@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -7,6 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from auth import router as auth_router
+
+# Works regardless of where uvicorn is launched from
+BASE_DIR = Path(__file__).parent.parent / "frontend"
 
 app = FastAPI(title="Fluent API")
 
@@ -28,12 +32,14 @@ def health():
 
 @app.get("/")
 def index():
-    return FileResponse("../frontend/index.html")
+    return FileResponse(BASE_DIR / "index.html")
 
 
 @app.get("/dashboard")
 def dashboard():
-    return FileResponse("../frontend/dashboard.html")
+    return FileResponse(BASE_DIR / "dashboard.html")
 
 
-app.mount("/static", StaticFiles(directory="../frontend/static"), name="static")
+static_dir = BASE_DIR / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
