@@ -3,6 +3,7 @@ services:
     name: fluent-backend
     runtime: python
     rootDir: backend
+    pythonVersion: "3.12.9"
     buildCommand: pip install -r requirements.txt && python seed.py
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
