@@ -9,7 +9,35 @@
   "dashboard": {
     "welcome": "С возвращением",
     "subtitle": "Готов продолжить путь к литовскому?",
-    "comingSoon": "Уроки скоро будут...",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "listsTitle": "Словари",
+    "listsSubtitle": "Выбери список и начни учить",
+    "statsKnown": "Знаю",
+    "statsLearning": "Учу",
+    "words": "слов",
+    "study": "Учить"
+  },
+  "lists": {
+    "title": "Словари",
+    "subtitle": "Выбери список для изучения",
+    "words": "слов",
+    "study": "Учить",
+    "backToDashboard": "На главную",
+    "allWords": "Все слова",
+    "lithuanian": "Литовский",
+    "translation": "Перевод",
+    "hint": "Заметка"
+  },
+  "study": {
+    "tapToReveal": "Нажми, чтобы показать",
+    "gotIt": "Знаю",
+    "keepPracticing": "Ещё учу",
+    "progress": "{current} из {total}",
+    "doneTitle": "Сессия завершена!",
+    "doneKnown": "Знаю",
+    "doneLearning": "Ещё учу",
+    "studyAgain": "Повторить",
+    "backToList": "К списку",
+    "savingProgress": "Сохраняем..."
   }
 }

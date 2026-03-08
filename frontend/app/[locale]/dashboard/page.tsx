@@ -2,23 +2,38 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 interface User {
-  id: string;
   name: string;
   email: string;
   picture?: string;
-  lang: string;
+}
+
+interface WordListSummary {
+  id: number;
+  title: string;
+  description: string | null;
+  word_count: number;
+}
+
+interface Stats {
+  known: number;
+  learning: number;
+  total_studied: number;
 }
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
+  const { locale } = useParams<{ locale: string }>();
   const [user, setUser] = useState<User | null>(null);
+  const [lists, setLists] = useState<WordListSummary[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    // Grab token from URL (set by backend after OAuth) or from storage
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
 
@@ -46,6 +61,17 @@ export default function DashboardPage() {
         localStorage.removeItem('fluent_token');
         window.location.href = '/';
       });
+
+    fetch(`${BACKEND_URL}/api/lists`)
+      .then((r) => r.json())
+      .then((data) => setLists(data.slice(0, 4)));
+
+    fetch(`${BACKEND_URL}/api/me/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() => {});
   }, []);
 
   function logout() {
@@ -63,7 +89,6 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#07070f] text-white">
-      {/* Background glow */}
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
         <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
@@ -99,11 +124,63 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Coming soon placeholder */}
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-16 text-center">
-          <p className="text-4xl mb-4">🇱🇹</p>
-          <p className="text-white/30 text-lg">{t('comingSoon')}</p>
+        {/* Stats */}
+        {stats && stats.total_studied > 0 && (
+          <div className="flex gap-4 mb-10">
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
+              <div className="text-2xl font-bold text-violet-400">{stats.known}</div>
+              <div className="text-white/40 text-sm mt-0.5">{t('statsKnown')}</div>
+            </div>
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
+              <div className="text-2xl font-bold text-amber-400">{stats.learning}</div>
+              <div className="text-white/40 text-sm mt-0.5">{t('statsLearning')}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Word lists */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">{t('listsTitle')}</h2>
+          <Link
+            href={`/${locale}/dashboard/lists`}
+            className="text-violet-400 hover:text-violet-300 text-sm transition-colors"
+          >
+            View all →
+          </Link>
         </div>
+
+        {lists.length === 0 ? (
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-16 text-center">
+            <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {lists.map((list) => (
+              <div
+                key={list.id}
+                className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 flex flex-col gap-4 hover:border-violet-500/40 transition-colors"
+              >
+                <div>
+                  <h3 className="font-semibold">{list.title}</h3>
+                  {list.description && (
+                    <p className="text-white/40 text-sm mt-1 line-clamp-2">{list.description}</p>
+                  )}
+                </div>
+                <div className="flex items-center justify-between mt-auto">
+                  <span className="text-white/30 text-sm">
+                    {list.word_count} {t('words')}
+                  </span>
+                  <Link
+                    href={`/${locale}/dashboard/lists/${list.id}/study`}
+                    className="px-4 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors font-medium"
+                  >
+                    {t('study')}
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

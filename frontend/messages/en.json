@@ -9,7 +9,35 @@
   "dashboard": {
     "welcome": "Welcome back",
     "subtitle": "Ready to continue your Lithuanian journey?",
-    "comingSoon": "Lessons coming soon...",
-    "logout": "Log out"
+    "logout": "Log out",
+    "listsTitle": "Word Lists",
+    "listsSubtitle": "Pick a list and start learning",
+    "statsKnown": "Known",
+    "statsLearning": "Learning",
+    "words": "words",
+    "study": "Study"
+  },
+  "lists": {
+    "title": "Word Lists",
+    "subtitle": "Choose a list to start studying",
+    "words": "words",
+    "study": "Study",
+    "backToDashboard": "Back to dashboard",
+    "allWords": "All words",
+    "lithuanian": "Lithuanian",
+    "translation": "Translation",
+    "hint": "Note"
+  },
+  "study": {
+    "tapToReveal": "Tap to reveal",
+    "gotIt": "Got it",
+    "keepPracticing": "Keep practicing",
+    "progress": "{current} of {total}",
+    "doneTitle": "Session complete!",
+    "doneKnown": "Known",
+    "doneLearning": "Still learning",
+    "studyAgain": "Study again",
+    "backToList": "Back to list",
+    "savingProgress": "Saving..."
   }
 }

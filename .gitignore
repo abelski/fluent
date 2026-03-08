@@ -15,7 +15,13 @@ node_modules/
 .env.production.local
 npm-debug.log*
 
+# Google credentials
+client_secret_*.json
+
 # OS
 .DS_Store
 *.swp
 *.swo
+
+# PDFs / source materials
+*.pdf

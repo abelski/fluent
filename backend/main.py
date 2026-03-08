@@ -8,11 +8,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from auth import router as auth_router
+from routers.words import router as words_router
+from database import create_db_and_tables
 
 # Works regardless of where uvicorn is launched from
 BASE_DIR = Path(__file__).parent.parent / "frontend"
 
 app = FastAPI(title="Fluent API")
+
+
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/api/auth")
+app.include_router(words_router, prefix="/api")
 
 
 @app.get("/health")

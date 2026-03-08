@@ -18,11 +18,10 @@
 
     .glow {
       position: fixed;
-      top: 0; left: 50%;
+      top: -100px; left: 50%;
       transform: translateX(-50%);
-      width: 600px;
-      height: 400px;
-      background: radial-gradient(ellipse, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+      width: 700px; height: 500px;
+      background: radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
@@ -35,87 +34,253 @@
       padding: 32px 24px;
     }
 
+    /* ── NAV ── */
     nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 48px;
     }
-
     .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
     .logo span { color: #a78bfa; }
-
-    .logout-btn {
-      background: none;
-      border: none;
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .btn-ghost {
+      background: none; border: none;
       color: rgba(255,255,255,0.35);
       font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      cursor: pointer;
-      transition: color 0.15s;
+      font-size: 14px; cursor: pointer;
+      transition: color 0.15s; text-decoration: none;
     }
-    .logout-btn:hover { color: #fff; }
+    .btn-ghost:hover { color: #fff; }
 
-    .user-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 40px;
-    }
-
-    .avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      border: 2px solid rgba(139, 92, 246, 0.4);
-      object-fit: cover;
-    }
-
+    /* ── USER ROW ── */
+    .user-row { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; }
+    .avatar { width: 52px; height: 52px; border-radius: 50%; border: 2px solid rgba(139,92,246,0.4); object-fit: cover; }
     .avatar-placeholder {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: rgba(139, 92, 246, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 700;
-      color: #a78bfa;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(139,92,246,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 700; color: #a78bfa;
     }
-
     .user-name { font-size: 22px; font-weight: 700; }
     .user-sub { font-size: 14px; color: rgba(255,255,255,0.4); margin-top: 4px; }
 
-    .card {
-      background: rgba(255,255,255,0.03);
+    /* ── STATS ROW ── */
+    .stats-row { display: flex; gap: 12px; margin-bottom: 36px; }
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 16px 24px;
+    }
+    .stat-num { font-size: 24px; font-weight: 700; }
+    .stat-num.violet { color: #a78bfa; }
+    .stat-num.amber { color: #fbbf24; }
+    .stat-label { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-title { font-size: 17px; font-weight: 600; }
+    .link-all { font-size: 13px; color: #a78bfa; text-decoration: none; cursor: pointer; }
+    .link-all:hover { color: #c4b5fd; }
+
+    /* ── LISTS GRID ── */
+    .lists-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .list-card {
+      background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.07);
       border-radius: 20px;
-      padding: 64px 24px;
-      text-align: center;
+      padding: 24px;
+      display: flex; flex-direction: column; gap: 16px;
+      transition: border-color 0.2s;
+      cursor: default;
     }
-
-    .card-emoji { font-size: 48px; margin-bottom: 16px; }
-    .card-text { font-size: 16px; color: rgba(255,255,255,0.25); }
-
-    /* Loading spinner */
-    .spinner {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+    .list-card:hover { border-color: rgba(139,92,246,0.35); }
+    .list-card-title { font-size: 16px; font-weight: 600; }
+    .list-card-desc { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.5; }
+    .list-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+    .word-count { font-size: 13px; color: rgba(255,255,255,0.25); }
+    .card-actions { display: flex; gap: 8px; }
+    .btn-outline {
+      padding: 6px 14px; font-size: 13px; font-family: 'Inter', sans-serif;
+      background: none; border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.55); border-radius: 10px;
+      cursor: pointer; transition: all 0.15s;
     }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+    .btn-primary {
+      padding: 6px 14px; font-size: 13px; font-family: 'Inter', sans-serif;
+      background: #7c3aed; border: none; color: #fff;
+      border-radius: 10px; cursor: pointer; font-weight: 500;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #6d28d9; }
 
+    /* ── LOADING SPINNER ── */
+    .spinner { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
     .spin {
-      width: 32px;
-      height: 32px;
-      border: 2px solid rgba(139, 92, 246, 0.3);
+      width: 32px; height: 32px;
+      border: 2px solid rgba(139,92,246,0.3);
       border-top-color: #7c3aed;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── WORD TABLE (list detail) ── */
+    .word-table {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .word-table-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 80px;
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.25);
+    }
+    .word-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 80px;
+      padding: 14px 20px;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .word-row:last-child { border-bottom: none; }
+    .word-lt { font-weight: 500; }
+    .word-en { font-size: 14px; color: rgba(255,255,255,0.55); }
+    .word-hint { font-size: 11px; color: rgba(255,255,255,0.2); text-transform: uppercase; }
+
+    /* ── STUDY SCREEN ── */
+    #screen-study {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .study-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px;
+    }
+    .study-counter { font-size: 14px; color: rgba(255,255,255,0.3); }
+
+    .progress-bar {
+      width: 100%; height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      margin-bottom: 48px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: #7c3aed;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    /* Flashcard */
+    .flashcard-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+    }
+    .flashcard {
+      width: 100%;
+      min-height: 280px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 40px 32px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      text-align: center;
+      user-select: none;
+    }
+    .flashcard:hover { border-color: rgba(139,92,246,0.3); }
+    .flashcard-lt { font-size: 32px; font-weight: 700; line-height: 1.2; }
+    .flashcard-hint-small { font-size: 11px; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.1em; }
+    .flashcard-tap { font-size: 13px; color: rgba(255,255,255,0.2); }
+    .flashcard-en { font-size: 22px; color: #c4b5fd; font-weight: 600; }
+    .flashcard-ru { font-size: 16px; color: rgba(255,255,255,0.4); }
+    .flashcard-actions {
+      display: flex; gap: 12px; width: 100%;
+    }
+    .btn-keep {
+      flex: 1; padding: 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.65);
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+      border-radius: 16px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-keep:hover { background: rgba(255,255,255,0.10); color: #fff; }
+    .btn-got {
+      flex: 1; padding: 14px;
+      background: #7c3aed; border: none;
+      color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+      border-radius: 16px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-got:hover { background: #6d28d9; }
+
+    /* Done screen */
+    .done-screen {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; gap: 24px;
+    }
+    .done-emoji { font-size: 56px; }
+    .done-title { font-size: 26px; font-weight: 700; }
+    .done-stats { display: flex; gap: 16px; }
+    .done-stat {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 20px 32px; text-align: center;
+    }
+    .done-stat-num { font-size: 32px; font-weight: 700; }
+    .done-stat-num.violet { color: #a78bfa; }
+    .done-stat-num.amber { color: #fbbf24; }
+    .done-stat-label { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+    .done-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; }
+    .btn-full {
+      width: 100%; padding: 14px;
+      background: #7c3aed; border: none; color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500;
+      border-radius: 16px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-full:hover { background: #6d28d9; }
+
+    /* Screens visibility */
+    .screen { display: none; }
+    .screen.active { display: block; }
+    #screen-study.active { display: flex; }
 
     #app { display: none; }
   </style>
@@ -125,84 +290,323 @@
 
   <div id="app">
     <div class="glow"></div>
-    <div class="container">
-      <nav>
-        <div class="logo">fluent<span>.</span></div>
-        <button class="logout-btn" onclick="logout()" id="logout-label">Log out</button>
-      </nav>
 
-      <div class="user-row">
-        <div id="avatar-wrap"></div>
-        <div>
-          <div class="user-name" id="user-name"></div>
-          <div class="user-sub" id="user-sub"></div>
+    <!-- ── DASHBOARD SCREEN ── -->
+    <div id="screen-dashboard" class="screen">
+      <div class="container">
+        <nav>
+          <div class="logo">fluent<span>.</span></div>
+          <div class="nav-right">
+            <button class="btn-ghost" id="logout-btn">Log out</button>
+          </div>
+        </nav>
+
+        <div class="user-row">
+          <div id="avatar-wrap"></div>
+          <div>
+            <div class="user-name" id="user-name"></div>
+            <div class="user-sub" id="user-sub"></div>
+          </div>
+        </div>
+
+        <div id="stats-row" class="stats-row" style="display:none"></div>
+
+        <div class="section-header">
+          <div class="section-title" id="lists-title">Word Lists</div>
+        </div>
+        <div id="lists-grid" class="lists-grid">
+          <div style="padding:60px;text-align:center;color:rgba(255,255,255,0.2)">
+            <div class="spin" style="margin:0 auto"></div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="card">
-        <div class="card-emoji">🇱🇹</div>
-        <div class="card-text" id="coming-soon">Lessons coming soon...</div>
+    <!-- ── LIST DETAIL SCREEN ── -->
+    <div id="screen-list" class="screen">
+      <div class="container">
+        <nav>
+          <div class="logo">fluent<span>.</span></div>
+          <button class="btn-ghost" onclick="showDashboard()">← Back</button>
+        </nav>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:32px">
+          <div>
+            <h1 id="detail-title" style="font-size:28px;font-weight:700"></h1>
+            <p id="detail-desc" style="color:rgba(255,255,255,0.4);margin-top:6px;font-size:14px"></p>
+            <p id="detail-count" style="color:rgba(255,255,255,0.25);font-size:13px;margin-top:4px"></p>
+          </div>
+          <button class="btn-primary" style="padding:10px 20px;font-size:14px;white-space:nowrap;flex-shrink:0" id="detail-study-btn">Study →</button>
+        </div>
+        <div class="word-table">
+          <div class="word-table-header">
+            <span>Lithuanian</span><span>English</span><span>Note</span>
+          </div>
+          <div id="word-rows"></div>
+        </div>
       </div>
     </div>
-  </div>
+
+    <!-- ── STUDY SCREEN ── -->
+    <div id="screen-study" class="screen">
+      <div class="glow"></div>
+      <div style="position:relative;z-index:10;width:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;flex:1">
+        <div class="study-header">
+          <button class="btn-ghost" id="study-back-btn">← Back</button>
+          <span class="study-counter" id="study-counter"></span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+        <div class="flashcard-wrap">
+          <!-- card -->
+          <div class="flashcard" id="flashcard" onclick="flipCard()">
+            <div class="flashcard-lt" id="card-lt"></div>
+            <div class="flashcard-hint-small" id="card-hint"></div>
+            <div class="flashcard-tap" id="card-tap">Tap to reveal</div>
+            <div id="card-back" style="display:none;width:100%">
+              <div class="flashcard-en" id="card-en"></div>
+              <div class="flashcard-ru" id="card-ru" style="margin-top:8px"></div>
+            </div>
+          </div>
+
+          <!-- action buttons (hidden until flipped) -->
+          <div class="flashcard-actions" id="card-actions" style="display:none">
+            <button class="btn-keep" onclick="markCard('learning')">↩ Keep practicing</button>
+            <button class="btn-got" onclick="markCard('known')">Got it ✓</button>
+          </div>
+        </div>
+
+        <!-- done screen (hidden until all cards done) -->
+        <div class="done-screen" id="done-screen" style="display:none">
+          <div class="done-emoji">🎉</div>
+          <div class="done-title">Session complete!</div>
+          <div class="done-stats">
+            <div class="done-stat">
+              <div class="done-stat-num violet" id="done-known">0</div>
+              <div class="done-stat-label">Known</div>
+            </div>
+            <div class="done-stat">
+              <div class="done-stat-num amber" id="done-learning">0</div>
+              <div class="done-stat-label">Still learning</div>
+            </div>
+          </div>
+          <div class="done-actions">
+            <button class="btn-full" onclick="restartStudy()">Study again</button>
+            <button class="btn-ghost" style="padding:10px" onclick="showCurrentList()">Back to list</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- #app -->
 
   <script>
     const i18n = {
-      en: { welcome: 'Welcome back', subtitle: 'Ready to continue your Lithuanian journey?', comingSoon: 'Lessons coming soon...', logout: 'Log out' },
-      ru: { welcome: 'С возвращением', subtitle: 'Готов продолжить путь к литовскому?', comingSoon: 'Уроки скоро будут...', logout: 'Выйти' }
+      en: { welcome: 'Welcome back', subtitle: 'Ready to continue your Lithuanian journey?', logout: 'Log out', listsTitle: 'Word Lists', words: 'words', study: 'Study', statsKnown: 'Known', statsLearning: 'Learning' },
+      ru: { welcome: 'С возвращением', subtitle: 'Готов продолжить путь к литовскому?', logout: 'Выйти', listsTitle: 'Словари', words: 'слов', study: 'Учить', statsKnown: 'Знаю', statsLearning: 'Ещё учу' }
     };
 
+    let currentListId = null;
+    let studyWords = [];
+    let studyIndex = 0;
+    let studyResults = {};
+    let token = null;
+    let t = i18n.en;
+
+    // ── SCREENS ──
+    function showScreen(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + name).classList.add('active');
+    }
+    function showDashboard() { showScreen('dashboard'); }
+    function showCurrentList() { showScreen('list'); }
+
+    // ── INIT ──
     async function init() {
       const params = new URLSearchParams(window.location.search);
       const urlToken = params.get('token');
-
       if (urlToken) {
         localStorage.setItem('fluent_token', urlToken);
         window.history.replaceState({}, '', '/dashboard');
       }
-
-      const token = urlToken || localStorage.getItem('fluent_token');
-
-      if (!token) {
-        window.location.href = '/';
-        return;
-      }
+      token = urlToken || localStorage.getItem('fluent_token');
+      if (!token) { window.location.href = '/'; return; }
 
       try {
-        const res = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        if (!res.ok) throw new Error('Unauthorized');
-
+        const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error();
         const user = await res.json();
+
         const lang = localStorage.getItem('lang') || 'en';
-        const t = i18n[lang] || i18n.en;
+        t = i18n[lang] || i18n.en;
 
         document.getElementById('user-name').textContent = `${t.welcome}, ${user.name}!`;
         document.getElementById('user-sub').textContent = t.subtitle;
-        document.getElementById('coming-soon').textContent = t.comingSoon;
-        document.getElementById('logout-label').textContent = t.logout;
+        document.getElementById('logout-btn').textContent = t.logout;
+        document.getElementById('lists-title').textContent = t.listsTitle;
 
         const avatarWrap = document.getElementById('avatar-wrap');
-        if (user.picture) {
-          avatarWrap.innerHTML = `<img src="${user.picture}" class="avatar" alt="${user.name}" />`;
-        } else {
-          avatarWrap.innerHTML = `<div class="avatar-placeholder">${user.name[0]}</div>`;
-        }
+        avatarWrap.innerHTML = user.picture
+          ? `<img src="${user.picture}" class="avatar" alt="${user.name}" />`
+          : `<div class="avatar-placeholder">${user.name[0]}</div>`;
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('app').style.display = 'block';
+        showScreen('dashboard');
+
+        loadLists();
+        loadStats();
       } catch {
         localStorage.removeItem('fluent_token');
         window.location.href = '/';
       }
     }
 
+    // ── LISTS ──
+    async function loadLists() {
+      const res = await fetch('/api/lists');
+      const lists = await res.json();
+      const grid = document.getElementById('lists-grid');
+      grid.innerHTML = lists.map(l => `
+        <div class="list-card">
+          <div>
+            <div class="list-card-title">${l.title}</div>
+            ${l.description ? `<div class="list-card-desc">${l.description}</div>` : ''}
+          </div>
+          <div class="list-card-footer">
+            <span class="word-count">${l.word_count} ${t.words}</span>
+            <div class="card-actions">
+              <button class="btn-outline" onclick="openList(${l.id})">Browse</button>
+              <button class="btn-primary" onclick="startStudy(${l.id})">${t.study}</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ── STATS ──
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/me/stats', { headers: { Authorization: `Bearer ${token}` } });
+        const s = await res.json();
+        if (s.total_studied > 0) {
+          const row = document.getElementById('stats-row');
+          row.style.display = 'flex';
+          row.innerHTML = `
+            <div class="stat-card"><div class="stat-num violet">${s.known}</div><div class="stat-label">${t.statsKnown}</div></div>
+            <div class="stat-card"><div class="stat-num amber">${s.learning}</div><div class="stat-label">${t.statsLearning}</div></div>
+          `;
+        }
+      } catch {}
+    }
+
+    // ── LIST DETAIL ──
+    async function openList(id) {
+      currentListId = id;
+      const res = await fetch(`/api/lists/${id}`);
+      const list = await res.json();
+
+      document.getElementById('detail-title').textContent = list.title;
+      document.getElementById('detail-desc').textContent = list.description || '';
+      document.getElementById('detail-count').textContent = `${list.words.length} ${t.words}`;
+      document.getElementById('detail-study-btn').onclick = () => startStudy(id);
+      document.getElementById('detail-study-btn').textContent = `${t.study} →`;
+
+      document.getElementById('word-rows').innerHTML = list.words.map(w => `
+        <div class="word-row">
+          <span class="word-lt">${w.lithuanian}</span>
+          <span class="word-en">${w.translation_en}</span>
+          <span class="word-hint">${w.hint || ''}</span>
+        </div>
+      `).join('');
+
+      showScreen('list');
+    }
+
+    // ── STUDY ──
+    async function startStudy(id) {
+      currentListId = id;
+      const res = await fetch(`/api/lists/${id}/study`);
+      studyWords = await res.json();
+      studyIndex = 0;
+      studyResults = {};
+
+      document.getElementById('study-back-btn').onclick = () => {
+        if (currentListId) showScreen('list'); else showDashboard();
+      };
+
+      document.getElementById('done-screen').style.display = 'none';
+      document.getElementById('flashcard').style.display = 'flex';
+      document.getElementById('card-actions').style.display = 'none';
+
+      showScreen('study');
+      renderCard();
+    }
+
+    function renderCard() {
+      if (studyIndex >= studyWords.length) {
+        showDone();
+        return;
+      }
+      const w = studyWords[studyIndex];
+      document.getElementById('card-lt').textContent = w.lithuanian;
+      document.getElementById('card-hint').textContent = w.hint || '';
+      document.getElementById('card-en').textContent = w.translation_en;
+      document.getElementById('card-ru').textContent = w.translation_ru;
+      document.getElementById('card-tap').style.display = 'block';
+      document.getElementById('card-back').style.display = 'none';
+      document.getElementById('card-actions').style.display = 'none';
+
+      const pct = (studyIndex / studyWords.length) * 100;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('study-counter').textContent = `${studyIndex + 1} / ${studyWords.length}`;
+    }
+
+    function flipCard() {
+      if (document.getElementById('card-back').style.display !== 'none') return;
+      document.getElementById('card-tap').style.display = 'none';
+      document.getElementById('card-back').style.display = 'block';
+      document.getElementById('card-actions').style.display = 'flex';
+    }
+
+    function markCard(status) {
+      const w = studyWords[studyIndex];
+      studyResults[w.id] = status;
+      saveProgress(w.id, status);
+      studyIndex++;
+      renderCard();
+    }
+
+    function saveProgress(wordId, status) {
+      if (!token) return;
+      fetch(`/api/words/${wordId}/progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status })
+      }).catch(() => {});
+    }
+
+    function showDone() {
+      const known = Object.values(studyResults).filter(r => r === 'known').length;
+      const learning = Object.values(studyResults).filter(r => r === 'learning').length;
+      document.getElementById('done-known').textContent = known;
+      document.getElementById('done-learning').textContent = learning;
+      document.getElementById('progress-fill').style.width = '100%';
+      document.getElementById('flashcard').style.display = 'none';
+      document.getElementById('card-actions').style.display = 'none';
+      document.getElementById('done-screen').style.display = 'flex';
+      loadStats(); // refresh stats after session
+    }
+
+    function restartStudy() {
+      startStudy(currentListId);
+    }
+
     function logout() {
       localStorage.removeItem('fluent_token');
       window.location.href = '/';
     }
+
+    document.getElementById('logout-btn') && document.getElementById('logout-btn').addEventListener('click', logout);
 
     init();
   </script>
