@@ -1,0 +1,15 @@
+{
+  "landing": {
+    "badge": "Lithuanian",
+    "headline": "Learn Lithuanian",
+    "subheadline": "The fun, fast way to master Lithuanian — for Russian and English speakers",
+    "cta": "Continue with Google",
+    "tagline": "Free · No credit card · Start in seconds"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "subtitle": "Ready to continue your Lithuanian journey?",
+    "comingSoon": "Lessons coming soon...",
+    "logout": "Log out"
+  }
+}
