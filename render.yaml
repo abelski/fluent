@@ -4,7 +4,7 @@ services:
     runtime: python
     rootDir: backend
     pythonVersion: "3.12.9"
-    buildCommand: pip install -r requirements.txt && python seed.py
+    buildCommand: cd ../frontend && npm install && npm run build && cd ../backend && pip install -r requirements.txt && python seed.py
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
@@ -19,13 +19,5 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-
-  - type: web
-    name: fluent-frontend
-    runtime: node
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    startCommand: npm start
-    envVars:
       - key: NEXT_PUBLIC_BACKEND_URL
         sync: false

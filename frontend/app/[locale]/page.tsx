@@ -1,9 +1,11 @@
 import { useTranslations } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 export default function LandingPage({ params: { locale } }: { params: { locale: string } }) {
+  setRequestLocale(locale);
   const t = useTranslations('landing');
 
   return (

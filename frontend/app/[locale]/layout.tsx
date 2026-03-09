@@ -1,5 +1,5 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Inter } from 'next/font/google';
 import '../globals.css';
 
@@ -10,6 +10,10 @@ export const metadata = {
   description: 'The fun way to master Lithuanian',
 };
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'ru' }];
+}
+
 export default async function LocaleLayout({
   children,
   params: { locale },
@@ -17,6 +21,7 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
+  setRequestLocale(locale);
   const messages = await getMessages();
 
   return (
