@@ -71,7 +71,8 @@ export default function DashboardPage() {
 
     fetch(`${BACKEND_URL}/api/lists`)
       .then((r) => r.json())
-      .then(setLists);
+      .then((data) => setLists(Array.isArray(data) ? data : []))
+      .catch(() => {});
 
     fetch(`${BACKEND_URL}/api/me/stats`, {
       headers: { Authorization: `Bearer ${token}` },

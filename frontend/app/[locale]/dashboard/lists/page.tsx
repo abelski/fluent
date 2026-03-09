@@ -24,7 +24,8 @@ export default function ListsPage() {
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/lists`)
       .then((r) => r.json())
-      .then(setLists)
+      .then((data) => setLists(Array.isArray(data) ? data : []))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

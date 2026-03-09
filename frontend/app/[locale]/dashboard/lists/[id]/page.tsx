@@ -30,8 +30,9 @@ export default function ListDetailPage() {
 
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/lists/${id}`)
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : null))
       .then(setList)
+      .catch(() => setList(null))
       .finally(() => setLoading(false));
   }, [id]);
 

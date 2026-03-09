@@ -46,7 +46,7 @@ export default function FlashcardPage() {
     })
       .then((r) => r.json())
       .then((data) => {
-        setWords(data);
+        setWords(Array.isArray(data) ? data : []);
         setCurrentIndex(0);
         setSelected(null);
         setAnswerState('unanswered');
