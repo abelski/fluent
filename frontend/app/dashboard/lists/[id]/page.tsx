@@ -52,11 +52,11 @@ export default function ListDetailPage() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <nav className="flex justify-between items-center mb-12">
-          <Link href="/dashboard" className="font-bold text-xl tracking-tight">
+          <Link href="/dashboard/lists" className="font-bold text-xl tracking-tight">
             fluent<span className="text-violet-400">.</span>
           </Link>
           <Link
-            href="/dashboard"
+            href="/dashboard/lists"
             className="text-white/40 hover:text-white text-sm transition-colors"
           >
             ← На главную

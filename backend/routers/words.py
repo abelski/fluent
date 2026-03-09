@@ -28,7 +28,15 @@ def _require_user(authorization: Optional[str], session: Session) -> User:
         raise HTTPException(status_code=401, detail="Invalid token")
     user = session.exec(select(User).where(User.email == email)).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        # Auto-create user from valid JWT claims (handles tokens issued before DB row existed)
+        user = User(
+            email=email,
+            name=payload.get("name", email),
+            picture=payload.get("picture"),
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     return user
 
 
@@ -121,17 +129,51 @@ def get_study_words(
         ).all()
         progress_map = {p.word_id: p.status for p in progress_records}
 
-        new_words = [w for w in all_words if progress_map.get(w["id"], "new") == "new"]
-        learning_words = [w for w in all_words if progress_map.get(w["id"], "new") == "learning"]
-        known_words = [w for w in all_words if progress_map.get(w["id"], "new") == "known"]
+        # Annotate words with their status for the frontend
+        for w in all_words:
+            w["status"] = progress_map.get(w["id"], "new")
+
+        new_words = [w for w in all_words if w["status"] == "new"]
+        learning_words = [w for w in all_words if w["status"] == "learning"]
+        known_words = [w for w in all_words if w["status"] == "known"]
         random.shuffle(new_words)
         random.shuffle(learning_words)
         random.shuffle(known_words)
         all_words = new_words + learning_words + known_words
     else:
+        for w in all_words:
+            w["status"] = "new"
         random.shuffle(all_words)
 
     return all_words[:QUIZ_SIZE]
+
+
+@router.get("/lists/{list_id}/progress")
+def get_list_progress(
+    list_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    wl = session.get(WordList, list_id)
+    if not wl:
+        raise HTTPException(status_code=404, detail="List not found")
+    user = _require_user(authorization, session)
+    word_ids = [w["id"] for w in _list_words(list_id, session)]
+    progress_records = session.exec(
+        select(UserWordProgress).where(
+            UserWordProgress.user_id == user.id,
+            col(UserWordProgress.word_id).in_(word_ids),
+        )
+    ).all()
+    status_map = {p.word_id: p.status for p in progress_records}
+    known = sum(1 for wid in word_ids if status_map.get(wid) == "known")
+    learning = sum(1 for wid in word_ids if status_map.get(wid) == "learning")
+    return {
+        "total": len(word_ids),
+        "known": known,
+        "learning": learning,
+        "new": len(word_ids) - known - learning,
+    }
 
 
 class ProgressUpdate(BaseModel):
@@ -168,6 +210,47 @@ def update_progress(
         session.add(progress)
     session.commit()
     return {"ok": True}
+
+
+@router.get("/me/lists-progress")
+def get_all_lists_progress(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    user = _require_user(authorization, session)
+
+    # One query: all public list IDs + their word IDs
+    rows = session.exec(
+        select(WordListItem.word_list_id, WordListItem.word_id)
+        .join(WordList, WordList.id == WordListItem.word_list_id)
+        .where(WordList.is_public == True)
+    ).all()
+
+    list_word_ids: dict[int, list[int]] = {}
+    all_word_ids: set[int] = set()
+    for list_id, word_id in rows:
+        list_word_ids.setdefault(list_id, []).append(word_id)
+        all_word_ids.add(word_id)
+
+    progress_records = session.exec(
+        select(UserWordProgress).where(
+            UserWordProgress.user_id == user.id,
+            col(UserWordProgress.word_id).in_(list(all_word_ids)),
+        )
+    ).all() if all_word_ids else []
+    status_map = {p.word_id: p.status for p in progress_records}
+
+    result = {}
+    for list_id, word_ids in list_word_ids.items():
+        known = sum(1 for wid in word_ids if status_map.get(wid) == "known")
+        learning = sum(1 for wid in word_ids if status_map.get(wid) == "learning")
+        result[list_id] = {
+            "total": len(word_ids),
+            "known": known,
+            "learning": learning,
+            "new": len(word_ids) - known - learning,
+        }
+    return result
 
 
 @router.get("/me/stats")

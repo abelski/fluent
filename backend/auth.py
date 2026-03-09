@@ -4,9 +4,13 @@ from urllib.parse import urlencode
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.responses import RedirectResponse
 from jose import jwt, JWTError
+from sqlmodel import Session, select
+
+from database import get_session
+from models import User
 
 router = APIRouter()
 
@@ -44,7 +48,7 @@ def google_login():
 
 
 @router.get("/callback")
-async def google_callback(code: str):
+async def google_callback(code: str, session: Session = Depends(get_session)):
     async with httpx.AsyncClient() as client:
         token_resp = await client.post(
             "https://oauth2.googleapis.com/token",
@@ -67,11 +71,21 @@ async def google_callback(code: str):
         )
         google_user = user_resp.json()
 
-    token = create_jwt(
-        email=google_user["email"],
-        name=google_user.get("name", ""),
-        picture=google_user.get("picture"),
-    )
+    email = google_user["email"]
+    name = google_user.get("name", "")
+    picture = google_user.get("picture")
+
+    # Upsert user record so _require_user can find them
+    user = session.exec(select(User).where(User.email == email)).first()
+    if user:
+        user.name = name
+        user.picture = picture
+    else:
+        user = User(email=email, name=name, picture=picture)
+        session.add(user)
+    session.commit()
+
+    token = create_jwt(email=email, name=name, picture=picture)
     return RedirectResponse(f"{FRONTEND_URL}/dashboard?token={token}")
 
 
