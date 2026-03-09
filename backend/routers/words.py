@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header, HTTPException
 from jose import jwt, JWTError
 from pydantic import BaseModel
-from sqlmodel import Session, select, col
+from sqlmodel import Session, select, col, func
 
 from database import get_session
 from models import User, Word, WordList, WordListItem, UserWordProgress
@@ -33,40 +33,42 @@ def _require_user(authorization: Optional[str], session: Session) -> User:
 
 
 def _list_words(list_id: int, session: Session) -> list[dict]:
-    items = session.exec(
-        select(WordListItem)
+    rows = session.exec(
+        select(Word)
+        .join(WordListItem, WordListItem.word_id == Word.id)
         .where(WordListItem.word_list_id == list_id)
         .order_by(WordListItem.position)
     ).all()
-    words = []
-    for item in items:
-        word = session.get(Word, item.word_id)
-        if word:
-            words.append({
-                "id": word.id,
-                "lithuanian": word.lithuanian,
-                "translation_en": word.translation_en,
-                "translation_ru": word.translation_ru,
-                "hint": word.hint,
-            })
-    return words
+    return [
+        {
+            "id": w.id,
+            "lithuanian": w.lithuanian,
+            "translation_en": w.translation_en,
+            "translation_ru": w.translation_ru,
+            "hint": w.hint,
+        }
+        for w in rows
+    ]
 
 
 @router.get("/lists")
 def get_lists(session: Session = Depends(get_session)):
     lists = session.exec(select(WordList).where(WordList.is_public == True)).all()
-    result = []
-    for wl in lists:
-        count = session.exec(
-            select(WordListItem).where(WordListItem.word_list_id == wl.id)
+    counts = dict(
+        session.exec(
+            select(WordListItem.word_list_id, func.count(WordListItem.id))
+            .group_by(WordListItem.word_list_id)
         ).all()
-        result.append({
+    )
+    return [
+        {
             "id": wl.id,
             "title": wl.title,
             "description": wl.description,
-            "word_count": len(count),
-        })
-    return result
+            "word_count": counts.get(wl.id, 0),
+        }
+        for wl in lists
+    ]
 
 
 @router.get("/lists/{list_id}")

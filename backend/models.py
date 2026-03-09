@@ -35,7 +35,7 @@ class WordListItem(SQLModel, table=True):
     __tablename__ = "word_list_item"
     id: Optional[int] = Field(default=None, primary_key=True)
     word_list_id: int = Field(foreign_key="word_list.id", index=True)
-    word_id: int = Field(foreign_key="word.id")
+    word_id: int = Field(foreign_key="word.id", index=True)
     position: int = Field(default=0)
 
 

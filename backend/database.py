@@ -16,7 +16,13 @@ if DATABASE_URL:
     if "sslmode" not in DATABASE_URL:
         DATABASE_URL += ("&" if "?" in DATABASE_URL else "?") + "sslmode=require"
 
-engine = create_engine(DATABASE_URL, echo=False)
+engine = create_engine(
+    DATABASE_URL,
+    echo=False,
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,
+)
 
 
 def create_db_and_tables():
