@@ -21,6 +21,24 @@ interface StudyCard {
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
+function normalizeLt(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/į/g, 'i')
+    .replace(/č/g, 'c')
+    .replace(/š/g, 's')
+    .replace(/ž/g, 'z')
+    .replace(/ū/g, 'u')
+    .replace(/ę/g, 'e')
+    .replace(/ė/g, 'e')
+    .replace(/ą/g, 'a');
+}
+
+function parseForms(lithuanian: string): string[] {
+  const parts = lithuanian.split(/[,/]/).map((s) => s.trim()).filter(Boolean);
+  return parts.length > 1 ? parts : [lithuanian.trim()];
+}
+
 function pickDistractors(word: Word, allWords: Word[]): string[] {
   const pool = allWords.filter((w) => w.id !== word.id);
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
@@ -53,6 +71,7 @@ export default function QuizPage() {
   const [options, setOptions] = useState<{ text: string; correct: boolean }[]>([]);
   const [typedAnswer, setTypedAnswer] = useState('');
   const [shownAnswer, setShownAnswer] = useState('');
+  const [blankIndex, setBlankIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Prevents rapid Enter-key presses from auto-firing the stage-1 button
@@ -112,6 +131,8 @@ export default function QuizPage() {
       setOptions(buildOptions(queue[0].word, allWords));
     }
     if (queue.length > 0 && queue[0].stage === 3) {
+      const forms = parseForms(queue[0].word.lithuanian);
+      setBlankIndex(Math.floor(Math.random() * forms.length));
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [queue, allWords]);
@@ -159,11 +180,12 @@ export default function QuizPage() {
   function handleStage3Submit() {
     if (answerState !== 'unanswered') return;
     const card = queue[0];
-    const isCorrect =
-      typedAnswer.trim().toLowerCase() === card.word.lithuanian.trim().toLowerCase();
+    const forms = parseForms(card.word.lithuanian);
+    const target = forms[blankIndex] ?? forms[0];
+    const isCorrect = normalizeLt(typedAnswer.trim()) === normalizeLt(target);
 
     setAnswerState(isCorrect ? 'correct' : 'wrong');
-    if (!isCorrect) setShownAnswer(card.word.lithuanian);
+    if (!isCorrect) setShownAnswer(target);
 
     saveProgress(card.word.id, isCorrect ? 'known' : 'learning');
 
@@ -244,6 +266,10 @@ export default function QuizPage() {
   const progressPct = totalWords > 0 ? (wordsDone / totalWords) * 100 : 0;
 
   const stageLabel = ['', 'Читаю', 'Выбор', 'Пишу'][stage];
+
+  const cloveForms = parseForms(word.lithuanian);
+  const cloveIsCloze = cloveForms.length > 1;
+  const cloveText = cloveForms.map((f, i) => i === blankIndex ? '______' : f).join(' / ');
 
   return (
     <main className="min-h-screen bg-[#07070f] text-white flex flex-col px-6 py-8">
@@ -342,10 +368,19 @@ export default function QuizPage() {
         {stage === 3 && (
           <div className="flex flex-col items-center justify-center flex-1 gap-8">
             <div className="text-center">
-              <p className="text-white/30 text-sm mb-3 uppercase tracking-wider">Как будет по-литовски?</p>
-              <p className="text-4xl font-bold tracking-tight">{word.translation_ru}</p>
+              <p className="text-white/30 text-sm mb-3 uppercase tracking-wider">
+                {cloveIsCloze ? 'Вставьте пропущенную форму' : 'Как будет по-литовски?'}
+              </p>
+              {cloveIsCloze ? (
+                <p className="text-3xl font-bold tracking-tight font-mono">{cloveText}</p>
+              ) : (
+                <p className="text-4xl font-bold tracking-tight">{word.translation_ru}</p>
+              )}
               {word.hint && (
                 <p className="text-white/20 text-xs uppercase tracking-wider mt-2">{word.hint}</p>
+              )}
+              {cloveIsCloze && (
+                <p className="text-white/30 text-sm mt-3">{word.translation_ru}</p>
               )}
             </div>
 
@@ -359,7 +394,7 @@ export default function QuizPage() {
                   if (e.key === 'Enter') handleStage3Submit();
                 }}
                 disabled={answerState !== 'unanswered'}
-                placeholder="Напишите по-литовски..."
+                placeholder="Напишите пропущенное слово..."
                 className={`w-full py-4 px-5 rounded-xl border bg-white/[0.04] text-white placeholder-white/20 outline-none transition-all duration-200
                   ${answerState === 'correct' ? 'border-emerald-500/50 bg-emerald-500/10' :
                     answerState === 'wrong' ? 'border-red-500/50 bg-red-500/10' :
