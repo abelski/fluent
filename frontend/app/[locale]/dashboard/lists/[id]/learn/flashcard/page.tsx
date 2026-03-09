@@ -22,7 +22,7 @@ interface Option {
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
-export default function StudyPage() {
+export default function FlashcardPage() {
   const t = useTranslations('study');
   const { locale, id } = useParams<{ locale: string; id: string }>();
 
@@ -73,13 +73,11 @@ export default function StudyPage() {
     }).catch(() => {});
   }
 
-  // Generate shuffled options for current question
   const options: Option[] = useMemo(() => {
     if (!words.length || currentIndex >= words.length) return [];
     const current = words[currentIndex];
     const correctText = locale === 'ru' ? current.translation_ru : current.translation_en;
 
-    // Pick 3 distractors from the other words
     const pool = words.filter((_: Word, i: number) => i !== currentIndex);
     const shuffledPool = [...pool].sort(() => Math.random() - 0.5);
     const distractors = shuffledPool.slice(0, 3).map((w) =>
@@ -110,7 +108,6 @@ export default function StudyPage() {
       saveProgress(word.id, 'learning');
     }
 
-    // Advance after delay
     setTimeout(() => {
       if (currentIndex + 1 >= words.length) {
         setDone(true);
@@ -161,7 +158,7 @@ export default function StudyPage() {
               {t('studyAgain')}
             </button>
             <Link
-              href={`/${locale}/dashboard/lists/${id}`}
+              href={`/${locale}/dashboard/lists/${id}/learn`}
               className="w-full py-3 text-white/40 hover:text-white text-sm transition-colors text-center"
             >
               {t('backToList')}
@@ -184,7 +181,7 @@ export default function StudyPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <Link
-            href={`/${locale}/dashboard/lists/${id}`}
+            href={`/${locale}/dashboard/lists/${id}/learn`}
             className="text-white/40 hover:text-white text-sm transition-colors"
           >
             ← {t('backToList')}

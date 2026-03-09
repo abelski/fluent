@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header, HTTPException
 from jose import jwt, JWTError
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, select, col
 
 from database import get_session
 from models import User, Word, WordList, WordListItem, UserWordProgress
@@ -82,14 +82,54 @@ def get_list(list_id: int, session: Session = Depends(get_session)):
     }
 
 
+QUIZ_SIZE = 10
+
+
 @router.get("/lists/{list_id}/study")
-def get_study_words(list_id: int, session: Session = Depends(get_session)):
+def get_study_words(
+    list_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
     wl = session.get(WordList, list_id)
     if not wl:
         raise HTTPException(status_code=404, detail="List not found")
-    words = _list_words(list_id, session)
-    random.shuffle(words)
-    return words
+
+    all_words = _list_words(list_id, session)
+
+    # Try to get authenticated user for progress-based prioritization
+    user = None
+    if authorization and authorization.startswith("Bearer "):
+        try:
+            token = authorization.split(" ")[1]
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            email = payload.get("email")
+            if email:
+                user = session.exec(select(User).where(User.email == email)).first()
+        except JWTError:
+            pass
+
+    if user and all_words:
+        word_ids = [w["id"] for w in all_words]
+        progress_records = session.exec(
+            select(UserWordProgress).where(
+                UserWordProgress.user_id == user.id,
+                col(UserWordProgress.word_id).in_(word_ids),
+            )
+        ).all()
+        progress_map = {p.word_id: p.status for p in progress_records}
+
+        new_words = [w for w in all_words if progress_map.get(w["id"], "new") == "new"]
+        learning_words = [w for w in all_words if progress_map.get(w["id"], "new") == "learning"]
+        known_words = [w for w in all_words if progress_map.get(w["id"], "new") == "known"]
+        random.shuffle(new_words)
+        random.shuffle(learning_words)
+        random.shuffle(known_words)
+        all_words = new_words + learning_words + known_words
+    else:
+        random.shuffle(all_words)
+
+    return all_words[:QUIZ_SIZE]
 
 
 class ProgressUpdate(BaseModel):

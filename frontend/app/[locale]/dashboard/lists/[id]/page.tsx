@@ -57,7 +57,7 @@ export default function ListDetailPage() {
             fluent<span className="text-violet-400">.</span>
           </Link>
           <Link
-            href={`/${locale}/dashboard/lists`}
+            href={`/${locale}/dashboard`}
             className="text-white/40 hover:text-white text-sm transition-colors"
           >
             ← {t('backToDashboard')}
@@ -75,7 +75,7 @@ export default function ListDetailPage() {
             </p>
           </div>
           <Link
-            href={`/${locale}/dashboard/lists/${id}/study`}
+            href={`/${locale}/dashboard/lists/${id}/learn/flashcard`}
             className="shrink-0 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors font-medium text-sm"
           >
             {t('study')} →

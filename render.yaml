@@ -19,3 +19,13 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+
+  - type: web
+    name: fluent-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_BACKEND_URL
+        sync: false

@@ -10,12 +10,15 @@
     "welcome": "С возвращением",
     "subtitle": "Готов продолжить путь к литовскому?",
     "logout": "Выйти",
-    "listsTitle": "Словари",
-    "listsSubtitle": "Выбери список и начни учить",
+    "progressTitle": "Твой прогресс",
     "statsKnown": "Знаю",
     "statsLearning": "Учу",
+    "statsTotal": "Изучено",
+    "exercisesTitle": "Упражнения",
+    "exercisesSubtitle": "Нажми на упражнение, чтобы начать",
     "words": "слов",
-    "study": "Учить"
+    "study": "Учить",
+    "view": "Просмотр"
   },
   "lists": {
     "title": "Словари",
@@ -28,16 +31,21 @@
     "translation": "Перевод",
     "hint": "Заметка"
   },
-  "study": {
-    "tapToReveal": "Нажми, чтобы показать",
-    "gotIt": "Знаю",
-    "keepPracticing": "Ещё учу",
-    "progress": "{current} из {total}",
-    "doneTitle": "Сессия завершена!",
-    "doneKnown": "Знаю",
-    "doneLearning": "Ещё учу",
-    "studyAgain": "Повторить",
+  "learn": {
+    "subtitle": "Как хочешь практиковаться?",
     "backToList": "К списку",
-    "savingProgress": "Сохраняем..."
+    "flashcardTitle": "Карточки",
+    "flashcardDesc": "Викторина с вариантами ответов"
+  },
+  "study": {
+    "questionLabel": "Что это означает?",
+    "feedbackCorrect": "Правильно!",
+    "feedbackWrong": "Не совсем",
+    "doneTitle": "Сессия завершена!",
+    "doneScore": "Верно {score} из {total}",
+    "doneCorrect": "Верно",
+    "doneWrong": "Ошибок",
+    "studyAgain": "Повторить",
+    "backToList": "К списку"
   }
 }

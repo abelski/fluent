@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
@@ -29,6 +29,7 @@ interface Stats {
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
   const { locale } = useParams<{ locale: string }>();
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -49,22 +50,28 @@ export default function DashboardPage() {
       return;
     }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
     fetch(`${BACKEND_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
     })
       .then((r) => {
+        clearTimeout(timeout);
         if (!r.ok) throw new Error('Unauthorized');
         return r.json();
       })
       .then(setUser)
       .catch(() => {
+        clearTimeout(timeout);
         localStorage.removeItem('fluent_token');
         window.location.href = '/';
       });
 
     fetch(`${BACKEND_URL}/api/lists`)
       .then((r) => r.json())
-      .then((data) => setLists(data.slice(0, 4)));
+      .then(setLists);
 
     fetch(`${BACKEND_URL}/api/me/stats`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -124,29 +131,33 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Progress */}
         {stats && stats.total_studied > 0 && (
-          <div className="flex gap-4 mb-10">
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
-              <div className="text-2xl font-bold text-violet-400">{stats.known}</div>
-              <div className="text-white/40 text-sm mt-0.5">{t('statsKnown')}</div>
-            </div>
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
-              <div className="text-2xl font-bold text-amber-400">{stats.learning}</div>
-              <div className="text-white/40 text-sm mt-0.5">{t('statsLearning')}</div>
+          <div className="mb-10">
+            <h2 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-3">
+              {t('progressTitle')}
+            </h2>
+            <div className="flex gap-4 flex-wrap">
+              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
+                <div className="text-2xl font-bold text-violet-400">{stats.known}</div>
+                <div className="text-white/40 text-sm mt-0.5">{t('statsKnown')}</div>
+              </div>
+              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
+                <div className="text-2xl font-bold text-amber-400">{stats.learning}</div>
+                <div className="text-white/40 text-sm mt-0.5">{t('statsLearning')}</div>
+              </div>
+              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
+                <div className="text-2xl font-bold text-white/60">{stats.total_studied}</div>
+                <div className="text-white/40 text-sm mt-0.5">{t('statsTotal')}</div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Word lists */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">{t('listsTitle')}</h2>
-          <Link
-            href={`/${locale}/dashboard/lists`}
-            className="text-violet-400 hover:text-violet-300 text-sm transition-colors"
-          >
-            View all →
-          </Link>
+        {/* Exercises */}
+        <div className="mb-5">
+          <h2 className="text-lg font-semibold">{t('exercisesTitle')}</h2>
+          <p className="text-white/40 text-sm mt-0.5">{t('exercisesSubtitle')}</p>
         </div>
 
         {lists.length === 0 ? (
@@ -158,10 +169,15 @@ export default function DashboardPage() {
             {lists.map((list) => (
               <div
                 key={list.id}
-                className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 flex flex-col gap-4 hover:border-violet-500/40 transition-colors"
+                onClick={() =>
+                  router.push(`/${locale}/dashboard/lists/${list.id}/learn/flashcard`)
+                }
+                className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 flex flex-col gap-4 hover:border-violet-500/40 transition-colors cursor-pointer group"
               >
-                <div>
-                  <h3 className="font-semibold">{list.title}</h3>
+                <div className="flex-1">
+                  <h3 className="font-semibold group-hover:text-violet-300 transition-colors">
+                    {list.title}
+                  </h3>
                   {list.description && (
                     <p className="text-white/40 text-sm mt-1 line-clamp-2">{list.description}</p>
                   )}
@@ -171,10 +187,11 @@ export default function DashboardPage() {
                     {list.word_count} {t('words')}
                   </span>
                   <Link
-                    href={`/${locale}/dashboard/lists/${list.id}/study`}
-                    className="px-4 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors font-medium"
+                    href={`/${locale}/dashboard/lists/${list.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-4 py-1.5 text-sm text-white/60 hover:text-white border border-white/10 hover:border-white/30 rounded-lg transition-colors"
                   >
-                    {t('study')}
+                    {t('view')}
                   </Link>
                 </div>
               </div>

@@ -10,12 +10,15 @@
     "welcome": "Welcome back",
     "subtitle": "Ready to continue your Lithuanian journey?",
     "logout": "Log out",
-    "listsTitle": "Word Lists",
-    "listsSubtitle": "Pick a list and start learning",
+    "progressTitle": "Your progress",
     "statsKnown": "Known",
     "statsLearning": "Learning",
+    "statsTotal": "Studied",
+    "exercisesTitle": "Exercises",
+    "exercisesSubtitle": "Click an exercise to start practicing",
     "words": "words",
-    "study": "Study"
+    "study": "Study",
+    "view": "View"
   },
   "lists": {
     "title": "Word Lists",
@@ -28,16 +31,21 @@
     "translation": "Translation",
     "hint": "Note"
   },
-  "study": {
-    "tapToReveal": "Tap to reveal",
-    "gotIt": "Got it",
-    "keepPracticing": "Keep practicing",
-    "progress": "{current} of {total}",
-    "doneTitle": "Session complete!",
-    "doneKnown": "Known",
-    "doneLearning": "Still learning",
-    "studyAgain": "Study again",
+  "learn": {
+    "subtitle": "How do you want to practice?",
     "backToList": "Back to list",
-    "savingProgress": "Saving..."
+    "flashcardTitle": "Flashcards",
+    "flashcardDesc": "Multiple choice quiz"
+  },
+  "study": {
+    "questionLabel": "What does this mean?",
+    "feedbackCorrect": "Correct!",
+    "feedbackWrong": "Not quite",
+    "doneTitle": "Session complete!",
+    "doneScore": "You got {score} out of {total}",
+    "doneCorrect": "Correct",
+    "doneWrong": "Missed",
+    "studyAgain": "Study again",
+    "backToList": "Back to list"
   }
 }
