@@ -24,7 +24,11 @@ type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
 export default function FlashcardPage() {
   const t = useTranslations('study');
-  const { locale, id } = useParams<{ locale: string; id: string }>();
+  const { locale, id: _id } = useParams<{ locale: string; id: string }>();
+  // Static export serves the "_" placeholder page for all list IDs — read the real id from the URL
+  const id = (typeof window !== 'undefined' && !/^\d+$/.test(_id))
+    ? (window.location.pathname.split('/').find((s, i, a) => a[i - 1] === 'lists' && /^\d+$/.test(s)) ?? _id)
+    : _id;
 
   const [words, setWords] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);

@@ -24,7 +24,10 @@ interface WordListDetail {
 
 export default function ListDetailPage() {
   const t = useTranslations('lists');
-  const { locale, id } = useParams<{ locale: string; id: string }>();
+  const { locale, id: _id } = useParams<{ locale: string; id: string }>();
+  const id = (typeof window !== 'undefined' && !/^\d+$/.test(_id))
+    ? (window.location.pathname.split('/').find((s, i, a) => a[i - 1] === 'lists' && /^\d+$/.test(s)) ?? _id)
+    : _id;
   const [list, setList] = useState<WordListDetail | null>(null);
   const [loading, setLoading] = useState(true);
 

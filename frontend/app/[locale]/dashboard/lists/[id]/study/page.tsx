@@ -24,7 +24,10 @@ type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
 export default function StudyPage() {
   const t = useTranslations('study');
-  const { locale, id } = useParams<{ locale: string; id: string }>();
+  const { locale, id: _id } = useParams<{ locale: string; id: string }>();
+  const id = (typeof window !== 'undefined' && !/^\d+$/.test(_id))
+    ? (window.location.pathname.split('/').find((s, i, a) => a[i - 1] === 'lists' && /^\d+$/.test(s)) ?? _id)
+    : _id;
 
   const [words, setWords] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -46,7 +49,7 @@ export default function StudyPage() {
     })
       .then((r) => r.json())
       .then((data) => {
-        setWords(data);
+        setWords(Array.isArray(data) ? data : []);
         setCurrentIndex(0);
         setSelected(null);
         setAnswerState('unanswered');
