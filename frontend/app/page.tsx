@@ -1,13 +1,7 @@
-import { useTranslations } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
+import { BACKEND_URL } from '../lib/api';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-
-export default function LandingPage({ params: { locale } }: { params: { locale: string } }) {
-  setRequestLocale(locale);
-  const t = useTranslations('landing');
-
+export default function LandingPage() {
   return (
     <main className="relative min-h-screen bg-[#07070f] flex flex-col overflow-hidden">
       {/* Background glow */}
@@ -20,28 +14,6 @@ export default function LandingPage({ params: { locale } }: { params: { locale: 
         <span className="text-white font-bold text-2xl tracking-tight">
           fluent<span className="text-violet-400">.</span>
         </span>
-        <div className="flex gap-2">
-          <Link
-            href="/en"
-            className={`text-sm px-4 py-1.5 rounded-full font-medium transition-all ${
-              locale === 'en'
-                ? 'bg-white/15 text-white'
-                : 'text-white/40 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            EN
-          </Link>
-          <Link
-            href="/ru"
-            className={`text-sm px-4 py-1.5 rounded-full font-medium transition-all ${
-              locale === 'ru'
-                ? 'bg-white/15 text-white'
-                : 'text-white/40 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            RU
-          </Link>
-        </div>
       </nav>
 
       {/* Hero */}
@@ -49,17 +21,17 @@ export default function LandingPage({ params: { locale } }: { params: { locale: 
         {/* Badge */}
         <div className="mb-6 inline-flex items-center gap-2 bg-violet-500/15 border border-violet-500/25 rounded-full px-4 py-2">
           <span className="text-lg">🇱🇹</span>
-          <span className="text-violet-300 text-sm font-medium">{t('badge')}</span>
+          <span className="text-violet-300 text-sm font-medium">Литовский</span>
         </div>
 
         {/* Headline */}
         <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-5 leading-tight tracking-tight">
-          {t('headline')}
+          Учи литовский
         </h1>
 
         {/* Subheadline */}
         <p className="text-white/50 text-lg md:text-xl max-w-lg mb-10 leading-relaxed">
-          {t('subheadline')}
+          Быстрый и увлекательный способ освоить литовский
         </p>
 
         {/* Google login button */}
@@ -68,11 +40,11 @@ export default function LandingPage({ params: { locale } }: { params: { locale: 
           className="group flex items-center gap-3 bg-white text-gray-800 font-semibold px-8 py-4 rounded-2xl text-lg hover:bg-gray-50 active:scale-95 transition-all duration-150 shadow-2xl shadow-violet-500/20"
         >
           <GoogleIcon />
-          {t('cta')}
+          Войти через Google
         </a>
 
         {/* Tagline */}
-        <p className="mt-5 text-white/25 text-sm">{t('tagline')}</p>
+        <p className="mt-5 text-white/25 text-sm">Бесплатно · Без карты · Начни за секунды</p>
       </div>
 
       {/* Bottom fade */}

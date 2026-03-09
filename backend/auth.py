@@ -72,7 +72,7 @@ async def google_callback(code: str):
         name=google_user.get("name", ""),
         picture=google_user.get("picture"),
     )
-    return RedirectResponse(f"{FRONTEND_URL}/en/dashboard?token={token}")
+    return RedirectResponse(f"{FRONTEND_URL}/dashboard?token={token}")
 
 
 @router.get("/me")

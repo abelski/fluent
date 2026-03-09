@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+import { useRouter } from 'next/navigation';
+import { BACKEND_URL, getToken } from '../../lib/api';
 
 interface User {
   name: string;
@@ -27,8 +25,6 @@ interface Stats {
 }
 
 export default function DashboardPage() {
-  const t = useTranslations('dashboard');
-  const { locale } = useParams<{ locale: string }>();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [lists, setLists] = useState<WordListSummary[]>([]);
@@ -43,7 +39,7 @@ export default function DashboardPage() {
       window.history.replaceState({}, '', window.location.pathname);
     }
 
-    const token = urlToken || localStorage.getItem('fluent_token');
+    const token = urlToken || getToken();
 
     if (!token) {
       window.location.href = '/';
@@ -111,7 +107,7 @@ export default function DashboardPage() {
             onClick={logout}
             className="text-white/40 hover:text-white text-sm transition-colors"
           >
-            {t('logout')}
+            Выйти
           </button>
         </nav>
 
@@ -125,10 +121,8 @@ export default function DashboardPage() {
             />
           )}
           <div>
-            <h1 className="text-2xl font-bold">
-              {t('welcome')}, {user.name}!
-            </h1>
-            <p className="text-white/40 mt-0.5">{t('subtitle')}</p>
+            <h1 className="text-2xl font-bold">С возвращением, {user.name}!</h1>
+            <p className="text-white/40 mt-0.5">Готов продолжить путь к литовскому?</p>
           </div>
         </div>
 
@@ -136,20 +130,20 @@ export default function DashboardPage() {
         {stats && stats.total_studied > 0 && (
           <div className="mb-10">
             <h2 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-3">
-              {t('progressTitle')}
+              Твой прогресс
             </h2>
             <div className="flex gap-4 flex-wrap">
               <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
                 <div className="text-2xl font-bold text-violet-400">{stats.known}</div>
-                <div className="text-white/40 text-sm mt-0.5">{t('statsKnown')}</div>
+                <div className="text-white/40 text-sm mt-0.5">Знаю</div>
               </div>
               <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
                 <div className="text-2xl font-bold text-amber-400">{stats.learning}</div>
-                <div className="text-white/40 text-sm mt-0.5">{t('statsLearning')}</div>
+                <div className="text-white/40 text-sm mt-0.5">Учу</div>
               </div>
               <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 py-4">
                 <div className="text-2xl font-bold text-white/60">{stats.total_studied}</div>
-                <div className="text-white/40 text-sm mt-0.5">{t('statsTotal')}</div>
+                <div className="text-white/40 text-sm mt-0.5">Изучено</div>
               </div>
             </div>
           </div>
@@ -157,8 +151,8 @@ export default function DashboardPage() {
 
         {/* Exercises */}
         <div className="mb-5">
-          <h2 className="text-lg font-semibold">{t('exercisesTitle')}</h2>
-          <p className="text-white/40 text-sm mt-0.5">{t('exercisesSubtitle')}</p>
+          <h2 className="text-lg font-semibold">Упражнения</h2>
+          <p className="text-white/40 text-sm mt-0.5">Нажми на упражнение, чтобы начать</p>
         </div>
 
         {lists.length === 0 ? (
@@ -170,9 +164,7 @@ export default function DashboardPage() {
             {lists.map((list) => (
               <div
                 key={list.id}
-                onClick={() =>
-                  router.push(`/${locale}/dashboard/lists/${list.id}/learn/flashcard`)
-                }
+                onClick={() => router.push(`/dashboard/lists/${list.id}/study`)}
                 className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 flex flex-col gap-4 hover:border-violet-500/40 transition-colors cursor-pointer group"
               >
                 <div className="flex-1">
@@ -184,15 +176,13 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <div className="flex items-center justify-between mt-auto">
-                  <span className="text-white/30 text-sm">
-                    {list.word_count} {t('words')}
-                  </span>
+                  <span className="text-white/30 text-sm">{list.word_count} слов</span>
                   <Link
-                    href={`/${locale}/dashboard/lists/${list.id}`}
+                    href={`/dashboard/lists/${list.id}`}
                     onClick={(e) => e.stopPropagation()}
                     className="px-4 py-1.5 text-sm text-white/60 hover:text-white border border-white/10 hover:border-white/30 rounded-lg transition-colors"
                   >
-                    {t('view')}
+                    Просмотр
                   </Link>
                 </div>
               </div>

@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+import { BACKEND_URL, resolveListId } from '../../../../lib/api';
 
 interface Word {
   id: number;
@@ -23,11 +21,8 @@ interface WordListDetail {
 }
 
 export default function ListDetailPage() {
-  const t = useTranslations('lists');
-  const { locale, id: _id } = useParams<{ locale: string; id: string }>();
-  const id = (typeof window !== 'undefined' && !/^\d+$/.test(_id))
-    ? (window.location.pathname.split('/').find((s, i, a) => a[i - 1] === 'lists' && /^\d+$/.test(s)) ?? _id)
-    : _id;
+  const { id: _id } = useParams<{ id: string }>();
+  const id = resolveListId(_id);
   const [list, setList] = useState<WordListDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,14 +52,14 @@ export default function ListDetailPage() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <nav className="flex justify-between items-center mb-12">
-          <Link href={`/${locale}/dashboard`} className="font-bold text-xl tracking-tight">
+          <Link href="/dashboard" className="font-bold text-xl tracking-tight">
             fluent<span className="text-violet-400">.</span>
           </Link>
           <Link
-            href={`/${locale}/dashboard`}
+            href="/dashboard"
             className="text-white/40 hover:text-white text-sm transition-colors"
           >
-            ← {t('backToDashboard')}
+            ← На главную
           </Link>
         </nav>
 
@@ -74,23 +69,21 @@ export default function ListDetailPage() {
             {list.description && (
               <p className="text-white/40 mt-1">{list.description}</p>
             )}
-            <p className="text-white/30 text-sm mt-2">
-              {list.words.length} {t('words')}
-            </p>
+            <p className="text-white/30 text-sm mt-2">{list.words.length} слов</p>
           </div>
           <Link
-            href={`/${locale}/dashboard/lists/${id}/learn/flashcard`}
+            href={`/dashboard/lists/${id}/study`}
             className="shrink-0 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors font-medium text-sm"
           >
-            {t('study')} →
+            Учить →
           </Link>
         </div>
 
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden">
           <div className="grid grid-cols-[1fr_1fr_auto] text-xs text-white/30 uppercase tracking-wider px-6 py-3 border-b border-white/[0.06]">
-            <span>{t('lithuanian')}</span>
-            <span>{t('translation')}</span>
-            <span>{t('hint')}</span>
+            <span>Литовский</span>
+            <span>Перевод</span>
+            <span>Заметка</span>
           </div>
           {list.words.map((word, i) => (
             <div
@@ -100,7 +93,7 @@ export default function ListDetailPage() {
               }`}
             >
               <span className="font-medium text-white">{word.lithuanian}</span>
-              <span className="text-white/60 text-sm">{word.translation_en}</span>
+              <span className="text-white/60 text-sm">{word.translation_ru}</span>
               <span className="text-white/25 text-xs">{word.hint ?? ''}</span>
             </div>
           ))}

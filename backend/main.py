@@ -4,7 +4,7 @@ load_dotenv()
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse
 from auth import router as auth_router
 from routers.words import router as words_router
 from database import create_db_and_tables
@@ -38,7 +38,12 @@ def health():
 
 @app.get("/")
 def root():
-    return RedirectResponse(url="/en/")
+    if not OUT_DIR.exists():
+        raise HTTPException(status_code=503, detail="Frontend not built")
+    index = OUT_DIR / "index.html"
+    if index.is_file():
+        return FileResponse(index)
+    raise HTTPException(status_code=404, detail="Not found")
 
 
 def _resolve_static(path: str) -> Path | None:
@@ -55,7 +60,7 @@ def _resolve_static(path: str) -> Path | None:
         return index
 
     # Fallback: substitute each path segment with '_' to match dynamic [id] routes
-    # e.g. en/dashboard/lists/42/study -> en/dashboard/lists/_/study
+    # e.g. dashboard/lists/42/study -> dashboard/lists/_/study
     parts = path.split("/")
     for i in range(len(parts)):
         candidate = parts.copy()

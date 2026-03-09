@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+import { BACKEND_URL, getToken, resolveListId } from '../../../../../lib/api';
 
 interface Word {
   id: number;
@@ -22,13 +20,9 @@ interface Option {
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
-export default function FlashcardPage() {
-  const t = useTranslations('study');
-  const { locale, id: _id } = useParams<{ locale: string; id: string }>();
-  // Static export serves the "_" placeholder page for all list IDs — read the real id from the URL
-  const id = (typeof window !== 'undefined' && !/^\d+$/.test(_id))
-    ? (window.location.pathname.split('/').find((s, i, a) => a[i - 1] === 'lists' && /^\d+$/.test(s)) ?? _id)
-    : _id;
+export default function QuizPage() {
+  const { id: _id } = useParams<{ id: string }>();
+  const id = resolveListId(_id);
 
   const [words, setWords] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -37,10 +31,6 @@ export default function FlashcardPage() {
   const [correctCount, setCorrectCount] = useState(0);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  function getToken() {
-    return typeof window !== 'undefined' ? localStorage.getItem('fluent_token') : null;
-  }
 
   const loadWords = useCallback(() => {
     setLoading(true);
@@ -80,22 +70,18 @@ export default function FlashcardPage() {
   const options: Option[] = useMemo(() => {
     if (!words.length || currentIndex >= words.length) return [];
     const current = words[currentIndex];
-    const correctText = locale === 'ru' ? current.translation_ru : current.translation_en;
+    const correctText = current.translation_ru;
 
     const pool = words.filter((_: Word, i: number) => i !== currentIndex);
     const shuffledPool = [...pool].sort(() => Math.random() - 0.5);
-    const distractors = shuffledPool.slice(0, 3).map((w) =>
-      locale === 'ru' ? w.translation_ru : w.translation_en
-    );
+    const distractors = shuffledPool.slice(0, 3).map((w) => w.translation_ru);
 
-    const opts: Option[] = [
+    return [
       { text: correctText, correct: true },
       ...distractors.map((d) => ({ text: d, correct: false })),
     ].sort(() => Math.random() - 0.5);
-
-    return opts;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, words, locale]);
+  }, [currentIndex, words]);
 
   function handleSelect(index: number) {
     if (answerState !== 'unanswered') return;
@@ -140,17 +126,17 @@ export default function FlashcardPage() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">🎉</div>
-          <h1 className="text-2xl font-bold mb-2">{t('doneTitle')}</h1>
-          <p className="text-white/40 mb-8">{t('doneScore', { score: correctCount, total })}</p>
+          <h1 className="text-2xl font-bold mb-2">Сессия завершена!</h1>
+          <p className="text-white/40 mb-8">Верно {correctCount} из {total}</p>
 
           <div className="flex gap-4 justify-center mb-10">
             <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-8 py-5 text-center">
               <div className="text-3xl font-bold text-violet-400">{correctCount}</div>
-              <div className="text-white/40 text-sm mt-1">{t('doneCorrect')}</div>
+              <div className="text-white/40 text-sm mt-1">Верно</div>
             </div>
             <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-8 py-5 text-center">
               <div className="text-3xl font-bold text-amber-400">{total - correctCount}</div>
-              <div className="text-white/40 text-sm mt-1">{t('doneWrong')}</div>
+              <div className="text-white/40 text-sm mt-1">Ошибок</div>
             </div>
           </div>
 
@@ -159,13 +145,13 @@ export default function FlashcardPage() {
               onClick={loadWords}
               className="w-full py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition-colors"
             >
-              {t('studyAgain')}
+              Повторить
             </button>
             <Link
-              href={`/${locale}/dashboard/lists/${id}/learn`}
+              href="/dashboard"
               className="w-full py-3 text-white/40 hover:text-white text-sm transition-colors text-center"
             >
-              {t('backToList')}
+              ← На главную
             </Link>
           </div>
         </div>
@@ -185,10 +171,10 @@ export default function FlashcardPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <Link
-            href={`/${locale}/dashboard/lists/${id}/learn`}
+            href="/dashboard"
             className="text-white/40 hover:text-white text-sm transition-colors"
           >
-            ← {t('backToList')}
+            ← На главную
           </Link>
           <span className="text-white/30 text-sm">
             {currentIndex + 1} / {words.length}
@@ -206,7 +192,7 @@ export default function FlashcardPage() {
         {/* Question */}
         <div className="flex flex-col items-center justify-center flex-1 gap-8">
           <div className="text-center">
-            <p className="text-white/30 text-sm mb-3 uppercase tracking-wider">{t('questionLabel')}</p>
+            <p className="text-white/30 text-sm mb-3 uppercase tracking-wider">Что это означает?</p>
             <p className="text-4xl font-bold tracking-tight">{word.lithuanian}</p>
             {word.hint && (
               <p className="text-white/20 text-xs uppercase tracking-wider mt-2">{word.hint}</p>
@@ -245,7 +231,7 @@ export default function FlashcardPage() {
                 answerState === 'correct' ? 'text-emerald-400' : 'text-red-400'
               }`}
             >
-              {answerState === 'correct' ? t('feedbackCorrect') : t('feedbackWrong')}
+              {answerState === 'correct' ? 'Правильно!' : 'Не совсем'}
             </p>
           )}
         </div>
