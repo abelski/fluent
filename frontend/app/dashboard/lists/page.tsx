@@ -121,6 +121,19 @@ export default function ListsPage() {
           )}
         </nav>
 
+        {/* Tab navigation */}
+        <div className="flex gap-1 mb-10 bg-white/[0.04] border border-white/[0.08] rounded-xl p-1 w-fit">
+          <span className="px-5 py-2 rounded-lg text-sm font-medium bg-white/[0.08] text-white">
+            Словари
+          </span>
+          <Link
+            href="/dashboard/grammar"
+            className="px-5 py-2 rounded-lg text-sm font-medium text-white/50 hover:text-white transition-colors"
+          >
+            Грамматика
+          </Link>
+        </div>
+
         <h1 className="text-3xl font-bold mb-2">Словари</h1>
         <p className="text-white/40 mb-10">Выбери список для изучения</p>
 

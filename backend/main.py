@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from auth import router as auth_router
 from routers.words import router as words_router
+from routers.grammar import router as grammar_router
 from database import create_db_and_tables
 
 BASE_DIR = Path(__file__).parent.parent / "frontend"
@@ -29,6 +30,7 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/auth")
 app.include_router(words_router, prefix="/api")
+app.include_router(grammar_router, prefix="/api")
 
 
 @app.get("/health")
