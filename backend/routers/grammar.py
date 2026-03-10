@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from grammar_data import get_lessons, get_lesson_tasks
+from grammar_service import get_lessons, get_lesson_tasks
 
 router = APIRouter()
 
