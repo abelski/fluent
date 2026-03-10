@@ -63,6 +63,7 @@ export default function Header() {
 
   const listsActive = pathname.startsWith('/dashboard/lists') || pathname === '/dashboard';
   const grammarActive = pathname.startsWith('/dashboard/grammar');
+  const practiceActive = pathname.startsWith('/dashboard/practice');
 
   return (
     <header className="relative z-20 border-b border-white/10 bg-[#07070f] sticky top-0">
@@ -88,6 +89,14 @@ export default function Header() {
             }`}
           >
             Грамматика
+          </Link>
+          <Link
+            href="/dashboard/practice"
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              practiceActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
+            }`}
+          >
+            Практика
           </Link>
         </nav>
 
