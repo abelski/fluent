@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { BACKEND_URL } from '../../../lib/api';
+import StatsBar from '../components/StatsBar';
 
 interface Lesson {
   id: number;
@@ -145,6 +146,8 @@ export default function GrammarPage() {
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
+          <StatsBar />
+
           <h1 className="text-3xl font-bold mb-2">Грамматика</h1>
           <p className="text-white/40 mb-10">Выбери урок для тренировки склонений</p>
 

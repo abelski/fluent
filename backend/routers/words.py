@@ -1,6 +1,6 @@
 import os
 import random
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -264,4 +264,11 @@ def get_stats(
     ).all()
     known = sum(1 for p in all_progress if p.status == "known")
     learning = sum(1 for p in all_progress if p.status == "learning")
-    return {"known": known, "learning": learning, "total_studied": known + learning}
+    studied_dates = {p.last_seen.date() for p in all_progress}
+    today = datetime.now(timezone.utc).date()
+    streak = 0
+    check = today if today in studied_dates else today - timedelta(days=1)
+    while check in studied_dates:
+        streak += 1
+        check -= timedelta(days=1)
+    return {"known": known, "learning": learning, "total_studied": known + learning, "streak": streak}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../../../lib/api';
+import StatsBar from '../components/StatsBar';
 
 interface WordListSummary {
   id: number;
@@ -57,6 +58,8 @@ export default function ListsPage() {
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
+        <StatsBar />
+
         <h1 className="text-3xl font-bold mb-2">Словари</h1>
         <p className="text-white/40 mb-10">Выбери список для изучения</p>
 
