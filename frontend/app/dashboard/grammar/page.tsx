@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import Link from 'next/link';
 import { BACKEND_URL } from '../../../lib/api';
 
 interface Lesson {
@@ -140,31 +139,12 @@ export default function GrammarPage() {
   // ── Lesson list ────────────────────────────────────────────────────────────
   if (activeLessonId === null) {
     return (
-      <main className="min-h-screen bg-[#07070f] text-white">
+      <main className="bg-[#07070f] text-white">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
           <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
-          <nav className="flex justify-between items-center mb-12">
-            <Link href="/dashboard/lists" className="font-bold text-xl tracking-tight">
-              fluent<span className="text-violet-400">.</span>
-            </Link>
-          </nav>
-
-          {/* Tab navigation */}
-          <div className="flex gap-1 mb-10 bg-white/[0.04] border border-white/[0.08] rounded-xl p-1 w-fit">
-            <Link
-              href="/dashboard/lists"
-              className="px-5 py-2 rounded-lg text-sm font-medium text-white/50 hover:text-white transition-colors"
-            >
-              Словари
-            </Link>
-            <span className="px-5 py-2 rounded-lg text-sm font-medium bg-white/[0.08] text-white">
-              Грамматика
-            </span>
-          </div>
-
           <h1 className="text-3xl font-bold mb-2">Грамматика</h1>
           <p className="text-white/40 mb-10">Выбери урок для тренировки склонений</p>
 

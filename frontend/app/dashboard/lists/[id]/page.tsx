@@ -45,23 +45,17 @@ export default function ListDetailPage() {
   if (!list) return null;
 
   return (
-    <main className="min-h-screen bg-[#07070f] text-white">
+    <main className="bg-[#07070f] text-white">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
         <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
-        <nav className="flex justify-between items-center mb-12">
-          <Link href="/dashboard/lists" className="font-bold text-xl tracking-tight">
-            fluent<span className="text-violet-400">.</span>
-          </Link>
-          <Link
-            href="/dashboard/lists"
-            className="text-white/40 hover:text-white text-sm transition-colors"
-          >
+        <div className="mb-4">
+          <Link href="/dashboard/lists" className="text-white/40 hover:text-white text-sm transition-colors">
             ← На главную
           </Link>
-        </nav>
+        </div>
 
         <div className="flex items-start justify-between gap-4 mb-10">
           <div>
