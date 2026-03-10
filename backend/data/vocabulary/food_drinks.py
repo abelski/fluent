@@ -1,5 +1,5 @@
 TITLE = "Maistas ir gėrimai"
-DESCRIPTION = "Food, drinks and meals"
+DESCRIPTION = "Еда, напитки и блюда"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

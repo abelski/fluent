@@ -1,5 +1,5 @@
 TITLE = "Būdvardžiai"
-DESCRIPTION = "Descriptive adjectives"
+DESCRIPTION = "Описательные прилагательные"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

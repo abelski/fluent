@@ -73,10 +73,10 @@ export default function Header() {
           fluent<span className="text-violet-400">.</span>
         </Link>
 
-        <nav className="flex gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1">
+        <nav className="flex gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1 shrink-0">
           <Link
             href="/dashboard/lists"
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               listsActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
             }`}
           >
@@ -84,7 +84,7 @@ export default function Header() {
           </Link>
           <Link
             href="/dashboard/grammar"
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               grammarActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
             }`}
           >
@@ -92,7 +92,7 @@ export default function Header() {
           </Link>
           <Link
             href="/dashboard/practice"
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               practiceActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
             }`}
           >

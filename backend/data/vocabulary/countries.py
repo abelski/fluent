@@ -1,5 +1,5 @@
 TITLE = "Šalys ir tautybės"
-DESCRIPTION = "Countries and nationalities"
+DESCRIPTION = "Страны и национальности"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

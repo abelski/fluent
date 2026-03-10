@@ -1,5 +1,5 @@
 TITLE = "Restoranas ir kavinė"
-DESCRIPTION = "Restaurant, café and Lithuanian dishes"
+DESCRIPTION = "Ресторан, кафе и литовские блюда"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

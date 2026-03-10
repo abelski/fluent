@@ -1,5 +1,5 @@
 TITLE = "Daržovės, vaisiai ir prieskoniai"
-DESCRIPTION = "Vegetables, fruit, berries and spices"
+DESCRIPTION = "Овощи, фрукты, ягоды и специи"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

@@ -1,5 +1,5 @@
 TITLE = "Miestas ir vietos"
-DESCRIPTION = "City and places"
+DESCRIPTION = "Город и места"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

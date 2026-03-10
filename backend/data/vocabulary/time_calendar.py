@@ -1,5 +1,5 @@
 TITLE = "Laikas ir kalendorius"
-DESCRIPTION = "Time, days of the week and time expressions"
+DESCRIPTION = "Время, дни недели и временные выражения"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

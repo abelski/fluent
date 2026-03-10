@@ -1,5 +1,5 @@
 TITLE = "Žmonės ir socialiniai vaidmenys"
-DESCRIPTION = "People, professions and social roles"
+DESCRIPTION = "Люди, профессии и социальные роли"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

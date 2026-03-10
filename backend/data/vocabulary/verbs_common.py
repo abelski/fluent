@@ -1,5 +1,5 @@
 TITLE = "Dažni veiksmažodžiai"
-DESCRIPTION = "Common verbs"
+DESCRIPTION = "Распространённые глаголы"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

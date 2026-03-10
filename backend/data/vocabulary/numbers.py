@@ -1,5 +1,5 @@
 TITLE = "Skaičiai"
-DESCRIPTION = "Numbers 0–100"
+DESCRIPTION = "Числа 0–100"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

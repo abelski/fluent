@@ -1,5 +1,5 @@
 TITLE = "Pagrindiniai žodžiai"
-DESCRIPTION = "Basic words, conjunctions and common expressions"
+DESCRIPTION = "Базовые слова, союзы и распространённые выражения"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [

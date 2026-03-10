@@ -1,5 +1,5 @@
 TITLE = "Šeima ir giminės"
-DESCRIPTION = "Family, relatives and pets"
+DESCRIPTION = "Семья, родственники и домашние животные"
 
 # Format: (lithuanian, translation_en, translation_ru, hint)
 WORDS = [
