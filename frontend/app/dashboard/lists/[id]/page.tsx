@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { BACKEND_URL, resolveListId } from '../../../../lib/api';
+import { BACKEND_URL, resolveListId, getToken } from '../../../../lib/api';
 
 interface Word {
   id: number;
@@ -23,8 +23,17 @@ interface WordListDetail {
 export default function ListDetailPage() {
   const { id: _id } = useParams<{ id: string }>();
   const id = resolveListId(_id);
+
   const [list, setList] = useState<WordListDetail | null>(null);
   const [loading, setLoading] = useState(true);
+
+  function handleStudyClick() {
+    if (!getToken()) {
+      window.location.href = '/login';
+    } else {
+      window.location.href = `/dashboard/lists/${id}/study`;
+    }
+  }
 
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/lists/${id}`)
@@ -65,12 +74,12 @@ export default function ListDetailPage() {
             )}
             <p className="text-white/30 text-sm mt-2">{list.words.length} слов</p>
           </div>
-          <Link
-            href={`/dashboard/lists/${id}/study`}
+          <button
+            onClick={handleStudyClick}
             className="shrink-0 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors font-medium text-sm"
           >
             Учить →
-          </Link>
+          </button>
         </div>
 
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden">

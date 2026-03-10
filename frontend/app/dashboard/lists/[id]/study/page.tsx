@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, resolveListId } from '../../../../../lib/api';
 
 interface Word {
@@ -56,6 +56,7 @@ function buildOptions(word: Word, allWords: Word[]): { text: string; correct: bo
 export default function QuizPage() {
   const { id: _id } = useParams<{ id: string }>();
   const id = resolveListId(_id);
+  const router = useRouter();
 
   const [allWords, setAllWords] = useState<Word[]>([]);
   const [queue, setQueue] = useState<StudyCard[]>([]);
@@ -122,8 +123,12 @@ export default function QuizPage() {
   }, [id]);
 
   useEffect(() => {
+    if (!getToken()) {
+      router.replace('/login');
+      return;
+    }
     loadWords();
-  }, [loadWords]);
+  }, [loadWords, router]);
 
   // Recompute options whenever the front card changes (stage 2 only)
   useEffect(() => {

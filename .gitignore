@@ -26,3 +26,5 @@ client_secret_*.json
 
 # PDFs / source materials
 *.pdf
+
+CLAUDE.md
