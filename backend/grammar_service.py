@@ -2,7 +2,7 @@ import random
 
 from data.grammar.words import WORDS
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
-from data.grammar.sentences import SENTENCE_TEMPLATES
+from data.grammar.sentences import SENTENCES
 
 
 def get_lessons() -> list[dict]:
@@ -61,44 +61,25 @@ def _generate_declension_tasks(cases: list[int], count: int) -> list[dict]:
 
 
 def _generate_sentence_tasks(cases: list[int], count: int) -> list[dict]:
-    pool = list(WORDS)
+    # Build pool from all hardcoded sentences for requested cases.
+    pool: list[tuple[str, str, str, str]] = []
+    for case_idx in cases:
+        pool.extend(SENTENCES.get(case_idx, []))
+
+    if not pool:
+        # Fallback to declension tasks if no sentences defined for these cases.
+        return _generate_declension_tasks(cases, count)
+
     random.shuffle(pool)
     tasks = []
-    attempts = 0
-    while len(tasks) < count and attempts < count * 10:
-        attempts += 1
-        word = pool[attempts % len(pool)]
-        case_idx = random.choice(cases)
-        form = _word_form(word, case_idx)
-        if form is None:
-            continue
-        templates = SENTENCE_TEMPLATES.get(case_idx)
-        if not templates:
-            case_name, number = CASE_INFO.get(case_idx, ("", ""))
-            tasks.append({
-                "type": "declension",
-                "prompt_lt": _word_nominative(word),
-                "prompt_ru": _word_ru(word),
-                "case_name": case_name,
-                "number": number,
-                "answer": form,
-            })
-            continue
-
-        lt_tmpl, ru_tmpl = random.choice(templates)
-        stem = word[0]
-        ending = word[case_idx]
-        ru = _word_ru(word)
-
-        display = lt_tmpl.replace("{blank}", stem)
-        translation = ru_tmpl.replace("{ru}", ru)
-
+    for i in range(count):
+        display, answer, full_answer, translation_ru = pool[i % len(pool)]
         tasks.append({
             "type": "sentence",
             "display": display,
-            "answer": ending,
-            "full_answer": form,
-            "translation_ru": translation,
+            "answer": answer,
+            "full_answer": full_answer,
+            "translation_ru": translation_ru,
         })
     return tasks
 
