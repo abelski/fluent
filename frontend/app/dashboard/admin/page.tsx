@@ -109,8 +109,8 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#07070f] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#060d07] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -118,9 +118,9 @@ export default function AdminPage() {
   const openReports = reports.filter((r) => r.status === 'open').length;
 
   return (
-    <main className="bg-[#07070f] text-white min-h-screen">
+    <main className="bg-[#060d07] text-white min-h-screen">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        <div className="w-full max-w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
@@ -172,7 +172,7 @@ export default function AdminPage() {
                       ) : u.is_admin ? (
                         <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">Админ</span>
                       ) : u.premium_active ? (
-                        <span className="text-xs font-semibold text-violet-400 bg-violet-500/10 border border-violet-500/20 rounded-full px-2 py-0.5">Premium</span>
+                        <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-0.5">Premium</span>
                       ) : (
                         <span className="text-xs font-semibold text-white/30 bg-white/[0.04] border border-white/10 rounded-full px-2 py-0.5">Basic</span>
                       )}
@@ -192,12 +192,12 @@ export default function AdminPage() {
                             type="date"
                             value={grantDate}
                             onChange={(e) => setGrantDate(e.target.value)}
-                            className="bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-violet-500/50"
+                            className="bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-emerald-500/50"
                           />
                           <button
                             onClick={() => applyPremium(u.id, true, grantDate || null)}
                             disabled={saving}
-                            className="text-xs px-3 py-1.5 bg-violet-600 hover:bg-violet-500 rounded-lg font-medium transition-colors disabled:opacity-50"
+                            className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-medium transition-colors disabled:opacity-50"
                           >
                             {saving ? '...' : 'Сохранить'}
                           </button>
@@ -217,7 +217,7 @@ export default function AdminPage() {
                           ) : null}
                           <button
                             onClick={() => startGrant(u.id)}
-                            className="text-xs px-3 py-1.5 text-violet-400 hover:text-violet-300 border border-violet-500/20 hover:border-violet-500/40 rounded-lg transition-colors"
+                            className="text-xs px-3 py-1.5 text-emerald-400 hover:text-emerald-300 border border-emerald-500/20 hover:border-emerald-500/40 rounded-lg transition-colors"
                           >
                             {u.premium_active ? 'Продлить' : 'Выдать Premium'}
                           </button>
@@ -266,7 +266,7 @@ export default function AdminPage() {
                       {r.context && (
                         <>
                           <span className="text-white/20 text-xs">·</span>
-                          <span className="text-xs text-violet-400/60 font-mono">{r.context}</span>
+                          <span className="text-xs text-emerald-400/60 font-mono">{r.context}</span>
                         </>
                       )}
                     </div>

@@ -115,11 +115,11 @@ export default function Header() {
   );
 
   return (
-    <header className="relative z-20 border-b border-white/10 bg-[#07070f] sticky top-0">
+    <header className="relative z-20 border-b border-white/10 bg-[#060d07] sticky top-0">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
         <Link href="/dashboard/lists" className="font-bold text-[1.75rem] tracking-tight shrink-0 leading-none">
-          fluent<span className="text-violet-400">.</span>
+          fluent<span className="text-emerald-400">.</span>
         </Link>
 
         {/* Desktop nav */}
@@ -137,7 +137,7 @@ export default function Header() {
             >
               EN
             </button>
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap text-[10px] bg-[#1a1a28] border border-white/10 text-white/40 rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap text-[10px] bg-[#0f1a10] border border-white/10 text-white/40 rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               скоро
             </span>
           </div>
@@ -165,7 +165,7 @@ export default function Header() {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-sm font-medium">
+                  <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-sm font-medium">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -179,7 +179,7 @@ export default function Header() {
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-44 bg-[#111118] border border-white/10 rounded-xl shadow-xl overflow-hidden">
+                <div className="absolute right-0 mt-2 w-44 bg-[#080f08] border border-white/10 rounded-xl shadow-xl overflow-hidden">
                   <div className="px-4 py-3 border-b border-white/[0.06]">
                     <p className="text-white text-sm font-medium truncate">{user.name}</p>
                   </div>
@@ -218,7 +218,7 @@ export default function Header() {
 
       {/* Mobile nav dropdown */}
       {mobileNavOpen && (
-        <div className="sm:hidden border-t border-white/10 bg-[#07070f] px-4 py-3 flex flex-col gap-1">
+        <div className="sm:hidden border-t border-white/10 bg-[#060d07] px-4 py-3 flex flex-col gap-1">
           {navLinks}
         </div>
       )}

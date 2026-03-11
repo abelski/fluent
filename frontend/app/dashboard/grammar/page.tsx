@@ -46,8 +46,8 @@ type Task = DeclensionTask | SentenceTask;
 type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
 const LEVEL_STYLES: Record<string, string> = {
-  basic: 'bg-sky-500/10 border-sky-500/30 text-sky-400',
-  advanced: 'bg-violet-500/10 border-violet-500/30 text-violet-400',
+  basic: 'bg-teal-500/10 border-teal-500/30 text-teal-400',
+  advanced: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
   practice: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
 };
 
@@ -87,31 +87,31 @@ function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collaps
   if (rules.length === 0) return null;
 
   return (
-    <div className="w-full border border-sky-500/20 rounded-2xl overflow-hidden bg-sky-500/[0.04]">
+    <div className="w-full border border-teal-500/20 rounded-2xl overflow-hidden bg-teal-500/[0.04]">
       {collapsible ? (
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-sky-500/[0.06] transition-colors"
+          className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-teal-500/[0.06] transition-colors"
         >
-          <span className="text-sky-400 text-sm font-medium">Грамматическая подсказка</span>
+          <span className="text-teal-400 text-sm font-medium">Грамматическая подсказка</span>
           <svg
             width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
-            className={`text-sky-400/60 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
+            className={`text-teal-400/60 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
           >
             <path d="M6 8L1 3h10L6 8z" />
           </svg>
         </button>
       ) : (
-        <div className="px-5 py-3 border-b border-sky-500/10">
-          <span className="text-sky-400 text-sm font-medium">Грамматическое правило</span>
+        <div className="px-5 py-3 border-b border-teal-500/10">
+          <span className="text-teal-400 text-sm font-medium">Грамматическое правило</span>
         </div>
       )}
 
       {open && (
-        <div className={`px-5 py-4 flex flex-col gap-4 ${collapsible ? 'border-t border-sky-500/10' : ''}`}>
+        <div className={`px-5 py-4 flex flex-col gap-4 ${collapsible ? 'border-t border-teal-500/10' : ''}`}>
           {rules.map((rule, i) => (
-            <div key={i} className={rules.length > 1 ? 'pb-4 border-b border-sky-500/10 last:border-0 last:pb-0' : ''}>
-              <p className="text-sky-300 text-sm font-semibold mb-1">{rule.name_ru}</p>
+            <div key={i} className={rules.length > 1 ? 'pb-4 border-b border-teal-500/10 last:border-0 last:pb-0' : ''}>
+              <p className="text-teal-300 text-sm font-semibold mb-1">{rule.name_ru}</p>
               <p className="text-white/50 text-xs mb-2">{rule.question}</p>
               <p className="text-white/70 text-sm mb-3 leading-relaxed">{rule.usage}</p>
               {rule.endings_sg !== '—' && (
@@ -259,9 +259,9 @@ export default function GrammarPage() {
   // ── Lesson list ────────────────────────────────────────────────────────────
   if (activeLesson === null) {
     return (
-      <main className="bg-[#07070f] text-white">
+      <main className="bg-[#060d07] text-white">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+          <div className="w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
@@ -280,7 +280,7 @@ export default function GrammarPage() {
 
           {loading ? (
             <div className="flex justify-center py-20">
-              <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -337,7 +337,7 @@ export default function GrammarPage() {
                                 className={`bg-white/[0.04] border rounded-2xl p-5 text-left flex flex-col gap-3 transition-colors ${
                                   locked
                                     ? 'border-white/[0.04] opacity-40 cursor-not-allowed'
-                                    : 'border-white/[0.08] hover:border-violet-500/40 cursor-pointer'
+                                    : 'border-white/[0.08] hover:border-emerald-500/40 cursor-pointer'
                                 }`}
                               >
                                 <div className="flex items-start justify-between gap-2">
@@ -393,9 +393,9 @@ export default function GrammarPage() {
       currentIdx >= 0 && currentIdx + 1 < lessons.length ? lessons[currentIdx + 1] : null;
 
     return (
-      <main className="min-h-screen bg-[#07070f] text-white flex flex-col items-center justify-center px-6">
+      <main className="min-h-screen bg-[#060d07] text-white flex flex-col items-center justify-center px-6">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+          <div className="w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">{passed ? '🎉' : '📚'}</div>
@@ -419,7 +419,7 @@ export default function GrammarPage() {
 
           <div className="flex gap-4 justify-center mb-10">
             <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 sm:px-8 py-5 text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-violet-400">{correct}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-400">{correct}</div>
               <div className="text-white/40 text-sm mt-1">Верно</div>
             </div>
             <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 sm:px-8 py-5 text-center">
@@ -442,7 +442,7 @@ export default function GrammarPage() {
               className={`w-full py-3 rounded-xl font-medium transition-colors ${
                 passed
                   ? 'bg-white/[0.06] hover:bg-white/[0.1] text-white/70'
-                  : 'bg-violet-600 hover:bg-violet-500'
+                  : 'bg-emerald-600 hover:bg-emerald-500'
               }`}
             >
               Повторить
@@ -462,8 +462,8 @@ export default function GrammarPage() {
   // ── Exercise screen ────────────────────────────────────────────────────────
   if (exerciseLoading || tasks.length === 0) {
     return (
-      <div className="min-h-screen bg-[#07070f] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#060d07] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -475,9 +475,9 @@ export default function GrammarPage() {
   const ruleCollapsible = level === 'advanced';
 
   return (
-    <main className="min-h-screen bg-[#07070f] text-white flex flex-col px-6 py-8">
+    <main className="min-h-screen bg-[#060d07] text-white flex flex-col px-6 py-8">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        <div className="w-full max-w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col flex-1">
@@ -495,7 +495,7 @@ export default function GrammarPage() {
         {/* Progress bar */}
         <div className="w-full h-1 bg-white/[0.06] rounded-full mb-8">
           <div
-            className="h-1 bg-violet-500 rounded-full transition-all duration-300"
+            className="h-1 bg-emerald-500 rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -551,13 +551,13 @@ export default function GrammarPage() {
               className={`w-full py-4 px-5 rounded-xl border bg-white/[0.04] text-base text-white placeholder-white/20 outline-none transition-all duration-200
                 ${answerState === 'correct' ? 'border-emerald-500/50 bg-emerald-500/10' :
                   answerState === 'wrong' ? 'border-red-500/50 bg-red-500/10' :
-                  'border-white/[0.08] focus:border-violet-500/50'}`}
+                  'border-white/[0.08] focus:border-emerald-500/50'}`}
             />
 
             {answerState === 'unanswered' && (
               <button
                 onClick={checkAnswer}
-                className="w-full py-4 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition-colors"
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium transition-colors"
               >
                 Проверить
               </button>

@@ -14,9 +14,9 @@ export default function LoginPage() {
   }, [router]);
 
   return (
-    <main className="min-h-screen bg-[#07070f] text-white flex flex-col items-center justify-center px-6">
+    <main className="min-h-screen bg-[#060d07] text-white flex flex-col items-center justify-center px-6">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-        <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        <div className="w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-sm w-full text-center">
@@ -29,7 +29,7 @@ export default function LoginPage() {
 
         <a
           href={`${BACKEND_URL}/api/auth/google`}
-          className="flex items-center justify-center gap-3 w-full py-3.5 bg-white text-[#07070f] font-medium rounded-xl hover:bg-white/90 transition-colors"
+          className="flex items-center justify-center gap-3 w-full py-3.5 bg-white text-[#060d07] font-medium rounded-xl hover:bg-white/90 transition-colors"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>

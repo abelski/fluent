@@ -28,16 +28,16 @@ function CheckIcon() {
 
 export default function PricingPage() {
   return (
-    <main className="bg-[#07070f] text-white min-h-screen">
+    <main className="bg-[#060d07] text-white min-h-screen">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[700px] h-[500px] bg-violet-700/10 blur-[140px] rounded-full mt-[-150px]" />
+        <div className="w-full max-w-[700px] h-[500px] bg-emerald-700/10 blur-[140px] rounded-full mt-[-150px]" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-16">
 
         {/* Header */}
         <div className="text-center mb-4">
-          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-violet-400/70 mb-4">Тарифы</span>
+          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-emerald-400/70 mb-4">Тарифы</span>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">Простые и честные условия</h1>
         </div>
 
@@ -79,12 +79,12 @@ export default function PricingPage() {
           </div>
 
           {/* Premium */}
-          <div className="relative bg-violet-600/10 border border-violet-500/30 rounded-2xl p-8 flex flex-col">
-            <div className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-widest bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-full px-2.5 py-1">
+          <div className="relative bg-emerald-600/10 border border-emerald-500/30 rounded-2xl p-8 flex flex-col">
+            <div className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full px-2.5 py-1">
               Premium
             </div>
             <div className="mb-6">
-              <p className="text-violet-400/70 text-sm font-medium uppercase tracking-wide mb-2">Premium</p>
+              <p className="text-emerald-400/70 text-sm font-medium uppercase tracking-wide mb-2">Premium</p>
               <div className="flex items-end gap-1">
                 <span className="text-4xl font-bold">2 €</span>
                 <span className="text-white/30 mb-1">/ месяц</span>
@@ -93,14 +93,14 @@ export default function PricingPage() {
             <ul className="flex flex-col gap-3 flex-1 mb-8">
               {PREMIUM_FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-white/80 text-sm">
-                  <span className="text-violet-400"><CheckIcon /></span>
+                  <span className="text-emerald-400"><CheckIcon /></span>
                   {f}
                 </li>
               ))}
             </ul>
             <a
               href="mailto:artyrbelski@gmail.com?subject=Fluent Premium&body=Привет! Хочу получить Premium-доступ."
-              className="w-full py-3 text-center text-sm font-medium bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors"
+              className="w-full py-3 text-center text-sm font-medium bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-colors"
             >
               Написать нам
             </a>

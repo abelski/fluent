@@ -47,10 +47,10 @@ export default function StatsBar() {
   return (
     <div className="relative mb-10 rounded-2xl overflow-hidden">
       {/* glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 via-violet-500/10 to-transparent pointer-events-none" />
-      <div className="absolute inset-px rounded-2xl bg-[#07070f]/60 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 via-emerald-500/10 to-transparent pointer-events-none" />
+      <div className="absolute inset-px rounded-2xl bg-[#060d07]/60 pointer-events-none" />
 
-      <div className="relative border border-violet-500/25 rounded-2xl px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="relative border border-emerald-500/25 rounded-2xl px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
         {/* stats */}
         <div className="flex items-center gap-6 flex-1">
           <div className="flex items-center gap-3">
@@ -76,7 +76,7 @@ export default function StatsBar() {
         </div>
 
         {/* motivation */}
-        <p className="text-violet-300/80 text-sm font-medium sm:text-right">
+        <p className="text-emerald-300/80 text-sm font-medium sm:text-right">
           {motivation(stats.known, stats.streak)}
         </p>
       </div>

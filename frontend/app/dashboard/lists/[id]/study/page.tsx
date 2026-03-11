@@ -267,24 +267,24 @@ export default function QuizPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#07070f] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#060d07] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (limitReached) {
     return (
-      <main className="min-h-screen bg-[#07070f] text-white flex flex-col items-center justify-center px-6">
+      <main className="min-h-screen bg-[#060d07] text-white flex flex-col items-center justify-center px-6">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+          <div className="w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">⏳</div>
           <h1 className="text-2xl font-bold mb-2">Лимит на сегодня исчерпан</h1>
           <p className="text-white/40 mb-8">Вы использовали все 10 бесплатных сессий на сегодня. Возвращайтесь завтра или переходите на Premium.</p>
           <div className="flex flex-col gap-3">
-            <Link href="/pricing" className="w-full py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition-colors text-center">
+            <Link href="/pricing" className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium transition-colors text-center">
               Получить Premium
             </Link>
             <button
@@ -301,9 +301,9 @@ export default function QuizPage() {
 
   if (done) {
     return (
-      <main className="min-h-screen bg-[#07070f] text-white flex flex-col items-center justify-center px-6">
+      <main className="min-h-screen bg-[#060d07] text-white flex flex-col items-center justify-center px-6">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+          <div className="w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">🎉</div>
@@ -312,7 +312,7 @@ export default function QuizPage() {
 
           <div className="flex gap-4 justify-center mb-10">
             <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 sm:px-8 py-5 text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-violet-400">{correctWords}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-400">{correctWords}</div>
               <div className="text-white/40 text-sm mt-1">Верно</div>
             </div>
             <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 sm:px-8 py-5 text-center">
@@ -324,7 +324,7 @@ export default function QuizPage() {
           <div className="flex flex-col gap-3">
             <button
               onClick={loadWords}
-              className="w-full py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition-colors"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium transition-colors"
             >
               Повторить
             </button>
@@ -355,9 +355,9 @@ export default function QuizPage() {
   const digit = getDigit(word);
 
   return (
-    <main className="min-h-screen bg-[#07070f] text-white flex flex-col px-6 py-8">
+    <main className="min-h-screen bg-[#060d07] text-white flex flex-col px-6 py-8">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        <div className="w-full max-w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col flex-1">
@@ -380,7 +380,7 @@ export default function QuizPage() {
         {/* Progress bar */}
         <div className="w-full h-1 bg-white/[0.06] rounded-full mb-10">
           <div
-            className="h-1 bg-violet-500 rounded-full transition-all duration-300"
+            className="h-1 bg-emerald-500 rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -392,7 +392,7 @@ export default function QuizPage() {
               <p className="text-white/30 text-xs uppercase tracking-wider mb-6">Новое слово</p>
               <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
               {digit && (
-                <p className="text-5xl sm:text-7xl font-bold text-violet-400 mb-4" data-testid="number-digit">{digit}</p>
+                <p className="text-5xl sm:text-7xl font-bold text-emerald-400 mb-4" data-testid="number-digit">{digit}</p>
               )}
               {word.hint && !digit && (
                 <p className="text-white/20 text-xs uppercase tracking-wider mb-4">{word.hint}</p>
@@ -403,7 +403,7 @@ export default function QuizPage() {
             <button
               onClick={handleStage1Confirm}
               tabIndex={-1}
-              className="w-full py-4 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition-colors text-lg"
+              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium transition-colors text-lg"
             >
               Понял →
             </button>
@@ -417,7 +417,7 @@ export default function QuizPage() {
               <p className="text-white/30 text-sm mb-3 uppercase tracking-wider">Что это означает?</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.lithuanian}</p>
               {digit && (
-                <p className="text-4xl sm:text-6xl font-bold text-violet-400 mt-2" data-testid="number-digit">{digit}</p>
+                <p className="text-4xl sm:text-6xl font-bold text-emerald-400 mt-2" data-testid="number-digit">{digit}</p>
               )}
               {word.hint && !digit && (
                 <p className="text-white/20 text-xs uppercase tracking-wider mt-2">{word.hint}</p>
@@ -429,7 +429,7 @@ export default function QuizPage() {
                 let cls =
                   'w-full py-4 px-5 rounded-xl font-medium text-left transition-all duration-200 border ';
                 if (answerState === 'unanswered') {
-                  cls += 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.08] hover:border-violet-500/40 text-white';
+                  cls += 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.08] hover:border-emerald-500/40 text-white';
                 } else if (opt.correct) {
                   cls += 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300';
                 } else if (i === selectedOption) {
@@ -484,7 +484,7 @@ export default function QuizPage() {
                 <>
                   <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
                   {digit && (
-                    <p className="text-4xl sm:text-6xl font-bold text-violet-400 mt-2" data-testid="number-digit">{digit}</p>
+                    <p className="text-4xl sm:text-6xl font-bold text-emerald-400 mt-2" data-testid="number-digit">{digit}</p>
                   )}
                 </>
               )}
@@ -510,13 +510,13 @@ export default function QuizPage() {
                 className={`w-full py-4 px-5 rounded-xl border bg-white/[0.04] text-base text-white placeholder-white/20 outline-none transition-all duration-200
                   ${answerState === 'correct' ? 'border-emerald-500/50 bg-emerald-500/10' :
                     answerState === 'wrong' ? 'border-red-500/50 bg-red-500/10' :
-                    'border-white/[0.08] focus:border-violet-500/50'}`}
+                    'border-white/[0.08] focus:border-emerald-500/50'}`}
               />
 
               {answerState === 'unanswered' && (
                 <button
                   onClick={handleStage3Submit}
-                  className="w-full py-4 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition-colors"
+                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium transition-colors"
                 >
                   Проверить
                 </button>

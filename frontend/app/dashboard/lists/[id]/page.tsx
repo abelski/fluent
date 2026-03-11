@@ -45,8 +45,8 @@ export default function ListDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#07070f] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#060d07] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -54,9 +54,9 @@ export default function ListDetailPage() {
   if (!list) return null;
 
   return (
-    <main className="bg-[#07070f] text-white">
+    <main className="bg-[#060d07] text-white">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        <div className="w-full max-w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
@@ -76,7 +76,7 @@ export default function ListDetailPage() {
           </div>
           <button
             onClick={handleStudyClick}
-            className="shrink-0 px-6 py-3 bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors font-medium text-sm"
+            className="shrink-0 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-colors font-medium text-sm"
           >
             Учить →
           </button>

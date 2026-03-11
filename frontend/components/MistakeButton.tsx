@@ -66,7 +66,7 @@ export default function MistakeButton({ context }: Props) {
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
         >
-          <div className="bg-[#111118] border border-white/10 rounded-2xl w-full max-w-sm p-5 shadow-xl">
+          <div className="bg-[#080f08] border border-white/10 rounded-2xl w-full max-w-sm p-5 shadow-xl">
             <h3 className="text-white font-semibold mb-1">Сообщить об ошибке</h3>
             <p className="text-white/40 text-xs mb-4">
               Опишите, что не так — мы исправим как можно скорее.
@@ -81,7 +81,7 @@ export default function MistakeButton({ context }: Props) {
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Например: неверный перевод слова..."
                   rows={3}
-                  className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-violet-500/50 resize-none mb-3"
+                  className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50 resize-none mb-3"
                 />
                 <div className="flex gap-2 justify-end">
                   <button
@@ -94,7 +94,7 @@ export default function MistakeButton({ context }: Props) {
                     onClick={submit}
                     disabled={sending || !text.trim()}
                     data-testid="mistake-submit"
-                    className="text-xs px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    className="text-xs px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-medium transition-colors disabled:opacity-50"
                   >
                     {sending ? '...' : 'Отправить'}
                   </button>

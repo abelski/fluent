@@ -75,9 +75,9 @@ export default function ListsPage() {
   const limitReached = quota !== null && quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
 
   return (
-    <main className="bg-[#07070f] text-white">
+    <main className="bg-[#060d07] text-white">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        <div className="w-full max-w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
@@ -97,14 +97,14 @@ export default function ListsPage() {
                 <p className="text-white/50 text-sm">Сессий сегодня: <span className="text-white font-medium">{quota.sessions_today} / {quota.daily_limit}</span></p>
               )}
             </div>
-            <Link href="/pricing" className="shrink-0 text-xs font-medium text-violet-400 hover:text-violet-300 border border-violet-500/30 rounded-lg px-3 py-1.5 transition-colors">
+            <Link href="/pricing" className="shrink-0 text-xs font-medium text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 rounded-lg px-3 py-1.5 transition-colors">
               Получить Premium →
             </Link>
           </div>
         )}
         {quota?.premium_active && quota.premium_until && (
-          <div className="mb-6 rounded-xl px-5 py-3 border border-violet-500/20 bg-violet-500/5 flex items-center gap-2">
-            <span className="text-violet-400 text-sm font-medium">✦ Premium</span>
+          <div className="mb-6 rounded-xl px-5 py-3 border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2">
+            <span className="text-emerald-400 text-sm font-medium">✦ Premium</span>
             <span className="text-white/30 text-sm">до {new Date(quota.premium_until).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </div>
         )}
@@ -114,7 +114,7 @@ export default function ListsPage() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -126,7 +126,7 @@ export default function ListsPage() {
               return (
                 <div
                   key={list.id}
-                  className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 flex flex-col gap-4 hover:border-violet-500/40 transition-colors"
+                  className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 flex flex-col gap-4 hover:border-emerald-500/40 transition-colors"
                 >
                   <div>
                     <h2 className="text-lg font-semibold">{list.title}</h2>
@@ -169,14 +169,14 @@ export default function ListsPage() {
                         <button
                           disabled
                           title="Лимит сессий на сегодня исчерпан"
-                          className="px-4 py-2.5 text-sm bg-violet-600/30 rounded-lg font-medium cursor-not-allowed opacity-40"
+                          className="px-4 py-2.5 text-sm bg-emerald-600/30 rounded-lg font-medium cursor-not-allowed opacity-40"
                         >
                           Учить
                         </button>
                       ) : (
                         <Link
                           href={`/dashboard/lists/${list.id}/study`}
-                          className="px-4 py-2.5 text-sm bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors font-medium"
+                          className="px-4 py-2.5 text-sm bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors font-medium"
                         >
                           Учить
                         </Link>
