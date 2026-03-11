@@ -3,6 +3,7 @@ import './globals.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import MistakeButton from '../components/MistakeButton';
+import CookieConsent from '../components/CookieConsent';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="flex-1">{children}</div>
         <Footer />
         <MistakeButton />
+        <CookieConsent />
       </body>
     </html>
   );
