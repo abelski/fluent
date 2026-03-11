@@ -25,6 +25,11 @@ export default function ListsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!getToken()) {
+      window.location.href = '/login';
+      return;
+    }
+
     fetch(`${BACKEND_URL}/api/lists`)
       .then((r) => r.json())
       .then((data: WordListSummary[]) => {

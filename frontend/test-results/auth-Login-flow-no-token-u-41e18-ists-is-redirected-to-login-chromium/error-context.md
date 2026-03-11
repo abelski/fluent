@@ -1,0 +1,165 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "fluent." [ref=e4] [cursor=pointer]:
+        - /url: /dashboard/lists/
+      - navigation [ref=e5]:
+        - link "Словари" [ref=e6] [cursor=pointer]:
+          - /url: /dashboard/lists/
+        - link "Грамматика тестирование" [ref=e7] [cursor=pointer]:
+          - /url: /dashboard/grammar/
+          - text: Грамматика
+          - generic [ref=e8]: тестирование
+        - link "Практика" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard/practice/
+      - link "Войти" [ref=e11] [cursor=pointer]:
+        - /url: https://fluent-qhk8.onrender.com/api/auth/google
+        - img [ref=e12]
+        - text: Войти
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - heading "Словари" [level=1] [ref=e20]
+      - paragraph [ref=e21]: Выбери список для изучения
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - heading "Šalys ir tautybės" [level=2] [ref=e25]
+            - paragraph [ref=e26]: Страны и национальности
+          - generic [ref=e29]:
+            - generic [ref=e30]: 75 слов
+            - generic [ref=e31]:
+              - link "Browse" [ref=e32] [cursor=pointer]:
+                - /url: /dashboard/lists/65/
+              - link "Учить" [ref=e33] [cursor=pointer]:
+                - /url: /dashboard/lists/65/study/
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - heading "Skaičiai" [level=2] [ref=e36]
+            - paragraph [ref=e37]: Числа 0–100
+          - generic [ref=e40]:
+            - generic [ref=e41]: 29 слов
+            - generic [ref=e42]:
+              - link "Browse" [ref=e43] [cursor=pointer]:
+                - /url: /dashboard/lists/66/
+              - link "Учить" [ref=e44] [cursor=pointer]:
+                - /url: /dashboard/lists/66/study/
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - heading "Žmonės ir socialiniai vaidmenys" [level=2] [ref=e47]
+            - paragraph [ref=e48]: Люди, профессии и социальные роли
+          - generic [ref=e51]:
+            - generic [ref=e52]: 18 слов
+            - generic [ref=e53]:
+              - link "Browse" [ref=e54] [cursor=pointer]:
+                - /url: /dashboard/lists/67/
+              - link "Учить" [ref=e55] [cursor=pointer]:
+                - /url: /dashboard/lists/67/study/
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - heading "Pagrindiniai žodžiai" [level=2] [ref=e58]
+            - paragraph [ref=e59]: Базовые слова, союзы и распространённые выражения
+          - generic [ref=e62]:
+            - generic [ref=e63]: 22 слов
+            - generic [ref=e64]:
+              - link "Browse" [ref=e65] [cursor=pointer]:
+                - /url: /dashboard/lists/68/
+              - link "Учить" [ref=e66] [cursor=pointer]:
+                - /url: /dashboard/lists/68/study/
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - heading "Miestas ir vietos" [level=2] [ref=e69]
+            - paragraph [ref=e70]: Город и места
+          - generic [ref=e73]:
+            - generic [ref=e74]: 56 слов
+            - generic [ref=e75]:
+              - link "Browse" [ref=e76] [cursor=pointer]:
+                - /url: /dashboard/lists/69/
+              - link "Учить" [ref=e77] [cursor=pointer]:
+                - /url: /dashboard/lists/69/study/
+        - generic [ref=e78]:
+          - generic [ref=e79]:
+            - heading "Laikas ir kalendorius" [level=2] [ref=e80]
+            - paragraph [ref=e81]: Время, дни недели и временные выражения
+          - generic [ref=e84]:
+            - generic [ref=e85]: 25 слов
+            - generic [ref=e86]:
+              - link "Browse" [ref=e87] [cursor=pointer]:
+                - /url: /dashboard/lists/70/
+              - link "Учить" [ref=e88] [cursor=pointer]:
+                - /url: /dashboard/lists/70/study/
+        - generic [ref=e89]:
+          - generic [ref=e90]:
+            - heading "Šeima ir giminės" [level=2] [ref=e91]
+            - paragraph [ref=e92]: Семья, родственники и домашние животные
+          - generic [ref=e95]:
+            - generic [ref=e96]: 28 слов
+            - generic [ref=e97]:
+              - link "Browse" [ref=e98] [cursor=pointer]:
+                - /url: /dashboard/lists/71/
+              - link "Учить" [ref=e99] [cursor=pointer]:
+                - /url: /dashboard/lists/71/study/
+        - generic [ref=e100]:
+          - generic [ref=e101]:
+            - heading "Būdvardžiai" [level=2] [ref=e102]
+            - paragraph [ref=e103]: Описательные прилагательные
+          - generic [ref=e106]:
+            - generic [ref=e107]: 23 слов
+            - generic [ref=e108]:
+              - link "Browse" [ref=e109] [cursor=pointer]:
+                - /url: /dashboard/lists/72/
+              - link "Учить" [ref=e110] [cursor=pointer]:
+                - /url: /dashboard/lists/72/study/
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - heading "Maistas ir gėrimai" [level=2] [ref=e113]
+            - paragraph [ref=e114]: Еда, напитки и блюда
+          - generic [ref=e117]:
+            - generic [ref=e118]: 52 слов
+            - generic [ref=e119]:
+              - link "Browse" [ref=e120] [cursor=pointer]:
+                - /url: /dashboard/lists/73/
+              - link "Учить" [ref=e121] [cursor=pointer]:
+                - /url: /dashboard/lists/73/study/
+        - generic [ref=e122]:
+          - generic [ref=e123]:
+            - heading "Daržovės, vaisiai ir prieskoniai" [level=2] [ref=e124]
+            - paragraph [ref=e125]: Овощи, фрукты, ягоды и специи
+          - generic [ref=e128]:
+            - generic [ref=e129]: 49 слов
+            - generic [ref=e130]:
+              - link "Browse" [ref=e131] [cursor=pointer]:
+                - /url: /dashboard/lists/75/
+              - link "Учить" [ref=e132] [cursor=pointer]:
+                - /url: /dashboard/lists/75/study/
+        - generic [ref=e133]:
+          - generic [ref=e134]:
+            - heading "Restoranas ir kavinė" [level=2] [ref=e135]
+            - paragraph [ref=e136]: Ресторан, кафе и литовские блюда
+          - generic [ref=e139]:
+            - generic [ref=e140]: 70 слов
+            - generic [ref=e141]:
+              - link "Browse" [ref=e142] [cursor=pointer]:
+                - /url: /dashboard/lists/76/
+              - link "Учить" [ref=e143] [cursor=pointer]:
+                - /url: /dashboard/lists/76/study/
+        - generic [ref=e144]:
+          - generic [ref=e145]:
+            - heading "Dažni veiksmažodžiai" [level=2] [ref=e146]
+            - paragraph [ref=e147]: Распространённые глаголы
+          - generic [ref=e150]:
+            - generic [ref=e151]: 35 слов
+            - generic [ref=e152]:
+              - link "Browse" [ref=e153] [cursor=pointer]:
+                - /url: /dashboard/lists/80/
+              - link "Учить" [ref=e154] [cursor=pointer]:
+                - /url: /dashboard/lists/80/study/
+  - contentinfo [ref=e155]:
+    - generic [ref=e156]:
+      - link "fluent." [ref=e157] [cursor=pointer]:
+        - /url: /dashboard/lists/
+      - paragraph [ref=e158]: be fluent.
+  - alert [ref=e159]
+```

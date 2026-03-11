@@ -12,11 +12,11 @@ function makeFakeJwt(name: string): string {
 
 test.describe('Login flow', () => {
   test('login button points to backend auth endpoint, not frontend port', async ({ page }) => {
-    await page.goto('/');
-    const loginLink = page.getByRole('link', { name: /Войти/ });
+    await page.goto('/login');
+    const loginLink = page.getByRole('link', { name: /Войти через Google/ });
     const href = await loginLink.getAttribute('href');
-    expect(href).toContain('localhost:8000/api/auth/google');
-    expect(href).not.toContain('localhost:3000');
+    expect(href).toContain('/api/auth/google');
+    expect(href).not.toContain(':3000');
   });
 
   test('OAuth callback: token in URL is stored and user is redirected to /dashboard/lists', async ({ page }) => {
@@ -52,10 +52,13 @@ test.describe('Login flow', () => {
     await expect(page.getByText('Test User')).toBeVisible();
   });
 
-  test('no token: unauthenticated user is redirected to landing page', async ({ page }) => {
-    // Fresh context has no token; navigate directly to dashboard
+  test('no token: unauthenticated user is redirected to /login', async ({ page }) => {
     await page.goto('/dashboard');
-    // Dashboard redirects unauthenticated users to the landing page "/"
-    await expect(page).toHaveURL(/localhost:3000\/?$/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/login\/?$/, { timeout: 5000 });
+  });
+
+  test('no token: unauthenticated user on /dashboard/lists is redirected to /login', async ({ page }) => {
+    await page.goto('/dashboard/lists');
+    await expect(page).toHaveURL(/\/login\/?$/, { timeout: 5000 });
   });
 });
