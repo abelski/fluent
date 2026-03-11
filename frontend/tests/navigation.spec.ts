@@ -94,6 +94,62 @@ test.describe('Grammar page — categories', () => {
   });
 });
 
+test.describe('Grammar page — lesson levels', () => {
+  // Helper: click the first lesson card of the given level label
+  async function startFirstLessonOfLevel(page: import('@playwright/test').Page, levelLabel: string) {
+    await page.goto('/dashboard/grammar');
+    // Wait for lessons to load
+    await page.waitForSelector('.grid button', { timeout: 5000 });
+    const card = page.locator('.grid button').filter({ hasText: levelLabel }).first();
+    await card.click();
+    // Wait for exercise screen: "← К урокам" back button is unique to exercise view
+    await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 8000 });
+  }
+
+  test('basic lesson shows always-visible grammar rule card', async ({ page }) => {
+    await startFirstLessonOfLevel(page, 'Базовый');
+    // Rule card is always visible for basic level (not collapsible)
+    await expect(page.getByText('Грамматическое правило')).toBeVisible();
+  });
+
+  test('advanced lesson shows collapsible grammar hint', async ({ page }) => {
+    await startFirstLessonOfLevel(page, 'Продвинутый');
+    // Advanced shows collapsible hint button
+    await expect(page.getByText('Грамматическая подсказка')).toBeVisible();
+  });
+
+  test('advanced lesson collapsible hint can be toggled', async ({ page }) => {
+    await startFirstLessonOfLevel(page, 'Продвинутый');
+    const hint = page.getByText('Грамматическая подсказка');
+    // Initially collapsed — rule content not visible
+    await expect(page.getByText('Использование')).not.toBeVisible();
+    await hint.click();
+    // After click — rule details visible
+    await expect(page.locator('text=/Винительный|Родительный|Дательный|Местный|Творительный/')).toBeVisible();
+  });
+
+  test('advanced lesson shows base form → sentence puzzle format', async ({ page }) => {
+    await startFirstLessonOfLevel(page, 'Продвинутый');
+    // Puzzle card: "Составьте форму" label visible
+    await expect(page.getByText('Составьте форму')).toBeVisible();
+    // Arrow → between base form and sentence
+    await expect(page.locator('text=→')).toBeVisible();
+  });
+
+  test('practice lesson shows no grammar hint', async ({ page }) => {
+    await startFirstLessonOfLevel(page, 'Повторение');
+    // No hint button at all
+    await expect(page.getByText('Грамматическая подсказка')).not.toBeVisible();
+    await expect(page.getByText('Грамматическое правило')).not.toBeVisible();
+  });
+
+  test('practice lesson shows puzzle format', async ({ page }) => {
+    await startFirstLessonOfLevel(page, 'Повторение');
+    // Still shows puzzle format (base form → sentence)
+    await expect(page.getByText('Составьте форму')).toBeVisible();
+  });
+});
+
 test.describe('Practice page', () => {
   test('shows coming soon text', async ({ page }) => {
     await page.goto('/dashboard/practice');

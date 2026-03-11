@@ -4,12 +4,21 @@ import { useEffect, useState, useRef } from 'react';
 import { BACKEND_URL } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 
+interface GrammarRule {
+  question: string;
+  name_ru: string;
+  usage: string;
+  endings_sg: string;
+  endings_pl: string;
+}
+
 interface Lesson {
   id: number;
   title: string;
   level: 'basic' | 'advanced' | 'practice';
   cases: number[];
   task_count: number;
+  rules: GrammarRule[];
 }
 
 interface DeclensionTask {
@@ -27,6 +36,7 @@ interface SentenceTask {
   answer: string;
   full_answer: string;
   translation_ru: string;
+  base_lt?: string;
 }
 
 type Task = DeclensionTask | SentenceTask;
@@ -42,7 +52,7 @@ const LEVEL_STYLES: Record<string, string> = {
 const LEVEL_LABELS: Record<string, string> = {
   basic: 'Базовый',
   advanced: 'Продвинутый',
-  practice: 'Практика',
+  practice: 'Повторение',
 };
 
 interface Category {
@@ -69,6 +79,65 @@ function normalizeLt(text: string): string {
     .replace(/ą/g, 'a');
 }
 
+function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collapsible: boolean }) {
+  const [open, setOpen] = useState(!collapsible);
+
+  if (rules.length === 0) return null;
+
+  return (
+    <div className="w-full border border-sky-500/20 rounded-2xl overflow-hidden bg-sky-500/[0.04]">
+      {collapsible ? (
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-sky-500/[0.06] transition-colors"
+        >
+          <span className="text-sky-400 text-sm font-medium">Грамматическая подсказка</span>
+          <svg
+            width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
+            className={`text-sky-400/60 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
+          >
+            <path d="M6 8L1 3h10L6 8z" />
+          </svg>
+        </button>
+      ) : (
+        <div className="px-5 py-3 border-b border-sky-500/10">
+          <span className="text-sky-400 text-sm font-medium">Грамматическое правило</span>
+        </div>
+      )}
+
+      {open && (
+        <div className={`px-5 py-4 flex flex-col gap-4 ${collapsible ? 'border-t border-sky-500/10' : ''}`}>
+          {rules.map((rule, i) => (
+            <div key={i} className={rules.length > 1 ? 'pb-4 border-b border-sky-500/10 last:border-0 last:pb-0' : ''}>
+              <p className="text-sky-300 text-sm font-semibold mb-1">{rule.name_ru}</p>
+              <p className="text-white/50 text-xs mb-2">{rule.question}</p>
+              <p className="text-white/70 text-sm mb-3 leading-relaxed">{rule.usage}</p>
+              {rule.endings_sg !== '—' && (
+                <div className="flex flex-wrap gap-3 text-xs">
+                  <div>
+                    <span className="text-white/30">Ед.ч.: </span>
+                    <span className="text-white/60 font-mono">{rule.endings_sg}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/30">Мн.ч.: </span>
+                    <span className="text-white/60 font-mono">{rule.endings_pl}</span>
+                  </div>
+                </div>
+              )}
+              {rule.endings_sg === '—' && (
+                <div className="text-xs">
+                  <span className="text-white/30">Мн.ч.: </span>
+                  <span className="text-white/60 font-mono">{rule.endings_pl}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GrammarPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +152,7 @@ export default function GrammarPage() {
   }
 
   // Exercise state
-  const [activeLessonId, setActiveLessonId] = useState<number | null>(null);
+  const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskIndex, setTaskIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -104,9 +173,9 @@ export default function GrammarPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  function startLesson(id: number) {
+  function startLesson(lesson: Lesson) {
     setExerciseLoading(true);
-    setActiveLessonId(id);
+    setActiveLesson(lesson);
     setTaskIndex(0);
     setCorrect(0);
     setDone(false);
@@ -114,7 +183,7 @@ export default function GrammarPage() {
     setAnswerState('unanswered');
     setShownAnswer('');
 
-    fetch(`${BACKEND_URL}/api/grammar/lessons/${id}/tasks`)
+    fetch(`${BACKEND_URL}/api/grammar/lessons/${lesson.id}/tasks`)
       .then((r) => r.json())
       .then((data: Task[]) => {
         setTasks(Array.isArray(data) ? data : []);
@@ -152,13 +221,13 @@ export default function GrammarPage() {
   }
 
   function resetToLessons() {
-    setActiveLessonId(null);
+    setActiveLesson(null);
     setTasks([]);
     setDone(false);
   }
 
   // ── Lesson list ────────────────────────────────────────────────────────────
-  if (activeLessonId === null) {
+  if (activeLesson === null) {
     return (
       <main className="bg-[#07070f] text-white">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
@@ -229,7 +298,7 @@ export default function GrammarPage() {
                           {categoryLessons.map((lesson) => (
                             <button
                               key={lesson.id}
-                              onClick={() => startLesson(lesson.id)}
+                              onClick={() => startLesson(lesson)}
                               className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 text-left hover:border-violet-500/40 transition-colors flex flex-col gap-3"
                             >
                               <div className="flex items-start justify-between gap-2">
@@ -281,7 +350,7 @@ export default function GrammarPage() {
 
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => startLesson(activeLessonId)}
+              onClick={() => startLesson(activeLesson)}
               className="w-full py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition-colors"
             >
               Повторить
@@ -309,6 +378,9 @@ export default function GrammarPage() {
 
   const task = tasks[taskIndex];
   const progressPct = (taskIndex / tasks.length) * 100;
+  const level = activeLesson.level;
+  const showRule = level === 'basic' || level === 'advanced';
+  const ruleCollapsible = level === 'advanced';
 
   return (
     <main className="min-h-screen bg-[#07070f] text-white flex flex-col px-6 py-8">
@@ -329,12 +401,19 @@ export default function GrammarPage() {
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-1 bg-white/[0.06] rounded-full mb-10">
+        <div className="w-full h-1 bg-white/[0.06] rounded-full mb-8">
           <div
             className="h-1 bg-violet-500 rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
+
+        {/* Grammar rule — basic (always visible) or advanced (collapsible) */}
+        {showRule && (
+          <div className="mb-6">
+            <GrammarRuleCard rules={activeLesson.rules} collapsible={ruleCollapsible} />
+          </div>
+        )}
 
         {/* Task card */}
         <div className="flex flex-col items-center justify-center flex-1 gap-8">
@@ -348,8 +427,22 @@ export default function GrammarPage() {
             </div>
           ) : (
             <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 text-center">
-              <p className="text-white/30 text-xs uppercase tracking-wider mb-4">Заполните пропуск</p>
-              <p className="text-2xl font-mono tracking-tight mb-4">{task.display}</p>
+              {/* Puzzle header: base form → sentence */}
+              {task.base_lt ? (
+                <>
+                  <p className="text-white/30 text-xs uppercase tracking-wider mb-3">Составьте форму</p>
+                  <div className="flex items-center justify-center gap-3 mb-5">
+                    <span className="text-2xl font-bold text-white">{task.base_lt}</span>
+                    <span className="text-white/30 text-xl">→</span>
+                    <span className="text-white/50 text-base font-mono">{task.display}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-white/30 text-xs uppercase tracking-wider mb-4">Заполните пропуск</p>
+                  <p className="text-2xl font-mono tracking-tight mb-4">{task.display}</p>
+                </>
+              )}
               <p className="text-white/50 text-base">{task.translation_ru}</p>
             </div>
           )}
@@ -362,7 +455,7 @@ export default function GrammarPage() {
               onChange={(e) => setTyped(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') checkAnswer(); }}
               disabled={answerState !== 'unanswered'}
-              placeholder={task.type === 'declension' ? 'Введите форму слова...' : 'Введите пропущенную часть...'}
+              placeholder={task.type === 'declension' ? 'Введите форму слова...' : 'Введите окончание...'}
               className={`w-full py-4 px-5 rounded-xl border bg-white/[0.04] text-white placeholder-white/20 outline-none transition-all duration-200
                 ${answerState === 'correct' ? 'border-emerald-500/50 bg-emerald-500/10' :
                   answerState === 'wrong' ? 'border-red-500/50 bg-red-500/10' :

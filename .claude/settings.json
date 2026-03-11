@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(''''lessons:'''', len\\(data\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{time_total}s\" http://localhost:3000/dashboard/grammar)",
+      "Bash(curl -sL -o /dev/null -w \"%{http_code} %{time_total}s\\\\n\" http://localhost:3000/dashboard/grammar/)",
+      "Bash(curl -s http://127.0.0.1:8000/api/grammar/lessons)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(''''OK:'''', len\\(data\\)\\)\")",
+      "Bash(curl -s http://[::1]:8000/api/grammar/lessons)",
+      "Bash(curl -s http://localhost:3000/ -o /dev/null -w \"%{http_code}\")"
+    ]
+  }
+}
