@@ -35,6 +35,7 @@ export default function Header() {
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const [user, setUser] = useState<JwtUser | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,6 +54,11 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Close mobile nav on route change
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
   function logout() {
     localStorage.removeItem('fluent_token');
     setIsAuthed(false);
@@ -65,49 +71,56 @@ export default function Header() {
   const grammarActive = pathname.startsWith('/dashboard/grammar');
   const practiceActive = pathname.startsWith('/dashboard/practice');
 
+  const navLinks = (
+    <>
+      <Link
+        href="/dashboard/lists"
+        className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          listsActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
+        }`}
+      >
+        Словари
+      </Link>
+      <Link
+        href="/dashboard/grammar"
+        className={`relative px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          grammarActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
+        }`}
+      >
+        Грамматика
+        <span className="ml-1.5 inline-block text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded px-1 py-px leading-tight align-middle">
+          тестирование
+        </span>
+      </Link>
+      <Link
+        href="/dashboard/practice"
+        className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          practiceActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
+        }`}
+      >
+        Практика
+      </Link>
+    </>
+  );
+
   return (
     <header className="relative z-20 border-b border-white/10 bg-[#07070f] sticky top-0">
-      <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
         <Link href="/dashboard/lists" className="font-bold text-[1.75rem] tracking-tight shrink-0 leading-none">
           fluent<span className="text-violet-400">.</span>
         </Link>
 
-        <nav className="flex gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1 shrink-0">
-          <Link
-            href="/dashboard/lists"
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              listsActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
-            }`}
-          >
-            Словари
-          </Link>
-          <Link
-            href="/dashboard/grammar"
-            className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              grammarActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
-            }`}
-          >
-            Грамматика
-            <span className="ml-1.5 inline-block text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded px-1 py-px leading-tight align-middle">
-              тестирование
-            </span>
-          </Link>
-          <Link
-            href="/dashboard/practice"
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              practiceActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
-            }`}
-          >
-            Практика
-          </Link>
+        {/* Desktop nav */}
+        <nav className="hidden sm:flex gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1 shrink-0">
+          {navLinks}
         </nav>
 
-        <div className="shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {isAuthed === false && (
             <a
               href={`${BACKEND_URL}/api/auth/google`}
-              className="flex items-center gap-2 bg-white text-gray-800 font-medium px-4 py-1.5 rounded-xl text-sm hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-2 bg-white text-gray-800 font-medium px-4 py-2.5 rounded-xl text-sm hover:bg-gray-100 transition-colors"
             >
               <GoogleIcon />
               Войти
@@ -117,7 +130,7 @@ export default function Header() {
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((o) => !o)}
-                className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-2.5 hover:opacity-80 transition-opacity min-h-[44px] px-1"
               >
                 {user.picture ? (
                   <img
@@ -155,8 +168,26 @@ export default function Header() {
               )}
             </div>
           )}
+
+          {/* Mobile hamburger */}
+          <button
+            className="sm:hidden flex flex-col justify-center items-center w-11 h-11 gap-1.5"
+            onClick={() => setMobileNavOpen((o) => !o)}
+            aria-label="Меню"
+          >
+            <span className={`block w-5 h-0.5 bg-white/70 transition-all duration-200 ${mobileNavOpen ? 'rotate-45 translate-y-2' : ''}`} />
+            <span className={`block w-5 h-0.5 bg-white/70 transition-all duration-200 ${mobileNavOpen ? 'opacity-0' : ''}`} />
+            <span className={`block w-5 h-0.5 bg-white/70 transition-all duration-200 ${mobileNavOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+          </button>
         </div>
       </div>
+
+      {/* Mobile nav dropdown */}
+      {mobileNavOpen && (
+        <div className="sm:hidden border-t border-white/10 bg-[#07070f] px-4 py-3 flex flex-col gap-1">
+          {navLinks}
+        </div>
+      )}
     </header>
   );
 }

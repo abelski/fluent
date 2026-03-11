@@ -7,7 +7,10 @@
       "Bash(curl -s http://127.0.0.1:8000/api/grammar/lessons)",
       "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(''''OK:'''', len\\(data\\)\\)\")",
       "Bash(curl -s http://[::1]:8000/api/grammar/lessons)",
-      "Bash(curl -s http://localhost:3000/ -o /dev/null -w \"%{http_code}\")"
+      "Bash(curl -s http://localhost:3000/ -o /dev/null -w \"%{http_code}\")",
+      "Bash(grep -r \"py-[0-9]\\\\|px-[0-9]\\\\|py-\\\\[[0-9]\\\\|px-\\\\[[0-9]\" /Users/Artur_Belski/Documents/src/fluent/frontend/app/dashboard/lists/[id]/study/page.tsx)",
+      "Bash(pkill -f \"uvicorn\\\\|next\")",
+      "Read(//private/tmp/**)"
     ]
   }
 }

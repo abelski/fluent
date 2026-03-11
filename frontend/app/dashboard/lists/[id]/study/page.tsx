@@ -234,12 +234,12 @@ export default function QuizPage() {
           <p className="text-white/40 mb-8">Верно {correctWords} из {totalWords}</p>
 
           <div className="flex gap-4 justify-center mb-10">
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-8 py-5 text-center">
-              <div className="text-3xl font-bold text-violet-400">{correctWords}</div>
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 sm:px-8 py-5 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-violet-400">{correctWords}</div>
               <div className="text-white/40 text-sm mt-1">Верно</div>
             </div>
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-8 py-5 text-center">
-              <div className="text-3xl font-bold text-amber-400">{totalWords - correctWords}</div>
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 sm:px-8 py-5 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-amber-400">{totalWords - correctWords}</div>
               <div className="text-white/40 text-sm mt-1">Ошибок</div>
             </div>
           </div>
@@ -278,8 +278,8 @@ export default function QuizPage() {
 
   return (
     <main className="min-h-screen bg-[#07070f] text-white flex flex-col px-6 py-8">
-      <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-        <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+      <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
+        <div className="w-full max-w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col flex-1">
@@ -310,9 +310,9 @@ export default function QuizPage() {
         {/* ── Stage 1: Flashcard ── */}
         {stage === 1 && (
           <div className="flex flex-col items-center justify-center flex-1 gap-8">
-            <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl p-10 text-center">
+            <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 sm:p-10 text-center">
               <p className="text-white/30 text-xs uppercase tracking-wider mb-6">Новое слово</p>
-              <p className="text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
+              <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
               {word.hint && (
                 <p className="text-white/20 text-xs uppercase tracking-wider mb-4">{word.hint}</p>
               )}
@@ -334,7 +334,7 @@ export default function QuizPage() {
           <div className="flex flex-col items-center justify-center flex-1 gap-8">
             <div className="text-center">
               <p className="text-white/30 text-sm mb-3 uppercase tracking-wider">Что это означает?</p>
-              <p className="text-4xl font-bold tracking-tight">{word.lithuanian}</p>
+              <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.lithuanian}</p>
               {word.hint && (
                 <p className="text-white/20 text-xs uppercase tracking-wider mt-2">{word.hint}</p>
               )}
@@ -377,9 +377,9 @@ export default function QuizPage() {
                 {cloveIsCloze ? 'Вставьте пропущенную форму' : 'Как будет по-литовски?'}
               </p>
               {cloveIsCloze ? (
-                <p className="text-3xl font-bold tracking-tight font-mono">{cloveText}</p>
+                <p className="text-xl sm:text-3xl font-bold tracking-tight font-mono">{cloveText}</p>
               ) : (
-                <p className="text-4xl font-bold tracking-tight">{word.translation_ru}</p>
+                <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.translation_ru}</p>
               )}
               {word.hint && (
                 <p className="text-white/20 text-xs uppercase tracking-wider mt-2">{word.hint}</p>
@@ -400,7 +400,7 @@ export default function QuizPage() {
                 }}
                 disabled={answerState !== 'unanswered'}
                 placeholder="Напишите пропущенное слово..."
-                className={`w-full py-4 px-5 rounded-xl border bg-white/[0.04] text-white placeholder-white/20 outline-none transition-all duration-200
+                className={`w-full py-4 px-5 rounded-xl border bg-white/[0.04] text-base text-white placeholder-white/20 outline-none transition-all duration-200
                   ${answerState === 'correct' ? 'border-emerald-500/50 bg-emerald-500/10' :
                     answerState === 'wrong' ? 'border-red-500/50 bg-red-500/10' :
                     'border-white/[0.08] focus:border-violet-500/50'}`}

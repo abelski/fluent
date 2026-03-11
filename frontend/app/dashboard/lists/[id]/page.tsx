@@ -55,8 +55,8 @@ export default function ListDetailPage() {
 
   return (
     <main className="bg-[#07070f] text-white">
-      <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-        <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+      <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
+        <div className="w-full max-w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
@@ -76,28 +76,28 @@ export default function ListDetailPage() {
           </div>
           <button
             onClick={handleStudyClick}
-            className="shrink-0 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors font-medium text-sm"
+            className="shrink-0 px-6 py-3 bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors font-medium text-sm"
           >
             Учить →
           </button>
         </div>
 
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_1fr_auto] text-xs text-white/30 uppercase tracking-wider px-6 py-3 border-b border-white/[0.06]">
+          <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr_1fr_auto] text-xs text-white/30 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-white/[0.06]">
             <span>Литовский</span>
             <span>Перевод</span>
-            <span>Заметка</span>
+            <span className="hidden sm:block">Заметка</span>
           </div>
           {list.words.map((word, i) => (
             <div
               key={word.id}
-              className={`grid grid-cols-[1fr_1fr_auto] px-6 py-3.5 gap-4 items-center ${
+              className={`grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr_1fr_auto] px-4 sm:px-6 py-3.5 gap-4 items-center ${
                 i < list.words.length - 1 ? 'border-b border-white/[0.04]' : ''
               }`}
             >
               <span className="font-medium text-white">{word.lithuanian}</span>
               <span className="text-white/60 text-sm">{word.translation_ru}</span>
-              <span className="text-white/25 text-xs">{word.hint ?? ''}</span>
+              <span className="text-white/25 text-xs hidden sm:block">{word.hint ?? ''}</span>
             </div>
           ))}
         </div>

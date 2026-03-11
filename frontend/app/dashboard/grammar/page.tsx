@@ -338,12 +338,12 @@ export default function GrammarPage() {
           <p className="text-white/40 mb-8">Верно {correct} из {total}</p>
 
           <div className="flex gap-4 justify-center mb-10">
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-8 py-5 text-center">
-              <div className="text-3xl font-bold text-violet-400">{correct}</div>
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 sm:px-8 py-5 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-violet-400">{correct}</div>
               <div className="text-white/40 text-sm mt-1">Верно</div>
             </div>
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-8 py-5 text-center">
-              <div className="text-3xl font-bold text-amber-400">{errors}</div>
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 sm:px-8 py-5 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-amber-400">{errors}</div>
               <div className="text-white/40 text-sm mt-1">Ошибок</div>
             </div>
           </div>
@@ -384,8 +384,8 @@ export default function GrammarPage() {
 
   return (
     <main className="min-h-screen bg-[#07070f] text-white flex flex-col px-6 py-8">
-      <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-        <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+      <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
+        <div className="w-full max-w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col flex-1">
@@ -418,15 +418,15 @@ export default function GrammarPage() {
         {/* Task card */}
         <div className="flex flex-col items-center justify-center flex-1 gap-8">
           {task.type === 'declension' ? (
-            <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 text-center">
+            <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 sm:p-8 text-center">
               <p className="text-white/30 text-xs uppercase tracking-wider mb-1">
                 {task.case_name} · {task.number}
               </p>
-              <p className="text-4xl font-bold tracking-tight mt-4 mb-2">{task.prompt_lt}</p>
-              <p className="text-white/50 text-lg">{task.prompt_ru}</p>
+              <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-2">{task.prompt_lt}</p>
+              <p className="text-white/50 text-base sm:text-lg">{task.prompt_ru}</p>
             </div>
           ) : (
-            <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 text-center">
+            <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 sm:p-8 text-center">
               {/* Puzzle header: base form → sentence */}
               {task.base_lt ? (
                 <>
@@ -456,7 +456,7 @@ export default function GrammarPage() {
               onKeyDown={(e) => { if (e.key === 'Enter') checkAnswer(); }}
               disabled={answerState !== 'unanswered'}
               placeholder={task.type === 'declension' ? 'Введите форму слова...' : 'Введите окончание...'}
-              className={`w-full py-4 px-5 rounded-xl border bg-white/[0.04] text-white placeholder-white/20 outline-none transition-all duration-200
+              className={`w-full py-4 px-5 rounded-xl border bg-white/[0.04] text-base text-white placeholder-white/20 outline-none transition-all duration-200
                 ${answerState === 'correct' ? 'border-emerald-500/50 bg-emerald-500/10' :
                   answerState === 'wrong' ? 'border-red-500/50 bg-red-500/10' :
                   'border-white/[0.08] focus:border-violet-500/50'}`}

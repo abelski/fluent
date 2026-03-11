@@ -58,8 +58,8 @@ export default function ListsPage() {
 
   return (
     <main className="bg-[#07070f] text-white">
-      <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-        <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+      <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
+        <div className="w-full max-w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
@@ -117,13 +117,13 @@ export default function ListsPage() {
                     <div className="flex gap-2">
                       <Link
                         href={`/dashboard/lists/${list.id}`}
-                        className="px-4 py-1.5 text-sm text-white/60 hover:text-white border border-white/10 hover:border-white/30 rounded-lg transition-colors"
+                        className="px-4 py-2.5 text-sm text-white/60 hover:text-white border border-white/10 hover:border-white/30 rounded-lg transition-colors"
                       >
                         Browse
                       </Link>
                       <Link
                         href={`/dashboard/lists/${list.id}/study`}
-                        className="px-4 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors font-medium"
+                        className="px-4 py-2.5 text-sm bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors font-medium"
                       >
                         Учить
                       </Link>
