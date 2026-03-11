@@ -45,6 +45,17 @@ const LEVEL_LABELS: Record<string, string> = {
   practice: 'Практика',
 };
 
+interface Category {
+  key: string;
+  label: string;
+  comingSoon: boolean;
+}
+
+const CATEGORIES: Category[] = [
+  { key: 'padezhi', label: 'Падежи', comingSoon: false },
+  { key: 'vremena', label: 'Времена', comingSoon: true },
+];
+
 function normalizeLt(text: string): string {
   return text
     .toLowerCase()
@@ -61,6 +72,15 @@ function normalizeLt(text: string): string {
 export default function GrammarPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['padezhi']));
+
+  function toggleCategory(key: string) {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
 
   // Exercise state
   const [activeLessonId, setActiveLessonId] = useState<number | null>(null);
@@ -164,22 +184,69 @@ export default function GrammarPage() {
               <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {lessons.map((lesson) => (
-                <button
-                  key={lesson.id}
-                  onClick={() => startLesson(lesson.id)}
-                  className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 text-left hover:border-violet-500/40 transition-colors flex flex-col gap-3"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-semibold leading-snug">{lesson.title}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${LEVEL_STYLES[lesson.level] ?? ''}`}>
-                      {LEVEL_LABELS[lesson.level] ?? lesson.level}
-                    </span>
+            <div className="flex flex-col gap-4">
+              {CATEGORIES.map((cat) => {
+                const isOpen = openCategories.has(cat.key);
+                const categoryLessons = cat.key === 'padezhi' ? lessons : [];
+                return (
+                  <div
+                    key={cat.key}
+                    className="border border-white/[0.08] rounded-2xl overflow-hidden"
+                    data-testid={`category-${cat.key}`}
+                  >
+                    <button
+                      onClick={() => !cat.comingSoon && toggleCategory(cat.key)}
+                      disabled={cat.comingSoon}
+                      aria-expanded={isOpen}
+                      data-testid={`category-toggle-${cat.key}`}
+                      className={`w-full flex items-center justify-between px-5 py-4 bg-white/[0.03] transition-colors text-left ${
+                        cat.comingSoon ? 'cursor-default opacity-70' : 'hover:bg-white/[0.06] cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-white">{cat.label}</span>
+                        {cat.comingSoon ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-white/[0.06] text-white/40 border border-white/10 rounded px-1.5 py-px leading-tight">
+                            Скоро
+                          </span>
+                        ) : (
+                          <span className="text-white/30 text-sm">{categoryLessons.length} уроков</span>
+                        )}
+                      </div>
+                      {!cat.comingSoon && (
+                        <svg
+                          width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
+                          className={`text-white/30 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                        >
+                          <path d="M6 8L1 3h10L6 8z" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {isOpen && !cat.comingSoon && (
+                      <div className="px-5 py-4 border-t border-white/[0.06]">
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                          {categoryLessons.map((lesson) => (
+                            <button
+                              key={lesson.id}
+                              onClick={() => startLesson(lesson.id)}
+                              className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 text-left hover:border-violet-500/40 transition-colors flex flex-col gap-3"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="text-sm font-semibold leading-snug">{lesson.title}</span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${LEVEL_STYLES[lesson.level] ?? ''}`}>
+                                  {LEVEL_LABELS[lesson.level] ?? lesson.level}
+                                </span>
+                              </div>
+                              <div className="text-white/30 text-xs">{lesson.task_count} заданий</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-white/30 text-xs">{lesson.task_count} заданий</div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

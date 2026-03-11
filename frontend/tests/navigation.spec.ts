@@ -46,6 +46,36 @@ test.describe('Grammar page', () => {
   });
 });
 
+test.describe('Grammar page — categories', () => {
+  test('shows Падежи category expanded by default', async ({ page }) => {
+    await page.goto('/dashboard/grammar');
+    const toggle = page.locator('[data-testid="category-toggle-padezhi"]');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  test('Падежи category can be collapsed and re-expanded', async ({ page }) => {
+    await page.goto('/dashboard/grammar');
+    const toggle = page.locator('[data-testid="category-toggle-padezhi"]');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  test('shows Времена category with Скоро badge', async ({ page }) => {
+    await page.goto('/dashboard/grammar');
+    await expect(page.locator('[data-testid="category-vremena"]')).toBeVisible();
+    await expect(page.locator('[data-testid="category-vremena"]').getByText('Скоро')).toBeVisible();
+  });
+
+  test('Времена category is disabled and not expandable', async ({ page }) => {
+    await page.goto('/dashboard/grammar');
+    const toggle = page.locator('[data-testid="category-toggle-vremena"]');
+    await expect(toggle).toBeDisabled();
+    await expect(page.locator('[data-testid="category-vremena"] .grid')).not.toBeVisible();
+  });
+});
+
 test.describe('Practice page', () => {
   test('shows coming soon text', async ({ page }) => {
     await page.goto('/dashboard/practice');
