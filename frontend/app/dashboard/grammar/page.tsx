@@ -149,7 +149,15 @@ export default function GrammarPage() {
           <StatsBar />
 
           <h1 className="text-3xl font-bold mb-2">Грамматика</h1>
-          <p className="text-white/40 mb-10">Выбери урок для тренировки склонений</p>
+          <p className="text-white/40 mb-6">Выбери урок для тренировки склонений</p>
+
+          <div className="flex items-start gap-3 bg-amber-500/[0.07] border border-amber-500/25 rounded-2xl px-5 py-4 mb-8">
+            <span className="text-amber-400 text-lg shrink-0 mt-0.5">⚠</span>
+            <p className="text-white/60 text-sm leading-relaxed">
+              Раздел «Грамматика» находится в стадии тестирования. Задания и оценка ответов могут содержать неточности.
+              Пожалуйста, используйте с осторожностью — мы будем рады вашим отзывам.
+            </p>
+          </div>
 
           {loading ? (
             <div className="flex justify-center py-20">

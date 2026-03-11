@@ -9,7 +9,7 @@ test.describe('Navigation', () => {
   test('nav shows Словари, Грамматика, Практика', async ({ page }) => {
     await page.goto('/dashboard/lists');
     await expect(page.getByRole('link', { name: 'Словари' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Грамматика' })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Грамматика/ })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Практика' })).toBeVisible();
   });
 
@@ -21,9 +21,14 @@ test.describe('Navigation', () => {
 
   test('Грамматика link navigates to grammar page', async ({ page }) => {
     await page.goto('/dashboard/lists');
-    await page.getByRole('link', { name: 'Грамматика' }).click();
+    await page.getByRole('link', { name: /Грамматика/ }).click();
     await expect(page).toHaveURL(/\/dashboard\/grammar/);
-    await expect(page.getByRole('link', { name: 'Грамматика' })).toHaveClass(/bg-white\/10/);
+    await expect(page.getByRole('link', { name: /Грамматика/ })).toHaveClass(/bg-white\/10/);
+  });
+
+  test('Грамматика nav link shows тестирование badge', async ({ page }) => {
+    await page.goto('/dashboard/lists');
+    await expect(page.locator('text=тестирование')).toBeVisible();
   });
 
   test('Практика link navigates to practice page', async ({ page }) => {
@@ -31,6 +36,13 @@ test.describe('Navigation', () => {
     await page.getByRole('link', { name: 'Практика' }).click();
     await expect(page).toHaveURL(/\/dashboard\/practice/);
     await expect(page.getByRole('link', { name: 'Практика' })).toHaveClass(/bg-white\/10/);
+  });
+});
+
+test.describe('Grammar page', () => {
+  test('shows beta disclaimer banner', async ({ page }) => {
+    await page.goto('/dashboard/grammar');
+    await expect(page.getByText(/находится в стадии тестирования/)).toBeVisible();
   });
 });
 

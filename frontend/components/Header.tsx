@@ -84,11 +84,14 @@ export default function Header() {
           </Link>
           <Link
             href="/dashboard/grammar"
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               grammarActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
             }`}
           >
             Грамматика
+            <span className="ml-1.5 inline-block text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded px-1 py-px leading-tight align-middle">
+              тестирование
+            </span>
           </Link>
           <Link
             href="/dashboard/practice"
