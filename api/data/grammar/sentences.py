@@ -1,0 +1,268 @@
+# Hardcoded predefined sentences for grammar practice exercises.
+# Every sentence is manually verified for semantic correctness.
+# Format per entry: (display, answer_ending, full_word_form, russian_translation)
+# display: sentence with the target word shown as "stem___"
+# answer_ending: the ending the student must type
+# full_word_form: complete inflected word (stem + ending)
+# russian_translation: full Russian sentence
+
+SENTENCES: dict[int, list[tuple[str, str, str, str]]] = {
+
+    # ── Case 4 · Galininkas Vienaskaita (Accusative singular) ──────────────
+    4: [
+        ("Laima mato brol___.", "į", "brolį", "Лайма видит брата."),
+        ("Jonas skaito knyg___.", "ą", "knygą", "Йонас читает книгу."),
+        ("Rasa mato draug___.", "ą", "draugą", "Раса видит друга."),
+        ("Petras mato draug___.", "ę", "draugę", "Пятрас видит подругу."),
+        ("Vaikai valgo tort___.", "ą", "tortą", "Дети едят торт."),
+        ("Aš valgau obuol___.", "į", "obuolį", "Я ем яблоко."),
+        ("Mama perka mork___.", "ą", "morką", "Мама покупает морковь."),
+        ("Jonas valgo sumuštin___.", "į", "sumuštinį", "Йонас ест бутерброд."),
+        ("Mama myli sūn___.", "ų", "sūnų", "Мама любит сына."),
+        ("Tėvas myli dukt___.", "erį", "dukterį", "Папа любит дочь."),
+        ("Rasa neša puodel___.", "į", "puodelį", "Раса несёт чашку."),
+        ("Aš geriu vand___.", "enį", "vandenį", "Я пью воду."),
+        ("Rasa perka agurk___.", "ą", "agurką", "Раса покупает огурец."),
+        ("Vaikai valgo desert___.", "ą", "desertą", "Дети едят десерт."),
+        ("Ona perka spurg___.", "ą", "spurgą", "Она покупает пончик."),
+        ("Mama perka citrin___.", "ą", "citriną", "Мама покупает лимон."),
+        ("Katė mato žuv___.", "į", "žuvį", "Кошка видит рыбу."),
+        ("Jonas neša akm___.", "enį", "akmenį", "Йонас несёт камень."),
+        ("Vaikas valgo bandel___.", "ę", "bandelę", "Ребёнок ест булочку."),
+        ("Rasa perka slyv___.", "ą", "slyvą", "Раса покупает сливу."),
+        ("Mama perka brašk___.", "ę", "braškę", "Мама покупает клубнику."),
+        ("Jonas perka tort___.", "ą", "tortą", "Йонас покупает торт."),
+        ("Aš turiu ses___.", "erį", "seserį", "Я имею сестру."),
+        ("Mama perka brašk___.", "ę", "braškę", "Мама покупает клубнику."),
+    ],
+
+    # ── Case 2 · Kilmininkas Vienaskaita (Genitive singular) ───────────────
+    2: [
+        ("Ten nėra nam___.", "o", "namo", "Там нет дома."),
+        ("Šalia draug___ yra parduotuvė.", "o", "draugo", "Рядом с другом есть магазин."),
+        ("Šalia universitet___ yra kavinė.", "o", "universiteto", "Рядом с университетом есть кафе."),
+        ("Ten nėra brol___.", "io", "brolio", "Там нет брата."),
+        ("Ten nėra knyg___.", "os", "knygos", "Там нет книги."),
+        ("Rasa ieško draug___.", "ės", "draugės", "Раса ищет подругу."),
+        ("Mama ieško sūn___.", "aus", "sūnaus", "Мама ищет сына."),
+        ("Šalia muziej___ yra kavinė.", "aus", "muziejaus", "Рядом с музеем есть кафе."),
+        ("Šalia turg___ yra parduotuvė.", "aus", "turgaus", "Рядом с рынком есть магазин."),
+        ("Šalia katedr___ yra restoranas.", "os", "katedros", "Рядом с собором есть ресторан."),
+        ("Šalia bažnyč___ yra parduotuvė.", "ios", "bažnyčios", "Рядом с церковью есть магазин."),
+        ("Šalia aikšt___ yra restoranas.", "ės", "aikštės", "Рядом с площадью есть ресторан."),
+        ("Šalia stot___ yra viešbutis.", "ies", "stoties", "Рядом с вокзалом есть гостиница."),
+        ("Ten nėra sod___.", "o", "sodo", "Там нет сада."),
+        ("Ten nėra obuol___.", "io", "obuolio", "Там нет яблока."),
+        ("Ten nėra profesor___.", "iaus", "profesoriaus", "Там нет профессора."),
+        ("Petras ieško draug___.", "o", "draugo", "Пятрас ищет друга."),
+        ("Ten nėra aktor___.", "iaus", "aktoriaus", "Там нет актёра."),
+        ("Ona neturi knyg___.", "os", "knygos", "У Оны нет книги."),
+        ("Šalia rotuš___ yra kavinė.", "ės", "rotušės", "Рядом с ратушей есть кафе."),
+        ("Ten nėra draug___.", "ės", "draugės", "Там нет подруги."),
+        ("Petras ieško sūn___.", "aus", "sūnaus", "Пятрас ищет сына."),
+    ],
+
+    # ── Case 6 · Vietininkas Vienaskaita (Locative singular) ───────────────
+    # Only place/location nouns — semantically verified.
+    6: [
+        ("Mama dirba universitet___.", "e", "universitete", "Мама работает в университете."),
+        ("Jie gyvena rajon___.", "e", "rajone", "Они живут в районе."),
+        ("Mama dirba turg___.", "uje", "turguje", "Мама работает на рынке."),
+        ("Jie gyvena sodyb___.", "oje", "sodyboje", "Они живут в усадьбе."),
+        ("Vaikai žaidžia sod___.", "e", "sode", "Дети играют в саду."),
+        ("Mama dirba centr___.", "e", "centre", "Мама работает в центре."),
+        ("Jis gyvena nam___.", "e", "name", "Он живёт дома."),
+        ("Petras dirba muziej___.", "uje", "muziejuje", "Пятрас работает в музее."),
+        ("Jie susitinka aikšt___.", "ėje", "aikštėje", "Они встречаются на площади."),
+        ("Vaikai žaidžia gatv___.", "ėje", "gatvėje", "Дети играют на улице."),
+        ("Mama laukia stot___.", "yje", "stotyje", "Мама ждёт на вокзале."),
+        ("Jonas gyvena pil___.", "yje", "pilyje", "Йонас живёт в замке."),
+        ("Jie susitinka rotuš___.", "ėje", "rotušėje", "Они встречаются у ратуши."),
+        ("Vaikai mokosi universitet___.", "e", "universitete", "Дети учатся в университете."),
+        ("Mama dirba bažnyč___.", "ioje", "bažnyčioje", "Мама работает в церкви."),
+        ("Jonas gyvena rajon___.", "e", "rajone", "Йонас живёт в районе."),
+        ("Rasa dirba turg___.", "uje", "turguje", "Раса работает на рынке."),
+        ("Jie susitinka centr___.", "e", "centre", "Они встречаются в центре."),
+        ("Vaikai žaidžia kambar___.", "yje", "kambaryje", "Дети играют в комнате."),
+        ("Petras gyvena sodyb___.", "oje", "sodyboje", "Пятрас живёт в усадьбе."),
+    ],
+
+    # ── Case 7 · Šauksmininkas Vienaskaita (Vocative singular) ─────────────
+    # Only animate beings — semantically verified.
+    7: [
+        ("Sveiki, brol___!", "i", "broli", "Привет, брат!"),
+        ("Ačiū, senel___!", "i", "seneli", "Спасибо, дедушка!"),
+        ("Labas, draug___!", "e", "drauge", "Привет, друг!"),
+        ("Sveiki, profesor___!", "iau", "profesoriau", "Привет, профессор!"),
+        ("Ačiū, aktor___!", "iau", "aktoriau", "Спасибо, актёр!"),
+        ("Labas, mam___!", "a", "mama", "Привет, мама!"),
+        ("Sveiki, tėvel___!", "i", "tėveli", "Привет, папочка!"),
+        ("Labas, sūn___!", "au", "sūnau", "Привет, сын!"),
+        ("Ačiū, dukt___!", "e", "dukte", "Спасибо, дочь!"),
+        ("Sveiki, močiut___!", "e", "močiute", "Привет, бабушка!"),
+        ("Ačiū, dukr___!", "a", "dukra", "Спасибо, дочь!"),
+        ("Labas, padavėj___!", "a", "padavėja", "Привет, официантка!"),
+        ("Sveiki, draug___!", "e", "drauge", "Привет, подруга!"),
+    ],
+
+    # ── Case 8 · Vardininkas Daugiskaita (Nominative plural) ───────────────
+    8: [
+        ("Čia yra brol___.", "iai", "broliai", "Здесь есть братья."),
+        ("Tie brol___ yra aukšti.", "iai", "broliai", "Эти братья высокие."),
+        ("Čia yra knyg___.", "os", "knygos", "Здесь есть книги."),
+        ("Tos knyg___ yra įdomios.", "os", "knygos", "Эти книги интересные."),
+        ("Čia yra obuol___.", "iai", "obuoliai", "Здесь есть яблоки."),
+        ("Tie obuol___ yra saldūs.", "iai", "obuoliai", "Эти яблоки сладкие."),
+        ("Čia yra agurk___.", "ai", "agurkai", "Здесь есть огурцы."),
+        ("Tie agurk___ yra žali.", "ai", "agurkai", "Эти огурцы зелёные."),
+        ("Čia yra tort___.", "ai", "tortai", "Здесь есть торты."),
+        ("Tie draug___ yra linksmi.", "ai", "draugai", "Эти друзья веселые."),
+        ("Čia yra draug___.", "ai", "draugai", "Здесь есть друзья."),
+        ("Tos draug___ yra geros.", "ės", "draugės", "Эти подруги хорошие."),
+        ("Čia yra sveč___.", "iai", "svečiai", "Здесь есть гости."),
+        ("Tos bažnyč___ yra senos.", "ios", "bažnyčios", "Эти церкви старые."),
+        ("Čia yra muziej___.", "ūs", "muziejūs", "Здесь есть музеи."),
+        ("Čia yra mork___.", "os", "morkos", "Здесь есть морковь."),
+        ("Čia yra brašk___.", "ės", "braškės", "Здесь есть клубника."),
+        ("Tie senel___ yra geri.", "iai", "seneliai", "Эти дедушки хорошие."),
+        ("Čia yra profesor___.", "iai", "profesoriai", "Здесь есть профессора."),
+        ("Tie turg___ yra dideli.", "ūs", "turgūs", "Эти рынки большие."),
+        ("Tie sod___ yra gražūs.", "ai", "sodai", "Эти сады красивые."),
+    ],
+
+    # ── Case 9 · Kilmininkas Daugiskaita (Genitive plural) ─────────────────
+    9: [
+        ("Čia nėra brol___.", "ių", "brolių", "Здесь нет братьев."),
+        ("Rasa neturi knyg___.", "ų", "knygų", "У Расы нет книг."),
+        ("Aš turiu daug draug___.", "ų", "draugų", "У меня много друзей."),
+        ("Čia nėra obuol___.", "ių", "obuolių", "Здесь нет яблок."),
+        ("Jonas neturi draug___.", "ų", "draugų", "У Йонаса нет друзей."),
+        ("Aš turiu daug knyg___.", "ų", "knygų", "У меня много книг."),
+        ("Čia nėra muziej___.", "ų", "muziejų", "Здесь нет музеев."),
+        ("Čia nėra agurk___.", "ų", "agurků", "Здесь нет огурцов."),
+        ("Aš turiu daug pirkin___.", "ių", "pirkinių", "У меня много покупок."),
+        ("Čia nėra brašk___.", "ių", "braškių", "Здесь нет клубники."),
+        ("Čia nėra tort___.", "ų", "tortų", "Здесь нет тортов."),
+        ("Aš turiu daug obuol___.", "ių", "obuolių", "У меня много яблок."),
+        ("Čia nėra profesor___.", "ių", "profesorių", "Здесь нет профессоров."),
+        ("Rasa neturi draug___.", "ių", "draugių", "У Расы нет подруг."),
+        ("Aš turiu daug sveč___.", "ių", "svečių", "У меня много гостей."),
+        ("Čia nėra nam___.", "ų", "namų", "Здесь нет домов."),
+        ("Jonas neturi brol___.", "ių", "brolių", "У Йонаса нет братьев."),
+        ("Aš turiu daug mork___.", "ų", "morkų", "У меня много моркови."),
+        ("Čia nėra sod___.", "ų", "sodų", "Здесь нет садов."),
+        ("Rasa neturi tort___.", "ų", "tortų", "У Расы нет тортов."),
+    ],
+
+    # ── Case 5 · Įnagininkas Vienaskaita (Instrumental singular) ───────────
+    5: [
+        ("Jis eina su brol___.", "iu", "broliu", "Он идёт с братом."),
+        ("Rasa eina su draug___.", "e", "drauge", "Раса идёт с подругой."),
+        ("Jonas eina su draug___.", "u", "draugu", "Йонас идёт с другом."),
+        ("Mama eina su dukr___.", "a", "dukra", "Мама идёт с дочерью."),
+        ("Petras dirba su profesor___.", "iumi", "profesoriumi", "Пятрас работает с профессором."),
+        ("Jonas eina su sveč___.", "iu", "svečiu", "Йонас идёт с гостем."),
+        ("Mama eina su ses___.", "eria", "seseria", "Мама идёт с сестрой."),
+        ("Mama atėjo su tort___.", "u", "tortu", "Мама пришла с тортом."),
+        ("Rasa atėjo su obuol___.", "iu", "obuoliu", "Раса пришла с яблоком."),
+        ("Jonas atėjo su knyg___.", "a", "knyga", "Йонас пришёл с книгой."),
+        ("Petras eina su senel___.", "iu", "seneliu", "Пятрас идёт с дедушкой."),
+        ("Ona dirba su aktor___.", "iumi", "aktoriumi", "Она работает с актёром."),
+        ("Petras eina su sūn___.", "umi", "sūnumi", "Пятрас идёт с сыном."),
+        ("Rasa atėjo su citrin___.", "a", "citrina", "Раса пришла с лимоном."),
+        ("Jonas eina su tėvel___.", "iu", "tėveliu", "Йонас идёт с папой."),
+        ("Mama atėjo su pirkin___.", "iu", "pirkiniu", "Мама пришла с покупкой."),
+    ],
+
+    # ── Case 3 · Naudininkas Vienaskaita (Dative singular) ─────────────────
+    # Only animate recipients — semantically verified.
+    3: [
+        ("Tai reikalinga brol___.", "iui", "broliui", "Это нужно брату."),
+        ("Tai reikalinga draug___.", "ui", "draugui", "Это нужно другу."),
+        ("Tai reikalinga senel___.", "iui", "seneliui", "Это нужно дедушке."),
+        ("Tai reikalinga sūn___.", "ui", "sūnui", "Это нужно сыну."),
+        ("Mama duoda knygą brol___.", "iui", "broliui", "Мама даёт книгу брату."),
+        ("Mama duoda tortą sūn___.", "ui", "sūnui", "Мама даёт торт сыну."),
+        ("Petras davė gėles draug___.", "ei", "draugei", "Пятрас дал цветы подруге."),
+        ("Aš daviau knygą mam___.", "ai", "mamai", "Я дал(а) книгу маме."),
+        ("Rasa davė tortą senel___.", "iui", "seneliui", "Раса дала торт дедушке."),
+        ("Petras padovanojo knygą profesor___.", "iui", "profesoriui", "Пятрас подарил книгу профессору."),
+        ("Tai reikalinga profesor___.", "iui", "profesoriui", "Это нужно профессору."),
+        ("Mama davė sumuštinį sūn___.", "ui", "sūnui", "Мама дала бутерброд сыну."),
+        ("Tai reikalinga aktor___.", "iui", "aktoriui", "Это нужно актёру."),
+        ("Jonas padovanojo žiedą draug___.", "ei", "draugei", "Йонас подарил кольцо подруге."),
+        ("Tai reikalinga sveč___.", "iui", "svečiui", "Это нужно гостю."),
+        ("Mama duoda obuolį senel___.", "iui", "seneliui", "Мама даёт яблоко дедушке."),
+        ("Rasa davė gėles mam___.", "ai", "mamai", "Раса дала цветы маме."),
+    ],
+
+    # ── Case 10 · Naudininkas Daugiskaita (Dative plural) ──────────────────
+    # Only animate recipients — semantically verified.
+    10: [
+        ("Tai reikalinga draug___.", "ams", "draugams", "Это нужно друзьям."),
+        ("Petras padovanojo knygas senel___.", "iams", "seneliams", "Пятрас подарил книги дедушкам."),
+        ("Tai reikalinga profesor___.", "iams", "profesoriams", "Это нужно профессорам."),
+        ("Mama davė tortą brol___.", "iams", "broliams", "Мама дала торт братьям."),
+        ("Jonas pasakė sveč___.", "iams", "svečiams", "Йонас сказал гостям."),
+        ("Tai reikalinga aktor___.", "iams", "aktoriams", "Это нужно актёрам."),
+        ("Petras padovanojo gėles draug___.", "ėms", "draugėms", "Пятрас подарил цветы подругам."),
+        ("Mama davė obuolius brol___.", "iams", "broliams", "Мама дала яблоки братьям."),
+        ("Tai reikalinga senel___.", "iams", "seneliams", "Это нужно дедушкам."),
+        ("Rasa davė knygas sūn___.", "ums", "sūnums", "Раса дала книги сыновьям."),
+        ("Mama duoda tortus senel___.", "iams", "seneliams", "Мама даёт торты дедушкам."),
+    ],
+
+    # ── Case 11 · Galininkas Daugiskaita (Accusative plural) ───────────────
+    # No "daug" — that requires genitive plural (case 9).
+    11: [
+        ("Laima mato brol___.", "ius", "brolius", "Лайма видит братьев."),
+        ("Tėvas perka obuol___.", "ius", "obuolius", "Папа покупает яблоки."),
+        ("Jonas mato draug___.", "us", "draugus", "Йонас видит друзей."),
+        ("Rasa perka knyg___.", "as", "knygas", "Раса покупает книги."),
+        ("Mama myli sūn___.", "us", "sūnus", "Мама любит сыновей."),
+        ("Vaikai valgo obuol___.", "ius", "obuolius", "Дети едят яблоки."),
+        ("Mama perka agurk___.", "us", "agurků", "Мама покупает огурцы."),
+        ("Rasa mato brašk___.", "es", "braшkes", "Раса видит клубнику."),
+        ("Mama perka mork___.", "as", "morkas", "Мама покупает морковь."),
+        ("Tėvas mato draug___.", "es", "drauges", "Папа видит подруг."),
+        ("Aš matau senel___.", "ius", "senelius", "Я вижу дедушек."),
+        ("Jonas perka tort___.", "us", "tortus", "Йонас покупает торты."),
+        ("Rasa perka slyv___.", "as", "slyvas", "Раса покупает сливы."),
+        ("Vaikai mato sveč___.", "ius", "svečius", "Дети видят гостей."),
+        ("Petras mato aktor___.", "ius", "aktorius", "Пятрас видит актёров."),
+    ],
+
+    # ── Case 12 · Įnagininkas Daugiskaita (Instrumental plural) ────────────
+    12: [
+        ("Jis eina su brol___.", "iais", "broliais", "Он идёт с братьями."),
+        ("Rasa eina su draug___.", "ais", "draugais", "Раса идёт с друзьями."),
+        ("Mama atėjo su pirkin___.", "iais", "pirkiniais", "Мама пришла с покупками."),
+        ("Jonas atėjo su knyg___.", "omis", "knygomis", "Йонас пришёл с книгами."),
+        ("Petras eina su senel___.", "iais", "seneliais", "Пятрас идёт с дедушками."),
+        ("Ona atėjo su obuol___.", "iais", "obuoliais", "Она пришла с яблоками."),
+        ("Jie eina su profesor___.", "iais", "profesoriais", "Они идут с профессорами."),
+        ("Rasa atėjo su draug___.", "ėmis", "draugėmis", "Раса пришла с подругами."),
+        ("Mama atėjo su tort___.", "ais", "tortais", "Мама пришла с тортами."),
+        ("Jie eina su sūn___.", "umis", "sūnumis", "Они идут с сыновьями."),
+        ("Jonas eina su tėvel___.", "iais", "tėveliais", "Йонас идёт с папами."),
+        ("Rasa atėjo su mork___.", "omis", "morkomis", "Раса пришла с морковкой."),
+    ],
+
+    # ── Case 13 · Vietininkas Daugiskaita (Locative plural) ────────────────
+    # Only place/location nouns — semantically verified.
+    13: [
+        ("Jie gyvena nam___.", "uose", "namuose", "Они живут в домах."),
+        ("Vaikai žaidžia sod___.", "uose", "soduose", "Дети играют в садах."),
+        ("Mama dirba muziej___.", "uose", "muziejuose", "Мама работает в музеях."),
+        ("Jie gyvena rajon___.", "uose", "rajonuose", "Они живут в районах."),
+        ("Petras dirba centr___.", "uose", "centruose", "Пятрас работает в центрах."),
+        ("Jie gyvena sodyb___.", "ose", "sodybose", "Они живут в усадьбах."),
+        ("Mama susitinka aikšt___.", "ėse", "aikštėse", "Мама встречается на площадях."),
+        ("Petras dirba turg___.", "uose", "turguose", "Пятрас работает на рынках."),
+        ("Jie gyvena pil___.", "yse", "pilyse", "Они живут в замках."),
+        ("Mama laukia stot___.", "yse", "stotyse", "Мама ждёт на вокзалах."),
+        ("Vaikai mokosi bažnyč___.", "iose", "bažnyčiose", "Дети учатся в церквях."),
+        ("Jie susitinka gatv___.", "ėse", "gatvėse", "Они встречаются на улицах."),
+        ("Jonas dirba centr___.", "uose", "centruose", "Йонас работает в центрах."),
+    ],
+}

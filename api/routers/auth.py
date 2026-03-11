@@ -1,4 +1,4 @@
-# Google OAuth 2.0 authentication flow and JWT issuance.
+# Google OAuth 2.0 authentication flow.
 #
 # Flow:
 #   1. Browser visits GET /api/auth/google  → redirected to Google consent screen
@@ -7,8 +7,6 @@
 #   3. Browser is redirected to /dashboard?token=<jwt>  → frontend stores token
 #      in localStorage and uses it for all subsequent API calls
 
-import os
-from datetime import datetime, timedelta
 from urllib.parse import urlencode
 from typing import Optional
 
@@ -18,31 +16,14 @@ from fastapi.responses import RedirectResponse
 from jose import jwt, JWTError
 from sqlmodel import Session, select
 
-from database import get_session
+from core.database import get_session
+from core.auth import (
+    GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI,
+    FRONTEND_URL, JWT_SECRET, JWT_ALGORITHM, create_jwt,
+)
 from models import User
 
 router = APIRouter()
-
-# OAuth credentials and redirect URI come from environment variables so they
-# can differ between local dev and production without code changes.
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRE_DAYS = 30  # Token stays valid for 30 days before the user must re-login
-
-
-def create_jwt(email: str, name: str, picture: Optional[str]) -> str:
-    """Encode user identity into a signed JWT that the frontend stores in localStorage."""
-    payload = {
-        "email": email,
-        "name": name,
-        "picture": picture,
-        "exp": datetime.utcnow() + timedelta(days=JWT_EXPIRE_DAYS),
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 @router.get("/google")

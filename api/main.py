@@ -8,13 +8,17 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
+# Import models first so all SQLModel table classes register with metadata
+# before create_db_and_tables() is called at startup.
+import models  # noqa: F401
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from auth import router as auth_router
+from routers.auth import router as auth_router
 from routers.words import router as words_router
 from routers.grammar import router as grammar_router
-from database import create_db_and_tables
+from core.database import create_db_and_tables
 
 # Resolve the static export directory relative to this file so the path works
 # regardless of where the process is started from.
@@ -84,7 +88,7 @@ def _resolve_static(path: str) -> Path | None:
     if exact.is_file():
         return exact
 
-    # Directory index (e.g. en/dashboard/)
+    # Directory index (e.g. dashboard/)
     index = OUT_DIR / path / "index.html"
     if index.is_file():
         return index

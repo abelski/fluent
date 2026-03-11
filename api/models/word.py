@@ -1,21 +1,6 @@
-# SQLModel ORM models — each class maps 1:1 to a PostgreSQL table.
-# SQLModel combines SQLAlchemy table definition with Pydantic validation,
-# so the same class is used for DB access and for API response serialization.
-
-import uuid
 from datetime import datetime
 from typing import Optional
 from sqlmodel import SQLModel, Field
-
-
-class User(SQLModel, table=True):
-    """Registered user. Created on first Google OAuth login, updated on subsequent logins."""
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
-    email: str = Field(unique=True, index=True)
-    name: str
-    picture: Optional[str] = None
-    lang: str = Field(default="en")  # preferred UI language: 'en' | 'ru'
-    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class WordList(SQLModel, table=True):
@@ -49,19 +34,3 @@ class WordListItem(SQLModel, table=True):
     word_list_id: int = Field(foreign_key="word_list.id", index=True)
     word_id: int = Field(foreign_key="word.id", index=True)
     position: int = Field(default=0)  # lower value = shown earlier in the list
-
-
-class UserWordProgress(SQLModel, table=True):
-    """Tracks how well a specific user knows a specific word.
-
-    Status transitions: new → learning → known
-    review_count tracks total answer attempts; last_seen is used to calculate
-    the study streak shown on the dashboard.
-    """
-    __tablename__ = "user_word_progress"
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: str = Field(foreign_key="user.id", index=True)
-    word_id: int = Field(foreign_key="word.id")
-    status: str = Field(default="new")  # new | learning | known
-    review_count: int = Field(default=0)
-    last_seen: datetime = Field(default_factory=datetime.utcnow)

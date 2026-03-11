@@ -1,7 +1,6 @@
 # Word lists and vocabulary study endpoints.
 # Handles browsing lists, fetching study sessions, and recording per-word progress.
 
-import os
 import random
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -11,13 +10,11 @@ from jose import jwt, JWTError
 from pydantic import BaseModel
 from sqlmodel import Session, select, col, func
 
-from database import get_session
+from core.database import get_session
+from core.auth import JWT_SECRET, JWT_ALGORITHM
 from models import User, Word, WordList, WordListItem, UserWordProgress
 
 router = APIRouter()
-
-JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
-JWT_ALGORITHM = "HS256"
 
 
 def _require_user(authorization: Optional[str], session: Session) -> User:

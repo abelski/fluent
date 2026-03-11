@@ -10,7 +10,7 @@ echo "=== Building frontend ==="
 cd "$ROOT/frontend"
 npm run build
 
-echo "=== Starting backend ==="
-cd "$ROOT/backend"
+echo "=== Starting api ==="
+cd "$ROOT/api"
 source .venv/bin/activate
 exec uvicorn main:app --reload --port 8000

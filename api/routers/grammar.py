@@ -1,8 +1,8 @@
 # Grammar lesson endpoints.
-# This router is intentionally thin — all content logic lives in grammar_service.py.
+# This router is intentionally thin — all content logic lives in services/grammar_service.py.
 
 from fastapi import APIRouter, HTTPException
-from grammar_service import get_lessons, get_lesson_tasks
+from services.grammar_service import get_lessons, get_lesson_tasks
 
 router = APIRouter()
 
