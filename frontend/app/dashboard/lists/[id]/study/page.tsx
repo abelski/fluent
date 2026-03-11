@@ -64,6 +64,7 @@ export default function QuizPage() {
   const [wordsDone, setWordsDone] = useState(0);   // words that exited the queue
   const [correctWords, setCorrectWords] = useState(0); // words correctly finished at stage 3
   const [done, setDone] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Per-card UI state
@@ -98,8 +99,16 @@ export default function QuizPage() {
     fetch(`${BACKEND_URL}/api/lists/${id}/study`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
-      .then((r) => r.json())
-      .then((data: Word[]) => {
+      .then((r) => {
+        if (r.status === 429) {
+          setLimitReached(true);
+          setLoading(false);
+          return null;
+        }
+        return r.json();
+      })
+      .then((data: Word[] | null) => {
+        if (!data) return;
         const words = Array.isArray(data) ? data : [];
         setAllWords(words);
 
@@ -219,6 +228,32 @@ export default function QuizPage() {
       <div className="min-h-screen bg-[#07070f] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  if (limitReached) {
+    return (
+      <main className="min-h-screen bg-[#07070f] text-white flex flex-col items-center justify-center px-6">
+        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
+          <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        </div>
+        <div className="relative z-10 text-center max-w-sm w-full">
+          <div className="text-5xl mb-6">⏳</div>
+          <h1 className="text-2xl font-bold mb-2">Лимит на сегодня исчерпан</h1>
+          <p className="text-white/40 mb-8">Вы использовали все 10 бесплатных сессий на сегодня. Возвращайтесь завтра или переходите на Premium.</p>
+          <div className="flex flex-col gap-3">
+            <Link href="/pricing" className="w-full py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition-colors text-center">
+              Получить Premium
+            </Link>
+            <button
+              onClick={() => { window.location.href = '/dashboard/lists'; }}
+              className="w-full py-3 text-white/40 hover:text-white text-sm transition-colors text-center"
+            >
+              ← На главную
+            </button>
+          </div>
+        </div>
+      </main>
     );
   }
 

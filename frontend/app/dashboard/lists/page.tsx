@@ -19,10 +19,18 @@ interface ListProgress {
   new: number;
 }
 
+interface Quota {
+  premium_active: boolean;
+  premium_until: string | null;
+  sessions_today: number;
+  daily_limit: number | null;
+}
+
 export default function ListsPage() {
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [progress, setProgress] = useState<Record<number, ListProgress>>({});
   const [loading, setLoading] = useState(true);
+  const [quota, setQuota] = useState<Quota | null>(null);
 
   useEffect(() => {
     if (!getToken()) {
@@ -30,14 +38,22 @@ export default function ListsPage() {
       return;
     }
 
+    const token = getToken()!;
+
+    fetch(`${BACKEND_URL}/api/me/quota`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data) setQuota(data); })
+      .catch(() => {});
+
     fetch(`${BACKEND_URL}/api/lists`)
       .then((r) => r.json())
       .then((data: WordListSummary[]) => {
         const validData = Array.isArray(data) ? data : [];
         setLists(validData);
 
-        const token = getToken();
-        if (!token || validData.length === 0) return;
+        if (validData.length === 0) return;
 
         fetch(`${BACKEND_URL}/api/me/lists-progress`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -56,6 +72,8 @@ export default function ListsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const limitReached = quota !== null && quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
+
   return (
     <main className="bg-[#07070f] text-white">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
@@ -64,6 +82,32 @@ export default function ListsPage() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <StatsBar />
+
+        {/* Quota banner */}
+        {quota && !quota.premium_active && (
+          <div className={`mb-6 rounded-xl px-5 py-4 border flex flex-col sm:flex-row sm:items-center gap-3 ${
+            limitReached
+              ? 'bg-red-500/10 border-red-500/30'
+              : 'bg-white/[0.04] border-white/[0.08]'
+          }`}>
+            <div className="flex-1">
+              {limitReached ? (
+                <p className="text-red-400 font-medium text-sm">Лимит на сегодня исчерпан ({quota.sessions_today}/{quota.daily_limit}). Попробуйте завтра или перейдите на Premium.</p>
+              ) : (
+                <p className="text-white/50 text-sm">Сессий сегодня: <span className="text-white font-medium">{quota.sessions_today} / {quota.daily_limit}</span></p>
+              )}
+            </div>
+            <Link href="/pricing" className="shrink-0 text-xs font-medium text-violet-400 hover:text-violet-300 border border-violet-500/30 rounded-lg px-3 py-1.5 transition-colors">
+              Получить Premium →
+            </Link>
+          </div>
+        )}
+        {quota?.premium_active && quota.premium_until && (
+          <div className="mb-6 rounded-xl px-5 py-3 border border-violet-500/20 bg-violet-500/5 flex items-center gap-2">
+            <span className="text-violet-400 text-sm font-medium">✦ Premium</span>
+            <span className="text-white/30 text-sm">до {new Date(quota.premium_until).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+          </div>
+        )}
 
         <h1 className="text-3xl font-bold mb-2">Словари</h1>
         <p className="text-white/40 mb-10">Выбери список для изучения</p>
@@ -121,12 +165,22 @@ export default function ListsPage() {
                       >
                         Browse
                       </Link>
-                      <Link
-                        href={`/dashboard/lists/${list.id}/study`}
-                        className="px-4 py-2.5 text-sm bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors font-medium"
-                      >
-                        Учить
-                      </Link>
+                      {limitReached ? (
+                        <button
+                          disabled
+                          title="Лимит сессий на сегодня исчерпан"
+                          className="px-4 py-2.5 text-sm bg-violet-600/30 rounded-lg font-medium cursor-not-allowed opacity-40"
+                        >
+                          Учить
+                        </button>
+                      ) : (
+                        <Link
+                          href={`/dashboard/lists/${list.id}/study`}
+                          className="px-4 py-2.5 text-sm bg-violet-600 hover:bg-violet-500 rounded-lg transition-colors font-medium"
+                        >
+                          Учить
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>

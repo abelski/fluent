@@ -34,6 +34,7 @@ export default function Header() {
   const router = useRouter();
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const [user, setUser] = useState<JwtUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -41,7 +42,15 @@ export default function Header() {
   useEffect(() => {
     const token = getToken();
     setIsAuthed(!!token);
-    if (token) setUser(parseJwtUser(token));
+    if (token) {
+      setUser(parseJwtUser(token));
+      fetch(`${BACKEND_URL}/api/me/quota`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => { if (data?.is_admin) setIsAdmin(true); })
+        .catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
@@ -158,6 +167,15 @@ export default function Header() {
                   <div className="px-4 py-3 border-b border-white/[0.06]">
                     <p className="text-white text-sm font-medium truncate">{user.name}</p>
                   </div>
+                  {isAdmin && (
+                    <Link
+                      href="/dashboard/admin"
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-4 py-3 text-sm text-amber-400/80 hover:text-amber-400 hover:bg-white/[0.05] transition-colors"
+                    >
+                      Администрирование
+                    </Link>
+                  )}
                   <button
                     onClick={logout}
                     className="w-full text-left px-4 py-3 text-sm text-white/50 hover:text-white hover:bg-white/[0.05] transition-colors"

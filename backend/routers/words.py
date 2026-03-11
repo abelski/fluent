@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select, col, func
 
 from database import get_session
-from models import User, Word, WordList, WordListItem, UserWordProgress
+from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession
 
 router = APIRouter()
 
@@ -107,8 +107,18 @@ def get_list(list_id: int, session: Session = Depends(get_session)):
 
 
 # Number of words returned per study session.
-# Keeping it small ensures sessions feel achievable.
 QUIZ_SIZE = 10
+
+# Max study sessions per day for basic (non-premium) users.
+DAILY_LIMIT = 10
+
+
+def _is_premium_active(user: User) -> bool:
+    if not user.is_premium:
+        return False
+    if user.premium_until is None:
+        return True
+    return user.premium_until > datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 @router.get("/lists/{list_id}/study")
@@ -136,6 +146,7 @@ def get_study_words(
     # Auth is optional here — unauthenticated users still get a study session.
     user = None
     if authorization and authorization.startswith("Bearer "):
+        # Enforce daily session limit for basic users.
         try:
             token = authorization.split(" ")[1]
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
@@ -143,7 +154,26 @@ def get_study_words(
             if email:
                 user = session.exec(select(User).where(User.email == email)).first()
         except JWTError:
-            pass  # Ignore bad tokens — fall back to anonymous mode
+            pass
+
+        if user and not _is_premium_active(user):
+            today = datetime.now(timezone.utc).date()
+            row = session.exec(
+                select(DailyStudySession).where(
+                    DailyStudySession.user_id == user.id,
+                    DailyStudySession.study_date == today,
+                )
+            ).first()
+            if not row:
+                row = DailyStudySession(user_id=user.id, study_date=today, session_count=0)
+                session.add(row)
+            if row.session_count >= DAILY_LIMIT:
+                raise HTTPException(
+                    status_code=429,
+                    detail={"code": "daily_limit_reached", "limit": DAILY_LIMIT, "sessions_today": row.session_count},
+                )
+            row.session_count += 1
+            session.commit()
 
     if user and all_words:
         word_ids = [w["id"] for w in all_words]
@@ -325,3 +355,29 @@ def get_stats(
         streak += 1
         check -= timedelta(days=1)
     return {"known": known, "learning": learning, "total_studied": known + learning, "streak": streak}
+
+
+@router.get("/me/quota")
+def get_quota(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return the current user's tier and daily session usage."""
+    user = _require_user(authorization, session)
+    premium_active = _is_premium_active(user)
+    today = datetime.now(timezone.utc).date()
+    row = session.exec(
+        select(DailyStudySession).where(
+            DailyStudySession.user_id == user.id,
+            DailyStudySession.study_date == today,
+        )
+    ).first()
+    sessions_today = row.session_count if row else 0
+    return {
+        "is_premium": user.is_premium,
+        "premium_until": user.premium_until,
+        "premium_active": premium_active,
+        "sessions_today": sessions_today,
+        "daily_limit": None if premium_active else DAILY_LIMIT,
+        "is_admin": user.is_admin,
+    }

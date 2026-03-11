@@ -3,7 +3,7 @@
 # so the same class is used for DB access and for API response serialization.
 
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 from sqlmodel import SQLModel, Field
 
@@ -16,6 +16,9 @@ class User(SQLModel, table=True):
     picture: Optional[str] = None
     lang: str = Field(default="en")  # preferred UI language: 'en' | 'ru'
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_premium: bool = Field(default=False)
+    premium_until: Optional[datetime] = None  # None = no expiry; past date = expired
+    is_admin: bool = Field(default=False)
 
 
 class WordList(SQLModel, table=True):
@@ -65,6 +68,16 @@ class UserWordProgress(SQLModel, table=True):
     status: str = Field(default="new")  # new | learning | known
     review_count: int = Field(default=0)
     last_seen: datetime = Field(default_factory=datetime.utcnow)
+
+
+class DailyStudySession(SQLModel, table=True):
+    """Tracks how many study sessions a user has started on a given UTC date.
+    Used to enforce the daily limit for basic (non-premium) users."""
+    __tablename__ = "daily_study_session"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    study_date: date = Field(index=True)
+    session_count: int = Field(default=0)
 
 
 class GrammarLessonResult(SQLModel, table=True):
