@@ -252,12 +252,12 @@ test.describe('Grammar progression — locking', () => {
     await page.locator('.grid button').first().click();
     await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 5000 });
 
-    // Answer both tasks wrong
+    // Answer both tasks wrong, then dismiss each (wrong answers no longer auto-advance)
     for (let i = 0; i < 2; i++) {
       const input = page.locator('input[type="text"]');
       await input.fill('wrong');
       await input.press('Enter');
-      await page.waitForTimeout(2200);
+      await page.locator('[data-testid="dismiss-wrong"]').click({ timeout: 3000 });
     }
 
     // Done screen should show fail banner, no "Следующий урок" button

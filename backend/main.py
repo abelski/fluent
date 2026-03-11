@@ -16,6 +16,7 @@ from auth import router as auth_router
 from routers.words import router as words_router
 from routers.grammar import router as grammar_router
 from routers.admin import router as admin_router
+from routers.reports import router as reports_router
 from database import create_db_and_tables
 
 # Resolve the static export directory relative to this file so the path works
@@ -50,6 +51,7 @@ app.include_router(auth_router, prefix="/api/auth")
 app.include_router(words_router, prefix="/api")
 app.include_router(grammar_router, prefix="/api")
 app.include_router(admin_router, prefix="/api/admin")
+app.include_router(reports_router, prefix="/api")
 
 
 @app.get("/health")

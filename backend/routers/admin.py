@@ -21,7 +21,7 @@ JWT_ALGORITHM = "HS256"
 DAILY_LIMIT = 10
 
 
-def _require_admin(authorization: Optional[str], session: Session) -> User:
+def _decode_user(authorization: Optional[str], session: Session) -> User:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing token")
     token = authorization.split(" ")[1]
@@ -33,7 +33,19 @@ def _require_admin(authorization: Optional[str], session: Session) -> User:
     user = session.exec(select(User).where(User.email == email)).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    return user
+
+
+def _require_admin(authorization: Optional[str], session: Session) -> User:
+    user = _decode_user(authorization, session)
     if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return user
+
+
+def _require_superadmin(authorization: Optional[str], session: Session) -> User:
+    user = _decode_user(authorization, session)
+    if not user.is_superadmin:
         raise HTTPException(status_code=403, detail="Forbidden")
     return user
 
@@ -71,11 +83,36 @@ def list_users(
             "premium_until": u.premium_until,
             "premium_active": _is_premium_active(u),
             "is_admin": u.is_admin,
+            "is_superadmin": u.is_superadmin,
             "sessions_today": counts.get(u.id, 0),
             "daily_limit": None if _is_premium_active(u) else DAILY_LIMIT,
         }
         for u in users
     ]
+
+
+class AdminUpdate(BaseModel):
+    is_admin: bool
+
+
+@router.patch("/users/{user_id}/set-admin")
+def set_admin(
+    user_id: str,
+    body: AdminUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Grant or revoke admin role. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    target = session.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target.is_superadmin:
+        raise HTTPException(status_code=400, detail="Cannot change superadmin role")
+    target.is_admin = body.is_admin
+    session.add(target)
+    session.commit()
+    return {"ok": True}
 
 
 class PremiumUpdate(BaseModel):

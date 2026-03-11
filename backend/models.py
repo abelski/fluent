@@ -19,6 +19,7 @@ class User(SQLModel, table=True):
     is_premium: bool = Field(default=False)
     premium_until: Optional[datetime] = None  # None = no expiry; past date = expired
     is_admin: bool = Field(default=False)
+    is_superadmin: bool = Field(default=False)
 
 
 class WordList(SQLModel, table=True):
@@ -78,6 +79,21 @@ class DailyStudySession(SQLModel, table=True):
     user_id: str = Field(foreign_key="user.id", index=True)
     study_date: date = Field(index=True)
     session_count: int = Field(default=0)
+
+
+class MistakeReport(SQLModel, table=True):
+    """A user-submitted report about a mistake in content (word, translation, grammar task).
+
+    context holds a short string identifying where the mistake was found,
+    e.g. 'word:42' or 'grammar:3'. status is 'open' until an admin resolves it.
+    """
+    __tablename__ = "mistake_report"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    context: Optional[str] = None   # e.g. 'word:42', 'grammar:3'
+    description: str = Field(default="")
+    status: str = Field(default="open")  # open | resolved
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class GrammarLessonResult(SQLModel, table=True):

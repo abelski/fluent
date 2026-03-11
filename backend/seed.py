@@ -2,11 +2,19 @@
 Seed the database with Lithuanian vocabulary organized by topic.
 Run from backend/ directory:
     python seed.py
+
+SAFETY: Only runs when DEV=true to prevent accidental production data wipe.
 """
 import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
+
+if os.getenv("DEV", "").lower() not in ("1", "true", "yes"):
+    print("ERROR: seed.py refuses to run outside of development environment.")
+    print("Set DEV=true in your .env to confirm you are running locally.")
+    sys.exit(1)
 
 from sqlmodel import Session, select
 from database import engine, create_db_and_tables

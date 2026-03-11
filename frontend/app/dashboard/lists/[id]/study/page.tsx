@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, resolveListId } from '../../../../../lib/api';
+import { useLang, type Lang } from '../../../../../lib/useLang';
 
 interface Word {
   id: number;
@@ -20,6 +21,23 @@ interface StudyCard {
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong';
+
+// Maps English number word → digit string so we can display "11" alongside "vienuolika".
+// Number words are identified by hint === 'skaitvardis'.
+const ENGLISH_TO_DIGIT: Record<string, string> = {
+  zero: '0', one: '1', two: '2', three: '3', four: '4',
+  five: '5', six: '6', seven: '7', eight: '8', nine: '9',
+  ten: '10', eleven: '11', twelve: '12', thirteen: '13',
+  fourteen: '14', fifteen: '15', sixteen: '16', seventeen: '17',
+  eighteen: '18', nineteen: '19', twenty: '20', thirty: '30',
+  forty: '40', fifty: '50', sixty: '60', seventy: '70',
+  eighty: '80', ninety: '90', 'one hundred': '100',
+};
+
+function getDigit(word: Word): string | null {
+  if (word.hint !== 'skaitvardis') return null;
+  return ENGLISH_TO_DIGIT[word.translation_en] ?? null;
+}
 
 function normalizeLt(text: string): string {
   return text
@@ -39,16 +57,20 @@ function parseForms(lithuanian: string): string[] {
   return parts.length > 1 ? parts : [lithuanian.trim()];
 }
 
-function pickDistractors(word: Word, allWords: Word[]): string[] {
-  const pool = allWords.filter((w) => w.id !== word.id);
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 3).map((w) => w.translation_ru);
+function trans(word: Word, lang: Lang): string {
+  return lang === 'en' ? word.translation_en : word.translation_ru;
 }
 
-function buildOptions(word: Word, allWords: Word[]): { text: string; correct: boolean }[] {
-  const distractors = pickDistractors(word, allWords);
+function pickDistractors(word: Word, allWords: Word[], lang: Lang): string[] {
+  const pool = allWords.filter((w) => w.id !== word.id);
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3).map((w) => trans(w, lang));
+}
+
+function buildOptions(word: Word, allWords: Word[], lang: Lang): { text: string; correct: boolean }[] {
+  const distractors = pickDistractors(word, allWords, lang);
   return [
-    { text: word.translation_ru, correct: true },
+    { text: trans(word, lang), correct: true },
     ...distractors.map((d) => ({ text: d, correct: false })),
   ].sort(() => Math.random() - 0.5);
 }
@@ -58,6 +80,7 @@ export default function QuizPage() {
   const id = resolveListId(_id);
   const router = useRouter();
 
+  const [lang] = useLang();
   const [allWords, setAllWords] = useState<Word[]>([]);
   const [queue, setQueue] = useState<StudyCard[]>([]);
   const [totalWords, setTotalWords] = useState(0);
@@ -142,14 +165,14 @@ export default function QuizPage() {
   // Recompute options whenever the front card changes (stage 2 only)
   useEffect(() => {
     if (queue.length > 0 && queue[0].stage === 2) {
-      setOptions(buildOptions(queue[0].word, allWords));
+      setOptions(buildOptions(queue[0].word, allWords, lang));
     }
     if (queue.length > 0 && queue[0].stage === 3) {
       const forms = parseForms(queue[0].word.lithuanian);
       setBlankIndex(Math.floor(Math.random() * forms.length));
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [queue, allWords]);
+  }, [queue, allWords, lang]);
 
   function advance(card: StudyCard, correct: boolean) {
     setQueue((prev) => {
@@ -176,19 +199,27 @@ export default function QuizPage() {
     const isCorrect = options[index].correct;
     setSelectedOption(index);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
-
     saveProgress(card.word.id, isCorrect ? 'known' : 'learning');
 
-    setTimeout(() => {
-      if (!isCorrect) {
-        // Word exits queue on wrong answer (no retry)
-        setWordsDone((c) => c + 1);
-      }
-      setAnswerState('unanswered');
-      setSelectedOption(null);
-      blockUntilRef.current = Date.now() + 200;
-      advance(card, isCorrect);
-    }, 1200);
+    if (isCorrect) {
+      // Correct: auto-advance after short delay
+      setTimeout(() => {
+        setAnswerState('unanswered');
+        setSelectedOption(null);
+        blockUntilRef.current = Date.now() + 200;
+        advance(card, true);
+      }, 1200);
+    }
+    // Wrong: stay on screen until user clicks "Понятно, дальше"
+  }
+
+  function handleStage2Dismiss() {
+    const card = queue[0];
+    setWordsDone((c) => c + 1);
+    setAnswerState('unanswered');
+    setSelectedOption(null);
+    blockUntilRef.current = Date.now() + 200;
+    advance(card, false);
   }
 
   function handleStage3Submit() {
@@ -200,20 +231,31 @@ export default function QuizPage() {
 
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     if (!isCorrect) setShownAnswer(target);
-
     saveProgress(card.word.id, isCorrect ? 'known' : 'learning');
 
-    const delay = isCorrect ? 1200 : 2000;
-    setTimeout(() => {
-      // Word always exits queue at stage 3 (correct or wrong)
-      setWordsDone((c) => c + 1);
-      if (isCorrect) setCorrectWords((c) => c + 1);
-      setAnswerState('unanswered');
-      setTypedAnswer('');
-      setShownAnswer('');
-      blockUntilRef.current = Date.now() + 200;
-      advance(card, isCorrect);
-    }, delay);
+    if (isCorrect) {
+      // Correct: auto-advance after short delay
+      setTimeout(() => {
+        setWordsDone((c) => c + 1);
+        setCorrectWords((c) => c + 1);
+        setAnswerState('unanswered');
+        setTypedAnswer('');
+        setShownAnswer('');
+        blockUntilRef.current = Date.now() + 200;
+        advance(card, true);
+      }, 1200);
+    }
+    // Wrong: stay on screen until user clicks "Понятно, дальше"
+  }
+
+  function handleStage3Dismiss() {
+    const card = queue[0];
+    setWordsDone((c) => c + 1);
+    setAnswerState('unanswered');
+    setTypedAnswer('');
+    setShownAnswer('');
+    blockUntilRef.current = Date.now() + 200;
+    advance(card, false);
   }
 
   // Check if session is done after queue empties
@@ -310,6 +352,7 @@ export default function QuizPage() {
   const cloveForms = parseForms(word.lithuanian);
   const cloveIsCloze = cloveForms.length > 1;
   const cloveText = cloveForms.map((f, i) => i === blankIndex ? '______' : f).join(' / ');
+  const digit = getDigit(word);
 
   return (
     <main className="min-h-screen bg-[#07070f] text-white flex flex-col px-6 py-8">
@@ -348,11 +391,14 @@ export default function QuizPage() {
             <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 sm:p-10 text-center">
               <p className="text-white/30 text-xs uppercase tracking-wider mb-6">Новое слово</p>
               <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
-              {word.hint && (
+              {digit && (
+                <p className="text-5xl sm:text-7xl font-bold text-violet-400 mb-4" data-testid="number-digit">{digit}</p>
+              )}
+              {word.hint && !digit && (
                 <p className="text-white/20 text-xs uppercase tracking-wider mb-4">{word.hint}</p>
               )}
               <div className="h-px bg-white/[0.06] mb-4" />
-              <p className="text-xl text-white/60">{word.translation_ru}</p>
+              <p className="text-xl text-white/60">{trans(word, lang)}</p>
             </div>
             <button
               onClick={handleStage1Confirm}
@@ -370,7 +416,10 @@ export default function QuizPage() {
             <div className="text-center">
               <p className="text-white/30 text-sm mb-3 uppercase tracking-wider">Что это означает?</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.lithuanian}</p>
-              {word.hint && (
+              {digit && (
+                <p className="text-4xl sm:text-6xl font-bold text-violet-400 mt-2" data-testid="number-digit">{digit}</p>
+              )}
+              {word.hint && !digit && (
                 <p className="text-white/20 text-xs uppercase tracking-wider mt-2">{word.hint}</p>
               )}
             </div>
@@ -396,10 +445,28 @@ export default function QuizPage() {
               })}
             </div>
 
-            {answerState !== 'unanswered' && (
-              <p className={`text-sm font-medium animate-in fade-in duration-150 ${answerState === 'correct' ? 'text-emerald-400' : 'text-red-400'}`}>
-                {answerState === 'correct' ? 'Правильно!' : 'Не совсем'}
-              </p>
+            {answerState === 'correct' && (
+              <p className="text-emerald-400 text-sm font-medium animate-in fade-in duration-150">Правильно!</p>
+            )}
+
+            {answerState === 'wrong' && (
+              <div className="w-full flex flex-col gap-3 animate-in fade-in duration-150">
+                <div className="text-center">
+                  <p className="text-red-400 text-sm font-medium">Не совсем</p>
+                  <p className="text-white/50 text-sm mt-1">
+                    Правильно: <span className="text-white font-medium">
+                      {options.find((o) => o.correct)?.text}
+                    </span>
+                  </p>
+                </div>
+                <button
+                  data-testid="dismiss-wrong"
+                  onClick={handleStage2Dismiss}
+                  className="w-full py-4 bg-white/[0.06] hover:bg-white/[0.10] rounded-xl font-medium transition-colors"
+                >
+                  Понятно, дальше →
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -414,13 +481,18 @@ export default function QuizPage() {
               {cloveIsCloze ? (
                 <p className="text-xl sm:text-3xl font-bold tracking-tight font-mono">{cloveText}</p>
               ) : (
-                <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.translation_ru}</p>
+                <>
+                  <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
+                  {digit && (
+                    <p className="text-4xl sm:text-6xl font-bold text-violet-400 mt-2" data-testid="number-digit">{digit}</p>
+                  )}
+                </>
               )}
-              {word.hint && (
+              {word.hint && !digit && (
                 <p className="text-white/20 text-xs uppercase tracking-wider mt-2">{word.hint}</p>
               )}
               {cloveIsCloze && (
-                <p className="text-white/30 text-sm mt-3">{word.translation_ru}</p>
+                <p className="text-white/30 text-sm mt-3">{trans(word, lang)}</p>
               )}
             </div>
 
@@ -457,11 +529,20 @@ export default function QuizPage() {
               )}
 
               {answerState === 'wrong' && (
-                <div className="text-center animate-in fade-in duration-150">
-                  <p className="text-red-400 text-sm font-medium">Не совсем</p>
-                  <p className="text-white/50 text-sm mt-1">
-                    Правильно: <span className="text-white font-medium">{shownAnswer}</span>
-                  </p>
+                <div className="flex flex-col gap-3 animate-in fade-in duration-150">
+                  <div className="text-center">
+                    <p className="text-red-400 text-sm font-medium">Не совсем</p>
+                    <p className="text-white/50 text-sm mt-1">
+                      Правильно: <span className="text-white font-medium">{shownAnswer}</span>
+                    </p>
+                  </div>
+                  <button
+                    data-testid="dismiss-wrong"
+                    onClick={handleStage3Dismiss}
+                    className="w-full py-4 bg-white/[0.06] hover:bg-white/[0.10] rounded-xl font-medium transition-colors"
+                  >
+                    Понятно, дальше →
+                  </button>
                 </div>
               )}
             </div>

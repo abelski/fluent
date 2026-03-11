@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../lib/api';
+import { useLang } from '../lib/useLang';
 
 function GoogleIcon() {
   return (
@@ -38,6 +39,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  useLang(); // reserved for future language switch
 
   useEffect(() => {
     const token = getToken();
@@ -126,6 +128,20 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
+          {/* Language toggle — disabled, in development */}
+          <div className="relative group">
+            <button
+              disabled
+              data-testid="lang-toggle"
+              className="text-xs font-medium px-2 py-1 rounded-lg border border-white/[0.06] text-white/20 cursor-not-allowed"
+            >
+              EN
+            </button>
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap text-[10px] bg-[#1a1a28] border border-white/10 text-white/40 rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              скоро
+            </span>
+          </div>
+
           {isAuthed === false && (
             <a
               href={`${BACKEND_URL}/api/auth/google`}

@@ -21,7 +21,11 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/api/lists)",
       "Bash(source .venv/bin/activate)",
       "Bash(python -m pytest tests/test_quota.py -v)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(python -m pytest tests/test_quota.py::test_quota_returns_basic_defaults -v -s)",
+      "Bash(python -m pytest tests/ -q)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)"
     ]
   }
 }

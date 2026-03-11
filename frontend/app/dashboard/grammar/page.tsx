@@ -213,6 +213,23 @@ export default function GrammarPage() {
       .finally(() => setExerciseLoading(false));
   }
 
+  function advanceTask(isCorrect: boolean) {
+    const next = taskIndex + 1;
+    if (next >= tasks.length) {
+      const finalCorrect = isCorrect ? correct + 1 : correct;
+      if (activeLesson) postResult(activeLesson.id, finalCorrect, tasks.length);
+      if (isCorrect) setCorrect((c) => c + 1);
+      setDone(true);
+    } else {
+      if (isCorrect) setCorrect((c) => c + 1);
+      setTaskIndex(next);
+      setTyped('');
+      setAnswerState('unanswered');
+      setShownAnswer('');
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }
+
   function checkAnswer() {
     if (answerState !== 'unanswered') return;
     const task = tasks[taskIndex];
@@ -222,24 +239,15 @@ export default function GrammarPage() {
       setShownAnswer(task.type === 'sentence' ? task.full_answer : task.answer);
     }
 
-    const delay = isCorrect ? 1000 : 2000;
-    setTimeout(() => {
-      const next = taskIndex + 1;
-      if (next >= tasks.length) {
-        // Compute final score before state updates
-        const finalCorrect = isCorrect ? correct + 1 : correct;
-        if (activeLesson) postResult(activeLesson.id, finalCorrect, tasks.length);
-        if (isCorrect) setCorrect((c) => c + 1);
-        setDone(true);
-      } else {
-        if (isCorrect) setCorrect((c) => c + 1);
-        setTaskIndex(next);
-        setTyped('');
-        setAnswerState('unanswered');
-        setShownAnswer('');
-        setTimeout(() => inputRef.current?.focus(), 50);
-      }
-    }, delay);
+    if (isCorrect) {
+      // Correct: auto-advance after short delay
+      setTimeout(() => advanceTask(true), 1000);
+    }
+    // Wrong: wait for user to click "Понятно, дальше"
+  }
+
+  function dismissWrongGrammar() {
+    advanceTask(false);
   }
 
   function resetToLessons() {
@@ -560,11 +568,20 @@ export default function GrammarPage() {
             )}
 
             {answerState === 'wrong' && (
-              <div className="text-center">
-                <p className="text-red-400 text-sm font-medium">Не совсем</p>
-                <p className="text-white/50 text-sm mt-1">
-                  Правильно: <span className="text-white font-medium">{shownAnswer}</span>
-                </p>
+              <div className="flex flex-col gap-3 animate-in fade-in duration-150">
+                <div className="text-center">
+                  <p className="text-red-400 text-sm font-medium">Не совсем</p>
+                  <p className="text-white/50 text-sm mt-1">
+                    Правильно: <span className="text-white font-medium">{shownAnswer}</span>
+                  </p>
+                </div>
+                <button
+                  data-testid="dismiss-wrong"
+                  onClick={dismissWrongGrammar}
+                  className="w-full py-4 bg-white/[0.06] hover:bg-white/[0.10] rounded-xl font-medium transition-colors"
+                >
+                  Понятно, дальше →
+                </button>
               </div>
             )}
           </div>

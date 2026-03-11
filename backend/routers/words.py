@@ -380,4 +380,5 @@ def get_quota(
         "sessions_today": sessions_today,
         "daily_limit": None if premium_active else DAILY_LIMIT,
         "is_admin": user.is_admin,
+        "is_superadmin": user.is_superadmin,
     }
