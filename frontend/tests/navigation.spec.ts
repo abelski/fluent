@@ -150,6 +150,122 @@ test.describe('Grammar page — lesson levels', () => {
   });
 });
 
+test.describe('Grammar progression — locking', () => {
+  const MOCK_LESSONS = [
+    {
+      id: 1, title: 'Урок 1', level: 'basic', cases: [4], task_count: 2,
+      rules: [], is_locked: false, best_score_pct: null,
+    },
+    {
+      id: 2, title: 'Урок 2', level: 'advanced', cases: [4], task_count: 2,
+      rules: [], is_locked: true, best_score_pct: null,
+    },
+  ];
+
+  test('locked lesson shows lock icon and cannot be clicked', async ({ page }) => {
+    await page.route('**/api/grammar/lessons', async (route) => {
+      await route.fulfill({ json: MOCK_LESSONS });
+    });
+    await page.goto('/dashboard/grammar');
+    await page.waitForSelector('.grid button', { timeout: 5000 });
+
+    // Second lesson should have data-testid="lesson-locked" and be disabled
+    const lockedCard = page.locator('[data-testid="lesson-locked"]').first();
+    await expect(lockedCard).toBeVisible();
+    await expect(lockedCard).toBeDisabled();
+  });
+
+  test('unlocked lesson is clickable', async ({ page }) => {
+    await page.route('**/api/grammar/lessons', async (route) => {
+      await route.fulfill({ json: MOCK_LESSONS });
+    });
+    await page.goto('/dashboard/grammar');
+    await page.waitForSelector('.grid button', { timeout: 5000 });
+
+    // First lesson is unlocked — should NOT have lesson-locked testid
+    const cards = page.locator('.grid button');
+    await expect(cards.first()).not.toBeDisabled();
+    await expect(cards.first()).not.toHaveAttribute('data-testid', 'lesson-locked');
+  });
+
+  test('passing lesson shows next lesson button on done screen', async ({ page }) => {
+    // Lesson 1 passed → lesson 2 now unlocked
+    const lessonsAfterPass = [
+      { ...MOCK_LESSONS[0], best_score_pct: 0.9 },
+      { ...MOCK_LESSONS[1], is_locked: false },
+    ];
+    let callCount = 0;
+    await page.route('**/api/grammar/lessons', async (route) => {
+      callCount++;
+      await route.fulfill({ json: callCount === 1 ? MOCK_LESSONS : lessonsAfterPass });
+    });
+    await page.route('**/api/grammar/lessons/1/tasks', async (route) => {
+      await route.fulfill({
+        json: [
+          { type: 'declension', prompt_lt: 'namas', prompt_ru: 'дом', case_name: 'Galininkas', number: 'vienaskaita', answer: 'namą' },
+          { type: 'declension', prompt_lt: 'knyga', prompt_ru: 'книга', case_name: 'Galininkas', number: 'vienaskaita', answer: 'knygą' },
+        ],
+      });
+    });
+    await page.route('**/api/grammar/lessons/1/results', async (route) => {
+      await route.fulfill({ json: { ok: true, passed: true } });
+    });
+
+    await page.goto('/dashboard/grammar');
+    await page.waitForSelector('.grid button', { timeout: 5000 });
+
+    // Start lesson 1
+    await page.locator('.grid button').first().click();
+    await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 5000 });
+
+    // Answer both tasks correctly
+    for (const answer of ['namą', 'knygą']) {
+      const input = page.locator('input[type="text"]');
+      await input.fill(answer);
+      await input.press('Enter');
+      await page.waitForTimeout(1200);
+    }
+
+    // Done screen should show pass banner and next lesson button
+    await expect(page.getByText(/Пройдено/)).toBeVisible({ timeout: 3000 });
+    await expect(page.getByText('Следующий урок →')).toBeVisible();
+  });
+
+  test('failing lesson shows retry recommendation, no next lesson button', async ({ page }) => {
+    await page.route('**/api/grammar/lessons', async (route) => {
+      await route.fulfill({ json: MOCK_LESSONS });
+    });
+    await page.route('**/api/grammar/lessons/1/tasks', async (route) => {
+      await route.fulfill({
+        json: [
+          { type: 'declension', prompt_lt: 'namas', prompt_ru: 'дом', case_name: 'Galininkas', number: 'vienaskaita', answer: 'namą' },
+          { type: 'declension', prompt_lt: 'knyga', prompt_ru: 'книга', case_name: 'Galininkas', number: 'vienaskaita', answer: 'knygą' },
+        ],
+      });
+    });
+    await page.route('**/api/grammar/lessons/1/results', async (route) => {
+      await route.fulfill({ json: { ok: true, passed: false } });
+    });
+
+    await page.goto('/dashboard/grammar');
+    await page.waitForSelector('.grid button', { timeout: 5000 });
+    await page.locator('.grid button').first().click();
+    await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 5000 });
+
+    // Answer both tasks wrong
+    for (let i = 0; i < 2; i++) {
+      const input = page.locator('input[type="text"]');
+      await input.fill('wrong');
+      await input.press('Enter');
+      await page.waitForTimeout(2200);
+    }
+
+    // Done screen should show fail banner, no "Следующий урок" button
+    await expect(page.getByText(/Результат ниже 75%/)).toBeVisible({ timeout: 3000 });
+    await expect(page.getByText('Следующий урок →')).not.toBeVisible();
+  });
+});
+
 test.describe('Practice page', () => {
   test('shows coming soon text', async ({ page }) => {
     await page.goto('/dashboard/practice');

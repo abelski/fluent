@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { BACKEND_URL } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 
@@ -19,6 +19,8 @@ interface Lesson {
   cases: number[];
   task_count: number;
   rules: GrammarRule[];
+  is_locked: boolean;
+  best_score_pct: number | null;
 }
 
 interface DeclensionTask {
@@ -165,13 +167,31 @@ export default function GrammarPage() {
   const [shownAnswer, setShownAnswer] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetch(`${BACKEND_URL}/api/grammar/lessons`)
+  const fetchLessons = useCallback(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('fluent_token') : null;
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+    fetch(`${BACKEND_URL}/api/grammar/lessons`, { headers })
       .then((r) => r.json())
       .then((data: Lesson[]) => setLessons(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchLessons();
+  }, [fetchLessons]);
+
+  function postResult(lessonId: number, score: number, total: number) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('fluent_token') : null;
+    if (!token) return;
+    fetch(`${BACKEND_URL}/api/grammar/lessons/${lessonId}/results`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ score, total }),
+    })
+      .then(() => fetchLessons()) // refresh locked status in background
+      .catch(() => {});
+  }
 
   function startLesson(lesson: Lesson) {
     setExerciseLoading(true);
@@ -199,18 +219,20 @@ export default function GrammarPage() {
     const isCorrect = normalizeLt(typed.trim()) === normalizeLt(task.answer);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     if (!isCorrect) {
-      setShownAnswer(
-        task.type === 'sentence' ? task.full_answer : task.answer
-      );
+      setShownAnswer(task.type === 'sentence' ? task.full_answer : task.answer);
     }
 
     const delay = isCorrect ? 1000 : 2000;
     setTimeout(() => {
-      if (isCorrect) setCorrect((c) => c + 1);
       const next = taskIndex + 1;
       if (next >= tasks.length) {
+        // Compute final score before state updates
+        const finalCorrect = isCorrect ? correct + 1 : correct;
+        if (activeLesson) postResult(activeLesson.id, finalCorrect, tasks.length);
+        if (isCorrect) setCorrect((c) => c + 1);
         setDone(true);
       } else {
+        if (isCorrect) setCorrect((c) => c + 1);
         setTaskIndex(next);
         setTyped('');
         setAnswerState('unanswered');
@@ -295,21 +317,49 @@ export default function GrammarPage() {
                     {isOpen && !cat.comingSoon && (
                       <div className="px-5 py-4 border-t border-white/[0.06]">
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                          {categoryLessons.map((lesson) => (
-                            <button
-                              key={lesson.id}
-                              onClick={() => startLesson(lesson)}
-                              className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 text-left hover:border-violet-500/40 transition-colors flex flex-col gap-3"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <span className="text-sm font-semibold leading-snug">{lesson.title}</span>
-                                <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${LEVEL_STYLES[lesson.level] ?? ''}`}>
-                                  {LEVEL_LABELS[lesson.level] ?? lesson.level}
-                                </span>
-                              </div>
-                              <div className="text-white/30 text-xs">{lesson.task_count} заданий</div>
-                            </button>
-                          ))}
+                          {categoryLessons.map((lesson) => {
+                            const locked = lesson.is_locked ?? false;
+                            const scorePct = lesson.best_score_pct;
+                            return (
+                              <button
+                                key={lesson.id}
+                                onClick={() => !locked && startLesson(lesson)}
+                                disabled={locked}
+                                data-testid={locked ? 'lesson-locked' : undefined}
+                                className={`bg-white/[0.04] border rounded-2xl p-5 text-left flex flex-col gap-3 transition-colors ${
+                                  locked
+                                    ? 'border-white/[0.04] opacity-40 cursor-not-allowed'
+                                    : 'border-white/[0.08] hover:border-violet-500/40 cursor-pointer'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <span className="text-sm font-semibold leading-snug flex items-center gap-2">
+                                    {locked && (
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-white/40 shrink-0">
+                                        <path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/>
+                                      </svg>
+                                    )}
+                                    {lesson.title}
+                                  </span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${LEVEL_STYLES[lesson.level] ?? ''}`}>
+                                    {LEVEL_LABELS[lesson.level] ?? lesson.level}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <div className="text-white/30 text-xs">{lesson.task_count} заданий</div>
+                                  {scorePct !== null && scorePct !== undefined && (
+                                    <div className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                      scorePct > 0.75
+                                        ? 'bg-emerald-500/10 text-emerald-400'
+                                        : 'bg-amber-500/10 text-amber-400'
+                                    }`}>
+                                      {Math.round(scorePct * 100)}%
+                                    </div>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -327,15 +377,37 @@ export default function GrammarPage() {
   if (done) {
     const total = tasks.length;
     const errors = total - correct;
+    const scorePct = total > 0 ? correct / total : 0;
+    const passed = scorePct > 0.75;
+
+    const currentIdx = lessons.findIndex((l) => l.id === activeLesson.id);
+    const nextLesson =
+      currentIdx >= 0 && currentIdx + 1 < lessons.length ? lessons[currentIdx + 1] : null;
+
     return (
       <main className="min-h-screen bg-[#07070f] text-white flex flex-col items-center justify-center px-6">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
           <div className="w-[600px] h-[400px] bg-violet-700/10 blur-[120px] rounded-full mt-[-100px]" />
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
-          <div className="text-5xl mb-6">🎉</div>
+          <div className="text-5xl mb-6">{passed ? '🎉' : '📚'}</div>
           <h1 className="text-2xl font-bold mb-2">Урок завершён!</h1>
-          <p className="text-white/40 mb-8">Верно {correct} из {total}</p>
+
+          {/* Pass/fail banner */}
+          {passed ? (
+            <div className="flex items-center justify-center gap-2 mb-4 bg-emerald-500/[0.08] border border-emerald-500/25 rounded-xl px-4 py-2">
+              <span className="text-emerald-400 text-sm font-semibold">✓ Пройдено — следующий урок разблокирован</span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1 mb-4 bg-amber-500/[0.08] border border-amber-500/25 rounded-xl px-4 py-3">
+              <span className="text-amber-400 text-sm font-semibold">Результат ниже 75%</span>
+              <span className="text-white/50 text-xs">Повторите урок, чтобы открыть следующий</span>
+            </div>
+          )}
+
+          <p className="text-white/40 mb-8">
+            Верно {correct} из {total} · <span className={passed ? 'text-emerald-400' : 'text-amber-400'}>{Math.round(scorePct * 100)}%</span>
+          </p>
 
           <div className="flex gap-4 justify-center mb-10">
             <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-6 sm:px-8 py-5 text-center">
@@ -349,9 +421,21 @@ export default function GrammarPage() {
           </div>
 
           <div className="flex flex-col gap-3">
+            {passed && nextLesson && (
+              <button
+                onClick={() => startLesson(nextLesson)}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium transition-colors"
+              >
+                Следующий урок →
+              </button>
+            )}
             <button
               onClick={() => startLesson(activeLesson)}
-              className="w-full py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition-colors"
+              className={`w-full py-3 rounded-xl font-medium transition-colors ${
+                passed
+                  ? 'bg-white/[0.06] hover:bg-white/[0.1] text-white/70'
+                  : 'bg-violet-600 hover:bg-violet-500'
+              }`}
             >
               Повторить
             </button>

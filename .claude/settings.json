@@ -10,7 +10,9 @@
       "Bash(curl -s http://localhost:3000/ -o /dev/null -w \"%{http_code}\")",
       "Bash(grep -r \"py-[0-9]\\\\|px-[0-9]\\\\|py-\\\\[[0-9]\\\\|px-\\\\[[0-9]\" /Users/Artur_Belski/Documents/src/fluent/frontend/app/dashboard/lists/[id]/study/page.tsx)",
       "Bash(pkill -f \"uvicorn\\\\|next\")",
-      "Read(//private/tmp/**)"
+      "Read(//private/tmp/**)",
+      "Bash(pkill -f \"uvicorn main:app\")",
+      "Bash(npm run:*)"
     ]
   }
 }

@@ -5,5 +5,6 @@
 from .user import User
 from .word import Word, WordList, WordListItem
 from .progress import UserWordProgress
+from .grammar import GrammarLessonResult
 
-__all__ = ["User", "Word", "WordList", "WordListItem", "UserWordProgress"]
+__all__ = ["User", "Word", "WordList", "WordListItem", "UserWordProgress", "GrammarLessonResult"]
