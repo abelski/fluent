@@ -28,3 +28,11 @@ client_secret_*.json
 *.pdf
 
 CLAUDE.md
+
+# Local planning docs
+plan/
+
+# Playwright test results
+frontend/test-results/
+backend/test-results/
+**/playwright-report/
