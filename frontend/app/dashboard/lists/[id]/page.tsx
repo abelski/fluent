@@ -45,7 +45,7 @@ export default function ListDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#060d07] flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -54,14 +54,14 @@ export default function ListDetailPage() {
   if (!list) return null;
 
   return (
-    <main className="bg-[#060d07] text-white">
+    <main className="bg-slate-50 text-gray-900">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        <div className="w-full max-w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <div className="mb-4">
-          <Link href="/dashboard/lists" className="text-white/40 hover:text-white text-sm transition-colors">
+          <Link href="/dashboard/lists" className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
             ← На главную
           </Link>
         </div>
@@ -70,20 +70,20 @@ export default function ListDetailPage() {
           <div>
             <h1 className="text-3xl font-bold">{list.title}</h1>
             {list.description && (
-              <p className="text-white/40 mt-1">{list.description}</p>
+              <p className="text-gray-400 mt-1">{list.description}</p>
             )}
-            <p className="text-white/30 text-sm mt-2">{list.words.length} слов</p>
+            <p className="text-gray-400 text-sm mt-2">{list.words.length} слов</p>
           </div>
           <button
             onClick={handleStudyClick}
-            className="shrink-0 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-colors font-medium text-sm"
+            className="shrink-0 px-6 py-3 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm text-white"
           >
             Учить →
           </button>
         </div>
 
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr_1fr_auto] text-xs text-white/30 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-white/[0.06]">
+        <div className="bg-white border border-gray-900 rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr_1fr_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-gray-900">
             <span>Литовский</span>
             <span>Перевод</span>
             <span className="hidden sm:block">Заметка</span>
@@ -92,12 +92,12 @@ export default function ListDetailPage() {
             <div
               key={word.id}
               className={`grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr_1fr_auto] px-4 sm:px-6 py-3.5 gap-4 items-center ${
-                i < list.words.length - 1 ? 'border-b border-white/[0.04]' : ''
+                i < list.words.length - 1 ? 'border-b border-gray-900' : ''
               }`}
             >
-              <span className="font-medium text-white">{word.lithuanian}</span>
-              <span className="text-white/60 text-sm">{word.translation_ru}</span>
-              <span className="text-white/25 text-xs hidden sm:block">{word.hint ?? ''}</span>
+              <span className="font-medium text-gray-900">{word.lithuanian}</span>
+              <span className="text-gray-500 text-sm">{word.translation_ru}</span>
+              <span className="text-gray-300 text-xs hidden sm:block">{word.hint ?? ''}</span>
             </div>
           ))}
         </div>

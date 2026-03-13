@@ -109,7 +109,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#060d07] flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -118,26 +118,26 @@ export default function AdminPage() {
   const openReports = reports.filter((r) => r.status === 'open').length;
 
   return (
-    <main className="bg-[#060d07] text-white min-h-screen">
+    <main className="bg-slate-50 text-gray-900 min-h-screen">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        <div className="w-full max-w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
         <h1 className="text-3xl font-bold mb-2">Администрирование</h1>
-        <p className="text-white/40 mb-6">Управление пользователями и Premium-доступом</p>
+        <p className="text-gray-400 mb-6">Управление пользователями и Premium-доступом</p>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1 w-fit mb-8">
+        <div className="flex gap-1 bg-gray-50 border border-gray-900 rounded-xl p-1 w-fit mb-8">
           <button
             onClick={() => setTab('users')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'users' ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'users' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
             Пользователи
           </button>
           <button
             onClick={() => setTab('reports')}
-            className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'reports' ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'}`}
+            className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'reports' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
             Жалобы
             {openReports > 0 && (
@@ -148,10 +148,10 @@ export default function AdminPage() {
 
         {/* ── Users tab ── */}
         {tab === 'users' && (
-          <div className="overflow-x-auto rounded-2xl border border-white/[0.08]">
+          <div className="overflow-x-auto rounded-2xl border border-gray-900">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.08] text-white/40 text-left">
+                <tr className="border-b border-gray-900 text-gray-400 text-left">
                   <th className="px-4 py-3 font-medium">Пользователь</th>
                   <th className="px-4 py-3 font-medium">Тариф</th>
                   <th className="px-4 py-3 font-medium hidden sm:table-cell">Premium до</th>
@@ -161,28 +161,28 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                  <tr key={u.id} className="border-b border-gray-900 hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-white truncate max-w-[180px]">{u.name}</p>
-                      <p className="text-white/30 text-xs truncate max-w-[180px]">{u.email}</p>
+                      <p className="font-medium text-gray-900 truncate max-w-[180px]">{u.name}</p>
+                      <p className="text-gray-400 text-xs truncate max-w-[180px]">{u.email}</p>
                     </td>
                     <td className="px-4 py-3">
                       {u.is_superadmin ? (
-                        <span className="text-xs font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-full px-2 py-0.5">Суперадмин</span>
+                        <span className="text-xs font-semibold text-rose-600 bg-rose-50 border border-gray-900 rounded-full px-2 py-0.5">Суперадмин</span>
                       ) : u.is_admin ? (
-                        <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">Админ</span>
+                        <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-gray-900 rounded-full px-2 py-0.5">Админ</span>
                       ) : u.premium_active ? (
-                        <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-0.5">Premium</span>
+                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-gray-900 rounded-full px-2 py-0.5">Premium</span>
                       ) : (
-                        <span className="text-xs font-semibold text-white/30 bg-white/[0.04] border border-white/10 rounded-full px-2 py-0.5">Basic</span>
+                        <span className="text-xs font-semibold text-gray-400 bg-white border border-gray-900 rounded-full px-2 py-0.5">Basic</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-white/40 hidden sm:table-cell">
+                    <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">
                       {u.premium_until
                         ? new Date(u.premium_until).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
                         : u.premium_active ? '∞' : '—'}
                     </td>
-                    <td className="px-4 py-3 text-white/40 hidden sm:table-cell">
+                    <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">
                       {u.sessions_today} / {u.daily_limit ?? '∞'}
                     </td>
                     <td className="px-4 py-3">
@@ -192,16 +192,16 @@ export default function AdminPage() {
                             type="date"
                             value={grantDate}
                             onChange={(e) => setGrantDate(e.target.value)}
-                            className="bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-emerald-500/50"
+                            className="bg-gray-100 border border-gray-900 rounded-lg px-2 py-1 text-sm text-gray-900 outline-none focus:border-gray-900"
                           />
                           <button
                             onClick={() => applyPremium(u.id, true, grantDate || null)}
                             disabled={saving}
-                            className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-medium transition-colors disabled:opacity-50"
+                            className="text-xs px-3 py-1.5 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
                           >
                             {saving ? '...' : 'Сохранить'}
                           </button>
-                          <button onClick={cancelEdit} className="text-xs px-2 py-1.5 text-white/40 hover:text-white transition-colors">
+                          <button onClick={cancelEdit} className="text-xs px-2 py-1.5 text-gray-400 hover:text-gray-900 transition-colors">
                             Отмена
                           </button>
                         </div>
@@ -210,14 +210,14 @@ export default function AdminPage() {
                           {u.premium_active ? (
                             <button
                               onClick={() => applyPremium(u.id, false, null)}
-                              className="text-xs px-3 py-1.5 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 rounded-lg transition-colors"
+                              className="text-xs px-3 py-1.5 text-red-600 hover:text-red-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
                             >
                               Отозвать
                             </button>
                           ) : null}
                           <button
                             onClick={() => startGrant(u.id)}
-                            className="text-xs px-3 py-1.5 text-emerald-400 hover:text-emerald-300 border border-emerald-500/20 hover:border-emerald-500/40 rounded-lg transition-colors"
+                            className="text-xs px-3 py-1.5 text-emerald-600 hover:text-emerald-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
                           >
                             {u.premium_active ? 'Продлить' : 'Выдать Premium'}
                           </button>
@@ -227,8 +227,8 @@ export default function AdminPage() {
                               disabled={saving}
                               className={`text-xs px-3 py-1.5 border rounded-lg transition-colors disabled:opacity-50 ${
                                 u.is_admin
-                                  ? 'text-amber-400 hover:text-amber-300 border-amber-500/20 hover:border-amber-500/40'
-                                  : 'text-amber-400/60 hover:text-amber-400 border-amber-500/10 hover:border-amber-500/30'
+                                  ? 'text-amber-600 hover:text-amber-700 border-gray-900 hover:border-gray-900'
+                                  : 'text-amber-500 hover:text-amber-600 border-amber-500/10 hover:border-gray-900'
                               }`}
                             >
                               {u.is_admin ? 'Снять админа' : 'Назначить админом'}
@@ -248,40 +248,40 @@ export default function AdminPage() {
         {tab === 'reports' && (
           <div className="flex flex-col gap-3">
             {reports.length === 0 && (
-              <p className="text-white/30 text-sm py-8 text-center">Жалоб пока нет.</p>
+              <p className="text-gray-400 text-sm py-8 text-center">Жалоб пока нет.</p>
             )}
             {reports.map((r) => (
               <div
                 key={r.id}
                 className={`rounded-2xl border p-4 transition-colors ${
-                  r.status === 'resolved' ? 'border-white/[0.04] bg-white/[0.01] opacity-50' : 'border-white/[0.08] bg-white/[0.03]'
+                  r.status === 'resolved' ? 'border-gray-900 bg-white opacity-50' : 'border-gray-900 bg-gray-50'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-white/60 truncate">{r.user_name}</span>
-                      <span className="text-white/20 text-xs">·</span>
-                      <span className="text-white/30 text-xs">{new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
+                      <span className="text-xs font-medium text-gray-500 truncate">{r.user_name}</span>
+                      <span className="text-gray-300 text-xs">·</span>
+                      <span className="text-gray-400 text-xs">{new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
                       {r.context && (
                         <>
-                          <span className="text-white/20 text-xs">·</span>
-                          <span className="text-xs text-emerald-400/60 font-mono">{r.context}</span>
+                          <span className="text-gray-300 text-xs">·</span>
+                          <span className="text-xs text-emerald-500 font-mono">{r.context}</span>
                         </>
                       )}
                     </div>
-                    <p className="text-white text-sm">{r.description}</p>
+                    <p className="text-gray-900 text-sm">{r.description}</p>
                   </div>
                   {r.status === 'open' && (
                     <button
                       onClick={() => resolveReport(r.id)}
-                      className="shrink-0 text-xs px-3 py-1.5 text-emerald-400 hover:text-emerald-300 border border-emerald-500/20 hover:border-emerald-500/40 rounded-lg transition-colors"
+                      className="shrink-0 text-xs px-3 py-1.5 text-emerald-600 hover:text-emerald-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
                     >
                       Решено
                     </button>
                   )}
                   {r.status === 'resolved' && (
-                    <span className="shrink-0 text-xs text-white/20">✓ Решено</span>
+                    <span className="shrink-0 text-xs text-gray-300">✓ Решено</span>
                   )}
                 </div>
               </div>

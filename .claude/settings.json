@@ -26,7 +26,9 @@
       "Bash(python -m pytest tests/ -q)",
       "Bash(pkill -f \"next dev\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
-      "Bash(curl -sL http://localhost:8000/dashboard/lists)"
+      "Bash(curl -sL http://localhost:8000/dashboard/lists)",
+      "Bash(sed -i '' 's/bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors font-medium\"\"/bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors font-medium text-white\"\"/g' frontend/app/dashboard/lists/page.tsx)",
+      "Bash(sed -i '' 's/bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm\"\"/bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm text-white\"\"/g' frontend/app/dashboard/lists/[id]/page.tsx)"
     ]
   }
 }

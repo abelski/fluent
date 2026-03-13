@@ -87,7 +87,7 @@ export default function Header() {
       <Link
         href="/dashboard/lists"
         className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          listsActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
+          listsActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
         }`}
       >
         Словари
@@ -95,18 +95,18 @@ export default function Header() {
       <Link
         href="/dashboard/grammar"
         className={`relative px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          grammarActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
+          grammarActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
         }`}
       >
         Грамматика
-        <span className="ml-1.5 inline-block text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded px-1 py-px leading-tight align-middle">
+        <span className="ml-1.5 inline-block text-[9px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-600 border border-gray-900 rounded px-1 py-px leading-tight align-middle">
           тестирование
         </span>
       </Link>
       <Link
         href="/dashboard/practice"
         className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          practiceActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
+          practiceActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
         }`}
       >
         Практика
@@ -115,15 +115,15 @@ export default function Header() {
   );
 
   return (
-    <header className="relative z-20 border-b border-white/10 bg-[#060d07] sticky top-0">
+    <header className="relative z-20 border-b border-gray-900 bg-slate-50 sticky top-0">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
         <Link href="/dashboard/lists" className="font-bold text-[1.75rem] tracking-tight shrink-0 leading-none">
-          fluent<span className="text-emerald-400">.</span>
+          fluent<span className="text-emerald-600">.</span>
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden sm:flex gap-1 bg-white/[0.05] border border-white/10 rounded-xl p-1 shrink-0">
+        <nav className="hidden sm:flex gap-1 bg-gray-50 border border-gray-900 rounded-xl p-1 shrink-0">
           {navLinks}
         </nav>
 
@@ -133,11 +133,11 @@ export default function Header() {
             <button
               disabled
               data-testid="lang-toggle"
-              className="text-xs font-medium px-2 py-1 rounded-lg border border-white/[0.06] text-white/20 cursor-not-allowed"
+              className="text-xs font-medium px-2 py-1 rounded-lg border border-gray-900 text-gray-300 cursor-not-allowed"
             >
               EN
             </button>
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap text-[10px] bg-[#0f1a10] border border-white/10 text-white/40 rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap text-[10px] bg-gray-800 border border-gray-700 text-gray-300 rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               скоро
             </span>
           </div>
@@ -145,7 +145,7 @@ export default function Header() {
           {isAuthed === false && (
             <a
               href={`${BACKEND_URL}/api/auth/google`}
-              className="flex items-center gap-2 bg-white text-gray-800 font-medium px-4 py-2.5 rounded-xl text-sm hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-2 bg-white text-gray-800 font-medium px-4 py-2.5 rounded-xl text-sm ring-1 ring-gray-900 shadow-sm hover:bg-gray-50 transition-colors"
             >
               <GoogleIcon />
               Войти
@@ -161,7 +161,7 @@ export default function Header() {
                   <img
                     src={user.picture}
                     alt={user.name}
-                    className="w-8 h-8 rounded-full ring-1 ring-white/20"
+                    className="w-8 h-8 rounded-full ring-1 ring-gray-900"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
@@ -169,32 +169,32 @@ export default function Header() {
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="text-white/60 text-sm hidden sm:block">{user.name}</span>
+                <span className="text-gray-500 text-sm hidden sm:block">{user.name}</span>
                 <svg
                   width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
-                  className={`text-white/30 transition-transform hidden sm:block ${menuOpen ? 'rotate-180' : ''}`}
+                  className={`text-gray-400 transition-transform hidden sm:block ${menuOpen ? 'rotate-180' : ''}`}
                 >
                   <path d="M6 8L1 3h10L6 8z" />
                 </svg>
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-44 bg-[#080f08] border border-white/10 rounded-xl shadow-xl overflow-hidden">
-                  <div className="px-4 py-3 border-b border-white/[0.06]">
-                    <p className="text-white text-sm font-medium truncate">{user.name}</p>
+                <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-900 rounded-xl shadow-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-900">
+                    <p className="text-gray-900 text-sm font-medium truncate">{user.name}</p>
                   </div>
                   {isAdmin && (
                     <Link
                       href="/dashboard/admin"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-3 text-sm text-amber-400/80 hover:text-amber-400 hover:bg-white/[0.05] transition-colors"
+                      className="block px-4 py-3 text-sm text-amber-600 hover:text-amber-600 hover:bg-gray-50 transition-colors"
                     >
                       Администрирование
                     </Link>
                   )}
                   <button
                     onClick={logout}
-                    className="w-full text-left px-4 py-3 text-sm text-white/50 hover:text-white hover:bg-white/[0.05] transition-colors"
+                    className="w-full text-left px-4 py-3 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                   >
                     Выйти
                   </button>
@@ -209,16 +209,16 @@ export default function Header() {
             onClick={() => setMobileNavOpen((o) => !o)}
             aria-label="Меню"
           >
-            <span className={`block w-5 h-0.5 bg-white/70 transition-all duration-200 ${mobileNavOpen ? 'rotate-45 translate-y-2' : ''}`} />
-            <span className={`block w-5 h-0.5 bg-white/70 transition-all duration-200 ${mobileNavOpen ? 'opacity-0' : ''}`} />
-            <span className={`block w-5 h-0.5 bg-white/70 transition-all duration-200 ${mobileNavOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+            <span className={`block w-5 h-0.5 bg-gray-600 transition-all duration-200 ${mobileNavOpen ? 'rotate-45 translate-y-2' : ''}`} />
+            <span className={`block w-5 h-0.5 bg-gray-600 transition-all duration-200 ${mobileNavOpen ? 'opacity-0' : ''}`} />
+            <span className={`block w-5 h-0.5 bg-gray-600 transition-all duration-200 ${mobileNavOpen ? '-rotate-45 -translate-y-2' : ''}`} />
           </button>
         </div>
       </div>
 
       {/* Mobile nav dropdown */}
       {mobileNavOpen && (
-        <div className="sm:hidden border-t border-white/10 bg-[#060d07] px-4 py-3 flex flex-col gap-1">
+        <div className="sm:hidden border-t border-gray-900 bg-slate-50 px-4 py-3 flex flex-col gap-1">
           {navLinks}
         </div>
       )}

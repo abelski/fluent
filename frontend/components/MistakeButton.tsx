@@ -51,7 +51,7 @@ export default function MistakeButton({ context }: Props) {
       <button
         onClick={() => setOpen(true)}
         data-testid="mistake-button"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-full px-3 py-2 transition-colors"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-900 rounded-full px-3 py-2 transition-colors shadow-sm"
       >
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="8" cy="8" r="7" />
@@ -66,14 +66,14 @@ export default function MistakeButton({ context }: Props) {
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
         >
-          <div className="bg-[#080f08] border border-white/10 rounded-2xl w-full max-w-sm p-5 shadow-xl">
-            <h3 className="text-white font-semibold mb-1">Сообщить об ошибке</h3>
-            <p className="text-white/40 text-xs mb-4">
+          <div className="bg-white border border-gray-900 rounded-2xl w-full max-w-sm p-5 shadow-xl">
+            <h3 className="text-gray-900 font-semibold mb-1">Сообщить об ошибке</h3>
+            <p className="text-gray-400 text-xs mb-4">
               Опишите, что не так — мы исправим как можно скорее.
             </p>
 
             {sent ? (
-              <p className="text-emerald-400 text-sm text-center py-4">Спасибо! Отчёт отправлен.</p>
+              <p className="text-emerald-600 text-sm text-center py-4">Спасибо! Отчёт отправлен.</p>
             ) : (
               <>
                 <textarea
@@ -81,12 +81,12 @@ export default function MistakeButton({ context }: Props) {
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Например: неверный перевод слова..."
                   rows={3}
-                  className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50 resize-none mb-3"
+                  className="w-full bg-gray-100 border border-gray-900 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 resize-none mb-3"
                 />
                 <div className="flex gap-2 justify-end">
                   <button
                     onClick={() => setOpen(false)}
-                    className="text-xs px-3 py-2 text-white/40 hover:text-white transition-colors"
+                    className="text-xs px-3 py-2 text-gray-400 hover:text-gray-900 transition-colors"
                   >
                     Отмена
                   </button>
@@ -94,7 +94,7 @@ export default function MistakeButton({ context }: Props) {
                     onClick={submit}
                     disabled={sending || !text.trim()}
                     data-testid="mistake-submit"
-                    className="text-xs px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    className="text-xs px-4 py-2 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
                   >
                     {sending ? '...' : 'Отправить'}
                   </button>

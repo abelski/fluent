@@ -47,28 +47,28 @@ export default function StatsBar() {
   return (
     <div className="relative mb-10 rounded-2xl overflow-hidden">
       {/* glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 via-emerald-500/10 to-transparent pointer-events-none" />
-      <div className="absolute inset-px rounded-2xl bg-[#060d07]/60 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-200/40 via-emerald-100/30 to-transparent pointer-events-none" />
+      <div className="absolute inset-px rounded-2xl bg-white/80 pointer-events-none" />
 
-      <div className="relative border border-emerald-500/25 rounded-2xl px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="relative border border-gray-900 rounded-2xl px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
         {/* stats */}
         <div className="flex items-center gap-6 flex-1">
           <div className="flex items-center gap-3">
             <span className="text-2xl leading-none">📚</span>
             <div>
-              <p className="text-2xl font-bold text-white leading-none">{stats.known}</p>
-              <p className="text-white/40 text-xs mt-0.5">слов выучено</p>
+              <p className="text-2xl font-bold text-gray-900 leading-none">{stats.known}</p>
+              <p className="text-gray-400 text-xs mt-0.5">слов выучено</p>
             </div>
           </div>
 
           {stats.streak > 0 && (
             <>
-              <div className="w-px h-8 bg-white/10 hidden sm:block" />
+              <div className="w-px h-8 bg-gray-200 hidden sm:block" />
               <div className="flex items-center gap-3">
                 <span className="text-2xl leading-none">🔥</span>
                 <div>
-                  <p className="text-2xl font-bold text-white leading-none">{stats.streak}</p>
-                  <p className="text-white/40 text-xs mt-0.5">{streakLabel(stats.streak)}</p>
+                  <p className="text-2xl font-bold text-gray-900 leading-none">{stats.streak}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">{streakLabel(stats.streak)}</p>
                 </div>
               </div>
             </>
@@ -76,7 +76,7 @@ export default function StatsBar() {
         </div>
 
         {/* motivation */}
-        <p className="text-emerald-300/80 text-sm font-medium sm:text-right">
+        <p className="text-emerald-600 text-sm font-medium sm:text-right">
           {motivation(stats.known, stats.streak)}
         </p>
       </div>

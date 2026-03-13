@@ -14,22 +14,22 @@ export default function LoginPage() {
   }, [router]);
 
   return (
-    <main className="min-h-screen bg-[#060d07] text-white flex flex-col items-center justify-center px-6">
+    <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-        <div className="w-[600px] h-[400px] bg-emerald-700/10 blur-[120px] rounded-full mt-[-100px]" />
+        <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-sm w-full text-center">
         <div className="text-5xl mb-6">📊</div>
         <h1 className="text-2xl font-bold mb-3">Войдите, чтобы учиться</h1>
-        <p className="text-white/40 text-sm leading-relaxed mb-8">
+        <p className="text-gray-400 text-sm leading-relaxed mb-8">
           Это бесплатно. Нам нужен аккаунт только чтобы сохранять ваш прогресс
           и показывать статистику — какие слова вы уже знаете, а какие стоит повторить.
         </p>
 
         <a
           href={`${BACKEND_URL}/api/auth/google`}
-          className="flex items-center justify-center gap-3 w-full py-3.5 bg-white text-[#060d07] font-medium rounded-xl hover:bg-white/90 transition-colors"
+          className="flex items-center justify-center gap-3 w-full py-3.5 bg-white text-gray-800 font-medium rounded-xl ring-1 ring-gray-900 shadow-sm hover:bg-gray-50 transition-colors"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -42,7 +42,7 @@ export default function LoginPage() {
 
         <button
           onClick={() => router.back()}
-          className="mt-4 w-full py-2.5 text-white/30 hover:text-white text-sm transition-colors"
+          className="mt-4 w-full py-2.5 text-gray-400 hover:text-gray-900 text-sm transition-colors"
         >
           ← Назад
         </button>
