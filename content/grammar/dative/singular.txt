@@ -1,0 +1,24 @@
+# case_index: 3
+# name:       Дательный (Naudininkas)
+# question:   Кому? Чему?
+# usage:      Косвенное дополнение — кому что-то дают, предназначают или для кого делают.
+# endings:    -ui, -iui, -ai, -ei, -ui (sg) / -ams, -iams, -oms, -ėms, -ums (pl)
+
+# display | answer_ending | full_word | russian
+Tai reikalinga brol___. | iui | broliui | Это нужно брату.
+Tai reikalinga draug___. | ui | draugui | Это нужно другу.
+Tai reikalinga senel___. | iui | seneliui | Это нужно дедушке.
+Tai reikalinga sūn___. | ui | sūnui | Это нужно сыну.
+Mama duoda knygą brol___. | iui | broliui | Мама даёт книгу брату.
+Mama duoda tortą sūn___. | ui | sūnui | Мама даёт торт сыну.
+Petras davė gėles draug___. | ei | draugei | Пятрас дал цветы подруге.
+Aš daviau knygą mam___. | ai | mamai | Я дал(а) книгу маме.
+Rasa davė tortą senel___. | iui | seneliui | Раса дала торт дедушке.
+Petras padovanojo knygą profesor___. | iui | profesoriui | Пятрас подарил книгу профессору.
+Tai reikalinga profesor___. | iui | profesoriui | Это нужно профессору.
+Mama davė sumuštinį sūn___. | ui | sūnui | Мама дала бутерброд сыну.
+Tai reikalinga aktor___. | iui | aktoriui | Это нужно актёру.
+Jonas padovanojo žiedą draug___. | ei | draugei | Йонас подарил кольцо подруге.
+Tai reikalinga sveč___. | iui | svečiui | Это нужно гостю.
+Mama duoda obuolį senel___. | iui | seneliui | Мама даёт яблоко дедушке.
+Rasa davė gėles mam___. | ai | mamai | Раса дала цветы маме.

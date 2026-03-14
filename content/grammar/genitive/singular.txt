@@ -1,0 +1,29 @@
+# case_index: 2
+# name:       Родительный (Kilmininkas)
+# question:   Кого? Чего?
+# usage:      Отрицание (nėra + род.), принадлежность, после предлогов iš, be, prie, šalia, iki, pas.
+# endings:    -o, -io, -os, -ės, -aus, -ies (sg) / -ų (pl)
+
+# display | answer_ending | full_word | russian
+Ten nėra nam___. | o | namo | Там нет дома.
+Šalia draug___ yra parduotuvė. | o | draugo | Рядом с другом есть магазин.
+Šalia universitet___ yra kavinė. | o | universiteto | Рядом с университетом есть кафе.
+Ten nėra brol___. | io | brolio | Там нет брата.
+Ten nėra knyg___. | os | knygos | Там нет книги.
+Rasa ieško draug___. | ės | draugės | Раса ищет подругу.
+Mama ieško sūn___. | aus | sūnaus | Мама ищет сына.
+Šalia muziej___ yra kavinė. | aus | muziejaus | Рядом с музеем есть кафе.
+Šalia turg___ yra parduotuvė. | aus | turgaus | Рядом с рынком есть магазин.
+Šalia katedr___ yra restoranas. | os | katedros | Рядом с собором есть ресторан.
+Šalia bažnyč___ yra parduotuvė. | ios | bažnyčios | Рядом с церковью есть магазин.
+Šalia aikšt___ yra restoranas. | ės | aikštės | Рядом с площадью есть ресторан.
+Šalia stot___ yra viešbutis. | ies | stoties | Рядом с вокзалом есть гостиница.
+Ten nėra sod___. | o | sodo | Там нет сада.
+Ten nėra obuol___. | io | obuolio | Там нет яблока.
+Ten nėra profesor___. | iaus | profesoriaus | Там нет профессора.
+Petras ieško draug___. | o | draugo | Пятрас ищет друга.
+Ten nėra aktor___. | iaus | aktoriaus | Там нет актёра.
+Ona neturi knyg___. | os | knygos | У Оны нет книги.
+Šalia rotuš___ yra kavinė. | ės | rotušės | Рядом с ратушей есть кафе.
+Ten nėra draug___. | ės | draugės | Там нет подруги.
+Petras ieško sūn___. | aus | sūnaus | Пятрас ищет сына.

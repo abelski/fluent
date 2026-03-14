@@ -29,8 +29,10 @@ class WordList(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
     description: Optional[str] = None
+    subcategory: Optional[str] = None  # parent folder name from content/vocabulary/<subcategory>/
     is_public: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    archived: bool = Field(default=False)  # soft-delete: hide but preserve FK integrity
 
 
 class Word(SQLModel, table=True):
@@ -42,6 +44,7 @@ class Word(SQLModel, table=True):
     translation_en: str
     translation_ru: str
     hint: Optional[str] = None  # e.g. "m. / f." or grammatical note
+    archived: bool = Field(default=False)  # soft-delete: hide but preserve FK integrity
 
 
 class WordListItem(SQLModel, table=True):
@@ -94,6 +97,19 @@ class MistakeReport(SQLModel, table=True):
     description: str = Field(default="")
     status: str = Field(default="open")  # open | resolved
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class GrammarSentence(SQLModel, table=True):
+    """A fill-in-the-gap sentence exercise loaded from content/grammar/ text files.
+    Keyed by case_index (1-14) which matches LESSON_CONFIG in grammar/lessons.py."""
+    __tablename__ = "grammar_sentence"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    case_index: int = Field(index=True)       # 1-14, links to lesson config
+    display: str                               # "Laima mato brol___."
+    answer_ending: str                         # "į"
+    full_word: str                             # "brolį"
+    russian: str                               # "Лайма видит брата."
+    archived: bool = Field(default=False)      # soft-delete: keep row, hide from exercises
 
 
 class GrammarLessonResult(SQLModel, table=True):

@@ -1,0 +1,59 @@
+# Description: Город и места
+
+# lithuanian | english | russian | hint
+sostinė | capital (city) | столица | daiktavardis
+miestas | city / town | город | daiktavardis
+centras | centre | центр | daiktavardis
+senamiestis | old town | старый город | daiktavardis
+adresas | address | адрес | daiktavardis
+telefonas | telephone | телефон | daiktavardis
+namas | house / building | дом | daiktavardis
+butas | apartment / flat | квартира | daiktavardis
+kambarys | room | комната | daiktavardis
+bendrabutis | dormitory | общежитие | daiktavardis
+viešbutis | hotel | гостиница | daiktavardis
+bažnyčia | church | церковь | daiktavardis
+ambasada | embassy | посольство | daiktavardis
+bankas | bank | банк | daiktavardis
+paštas | post office | почта | daiktavardis
+ministerija | ministry | министерство | daiktavardis
+biuras | office / bureau | офис / бюро | daiktavardis
+universitetas | university | университет | daiktavardis
+mokykla | school | школа | daiktavardis
+vaikų darželis | nursery school / kindergarten | детский сад | daiktavardis
+biblioteka | library | библиотека | daiktavardis
+knygynas | bookstore | книжный магазин | daiktavardis
+restoranas | restaurant | ресторан | daiktavardis
+baras | bar | бар | daiktavardis
+kavinė | cafe | кафе | daiktavardis
+valgykla | canteen | столовая | daiktavardis
+prekybos centras | shopping centre | торговый центр | daiktavardis
+parduotuvė | shop / store | магазин | daiktavardis
+kioskas | kiosk | киоск | daiktavardis
+turgus | market | рынок | daiktavardis
+kirpykla | hairdresser's | парикмахерская | daiktavardis
+grožio salonas | beauty salon | салон красоты | daiktavardis
+kino teatras | cinema | кинотеатр | daiktavardis
+teatras | theatre | театр | daiktavardis
+muziejus | museum | музей | daiktavardis
+pilis | castle | замок | daiktavardis
+sporto klubas | gym / sports club | спортивный клуб | daiktavardis
+ligoninė | hospital | больница | daiktavardis
+klinika | clinic | клиника | daiktavardis
+vaistinė | pharmacy | аптека | daiktavardis
+gatvė | street | улица | daiktavardis
+alėja | alley / boulevard | аллея | daiktavardis
+prospektas | avenue / prospect | проспект | daiktavardis
+aikštė | square | площадь | daiktavardis
+oro uostas | airport | аэропорт | daiktavardis
+stotis | station | станция / вокзал | daiktavardis
+autobusų stotis | bus station | автобусный вокзал | daiktavardis
+geležinkelio stotis | railway station | железнодорожный вокзал | daiktavardis
+stotelė | bus/tram stop | остановка | daiktavardis
+darbas | work / job | работа | daiktavardis
+upė | river | река | daiktavardis
+tiltas | bridge | мост | daiktavardis
+ežeras | lake | озеро | daiktavardis
+jūra | sea | море | daiktavardis
+parkas | park | парк | daiktavardis
+miškas | forest / woods | лес | daiktavardis

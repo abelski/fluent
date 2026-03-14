@@ -10,6 +10,7 @@ test.describe('Mistake button', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript((token) => {
       localStorage.setItem('fluent_token', token);
+      localStorage.setItem('cookie_consent', 'accepted');
     }, makeFakeJwt('Test User'));
     // Mock quota so Header doesn't error
     await page.route('**/api/me/quota', async (route) => {

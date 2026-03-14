@@ -1,0 +1,20 @@
+# case_index: 7
+# name:       Звательный (Šauksmininkas)
+# question:   Эй, ...!
+# usage:      Прямое обращение к человеку или существу. Используется только в речи.
+# endings:    -e, -ai, -a, -ė (sg) / -ai, -iai, -os, -ės (pl)
+
+# display | answer_ending | full_word | russian
+Sveiki, brol___! | i | broli | Привет, брат!
+Ačiū, senel___! | i | seneli | Спасибо, дедушка!
+Labas, draug___! | e | drauge | Привет, друг!
+Sveiki, profesor___! | iau | profesoriau | Привет, профессор!
+Ačiū, aktor___! | iau | aktoriau | Спасибо, актёр!
+Labas, mam___! | a | mama | Привет, мама!
+Sveiki, tėvel___! | i | tėveli | Привет, папочка!
+Labas, sūn___! | au | sūnau | Привет, сын!
+Ačiū, dukt___! | e | dukte | Спасибо, дочь!
+Sveiki, močiut___! | e | močiute | Привет, бабушка!
+Ačiū, dukr___! | a | dukra | Спасибо, дочь!
+Labas, padavėj___! | a | padavėja | Привет, официантка!
+Sveiki, draug___! | e | drauge | Привет, подруга!

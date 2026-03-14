@@ -1,0 +1,18 @@
+# case_index: 10
+# name:       Дательный мн.ч. (Naudininkas Dgs.)
+# question:   Кому? (мн.ч.)
+# usage:      Косвенное дополнение во множественном числе.
+# endings:    — (sg) / -ams, -iams, -oms, -ėms, -ums (pl)
+
+# display | answer_ending | full_word | russian
+Tai reikalinga draug___. | ams | draugams | Это нужно друзьям.
+Petras padovanojo knygas senel___. | iams | seneliams | Пятрас подарил книги дедушкам.
+Tai reikalinga profesor___. | iams | profesoriams | Это нужно профессорам.
+Mama davė tortą brol___. | iams | broliams | Мама дала торт братьям.
+Jonas pasakė sveč___. | iams | svečiams | Йонас сказал гостям.
+Tai reikalinga aktor___. | iams | aktoriams | Это нужно актёрам.
+Petras padovanojo gėles draug___. | ėms | draugėms | Пятрас подарил цветы подругам.
+Mama davė obuolius brol___. | iams | broliams | Мама дала яблоки братьям.
+Tai reikalinga senel___. | iams | seneliams | Это нужно дедушкам.
+Rasa davė knygas sūn___. | ums | sūnums | Раса дала книги сыновьям.
+Mama duoda tortus senel___. | iams | seneliams | Мама даёт торты дедушкам.

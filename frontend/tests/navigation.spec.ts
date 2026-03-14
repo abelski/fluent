@@ -31,7 +31,7 @@ test.describe('Navigation', () => {
     await setFakeToken(page);
     await page.goto('/dashboard/lists');
     const link = page.getByRole('link', { name: 'Словари' });
-    await expect(link).toHaveClass(/bg-white\/10/);
+    await expect(link).toHaveClass(/bg-gray-100/);
   });
 
   test('Грамматика link navigates to grammar page', async ({ page }) => {
@@ -39,7 +39,7 @@ test.describe('Navigation', () => {
     await page.goto('/dashboard/lists');
     await page.getByRole('link', { name: /Грамматика/ }).click();
     await expect(page).toHaveURL(/\/dashboard\/grammar/);
-    await expect(page.getByRole('link', { name: /Грамматика/ })).toHaveClass(/bg-white\/10/);
+    await expect(page.getByRole('link', { name: /Грамматика/ })).toHaveClass(/bg-gray-100/);
   });
 
   test('Грамматика nav link shows тестирование badge', async ({ page }) => {
@@ -53,7 +53,7 @@ test.describe('Navigation', () => {
     await page.goto('/dashboard/lists');
     await page.getByRole('link', { name: 'Практика' }).click();
     await expect(page).toHaveURL(/\/dashboard\/practice/);
-    await expect(page.getByRole('link', { name: 'Практика' })).toHaveClass(/bg-white\/10/);
+    await expect(page.getByRole('link', { name: 'Практика' })).toHaveClass(/bg-gray-100/);
   });
 });
 

@@ -9,7 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from auth import router as auth_router
@@ -113,11 +113,15 @@ def _resolve_static(path: str) -> Path | None:
 
 
 @app.get("/{full_path:path}")
-async def serve_frontend(full_path: str):
+async def serve_frontend(full_path: str, request: Request):
     # Catch-all route that serves the static Next.js frontend for any path
     # not matched by the /api/* routes above.
     if DEV_MODE:
-        return RedirectResponse(f"{FRONTEND_URL}/{full_path}")
+        qs = request.url.query
+        url = f"{FRONTEND_URL}/{full_path}"
+        if qs:
+            url += f"?{qs}"
+        return RedirectResponse(url)
     if not OUT_DIR.exists():
         raise HTTPException(status_code=503, detail="Frontend not built")
 

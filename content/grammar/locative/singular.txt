@@ -1,0 +1,27 @@
+# case_index: 6
+# name:       Местный (Vietininkas)
+# question:   В ком? В чём? Где?
+# usage:      Местонахождение внутри чего-то. Отвечает на вопрос «где?» (в доме, в городе).
+# endings:    -e, -yje, -oje, -ėje, -uje (sg) / -uose, -iuose, -ose, -ėse (pl)
+
+# display | answer_ending | full_word | russian
+Mama dirba universitet___. | e | universitete | Мама работает в университете.
+Jie gyvena rajon___. | e | rajone | Они живут в районе.
+Mama dirba turg___. | uje | turguje | Мама работает на рынке.
+Jie gyvena sodyb___. | oje | sodyboje | Они живут в усадьбе.
+Vaikai žaidžia sod___. | e | sode | Дети играют в саду.
+Mama dirba centr___. | e | centre | Мама работает в центре.
+Jis gyvena nam___. | e | name | Он живёт дома.
+Petras dirba muziej___. | uje | muziejuje | Пятрас работает в музее.
+Jie susitinka aikšt___. | ėje | aikštėje | Они встречаются на площади.
+Vaikai žaidžia gatv___. | ėje | gatvėje | Дети играют на улице.
+Mama laukia stot___. | yje | stotyje | Мама ждёт на вокзале.
+Jonas gyvena pil___. | yje | pilyje | Йонас живёт в замке.
+Jie susitinka rotuš___. | ėje | rotušėje | Они встречаются у ратуши.
+Vaikai mokosi universitet___. | e | universitete | Дети учатся в университете.
+Mama dirba bažnyč___. | ioje | bažnyčioje | Мама работает в церкви.
+Jonas gyvena rajon___. | e | rajone | Йонас живёт в районе.
+Rasa dirba turg___. | uje | turguje | Раса работает на рынке.
+Jie susitinka centr___. | e | centre | Они встречаются в центре.
+Vaikai žaidžia kambar___. | yje | kambaryje | Дети играют в комнате.
+Petras gyvena sodyb___. | oje | sodyboje | Пятрас живёт в усадьбе.

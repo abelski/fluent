@@ -50,11 +50,12 @@ def _require_user(authorization: Optional[str], session: Session) -> User:
 
 
 def _list_words(list_id: int, session: Session) -> list[dict]:
-    """Fetch all words in a list ordered by their position in that list."""
+    """Fetch all active (non-archived) words in a list ordered by their position."""
     rows = session.exec(
         select(Word)
         .join(WordListItem, WordListItem.word_id == Word.id)
         .where(WordListItem.word_list_id == list_id)
+        .where(Word.archived == False)  # noqa: E712
         .order_by(WordListItem.position)
     ).all()
     return [
@@ -73,7 +74,9 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
 def get_lists(session: Session = Depends(get_session)):
     """Return all public word lists with their word counts.
     Word counts are fetched in a single aggregation query to avoid N+1."""
-    lists = session.exec(select(WordList).where(WordList.is_public == True)).all()
+    lists = session.exec(
+        select(WordList).where(WordList.is_public == True, WordList.archived == False)  # noqa: E712
+    ).all()
     # Single aggregation query to get word counts for all lists at once
     counts = dict(
         session.exec(
@@ -96,7 +99,7 @@ def get_lists(session: Session = Depends(get_session)):
 def get_list(list_id: int, session: Session = Depends(get_session)):
     """Return a single list with all its words. Used on the list detail page."""
     wl = session.get(WordList, list_id)
-    if not wl:
+    if not wl or wl.archived:
         raise HTTPException(status_code=404, detail="List not found")
     return {
         "id": wl.id,
@@ -137,7 +140,7 @@ def get_study_words(
     Either way at most QUIZ_SIZE words are returned.
     """
     wl = session.get(WordList, list_id)
-    if not wl:
+    if not wl or wl.archived:
         raise HTTPException(status_code=404, detail="List not found")
 
     all_words = _list_words(list_id, session)
@@ -215,7 +218,7 @@ def get_list_progress(
     """Return the authenticated user's progress breakdown for a single list.
     Used to show the progress bar on the list detail page."""
     wl = session.get(WordList, list_id)
-    if not wl:
+    if not wl or wl.archived:
         raise HTTPException(status_code=404, detail="List not found")
     user = _require_user(authorization, session)
     word_ids = [w["id"] for w in _list_words(list_id, session)]

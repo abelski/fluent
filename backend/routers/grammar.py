@@ -83,13 +83,13 @@ def list_lessons(
 
 
 @router.get("/grammar/lessons/{lesson_id}/tasks")
-def lesson_tasks(lesson_id: int):
+def lesson_tasks(lesson_id: int, session: Session = Depends(get_session)):
     """Return a freshly generated set of tasks for the given lesson.
 
     Tasks are randomized on every call so students get variety each session.
     Returns 404 if the lesson_id doesn't match any entry in LESSON_CONFIG.
     """
-    tasks = get_lesson_tasks(lesson_id)
+    tasks = get_lesson_tasks(lesson_id, session)
     if tasks is None:
         raise HTTPException(status_code=404, detail="Lesson not found")
     return tasks

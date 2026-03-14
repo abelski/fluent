@@ -1,0 +1,20 @@
+# case_index: 13
+# name:       Местный мн.ч. (Vietininkas Dgs.)
+# question:   Где? (мн.ч.)
+# usage:      Местонахождение внутри чего-то, множественное число.
+# endings:    — (sg) / -uose, -iuose, -ose, -ėse (pl)
+
+# display | answer_ending | full_word | russian
+Jie gyvena nam___. | uose | namuose | Они живут в домах.
+Vaikai žaidžia sod___. | uose | soduose | Дети играют в садах.
+Mama dirba muziej___. | uose | muziejuose | Мама работает в музеях.
+Jie gyvena rajon___. | uose | rajonuose | Они живут в районах.
+Petras dirba centr___. | uose | centruose | Пятрас работает в центрах.
+Jie gyvena sodyb___. | ose | sodybose | Они живут в усадьбах.
+Mama susitinka aikšt___. | ėse | aikštėse | Мама встречается на площадях.
+Petras dirba turg___. | uose | turguose | Пятрас работает на рынках.
+Jie gyvena pil___. | yse | pilyse | Они живут в замках.
+Mama laukia stot___. | yse | stotyse | Мама ждёт на вокзалах.
+Vaikai mokosi bažnyč___. | iose | bažnyčiose | Дети учатся в церквях.
+Jie susitinka gatv___. | ėse | gatvėse | Они встречаются на улицах.
+Jonas dirba centr___. | uose | centruose | Йонас работает в центрах.

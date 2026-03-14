@@ -4,16 +4,18 @@
 #   "declension" — user must type the correct case form of a given word (basic level)
 #   "sentence"   — user must fill in a blank in a real Lithuanian sentence (advanced/practice)
 #
-# Content data (WORDS, LESSON_CONFIG, SENTENCES, CASE_RULES) is imported from the data/grammar/
-# package so this service contains only generation logic, not raw data.
+# Sentences are loaded from the grammar_sentence DB table (populated by the content loader).
+# Word stems (WORDS) and lesson config (LESSON_CONFIG) remain hardcoded in Python.
 
 import re
 import random
 
+from sqlmodel import Session, select
+
 from data.grammar.words import WORDS
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
-from data.grammar.sentences import SENTENCES
 from data.grammar.rules import CASE_RULES
+from models import GrammarSentence
 
 # Precomputed mapping: stem → nominative singular form (stem + nominative ending).
 # Used to annotate sentence tasks with the base form of the target word.
@@ -103,41 +105,43 @@ def _generate_declension_tasks(cases: list[int], count: int) -> list[dict]:
     return tasks
 
 
-def _generate_sentence_tasks(cases: list[int], count: int) -> list[dict]:
-    """Generate sentence gap-fill tasks from the SENTENCES data for given cases.
+def _generate_sentence_tasks(cases: list[int], count: int, session: Session) -> list[dict]:
+    """Generate sentence gap-fill tasks from the grammar_sentence DB table for given cases.
 
     Each task includes base_lt — the nominative form of the target word — derived
     by looking up the word stem in the WORDS list. Falls back to declension tasks
-    if no sentences are defined for the requested cases.
+    if no sentences are found for the requested cases.
     """
-    # Build pool from all hardcoded sentences for requested cases.
-    pool: list[tuple[str, str, str, str]] = []
-    for case_idx in cases:
-        pool.extend(SENTENCES.get(case_idx, []))
+    rows = session.exec(
+        select(GrammarSentence).where(
+            GrammarSentence.case_index.in_(cases),
+            GrammarSentence.archived == False,  # noqa: E712
+        )
+    ).all()
 
-    if not pool:
-        # Fallback to declension tasks if no sentences defined for these cases.
+    if not rows:
+        # Fallback to declension tasks if no sentences in DB for these cases.
         return _generate_declension_tasks(cases, count)
 
+    pool = list(rows)
     random.shuffle(pool)
     tasks = []
     for i in range(count):
-        # Cycle through pool with modulo so count can exceed pool size
-        display, answer, full_answer, translation_ru = pool[i % len(pool)]
-        stem = _extract_stem(display)
-        base_lt = _STEM_TO_NOMINATIVE.get(stem)  # None if stem not in WORDS
+        row = pool[i % len(pool)]
+        stem = _extract_stem(row.display)
+        base_lt = _STEM_TO_NOMINATIVE.get(stem)
         tasks.append({
             "type": "sentence",
-            "display": display,           # sentence with a blank to fill in
-            "answer": answer,             # the word/ending that fills the blank
-            "full_answer": full_answer,   # the complete sentence for showing after answer
-            "translation_ru": translation_ru,
-            "base_lt": base_lt,           # nominative form (base form) for puzzle display
+            "display": row.display,
+            "answer": row.answer_ending,
+            "full_answer": row.full_word,
+            "translation_ru": row.russian,
+            "base_lt": base_lt,
         })
     return tasks
 
 
-def get_lesson_tasks(lesson_id: int) -> list[dict] | None:
+def get_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None:
     """Look up a lesson by ID and generate its tasks.
 
     Returns None if the lesson_id is not found — the router converts this to 404.
@@ -154,4 +158,4 @@ def get_lesson_tasks(lesson_id: int) -> list[dict] | None:
         return _generate_declension_tasks(cases, task_count)
     else:
         # Both 'advanced' and 'practice' use sentence-style puzzle tasks.
-        return _generate_sentence_tasks(cases, task_count)
+        return _generate_sentence_tasks(cases, task_count, session)
