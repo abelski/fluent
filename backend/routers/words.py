@@ -242,7 +242,8 @@ def get_list_progress(
 
 class ProgressUpdate(BaseModel):
     status: str        # "learning" | "known"
-    mistake: bool = False  # True when the user answered this word incorrectly
+    mistake: bool = False       # True when the user answered this word incorrectly
+    clear_mistake: bool = False  # True to reset mistake_count to 0 (word mastered in review)
 
 
 @router.post("/words/{word_id}/progress")
@@ -272,6 +273,8 @@ def update_progress(
         progress.review_count += 1
         if body.mistake:
             progress.mistake_count += 1
+        elif body.clear_mistake:
+            progress.mistake_count = 0
         progress.last_seen = datetime.utcnow()
     else:
         progress = UserWordProgress(

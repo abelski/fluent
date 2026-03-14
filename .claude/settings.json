@@ -34,7 +34,9 @@
       "Bash(python3 -c \":*)",
       "Bash(python -m pytest tests/test_review.py -v)",
       "Bash(python -m pytest -v)",
-      "WebFetch(domain:fluent-qhk8.onrender.com)"
+      "WebFetch(domain:fluent-qhk8.onrender.com)",
+      "Bash(curl -s http://localhost:3000/dashboard/lists)",
+      "Bash(curl -s http://localhost:3000/)"
     ]
   }
 }

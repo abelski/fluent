@@ -93,13 +93,13 @@ function ReviewContent() {
   const inputRef = useRef<HTMLInputElement>(null);
   const blockUntilRef = useRef(0);
 
-  const saveProgress = useCallback((wordId: number, status: 'known' | 'learning', mistake = false) => {
+  const saveProgress = useCallback((wordId: number, status: 'known' | 'learning', mistake = false, clearMistake = false) => {
     const token = getToken();
     if (!token) return;
     fetch(`${BACKEND_URL}/api/words/${wordId}/progress`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ status, mistake }),
+      body: JSON.stringify({ status, mistake, clear_mistake: clearMistake }),
     }).catch(() => {});
   }, []);
 
@@ -198,7 +198,7 @@ function ReviewContent() {
     const isCorrect = normalizeLt(typedAnswer.trim()) === normalizeLt(target);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     if (!isCorrect) setShownAnswer(target);
-    saveProgress(card.word.id, isCorrect ? 'known' : 'learning', !isCorrect);
+    saveProgress(card.word.id, isCorrect ? 'known' : 'learning', !isCorrect, isCorrect && mode === 'mistakes');
     if (isCorrect) {
       setTimeout(() => {
         setWordsDone((c) => c + 1);

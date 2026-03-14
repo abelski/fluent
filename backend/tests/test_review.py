@@ -156,6 +156,21 @@ def test_review_mistakes_counts_against_daily_quota(client):
     assert r.json()["detail"]["code"] == "daily_limit_reached"
 
 
+# ── clear_mistake resets count ───────────────────────────────────────────────
+
+def test_clear_mistake_resets_count(client):
+    token = make_token("clear_mistake@example.com")
+    headers = auth_headers(token)
+
+    # Record a mistake
+    client.post("/api/words/1/progress", json={"status": "learning", "mistake": True}, headers=headers)
+    assert client.get("/api/me/stats", headers=headers).json()["mistakes"] >= 1
+
+    # Answer correctly with clear_mistake=True → count resets to 0
+    client.post("/api/words/1/progress", json={"status": "known", "mistake": False, "clear_mistake": True}, headers=headers)
+    assert client.get("/api/me/stats", headers=headers).json()["mistakes"] == 0
+
+
 # ── Stats include mistakes count ─────────────────────────────────────────────
 
 def test_stats_includes_mistakes_field(client):
