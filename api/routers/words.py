@@ -70,7 +70,7 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
 def get_lists(session: Session = Depends(get_session)):
     """Return all public word lists with their word counts.
     Word counts are fetched in a single aggregation query to avoid N+1."""
-    lists = session.exec(select(WordList).where(WordList.is_public == True)).all()
+    lists = session.exec(select(WordList).where(WordList.is_public == True, WordList.archived == False)).all()  # noqa: E712
     # Single aggregation query to get word counts for all lists at once
     counts = dict(
         session.exec(
@@ -83,6 +83,7 @@ def get_lists(session: Session = Depends(get_session)):
             "id": wl.id,
             "title": wl.title,
             "description": wl.description,
+            "subcategory": wl.subcategory,
             "word_count": counts.get(wl.id, 0),
         }
         for wl in lists

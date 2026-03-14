@@ -89,6 +89,7 @@ def get_lists(session: Session = Depends(get_session)):
             "id": wl.id,
             "title": wl.title,
             "description": wl.description,
+            "subcategory": wl.subcategory,
             "word_count": counts.get(wl.id, 0),
         }
         for wl in lists

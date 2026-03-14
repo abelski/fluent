@@ -10,6 +10,8 @@ class WordList(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
     description: Optional[str] = None
+    subcategory: Optional[str] = None
+    archived: bool = Field(default=False)
     is_public: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

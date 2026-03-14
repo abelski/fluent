@@ -162,6 +162,8 @@ test.describe('Wrong answer — grammar', () => {
 
   test('wrong grammar answer shows correct answer and dismiss button', async ({ page }) => {
     await page.goto('/dashboard/grammar');
+    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
+    await page.locator('[data-testid="subcategory-toggle"]').first().click();
     await page.waitForSelector('.grid button', { timeout: 5000 });
     await page.locator('.grid button').first().click();
     await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 5000 });
@@ -179,6 +181,8 @@ test.describe('Wrong answer — grammar', () => {
 
   test('wrong grammar answer does not auto-advance — requires button click', async ({ page }) => {
     await page.goto('/dashboard/grammar');
+    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
+    await page.locator('[data-testid="subcategory-toggle"]').first().click();
     await page.waitForSelector('.grid button', { timeout: 5000 });
     await page.locator('.grid button').first().click();
     await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 5000 });

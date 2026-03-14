@@ -95,10 +95,15 @@ test.describe('Grammar page — categories', () => {
 });
 
 test.describe('Grammar page — lesson levels', () => {
-  // Helper: click the first lesson card of the given level label
+  // Helper: click the first lesson card of the given level label.
+  // Lessons are inside collapsible subcategories — expand the first one first.
   async function startFirstLessonOfLevel(page: import('@playwright/test').Page, levelLabel: string) {
     await page.goto('/dashboard/grammar');
-    // Wait for lessons to load
+    // Wait for subcategory toggles to load (Падежи is open by default)
+    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
+    // Expand the first subcategory so lesson cards become visible
+    await page.locator('[data-testid="subcategory-toggle"]').first().click();
+    // Now find the lesson card with the matching level label
     await page.waitForSelector('.grid button', { timeout: 5000 });
     const card = page.locator('.grid button').filter({ hasText: levelLabel }).first();
     await card.click();
@@ -167,6 +172,11 @@ test.describe('Grammar progression — locking', () => {
       await route.fulfill({ json: MOCK_LESSONS });
     });
     await page.goto('/dashboard/grammar');
+    // Expand all subcategories to see lesson cards
+    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
+    for (const btn of await page.locator('[data-testid="subcategory-toggle"]').all()) {
+      await btn.click();
+    }
     await page.waitForSelector('.grid button', { timeout: 5000 });
 
     // Second lesson should have data-testid="lesson-locked" and be disabled
@@ -180,6 +190,9 @@ test.describe('Grammar progression — locking', () => {
       await route.fulfill({ json: MOCK_LESSONS });
     });
     await page.goto('/dashboard/grammar');
+    // Expand first subcategory to see the unlocked lesson
+    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
+    await page.locator('[data-testid="subcategory-toggle"]').first().click();
     await page.waitForSelector('.grid button', { timeout: 5000 });
 
     // First lesson is unlocked — should NOT have lesson-locked testid
@@ -212,6 +225,9 @@ test.describe('Grammar progression — locking', () => {
     });
 
     await page.goto('/dashboard/grammar');
+    // Expand first subcategory to see lesson cards
+    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
+    await page.locator('[data-testid="subcategory-toggle"]').first().click();
     await page.waitForSelector('.grid button', { timeout: 5000 });
 
     // Start lesson 1
@@ -248,6 +264,9 @@ test.describe('Grammar progression — locking', () => {
     });
 
     await page.goto('/dashboard/grammar');
+    // Expand first subcategory to see lesson cards
+    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
+    await page.locator('[data-testid="subcategory-toggle"]').first().click();
     await page.waitForSelector('.grid button', { timeout: 5000 });
     await page.locator('.grid button').first().click();
     await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 5000 });

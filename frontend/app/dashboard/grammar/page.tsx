@@ -140,6 +140,83 @@ function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collaps
   );
 }
 
+function SubcategoryGroup({
+  group,
+  onStartLesson,
+}: {
+  group: { title: string; lessons: Lesson[] };
+  onStartLesson: (lesson: Lesson) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        data-testid="subcategory-toggle"
+        className="w-full flex items-center justify-between px-5 py-3 bg-white hover:bg-gray-50 transition-colors text-left"
+      >
+        <span className="text-sm font-medium text-gray-700">{group.title}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 text-xs">{group.lessons.length} уровня</span>
+          <svg
+            width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
+            className={`text-gray-400 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
+          >
+            <path d="M6 8L1 3h10L6 8z" />
+          </svg>
+        </div>
+      </button>
+      {open && (
+        <div className="px-5 pb-4 bg-white">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {group.lessons.map((lesson) => {
+              const locked = lesson.is_locked ?? false;
+              const scorePct = lesson.best_score_pct;
+              return (
+                <button
+                  key={lesson.id}
+                  onClick={() => !locked && onStartLesson(lesson)}
+                  disabled={locked}
+                  data-testid={locked ? 'lesson-locked' : undefined}
+                  className={`bg-gray-50 border rounded-2xl p-5 text-left flex flex-col gap-3 transition-colors ${
+                    locked
+                      ? 'border-gray-900 opacity-40 cursor-not-allowed'
+                      : 'border-gray-900 hover:bg-white cursor-pointer'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {locked && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 shrink-0">
+                        <path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/>
+                      </svg>
+                    )}
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${LEVEL_STYLES[lesson.level] ?? ''}`}>
+                      {LEVEL_LABELS[lesson.level] ?? lesson.level}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-gray-400 text-xs">{lesson.task_count} заданий</div>
+                    {scorePct !== null && scorePct !== undefined && (
+                      <div className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        scorePct > 0.75
+                          ? 'bg-emerald-50 text-emerald-600'
+                          : 'bg-amber-50 text-amber-600'
+                      }`}>
+                        {Math.round(scorePct * 100)}%
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GrammarPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
@@ -287,6 +364,18 @@ export default function GrammarPage() {
               {CATEGORIES.map((cat) => {
                 const isOpen = openCategories.has(cat.key);
                 const categoryLessons = cat.key === 'padezhi' ? lessons : [];
+
+                // Group lessons by consecutive title runs into subcategories
+                const subcategoryGroups: { title: string; lessons: Lesson[] }[] = [];
+                for (const lesson of categoryLessons) {
+                  const last = subcategoryGroups[subcategoryGroups.length - 1];
+                  if (last && last.title === lesson.title) {
+                    last.lessons.push(lesson);
+                  } else {
+                    subcategoryGroups.push({ title: lesson.title, lessons: [lesson] });
+                  }
+                }
+
                 return (
                   <div
                     key={cat.key}
@@ -323,52 +412,10 @@ export default function GrammarPage() {
                     </button>
 
                     {isOpen && !cat.comingSoon && (
-                      <div className="px-5 py-4 border-t border-gray-900">
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                          {categoryLessons.map((lesson) => {
-                            const locked = lesson.is_locked ?? false;
-                            const scorePct = lesson.best_score_pct;
-                            return (
-                              <button
-                                key={lesson.id}
-                                onClick={() => !locked && startLesson(lesson)}
-                                disabled={locked}
-                                data-testid={locked ? 'lesson-locked' : undefined}
-                                className={`bg-white border rounded-2xl p-5 text-left flex flex-col gap-3 transition-colors ${
-                                  locked
-                                    ? 'border-gray-900 opacity-40 cursor-not-allowed'
-                                    : 'border-gray-900 hover:border-gray-900 cursor-pointer'
-                                }`}
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <span className="text-sm font-semibold leading-snug flex items-center gap-2">
-                                    {locked && (
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 shrink-0">
-                                        <path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/>
-                                      </svg>
-                                    )}
-                                    {lesson.title}
-                                  </span>
-                                  <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${LEVEL_STYLES[lesson.level] ?? ''}`}>
-                                    {LEVEL_LABELS[lesson.level] ?? lesson.level}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <div className="text-gray-400 text-xs">{lesson.task_count} заданий</div>
-                                  {scorePct !== null && scorePct !== undefined && (
-                                    <div className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                                      scorePct > 0.75
-                                        ? 'bg-emerald-50 text-emerald-600'
-                                        : 'bg-amber-50 text-amber-600'
-                                    }`}>
-                                      {Math.round(scorePct * 100)}%
-                                    </div>
-                                  )}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
+                      <div className="divide-y divide-gray-900 border-t border-gray-900">
+                        {subcategoryGroups.map((group, gi) => (
+                          <SubcategoryGroup key={`${group.title}-${gi}`} group={group} onStartLesson={startLesson} />
+                        ))}
                       </div>
                     )}
                   </div>

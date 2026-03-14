@@ -9,6 +9,7 @@ interface WordListSummary {
   id: number;
   title: string;
   description: string | null;
+  subcategory: string | null;
   word_count: number;
 }
 
@@ -26,11 +27,19 @@ interface Quota {
   daily_limit: number | null;
 }
 
+const SUBCATEGORY_LABELS: Record<string, string> = {
+  a1_basics: 'Основы A1',
+  everyday: 'Повседневная жизнь',
+  people: 'Люди',
+  grammar_vocab: 'Грамматика',
+};
+
 export default function ListsPage() {
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [progress, setProgress] = useState<Record<number, ListProgress>>({});
   const [loading, setLoading] = useState(true);
   const [quota, setQuota] = useState<Quota | null>(null);
+  const [openSubcategories, setOpenSubcategories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!getToken()) {
@@ -71,6 +80,14 @@ export default function ListsPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Open the first subcategory when lists load
+  useEffect(() => {
+    if (lists.length > 0 && openSubcategories.size === 0) {
+      const firstKey = lists[0].subcategory ?? 'other';
+      setOpenSubcategories(new Set([firstKey]));
+    }
+  }, [lists]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const limitReached = quota !== null && quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
 
@@ -116,78 +133,116 @@ export default function ListsPage() {
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {lists.map((list) => {
-              const p = progress[list.id];
-              const knownPct = p ? (p.known / p.total) * 100 : 0;
-              const learningPct = p ? (p.learning / p.total) * 100 : 0;
-
-              return (
-                <div
-                  key={list.id}
-                  className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-4 hover:border-gray-900 transition-colors"
-                >
-                  <div>
-                    <h2 className="text-lg font-semibold">{list.title}</h2>
-                    {list.description && (
-                      <p className="text-gray-400 text-sm mt-1">{list.description}</p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden flex">
-                      <div
-                        className="h-full bg-emerald-500 transition-all duration-500"
-                        style={{ width: `${knownPct}%` }}
-                      />
-                      <div
-                        className="h-full bg-amber-400 transition-all duration-500"
-                        style={{ width: `${learningPct}%` }}
-                      />
-                    </div>
-                    {p && (
-                      <p className="text-gray-400 text-xs">
-                        {p.known} / {p.total} выучено
-                        {p.learning > 0 && (
-                          <span className="text-amber-500 ml-1">· {p.learning} в процессе</span>
-                        )}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="text-gray-400 text-sm">{list.word_count} слов</span>
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/dashboard/lists/${list.id}`}
-                        className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-900 hover:border-white/30 rounded-lg transition-colors"
+        ) : (() => {
+          // Group lists by subcategory
+          const grouped: { key: string; label: string; lists: WordListSummary[] }[] = [];
+          for (const list of lists) {
+            const key = list.subcategory ?? 'other';
+            const existing = grouped.find((g) => g.key === key);
+            if (existing) {
+              existing.lists.push(list);
+            } else {
+              grouped.push({ key, label: SUBCATEGORY_LABELS[key] ?? key, lists: [list] });
+            }
+          }
+          return (
+            <div className="flex flex-col gap-4">
+              {grouped.map((group) => {
+                const isOpen = openSubcategories.has(group.key);
+                return (
+                  <div key={group.key} className="border border-gray-900 rounded-2xl overflow-hidden">
+                    <button
+                      onClick={() => setOpenSubcategories((prev) => {
+                        const next = new Set(prev);
+                        next.has(group.key) ? next.delete(group.key) : next.add(group.key);
+                        return next;
+                      })}
+                      aria-expanded={isOpen}
+                      className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-gray-900">{group.label}</span>
+                        <span className="text-gray-400 text-sm">{group.lists.length} списков</span>
+                      </div>
+                      <svg
+                        width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
+                        className={`text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
                       >
-                        Browse
-                      </Link>
-                      {limitReached ? (
-                        <button
-                          disabled
-                          title="Лимит сессий на сегодня исчерпан"
-                          className="px-4 py-2.5 text-sm bg-emerald-600/30 rounded-lg font-medium cursor-not-allowed opacity-40"
-                        >
-                          Учить
-                        </button>
-                      ) : (
-                        <Link
-                          href={`/dashboard/lists/${list.id}/study`}
-                          className="px-4 py-2.5 text-sm bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors font-medium text-white"
-                        >
-                          Учить
-                        </Link>
-                      )}
-                    </div>
+                        <path d="M6 8L1 3h10L6 8z" />
+                      </svg>
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-5 py-4 border-t border-gray-900">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {group.lists.map((list) => {
+                            const p = progress[list.id];
+                            const knownPct = p ? (p.known / p.total) * 100 : 0;
+                            const learningPct = p ? (p.learning / p.total) * 100 : 0;
+                            return (
+                              <div
+                                key={list.id}
+                                className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-4"
+                              >
+                                <div>
+                                  <h2 className="text-lg font-semibold">{list.title}</h2>
+                                  {list.description && (
+                                    <p className="text-gray-400 text-sm mt-1">{list.description}</p>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden flex">
+                                    <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${knownPct}%` }} />
+                                    <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${learningPct}%` }} />
+                                  </div>
+                                  {p && (
+                                    <p className="text-gray-400 text-xs">
+                                      {p.known} / {p.total} выучено
+                                      {p.learning > 0 && <span className="text-amber-500 ml-1">· {p.learning} в процессе</span>}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center justify-between mt-auto">
+                                  <span className="text-gray-400 text-sm">{list.word_count} слов</span>
+                                  <div className="flex gap-2">
+                                    <Link
+                                      href={`/dashboard/lists/${list.id}`}
+                                      className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-900 rounded-lg transition-colors"
+                                    >
+                                      Browse
+                                    </Link>
+                                    {limitReached ? (
+                                      <button
+                                        disabled
+                                        title="Лимит сессий на сегодня исчерпан"
+                                        className="px-4 py-2.5 text-sm bg-emerald-600/30 rounded-lg font-medium cursor-not-allowed opacity-40"
+                                      >
+                                        Учить
+                                      </button>
+                                    ) : (
+                                      <Link
+                                        href={`/dashboard/lists/${list.id}/study`}
+                                        className="px-4 py-2.5 text-sm bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors font-medium text-white"
+                                      >
+                                        Учить
+                                      </Link>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
     </main>
   );

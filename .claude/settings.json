@@ -29,7 +29,9 @@
       "Bash(curl -sL http://localhost:8000/dashboard/lists)",
       "Bash(sed -i '' 's/bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors font-medium\"\"/bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors font-medium text-white\"\"/g' frontend/app/dashboard/lists/page.tsx)",
       "Bash(sed -i '' 's/bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm\"\"/bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm text-white\"\"/g' frontend/app/dashboard/lists/[id]/page.tsx)",
-      "Bash(python load.py)"
+      "Bash(python load.py)",
+      "Bash(npx tsc:*)",
+      "Bash(python3 -c \":*)"
     ]
   }
 }
