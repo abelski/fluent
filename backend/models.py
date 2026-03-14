@@ -71,6 +71,7 @@ class UserWordProgress(SQLModel, table=True):
     word_id: int = Field(foreign_key="word.id")
     status: str = Field(default="new")  # new | learning | known
     review_count: int = Field(default=0)
+    mistake_count: int = Field(default=0)  # incremented each time user answers this word wrong
     last_seen: datetime = Field(default_factory=datetime.utcnow)
 
 

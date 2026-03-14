@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 
 interface Stats {
   known: number;
   streak: number;
+  mistakes: number;
 }
 
 function motivation(known: number, streak: number): string {
@@ -37,7 +39,7 @@ export default function StatsBar() {
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data) setStats({ known: data.known, streak: data.streak });
+        if (data) setStats({ known: data.known, streak: data.streak, mistakes: data.mistakes ?? 0 });
       })
       .catch(() => {});
   }, []);
@@ -58,6 +60,22 @@ export default function StatsBar() {
             <div>
               <p className="text-2xl font-bold text-gray-900 leading-none">{stats.known}</p>
               <p className="text-gray-400 text-xs mt-0.5">слов выучено</p>
+              {stats.known > 0 && (
+                <Link
+                  href="/dashboard/review?mode=known"
+                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors whitespace-nowrap"
+                >
+                  Повторить выученные →
+                </Link>
+              )}
+              {stats.mistakes > 0 && (
+                <Link
+                  href="/dashboard/review?mode=mistakes"
+                  className="block text-xs text-amber-600 hover:text-amber-700 font-medium transition-colors whitespace-nowrap"
+                >
+                  Повторить ошибки ({stats.mistakes}) →
+                </Link>
+              )}
             </div>
           </div>
 
@@ -75,7 +93,6 @@ export default function StatsBar() {
           )}
         </div>
 
-        {/* motivation */}
         <p className="text-emerald-600 text-sm font-medium sm:text-right">
           {motivation(stats.known, stats.streak)}
         </p>

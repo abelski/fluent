@@ -241,7 +241,8 @@ def get_list_progress(
 
 
 class ProgressUpdate(BaseModel):
-    status: str  # "learning" | "known"
+    status: str        # "learning" | "known"
+    mistake: bool = False  # True when the user answered this word incorrectly
 
 
 @router.post("/words/{word_id}/progress")
@@ -255,6 +256,7 @@ def update_progress(
 
     Called after each card flip. Upserts the UserWordProgress row —
     creates it on first answer, increments review_count on subsequent ones.
+    When mistake=True, also increments mistake_count.
     """
     if body.status not in ("learning", "known"):
         raise HTTPException(status_code=400, detail="status must be 'learning' or 'known'")
@@ -266,21 +268,134 @@ def update_progress(
         )
     ).first()
     if progress:
-        # Update existing record
         progress.status = body.status
         progress.review_count += 1
+        if body.mistake:
+            progress.mistake_count += 1
         progress.last_seen = datetime.utcnow()
     else:
-        # First time this user has seen this word
         progress = UserWordProgress(
             user_id=user.id,
             word_id=word_id,
             status=body.status,
             review_count=1,
+            mistake_count=1 if body.mistake else 0,
         )
         session.add(progress)
     session.commit()
     return {"ok": True}
+
+
+def _quota_check_and_increment(user: User, session: Session) -> None:
+    """Enforce the daily session limit for basic users. Raises 429 if exceeded."""
+    if _is_premium_active(user):
+        return
+    today = datetime.now(timezone.utc).date()
+    row = session.exec(
+        select(DailyStudySession).where(
+            DailyStudySession.user_id == user.id,
+            DailyStudySession.study_date == today,
+        )
+    ).first()
+    if not row:
+        row = DailyStudySession(user_id=user.id, study_date=today, session_count=0)
+        session.add(row)
+    if row.session_count >= DAILY_LIMIT:
+        raise HTTPException(
+            status_code=429,
+            detail={"code": "daily_limit_reached", "limit": DAILY_LIMIT, "sessions_today": row.session_count},
+        )
+    row.session_count += 1
+    session.commit()
+
+
+def _word_to_dict(w: Word, status: str) -> dict:
+    return {
+        "id": w.id,
+        "lithuanian": w.lithuanian,
+        "translation_en": w.translation_en,
+        "translation_ru": w.translation_ru,
+        "hint": w.hint,
+        "status": status,
+    }
+
+
+@router.get("/review/known")
+def get_review_known(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return up to 10 known words for a refresh session, oldest-reviewed first.
+
+    Words are ordered by last_seen ASC so the user revisits words they studied
+    longest ago first (spaced-repetition-like ordering).
+    Counts against the daily session quota same as regular study.
+    """
+    user = _require_user(authorization, session)
+    _quota_check_and_increment(user, session)
+
+    progress_records = session.exec(
+        select(UserWordProgress)
+        .where(
+            UserWordProgress.user_id == user.id,
+            UserWordProgress.status == "known",
+        )
+        .order_by(UserWordProgress.last_seen)
+        .limit(QUIZ_SIZE)
+    ).all()
+
+    if not progress_records:
+        return []
+
+    word_ids = [p.word_id for p in progress_records]
+    words = session.exec(
+        select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
+    ).all()
+    word_map = {w.id: w for w in words}
+
+    return [
+        _word_to_dict(word_map[p.word_id], p.status)
+        for p in progress_records
+        if p.word_id in word_map
+    ]
+
+
+@router.get("/review/mistakes")
+def get_review_mistakes(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return up to 10 words the user has answered wrong, most-mistaken first.
+
+    Counts against the daily session quota same as regular study.
+    """
+    user = _require_user(authorization, session)
+    _quota_check_and_increment(user, session)
+
+    progress_records = session.exec(
+        select(UserWordProgress)
+        .where(
+            UserWordProgress.user_id == user.id,
+            UserWordProgress.mistake_count > 0,
+        )
+        .order_by(col(UserWordProgress.mistake_count).desc())
+        .limit(QUIZ_SIZE)
+    ).all()
+
+    if not progress_records:
+        return []
+
+    word_ids = [p.word_id for p in progress_records]
+    words = session.exec(
+        select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
+    ).all()
+    word_map = {w.id: w for w in words}
+
+    return [
+        _word_to_dict(word_map[p.word_id], p.status)
+        for p in progress_records
+        if p.word_id in word_map
+    ]
 
 
 @router.get("/me/lists-progress")
@@ -348,6 +463,7 @@ def get_stats(
     ).all()
     known = sum(1 for p in all_progress if p.status == "known")
     learning = sum(1 for p in all_progress if p.status == "learning")
+    mistakes = sum(1 for p in all_progress if p.mistake_count > 0)
 
     # Build a set of unique study dates, then count backwards from today
     studied_dates = {p.last_seen.date() for p in all_progress}
@@ -358,7 +474,7 @@ def get_stats(
     while check in studied_dates:
         streak += 1
         check -= timedelta(days=1)
-    return {"known": known, "learning": learning, "total_studied": known + learning, "streak": streak}
+    return {"known": known, "learning": learning, "total_studied": known + learning, "streak": streak, "mistakes": mistakes}
 
 
 @router.get("/me/quota")

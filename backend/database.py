@@ -38,6 +38,25 @@ def create_db_and_tables():
     """Create all tables defined in SQLModel metadata if they don't exist yet.
     Called once at application startup — safe to run on every deploy."""
     SQLModel.metadata.create_all(engine)
+    _run_migrations()
+
+
+def _run_migrations():
+    """Apply incremental schema changes that create_all cannot handle (new columns on existing tables).
+
+    Each statement is wrapped in try/except so it is safe to run on every deploy:
+    PostgreSQL and SQLite both raise an error if the column already exists — we just ignore it.
+    """
+    from sqlalchemy import text
+    with Session(engine) as s:
+        try:
+            s.exec(text(
+                "ALTER TABLE user_word_progress "
+                "ADD COLUMN mistake_count INTEGER NOT NULL DEFAULT 0"
+            ))
+            s.commit()
+        except Exception:
+            s.rollback()
 
 
 def get_session():

@@ -31,7 +31,10 @@
       "Bash(sed -i '' 's/bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm\"\"/bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm text-white\"\"/g' frontend/app/dashboard/lists/[id]/page.tsx)",
       "Bash(python load.py)",
       "Bash(npx tsc:*)",
-      "Bash(python3 -c \":*)"
+      "Bash(python3 -c \":*)",
+      "Bash(python -m pytest tests/test_review.py -v)",
+      "Bash(python -m pytest -v)",
+      "WebFetch(domain:fluent-qhk8.onrender.com)"
     ]
   }
 }
