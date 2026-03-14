@@ -107,6 +107,16 @@ export default function AdminPage() {
     loadData();
   }
 
+  async function deleteReport(id: number) {
+    if (!confirm('Удалить жалобу навсегда?')) return;
+    const token = getToken();
+    await fetch(`${BACKEND_URL}/api/admin/reports/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {});
+    loadData();
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -272,17 +282,27 @@ export default function AdminPage() {
                     </div>
                     <p className="text-gray-900 text-sm">{r.description}</p>
                   </div>
-                  {r.status === 'open' && (
-                    <button
-                      onClick={() => resolveReport(r.id)}
-                      className="shrink-0 text-xs px-3 py-1.5 text-emerald-600 hover:text-emerald-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
-                    >
-                      Решено
-                    </button>
-                  )}
-                  {r.status === 'resolved' && (
-                    <span className="shrink-0 text-xs text-gray-300">✓ Решено</span>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {r.status === 'open' && (
+                      <button
+                        onClick={() => resolveReport(r.id)}
+                        className="text-xs px-3 py-1.5 text-emerald-600 hover:text-emerald-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
+                      >
+                        Решено
+                      </button>
+                    )}
+                    {r.status === 'resolved' && (
+                      <span className="text-xs text-gray-300">✓ Решено</span>
+                    )}
+                    {isSuperadmin && (
+                      <button
+                        onClick={() => deleteReport(r.id)}
+                        className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
+                      >
+                        Удалить
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

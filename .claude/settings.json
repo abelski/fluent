@@ -36,7 +36,8 @@
       "Bash(python -m pytest -v)",
       "WebFetch(domain:fluent-qhk8.onrender.com)",
       "Bash(curl -s http://localhost:3000/dashboard/lists)",
-      "Bash(curl -s http://localhost:3000/)"
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(python -m pytest tests/test_reports.py -v)"
     ]
   }
 }

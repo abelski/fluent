@@ -40,6 +40,13 @@ def _require_admin(authorization: Optional[str], session: Session) -> User:
     return user
 
 
+def _require_superadmin(authorization: Optional[str], session: Session) -> User:
+    user = _require_user(authorization, session)
+    if not user.is_superadmin:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return user
+
+
 class ReportCreate(BaseModel):
     context: Optional[str] = None   # e.g. 'word:42'
     description: str
@@ -90,6 +97,22 @@ def list_reports(
         }
         for r, u in reports
     ]
+
+
+@router.delete("/admin/reports/{report_id}")
+def delete_report(
+    report_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Permanently delete a report. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    report = session.get(MistakeReport, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    session.delete(report)
+    session.commit()
+    return {"ok": True}
 
 
 @router.patch("/admin/reports/{report_id}/resolve")

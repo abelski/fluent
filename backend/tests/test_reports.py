@@ -71,3 +71,29 @@ def test_admin_can_resolve_report(client):
 def test_resolve_nonexistent_report_returns_404(client):
     r = client.patch("/api/admin/reports/999999/resolve", headers=auth(ADMIN_TOKEN))
     assert r.status_code == 404
+
+
+def test_superadmin_can_delete_report(client):
+    _ensure_user(client, USER_TOKEN)
+    create_r = client.post("/api/reports", json={"description": "Delete me"}, headers=auth(USER_TOKEN))
+    report_id = create_r.json()["id"]
+
+    r = client.delete(f"/api/admin/reports/{report_id}", headers=auth(ADMIN_TOKEN))
+    assert r.status_code == 200
+
+    reports = client.get("/api/admin/reports", headers=auth(ADMIN_TOKEN)).json()
+    assert not any(rep["id"] == report_id for rep in reports)
+
+
+def test_non_superadmin_cannot_delete_report(client):
+    _ensure_user(client, USER_TOKEN)
+    create_r = client.post("/api/reports", json={"description": "Cannot delete"}, headers=auth(USER_TOKEN))
+    report_id = create_r.json()["id"]
+
+    r = client.delete(f"/api/admin/reports/{report_id}", headers=auth(USER_TOKEN))
+    assert r.status_code == 403
+
+
+def test_delete_nonexistent_report_returns_404(client):
+    r = client.delete("/api/admin/reports/999999", headers=auth(ADMIN_TOKEN))
+    assert r.status_code == 404
