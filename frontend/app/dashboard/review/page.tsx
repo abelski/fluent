@@ -4,7 +4,8 @@ import { Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
-import { useLang, type Lang } from '../../../lib/useLang';
+import { useT } from '../../../lib/useT';
+import type { Lang } from '../../../lib/useLang';
 
 interface Word {
   id: number;
@@ -73,7 +74,7 @@ function ReviewContent() {
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode') === 'mistakes' ? 'mistakes' : 'known';
 
-  const [lang] = useLang();
+  const { tr, lang } = useT();
   const [allWords, setAllWords] = useState<Word[]>([]);
   const [queue, setQueue] = useState<StudyCard[]>([]);
   const [totalWords, setTotalWords] = useState(0);
@@ -226,7 +227,7 @@ function ReviewContent() {
     if (!loading && totalWords > 0 && queue.length === 0) setDone(true);
   }, [queue, loading, totalWords]);
 
-  const modeLabel = mode === 'mistakes' ? 'ошибок' : 'выученных слов';
+  const modeLabel = mode === 'mistakes' ? tr.review.mistakesLabel : tr.review.knownLabel;
 
   if (loading) {
     return (
@@ -244,17 +245,17 @@ function ReviewContent() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">⏳</div>
-          <h1 className="text-2xl font-bold mb-2">Лимит на сегодня исчерпан</h1>
-          <p className="text-gray-400 mb-8">Вы использовали все 10 бесплатных сессий на сегодня. Возвращайтесь завтра или переходите на Premium.</p>
+          <h1 className="text-2xl font-bold mb-2">{tr.common.limitTitle}</h1>
+          <p className="text-gray-400 mb-8">{tr.common.limitBody}</p>
           <div className="flex flex-col gap-3">
             <Link href="/pricing" className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-center">
-              Получить Premium
+              {tr.common.getPremium}
             </Link>
             <button
               onClick={() => { window.location.href = '/dashboard/lists'; }}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
             >
-              ← На главную
+              {tr.common.backToLists}
             </button>
           </div>
         </div>
@@ -270,10 +271,10 @@ function ReviewContent() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">📭</div>
-          <h1 className="text-2xl font-bold mb-2">Нечего повторять</h1>
-          <p className="text-gray-400 mb-8">Пока нет {modeLabel} для повторения.</p>
+          <h1 className="text-2xl font-bold mb-2">{tr.review.nothingTitle}</h1>
+          <p className="text-gray-400 mb-8">{tr.review.nothingBody.many.replace('{mode}', modeLabel)}</p>
           <Link href="/dashboard/lists" className="w-full block py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-center">
-            ← На главную
+            {tr.common.backToLists}
           </Link>
         </div>
       </main>
@@ -288,17 +289,17 @@ function ReviewContent() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">🎉</div>
-          <h1 className="text-2xl font-bold mb-2">Сессия завершена!</h1>
-          <p className="text-gray-400 mb-8">Верно {correctWords} из {totalWords}</p>
+          <h1 className="text-2xl font-bold mb-2">{tr.common.sessionDone}</h1>
+          <p className="text-gray-400 mb-8">{tr.common.correctOf.replace('{correct}', String(correctWords)).replace('{total}', String(totalWords))}</p>
 
           <div className="flex gap-4 justify-center mb-10">
             <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{correctWords}</div>
-              <div className="text-gray-400 text-sm mt-1">Верно</div>
+              <div className="text-gray-400 text-sm mt-1">{tr.common.correctLabel}</div>
             </div>
             <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-amber-600">{totalWords - correctWords}</div>
-              <div className="text-gray-400 text-sm mt-1">Ошибок</div>
+              <div className="text-gray-400 text-sm mt-1">{tr.common.errorsLabel}</div>
             </div>
           </div>
 
@@ -307,13 +308,13 @@ function ReviewContent() {
               onClick={loadWords}
               className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
             >
-              Повторить ещё
+              {tr.common.repeatMore}
             </button>
             <button
               onClick={() => { window.location.href = '/dashboard/lists'; }}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
             >
-              ← На главную
+              {tr.common.backToLists}
             </button>
           </div>
         </div>
@@ -327,12 +328,12 @@ function ReviewContent() {
   const word = card.word;
   const stage = card.stage;
   const progressPct = totalWords > 0 ? (wordsDone / totalWords) * 100 : 0;
-  const stageLabel = ['', 'Читаю', 'Выбор', 'Пишу'][stage];
+  const stageLabel = tr.study.stages[stage];
   const cloveForms = parseForms(word.lithuanian);
   const cloveIsCloze = cloveForms.length > 1;
   const cloveText = cloveForms.map((f, i) => i === blankIndex ? '______' : f).join(' / ');
   const digit = getDigit(word);
-  const titleLabel = mode === 'mistakes' ? 'Повторение ошибок' : 'Повторение выученных';
+  const titleLabel = mode === 'mistakes' ? tr.review.mistakesMode : tr.review.knownMode;
 
   return (
     <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col px-6 py-8">
@@ -344,7 +345,7 @@ function ReviewContent() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <Link href="/dashboard/lists" className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
-            ← На главную
+            {tr.common.backToLists}
           </Link>
           <div className="flex items-center gap-3">
             <span className="text-gray-300 text-xs uppercase tracking-wider">{titleLabel} · {stageLabel}</span>
@@ -364,7 +365,7 @@ function ReviewContent() {
         {stage === 1 && (
           <div className="flex flex-col items-center justify-center flex-1 gap-8">
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-10 text-center">
-              <p className="text-gray-400 text-xs uppercase tracking-wider mb-6">Повторение</p>
+              <p className="text-gray-400 text-xs uppercase tracking-wider mb-6">{tr.common.review}</p>
               <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
               {digit && <p className="text-5xl sm:text-7xl font-bold text-emerald-600 mb-4">{digit}</p>}
               {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mb-4">{word.hint}</p>}
@@ -376,7 +377,7 @@ function ReviewContent() {
               tabIndex={-1}
               className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-lg"
             >
-              Понял →
+              {tr.common.gotIt}
             </button>
           </div>
         )}
@@ -385,7 +386,7 @@ function ReviewContent() {
         {stage === 2 && (
           <div className="flex flex-col items-center justify-center flex-1 gap-8">
             <div className="text-center">
-              <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">Что это означает?</p>
+              <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.whatMeans}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.lithuanian}</p>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2">{digit}</p>}
               {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
@@ -408,21 +409,21 @@ function ReviewContent() {
             </div>
 
             {answerState === 'correct' && (
-              <p className="text-emerald-600 text-sm font-medium animate-in fade-in duration-150">Правильно!</p>
+              <p className="text-emerald-600 text-sm font-medium animate-in fade-in duration-150">{tr.common.correct}</p>
             )}
             {answerState === 'wrong' && (
               <div className="w-full flex flex-col gap-3 animate-in fade-in duration-150">
                 <div className="text-center">
-                  <p className="text-red-600 text-sm font-medium">Не совсем</p>
+                  <p className="text-red-600 text-sm font-medium">{tr.common.notQuite}</p>
                   <p className="text-gray-500 text-sm mt-1">
-                    Правильно: <span className="text-gray-900 font-medium">{options.find((o) => o.correct)?.text}</span>
+                    {tr.common.correctAnswer} <span className="text-gray-900 font-medium">{options.find((o) => o.correct)?.text}</span>
                   </p>
                 </div>
                 <button
                   onClick={handleStage2Dismiss}
                   className="w-full py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors"
                 >
-                  Понятно, дальше →
+                  {tr.common.dismiss}
                 </button>
               </div>
             )}
@@ -434,7 +435,7 @@ function ReviewContent() {
           <div className="flex flex-col items-center justify-center flex-1 gap-8">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">
-                {cloveIsCloze ? 'Вставьте пропущенную форму' : 'Как будет по-литовски?'}
+                {cloveIsCloze ? tr.study.fillMissing : tr.study.howInLithuanian}
               </p>
               {cloveIsCloze ? (
                 <p className="text-xl sm:text-3xl font-bold tracking-tight font-mono">{cloveText}</p>
@@ -456,7 +457,7 @@ function ReviewContent() {
                 onChange={(e) => setTypedAnswer(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleStage3Submit(); }}
                 disabled={answerState !== 'unanswered'}
-                placeholder="Напишите пропущенное слово..."
+                placeholder={tr.study.typePlaceholder}
                 className={`w-full py-4 px-5 rounded-xl border bg-white text-base text-gray-900 placeholder-gray-400 outline-none transition-all duration-200
                   ${answerState === 'correct' ? 'border-gray-900 bg-emerald-50' :
                     answerState === 'wrong' ? 'border-gray-900 bg-red-50' :
@@ -465,25 +466,25 @@ function ReviewContent() {
 
               {answerState === 'unanswered' && (
                 <button onClick={handleStage3Submit} className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors">
-                  Проверить
+                  {tr.common.check}
                 </button>
               )}
               {answerState === 'correct' && (
-                <p className="text-emerald-600 text-sm font-medium text-center animate-in fade-in duration-150">Правильно!</p>
+                <p className="text-emerald-600 text-sm font-medium text-center animate-in fade-in duration-150">{tr.common.correct}</p>
               )}
               {answerState === 'wrong' && (
                 <div className="flex flex-col gap-3 animate-in fade-in duration-150">
                   <div className="text-center">
-                    <p className="text-red-600 text-sm font-medium">Не совсем</p>
+                    <p className="text-red-600 text-sm font-medium">{tr.common.notQuite}</p>
                     <p className="text-gray-500 text-sm mt-1">
-                      Правильно: <span className="text-gray-900 font-medium">{shownAnswer}</span>
+                      {tr.common.correctAnswer} <span className="text-gray-900 font-medium">{shownAnswer}</span>
                     </p>
                   </div>
                   <button
                     onClick={handleStage3Dismiss}
                     className="w-full py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors"
                   >
-                    Понятно, дальше →
+                    {tr.common.dismiss}
                   </button>
                 </div>
               )}

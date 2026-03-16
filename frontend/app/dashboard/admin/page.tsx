@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
+import { useT } from '../../../lib/useT';
 
 interface UserRow {
   id: string;
@@ -31,6 +32,7 @@ type Tab = 'users' | 'reports';
 
 export default function AdminPage() {
   const router = useRouter();
+  const { tr } = useT();
   const [tab, setTab] = useState<Tab>('users');
   const [users, setUsers] = useState<UserRow[]>([]);
   const [reports, setReports] = useState<ReportRow[]>([]);
@@ -108,7 +110,7 @@ export default function AdminPage() {
   }
 
   async function deleteReport(id: number) {
-    if (!confirm('Удалить жалобу навсегда?')) return;
+    if (!confirm(tr.admin.deleteConfirm)) return;
     const token = getToken();
     await fetch(`${BACKEND_URL}/api/admin/reports/${id}`, {
       method: 'DELETE',
@@ -134,8 +136,8 @@ export default function AdminPage() {
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold mb-2">Администрирование</h1>
-        <p className="text-gray-400 mb-6">Управление пользователями и Premium-доступом</p>
+        <h1 className="text-3xl font-bold mb-2">{tr.admin.title}</h1>
+        <p className="text-gray-400 mb-6">{tr.admin.subtitle}</p>
 
         {/* Tabs */}
         <div className="flex gap-1 bg-gray-50 border border-gray-900 rounded-xl p-1 w-fit mb-8">
@@ -143,13 +145,13 @@ export default function AdminPage() {
             onClick={() => setTab('users')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'users' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
-            Пользователи
+            {tr.admin.tabUsers}
           </button>
           <button
             onClick={() => setTab('reports')}
             className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'reports' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
-            Жалобы
+            {tr.admin.tabReports}
             {openReports > 0 && (
               <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 rounded-full">{openReports}</span>
             )}
@@ -162,11 +164,11 @@ export default function AdminPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-900 text-gray-400 text-left">
-                  <th className="px-4 py-3 font-medium">Пользователь</th>
-                  <th className="px-4 py-3 font-medium">Тариф</th>
-                  <th className="px-4 py-3 font-medium hidden sm:table-cell">Premium до</th>
-                  <th className="px-4 py-3 font-medium hidden sm:table-cell">Сессий сегодня</th>
-                  <th className="px-4 py-3 font-medium">Действие</th>
+                  <th className="px-4 py-3 font-medium">{tr.admin.colUser}</th>
+                  <th className="px-4 py-3 font-medium">{tr.admin.colPlan}</th>
+                  <th className="px-4 py-3 font-medium hidden sm:table-cell">{tr.admin.colPremiumUntil}</th>
+                  <th className="px-4 py-3 font-medium hidden sm:table-cell">{tr.admin.colSessionsToday}</th>
+                  <th className="px-4 py-3 font-medium">{tr.admin.colAction}</th>
                 </tr>
               </thead>
               <tbody>
@@ -178,13 +180,13 @@ export default function AdminPage() {
                     </td>
                     <td className="px-4 py-3">
                       {u.is_superadmin ? (
-                        <span className="text-xs font-semibold text-rose-600 bg-rose-50 border border-gray-900 rounded-full px-2 py-0.5">Суперадмин</span>
+                        <span className="text-xs font-semibold text-rose-600 bg-rose-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.superadmin}</span>
                       ) : u.is_admin ? (
-                        <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-gray-900 rounded-full px-2 py-0.5">Админ</span>
+                        <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.adminBadge}</span>
                       ) : u.premium_active ? (
-                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-gray-900 rounded-full px-2 py-0.5">Premium</span>
+                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.premium}</span>
                       ) : (
-                        <span className="text-xs font-semibold text-gray-400 bg-white border border-gray-900 rounded-full px-2 py-0.5">Basic</span>
+                        <span className="text-xs font-semibold text-gray-400 bg-white border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.basic}</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">
@@ -209,10 +211,10 @@ export default function AdminPage() {
                             disabled={saving}
                             className="text-xs px-3 py-1.5 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
                           >
-                            {saving ? '...' : 'Сохранить'}
+                            {saving ? '...' : tr.admin.save}
                           </button>
                           <button onClick={cancelEdit} className="text-xs px-2 py-1.5 text-gray-400 hover:text-gray-900 transition-colors">
-                            Отмена
+                            {tr.admin.cancel}
                           </button>
                         </div>
                       ) : (
@@ -222,14 +224,14 @@ export default function AdminPage() {
                               onClick={() => applyPremium(u.id, false, null)}
                               className="text-xs px-3 py-1.5 text-red-600 hover:text-red-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
                             >
-                              Отозвать
+                              {tr.admin.revoke}
                             </button>
                           ) : null}
                           <button
                             onClick={() => startGrant(u.id)}
                             className="text-xs px-3 py-1.5 text-emerald-600 hover:text-emerald-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
                           >
-                            {u.premium_active ? 'Продлить' : 'Выдать Premium'}
+                            {u.premium_active ? tr.admin.extend : tr.admin.grantPremium}
                           </button>
                           {isSuperadmin && !u.is_superadmin && (
                             <button
@@ -241,7 +243,7 @@ export default function AdminPage() {
                                   : 'text-amber-500 hover:text-amber-600 border-amber-500/10 hover:border-gray-900'
                               }`}
                             >
-                              {u.is_admin ? 'Снять админа' : 'Назначить админом'}
+                              {u.is_admin ? tr.admin.removeAdmin : tr.admin.makeAdmin}
                             </button>
                           )}
                         </div>
@@ -258,7 +260,7 @@ export default function AdminPage() {
         {tab === 'reports' && (
           <div className="flex flex-col gap-3">
             {reports.length === 0 && (
-              <p className="text-gray-400 text-sm py-8 text-center">Жалоб пока нет.</p>
+              <p className="text-gray-400 text-sm py-8 text-center">{tr.admin.noReports}</p>
             )}
             {reports.map((r) => (
               <div
@@ -288,18 +290,18 @@ export default function AdminPage() {
                         onClick={() => resolveReport(r.id)}
                         className="text-xs px-3 py-1.5 text-emerald-600 hover:text-emerald-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
                       >
-                        Решено
+                        {tr.admin.resolve}
                       </button>
                     )}
                     {r.status === 'resolved' && (
-                      <span className="text-xs text-gray-300">✓ Решено</span>
+                      <span className="text-xs text-gray-300">{tr.admin.resolvedBadge}</span>
                     )}
                     {isSuperadmin && (
                       <button
                         onClick={() => deleteReport(r.id)}
                         className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
                       >
-                        Удалить
+                        {tr.admin.delete}
                       </button>
                     )}
                   </div>

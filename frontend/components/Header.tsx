@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../lib/api';
-import { useLang } from '../lib/useLang';
+import { useT } from '../lib/useT';
 
 function GoogleIcon() {
   return (
@@ -39,7 +39,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  useLang(); // reserved for future language switch
+  const { tr, lang, setLang } = useT();
 
   useEffect(() => {
     const token = getToken();
@@ -90,7 +90,7 @@ export default function Header() {
           listsActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
         }`}
       >
-        Словари
+        {tr.nav.dictionaries}
       </Link>
       <Link
         href="/dashboard/grammar"
@@ -98,9 +98,9 @@ export default function Header() {
           grammarActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
         }`}
       >
-        Грамматика
+        {tr.nav.grammar}
         <span className="ml-1.5 inline-block text-[9px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-600 border border-gray-900 rounded px-1 py-px leading-tight align-middle">
-          тестирование
+          {tr.nav.beta}
         </span>
       </Link>
       <Link
@@ -109,7 +109,7 @@ export default function Header() {
           practiceActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
         }`}
       >
-        Практика
+        {tr.nav.practice}
       </Link>
     </>
   );
@@ -128,19 +128,16 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Language toggle — disabled, in development */}
-          <div className="relative group">
-            <button
-              disabled
-              data-testid="lang-toggle"
-              className="text-xs font-medium px-2 py-1 rounded-lg border border-gray-900 text-gray-300 cursor-not-allowed"
-            >
-              EN
-            </button>
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap text-[10px] bg-gray-800 border border-gray-700 text-gray-300 rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              скоро
-            </span>
-          </div>
+          {/* Language toggle */}
+          <button
+            onClick={() => { setLang(lang === 'ru' ? 'en' : 'ru'); window.location.reload(); }}
+            data-testid="lang-toggle"
+            className="text-xs font-medium px-2 py-1 rounded-lg border border-gray-900 hover:bg-gray-50 transition-colors flex items-center gap-1"
+          >
+            <span className={lang === 'ru' ? 'text-gray-900 font-semibold' : 'text-gray-400'}>RU</span>
+            <span className="text-gray-300">/</span>
+            <span className={lang === 'en' ? 'text-gray-900 font-semibold' : 'text-gray-400'}>EN</span>
+          </button>
 
           {isAuthed === null && (
             <div className="w-20 h-9 rounded-xl bg-gray-100 animate-pulse" />
@@ -151,7 +148,7 @@ export default function Header() {
               className="flex items-center gap-2 bg-white text-gray-800 font-medium px-4 py-2.5 rounded-xl text-sm ring-1 ring-gray-900 shadow-sm hover:bg-gray-50 transition-colors"
             >
               <GoogleIcon />
-              Войти
+              {tr.nav.signIn}
             </a>
           )}
           {isAuthed && user && (
@@ -192,14 +189,14 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                       className="block px-4 py-3 text-sm text-amber-600 hover:text-amber-600 hover:bg-gray-50 transition-colors"
                     >
-                      Администрирование
+                      {tr.nav.admin}
                     </Link>
                   )}
                   <button
                     onClick={logout}
                     className="w-full text-left px-4 py-3 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                   >
-                    Выйти
+                    {tr.nav.signOut}
                   </button>
                 </div>
               )}
@@ -210,7 +207,7 @@ export default function Header() {
           <button
             className="sm:hidden flex flex-col justify-center items-center w-11 h-11 gap-1.5"
             onClick={() => setMobileNavOpen((o) => !o)}
-            aria-label="Меню"
+            aria-label={tr.nav.menu}
           >
             <span className={`block w-5 h-0.5 bg-gray-600 transition-all duration-200 ${mobileNavOpen ? 'rotate-45 translate-y-2' : ''}`} />
             <span className={`block w-5 h-0.5 bg-gray-600 transition-all duration-200 ${mobileNavOpen ? 'opacity-0' : ''}`} />

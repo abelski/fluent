@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../lib/api';
+import { useT } from '../lib/useT';
 
 interface Props {
   context?: string; // e.g. 'word:42', 'grammar:3'
@@ -17,6 +18,7 @@ export default function MistakeButton({ context }: Props) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(false);
 
+  const { tr } = useT();
   useEffect(() => { setMounted(true); }, []);
 
   // Only render after client mount to avoid SSR/localStorage hydration mismatch
@@ -60,7 +62,7 @@ export default function MistakeButton({ context }: Props) {
           <circle cx="8" cy="8" r="7" />
           <path d="M8 5v4M8 11v.5" strokeLinecap="round" />
         </svg>
-        Нашёл ошибку?
+        {tr.mistake.trigger}
       </button>
 
       {/* Modal */}
@@ -70,32 +72,30 @@ export default function MistakeButton({ context }: Props) {
           onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
         >
           <div className="bg-white border border-gray-900 rounded-2xl w-full max-w-sm p-5 shadow-xl">
-            <h3 className="text-gray-900 font-semibold mb-1">Сообщить об ошибке</h3>
-            <p className="text-gray-400 text-xs mb-4">
-              Опишите, что не так — мы исправим как можно скорее.
-            </p>
+            <h3 className="text-gray-900 font-semibold mb-1">{tr.mistake.title}</h3>
+            <p className="text-gray-400 text-xs mb-4">{tr.mistake.subtitle}</p>
 
             {sent ? (
-              <p className="text-emerald-600 text-sm text-center py-4">Спасибо! Отчёт отправлен.</p>
+              <p className="text-emerald-600 text-sm text-center py-4">{tr.mistake.sent}</p>
             ) : (
               <>
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="Например: неверный перевод слова..."
+                  placeholder={tr.mistake.placeholder}
                   rows={3}
                   maxLength={500}
                   className="w-full bg-gray-100 border border-gray-900 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 resize-none mb-3"
                 />
                 {error && (
-                  <p className="text-red-600 text-xs mb-2">Не удалось отправить, попробуйте ещё раз.</p>
+                  <p className="text-red-600 text-xs mb-2">{tr.mistake.error}</p>
                 )}
                 <div className="flex gap-2 justify-end">
                   <button
                     onClick={() => setOpen(false)}
                     className="text-xs px-3 py-2 text-gray-400 hover:text-gray-900 transition-colors"
                   >
-                    Отмена
+                    {tr.mistake.cancel}
                   </button>
                   <button
                     onClick={submit}
@@ -103,7 +103,7 @@ export default function MistakeButton({ context }: Props) {
                     data-testid="mistake-submit"
                     className="text-xs px-4 py-2 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
                   >
-                    {sending ? '...' : 'Отправить'}
+                    {sending ? '...' : tr.mistake.send}
                   </button>
                 </div>
               </>

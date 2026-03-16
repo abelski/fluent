@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { BACKEND_URL, resolveListId, getToken } from '../../../../lib/api';
+import { useT } from '../../../../lib/useT';
 
 interface Word {
   id: number;
@@ -23,6 +24,7 @@ interface WordListDetail {
 export default function ListDetailPage() {
   const { id: _id } = useParams<{ id: string }>();
   const id = resolveListId(_id);
+  const { tr, plural, lang } = useT();
 
   const [list, setList] = useState<WordListDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,7 @@ export default function ListDetailPage() {
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <div className="mb-4">
           <Link href="/dashboard/lists" className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
-            ← На главную
+            {tr.detail.backToLists}
           </Link>
         </div>
 
@@ -72,21 +74,21 @@ export default function ListDetailPage() {
             {list.description && (
               <p className="text-gray-400 mt-1">{list.description}</p>
             )}
-            <p className="text-gray-400 text-sm mt-2">{list.words.length} слов</p>
+            <p className="text-gray-400 text-sm mt-2">{list.words.length} {plural(list.words.length, tr.detail.wordsCount)}</p>
           </div>
           <button
             onClick={handleStudyClick}
             className="shrink-0 px-6 py-3 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm text-white"
           >
-            Учить →
+            {tr.detail.studyBtn}
           </button>
         </div>
 
         <div className="bg-white border border-gray-900 rounded-2xl overflow-hidden">
           <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr_1fr_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-gray-900">
-            <span>Литовский</span>
-            <span>Перевод</span>
-            <span className="hidden sm:block">Заметка</span>
+            <span>{tr.detail.columnLithuanian}</span>
+            <span>{tr.detail.columnTranslation}</span>
+            <span className="hidden sm:block">{tr.detail.columnNote}</span>
           </div>
           {list.words.map((word, i) => (
             <div
@@ -96,7 +98,7 @@ export default function ListDetailPage() {
               }`}
             >
               <span className="font-medium text-gray-900">{word.lithuanian}</span>
-              <span className="text-gray-500 text-sm">{word.translation_ru}</span>
+              <span className="text-gray-500 text-sm">{lang === 'en' ? word.translation_en : word.translation_ru}</span>
               <span className="text-gray-300 text-xs hidden sm:block">{word.hint ?? ''}</span>
             </div>
           ))}

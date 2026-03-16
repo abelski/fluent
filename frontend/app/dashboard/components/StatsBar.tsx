@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../../../lib/api';
+import { useT } from '../../../lib/useT';
 
 interface Stats {
   known: number;
@@ -10,25 +11,8 @@ interface Stats {
   mistakes: number;
 }
 
-function motivation(known: number, streak: number): string {
-  if (streak >= 30) return 'Невероятно! Ты настоящая машина.';
-  if (streak >= 14) return 'Две недели без остановки — это сила!';
-  if (streak >= 7) return 'Неделя подряд. Так держать!';
-  if (streak >= 3) return 'Хорошая серия! Не останавливайся.';
-  if (streak === 2) return 'Два дня подряд — хорошее начало!';
-  if (known >= 100) return 'Уже больше сотни слов — впечатляет!';
-  if (known >= 50) return 'Полсотни слов позади. Продолжай!';
-  if (known > 0) return 'Отличный старт! Каждое слово на счету.';
-  return 'Начни учить — первое слово уже ждёт!';
-}
-
-function streakLabel(n: number): string {
-  if (n === 1) return 'день подряд';
-  if (n < 5) return 'дня подряд';
-  return 'дней подряд';
-}
-
 export default function StatsBar() {
+  const { tr, plural } = useT();
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
@@ -46,6 +30,19 @@ export default function StatsBar() {
 
   if (!stats) return null;
 
+  function motivation(known: number, streak: number): string {
+    const m = tr.stats.motivations;
+    if (streak >= 30) return m.streak30;
+    if (streak >= 14) return m.streak14;
+    if (streak >= 7) return m.streak7;
+    if (streak >= 3) return m.streak3;
+    if (streak === 2) return m.streak2;
+    if (known >= 100) return m.known100;
+    if (known >= 50) return m.known50;
+    if (known > 0) return m.knownSome;
+    return m.none;
+  }
+
   return (
     <div className="relative mb-10 rounded-2xl overflow-hidden">
       {/* glow */}
@@ -59,13 +56,13 @@ export default function StatsBar() {
             <span className="text-2xl leading-none">📚</span>
             <div>
               <p className="text-2xl font-bold text-gray-900 leading-none">{stats.known}</p>
-              <p className="text-gray-400 text-xs mt-0.5">слов выучено</p>
+              <p className="text-gray-400 text-xs mt-0.5">{tr.stats.wordsLearned}</p>
               {stats.known > 0 && (
                 <Link
                   href="/dashboard/review?mode=known"
                   className="text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors whitespace-nowrap"
                 >
-                  Повторить выученные →
+                  {tr.stats.reviewLearned}
                 </Link>
               )}
               {stats.mistakes > 0 && (
@@ -73,7 +70,7 @@ export default function StatsBar() {
                   href="/dashboard/review?mode=mistakes"
                   className="block text-xs text-amber-600 hover:text-amber-700 font-medium transition-colors whitespace-nowrap"
                 >
-                  Повторить ошибки ({stats.mistakes}) →
+                  {tr.stats.reviewMistakes.replace('{n}', String(stats.mistakes))}
                 </Link>
               )}
             </div>
@@ -86,7 +83,7 @@ export default function StatsBar() {
                 <span className="text-2xl leading-none">🔥</span>
                 <div>
                   <p className="text-2xl font-bold text-gray-900 leading-none">{stats.streak}</p>
-                  <p className="text-gray-400 text-xs mt-0.5">{streakLabel(stats.streak)}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">{plural(stats.streak, tr.stats.streakDay)}</p>
                 </div>
               </div>
             </>

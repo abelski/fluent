@@ -1,21 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-
-const FREE_FEATURES = [
-  '10 учебных сессий в день',
-  'Все словари и темы',
-  'Отслеживание прогресса',
-  'Грамматические уроки',
-];
-
-const PREMIUM_FEATURES = [
-  'Неограниченное количество сессий',
-  'Все словари и темы',
-  'Отслеживание прогресса',
-  'Грамматические уроки',
-  'Поддержка развития сервиса',
-];
+import { useT } from '../../lib/useT';
 
 function CheckIcon() {
   return (
@@ -27,6 +13,8 @@ function CheckIcon() {
 }
 
 export default function PricingPage() {
+  const { tr } = useT();
+
   return (
     <main className="bg-slate-50 text-gray-900 min-h-screen">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
@@ -37,17 +25,13 @@ export default function PricingPage() {
 
         {/* Header */}
         <div className="text-center mb-4">
-          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-emerald-600/70 mb-4">Тарифы</span>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">Простые и честные условия</h1>
+          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-emerald-600/70 mb-4">{tr.pricing.badge}</span>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">{tr.pricing.title}</h1>
         </div>
 
         {/* Mission statement */}
         <div className="max-w-2xl mx-auto text-center mb-16">
-          <p className="text-gray-500 text-lg leading-relaxed">
-            Fluent создан не ради заработка — мы хотим помочь людям выучить литовский язык и чувствовать себя свободно.
-            Деньги от Premium идут исключительно на поддержку серверов и развитие новых функций.
-            Спасибо, что помогаете нам делать это лучше.
-          </p>
+          <p className="text-gray-500 text-lg leading-relaxed">{tr.pricing.mission}</p>
         </div>
 
         {/* Cards */}
@@ -56,14 +40,14 @@ export default function PricingPage() {
           {/* Free */}
           <div className="bg-white border border-gray-900 rounded-2xl p-8 flex flex-col">
             <div className="mb-6">
-              <p className="text-gray-400 text-sm font-medium uppercase tracking-wide mb-2">Бесплатно</p>
+              <p className="text-gray-400 text-sm font-medium uppercase tracking-wide mb-2">{tr.pricing.freeLabel}</p>
               <div className="flex items-end gap-1">
-                <span className="text-4xl font-bold">0 €</span>
-                <span className="text-gray-400 mb-1">/ месяц</span>
+                <span className="text-4xl font-bold">{tr.pricing.freePrice}</span>
+                <span className="text-gray-400 mb-1">{tr.pricing.perMonth}</span>
               </div>
             </div>
             <ul className="flex flex-col gap-3 flex-1 mb-8">
-              {FREE_FEATURES.map((f) => (
+              {tr.pricing.freeFeatures.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-gray-500 text-sm">
                   <CheckIcon />
                   {f}
@@ -74,7 +58,7 @@ export default function PricingPage() {
               href="/dashboard/lists"
               className="w-full py-3 text-center text-sm font-medium border border-gray-900 hover:bg-gray-50 rounded-xl transition-colors text-gray-500 hover:text-gray-900"
             >
-              Начать бесплатно
+              {tr.pricing.startFree}
             </Link>
           </div>
 
@@ -86,12 +70,12 @@ export default function PricingPage() {
             <div className="mb-6">
               <p className="text-emerald-600/70 text-sm font-medium uppercase tracking-wide mb-2">Premium</p>
               <div className="flex items-end gap-1">
-                <span className="text-4xl font-bold">2 €</span>
-                <span className="text-gray-400 mb-1">/ месяц</span>
+                <span className="text-4xl font-bold">{tr.pricing.premiumPrice}</span>
+                <span className="text-gray-400 mb-1">{tr.pricing.perMonth}</span>
               </div>
             </div>
             <ul className="flex flex-col gap-3 flex-1 mb-8">
-              {PREMIUM_FEATURES.map((f) => (
+              {tr.pricing.premiumFeatures.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-gray-700 text-sm">
                   <span className="text-emerald-600"><CheckIcon /></span>
                   {f}
@@ -102,25 +86,21 @@ export default function PricingPage() {
               href="mailto:artyrbelski@gmail.com?subject=Fluent Premium&body=Привет! Хочу получить Premium-доступ."
               className="w-full py-3 text-center text-sm font-medium bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-colors"
             >
-              Написать нам
+              {tr.pricing.contactUs}
             </a>
-            <p className="text-gray-400 text-xs text-center mt-3">Мы активируем доступ вручную в течение 24 часов</p>
+            <p className="text-gray-400 text-xs text-center mt-3">{tr.pricing.contactNote}</p>
           </div>
         </div>
 
         {/* Why section */}
         <div className="mt-20 max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-4">Почему платная версия?</h2>
-          <p className="text-gray-400 leading-relaxed">
-            Серверы, база данных, домен — всё это стоит денег. Мы не показываем рекламу и не продаём данные.
-            Premium — это просто способ для тех, кто хочет поддержать проект и учиться без ограничений.
-            Каждый евро идёт на улучшение Fluent.
-          </p>
+          <h2 className="text-2xl font-bold mb-4">{tr.pricing.whyTitle}</h2>
+          <p className="text-gray-400 leading-relaxed">{tr.pricing.whyBody}</p>
         </div>
 
         <div className="mt-10 text-center">
           <Link href="/dashboard/lists" className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
-            ← Вернуться к словарям
+            {tr.pricing.backToLists}
           </Link>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
+import { useT } from '../../../lib/useT';
 
 interface GrammarRule {
   question: string;
@@ -51,22 +52,11 @@ const LEVEL_STYLES: Record<string, string> = {
   practice: 'bg-amber-50 border-gray-900 text-amber-600',
 };
 
-const LEVEL_LABELS: Record<string, string> = {
-  basic: 'Базовый',
-  advanced: 'Продвинутый',
-  practice: 'Повторение',
-};
-
 interface Category {
   key: string;
   label: string;
   comingSoon: boolean;
 }
-
-const CATEGORIES: Category[] = [
-  { key: 'padezhi', label: 'Падежи', comingSoon: false },
-  { key: 'vremena', label: 'Времена', comingSoon: true },
-];
 
 function normalizeLt(text: string): string {
   return text
@@ -82,6 +72,7 @@ function normalizeLt(text: string): string {
 }
 
 function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collapsible: boolean }) {
+  const { tr } = useT();
   const [open, setOpen] = useState(!collapsible);
 
   if (rules.length === 0) return null;
@@ -93,7 +84,7 @@ function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collaps
           onClick={() => setOpen((v) => !v)}
           className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-teal-50 transition-colors"
         >
-          <span className="text-teal-600 text-sm font-medium">Грамматическая подсказка</span>
+          <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarHint}</span>
           <svg
             width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
             className={`text-teal-500 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
@@ -103,7 +94,7 @@ function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collaps
         </button>
       ) : (
         <div className="px-5 py-3 border-b border-gray-900">
-          <span className="text-teal-600 text-sm font-medium">Грамматическое правило</span>
+          <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarRule}</span>
         </div>
       )}
 
@@ -117,18 +108,18 @@ function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collaps
               {rule.endings_sg !== '—' && (
                 <div className="flex flex-wrap gap-3 text-xs">
                   <div>
-                    <span className="text-gray-400">Ед.ч.: </span>
+                    <span className="text-gray-400">{tr.grammar.singular} </span>
                     <span className="text-gray-500 font-mono">{rule.endings_sg}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400">Мн.ч.: </span>
+                    <span className="text-gray-400">{tr.grammar.plural} </span>
                     <span className="text-gray-500 font-mono">{rule.endings_pl}</span>
                   </div>
                 </div>
               )}
               {rule.endings_sg === '—' && (
                 <div className="text-xs">
-                  <span className="text-gray-400">Мн.ч.: </span>
+                  <span className="text-gray-400">{tr.grammar.plural} </span>
                   <span className="text-gray-500 font-mono">{rule.endings_pl}</span>
                 </div>
               )}
@@ -147,6 +138,7 @@ function SubcategoryGroup({
   group: { title: string; lessons: Lesson[] };
   onStartLesson: (lesson: Lesson) => void;
 }) {
+  const { tr, plural } = useT();
   const [open, setOpen] = useState(false);
   return (
     <div>
@@ -158,7 +150,7 @@ function SubcategoryGroup({
       >
         <span className="text-sm font-medium text-gray-700">{group.title}</span>
         <div className="flex items-center gap-2">
-          <span className="text-gray-400 text-xs">{group.lessons.length} уровня</span>
+          <span className="text-gray-400 text-xs">{group.lessons.length} {plural(group.lessons.length, tr.grammar.levelsCount)}</span>
           <svg
             width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
             className={`text-gray-400 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
@@ -192,11 +184,11 @@ function SubcategoryGroup({
                       </svg>
                     )}
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${LEVEL_STYLES[lesson.level] ?? ''}`}>
-                      {LEVEL_LABELS[lesson.level] ?? lesson.level}
+                      {tr.grammar.levels[lesson.level] ?? lesson.level}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <div className="text-gray-400 text-xs">{lesson.task_count} заданий</div>
+                    <div className="text-gray-400 text-xs">{lesson.task_count} {plural(lesson.task_count, tr.grammar.tasksCount)}</div>
                     {scorePct !== null && scorePct !== undefined && (
                       <div className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                         scorePct > 0.75
@@ -218,6 +210,11 @@ function SubcategoryGroup({
 }
 
 export default function GrammarPage() {
+  const { tr, plural } = useT();
+  const CATEGORIES: Category[] = [
+    { key: 'padezhi', label: tr.grammar.categories.padezhi, comingSoon: false },
+    { key: 'vremena', label: tr.grammar.categories.vremena, comingSoon: true },
+  ];
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['padezhi']));
@@ -344,15 +341,12 @@ export default function GrammarPage() {
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
           <StatsBar />
 
-          <h1 className="text-3xl font-bold mb-2">Грамматика</h1>
-          <p className="text-gray-400 mb-6">Выбери урок для тренировки склонений</p>
+          <h1 className="text-3xl font-bold mb-2">{tr.grammar.title}</h1>
+          <p className="text-gray-400 mb-6">{tr.grammar.subtitle}</p>
 
           <div className="flex items-start gap-3 bg-amber-50 border border-gray-900 rounded-2xl px-5 py-4 mb-8">
             <span className="text-amber-600 text-lg shrink-0 mt-0.5">⚠</span>
-            <p className="text-gray-500 text-sm leading-relaxed">
-              Раздел «Грамматика» находится в стадии тестирования. Задания и оценка ответов могут содержать неточности.
-              Пожалуйста, используйте с осторожностью — мы будем рады вашим отзывам.
-            </p>
+            <p className="text-gray-500 text-sm leading-relaxed">{tr.grammar.betaNotice}</p>
           </div>
 
           {loading ? (
@@ -395,10 +389,10 @@ export default function GrammarPage() {
                         <span className="font-semibold text-gray-900">{cat.label}</span>
                         {cat.comingSoon ? (
                           <span className="text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-400 border border-gray-900 rounded px-1.5 py-px leading-tight">
-                            Скоро
+                            {tr.grammar.comingSoon}
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-sm">{categoryLessons.length} уроков</span>
+                          <span className="text-gray-400 text-sm">{categoryLessons.length} {plural(categoryLessons.length, tr.grammar.lessonsCount)}</span>
                         )}
                       </div>
                       {!cat.comingSoon && (
@@ -446,32 +440,32 @@ export default function GrammarPage() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">{passed ? '🎉' : '📚'}</div>
-          <h1 className="text-2xl font-bold mb-2">Урок завершён!</h1>
+          <h1 className="text-2xl font-bold mb-2">{tr.grammar.lessonDone}</h1>
 
           {/* Pass/fail banner */}
           {passed ? (
             <div className="flex items-center justify-center gap-2 mb-4 bg-emerald-50 border border-gray-900 rounded-xl px-4 py-2">
-              <span className="text-emerald-600 text-sm font-semibold">✓ Пройдено — следующий урок разблокирован</span>
+              <span className="text-emerald-600 text-sm font-semibold">{tr.grammar.passed}</span>
             </div>
           ) : (
             <div className="flex flex-col gap-1 mb-4 bg-amber-50 border border-gray-900 rounded-xl px-4 py-3">
-              <span className="text-amber-600 text-sm font-semibold">Результат ниже 75%</span>
-              <span className="text-gray-500 text-xs">Повторите урок, чтобы открыть следующий</span>
+              <span className="text-amber-600 text-sm font-semibold">{tr.grammar.failedScore}</span>
+              <span className="text-gray-500 text-xs">{tr.grammar.failedHint}</span>
             </div>
           )}
 
           <p className="text-gray-400 mb-8">
-            Верно {correct} из {total} · <span className={passed ? 'text-emerald-600' : 'text-amber-600'}>{Math.round(scorePct * 100)}%</span>
+            {tr.common.correctOf.replace('{correct}', String(correct)).replace('{total}', String(total))} · <span className={passed ? 'text-emerald-600' : 'text-amber-600'}>{Math.round(scorePct * 100)}%</span>
           </p>
 
           <div className="flex gap-4 justify-center mb-10">
             <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{correct}</div>
-              <div className="text-gray-400 text-sm mt-1">Верно</div>
+              <div className="text-gray-400 text-sm mt-1">{tr.common.correctLabel}</div>
             </div>
             <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-amber-600">{errors}</div>
-              <div className="text-gray-400 text-sm mt-1">Ошибок</div>
+              <div className="text-gray-400 text-sm mt-1">{tr.common.errorsLabel}</div>
             </div>
           </div>
 
@@ -481,7 +475,7 @@ export default function GrammarPage() {
                 onClick={() => startLesson(nextLesson)}
                 className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
               >
-                Следующий урок →
+                {tr.grammar.nextLesson}
               </button>
             )}
             <button
@@ -492,13 +486,13 @@ export default function GrammarPage() {
                   : 'bg-emerald-600 hover:bg-emerald-500'
               }`}
             >
-              Повторить
+              {tr.common.repeat}
             </button>
             <button
               onClick={resetToLessons}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors"
             >
-              ← К урокам
+              {tr.grammar.backToLessons}
             </button>
           </div>
         </div>
@@ -534,7 +528,7 @@ export default function GrammarPage() {
             onClick={resetToLessons}
             className="text-gray-400 hover:text-gray-900 text-sm transition-colors"
           >
-            ← К урокам
+            {tr.grammar.backToLessons}
           </button>
           <span className="text-gray-400 text-sm">{taskIndex + 1} / {tasks.length}</span>
         </div>
@@ -569,7 +563,7 @@ export default function GrammarPage() {
               {/* Puzzle header: base form → sentence */}
               {task.base_lt ? (
                 <>
-                  <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">Составьте форму</p>
+                  <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">{tr.grammar.buildForm}</p>
                   <div className="flex items-center justify-center gap-3 mb-5">
                     <span className="text-2xl font-bold text-gray-900">{task.base_lt}</span>
                     <span className="text-gray-400 text-xl">→</span>
@@ -578,7 +572,7 @@ export default function GrammarPage() {
                 </>
               ) : (
                 <>
-                  <p className="text-gray-400 text-xs uppercase tracking-wider mb-4">Заполните пропуск</p>
+                  <p className="text-gray-400 text-xs uppercase tracking-wider mb-4">{tr.grammar.fillBlank}</p>
                   <p className="text-2xl font-mono tracking-tight mb-4">{task.display}</p>
                 </>
               )}
@@ -594,7 +588,7 @@ export default function GrammarPage() {
               onChange={(e) => setTyped(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') checkAnswer(); }}
               disabled={answerState !== 'unanswered'}
-              placeholder={task.type === 'declension' ? 'Введите форму слова...' : 'Введите окончание...'}
+              placeholder={task.type === 'declension' ? tr.grammar.typeDeclension : tr.grammar.typeEnding}
               className={`w-full py-4 px-5 rounded-xl border bg-white text-base text-gray-900 placeholder-gray-400 outline-none transition-all duration-200
                 ${answerState === 'correct' ? 'border-gray-900 bg-emerald-50' :
                   answerState === 'wrong' ? 'border-gray-900 bg-red-50' :
@@ -606,20 +600,20 @@ export default function GrammarPage() {
                 onClick={checkAnswer}
                 className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
               >
-                Проверить
+                {tr.common.check}
               </button>
             )}
 
             {answerState === 'correct' && (
-              <p className="text-emerald-600 text-sm font-medium text-center">Правильно!</p>
+              <p className="text-emerald-600 text-sm font-medium text-center">{tr.common.correct}</p>
             )}
 
             {answerState === 'wrong' && (
               <div className="flex flex-col gap-3 animate-in fade-in duration-150">
                 <div className="text-center">
-                  <p className="text-red-600 text-sm font-medium">Не совсем</p>
+                  <p className="text-red-600 text-sm font-medium">{tr.common.notQuite}</p>
                   <p className="text-gray-500 text-sm mt-1">
-                    Правильно: <span className="text-gray-900 font-medium">{shownAnswer}</span>
+                    {tr.common.correctAnswer} <span className="text-gray-900 font-medium">{shownAnswer}</span>
                   </p>
                 </div>
                 <button
@@ -627,7 +621,7 @@ export default function GrammarPage() {
                   onClick={dismissWrongGrammar}
                   className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors"
                 >
-                  Понятно, дальше →
+                  {tr.common.dismiss}
                 </button>
               </div>
             )}

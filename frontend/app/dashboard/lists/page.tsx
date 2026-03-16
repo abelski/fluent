@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
+import { useT } from '../../../lib/useT';
 
 interface WordListSummary {
   id: number;
@@ -27,14 +28,8 @@ interface Quota {
   daily_limit: number | null;
 }
 
-const SUBCATEGORY_LABELS: Record<string, string> = {
-  a1_basics: 'Основы A1',
-  everyday: 'Повседневная жизнь',
-  people: 'Люди',
-  grammar_vocab: 'Грамматика',
-};
-
 export default function ListsPage() {
+  const { tr, plural } = useT();
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [progress, setProgress] = useState<Record<number, ListProgress>>({});
   const [loading, setLoading] = useState(true);
@@ -109,25 +104,25 @@ export default function ListsPage() {
           }`}>
             <div className="flex-1">
               {limitReached ? (
-                <p className="text-red-600 font-medium text-sm">Лимит на сегодня исчерпан ({quota.sessions_today}/{quota.daily_limit}). Попробуйте завтра или перейдите на Premium.</p>
+                <p className="text-red-600 font-medium text-sm">{tr.lists.limitReached.replace('{count}', String(quota.sessions_today)).replace('{limit}', String(quota.daily_limit))}</p>
               ) : (
-                <p className="text-gray-500 text-sm">Сессий сегодня: <span className="text-gray-900 font-medium">{quota.sessions_today} / {quota.daily_limit}</span></p>
+                <p className="text-gray-500 text-sm">{tr.lists.sessionsToday} <span className="text-gray-900 font-medium">{quota.sessions_today} / {quota.daily_limit}</span></p>
               )}
             </div>
             <Link href="/pricing" className="shrink-0 text-xs font-medium text-emerald-600 hover:text-emerald-600 border border-gray-900 rounded-lg px-3 py-1.5 transition-colors">
-              Получить Premium →
+              {tr.lists.getPremium}
             </Link>
           </div>
         )}
         {quota?.premium_active && quota.premium_until && (
           <div className="mb-6 rounded-xl px-5 py-3 border border-gray-900 bg-emerald-50 flex items-center gap-2">
             <span className="text-emerald-600 text-sm font-medium">✦ Premium</span>
-            <span className="text-gray-400 text-sm">до {new Date(quota.premium_until).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span className="text-gray-400 text-sm">{tr.lists.premiumUntil} {new Date(quota.premium_until).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </div>
         )}
 
-        <h1 className="text-3xl font-bold mb-2">Словари</h1>
-        <p className="text-gray-400 mb-10">Выбери список для изучения</p>
+        <h1 className="text-3xl font-bold mb-2">{tr.lists.title}</h1>
+        <p className="text-gray-400 mb-10">{tr.lists.subtitle}</p>
 
         {loading ? (
           <div className="flex justify-center py-20">
@@ -142,7 +137,7 @@ export default function ListsPage() {
             if (existing) {
               existing.lists.push(list);
             } else {
-              grouped.push({ key, label: SUBCATEGORY_LABELS[key] ?? key, lists: [list] });
+              grouped.push({ key, label: tr.lists.subcategories[key] ?? key, lists: [list] });
             }
           }
           return (
@@ -162,7 +157,7 @@ export default function ListsPage() {
                     >
                       <div className="flex items-center gap-3">
                         <span className="font-semibold text-gray-900">{group.label}</span>
-                        <span className="text-gray-400 text-sm">{group.lists.length} списков</span>
+                        <span className="text-gray-400 text-sm">{group.lists.length} {plural(group.lists.length, tr.lists.listsCount)}</span>
                       </div>
                       <svg
                         width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
@@ -198,35 +193,35 @@ export default function ListsPage() {
                                   </div>
                                   {p && (
                                     <p className="text-gray-400 text-xs">
-                                      {p.known} / {p.total} выучено
-                                      {p.learning > 0 && <span className="text-amber-500 ml-1">· {p.learning} в процессе</span>}
+                                      {p.known} / {p.total} {tr.lists.learned}
+                                      {p.learning > 0 && <span className="text-amber-500 ml-1">· {p.learning} {plural(p.learning, tr.lists.inProgress)}</span>}
                                     </p>
                                   )}
                                 </div>
 
                                 <div className="flex items-center justify-between mt-auto">
-                                  <span className="text-gray-400 text-sm">{list.word_count} слов</span>
+                                  <span className="text-gray-400 text-sm">{list.word_count} {plural(list.word_count, tr.lists.wordsCount)}</span>
                                   <div className="flex gap-2">
                                     <Link
                                       href={`/dashboard/lists/${list.id}`}
                                       className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-900 rounded-lg transition-colors"
                                     >
-                                      Browse
+                                      {tr.lists.browse}
                                     </Link>
                                     {limitReached ? (
                                       <button
                                         disabled
-                                        title="Лимит сессий на сегодня исчерпан"
+                                        title={tr.lists.studyDisabledTitle}
                                         className="px-4 py-2.5 text-sm bg-emerald-600/30 rounded-lg font-medium cursor-not-allowed opacity-40"
                                       >
-                                        Учить
+                                        {tr.lists.study}
                                       </button>
                                     ) : (
                                       <Link
                                         href={`/dashboard/lists/${list.id}/study`}
                                         className="px-4 py-2.5 text-sm bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors font-medium text-white"
                                       >
-                                        Учить
+                                        {tr.lists.study}
                                       </Link>
                                     )}
                                   </div>
