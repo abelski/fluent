@@ -10,9 +10,12 @@
     "test": "playwright test"
   },
   "dependencies": {
+    "@uiw/react-md-editor": "^4.0.11",
     "next": "14.2.0",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

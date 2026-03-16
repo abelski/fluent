@@ -81,6 +81,7 @@ export default function Header() {
   const listsActive = pathname.startsWith('/dashboard/lists') || pathname === '/dashboard';
   const grammarActive = pathname.startsWith('/dashboard/grammar');
   const practiceActive = pathname.startsWith('/dashboard/practice');
+  const articlesActive = pathname.startsWith('/dashboard/articles');
 
   const navLinks = (
     <>
@@ -110,6 +111,14 @@ export default function Header() {
         }`}
       >
         {tr.nav.practice}
+      </Link>
+      <Link
+        href="/dashboard/articles"
+        className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          articlesActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
+        }`}
+      >
+        {tr.nav.articles}
       </Link>
     </>
   );

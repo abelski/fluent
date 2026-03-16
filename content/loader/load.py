@@ -15,17 +15,18 @@ from pathlib import Path
 CONTENT_DIR = Path(__file__).parent.parent
 GRAMMAR_DIR = CONTENT_DIR / "grammar"
 VOCAB_DIR = CONTENT_DIR / "vocabulary"
+ARTICLES_DIR = CONTENT_DIR / "articles"
 
 
 def main():
     parser = argparse.ArgumentParser(description="Load content files into the DB")
-    parser.add_argument("--only", choices=["grammar", "vocabulary"], default=None)
+    parser.add_argument("--only", choices=["grammar", "vocabulary", "articles"], default=None)
     parser.add_argument("--dry-run", action="store_true",
                         help="Parse and validate files without writing to DB")
     args = parser.parse_args()
 
-    from parsers import scan_grammar_files, scan_vocab_files
-    from db import ensure_tables, upsert_grammar_file, upsert_vocab_file
+    from parsers import scan_grammar_files, scan_vocab_files, scan_article_files
+    from db import ensure_tables, upsert_grammar_file, upsert_vocab_file, upsert_article_file
 
     dry_run = args.dry_run
     if dry_run:
@@ -35,6 +36,7 @@ def main():
 
     load_grammar = args.only in (None, "grammar")
     load_vocab = args.only in (None, "vocabulary")
+    load_articles = args.only in (None, "articles")
 
     errors = 0
 
@@ -67,6 +69,20 @@ def main():
             except Exception as exc:
                 print(f"  ERROR processing {result.subcategory}/{result.title}: {exc}",
                       file=sys.stderr)
+                errors += 1
+
+    if load_articles:
+        print(f"\n── Articles ({ARTICLES_DIR}) ──")
+        article_results = scan_article_files(ARTICLES_DIR)
+        if not article_results:
+            print("  No article files found.")
+        for result in article_results:
+            try:
+                counts = upsert_article_file(result, dry_run=dry_run)
+                print(f"  {result.slug} | "
+                      f"+{counts['added']} updated:{counts['updated']} ={counts['unchanged']}")
+            except Exception as exc:
+                print(f"  ERROR processing {result.slug}: {exc}", file=sys.stderr)
                 errors += 1
 
     print()

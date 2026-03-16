@@ -131,6 +131,82 @@ def parse_vocab_file(path: Path) -> VocabFileResult:
     )
 
 
+@dataclass
+class ArticleResult:
+    slug: str
+    title_ru: str
+    title_en: str
+    body_ru: str
+    body_en: str
+    tags: str
+    published: bool
+
+
+def parse_article_file(path: Path) -> ArticleResult:
+    """Parse a bilingual article markdown file with YAML frontmatter.
+
+    Format:
+        ---
+        slug: some-slug
+        title_ru: ...
+        title_en: ...
+        tags: tag1,tag2
+        published: true
+        ---
+
+        <Russian body>
+
+        ---EN---
+
+        <English body>
+    """
+    import re
+    content = path.read_text(encoding="utf-8")
+
+    fm_match = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
+    if not fm_match:
+        raise ValueError(f"Missing frontmatter in {path}")
+
+    fm = fm_match.group(1)
+    body_part = content[fm_match.end():]
+
+    def _get(key: str) -> str:
+        m = re.search(rf"^{key}:\s*(.+)$", fm, re.MULTILINE)
+        return m.group(1).strip() if m else ""
+
+    slug = _get("slug") or path.stem
+    title_ru = _get("title_ru")
+    title_en = _get("title_en")
+    tags = _get("tags")
+    published = _get("published").lower() != "false"
+
+    if "---EN---" in body_part:
+        parts = body_part.split("---EN---", 1)
+        body_ru = parts[0].strip()
+        body_en = parts[1].strip()
+    else:
+        body_ru = body_part.strip()
+        body_en = ""
+
+    return ArticleResult(
+        slug=slug,
+        title_ru=title_ru,
+        title_en=title_en,
+        body_ru=body_ru,
+        body_en=body_en,
+        tags=tags,
+        published=published,
+    )
+
+
+def scan_article_files(articles_dir: Path) -> list[ArticleResult]:
+    """Recursively find and parse all .md files under articles_dir."""
+    results = []
+    for md_file in sorted(articles_dir.rglob("*.md")):
+        results.append(parse_article_file(md_file))
+    return results
+
+
 def scan_grammar_files(grammar_dir: Path) -> list[GrammarFileResult]:
     """Recursively find and parse all .txt files under grammar_dir."""
     results = []

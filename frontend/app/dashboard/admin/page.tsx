@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
@@ -28,19 +29,38 @@ interface ReportRow {
   created_at: string;
 }
 
-type Tab = 'users' | 'reports';
+interface ArticleRow {
+  id: number;
+  slug: string;
+  title_ru: string;
+  title_en: string;
+  tags: string[];
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+type Tab = 'users' | 'reports' | 'articles';
 
 export default function AdminPage() {
   const router = useRouter();
-  const { tr } = useT();
+  const { tr, lang } = useT();
   const [tab, setTab] = useState<Tab>('users');
   const [users, setUsers] = useState<UserRow[]>([]);
   const [reports, setReports] = useState<ReportRow[]>([]);
+  const [articles, setArticles] = useState<ArticleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [grantDate, setGrantDate] = useState('');
   const [saving, setSaving] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
+  const importRef = useRef<HTMLInputElement>(null);
+
+  function authHeaders() {
+    const token = getToken();
+    return { Authorization: `Bearer ${token}` };
+  }
 
   function loadData() {
     const token = getToken();
@@ -50,13 +70,15 @@ export default function AdminPage() {
       fetch(`${BACKEND_URL}/api/admin/users`, { headers }),
       fetch(`${BACKEND_URL}/api/me/quota`, { headers }),
       fetch(`${BACKEND_URL}/api/admin/reports`, { headers }),
+      fetch(`${BACKEND_URL}/api/admin/articles`, { headers }),
     ])
-      .then(async ([usersRes, quotaRes, reportsRes]) => {
+      .then(async ([usersRes, quotaRes, reportsRes, articlesRes]) => {
         if (usersRes.status === 403 || usersRes.status === 401) { router.replace('/dashboard/lists'); return; }
         const [usersData, quotaData] = await Promise.all([usersRes.json(), quotaRes.json()]);
         setUsers(usersData);
         setIsSuperadmin(!!quotaData.is_superadmin);
         if (reportsRes.ok) setReports(await reportsRes.json());
+        if (articlesRes.ok) setArticles(await articlesRes.json());
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -119,6 +141,45 @@ export default function AdminPage() {
     loadData();
   }
 
+  async function deleteArticle(slug: string) {
+    if (!confirm(tr.articles.deleteConfirm)) return;
+    await fetch(`${BACKEND_URL}/api/admin/articles/${slug}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    }).catch(() => {});
+    loadData();
+  }
+
+  async function exportArticle(slug: string) {
+    const res = await fetch(`${BACKEND_URL}/api/admin/articles/${slug}/export`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${slug}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${BACKEND_URL}/api/admin/articles/import`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: form,
+    });
+    setImportMsg(res.ok ? tr.articles.importSuccess : tr.articles.importError);
+    if (importRef.current) importRef.current.value = '';
+    setTimeout(() => setImportMsg(''), 3000);
+    if (res.ok) loadData();
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -155,6 +216,12 @@ export default function AdminPage() {
             {openReports > 0 && (
               <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 rounded-full">{openReports}</span>
             )}
+          </button>
+          <button
+            onClick={() => setTab('articles')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'articles' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+          >
+            {tr.admin.tabArticles}
           </button>
         </div>
 
@@ -308,6 +375,85 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ── Articles tab ── */}
+        {tab === 'articles' && (
+          <div>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                {importMsg && (
+                  <span className="text-xs text-emerald-600 font-medium">{importMsg}</span>
+                )}
+                <label className="cursor-pointer text-xs px-3 py-2 border border-gray-900 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                  {tr.articles.importArticle}
+                  <input
+                    ref={importRef}
+                    type="file"
+                    accept=".md"
+                    className="hidden"
+                    onChange={handleImport}
+                  />
+                </label>
+                <Link
+                  href="/dashboard/admin/articles/new/edit"
+                  className="text-xs px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                >
+                  + {tr.articles.newArticle}
+                </Link>
+              </div>
+            </div>
+
+            {articles.length === 0 && (
+              <p className="text-gray-400 text-sm py-8 text-center">{tr.articles.noArticles}</p>
+            )}
+
+            <div className="flex flex-col gap-3">
+              {articles.map((a) => {
+                const title = lang === 'ru' ? a.title_ru : a.title_en;
+                return (
+                  <div
+                    key={a.id}
+                    className="flex items-center justify-between gap-4 rounded-2xl border border-gray-900 bg-white px-4 py-3"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-gray-900 truncate">{title}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full border border-gray-900 font-medium ${
+                          a.published
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-gray-50 text-gray-400'
+                        }`}>
+                          {a.published ? tr.articles.published : tr.articles.draft}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5 font-mono">{a.slug}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                      <button
+                        onClick={() => exportArticle(a.slug)}
+                        className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg text-gray-500 hover:text-gray-900 transition-colors"
+                      >
+                        {tr.articles.exportArticle}
+                      </button>
+                      <Link
+                        href={`/dashboard/admin/articles/${a.slug}/edit`}
+                        className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg text-emerald-600 hover:bg-gray-50 transition-colors"
+                      >
+                        {tr.articles.editArticle}
+                      </Link>
+                      <button
+                        onClick={() => deleteArticle(a.slug)}
+                        className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg text-red-500 hover:bg-gray-50 transition-colors"
+                      >
+                        {tr.articles.deleteArticle}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

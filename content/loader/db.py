@@ -28,8 +28,8 @@ engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 # Import models AFTER engine is ready
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "backend"))
-from models import GrammarSentence, Word, WordList, WordListItem  # noqa: E402
-from parsers import GrammarFileResult, GrammarSentenceRow, VocabFileResult  # noqa: E402
+from models import GrammarSentence, Word, WordList, WordListItem, Article  # noqa: E402
+from parsers import GrammarFileResult, GrammarSentenceRow, VocabFileResult, ArticleResult  # noqa: E402
 
 
 def ensure_tables():
@@ -92,6 +92,59 @@ def upsert_grammar_file(result: GrammarFileResult, dry_run: bool = False) -> dic
             session.commit()
 
     return {"added": added, "updated": updated, "unchanged": unchanged}
+
+
+# ── Articles ───────────────────────────────────────────────────────────────────
+
+def upsert_article_file(result: ArticleResult, dry_run: bool = False) -> dict:
+    """Upsert one article from a parsed markdown file. Returns counts."""
+    from datetime import datetime, timezone
+
+    def _utcnow():
+        return datetime.now(timezone.utc).replace(tzinfo=None)
+
+    with Session(engine) as session:
+        existing = session.exec(
+            select(Article).where(Article.slug == result.slug)
+        ).first()
+
+        if existing:
+            changed = (
+                existing.title_ru != result.title_ru
+                or existing.title_en != result.title_en
+                or existing.body_ru != result.body_ru
+                or existing.body_en != result.body_en
+                or existing.tags != result.tags
+                or existing.published != result.published
+            )
+            if changed:
+                if not dry_run:
+                    existing.title_ru = result.title_ru
+                    existing.title_en = result.title_en
+                    existing.body_ru = result.body_ru
+                    existing.body_en = result.body_en
+                    existing.tags = result.tags
+                    existing.published = result.published
+                    existing.updated_at = _utcnow()
+                    session.add(existing)
+                    session.commit()
+                return {"added": 0, "updated": 1, "unchanged": 0}
+            return {"added": 0, "updated": 0, "unchanged": 1}
+
+        if not dry_run:
+            article = Article(
+                slug=result.slug,
+                title_ru=result.title_ru,
+                title_en=result.title_en,
+                body_ru=result.body_ru,
+                body_en=result.body_en,
+                tags=result.tags,
+                published=result.published,
+            )
+            session.add(article)
+            session.commit()
+
+    return {"added": 1, "updated": 0, "unchanged": 0}
 
 
 # ── Vocabulary ────────────────────────────────────────────────────────────────

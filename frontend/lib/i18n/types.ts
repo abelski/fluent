@@ -33,6 +33,7 @@ export interface Translations {
     dictionaries: string;
     grammar: string;
     practice: string;
+    articles: string;
     beta: string;
     signIn: string;
     admin: string;
@@ -137,6 +138,7 @@ export interface Translations {
     subtitle: string;
     tabUsers: string;
     tabReports: string;
+    tabArticles: string;
     colUser: string;
     colPlan: string;
     colPremiumUntil: string;
@@ -158,6 +160,35 @@ export interface Translations {
     resolve: string;
     delete: string;
     deleteConfirm: string;
+  };
+  articles: {
+    title: string;
+    subtitle: string;
+    readMore: string;
+    noArticles: string;
+    backToArticles: string;
+    langRu: string;
+    langEn: string;
+    adminTitle: string;
+    newArticle: string;
+    editArticle: string;
+    deleteArticle: string;
+    deleteConfirm: string;
+    importArticle: string;
+    exportArticle: string;
+    slugLabel: string;
+    titleRuLabel: string;
+    titleEnLabel: string;
+    tagsLabel: string;
+    publishedLabel: string;
+    bodyRuLabel: string;
+    bodyEnLabel: string;
+    saveSuccess: string;
+    saveError: string;
+    importSuccess: string;
+    importError: string;
+    published: string;
+    draft: string;
   };
   stats: {
     wordsLearned: string;

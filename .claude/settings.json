@@ -44,7 +44,13 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/dashboard/lists/)",
       "Bash(curl -s http://localhost:3000/dashboard/lists/)",
       "Bash(kill 41472 41473)",
-      "Bash(python -m pytest tests/test_i18n.py -v)"
+      "Bash(python -m pytest tests/test_i18n.py -v)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(npm install:*)",
+      "Bash(python load.py --only articles)",
+      "Bash(curl -s http://localhost:8000/dashboard/articles)",
+      "Bash(curl -s http://localhost:8000/api/articles)",
+      "Bash(python3 -c \"import sys,json; a=json.load\\(sys.stdin\\); print\\(f''''Articles in DB: {len\\(a\\)}, slug: {a[0][\"\"slug\"\"]}''''\\)\")"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"

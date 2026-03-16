@@ -118,6 +118,22 @@ class GrammarSentence(SQLModel, table=True):
     archived: bool = Field(default=False)      # soft-delete: keep row, hide from exercises
 
 
+class Article(SQLModel, table=True):
+    """A bilingual article (RU + EN) authored or imported by admins.
+    Body is stored as Markdown. Seeded from content/articles/*.md files."""
+    __tablename__ = "article"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    slug: str = Field(unique=True, index=True)         # URL-safe identifier
+    title_ru: str
+    title_en: str
+    body_ru: str = Field(default="")                   # Markdown content in Russian
+    body_en: str = Field(default="")                   # Markdown content in English
+    tags: str = Field(default="")                      # comma-separated tag list
+    published: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=_utcnow)
+    updated_at: datetime = Field(default_factory=_utcnow)
+
+
 class GrammarLessonResult(SQLModel, table=True):
     """Records each completed grammar lesson attempt for a user.
 
