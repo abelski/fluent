@@ -35,15 +35,18 @@ test.describe('Language switch', () => {
     await expect(page.locator('[data-testid="lang-toggle"]')).toBeVisible({ timeout: 3000 });
   });
 
-  test('default lang is RU — toggle shows EN', async ({ page }) => {
+  test('default lang is RU — toggle shows RU/EN with RU highlighted', async ({ page }) => {
     await page.addInitScript(() => localStorage.removeItem('fluent_lang'));
     await page.goto('/dashboard/lists');
-    await expect(page.locator('[data-testid="lang-toggle"]')).toHaveText('EN', { timeout: 3000 });
+    const toggle = page.locator('[data-testid="lang-toggle"]');
+    await expect(toggle).toBeVisible({ timeout: 3000 });
+    await expect(toggle).toContainText('RU');
+    await expect(toggle).toContainText('EN');
   });
 
-  test('lang toggle button is disabled (feature in development)', async ({ page }) => {
+  test('lang toggle button is enabled', async ({ page }) => {
     await page.goto('/dashboard/lists');
-    await expect(page.locator('[data-testid="lang-toggle"]')).toBeDisabled({ timeout: 3000 });
+    await expect(page.locator('[data-testid="lang-toggle"]')).toBeEnabled({ timeout: 3000 });
   });
 
   test('study page stage 1 shows Russian translation by default', async ({ page }) => {

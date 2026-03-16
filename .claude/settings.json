@@ -50,7 +50,10 @@
       "Bash(python load.py --only articles)",
       "Bash(curl -s http://localhost:8000/dashboard/articles)",
       "Bash(curl -s http://localhost:8000/api/articles)",
-      "Bash(python3 -c \"import sys,json; a=json.load\\(sys.stdin\\); print\\(f''''Articles in DB: {len\\(a\\)}, slug: {a[0][\"\"slug\"\"]}''''\\)\")"
+      "Bash(python3 -c \"import sys,json; a=json.load\\(sys.stdin\\); print\\(f''''Articles in DB: {len\\(a\\)}, slug: {a[0][\"\"slug\"\"]}''''\\)\")",
+      "Bash(curl -s http://localhost:8000/api/lists)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(ps eww:*)"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"
