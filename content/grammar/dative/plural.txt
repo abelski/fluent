@@ -1,8 +1,10 @@
 # case_index: 10
-# name:       Дательный мн.ч. (Naudininkas Dgs.)
+# name_ru:    Дательный мн.ч. (Naudininkas Dgs.)
 # question:   Кому? (мн.ч.)
 # usage:      Косвенное дополнение во множественном числе.
-# endings:    — (sg) / -ams, -iams, -oms, -ėms, -ums (pl)
+# endings_sg: —
+# endings_pl: -ams, -iams, -oms, -ėms, -ums
+# transform:  -ai→-ams (namams), -iai→-iams (broliams), -os→-oms (knygoms), -ės→-ėms (gatvėms), -ūs→-ums (sūnums).
 
 # display | answer_ending | full_word | russian
 Tai reikalinga draug___. | ams | draugams | Это нужно друзьям.

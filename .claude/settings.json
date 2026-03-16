@@ -60,7 +60,10 @@
       "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); titles=[l[''''title''''] for l in data]; print\\(''''Total lessons:'''', len\\(data\\)\\); print\\(''''Any Повторение:'''', any\\(''''Повторение'''' in t for t in titles\\)\\); print\\(''''Titles:'''', titles\\)\")",
       "Bash(lsof -ti:8000)",
       "Bash(xargs kill:*)",
-      "Bash(curl -sv http://localhost:8000/dashboard/grammar)"
+      "Bash(curl -sv http://localhost:8000/dashboard/grammar)",
+      "Bash(grep -E \"\\\\.py$|^d\")",
+      "Bash(wc -l /Users/Artur_Belski/Documents/src/fluent/frontend/lib/i18n/*.ts)",
+      "Bash(grep -r \"const.*\\\\[\" /Users/Artur_Belski/Documents/src/fluent/backend/routers/*.py)"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"

@@ -1,8 +1,10 @@
 # case_index: 4
-# name:       Винительный (Galininkas)
+# name_ru:    Винительный (Galininkas)
 # question:   Кого? Что?
 # usage:      Прямое дополнение — объект действия (вижу, покупаю, люблю кого/что).
-# endings:    -ą, -į, -ų (sg) / -us, -ius, -as, -es (pl)
+# endings_sg: -ą, -į, -ų
+# endings_pl: -us, -ius, -as, -es
+# transform:  -as→-ą, -is/-ys→-į, -us→-ų, -a→-ą, -ė→-ę. Мн.ч.: -ai→-us, -iai→-ius, -os→-as, -ės→-es.
 
 # display | answer_ending | full_word | russian
 Laima mato brol___. | į | brolį | Лайма видит брата.

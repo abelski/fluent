@@ -1,8 +1,10 @@
 # case_index: 12
-# name:       Творительный мн.ч. (Įnagininkas Dgs.)
+# name_ru:    Творительный мн.ч. (Įnagininkas Dgs.)
 # question:   С кем? С чем? (мн.ч.)
 # usage:      Творительный падеж во множественном числе, совместность.
-# endings:    — (sg) / -ais, -iais, -omis, -ėmis, -umis (pl)
+# endings_sg: —
+# endings_pl: -ais, -iais, -omis, -ėmis, -umis
+# transform:  -ai→-ais (namais), -iai→-iais (broliais), -os→-omis (knygomis), -ės→-ėmis (gatvėmis), -ūs→-umis (sūnumis).
 
 # display | answer_ending | full_word | russian
 Jis eina su brol___. | iais | broliais | Он идёт с братьями.

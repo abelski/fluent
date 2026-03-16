@@ -1,8 +1,10 @@
 # case_index: 2
-# name:       Родительный (Kilmininkas)
+# name_ru:    Родительный (Kilmininkas)
 # question:   Кого? Чего?
 # usage:      Отрицание (nėra + род.), принадлежность, после предлогов iš, be, prie, šalia, iki, pas.
-# endings:    -o, -io, -os, -ės, -aus, -ies (sg) / -ų (pl)
+# endings_sg: -o, -io, -os, -ės, -aus, -ies
+# endings_pl: -ų
+# transform:  -as→-o, -is/-ys→-io, -a→-os, -ė→-ės, -us→-aus, -uo→-ens/-ers. Исключений немного, но brolis→brolio (не brolios).
 
 # display | answer_ending | full_word | russian
 Ten nėra nam___. | o | namo | Там нет дома.

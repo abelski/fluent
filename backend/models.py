@@ -118,6 +118,20 @@ class GrammarSentence(SQLModel, table=True):
     archived: bool = Field(default=False)      # soft-delete: keep row, hide from exercises
 
 
+class GrammarCaseRule(SQLModel, table=True):
+    """Grammar rule metadata for a Lithuanian case, loaded from content/grammar/ text file headers.
+    Keyed by case_index (1-14). Populated by the content loader."""
+    __tablename__ = "grammar_case_rule"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    case_index: int = Field(unique=True, index=True)  # 1-14
+    name_ru: str                    # "Винительный (Galininkas)"
+    question: str                   # "Кого? Что?"
+    usage: str                      # explanation of when to use this case
+    endings_sg: str                 # singular endings, e.g. "-ą, -į, -ų"
+    endings_pl: str                 # plural endings, e.g. "-us, -ius, -as, -es"
+    transform: str                  # transformation rules description
+
+
 class Article(SQLModel, table=True):
     """A bilingual article (RU + EN) authored or imported by admins.
     Body is stored as Markdown. Seeded from content/articles/*.md files."""

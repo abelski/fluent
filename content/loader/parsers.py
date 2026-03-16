@@ -27,8 +27,20 @@ class GrammarSentenceRow:
 
 
 @dataclass
+class GrammarRuleRow:
+    case_index: int
+    name_ru: str
+    question: str
+    usage: str
+    endings_sg: str
+    endings_pl: str
+    transform: str
+
+
+@dataclass
 class GrammarFileResult:
     case_index: int
+    rule: GrammarRuleRow | None  # present when all rule headers are found in this file
     sentences: list[GrammarSentenceRow]
 
 
@@ -51,6 +63,12 @@ class VocabFileResult:
 def parse_grammar_file(path: Path) -> GrammarFileResult:
     """Parse a grammar exercise file and return header metadata + sentence rows."""
     case_index: int | None = None
+    name_ru: str | None = None
+    question: str | None = None
+    usage: str | None = None
+    endings_sg: str | None = None
+    endings_pl: str | None = None
+    transform: str | None = None
     sentences: list[GrammarSentenceRow] = []
 
     for raw_line in path.read_text(encoding="utf-8").splitlines():
@@ -59,10 +77,21 @@ def parse_grammar_file(path: Path) -> GrammarFileResult:
             continue
 
         if line.startswith("#"):
-            # Header metadata line
             content = line[1:].strip()
             if content.startswith("case_index:"):
                 case_index = int(content.split(":", 1)[1].strip())
+            elif content.startswith("name_ru:"):
+                name_ru = content.split(":", 1)[1].strip()
+            elif content.startswith("question:"):
+                question = content.split(":", 1)[1].strip()
+            elif content.startswith("usage:"):
+                usage = content.split(":", 1)[1].strip()
+            elif content.startswith("endings_sg:"):
+                endings_sg = content.split(":", 1)[1].strip()
+            elif content.startswith("endings_pl:"):
+                endings_pl = content.split(":", 1)[1].strip()
+            elif content.startswith("transform:"):
+                transform = content.split(":", 1)[1].strip()
             continue
 
         # Data line — must have exactly 4 pipe-separated fields
@@ -85,7 +114,19 @@ def parse_grammar_file(path: Path) -> GrammarFileResult:
     if case_index is None:
         raise ValueError(f"No case_index header found in {path}")
 
-    return GrammarFileResult(case_index=case_index, sentences=sentences)
+    rule: GrammarRuleRow | None = None
+    if all(v is not None for v in [name_ru, question, usage, endings_sg, endings_pl, transform]):
+        rule = GrammarRuleRow(
+            case_index=case_index,
+            name_ru=name_ru,  # type: ignore[arg-type]
+            question=question,  # type: ignore[arg-type]
+            usage=usage,  # type: ignore[arg-type]
+            endings_sg=endings_sg,  # type: ignore[arg-type]
+            endings_pl=endings_pl,  # type: ignore[arg-type]
+            transform=transform,  # type: ignore[arg-type]
+        )
+
+    return GrammarFileResult(case_index=case_index, rule=rule, sentences=sentences)
 
 
 def parse_vocab_file(path: Path) -> VocabFileResult:

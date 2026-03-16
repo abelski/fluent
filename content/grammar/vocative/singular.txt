@@ -1,8 +1,10 @@
 # case_index: 7
-# name:       Звательный (Šauksmininkas)
+# name_ru:    Звательный (Šauksmininkas)
 # question:   Эй, ...!
 # usage:      Прямое обращение к человеку или существу. Используется только в речи.
-# endings:    -e, -ai, -a, -ė (sg) / -ai, -iai, -os, -ės (pl)
+# endings_sg: -e, -ai, -a, -ė
+# endings_pl: -ai, -iai, -os, -ės
+# transform:  -as→-e (drauge!), -is→-i (broli!), -a→-a (mama!), -ė→-e (drauge!). Исключение: -ius→-iau (profesoriau!).
 
 # display | answer_ending | full_word | russian
 Sveiki, brol___! | i | broli | Привет, брат!

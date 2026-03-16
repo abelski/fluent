@@ -1,8 +1,10 @@
 # case_index: 11
-# name:       Винительный мн.ч. (Galininkas Dgs.)
+# name_ru:    Винительный мн.ч. (Galininkas Dgs.)
 # question:   Кого? Что? (мн.ч.)
 # usage:      Прямое дополнение во множественном числе.
-# endings:    — (sg) / -us, -ius, -as, -es (pl)
+# endings_sg: —
+# endings_pl: -us, -ius, -as, -es
+# transform:  -ai→-us (namus), -iai→-ius (brolius), -os→-as (knygas), -ės→-es (gatves), -ūs→-us (sūnus).
 
 # display | answer_ending | full_word | russian
 Laima mato brol___. | ius | brolius | Лайма видит братьев.

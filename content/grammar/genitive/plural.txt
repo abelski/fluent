@@ -1,8 +1,10 @@
 # case_index: 9
-# name:       Родительный мн.ч. (Kilmininkas Dgs.)
+# name_ru:    Родительный мн.ч. (Kilmininkas Dgs.)
 # question:   Кого? Чего? (мн.ч.)
 # usage:      Множественное число родительного. Часто окончание -ų для большинства существительных.
-# endings:    — (sg) / -ų (pl)
+# endings_sg: —
+# endings_pl: -ų
+# transform:  Большинство существительных: любое окончание ед.ч. → -ų (namų, brolių, knygų, gatvių). Исключения редки.
 
 # display | answer_ending | full_word | russian
 Čia nėra brol___. | ių | brolių | Здесь нет братьев.

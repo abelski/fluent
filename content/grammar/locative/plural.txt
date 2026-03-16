@@ -1,8 +1,10 @@
 # case_index: 13
-# name:       Местный мн.ч. (Vietininkas Dgs.)
+# name_ru:    Местный мн.ч. (Vietininkas Dgs.)
 # question:   Где? (мн.ч.)
 # usage:      Местонахождение внутри чего-то, множественное число.
-# endings:    — (sg) / -uose, -iuose, -ose, -ėse (pl)
+# endings_sg: —
+# endings_pl: -uose, -iuose, -ose, -ėse
+# transform:  -ai→-uose (namuose), -iai→-iuose (broliuose), -os→-ose (knygose), -ės→-ėse (gatvėse).
 
 # display | answer_ending | full_word | russian
 Jie gyvena nam___. | uose | namuose | Они живут в домах.

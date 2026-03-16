@@ -26,7 +26,7 @@ def list_lessons(
     Locking rule: lesson N is locked until lesson N-1 best score > 75%.
     Unauthenticated users see all lessons unlocked (no progression tracking).
     """
-    lessons = get_lessons()
+    lessons = get_lessons(session)
 
     best_scores: dict[int, float] = {}
 

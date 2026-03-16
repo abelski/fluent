@@ -4,24 +4,30 @@
 #   "declension" — user must type the correct case form of a given word (basic level)
 #   "sentence"   — user must fill in a blank in a real Lithuanian sentence (advanced/practice)
 #
-# Sentences are loaded from the grammar_sentence DB table (populated by the content loader).
-# Word stems (WORDS) and lesson config (LESSON_CONFIG) remain hardcoded in Python.
+# Sentences and case rules are loaded from the DB (populated by the content loader).
+# Word declension table is loaded from content/grammar/words.txt.
 
 import re
 import random
+from pathlib import Path
 
 from sqlmodel import Session, select
 
-from data.grammar.words import WORDS
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
-from data.grammar.rules import CASE_RULES
-from models import GrammarSentence
+from models import GrammarSentence, GrammarCaseRule
+
+# Load noun declension table from content file.
+# Each row: [stem, sg1..sg7, pl1..pl7, ru_translation] (17 fields total)
+_WORDS_PATH = Path(__file__).parent.parent / "content/words.txt"
+WORDS = [
+    line.strip().split("\t")
+    for line in _WORDS_PATH.read_text(encoding="utf-8").splitlines()
+    if line.strip() and not line.startswith("#")
+]
 
 # Precomputed mapping: stem → nominative singular form (stem + nominative ending).
 # Used to annotate sentence tasks with the base form of the target word.
-_STEM_TO_NOMINATIVE: dict[str, str] = {
-    word[0]: word[0] + word[1] for word in WORDS
-}
+_STEM_TO_NOMINATIVE: dict[str, str] = {w[0]: w[0] + w[1] for w in WORDS}
 
 # Stems of place/location nouns — used to restrict Vietininkas (locative) basic
 # declension tasks so every prompt makes semantic sense as a location.
@@ -56,13 +62,25 @@ def _extract_stem(display: str) -> str:
     return match.group(1) if match else ''
 
 
-def get_lessons() -> list[dict]:
+def get_lessons(session: Session) -> list[dict]:
     """Return metadata for all lessons defined in LESSON_CONFIG.
 
     LESSON_CONFIG entries are tuples: (id, level, cases, task_count, title).
     Each lesson includes the grammar rules for its cases so the frontend can
     display hints without an extra API round-trip.
+    Rules are loaded from the grammar_case_rule DB table.
     """
+    db_rules = {
+        row.case_index: {
+            "question": row.question,
+            "name_ru": row.name_ru,
+            "usage": row.usage,
+            "endings_sg": row.endings_sg,
+            "endings_pl": row.endings_pl,
+            "transform": row.transform,
+        }
+        for row in session.exec(select(GrammarCaseRule)).all()
+    }
     return [
         {
             "id": entry[0],
@@ -70,7 +88,7 @@ def get_lessons() -> list[dict]:
             "level": entry[1],
             "cases": entry[2],
             "task_count": entry[3],
-            "rules": [CASE_RULES[c] for c in entry[2] if c in CASE_RULES],
+            "rules": [db_rules[c] for c in entry[2] if c in db_rules],
         }
         for entry in LESSON_CONFIG
     ]

@@ -1,63 +1,10 @@
-# Lesson configuration.
-# Format: [id, level, [case_indices], task_count, title]
-# Case indices: 1=Vard.Vns, 2=Kilm.Vns, 3=Naud.Vns, 4=Galin.Vns,
-#               5=Įnag.Vns, 6=Viet.Vns, 7=Šauksm.Vns,
-#               8=Vard.Dgs, 9=Kilm.Dgs, 10=Naud.Dgs, 11=Galin.Dgs,
-#               12=Įnag.Dgs, 13=Viet.Dgs, 14=Šauksm.Dgs
-LESSON_CONFIG = [
-    [1,"basic",[4],24,"Galininkas Vns."],
-    [2,"advanced",[4],35,"Galininkas Vns."],
-    [3,"practice",[4],20,"Galininkas Vns."],
-    [4,"basic",[6],24,"Vietininkas Vns."],
-    [5,"advanced",[6],35,"Vietininkas Vns."],
-    [6,"practice",[6],20,"Vietininkas Vns."],
-    [10,"basic",[2],24,"Kilmininkas Vns."],
-    [11,"advanced",[2],35,"Kilmininkas Vns."],
-    [12,"practice",[2],20,"Kilmininkas Vns."],
-    [16,"basic",[8],24,"Vardininkas Dgs."],
-    [17,"advanced",[8],35,"Vardininkas Dgs."],
-    [18,"practice",[8],20,"Vardininkas Dgs."],
-    [22,"basic",[9],24,"Kilmininkas Dgs."],
-    [23,"advanced",[9],35,"Kilmininkas Dgs."],
-    [24,"practice",[9],20,"Kilmininkas Dgs."],
-    [28,"basic",[5],24,"Įnagininkas Vns."],
-    [29,"advanced",[5],35,"Įnagininkas Vns."],
-    [30,"practice",[5],10,"Įnagininkas Vns."],
-    [34,"basic",[3],24,"Naudininkas Vns."],
-    [35,"advanced",[3],35,"Naudininkas Vns."],
-    [36,"practice",[3],10,"Naudininkas Vns."],
-    [40,"basic",[7],24,"Šauksmininkas Vns."],
-    [41,"advanced",[7],35,"Šauksmininkas Vns."],
-    [42,"practice",[7],10,"Šauksmininkas Vns."],
-    [46,"basic",[13],24,"Vietininkas Dgs."],
-    [47,"advanced",[13],35,"Vietininkas Dgs."],
-    [48,"practice",[13],10,"Vietininkas Dgs."],
-    [52,"basic",[11],24,"Galininkas Dgs."],
-    [53,"advanced",[11],35,"Galininkas Dgs."],
-    [54,"practice",[11],10,"Galininkas Dgs."],
-    [58,"basic",[12],24,"Įnagininkas Dgs."],
-    [59,"advanced",[12],35,"Įnagininkas Dgs."],
-    [60,"practice",[12],10,"Įnagininkas Dgs."],
-    [64,"basic",[10],24,"Naudininkas Dgs."],
-    [65,"advanced",[10],35,"Naudininkas Dgs."],
-    [66,"practice",[10],35,"Naudininkas Dgs."],
-]
+import json
+from pathlib import Path
 
-# Lithuanian grammatical cases with singular/plural information.
-# Standard Lithuanian grammar terminology — not specific to any resource.
-CASE_INFO = {
-    1:  ("Vardininkas",   "Vienaskaita"),
-    2:  ("Kilmininkas",   "Vienaskaita"),
-    3:  ("Naudininkas",   "Vienaskaita"),
-    4:  ("Galininkas",    "Vienaskaita"),
-    5:  ("Įnagininkas",   "Vienaskaita"),
-    6:  ("Vietininkas",   "Vienaskaita"),
-    7:  ("Šauksmininkas", "Vienaskaita"),
-    8:  ("Vardininkas",   "Daugiskaita"),
-    9:  ("Kilmininkas",   "Daugiskaita"),
-    10: ("Naudininkas",   "Daugiskaita"),
-    11: ("Galininkas",    "Daugiskaita"),
-    12: ("Įnagininkas",   "Daugiskaita"),
-    13: ("Vietininkas",   "Daugiskaita"),
-    14: ("Šauksmininkas", "Daugiskaita"),
-}
+_data = json.loads(
+    (Path(__file__).parent.parent.parent.parent / "content/grammar/lessons.json")
+    .read_text(encoding="utf-8")
+)
+
+LESSON_CONFIG = [list(row) for row in _data["lessons"]]
+CASE_INFO = {int(k): tuple(v) for k, v in _data["cases"].items()}

@@ -1,8 +1,10 @@
 # case_index: 5
-# name:       Творительный (Įnagininkas)
+# name_ru:    Творительный (Įnagininkas)
 # question:   Кем? Чем? С кем?
 # usage:      Инструмент или совместность. После предлога su (с кем/чем).
-# endings:    -u, -iu, -a, -e (sg) / -ais, -iais, -omis, -ėmis, -umis (pl)
+# endings_sg: -u, -iu, -a, -e
+# endings_pl: -ais, -iais, -omis, -ėmis, -umis
+# transform:  -as→-u, -is/-ys→-iu, -a→-a (без изменений), -ė→-e. Мн.ч.: -ai→-ais, -iai→-iais, -os→-omis, -ės→-ėmis.
 
 # display | answer_ending | full_word | russian
 Jis eina su brol___. | iu | broliu | Он идёт с братом.

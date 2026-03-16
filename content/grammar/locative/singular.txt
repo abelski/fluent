@@ -1,8 +1,10 @@
 # case_index: 6
-# name:       Местный (Vietininkas)
+# name_ru:    Местный (Vietininkas)
 # question:   В ком? В чём? Где?
 # usage:      Местонахождение внутри чего-то. Отвечает на вопрос «где?» (в доме, в городе).
-# endings:    -e, -yje, -oje, -ėje, -uje (sg) / -uose, -iuose, -ose, -ėse (pl)
+# endings_sg: -e, -yje, -oje, -ėje, -uje
+# endings_pl: -uose, -iuose, -ose, -ėse
+# transform:  -as→-e (namas→name), -is→-yje (brolis→brolyje), -ys→-yje (kambarys→kambaryje), -a→-oje (knyga→knygoje), -ė→-ėje (gatvė→gatvėje), -us→-uje (muziejus→muziejuje).
 
 # display | answer_ending | full_word | russian
 Mama dirba universitet___. | e | universitete | Мама работает в университете.

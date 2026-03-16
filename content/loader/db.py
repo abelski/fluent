@@ -28,7 +28,7 @@ engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 # Import models AFTER engine is ready
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "backend"))
-from models import GrammarSentence, Word, WordList, WordListItem, Article  # noqa: E402
+from models import GrammarSentence, GrammarCaseRule, Word, WordList, WordListItem, Article  # noqa: E402
 from parsers import GrammarFileResult, GrammarSentenceRow, VocabFileResult, ArticleResult  # noqa: E402
 
 
@@ -90,6 +90,44 @@ def upsert_grammar_file(result: GrammarFileResult, dry_run: bool = False) -> dic
 
         if not dry_run:
             session.commit()
+
+    # Upsert rule metadata if the file had all rule headers
+    if result.rule is not None:
+        r = result.rule
+        with Session(engine) as session:
+            existing_rule = session.exec(
+                select(GrammarCaseRule).where(GrammarCaseRule.case_index == r.case_index)
+            ).first()
+            if existing_rule is None:
+                if not dry_run:
+                    session.add(GrammarCaseRule(
+                        case_index=r.case_index,
+                        name_ru=r.name_ru,
+                        question=r.question,
+                        usage=r.usage,
+                        endings_sg=r.endings_sg,
+                        endings_pl=r.endings_pl,
+                        transform=r.transform,
+                    ))
+                    session.commit()
+            else:
+                changed = (
+                    existing_rule.name_ru != r.name_ru
+                    or existing_rule.question != r.question
+                    or existing_rule.usage != r.usage
+                    or existing_rule.endings_sg != r.endings_sg
+                    or existing_rule.endings_pl != r.endings_pl
+                    or existing_rule.transform != r.transform
+                )
+                if changed and not dry_run:
+                    existing_rule.name_ru = r.name_ru
+                    existing_rule.question = r.question
+                    existing_rule.usage = r.usage
+                    existing_rule.endings_sg = r.endings_sg
+                    existing_rule.endings_pl = r.endings_pl
+                    existing_rule.transform = r.transform
+                    session.add(existing_rule)
+                    session.commit()
 
     return {"added": added, "updated": updated, "unchanged": unchanged}
 
