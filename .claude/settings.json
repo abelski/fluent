@@ -53,7 +53,14 @@
       "Bash(python3 -c \"import sys,json; a=json.load\\(sys.stdin\\); print\\(f''''Articles in DB: {len\\(a\\)}, slug: {a[0][\"\"slug\"\"]}''''\\)\")",
       "Bash(curl -s http://localhost:8000/api/lists)",
       "Bash(python -m pytest tests/ -v)",
-      "Bash(ps eww:*)"
+      "Bash(ps eww:*)",
+      "Bash(grep -r повторение /Users/Artur_Belski/Documents/src/fluent --include=*.py --include=*.ts --include=*.tsx --include=*.json)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/api/grammar/lessons)",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); titles=[l[''''title''''] for l in data]; print\\(''''Total lessons:'''', len\\(data\\)\\); print\\(''''Any Повторение:'''', any\\(''''Повторение'''' in t for t in titles\\)\\); print\\(''''Titles:'''', titles\\)\")",
+      "Bash(lsof -ti:8000)",
+      "Bash(xargs kill:*)",
+      "Bash(curl -sv http://localhost:8000/dashboard/grammar)"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"
