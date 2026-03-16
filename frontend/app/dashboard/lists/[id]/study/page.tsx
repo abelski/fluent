@@ -48,6 +48,7 @@ function normalizeLt(text: string): string {
     .replace(/š/g, 's')
     .replace(/ž/g, 'z')
     .replace(/ū/g, 'u')
+    .replace(/ų/g, 'u')
     .replace(/ę/g, 'e')
     .replace(/ė/g, 'e')
     .replace(/ą/g, 'a');
@@ -62,17 +63,21 @@ function trans(word: Word, lang: Lang): string {
   return lang === 'en' ? word.translation_en : word.translation_ru;
 }
 
-function pickDistractors(word: Word, allWords: Word[], lang: Lang): string[] {
+function optionText(word: Word, lang: Lang): string {
+  const digit = getDigit(word);
+  return digit ?? trans(word, lang);
+}
+
+function pickDistractors(word: Word, allWords: Word[]): Word[] {
   const pool = allWords.filter((w) => w.id !== word.id);
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 3).map((w) => trans(w, lang));
+  return [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
 }
 
 function buildOptions(word: Word, allWords: Word[], lang: Lang): { text: string; correct: boolean }[] {
-  const distractors = pickDistractors(word, allWords, lang);
+  const distractors = pickDistractors(word, allWords);
   return [
-    { text: trans(word, lang), correct: true },
-    ...distractors.map((d) => ({ text: d, correct: false })),
+    { text: optionText(word, lang), correct: true },
+    ...distractors.map((d) => ({ text: optionText(d, lang), correct: false })),
   ].sort(() => Math.random() - 0.5);
 }
 

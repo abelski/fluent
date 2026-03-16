@@ -11,6 +11,7 @@ interface GrammarRule {
   usage: string;
   endings_sg: string;
   endings_pl: string;
+  transform?: string;
 }
 
 interface Lesson {
@@ -66,6 +67,7 @@ function normalizeLt(text: string): string {
     .replace(/š/g, 's')
     .replace(/ž/g, 'z')
     .replace(/ū/g, 'u')
+    .replace(/ų/g, 'u')
     .replace(/ę/g, 'e')
     .replace(/ė/g, 'e')
     .replace(/ą/g, 'a');
@@ -104,7 +106,10 @@ function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collaps
             <div key={i} className={rules.length > 1 ? 'pb-4 border-b border-gray-900 last:border-0 last:pb-0' : ''}>
               <p className="text-teal-700 text-sm font-semibold mb-1">{rule.name_ru}</p>
               <p className="text-gray-500 text-xs mb-2">{rule.question}</p>
-              <p className="text-gray-600 text-sm mb-3 leading-relaxed">{rule.usage}</p>
+              <p className="text-gray-600 text-sm mb-2 leading-relaxed">{rule.usage}</p>
+              {rule.transform && (
+                <p className="text-gray-500 text-xs mb-3 leading-relaxed font-mono bg-white/60 rounded px-2 py-1">{rule.transform}</p>
+              )}
               {rule.endings_sg !== '—' && (
                 <div className="flex flex-wrap gap-3 text-xs">
                   <div>

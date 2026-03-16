@@ -23,6 +23,32 @@ _STEM_TO_NOMINATIVE: dict[str, str] = {
     word[0]: word[0] + word[1] for word in WORDS
 }
 
+# Stems of place/location nouns — used to restrict Vietininkas (locative) basic
+# declension tasks so every prompt makes semantic sense as a location.
+_PLACE_STEMS: frozenset[str] = frozenset([
+    "nam",          # дом
+    "kel",          # дорога
+    "kambar",       # комната
+    "gatv",         # улица
+    "pil",          # замок
+    "centr",        # центр
+    "sod",          # сад
+    "rajon",        # район
+    "universitet",  # университет
+    "sodyb",        # усадьба
+    "katedr",       # кафедральный собор
+    "bažnyč",       # церковь
+    "aikšt",        # площадь
+    "rotuš",        # ратуша
+    "stot",         # вокзал
+    "muziej",       # музей
+    "turg",         # рынок
+    "švytur",       # маяк
+])
+
+# Cases that semantically require place/location nouns (locative singular/plural).
+_LOCATION_CASES: frozenset[int] = frozenset([6, 13])
+
 
 def _extract_stem(display: str) -> str:
     """Extract the word stem from a sentence display string like 'Laima mato brol___.'"""
@@ -81,8 +107,13 @@ def _generate_declension_tasks(cases: list[int], count: int) -> list[dict]:
 
     The loop retries up to count*5 times to skip words with irregular forms (!),
     ensuring we always produce the requested number of valid tasks when possible.
+    For locative cases (6, 13) only place/location nouns are used so that every
+    prompt makes semantic sense (e.g. "в доме" not "в бутерброде").
     """
-    pool = list(WORDS)
+    if _LOCATION_CASES.issuperset(cases):
+        pool = [w for w in WORDS if w[0] in _PLACE_STEMS]
+    else:
+        pool = list(WORDS)
     random.shuffle(pool)
     tasks = []
     attempts = 0
