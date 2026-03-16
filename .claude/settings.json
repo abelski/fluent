@@ -63,7 +63,8 @@
       "Bash(curl -sv http://localhost:8000/dashboard/grammar)",
       "Bash(grep -E \"\\\\.py$|^d\")",
       "Bash(wc -l /Users/Artur_Belski/Documents/src/fluent/frontend/lib/i18n/*.ts)",
-      "Bash(grep -r \"const.*\\\\[\" /Users/Artur_Belski/Documents/src/fluent/backend/routers/*.py)"
+      "Bash(grep -r \"const.*\\\\[\" /Users/Artur_Belski/Documents/src/fluent/backend/routers/*.py)",
+      "Bash(python load.py --only vocabulary)"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"

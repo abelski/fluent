@@ -132,6 +132,23 @@ def upsert_grammar_file(result: GrammarFileResult, dry_run: bool = False) -> dic
     return {"added": added, "updated": updated, "unchanged": unchanged}
 
 
+def archive_removed_vocab_lists(active_keys: set[tuple[str, str]], dry_run: bool = False) -> int:
+    """Archive WordList rows whose (subcategory, title) is no longer in active_keys."""
+    count = 0
+    with Session(engine) as session:
+        stale = session.exec(
+            select(WordList).where(WordList.archived == False)  # noqa: E712
+        ).all()
+        for wl in stale:
+            if (wl.subcategory, wl.title) not in active_keys:
+                if not dry_run:
+                    wl.archived = True
+                    session.add(wl)
+                count += 1
+        if not dry_run:
+            session.commit()
+    return count
+
 # ── Articles ───────────────────────────────────────────────────────────────────
 
 def upsert_article_file(result: ArticleResult, dry_run: bool = False) -> dict:

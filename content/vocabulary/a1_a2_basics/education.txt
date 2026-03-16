@@ -1,0 +1,60 @@
+# Description: Образование
+
+# lithuanian | english | russian | hint
+akademija | academy | академия | daiktavardis
+auditorija | lecture hall | аудитория | daiktavardis
+aukštasis išsilavinimas | higher education | высшее образование | daiktavardis
+bendrabutis, -io | dormitory | общежитие | daiktavardis
+biologija | biology | биология | daiktavardis
+chemija | chemistry | химия | daiktavardis
+dailė | art | изобразительное искусство | daiktavardis
+daryti namų darbą | do homework | делать домашнее задание | veiksmažodis
+diplomas | diploma | диплом | daiktavardis
+ekonomika | economy | экономика | daiktavardis
+egzaminas | examination | экзамен | daiktavardis
+filologija | philology | филология | daiktavardis
+fizika | physics | физика | daiktavardis
+geografija | geography | география | daiktavardis
+informatika | informatics | информатика | daiktavardis
+išlaikyti egzaminą | pass an exam | сдать экзамен | veiksmažodis
+išsilavinimas | education | образование | daiktavardis
+istorija | history | история | daiktavardis
+kalba | language | язык | daiktavardis
+klausimas | question | вопрос | daiktavardis
+knyga | book | книга | daiktavardis
+kolegija | college | колледж | daiktavardis
+kursas | year of studies | курс | daiktavardis
+laikyti egzaminą | take an exam | сдавать экзамен | veiksmažodis
+literatūra | literature | литература | daiktavardis
+matematika | mathematics | математика | daiktavardis
+medicina | medicine | медицина | daiktavardis
+mokykla | school | школа | daiktavardis
+mokinys, -ė | schoolboy, schoolgirl | ученик, ученица | daiktavardis
+mokyti, moko, mokė | teach | учить, преподавать | veiksmažodis
+mokytis, mokosi, mokėsi | learn | учиться | veiksmažodis
+namų darbas | homework | домашнее задание | daiktavardis
+pagrindinis išsilavinimas | lower secondary education | неполное среднее образование | daiktavardis
+paskaita | lecture | лекция | daiktavardis
+pažymėjimas | certificate | удостоверение | daiktavardis
+pažymys | grade, mark | оценка | daiktavardis
+pieštukas | pencil | карандаш | daiktavardis
+politologija | political science | политология | daiktavardis
+pradinis išsilavinimas | primary education | начальное образование | daiktavardis
+pratimas | exercise | упражнение | daiktavardis
+profesinis išsilavinimas | vocational education | профессиональное образование | daiktavardis
+psichologija | psychology | психология | daiktavardis
+rašiklis, -io | pen | ручка | daiktavardis
+sąsiuvinis, -io | exercise book | тетрадь | daiktavardis
+seminaras | seminar | семинар | daiktavardis
+studentas, -ė | student | студент, студентка | daiktavardis
+studijuoti, studijuoja, studijavo | study | изучать, учиться в вузе | veiksmažodis
+teisė | law | право | daiktavardis
+testas | test | тест | daiktavardis
+trintukas | eraser | ластик | daiktavardis
+universitetas | university | университет | daiktavardis
+vadovėlis, -io | textbook | учебник | daiktavardis
+vadyba | management | менеджмент | daiktavardis
+vaikų darželis, -io | nursery school | детский сад | daiktavardis
+vidurinis išsilavinimas | upper secondary education | среднее образование | daiktavardis
+žodynas | dictionary | словарь | daiktavardis
+žurnalistika | journalism | журналистика | daiktavardis

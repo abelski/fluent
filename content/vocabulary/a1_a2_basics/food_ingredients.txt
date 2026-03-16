@@ -1,0 +1,74 @@
+# Description: Еда и продукты
+
+# lithuanian | english | russian | hint
+actas | vinegar | уксус | daiktavardis
+agurkas | cucumber | огурец | daiktavardis
+aliejus | oil | масло (растительное) | daiktavardis
+apelsinas | orange | апельсин | daiktavardis
+avietės | raspberries | малина | daiktavardis
+baklažanas | aubergine | баклажан | daiktavardis
+bananas | banana | банан | daiktavardis
+bandelė | roll | булочка | daiktavardis
+batonas | long loaf | батон | daiktavardis
+bazilikai | basil | базилик | daiktavardis
+braškės | strawberries | клубника | daiktavardis
+bulvė | potato | картофель | daiktavardis
+burokėlis, -io | beetroot | свёкла | daiktavardis
+česnakas | garlic | чеснок | daiktavardis
+citrina | lemon | лимон | daiktavardis
+cukinija | courgette | кабачок | daiktavardis
+cukrus | sugar | сахар | daiktavardis
+daržovės | vegetables | овощи | daiktavardis
+dešra | sausage | колбаса | daiktavardis
+dešrelės | sausages | сосиски | daiktavardis
+druska | salt | соль | daiktavardis
+duona | bread | хлеб | daiktavardis
+garstyčios | mustard | горчица | daiktavardis
+grietinė | sour cream | сметана | daiktavardis
+jautiena | beef | говядина | daiktavardis
+jogurtas | yogurt | йогурт | daiktavardis
+juoda duona | brown bread | чёрный хлеб | daiktavardis
+kalakutiena | turkey | индейка | daiktavardis
+kiaušinis, -io | egg | яйцо | daiktavardis
+kiauliena | pork | свинина | daiktavardis
+kmynai | caraway seeds | тмин | daiktavardis
+kopūstas | cabbage | капуста | daiktavardis
+krapai | dill | укроп | daiktavardis
+kriaušė | pear | груша | daiktavardis
+krienai | horseradish | хрен | daiktavardis
+kumpis, -io | ham | ветчина | daiktavardis
+lauro lapai | bay leaves | лавровый лист | daiktavardis
+majonezas | mayonnaise | майонез | daiktavardis
+makaronai | pasta | макароны | daiktavardis
+medus | honey | мёд | daiktavardis
+mėsa | meat | мясо | daiktavardis
+mėtos | mint | мята | daiktavardis
+moliūgas | pumpkin | тыква | daiktavardis
+morka | carrot | морковь | daiktavardis
+obuolys | apple | яблоко | daiktavardis
+padažas | sauce | соус | daiktavardis
+petražolės | parsley | петрушка | daiktavardis
+pienas | milk | молоко | daiktavardis
+pieno produktai | dairy products | молочные продукты | daiktavardis
+pipirai | pepper | перец | daiktavardis
+pomidoras | tomato | помидор | daiktavardis
+prieskoniai | spice | специи | daiktavardis
+pupelės | beans | фасоль | daiktavardis
+raudonėliai | oregano | орегано | daiktavardis
+riešutai | nuts | орехи | daiktavardis
+ryžiai | rice | рис | daiktavardis
+saldumynai | sweets | сладости | daiktavardis
+serbentai | currants | смородина | daiktavardis
+sviestas | butter | масло (сливочное) | daiktavardis
+svogūnas | onion | лук | daiktavardis
+šokoladas | chocolate | шоколад | daiktavardis
+šviesi duona | white bread | белый хлеб | daiktavardis
+uogienė | jam | варенье | daiktavardis
+uogos | berries | ягоды | daiktavardis
+vaisiai | fruit | фрукты | daiktavardis
+varškė | curd | творог | daiktavardis
+vištiena | chicken | курица | daiktavardis
+vynuogės | grapes | виноград | daiktavardis
+vyšnios | cherries | вишня | daiktavardis
+žirniai | peas | горох | daiktavardis
+žuvis, -ies | fish | рыба | daiktavardis

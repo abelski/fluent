@@ -1,0 +1,42 @@
+# Description: Время, календарь и сезоны
+
+# lithuanian | english | russian | hint
+antradienis, -io | Tuesday | вторник | daiktavardis
+balandis, -io | April | апрель | daiktavardis
+birželis, -io | June | июнь | daiktavardis
+data | date | дата | daiktavardis
+diena | day | день | daiktavardis
+gegužė | May | май | daiktavardis
+gruodis, -io | December | декабрь | daiktavardis
+ketvirtadienis, -io | Thursday | четверг | daiktavardis
+kovas | March | март | daiktavardis
+lapkritis, -io | November | ноябрь | daiktavardis
+liepa | July | июль | daiktavardis
+metai | year | год | daiktavardis
+naktis, -ies | night | ночь | daiktavardis
+nedarbo diena | rest day, day off | выходной день | daiktavardis
+para | twenty-four hours | сутки | daiktavardis
+pavasaris, -io | spring | весна | daiktavardis
+penktadienis, -io | Friday | пятница | daiktavardis
+pirmadienis, -io | Monday | понедельник | daiktavardis
+po pietų | p.m. | после полудня | prieveiksmis
+poilsio diena | rest day, day off | выходной | daiktavardis
+prieš pietus | a.m. | до полудня | prieveiksmis
+ruduo | autumn | осень | daiktavardis
+rugpjūtis, -io | August | август | daiktavardis
+rugsėjis, -o | September | сентябрь | daiktavardis
+rytas | morning | утро | daiktavardis
+rytoj | tomorrow | завтра | prieveiksmis
+sausis, -io | January | январь | daiktavardis
+savaitė | week | неделя | daiktavardis
+savaitgalis, -io | weekend | выходные | daiktavardis
+sekmadienis, -io | Sunday | воскресенье | daiktavardis
+šeštadienis, -io | Saturday | суббота | daiktavardis
+šiandien | today | сегодня | prieveiksmis
+spalis, -io | October | октябрь | daiktavardis
+trečiadienis, -io | Wednesday | среда | daiktavardis
+vakaras | evening | вечер | daiktavardis
+valanda | hour | час | daiktavardis
+vasara | summer | лето | daiktavardis
+vasaris, -io | February | февраль | daiktavardis
+žiema | winter | зима | daiktavardis

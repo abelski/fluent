@@ -56,6 +56,7 @@ def main():
                 errors += 1
 
     if load_vocab:
+        from db import archive_removed_vocab_lists
         print(f"\n── Vocabulary ({VOCAB_DIR}) ──")
         vocab_results = scan_vocab_files(VOCAB_DIR)
         if not vocab_results:
@@ -70,6 +71,11 @@ def main():
                 print(f"  ERROR processing {result.subcategory}/{result.title}: {exc}",
                       file=sys.stderr)
                 errors += 1
+        # Archive lists whose files have been removed
+        active_keys = {(r.subcategory, r.title) for r in vocab_results}
+        archived_count = archive_removed_vocab_lists(active_keys, dry_run=dry_run)
+        if archived_count:
+            print(f"  Archived {archived_count} removed list(s).")
 
     if load_articles:
         print(f"\n── Articles ({ARTICLES_DIR}) ──")

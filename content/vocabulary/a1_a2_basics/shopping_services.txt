@@ -1,0 +1,42 @@
+# Description: Покупки и сервисы
+
+# lithuanian | english | russian | hint
+apsipirkti, apsiperka, apsipirko | shop | делать покупки | veiksmažodis
+centas | cent | цент | daiktavardis
+cheminis drabužių valymas | dry cleaning | химчистка | daiktavardis
+dydis, -io | size | размер | daiktavardis
+euras | euro | евро | daiktavardis
+grožio salonas | beauty salon | салон красоты | daiktavardis
+išpardavimas | sale | распродажа | daiktavardis
+išsinuomoti, išsinuomoja, išsinuomojo | rent (from) | снять | veiksmažodis
+kaina | price | цена | daiktavardis
+kainuoti, kainuoja, kainavo | cost | стоить | veiksmažodis
+kilogramas | kilo | килограмм | daiktavardis
+kirpykla | hairdresser's | парикмахерская | daiktavardis
+kvitas | receipt | чек | daiktavardis
+maišelis, -io | bag | пакет | daiktavardis
+matavimosi kabinos | fitting room | примерочная | daiktavardis
+mokamas, -a | paid | платный, -ая | būdvardis
+mokestis, -io | fee | плата, сбор | daiktavardis
+moteriškas, -a | womenswear | женский, -ая | būdvardis
+nemokamas, -a | free of charge | бесплатный, -ая | būdvardis
+nuolaida | discount | скидка | daiktavardis
+nusipirkti, nusiperka, nusipirko | buy | купить | veiksmažodis
+parduotuvė | shop | магазин | daiktavardis
+pasimatuoti, pasimatuoja, pasimatavo | try on | примерить | veiksmažodis
+patrumpinti, patrumpina, patrumpino | shorten | укоротить | veiksmažodis
+per mažas | too small | слишком маленький | būdvardis
+per trumpas | too short | слишком короткий | būdvardis
+piniginė | wallet | кошелёк | daiktavardis
+prekybos centras | shopping centre | торговый центр | daiktavardis
+rezervuoti, rezervuoja, rezervavo | reserve | зарезервировать | veiksmažodis
+sąskaita | bill | счёт | daiktavardis
+savitarnos skalbykla | self-service laundry | прачечная самообслуживания | daiktavardis
+siuvykla | tailor shop | ателье | daiktavardis
+skalbykla | laundry | прачечная | daiktavardis
+sumokėti, sumoka, sumokėjo | pay | заплатить | veiksmažodis
+taisykla | repair shop | мастерская | daiktavardis
+tikti, tinka, tiko | fit, suit | подходить | veiksmažodis
+vaikiškas, -a | childrenswear | детский, -ая | būdvardis
+valykla | cleaner's | химчистка | daiktavardis
+vyriškas, -a | menswear | мужской, -ая | būdvardis

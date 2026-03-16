@@ -1,0 +1,21 @@
+# Description: Тело и здоровье
+
+# lithuanian | english | russian | hint
+akis, -ies | eye | глаз | daiktavardis
+ausis, -ies | ear | ухо | daiktavardis
+dantis, -ies | tooth | зуб | daiktavardis
+galva | head | голова | daiktavardis
+gerklė | throat | горло | daiktavardis
+koja | leg | нога | daiktavardis
+kraujas | blood | кровь | daiktavardis
+kraujospūdis, -io | blood pressure | кровяное давление | daiktavardis
+kūnas | body | тело | daiktavardis
+nosis, -ies | nose | нос | daiktavardis
+nugara | back | спина | daiktavardis
+pirštas | finger | палец | daiktavardis
+pilvas | abdomen, belly | живот | daiktavardis
+ranka | hand, arm | рука | daiktavardis
+skrandis, -io | stomach | желудок | daiktavardis
+sveikata | health | здоровье | daiktavardis
+širdis, -ies | heart | сердце | daiktavardis
+veidas | face | лицо | daiktavardis

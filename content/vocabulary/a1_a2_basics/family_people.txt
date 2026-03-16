@@ -1,0 +1,45 @@
+# Description: Семья и люди
+
+# lithuanian | english | russian | hint
+amžius | age | возраст | daiktavardis
+anūkas, -ė | grandson, granddaughter | внук, внучка | daiktavardis
+berniukas | boy | мальчик | daiktavardis
+brolis, -io | brother | брат | daiktavardis
+dėdė | uncle | дядя | daiktavardis
+draugas, -ė | friend | друг, подруга | daiktavardis
+duktė | daughter | дочь | daiktavardis
+dukterėčia | niece | племянница | daiktavardis
+giminės | relatives | родственники | daiktavardis
+išsiskyrės, -usi | divorced | разведённый, -ая | būdvardis
+ištekėjusi | married woman | замужем | būdvardis
+kaimynas, -ė | neighbour | сосед, соседка | daiktavardis
+katė | cat | кошка | daiktavardis
+mama | mummy | мама | daiktavardis
+mergaitė | girl | девочка | daiktavardis
+mergina | young woman | девушка | daiktavardis
+mirės, -usi | deceased | умерший, -ая | būdvardis
+moteris, -ers | woman | женщина | daiktavardis
+motina | mother | мать | daiktavardis
+naminis gyvūnas | pet | домашнее животное | daiktavardis
+ponas | Mr | господин | daiktavardis
+ponia | Mrs | госпожа | daiktavardis
+pusbrolis, -io | cousin (male) | двоюродный брат | daiktavardis
+pusseserė | cousin (female) | двоюродная сестра | daiktavardis
+senelė, močiutė | grandmother | бабушка | daiktavardis
+senelis, -io | grandfather | дедушка | daiktavardis
+sesuo | sister | сестра | daiktavardis
+sūnėnas | nephew | племянник | daiktavardis
+sūnus | son | сын | daiktavardis
+svečias | guest | гость | daiktavardis
+šeima | family | семья | daiktavardis
+šuo | dog | собака | daiktavardis
+teta | aunt | тётя | daiktavardis
+tėtis, -io | daddy | папа | daiktavardis
+tėvai | parents | родители | daiktavardis
+tėvas | father | отец | daiktavardis
+vaikas | child | ребёнок | daiktavardis
+vaikinas | young man | парень | daiktavardis
+vedęs | married man | женатый | būdvardis
+vyras | husband, man | муж, мужчина | daiktavardis
+žmogus | person, human | человек | daiktavardis
+žmona | wife | жена | daiktavardis

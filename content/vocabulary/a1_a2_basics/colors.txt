@@ -1,0 +1,18 @@
+# Description: Цвета
+
+# lithuanian | english | russian | hint
+baltas, -a | white | белый, -ая | būdvardis
+geltonas, -a | yellow | жёлтый, -ая | būdvardis
+juodas, -a | black | чёрный, -ая | būdvardis
+margas, -a | multicolour | пёстрый, -ая | būdvardis
+mėlynas, -a | blue | синий / голубой, -ая | būdvardis
+oranžinis, -ė | orange | оранжевый, -ая | būdvardis
+raudonas, -a | red | красный, -ая | būdvardis
+rausvas, -a | pink | розовый, -ая | būdvardis
+rudas, -a | brown | коричневый, -ая | būdvardis
+sidabrinis, -ė | silver | серебристый, -ая | būdvardis
+spalvingas, -a | colourful | красочный, -ая | būdvardis
+šviesus, -i | blond, light | светлый, -ая | būdvardis
+vienspalvis, -ė | solid-coloured | одноцветный, -ая | būdvardis
+violetinis, -ė | purple | фиолетовый, -ая | būdvardis
+žalias, -ia | green, raw | зелёный, -ая | būdvardis

@@ -1,0 +1,66 @@
+# Description: Дом и быт
+
+# lithuanian | english | russian | hint
+aukštas | floor (storey) | этаж | daiktavardis
+baldai | furniture | мебель | daiktavardis
+balkonas | balcony | балкон | daiktavardis
+buitinė technika | household appliances | бытовая техника | daiktavardis
+butas | apartment, flat | квартира | daiktavardis
+čiaupas | tap | кран | daiktavardis
+dėmė | stain | пятно | daiktavardis
+dujos | gas | газ | daiktavardis
+dulkės | dust | пыль | daiktavardis
+dulkių siurblys | vacuum cleaner | пылесос | daiktavardis
+durys, -ų | door | дверь | daiktavardis
+durų kodas | door code | код двери | daiktavardis
+dušas | shower | душ | daiktavardis
+džiovyklė | dryer machine | сушильная машина | daiktavardis
+fotelis, -io | armchair | кресло | daiktavardis
+garažas | garage | гараж | daiktavardis
+grindys, -ų | floor | пол | daiktavardis
+indai | dishes | посуда | daiktavardis
+indaplovė | dishwasher | посудомоечная машина | daiktavardis
+kambarys | room | комната | daiktavardis
+kavos aparatas | coffee maker | кофемашина | daiktavardis
+kėdė | chair | стул | daiktavardis
+kiemas | yard, courtyard | двор | daiktavardis
+kilimas | rug, carpet | ковёр | daiktavardis
+koridorius | corridor | коридор | daiktavardis
+laiptai | staircase | лестница | daiktavardis
+laiptinė | stairway, landing | лестничная площадка | daiktavardis
+lampa | lamp | лампа | daiktavardis
+langas | window | окно | daiktavardis
+lentyna | shelf | полка | daiktavardis
+liftas | lift | лифт | daiktavardis
+lova | bed | кровать | daiktavardis
+lubos, -ų | ceiling | потолок | daiktavardis
+miegamasis | bedroom | спальня | daiktavardis
+mikrobangų krosnelė | microwave oven | микроволновая печь | daiktavardis
+namai | home | дом | daiktavardis
+namie | at home | дома | prieveiksmis
+namas | house | дом | daiktavardis
+orkaitė | oven | духовка | daiktavardis
+patalynė | bedding | постельное бельё | daiktavardis
+purvas | dirt | грязь | daiktavardis
+raktas | key | ключ | daiktavardis
+remontas | repair | ремонт | daiktavardis
+rūsys | cellar | подвал | daiktavardis
+siena | wall | стена | daiktavardis
+skalbyklė | washing machine | стиральная машина | daiktavardis
+sofa | sofa, couch | диван | daiktavardis
+spinta | wardrobe, closet | шкаф | daiktavardis
+staliukas | table | стол | daiktavardis
+svetainė | living room | гостиная | daiktavardis
+šaldytuvas | refrigerator | холодильник | daiktavardis
+šiukšlės | litter, rubbish | мусор | daiktavardis
+šiukšlių dėžė | litter bin, rubbish bin | мусорное ведро | daiktavardis
+šviesa | light | свет | daiktavardis
+televizorius | TV set | телевизор | daiktavardis
+tualetas | toilet, WC | туалет | daiktavardis
+vamzdis, -io | pipe, tube | труба | daiktavardis
+valymas | cleaning | уборка | daiktavardis
+veidrodis, -io | mirror | зеркало | daiktavardis
+virdulys | kettle | чайник | daiktavardis
+viryklė | stove | плита | daiktavardis
+virtuvė | kitchen | кухня | daiktavardis
+vonia | bathroom | ванная | daiktavardis

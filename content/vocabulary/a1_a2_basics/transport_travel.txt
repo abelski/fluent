@@ -1,0 +1,45 @@
+# Description: Транспорт и путешествия
+
+# lithuanian | english | russian | hint
+aikštelė | platform | платформа | daiktavardis
+atvažiuoti, atvažiuoja, atvažiavo | arrive | приехать | veiksmažodis
+autobusas | bus | автобус | daiktavardis
+autobuso bilietas | bus ticket | билет на автобус | daiktavardis
+autobusų stotelė | bus stop | автобусная остановка | daiktavardis
+autobusų tvarkaraštis | bus timetable | расписание автобусов | daiktavardis
+autobusų stotis, -ies | bus station | автовокзал | daiktavardis
+bagažas | luggage | багаж | daiktavardis
+bilietas | ticket | билет | daiktavardis
+bilietas pirmyn | one-way ticket | билет в одну сторону | daiktavardis
+bilietas pirmyn ir atgal | return ticket | билет туда и обратно | daiktavardis
+bilietas su nuolaida | discount ticket | льготный билет | daiktavardis
+bilietų kasa | ticket office | касса | daiktavardis
+dviratis, -io | bicycle | велосипед | daiktavardis
+elektroninis bilietas | e-ticket | электронный билет | daiktavardis
+geležinkelio stotis, -ies | railway station | железнодорожный вокзал | daiktavardis
+greitasis autobusas | high-speed bus | скоростной автобус | daiktavardis
+greitasis traukinys | high-speed train | скоростной поезд | daiktavardis
+įlipti, įlipa, įlipo | get on to / in | сесть (в транспорт) | veiksmažodis
+išlipti, išlipa, išlipo | get off | выйти (из транспорта) | veiksmažodis
+išvažiuoti, išvažiuoja, išvažiavo | leave | уехать | veiksmažodis
+keleivis, -io, -ė | passenger | пассажир, пассажирка | daiktavardis
+kelias | track, road | путь, дорога | daiktavardis
+keliauti, keliauja, keliavo | travel | путешествовать | veiksmažodis
+kelionė | travel, trip, journey | поездка, путешествие | daiktavardis
+lėktuvas | plane | самолёт | daiktavardis
+lipti, lipa, lipo | get on | садиться | veiksmažodis
+naktinis autobusas | night bus | ночной автобус | daiktavardis
+nuvažiuoti, nuvažiuoja, nuvažiavo | get somewhere by vehicle | доехать | veiksmažodis
+oro uostas | airport | аэропорт | daiktavardis
+paspirtukas | scooter | самокат | daiktavardis
+peronas | platform | перрон | daiktavardis
+rezervacija | reservation | бронирование | daiktavardis
+skristi, skrenda, skrido | go by plane, fly | лететь | veiksmažodis
+stotelė | bus stop | остановка | daiktavardis
+stotis, -ies | station | вокзал, станция | daiktavardis
+traukinys | train | поезд | daiktavardis
+troleibusas | trolleybus | троллейбус | daiktavardis
+tvarkaraštis, -io | timetable | расписание | daiktavardis
+važiuoti, važiuoja, važiavo | go (by transport) | ехать | veiksmažodis
+važinėti, važinėja, važinėjo | ride | ездить | veiksmažodis
+viešasis transportas | public transport | общественный транспорт | daiktavardis

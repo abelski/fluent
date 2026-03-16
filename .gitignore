@@ -32,6 +32,9 @@ CLAUDE.md
 # Local planning docs
 plan/
 
+#temp files
+temp files/
+
 # Playwright test results
 frontend/test-results/
 backend/test-results/

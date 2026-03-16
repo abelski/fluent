@@ -1,0 +1,12 @@
+# Description: Глаголы и методы приготовления пищи
+
+# lithuanian | english | russian | hint
+keptas, -a | baked, roast, fried, grilled | запечённый, жареный, -ая | būdvardis
+kepti, kepa, kepė | fry, bake, roast, grill | жарить, печь | veiksmažodis
+pietauti, pietauja, pietavo | have lunch | обедать | veiksmažodis
+pusryčiauti, pusryčiauja, pusryčiavo | have breakfast | завтракать | veiksmažodis
+ragauti, ragauja, ragavo | taste | пробовать (еду) | veiksmažodis
+rūkytas, -a | smoked | копчёный, -ая | būdvardis
+vakarienauti, vakarienauja, vakarieniavo | have dinner | ужинать | veiksmažodis
+virti, verda, virė | boil, cook | варить | veiksmažodis
+virtas, -a | boiled, cooked | варёный, -ая | būdvardis
