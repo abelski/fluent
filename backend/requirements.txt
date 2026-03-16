@@ -5,3 +5,4 @@ python-jose[cryptography]==3.3.0
 python-dotenv==1.0.1
 sqlmodel>=0.0.22
 psycopg[binary]>=3.1
+python-multipart>=0.0.9
