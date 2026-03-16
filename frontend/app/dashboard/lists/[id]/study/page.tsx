@@ -99,6 +99,7 @@ export default function QuizPage() {
   const [shownAnswer, setShownAnswer] = useState('');
   const [blankIndex, setBlankIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dismissBtnRef = useRef<HTMLButtonElement>(null);
 
   // Prevents rapid Enter-key presses from auto-firing the stage-1 button
   // after a card transition (e.g. user hammers Enter on stage-3 input).
@@ -272,6 +273,15 @@ export default function QuizPage() {
       setDone(true);
     }
   }, [queue, loading, totalWords]);
+
+  // Focus dismiss button after a short delay so the Enter keypress that
+  // triggered the wrong answer doesn't immediately activate it.
+  useEffect(() => {
+    if (answerState !== 'wrong') return;
+    const id = setTimeout(() => dismissBtnRef.current?.focus(), 100);
+    return () => clearTimeout(id);
+  }, [answerState]);
+
 
   if (loading) {
     return (
@@ -468,6 +478,7 @@ export default function QuizPage() {
                   </p>
                 </div>
                 <button
+                  ref={dismissBtnRef}
                   data-testid="dismiss-wrong"
                   onClick={handleStage2Dismiss}
                   className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors"
@@ -545,6 +556,7 @@ export default function QuizPage() {
                     </p>
                   </div>
                   <button
+                    ref={dismissBtnRef}
                     data-testid="dismiss-wrong"
                     onClick={handleStage3Dismiss}
                     className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors"

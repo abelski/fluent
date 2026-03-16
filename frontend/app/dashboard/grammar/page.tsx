@@ -240,6 +240,15 @@ export default function GrammarPage() {
   const [answerState, setAnswerState] = useState<AnswerState>('unanswered');
   const [shownAnswer, setShownAnswer] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const dismissBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Focus dismiss button after a short delay so the Enter keypress that
+  // triggered the wrong answer doesn't immediately activate it.
+  useEffect(() => {
+    if (answerState !== 'wrong') return;
+    const id = setTimeout(() => dismissBtnRef.current?.focus(), 100);
+    return () => clearTimeout(id);
+  }, [answerState]);
 
   const fetchLessons = useCallback(() => {
     const token = getToken();
@@ -586,7 +595,7 @@ export default function GrammarPage() {
               type="text"
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') checkAnswer(); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
               disabled={answerState !== 'unanswered'}
               placeholder={task.type === 'declension' ? tr.grammar.typeDeclension : tr.grammar.typeEnding}
               className={`w-full py-4 px-5 rounded-xl border bg-white text-base text-gray-900 placeholder-gray-400 outline-none transition-all duration-200
@@ -598,7 +607,8 @@ export default function GrammarPage() {
             {answerState === 'unanswered' && (
               <button
                 onClick={checkAnswer}
-                className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
+                disabled={!typed.trim()}
+                className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {tr.common.check}
               </button>
@@ -617,6 +627,7 @@ export default function GrammarPage() {
                   </p>
                 </div>
                 <button
+                  ref={dismissBtnRef}
                   data-testid="dismiss-wrong"
                   onClick={dismissWrongGrammar}
                   className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors"

@@ -179,6 +179,26 @@ test.describe('Wrong answer — grammar', () => {
     await expect(page.locator('text=namą')).toBeVisible();
   });
 
+  test('wrong grammar answer: Enter key triggers dismiss', async ({ page }) => {
+    await page.goto('/dashboard/grammar');
+    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
+    await page.locator('[data-testid="subcategory-toggle"]').first().click();
+    await page.waitForSelector('.grid button', { timeout: 5000 });
+    await page.locator('.grid button').first().click();
+    await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 5000 });
+
+    const input = page.locator('input[type="text"]');
+    await input.fill('wrong');
+    await input.press('Enter');
+
+    await expect(page.locator('[data-testid="dismiss-wrong"]')).toBeVisible({ timeout: 3000 });
+    // Wait for delayed focus to be applied, then press Enter to activate the button
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('[data-testid="dismiss-wrong"]')).not.toBeVisible({ timeout: 2000 });
+    await expect(page.locator('input[type="text"]')).toBeVisible({ timeout: 2000 });
+  });
+
   test('wrong grammar answer does not auto-advance — requires button click', async ({ page }) => {
     await page.goto('/dashboard/grammar');
     await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
