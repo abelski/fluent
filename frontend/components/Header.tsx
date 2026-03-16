@@ -142,6 +142,9 @@ export default function Header() {
             </span>
           </div>
 
+          {isAuthed === null && (
+            <div className="w-20 h-9 rounded-xl bg-gray-100 animate-pulse" />
+          )}
           {isAuthed === false && (
             <a
               href={`${BACKEND_URL}/api/auth/google`}

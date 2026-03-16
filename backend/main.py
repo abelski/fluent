@@ -127,6 +127,9 @@ async def serve_frontend(full_path: str, request: Request):
 
     resolved = _resolve_static(full_path)
     if resolved:
+        # Guard against path traversal: ensure resolved path stays inside OUT_DIR
+        if not resolved.resolve().is_relative_to(OUT_DIR.resolve()):
+            raise HTTPException(status_code=400, detail="Invalid path")
         return FileResponse(resolved)
 
     raise HTTPException(status_code=404, detail="Not found")

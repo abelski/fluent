@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { BACKEND_URL } from '../../../lib/api';
+import { BACKEND_URL, getToken } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 
 interface GrammarRule {
@@ -245,7 +245,7 @@ export default function GrammarPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchLessons = useCallback(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('fluent_token') : null;
+    const token = getToken();
     const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
     fetch(`${BACKEND_URL}/api/grammar/lessons`, { headers })
       .then((r) => r.json())
@@ -259,7 +259,7 @@ export default function GrammarPage() {
   }, [fetchLessons]);
 
   function postResult(lessonId: number, score: number, total: number) {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('fluent_token') : null;
+    const token = getToken();
     if (!token) return;
     fetch(`${BACKEND_URL}/api/grammar/lessons/${lessonId}/results`, {
       method: 'POST',

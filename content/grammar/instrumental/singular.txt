@@ -8,7 +8,7 @@
 Jis eina su brol___. | iu | broliu | Он идёт с братом.
 Rasa eina su draug___. | e | drauge | Раса идёт с подругой.
 Jonas eina su draug___. | u | draugu | Йонас идёт с другом.
-Mama eina su dukr___. | a | dukra | Мама идёт с дочерью.
+Mama eina su dukt___. | eria | dukteri | Мама идёт с дочерью.
 Petras dirba su profesor___. | iumi | profesoriumi | Пятрас работает с профессором.
 Jonas eina su sveč___. | iu | svečiu | Йонас идёт с гостем.
 Mama eina su ses___. | eria | seseria | Мама идёт с сестрой.

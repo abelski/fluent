@@ -87,8 +87,8 @@ def _generate_declension_tasks(cases: list[int], count: int) -> list[dict]:
     tasks = []
     attempts = 0
     while len(tasks) < count and attempts < count * 5:
-        attempts += 1
         word = pool[attempts % len(pool)]
+        attempts += 1
         case_idx = random.choice(cases)
         form = _word_form(word, case_idx)
         if form is None:

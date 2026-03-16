@@ -26,6 +26,3 @@ miręs / mirusi | deceased (m./f.) | умерший / умершая | būdvardi
 naminis gyvūnas | pet | домашнее животное | daiktavardis
 katė | cat | кошка | daiktavardis
 šuo | dog | собака | daiktavardis
-muzika | music | музыка | daiktavardis
-literatūra | literature | литература | daiktavardis
-sportas | sport | спорт | daiktavardis

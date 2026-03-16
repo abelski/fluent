@@ -128,6 +128,10 @@ export default function QuizPage() {
           setLoading(false);
           return null;
         }
+        if (r.status === 404) {
+          router.replace('/dashboard/lists');
+          return null;
+        }
         return r.json();
       })
       .then((data: Word[] | null) => {
@@ -178,8 +182,11 @@ export default function QuizPage() {
     setQueue((prev) => {
       const rest = prev.slice(1);
       if (correct && card.stage < 3) {
-        // Advance to next stage, push to end of queue
-        return [...rest, { word: card.word, stage: (card.stage + 1) as 2 | 3 }];
+        // Skip MCQ (stage 2) when list is too small to build 4 distinct options.
+        // Go directly from stage 1 to stage 3 in that case.
+        const nextStage: 2 | 3 =
+          card.stage === 1 && allWords.length < 4 ? 3 : ((card.stage + 1) as 2 | 3);
+        return [...rest, { word: card.word, stage: nextStage }];
       }
       // Stage 3 correct → word fully done.
       // Wrong at any stage → word removed without retry (already saved as 'learning').
@@ -288,7 +295,7 @@ export default function QuizPage() {
               Получить Premium
             </Link>
             <button
-              onClick={() => { window.location.href = '/dashboard/lists'; }}
+              onClick={() => router.push('/dashboard/lists')}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
             >
               ← На главную
@@ -329,7 +336,7 @@ export default function QuizPage() {
               Повторить
             </button>
             <button
-              onClick={() => { window.location.href = '/dashboard/lists'; }}
+              onClick={() => router.push('/dashboard/lists')}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
             >
               ← На главную

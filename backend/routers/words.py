@@ -1,52 +1,20 @@
 # Word lists and vocabulary study endpoints.
 # Handles browsing lists, fetching study sessions, and recording per-word progress.
 
-import os
 import random
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from jose import jwt, JWTError
 from pydantic import BaseModel
 from sqlmodel import Session, select, col, func
 
 from database import get_session
 from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession
+from constants import DAILY_LIMIT
+from auth import require_user as _require_user, try_get_user as _try_get_user
 
 router = APIRouter()
-
-JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
-JWT_ALGORITHM = "HS256"
-
-
-def _require_user(authorization: Optional[str], session: Session) -> User:
-    """Validate the Authorization header and return the corresponding User.
-
-    Raises HTTP 401 if the token is missing or invalid.
-    Auto-creates the DB row on first use to handle tokens issued before the
-    user record existed (edge case during early testing or re-deployments).
-    """
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing token")
-    token = authorization.split(" ")[1]
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        email = payload["email"]
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user = session.exec(select(User).where(User.email == email)).first()
-    if not user:
-        # Auto-create user from valid JWT claims (handles tokens issued before DB row existed)
-        user = User(
-            email=email,
-            name=payload.get("name", email),
-            picture=payload.get("picture"),
-        )
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-    return user
 
 
 def _list_words(list_id: int, session: Session) -> list[dict]:
@@ -113,16 +81,14 @@ def get_list(list_id: int, session: Session = Depends(get_session)):
 # Number of words returned per study session.
 QUIZ_SIZE = 10
 
-# Max study sessions per day for basic (non-premium) users.
-DAILY_LIMIT = 10
-
 
 def _is_premium_active(user: User) -> bool:
     if not user.is_premium:
         return False
     if user.premium_until is None:
         return True
-    return user.premium_until > datetime.now(timezone.utc).replace(tzinfo=None)
+    now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    return user.premium_until > now_naive
 
 
 @router.get("/lists/{list_id}/study")
@@ -148,25 +114,15 @@ def get_study_words(
 
     # Try to get authenticated user for progress-based prioritization.
     # Auth is optional here — unauthenticated users still get a study session.
-    user = None
-    if authorization and authorization.startswith("Bearer "):
-        # Enforce daily session limit for basic users.
-        try:
-            token = authorization.split(" ")[1]
-            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-            email = payload.get("email")
-            if email:
-                user = session.exec(select(User).where(User.email == email)).first()
-        except JWTError:
-            pass
+    user = _try_get_user(authorization, session)
 
-        if user and not _is_premium_active(user):
+    if user and not _is_premium_active(user):
             today = datetime.now(timezone.utc).date()
             row = session.exec(
                 select(DailyStudySession).where(
                     DailyStudySession.user_id == user.id,
                     DailyStudySession.study_date == today,
-                )
+                ).with_for_update()
             ).first()
             if not row:
                 row = DailyStudySession(user_id=user.id, study_date=today, session_count=0)
@@ -241,7 +197,7 @@ def get_list_progress(
 
 
 class ProgressUpdate(BaseModel):
-    status: str        # "learning" | "known"
+    status: Literal["learning", "known"]
     mistake: bool = False       # True when the user answered this word incorrectly
     clear_mistake: bool = False  # True to reset mistake_count to 0 (word mastered in review)
 
@@ -259,8 +215,6 @@ def update_progress(
     creates it on first answer, increments review_count on subsequent ones.
     When mistake=True, also increments mistake_count.
     """
-    if body.status not in ("learning", "known"):
-        raise HTTPException(status_code=400, detail="status must be 'learning' or 'known'")
     user = _require_user(authorization, session)
     progress = session.exec(
         select(UserWordProgress).where(
@@ -275,7 +229,7 @@ def update_progress(
             progress.mistake_count += 1
         elif body.clear_mistake:
             progress.mistake_count = 0
-        progress.last_seen = datetime.utcnow()
+        progress.last_seen = datetime.now(timezone.utc).replace(tzinfo=None)
     else:
         progress = UserWordProgress(
             user_id=user.id,
@@ -298,7 +252,7 @@ def _quota_check_and_increment(user: User, session: Session) -> None:
         select(DailyStudySession).where(
             DailyStudySession.user_id == user.id,
             DailyStudySession.study_date == today,
-        )
+        ).with_for_update()
     ).first()
     if not row:
         row = DailyStudySession(user_id=user.id, study_date=today, session_count=0)

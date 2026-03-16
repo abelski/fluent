@@ -1,39 +1,19 @@
 # Admin-only endpoints for managing user tiers and premium access.
 # All routes require is_admin=True on the authenticated user, otherwise 403.
 
-import os
 from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from jose import jwt, JWTError
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from auth import require_user as _decode_user
 from database import get_session
 from models import User, DailyStudySession
+from constants import DAILY_LIMIT
 
 router = APIRouter()
-
-JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
-JWT_ALGORITHM = "HS256"
-
-DAILY_LIMIT = 10
-
-
-def _decode_user(authorization: Optional[str], session: Session) -> User:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing token")
-    token = authorization.split(" ")[1]
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        email = payload["email"]
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user = session.exec(select(User).where(User.email == email)).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    return user
 
 
 def _require_admin(authorization: Optional[str], session: Session) -> User:
@@ -55,7 +35,8 @@ def _is_premium_active(user: User) -> bool:
         return False
     if user.premium_until is None:
         return True
-    return user.premium_until > datetime.now(timezone.utc).replace(tzinfo=None)
+    now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    return user.premium_until > now_naive
 
 
 @router.get("/users")
@@ -135,7 +116,8 @@ def set_premium(
         raise HTTPException(status_code=404, detail="User not found")
 
     if body.is_premium and body.premium_until is not None:
-        if body.premium_until <= datetime.now(timezone.utc).replace(tzinfo=None):
+        now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        if body.premium_until <= now_naive:
             raise HTTPException(status_code=400, detail="premium_until must be in the future")
 
     target.is_premium = body.is_premium

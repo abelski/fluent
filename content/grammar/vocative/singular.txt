@@ -15,6 +15,5 @@ Sveiki, tėvel___! | i | tėveli | Привет, папочка!
 Labas, sūn___! | au | sūnau | Привет, сын!
 Ačiū, dukt___! | e | dukte | Спасибо, дочь!
 Sveiki, močiut___! | e | močiute | Привет, бабушка!
-Ačiū, dukr___! | a | dukra | Спасибо, дочь!
 Labas, padavėj___! | a | padavėja | Привет, официантка!
 Sveiki, draug___! | e | drauge | Привет, подруга!

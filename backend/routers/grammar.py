@@ -1,41 +1,18 @@
 # Grammar lesson endpoints.
 # This router is intentionally thin — all content logic lives in grammar_service.py.
 
-import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from jose import jwt, JWTError
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from auth import require_user as _require_user, try_get_user as _try_get_user
 from database import get_session
 from grammar_service import get_lessons, get_lesson_tasks
-from models import GrammarLessonResult, User
+from models import GrammarLessonResult
 
 router = APIRouter()
-
-JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
-JWT_ALGORITHM = "HS256"
-
-
-def _require_user(authorization: Optional[str], session: Session) -> User:
-    """Validate Authorization header and return the User. Raises 401 if invalid."""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing token")
-    token = authorization.split(" ")[1]
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        email = payload["email"]
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user = session.exec(select(User).where(User.email == email)).first()
-    if not user:
-        user = User(email=email, name=payload.get("name", email), picture=payload.get("picture"))
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-    return user
 
 
 @router.get("/grammar/lessons")
@@ -51,25 +28,18 @@ def list_lessons(
     """
     lessons = get_lessons()
 
-    user_authenticated = False
     best_scores: dict[int, float] = {}
 
-    if authorization and authorization.startswith("Bearer "):
-        try:
-            payload = jwt.decode(authorization.split(" ")[1], JWT_SECRET, algorithms=[JWT_ALGORITHM])
-            email = payload["email"]
-            user = session.exec(select(User).where(User.email == email)).first()
-            if user:
-                user_authenticated = True
-                results = session.exec(
-                    select(GrammarLessonResult).where(GrammarLessonResult.user_id == user.id)
-                ).all()
-                for r in results:
-                    pct = r.score / r.total if r.total > 0 else 0.0
-                    if r.lesson_id not in best_scores or pct > best_scores[r.lesson_id]:
-                        best_scores[r.lesson_id] = pct
-        except JWTError:
-            pass
+    user = _try_get_user(authorization, session)
+    user_authenticated = user is not None
+    if user:
+        results = session.exec(
+            select(GrammarLessonResult).where(GrammarLessonResult.user_id == user.id)
+        ).all()
+        for r in results:
+            pct = r.score / r.total if r.total > 0 else 0.0
+            if r.lesson_id not in best_scores or pct > best_scores[r.lesson_id]:
+                best_scores[r.lesson_id] = pct
 
     for i, lesson in enumerate(lessons):
         lesson["best_score_pct"] = best_scores.get(lesson["id"])

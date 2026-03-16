@@ -25,8 +25,6 @@ Filipinai | Philippines | Филиппины | šalis
 filipinietis / filipinietė | Filipino (m./f.) | филиппинец / филиппинка | tauta
 Graikija | Greece | Греция | šalis
 graikas / graikė | Greek (m./f.) | грек / гречанка | tauta
-Havajai | Hawaii | Гавайи | šalis
-havajietis / havajietė | Hawaiian (m./f.) | гавайец / гавайка | tauta
 Ispanija | Spain | Испания | šalis
 ispanas / ispanė | Spanish (m./f.) | испанец / испанка | tauta
 Italija | Italy | Италия | šalis

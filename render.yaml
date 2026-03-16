@@ -3,8 +3,8 @@ services:
     name: fluent-backend
     runtime: python
     pythonVersion: "3.12.9"
-    buildCommand: npm --prefix frontend install && npm --prefix frontend run build && pip install -r api/requirements.txt && (cd api && python ../scripts/seed.py)
-    startCommand: bash -c "cd api && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    buildCommand: npm --prefix frontend install && npm --prefix frontend run build && pip install -r backend/requirements.txt && (cd backend && python ../scripts/seed.py)
+    startCommand: bash -c "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
         sync: false

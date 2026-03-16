@@ -1,36 +1,17 @@
 # Mistake-report endpoints.
 # Any authenticated user can submit a report; admins can list and resolve them.
 
-import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from jose import jwt, JWTError
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from auth import require_user as _require_user
 from database import get_session
 from models import MistakeReport, User
 
 router = APIRouter()
-
-JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
-JWT_ALGORITHM = "HS256"
-
-
-def _require_user(authorization: Optional[str], session: Session) -> User:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing token")
-    token = authorization.split(" ")[1]
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        email = payload["email"]
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user = session.exec(select(User).where(User.email == email)).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    return user
 
 
 def _require_admin(authorization: Optional[str], session: Session) -> User:

@@ -36,3 +36,11 @@ pirkti, perka, pirko | to buy | покупать | veiksmažodis
 daryti, daro, darė | to do / to make | делать | veiksmažodis
 kepti, kepa, kepė | to fry / to bake / to grill | жарить / печь | veiksmažodis
 virti, verda, virė | to boil / to cook | варить / готовить | veiksmažodis
+matyti, mato, matė | to see | видеть | veiksmažodis
+skaityti, skaito, skaitė | to read | читать | veiksmažodis
+nešti, neša, nešė | to carry | нести / носить | veiksmažodis
+ieškoti, ieško, ieškojo | to look for / to search | искать | veiksmažodis
+laukti, laukia, laukė | to wait | ждать | veiksmažodis
+mokytis, mokosi, mokėsi | to learn / to study | учиться | veiksmažodis
+žaisti, žaidžia, žaidė | to play | играть | veiksmažodis
+padovanoti, padovanoja, padovanojo | to give as a gift | подарить | veiksmažodis

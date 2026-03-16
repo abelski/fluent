@@ -15,6 +15,7 @@ export default function MistakeButton({ context }: Props) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -26,8 +27,9 @@ export default function MistakeButton({ context }: Props) {
   async function submit() {
     if (!text.trim()) return;
     setSending(true);
+    setError(false);
     try {
-      await fetch(`${BACKEND_URL}/api/reports`, {
+      const res = await fetch(`${BACKEND_URL}/api/reports`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,11 +37,12 @@ export default function MistakeButton({ context }: Props) {
         },
         body: JSON.stringify({ context: context ?? pathname, description: text.trim() }),
       });
+      if (!res.ok) throw new Error('failed');
       setSent(true);
       setText('');
       setTimeout(() => { setSent(false); setOpen(false); }, 1500);
     } catch {
-      // ignore
+      setError(true);
     } finally {
       setSending(false);
     }
@@ -81,8 +84,12 @@ export default function MistakeButton({ context }: Props) {
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Например: неверный перевод слова..."
                   rows={3}
+                  maxLength={500}
                   className="w-full bg-gray-100 border border-gray-900 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 resize-none mb-3"
                 />
+                {error && (
+                  <p className="text-red-600 text-xs mb-2">Не удалось отправить, попробуйте ещё раз.</p>
+                )}
                 <div className="flex gap-2 justify-end">
                   <button
                     onClick={() => setOpen(false)}

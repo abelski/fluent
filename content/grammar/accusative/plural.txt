@@ -11,7 +11,7 @@ Jonas mato draug___. | us | draugus | Йонас видит друзей.
 Rasa perka knyg___. | as | knygas | Раса покупает книги.
 Mama myli sūn___. | us | sūnus | Мама любит сыновей.
 Vaikai valgo obuol___. | ius | obuolius | Дети едят яблоки.
-Mama perka agurk___. | us | agurků | Мама покупает огурцы.
+Mama perka agurk___. | us | agurkus | Мама покупает огурцы.
 Mama perka mork___. | as | morkas | Мама покупает морковь.
 Tėvas mato draug___. | es | drauges | Папа видит подруг.
 Aš matau senel___. | ius | senelius | Я вижу дедушек.

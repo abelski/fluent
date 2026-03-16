@@ -3,9 +3,14 @@
 # so the same class is used for DB access and for API response serialization.
 
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field
+
+
+def _utcnow() -> datetime:
+    """Return current UTC time as a naive datetime (for storage in TIMESTAMP columns)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(SQLModel, table=True):
@@ -15,7 +20,7 @@ class User(SQLModel, table=True):
     name: str
     picture: Optional[str] = None
     lang: str = Field(default="en")  # preferred UI language: 'en' | 'ru'
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=_utcnow)
     is_premium: bool = Field(default=False)
     premium_until: Optional[datetime] = None  # None = no expiry; past date = expired
     is_admin: bool = Field(default=False)
@@ -31,7 +36,7 @@ class WordList(SQLModel, table=True):
     description: Optional[str] = None
     subcategory: Optional[str] = None  # parent folder name from content/vocabulary/<subcategory>/
     is_public: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=_utcnow)
     archived: bool = Field(default=False)  # soft-delete: hide but preserve FK integrity
 
 
@@ -72,7 +77,7 @@ class UserWordProgress(SQLModel, table=True):
     status: str = Field(default="new")  # new | learning | known
     review_count: int = Field(default=0)
     mistake_count: int = Field(default=0)  # incremented each time user answers this word wrong
-    last_seen: datetime = Field(default_factory=datetime.utcnow)
+    last_seen: datetime = Field(default_factory=_utcnow)
 
 
 class DailyStudySession(SQLModel, table=True):
@@ -95,9 +100,9 @@ class MistakeReport(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="user.id", index=True)
     context: Optional[str] = None   # e.g. 'word:42', 'grammar:3'
-    description: str = Field(default="")
+    description: str = Field(default="", max_length=500)
     status: str = Field(default="open")  # open | resolved
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=_utcnow)
 
 
 class GrammarSentence(SQLModel, table=True):
@@ -126,4 +131,4 @@ class GrammarLessonResult(SQLModel, table=True):
     score: int       # number of correct answers
     total: int       # total tasks in the attempt
     passed: bool     # score / total > 0.75
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=_utcnow)
