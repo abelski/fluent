@@ -2,21 +2,35 @@
 
 # lithuanian | english | russian | hint
 alergija | allergy | аллергия | daiktavardis
-alergiškas, -a | allergic | аллергичный, -ая | būdvardis
+alergiškas | allergic | аллергичный | būdvardis
 angina | tonsillitis | ангина | daiktavardis
 bronchitas | bronchitis | бронхит | daiktavardis
 gripas | influenza (flu) | грипп | daiktavardis
-karščiuoti, karščiuoja, karščiavo | have a fever | температурить | veiksmažodis
-kosėti, kosėja, kosėjo | cough | кашлять | veiksmažodis
+karščiuoti | have a fever | температурить | veiksmažodis
+karščiuoja | has a fever | температурит | veiksmažodis
+karščiavo | had a fever | температурил | veiksmažodis
+kosėti | cough | кашлять | veiksmažodis
+kosėja | coughs | кашляет | veiksmažodis
+kosėjo | coughed | кашлял | veiksmažodis
 kosulys | cough | кашель | daiktavardis
 liga | illness, disease | болезнь | daiktavardis
-peršalti, peršąla, peršalo | catch a cold | простудиться | veiksmažodis
+peršalti | catch a cold | простудиться | veiksmažodis
+peršąla | catch a cold | простудиться | veiksmažodis
+peršalo | catch a cold | простудиться | veiksmažodis
 plaučių uždegimas | pneumonia | пневмония | daiktavardis
-sirgti, serga, sirgo | be ill, sick | болеть | veiksmažodis
-skaudėti, skauda, skaudėjo | have a pain, hurt, ache | болеть (о части тела) | veiksmažodis
+sirgti | be ill, sick | болеть | veiksmažodis
+serga | be ill, sick | болеть | veiksmažodis
+sirgo | be ill, sick | болеть | veiksmažodis
+skaudėti | have a pain, hurt, ache | болеть (о части тела) | veiksmažodis
+skauda | have a pain, hurt, ache | болеть (о части тела) | veiksmažodis
+skaudėjo | have a pain, hurt, ache | болеть (о части тела) | veiksmažodis
 sloga | common cold, runny nose | насморк | daiktavardis
 temperatūra | temperature | температура | daiktavardis
 turėti temperatūros | have a fever | иметь температуру | veiksmažodis
-vemti, vemia, vėmė | vomit | рвать | veiksmažodis
-viduriuoti, viduriuoja, viduriavo | have diarrhea | поносить | veiksmažodis
+vemti | vomit | рвать | veiksmažodis
+vemia | vomit | рвать | veiksmažodis
+vėmė | vomit | рвать | veiksmažodis
+viduriuoti | have diarrhea | поносить | veiksmažodis
+viduriuoja | have diarrhea | поносить | veiksmažodis
+viduriavo | have diarrhea | поносить | veiksmažodis
 virusas | virus | вирус | daiktavardis

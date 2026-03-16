@@ -3,7 +3,7 @@
 # lithuanian | english | russian | hint
 automobilio dalys | car parts | части автомобиля | daiktavardis
 automobilio draudimas | car insurance | страховка автомобиля | daiktavardis
-automobilis, -io | car | автомобиль | daiktavardis
+automobilis | car | автомобиль | daiktavardis
 automobilių plovimas | car washing | мойка автомобиля | daiktavardis
 automobilių plovykla | car wash | автомойка | daiktavardis
 automobilių stovėjimo aikštelė | car park | автостоянка | daiktavardis
@@ -13,20 +13,24 @@ benzinas | petrol | бензин | daiktavardis
 degalai | fuel | топливо | daiktavardis
 degalinė | petrol station | заправочная станция | daiktavardis
 dyzelinas | diesel | дизель | daiktavardis
-greitis, -io | speed | скорость | daiktavardis
+greitis | speed | скорость | daiktavardis
 kolonėlė | fuel dispenser | колонка | daiktavardis
 kuras | fuel | топливо | daiktavardis
 mašina | car | машина | daiktavardis
 nuoma: ilgalaikė, trumpalaikė | car rental: long-term, short-term | аренда: долгосрочная, краткосрочная | daiktavardis
 padangos | tires | шины | daiktavardis
-pilti, pila, pylė | refuel | заправлять | veiksmažodis
+pilti | refuel | заправлять | veiksmažodis
+pila | refuels | заправляет | veiksmažodis
+pylė | refuelled | заправил | veiksmažodis
 salonas | car interior | салон | daiktavardis
 salono valymas | car interior cleaning | чистка салона | daiktavardis
 stabdžiai | brakes | тормоза | daiktavardis
 techninė pagalba kelyje | roadside assistance | помощь на дороге | daiktavardis
 tepalai | lubricants | смазочные материалы | daiktavardis
 vairas | steering wheel | руль | daiktavardis
-vairuoti, vairuoja, vairavo | drive | водить (машину) | veiksmažodis
+vairuoti | drive | водить (машину) | veiksmažodis
+vairuoja | drives | водит (машину) | veiksmažodis
+vairavo | drove | водил (машину) | veiksmažodis
 vairuotojo pažymėjimas | driving license | водительское удостоверение | daiktavardis
 valytuvai | wipers | дворники | daiktavardis
 viršyti greitį | exceed speed limit | превышать скорость | veiksmažodis

@@ -11,7 +11,7 @@ batai | shoes | ботинки | daiktavardis
 bateliai | court shoes, pumps | туфли | daiktavardis
 diržas | belt | ремень | daiktavardis
 drabužiai | clothes | одежда | daiktavardis
-džemperis, -io | jumper | джемпер | daiktavardis
+džemperis | jumper | джемпер | daiktavardis
 džinsai | jeans | джинсы | daiktavardis
 glaudės | swimming trunks | плавки | daiktavardis
 grandinėlė | chain | цепочка | daiktavardis
@@ -24,8 +24,8 @@ kuprinė | backpack | рюкзак | daiktavardis
 liemenė | waistcoat | жилет | daiktavardis
 marškinėliai | T-shirt | футболка | daiktavardis
 marškiniai | shirt | рубашка | daiktavardis
-maudymosi kostiumėlis, -io | swimsuit | купальник | daiktavardis
-megztinis, -io | sweater, jumper | свитер | daiktavardis
+maudymosi kostiumėlis | swimsuit | купальник | daiktavardis
+megztinis | sweater, jumper | свитер | daiktavardis
 palaidinė | blouse | блузка | daiktavardis
 paltas | coat | пальто | daiktavardis
 pirštinės | gloves | перчатки | daiktavardis
@@ -34,7 +34,7 @@ rankovė | sleeve | рукав | daiktavardis
 rūbai | clothes | одежда | daiktavardis
 saga | button | пуговица | daiktavardis
 sijonas | skirt | юбка | daiktavardis
-skėtis, -io | umbrella | зонт | daiktavardis
+skėtis | umbrella | зонт | daiktavardis
 sportbačiai | sneakers | кроссовки | daiktavardis
 striukė | jacket | куртка | daiktavardis
 suknelė | dress | платье | daiktavardis

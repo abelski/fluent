@@ -1,41 +1,61 @@
 # Description: Досуг, культура и спорт
 
 # lithuanian | english | russian | hint
-atostogauti, atostogauja, atostogavo | be on holiday, have vacation | быть в отпуске | veiksmažodis
+atostogauti | be on holiday, have vacation | быть в отпуске | veiksmažodis
+atostogauja | is on holiday | находится в отпуске | veiksmažodis
+atostogavo | was on holiday | был в отпуске | veiksmažodis
 atostogos | holiday, vacation | отпуск, каникулы | daiktavardis
 baletas | ballet | балет | daiktavardis
 baseinas | swimming pool | бассейн | daiktavardis
-bėgioti, bėgioja, bėgiojo | jog | бегать | veiksmažodis
-dainuoti, dainuoja, dainavo | sing | петь | veiksmažodis
+bėgioti | jog | бегать | veiksmažodis
+bėgioja | jogs | бегает | veiksmažodis
+bėgiojo | jogged | бегал | veiksmažodis
+dainuoti | sing | петь | veiksmažodis
+dainuoja | sings | поёт | veiksmažodis
+dainavo | sang | пел | veiksmažodis
 filmas | movie, film | фильм | daiktavardis
 fortepijonas | grand piano | рояль | daiktavardis
 fotografija | photography | фотография | daiktavardis
 futbolas | football | футбол | daiktavardis
 gitara | guitar | гитара | daiktavardis
-groti, groja, grojo | play (music) | играть (на инструменте) | veiksmažodis
-grybauti, grybauja, grybavo | pick mushrooms | собирать грибы | veiksmažodis
+groti | play (music) | играть (на инструменте) | veiksmažodis
+groja | plays (music) | играет (на инструменте) | veiksmažodis
+grojo | played (music) | играл (на инструменте) | veiksmažodis
+grybauti | pick mushrooms | собирать грибы | veiksmažodis
+grybauja | picks mushrooms | собирает грибы | veiksmažodis
+grybavo | picked mushrooms | собирал грибы | veiksmažodis
 kinas | cinema | кино | daiktavardis
 koncertas | concert | концерт | daiktavardis
-krepšinis, -io | basketball | баскетбол | daiktavardis
-laisvalaikis, -io | leisure | досуг | daiktavardis
+krepšinis | basketball | баскетбол | daiktavardis
+laisvalaikis | leisure | досуг | daiktavardis
 opera | opera | опера | daiktavardis
 paroda | exhibition | выставка | daiktavardis
 paveikslas | painting, picture | картина | daiktavardis
 pianinas | piano | пианино | daiktavardis
-plaukioti, plaukioja, plaukiojo | swim | плавать | veiksmažodis
+plaukioti | swim | плавать | veiksmažodis
+plaukioja | swims | плавает | veiksmažodis
+plaukiojo | swam | плавал | veiksmažodis
 skulptūra | sculpture | скульптура | daiktavardis
-slidinėti, slidinėja, slidinėjo | ski | кататься на лыжах | veiksmažodis
-spektaklis, -io | play (theatre) | спектакль | daiktavardis
+slidinėti | ski | кататься на лыжах | veiksmažodis
+slidinėja | skis | катается на лыжах | veiksmažodis
+slidinėjo | skied | катался на лыжах | veiksmažodis
+spektaklis | play (theatre) | спектакль | daiktavardis
 sportas | sport, sports | спорт | daiktavardis
 sporto klubas | gym | спортзал | daiktavardis
-sportuoti, sportuoja, sportavo | do sports | заниматься спортом | veiksmažodis
+sportuoti | do sports | заниматься спортом | veiksmažodis
+sportuoja | does sports | занимается спортом | veiksmažodis
+sportavo | did sports | занимался спортом | veiksmažodis
 stadionas | stadium | стадион | daiktavardis
 šachmatai | chess | шахматы | daiktavardis
 šaškės | draughts | шашки | daiktavardis
-šokti, šoka, šoko | dance | танцевать | veiksmažodis
+šokti | dance | танцевать | veiksmažodis
+šoka | dances | танцует | veiksmažodis
+šoko | danced | танцевал | veiksmažodis
 teatras | theatre | театр | daiktavardis
 tenisas | tennis | теннис | daiktavardis
-vakarėlis, -io | party | вечеринка | daiktavardis
+vakarėlis | party | вечеринка | daiktavardis
 žaisti krepšinį | play basketball | играть в баскетбол | veiksmažodis
 žaisti šaškėmis | play draughts | играть в шашки | veiksmažodis
-žvejoti, žvejoja, žvejojo | fish | рыбачить | veiksmažodis
+žvejoti | fish | рыбачить | veiksmažodis
+žvejoja | fishes | рыбачит | veiksmažodis
+žvejojo | fished | рыбачил | veiksmažodis

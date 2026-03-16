@@ -24,11 +24,11 @@ miškas | forest | лес | daiktavardis
 muziejus | museum | музей | daiktavardis
 parkas | park | парк | daiktavardis
 picerija | pizzeria | пиццерия | daiktavardis
-pilis, -ies | castle | замок | daiktavardis
+pilis | castle | замок | daiktavardis
 prospektas | avenue | проспект | daiktavardis
 restoranas | restaurant | ресторан | daiktavardis
 salė | hall | зал | daiktavardis
-senamiestis, -io | old town | старый город | daiktavardis
+senamiestis | old town | старый город | daiktavardis
 sodyba | summer house, homestead | усадьба | daiktavardis
 sostinė | capital | столица | daiktavardis
 stadionas | stadium | стадион | daiktavardis
@@ -37,4 +37,4 @@ turgus | market | рынок | daiktavardis
 upė | river | река | daiktavardis
 valgykla | canteen | столовая | daiktavardis
 vaistinė | pharmacy | аптека | daiktavardis
-viešbutis, -io | hotel | гостиница | daiktavardis
+viešbutis | hotel | гостиница | daiktavardis

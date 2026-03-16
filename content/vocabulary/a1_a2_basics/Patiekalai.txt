@@ -6,7 +6,7 @@ blynai | pancakes | блины | daiktavardis
 blyneliai su obuoliais | crepes with apples | блинчики с яблоками | daiktavardis
 blyneliai su sūriu | crepes with cheese | блинчики с сыром | daiktavardis
 blyneliai su uogiene | crepes with jam | блинчики с вареньем | daiktavardis
-blynelis, -io | crepe | блинчик | daiktavardis
+blynelis | crepe | блинчик | daiktavardis
 bulvių blynai | potato pancakes | картофельные оладьи | daiktavardis
 burokėlių sriuba | beetroot soup | свекольный суп | daiktavardis
 cepelinai | potato dumplings (Lithuanian dish) | цеппелины | daiktavardis
@@ -38,8 +38,8 @@ ryžiai su daržovėmis | rice with vegetables | рис с овощами | daik
 salotos | salad | салат | daiktavardis
 spurga | doughnut | пончик | daiktavardis
 sriuba | soup | суп | daiktavardis
-sumuštinis, -io | sandwich | бутерброд | daiktavardis
-šakotis, -io | spit cake (Lithuanian dessert) | сакотис | daiktavardis
+sumuštinis | sandwich | бутерброд | daiktavardis
+šakotis | spit cake (Lithuanian dessert) | сакотис | daiktavardis
 šaltibarščiai | cold beetroot soup | холодный борщ | daiktavardis
 tortas | cake | торт | daiktavardis
 vakarienė | supper | ужин | daiktavardis

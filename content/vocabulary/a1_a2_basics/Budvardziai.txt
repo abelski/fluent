@@ -1,66 +1,66 @@
 # Description: Прилагательные и описания
 
 # lithuanian | english | russian | hint
-aukštas, -a | tall, high | высокий, -ая | būdvardis
-auksinis, -ė | golden | золотой, -ая | būdvardis
-aštrus, -i | spicy, hot | острый, -ая | būdvardis
-brangus, -i | expensive | дорогой, -ая | būdvardis
-didelis, -ė | big | большой, -ая | būdvardis
-draugiškas, -a | friendly | дружелюбный, -ая | būdvardis
-geras, -a | kind, good | хороший, добрый, -ая | būdvardis
-gerbiamas, -a | honourable | уважаемый, -ая | būdvardis
-gražus, -i | beautiful, handsome, pretty | красивый, -ая | būdvardis
-greitas, -a | fast | быстрый, -ая | būdvardis
-ilgas, -a | long | длинный, -ая | būdvardis
-įdomus, -i | interesting | интересный, -ая | būdvardis
-jaukus, -i | cosy | уютный, -ая | būdvardis
-jaunas, -a | young | молодой, -ая | būdvardis
-jaunesnis, -ė | younger | помоложе | būdvardis
-jauniausias, -ia | youngest | самый молодой | būdvardis
-karštas, -a | hot | горячий, -ая | būdvardis
-kitas, -a | next, other | другой, -ая | būdvardis
-laisvas, -a | available, free | свободный, -ая | būdvardis
-lėtas, -a | slow | медленный, -ая | būdvardis
-madingas, -a | fashionable, stylish | модный, -ая | būdvardis
-malonus, -i | nice | приятный, -ая | būdvardis
-mažas, -a | small, little | маленький, -ая | būdvardis
-medinis, -ė | wooden | деревянный, -ая | būdvardis
-medvilninis, -ė | cotton | хлопковый, -ая | būdvardis
-mielas, -a | dear | милый, -ая | būdvardis
-minkštas, -a | soft | мягкий, -ая | būdvardis
-mylimas, -a | beloved | любимый, -ая | būdvardis
-naujas, -a | new | новый, -ая | būdvardis
-nešvarus, -i | unclean, dirty | грязный, -ая | būdvardis
-normalus, -i | normal | нормальный, -ая | būdvardis
-odinis, -ė | leather | кожаный, -ая | būdvardis
-patogus, -i | comfortable | удобный, -ая | būdvardis
-pigus, -i | cheap | дешёвый, -ая | būdvardis
-platus, -i | wide | широкий, -ая | būdvardis
-populiarus, -i | popular | популярный, -ая | būdvardis
-puikus, -i | excellent | отличный, -ая | būdvardis
-ramus, -i | calm, quiet | спокойный, -ая | būdvardis
-riebus, -i | rich (food) | жирный, -ая | būdvardis
-rūgštus, -i | sour | кислый, -ая | būdvardis
-saldus, -i | sweet | сладкий, -ая | būdvardis
-skanus, -i | delicious | вкусный, -ая | būdvardis
-senamadiškas, -a | old-fashioned | старомодный, -ая | būdvardis
-senas, -a | old, not fresh | старый, -ая | būdvardis
-siauras, -a | tight, narrow | узкий, -ая | būdvardis
-sintetinis, -ė | synthetic | синтетический, -ая | būdvardis
-sotus, -i | full (not hungry) | сытый, -ая | būdvardis
-sveikas, -a | healthy | здоровый, -ая | būdvardis
-sūrus, -i | salty | солёный, -ая | būdvardis
-šaltas, -a | cold | холодный, -ая | būdvardis
-šiltas, -a | warm | тёплый, -ая | būdvardis
-švelnus, -i | mild, gentle | нежный, мягкий, -ая | būdvardis
-šviežias, -ia | fresh | свежий, -ая | būdvardis
-triukšmingas, -a | noisy | шумный, -ая | būdvardis
-trumpas, -a | short | короткий, -ая | būdvardis
-tvarkingas, -a | tidy | аккуратный, -ая | būdvardis
-užimtas, -a | occupied, busy | занятый, -ая | būdvardis
-vasarinis, -ė | summer | летний, -яя | būdvardis
-vilnonis, -ė | woollen | шерстяной, -ая | būdvardis
-vyresnis, -ė | elder | постарше | būdvardis
-vyriausias, -ia | senior, eldest | старший, -ая | būdvardis
-žemas, -a | short, low | низкий, -ая | būdvardis
-žieminis, -ė | winter | зимний, -яя | būdvardis
+aukštas | tall, high | высокий | būdvardis
+auksinis | golden | золотой | būdvardis
+aštrus | spicy, hot | острый | būdvardis
+brangus | expensive | дорогой | būdvardis
+didelis | big | большой | būdvardis
+draugiškas | friendly | дружелюбный | būdvardis
+geras | kind, good | хороший, добрый | būdvardis
+gerbiamas | honourable | уважаемый | būdvardis
+gražus | beautiful, handsome, pretty | красивый | būdvardis
+greitas | fast | быстрый | būdvardis
+ilgas | long | длинный | būdvardis
+įdomus | interesting | интересный | būdvardis
+jaukus | cosy | уютный | būdvardis
+jaunas | young | молодой | būdvardis
+jaunesnis | younger | помоложе | būdvardis
+jauniausias | youngest | самый молодой | būdvardis
+karštas | hot | горячий | būdvardis
+kitas | next, other | другой | būdvardis
+laisvas | available, free | свободный | būdvardis
+lėtas | slow | медленный | būdvardis
+madingas | fashionable, stylish | модный | būdvardis
+malonus | nice | приятный | būdvardis
+mažas | small, little | маленький | būdvardis
+medinis | wooden | деревянный | būdvardis
+medvilninis | cotton | хлопковый | būdvardis
+mielas | dear | милый | būdvardis
+minkštas | soft | мягкий | būdvardis
+mylimas | beloved | любимый | būdvardis
+naujas | new | новый | būdvardis
+nešvarus | unclean, dirty | грязный | būdvardis
+normalus | normal | нормальный | būdvardis
+odinis | leather | кожаный | būdvardis
+patogus | comfortable | удобный | būdvardis
+pigus | cheap | дешёвый | būdvardis
+platus | wide | широкий | būdvardis
+populiarus | popular | популярный | būdvardis
+puikus | excellent | отличный | būdvardis
+ramus | calm, quiet | спокойный | būdvardis
+riebus | rich (food) | жирный | būdvardis
+rūgštus | sour | кислый | būdvardis
+saldus | sweet | сладкий | būdvardis
+skanus | delicious | вкусный | būdvardis
+senamadiškas | old-fashioned | старомодный | būdvardis
+senas | old, not fresh | старый | būdvardis
+siauras | tight, narrow | узкий | būdvardis
+sintetinis | synthetic | синтетический | būdvardis
+sotus | full (not hungry) | сытый | būdvardis
+sveikas | healthy | здоровый | būdvardis
+sūrus | salty | солёный | būdvardis
+šaltas | cold | холодный | būdvardis
+šiltas | warm | тёплый | būdvardis
+švelnus | mild, gentle | нежный, мягкий | būdvardis
+šviežias | fresh | свежий | būdvardis
+triukšmingas | noisy | шумный | būdvardis
+trumpas | short | короткий | būdvardis
+tvarkingas | tidy | аккуратный | būdvardis
+užimtas | occupied, busy | занятый | būdvardis
+vasarinis | summer | летний | būdvardis
+vilnonis | woollen | шерстяной | būdvardis
+vyresnis | elder | постарше | būdvardis
+vyriausias | senior, eldest | старший | būdvardis
+žemas | short, low | низкий | būdvardis
+žieminis | winter | зимний | būdvardis

@@ -1,14 +1,16 @@
 # Description: Эмоции и состояния
 
 # lithuanian | english | russian | hint
-alkanas, -a | hungry | голодный, -ая | būdvardis
+alkanas | hungry | голодный | būdvardis
 džiaugsmas | joy | радость | daiktavardis
-jaustis, jaučiasi, jautėsi | feel | чувствовать себя | veiksmažodis
+jaustis | feel | чувствовать себя | veiksmažodis
+jaučiasi | feels | чувствует себя | veiksmažodis
+jautėsi | felt | чувствовал себя | veiksmažodis
 laimė | happiness | счастье | daiktavardis
-laimingas, -a | happy | счастливый, -ая | būdvardis
-linksmas, -a | cheerful | весёлый, -ая | būdvardis
-liūdnas, -a | sad | грустный, -ая | būdvardis
+laimingas | happy | счастливый | būdvardis
+linksmas | cheerful | весёлый | būdvardis
+liūdnas | sad | грустный | būdvardis
 meilė | love | любовь | daiktavardis
-pavargęs, -usi | tired | уставший, -ая | būdvardis
+pavargęs | tired | уставший | būdvardis
 sėkmė | success | успех | daiktavardis
-užsiėmęs, -usi | busy | занятый, -ая | būdvardis
+užsiėmęs | busy | занятый | būdvardis

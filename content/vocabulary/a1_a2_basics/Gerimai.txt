@@ -10,7 +10,7 @@ gira | kvass | квас | daiktavardis
 juoda arbata | black tea | чёрный чай | daiktavardis
 kava | coffee | кофе | daiktavardis
 kefyras | kefir | кефир | daiktavardis
-kokteilis, -io | cocktail, shake | коктейль | daiktavardis
+kokteilis | cocktail, shake | коктейль | daiktavardis
 mėtų arbata | mint tea | мятный чай | daiktavardis
 morkų sultys | carrot juice | морковный сок | daiktavardis
 negazuotas vanduo | still water | негазированная вода | daiktavardis

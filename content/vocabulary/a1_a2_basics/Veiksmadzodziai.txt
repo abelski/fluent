@@ -1,86 +1,244 @@
 # Description: Распространённые глаголы
 
 # lithuanian | english | russian | hint
-apsiauti, apsiauna, apsiavė | put on shoes | обуться | veiksmažodis
-apsirengti, apsirengia, apsirengė | dress oneself, put on | одеться | veiksmažodis
-atidaryti, atidaro, atidarė | open | открыть | veiksmažodis
-atrakinti, atrakina, atrakino | unlock | разблокировать, открыть | veiksmažodis
-atsiimti, atsiima, atsiėmė | pick up | забрать | veiksmažodis
-baigti, baigia, baigė | finish | закончить | veiksmažodis
+apsiauti | put on shoes | обуться | veiksmažodis
+apsiauna | puts on shoes | обувается | veiksmažodis
+apsiavė | put on shoes | обулся | veiksmažodis
+apsirengti | dress oneself, put on | одеться | veiksmažodis
+apsirengia | dresses oneself | одевается | veiksmažodis
+apsirengė | dressed oneself | оделся | veiksmažodis
+atidaryti | open | открыть | veiksmažodis
+atidaro | opens | открывает | veiksmažodis
+atidarė | opened | открыл | veiksmažodis
+atrakinti | unlock | разблокировать, открыть | veiksmažodis
+atrakina | unlocks | разблокирует | veiksmažodis
+atrakino | unlocked | разблокировал | veiksmažodis
+atsiimti | pick up | забрать | veiksmažodis
+atsiima | picks up | забирает | veiksmažodis
+atsiėmė | picked up | забрал | veiksmažodis
+baigti | finish | закончить | veiksmažodis
+baigia | finishes | заканчивает | veiksmažodis
+baigė | finished | закончил | veiksmažodis
 būti svečiuose | stay as a guest | быть в гостях | veiksmažodis
-būti, yra, buvo | be | быть | veiksmažodis
-daryti, daro, darė | do, make | делать | veiksmažodis
-dėvėti, dėvi, dėvėjo | wear | носить (одежду) | veiksmažodis
-dirbti, dirba, dirbo | work | работать | veiksmažodis
-dovanoti, dovanoja, dovanojo | give as a present | дарить | veiksmažodis
-duoti, duoda, davė | give | давать | veiksmažodis
+būti | be | быть | veiksmažodis
+yra | is | есть | veiksmažodis
+buvo | was | был | veiksmažodis
+daryti | do, make | делать | veiksmažodis
+daro | does, makes | делает | veiksmažodis
+darė | did, made | делал | veiksmažodis
+dėvėti | wear | носить (одежду) | veiksmažodis
+dėvi | wears | носит (одежду) | veiksmažodis
+dėvėjo | wore | носил (одежду) | veiksmažodis
+dirbti | work | работать | veiksmažodis
+dirba | works | работает | veiksmažodis
+dirbo | worked | работал | veiksmažodis
+dovanoti | give as a present | дарить | veiksmažodis
+dovanoja | gives as a present | дарит | veiksmažodis
+dovanojo | gave as a present | дарил | veiksmažodis
+duoti | give | давать | veiksmažodis
+duoda | gives | даёт | veiksmažodis
+davė | gave | дал | veiksmažodis
 eiti į svečius | visit | идти в гости | veiksmažodis
 eiti pasivaikščioti | go for a walk | идти гулять | veiksmažodis
-eiti, eina, ėjo | go (on foot) | идти | veiksmažodis
-gauti, gauna, gavo | get, receive | получать | veiksmažodis
-gerti, geria, gėrė | drink | пить | veiksmažodis
-grąžinti, grąžina, grąžino | return | вернуть | veiksmažodis
-grįžti, grįžta, grįžo | return, come back | возвращаться | veiksmažodis
-gulėti, guli, gulėjo | lie | лежать | veiksmažodis
-gyventi, gyvena, gyveno | live | жить | veiksmažodis
-ieškoti, ieško, ieškojo | look for | искать | veiksmažodis
-imti, ima, ėmė | take | брать | veiksmažodis
-išjungti, išjungia, išjungė | switch off | выключить | veiksmažodis
-išplauti, išplauna, išplovė | wash up | вымыть | veiksmažodis
-išsiurbti, išsiurbia, išsiurbė | vacuum | пылесосить | veiksmažodis
-išsiųsti, išsiunčia, išsiuntė | send | отправить | veiksmažodis
-išspausdinti, išspausdina, išspausdino | print out | распечатать | veiksmažodis
-išvalyti, išvalo, išvalė | clean up | убрать | veiksmažodis
-kalbėti, kalba, kalbėjo | speak | говорить | veiksmažodis
-klausyti, klauso, klausė | listen | слушать | veiksmažodis
-kviesti, kveičia, kvietė | invite | приглашать | veiksmažodis
-mėgti, mėgsta, mėgo | like | любить / нравиться | veiksmažodis
-miegoti, miega, miegojo | sleep | спать | veiksmažodis
-mokėti, moka, mokėjo | know | уметь, знать | veiksmažodis
-mylėti, myli, mylėjo | love | любить | veiksmažodis
-norėti, nori, norėjo | want | хотеть | veiksmažodis
-nueiti, nueina, nuėjo | get somewhere on foot | дойти | veiksmažodis
-nuomoti, nuomoja, nuomojo | let, rent | сдавать / снимать | veiksmažodis
-nuplauti, nuplauna, nuplovė | wash | помыть | veiksmažodis
-nusiauti, nusiauna, nusiavė | take off shoes | разуться | veiksmažodis
-nusirengti, nusirengia, nusirengė | undress, take off | раздеться | veiksmažodis
-padaryti, padaro, padarė | do | сделать | veiksmažodis
-paduoti, paduoda, padavė | pass, give, hand | подать | veiksmažodis
-pailsėti, pailsi, pailsėjo | have a rest | отдохнуть | veiksmažodis
-pakartoti, pakartoja, pakartojo | repeat | повторить | veiksmažodis
-pakeisti, pakeičia, pakeitė | change | изменить, поменять | veiksmažodis
-paklausi, paklausia, paklausė | ask | спросить | veiksmažodis
-palaukti, palaukia, palaukė | wait | подождать | veiksmažodis
-pamiršti, pamirša, pamiršo | forget | забыть | veiksmažodis
-parodyti, parodo, parodė | show | показать | veiksmažodis
-pasakyti, pasako, pasakė | say, tell | сказать | veiksmažodis
-pasirašyti, pasirašo, pasirašė | sign | подписать | veiksmažodis
-paskambinti, paskambina, paskambino | call, make a call | позвонить | veiksmažodis
-paskolinti, paskolina, paskolino | lend | одолжить | veiksmažodis
-pasukti, pasuka, pasuko | turn | повернуть | veiksmažodis
-pataisyti, pataiso, pataisė | fix, repair | починить | veiksmažodis
-patikti, patinka, patiko | like, please | нравиться | veiksmažodis
-pradėti, pradeda, pradėjo | start, begin | начать | veiksmažodis
-rašyti, rašo, rašė | write | писать | veiksmažodis
-reikėti, reikia, reikėjo | need | нужно / нужен | veiksmažodis
-sėdėti, sėdi, sėdėjo | sit | сидеть | veiksmažodis
-skalbti, skalbia, skalbė | wash (laundry) | стирать | veiksmažodis
-skubėti, skuba, skubėjo | rush, hurry | торопиться | veiksmažodis
-stovėti, stovi, stovėjo | stand | стоять | veiksmažodis
-sugesti, sugenda, sugedo | break down | сломаться | veiksmažodis
-suprasti, supranta, suprato | understand | понимать | veiksmažodis
-susitikti, susitinka, susitiko | meet | встретиться | veiksmažodis
-sustoti, sustoja, sustojo | stop | остановиться | veiksmažodis
-sutvarkyti, sutvarko, sutvarkė | tidy up | убрать | veiksmažodis
-turėti, turi, turėjo | have | иметь | veiksmažodis
-uždaryti, uždaro, uždarė | close | закрыть | veiksmažodis
-užrakinti, užrakina, užrakino | lock | запереть | veiksmažodis
-vaikščioti, vaikščioja, vaikščiojo | walk | ходить | veiksmažodis
-valgyti, valgo, valgė | eat | есть | veiksmažodis
-valyti, valo, valė | clean, wipe | чистить, убирать | veiksmažodis
-veikti, veikia, veikė | do, work, function | действовать, работать | veiksmažodis
-vėluoti, vėluoja, vėlavo | be late | опаздывать | veiksmažodis
-žaisti, žaidžia, žaidė | play | играть | veiksmažodis
-žinoti, žino, žinojo | know | знать | veiksmažodis
+eiti | go (on foot) | идти | veiksmažodis
+eina | goes (on foot) | идёт | veiksmažodis
+ėjo | went (on foot) | шёл | veiksmažodis
+gauti | get, receive | получать | veiksmažodis
+gauna | gets, receives | получает | veiksmažodis
+gavo | got, received | получил | veiksmažodis
+gerti | drink | пить | veiksmažodis
+geria | drinks | пьёт | veiksmažodis
+gėrė | drank | пил | veiksmažodis
+grąžinti | return | вернуть | veiksmažodis
+grąžina | returns | возвращает | veiksmažodis
+grąžino | returned | вернул | veiksmažodis
+grįžti | return, come back | возвращаться | veiksmažodis
+grįžta | returns, comes back | возвращается | veiksmažodis
+grįžo | returned, came back | вернулся | veiksmažodis
+gulėti | lie | лежать | veiksmažodis
+guli | lies | лежит | veiksmažodis
+gulėjo | lay | лежал | veiksmažodis
+gyventi | live | жить | veiksmažodis
+gyvena | lives | живёт | veiksmažodis
+gyveno | lived | жил | veiksmažodis
+ieškoti | look for | искать | veiksmažodis
+ieško | looks for | ищет | veiksmažodis
+ieškojo | looked for | искал | veiksmažodis
+imti | take | брать | veiksmažodis
+ima | takes | берёт | veiksmažodis
+ėmė | took | взял | veiksmažodis
+išjungti | switch off | выключить | veiksmažodis
+išjungia | switches off | выключает | veiksmažodis
+išjungė | switched off | выключил | veiksmažodis
+išplauti | wash up | вымыть | veiksmažodis
+išplauna | washes up | моет | veiksmažodis
+išplovė | washed up | вымыл | veiksmažodis
+išsiurbti | vacuum | пылесосить | veiksmažodis
+išsiurbia | vacuums | пылесосит | veiksmažodis
+išsiurbė | vacuumed | пропылесосил | veiksmažodis
+išsiųsti | send | отправить | veiksmažodis
+išsiunčia | sends | отправляет | veiksmažodis
+išsiuntė | sent | отправил | veiksmažodis
+išspausdinti | print out | распечатать | veiksmažodis
+išspausdina | prints out | распечатывает | veiksmažodis
+išspausdino | printed out | распечатал | veiksmažodis
+išvalyti | clean up | убрать | veiksmažodis
+išvalo | cleans up | убирает | veiksmažodis
+išvalė | cleaned up | убрал | veiksmažodis
+kalbėti | speak | говорить | veiksmažodis
+kalba | speaks | говорит | veiksmažodis
+kalbėjo | spoke | говорил | veiksmažodis
+klausyti | listen | слушать | veiksmažodis
+klauso | listens | слушает | veiksmažodis
+klausė | listened | слушал | veiksmažodis
+kviesti | invite | приглашать | veiksmažodis
+kveičia | invites | приглашает | veiksmažodis
+kvietė | invited | приглашал | veiksmažodis
+mėgti | like | любить / нравиться | veiksmažodis
+mėgsta | likes | любит | veiksmažodis
+mėgo | liked | любил | veiksmažodis
+miegoti | sleep | спать | veiksmažodis
+miega | sleeps | спит | veiksmažodis
+miegojo | slept | спал | veiksmažodis
+mokėti | know | уметь, знать | veiksmažodis
+moka | knows how | умеет | veiksmažodis
+mokėjo | knew how | умел | veiksmažodis
+mylėti | love | любить | veiksmažodis
+myli | loves | любит | veiksmažodis
+mylėjo | loved | любил | veiksmažodis
+norėti | want | хотеть | veiksmažodis
+nori | wants | хочет | veiksmažodis
+norėjo | wanted | хотел | veiksmažodis
+nueiti | get somewhere on foot | дойти | veiksmažodis
+nueina | gets somewhere on foot | доходит | veiksmažodis
+nuėjo | got somewhere on foot | дошёл | veiksmažodis
+nuomoti | let, rent | сдавать / снимать | veiksmažodis
+nuomoja | lets, rents | сдаёт / снимает | veiksmažodis
+nuomojo | let, rented | сдавал / снимал | veiksmažodis
+nuplauti | wash | помыть | veiksmažodis
+nuplauna | washes | моет | veiksmažodis
+nuplovė | washed | помыл | veiksmažodis
+nusiauti | take off shoes | разуться | veiksmažodis
+nusiauna | takes off shoes | разувается | veiksmažodis
+nusiavė | took off shoes | разулся | veiksmažodis
+nusirengti | undress, take off | раздеться | veiksmažodis
+nusirengia | undresses | раздевается | veiksmažodis
+nusirengė | undressed | разделся | veiksmažodis
+padaryti | do | сделать | veiksmažodis
+padaro | does | делает | veiksmažodis
+padarė | did | сделал | veiksmažodis
+paduoti | pass, give, hand | подать | veiksmažodis
+paduoda | passes, gives | подаёт | veiksmažodis
+padavė | passed, gave | подал | veiksmažodis
+pailsėti | have a rest | отдохнуть | veiksmažodis
+pailsi | has a rest | отдыхает | veiksmažodis
+pailsėjo | had a rest | отдохнул | veiksmažodis
+pakartoti | repeat | повторить | veiksmažodis
+pakartoja | repeats | повторяет | veiksmažodis
+pakartojo | repeated | повторил | veiksmažodis
+pakeisti | change | изменить, поменять | veiksmažodis
+pakeičia | changes | изменяет | veiksmažodis
+pakeitė | changed | изменил | veiksmažodis
+paklausi | ask | спросить | veiksmažodis
+paklausia | asks | спрашивает | veiksmažodis
+paklausė | asked | спросил | veiksmažodis
+palaukti | wait | подождать | veiksmažodis
+palaukia | waits | ждёт | veiksmažodis
+palaukė | waited | подождал | veiksmažodis
+pamiršti | forget | забыть | veiksmažodis
+pamirša | forgets | забывает | veiksmažodis
+pamiršo | forgot | забыл | veiksmažodis
+parodyti | show | показать | veiksmažodis
+parodo | shows | показывает | veiksmažodis
+parodė | showed | показал | veiksmažodis
+pasakyti | say, tell | сказать | veiksmažodis
+pasako | says, tells | говорит | veiksmažodis
+pasakė | said, told | сказал | veiksmažodis
+pasirašyti | sign | подписать | veiksmažodis
+pasirašo | signs | подписывает | veiksmažodis
+pasirašė | signed | подписал | veiksmažodis
+paskambinti | call, make a call | позвонить | veiksmažodis
+paskambina | calls | звонит | veiksmažodis
+paskambino | called | позвонил | veiksmažodis
+paskolinti | lend | одолжить | veiksmažodis
+paskolina | lends | одалживает | veiksmažodis
+paskolino | lent | одолжил | veiksmažodis
+pasukti | turn | повернуть | veiksmažodis
+pasuka | turns | поворачивает | veiksmažodis
+pasuko | turned | повернул | veiksmažodis
+pataisyti | fix, repair | починить | veiksmažodis
+pataiso | fixes, repairs | чинит | veiksmažodis
+pataisė | fixed, repaired | починил | veiksmažodis
+patikti | like, please | нравиться | veiksmažodis
+patinka | pleases | нравится | veiksmažodis
+patiko | pleased | понравился | veiksmažodis
+pradėti | start, begin | начать | veiksmažodis
+pradeda | starts, begins | начинает | veiksmažodis
+pradėjo | started, began | начал | veiksmažodis
+rašyti | write | писать | veiksmažodis
+rašo | writes | пишет | veiksmažodis
+rašė | wrote | писал | veiksmažodis
+reikėti | need | нужно / нужен | veiksmažodis
+reikia | is needed | нужно | veiksmažodis
+reikėjo | was needed | было нужно | veiksmažodis
+sėdėti | sit | сидеть | veiksmažodis
+sėdi | sits | сидит | veiksmažodis
+sėdėjo | sat | сидел | veiksmažodis
+skalbti | wash (laundry) | стирать | veiksmažodis
+skalbia | washes (laundry) | стирает | veiksmažodis
+skalbė | washed (laundry) | стирал | veiksmažodis
+skubėti | rush, hurry | торопиться | veiksmažodis
+skuba | rushes, hurries | торопится | veiksmažodis
+skubėjo | rushed, hurried | торопился | veiksmažodis
+stovėti | stand | стоять | veiksmažodis
+stovi | stands | стоит | veiksmažodis
+stovėjo | stood | стоял | veiksmažodis
+sugesti | break down | сломаться | veiksmažodis
+sugenda | breaks down | ломается | veiksmažodis
+sugedo | broke down | сломался | veiksmažodis
+suprasti | understand | понимать | veiksmažodis
+supranta | understands | понимает | veiksmažodis
+suprato | understood | понял | veiksmažodis
+susitikti | meet | встретиться | veiksmažodis
+susitinka | meets | встречается | veiksmažodis
+susitiko | met | встретился | veiksmažodis
+sustoti | stop | остановиться | veiksmažodis
+sustoja | stops | останавливается | veiksmažodis
+sustojo | stopped | остановился | veiksmažodis
+sutvarkyti | tidy up | убрать | veiksmažodis
+sutvarko | tidies up | убирает | veiksmažodis
+sutvarkė | tidied up | убрал | veiksmažodis
+turėti | have | иметь | veiksmažodis
+turi | has | имеет | veiksmažodis
+turėjo | had | имел | veiksmažodis
+uždaryti | close | закрыть | veiksmažodis
+uždaro | closes | закрывает | veiksmažodis
+uždarė | closed | закрыл | veiksmažodis
+užrakinti | lock | запереть | veiksmažodis
+užrakina | locks | запирает | veiksmažodis
+užrakino | locked | запер | veiksmažodis
+vaikščioti | walk | ходить | veiksmažodis
+vaikščioja | walks | ходит | veiksmažodis
+vaikščiojo | walked | ходил | veiksmažodis
+valgyti | eat | есть | veiksmažodis
+valgo | eats | ест | veiksmažodis
+valgė | ate | ел | veiksmažodis
+valyti | clean, wipe | чистить, убирать | veiksmažodis
+valo | cleans, wipes | чистит | veiksmažodis
+valė | cleaned, wiped | чистил | veiksmažodis
+veikti | do, work, function | действовать, работать | veiksmažodis
+veikia | works, functions | работает | veiksmažodis
+veikė | worked, functioned | работал | veiksmažodis
+vėluoti | be late | опаздывать | veiksmažodis
+vėluoja | is late | опаздывает | veiksmažodis
+vėlavo | was late | опоздал | veiksmažodis
+žaisti | play | играть | veiksmažodis
+žaidžia | plays | играет | veiksmažodis
+žaidė | played | играл | veiksmažodis
+žinoti | know | знать | veiksmažodis
+žino | knows | знает | veiksmažodis
+žinojo | knew | знал | veiksmažodis
 žiūrėti televizorių | watch TV | смотреть телевизор | veiksmažodis
-žiūrėti, žiūri, žiūrėjo | look, watch | смотреть | veiksmažodis
+žiūrėti | look, watch | смотреть | veiksmažodis
+žiūri | looks, watches | смотрит | veiksmažodis
+žiūrėjo | looked, watched | смотрел | veiksmažodis

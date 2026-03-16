@@ -2,31 +2,31 @@
 
 # lithuanian | english | russian | hint
 amžius | age | возраст | daiktavardis
-anūkas, -ė | grandson, granddaughter | внук, внучка | daiktavardis
+anūkas | grandson, granddaughter | внук, внучка | daiktavardis
 berniukas | boy | мальчик | daiktavardis
-brolis, -io | brother | брат | daiktavardis
+brolis | brother | брат | daiktavardis
 dėdė | uncle | дядя | daiktavardis
-draugas, -ė | friend | друг, подруга | daiktavardis
+draugas | friend | друг, подруга | daiktavardis
 duktė | daughter | дочь | daiktavardis
 dukterėčia | niece | племянница | daiktavardis
 giminės | relatives | родственники | daiktavardis
-išsiskyrės, -usi | divorced | разведённый, -ая | būdvardis
+išsiskyrės | divorced | разведённый | būdvardis
 ištekėjusi | married woman | замужем | būdvardis
-kaimynas, -ė | neighbour | сосед, соседка | daiktavardis
+kaimynas | neighbour | сосед, соседка | daiktavardis
 katė | cat | кошка | daiktavardis
 mama | mummy | мама | daiktavardis
 mergaitė | girl | девочка | daiktavardis
 mergina | young woman | девушка | daiktavardis
-mirės, -usi | deceased | умерший, -ая | būdvardis
-moteris, -ers | woman | женщина | daiktavardis
+mirės | deceased | умерший | būdvardis
+moteris | woman | женщина | daiktavardis
 motina | mother | мать | daiktavardis
 naminis gyvūnas | pet | домашнее животное | daiktavardis
 ponas | Mr | господин | daiktavardis
 ponia | Mrs | госпожа | daiktavardis
-pusbrolis, -io | cousin (male) | двоюродный брат | daiktavardis
+pusbrolis | cousin (male) | двоюродный брат | daiktavardis
 pusseserė | cousin (female) | двоюродная сестра | daiktavardis
 senelė, močiutė | grandmother | бабушка | daiktavardis
-senelis, -io | grandfather | дедушка | daiktavardis
+senelis | grandfather | дедушка | daiktavardis
 sesuo | sister | сестра | daiktavardis
 sūnėnas | nephew | племянник | daiktavardis
 sūnus | son | сын | daiktavardis
@@ -34,7 +34,7 @@ svečias | guest | гость | daiktavardis
 šeima | family | семья | daiktavardis
 šuo | dog | собака | daiktavardis
 teta | aunt | тётя | daiktavardis
-tėtis, -io | daddy | папа | daiktavardis
+tėtis | daddy | папа | daiktavardis
 tėvai | parents | родители | daiktavardis
 tėvas | father | отец | daiktavardis
 vaikas | child | ребёнок | daiktavardis

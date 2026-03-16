@@ -1,12 +1,24 @@
 # Description: Глаголы и методы приготовления пищи
 
 # lithuanian | english | russian | hint
-keptas, -a | baked, roast, fried, grilled | запечённый, жареный, -ая | būdvardis
-kepti, kepa, kepė | fry, bake, roast, grill | жарить, печь | veiksmažodis
-pietauti, pietauja, pietavo | have lunch | обедать | veiksmažodis
-pusryčiauti, pusryčiauja, pusryčiavo | have breakfast | завтракать | veiksmažodis
-ragauti, ragauja, ragavo | taste | пробовать (еду) | veiksmažodis
-rūkytas, -a | smoked | копчёный, -ая | būdvardis
-vakarienauti, vakarienauja, vakarieniavo | have dinner | ужинать | veiksmažodis
-virti, verda, virė | boil, cook | варить | veiksmažodis
-virtas, -a | boiled, cooked | варёный, -ая | būdvardis
+keptas | baked, roast, fried, grilled | запечённый, жареный | būdvardis
+kepti | fry, bake, roast, grill | жарить, печь | veiksmažodis
+kepa | fries, bakes, roasts, grills | жарит, печёт | veiksmažodis
+kepė | fried, baked, roasted, grilled | жарил, пёк | veiksmažodis
+pietauti | have lunch | обедать | veiksmažodis
+pietauja | has lunch | обедает | veiksmažodis
+pietavo | had lunch | пообедал | veiksmažodis
+pusryčiauti | have breakfast | завтракать | veiksmažodis
+pusryčiauja | has breakfast | завтракает | veiksmažodis
+pusryčiavo | had breakfast | позавтракал | veiksmažodis
+ragauti | taste | пробовать (еду) | veiksmažodis
+ragauja | tastes | пробует (еду) | veiksmažodis
+ragavo | tasted | попробовал (еду) | veiksmažodis
+rūkytas | smoked | копчёный | būdvardis
+vakarienauti | have dinner | ужинать | veiksmažodis
+vakarienauja | has dinner | ужинает | veiksmažodis
+vakarieniavo | had dinner | поужинал | veiksmažodis
+virti | boil, cook | варить | veiksmažodis
+verda | boils, cooks | варит | veiksmažodis
+virė | boiled, cooked | варил | veiksmažodis
+virtas | boiled, cooked | варёный | būdvardis

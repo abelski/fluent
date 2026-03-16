@@ -11,13 +11,13 @@ dėmė | stain | пятно | daiktavardis
 dujos | gas | газ | daiktavardis
 dulkės | dust | пыль | daiktavardis
 dulkių siurblys | vacuum cleaner | пылесос | daiktavardis
-durys, -ų | door | дверь | daiktavardis
+durys | door | дверь | daiktavardis
 durų kodas | door code | код двери | daiktavardis
 dušas | shower | душ | daiktavardis
 džiovyklė | dryer machine | сушильная машина | daiktavardis
-fotelis, -io | armchair | кресло | daiktavardis
+fotelis | armchair | кресло | daiktavardis
 garažas | garage | гараж | daiktavardis
-grindys, -ų | floor | пол | daiktavardis
+grindys | floor | пол | daiktavardis
 indai | dishes | посуда | daiktavardis
 indaplovė | dishwasher | посудомоечная машина | daiktavardis
 kambarys | room | комната | daiktavardis
@@ -33,7 +33,7 @@ langas | window | окно | daiktavardis
 lentyna | shelf | полка | daiktavardis
 liftas | lift | лифт | daiktavardis
 lova | bed | кровать | daiktavardis
-lubos, -ų | ceiling | потолок | daiktavardis
+lubos | ceiling | потолок | daiktavardis
 miegamasis | bedroom | спальня | daiktavardis
 mikrobangų krosnelė | microwave oven | микроволновая печь | daiktavardis
 namai | home | дом | daiktavardis
@@ -57,9 +57,9 @@ svetainė | living room | гостиная | daiktavardis
 šviesa | light | свет | daiktavardis
 televizorius | TV set | телевизор | daiktavardis
 tualetas | toilet, WC | туалет | daiktavardis
-vamzdis, -io | pipe, tube | труба | daiktavardis
+vamzdis | pipe, tube | труба | daiktavardis
 valymas | cleaning | уборка | daiktavardis
-veidrodis, -io | mirror | зеркало | daiktavardis
+veidrodis | mirror | зеркало | daiktavardis
 virdulys | kettle | чайник | daiktavardis
 viryklė | stove | плита | daiktavardis
 virtuvė | kitchen | кухня | daiktavardis

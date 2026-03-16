@@ -1,47 +1,47 @@
 # Description: Профессии и работа
 
 # lithuanian | english | russian | hint
-administratorius, -ė | administrator | администратор | daiktavardis
-aktorius, -ė | actor, actress | актёр, актриса | daiktavardis
-architektas, -ė | architect | архитектор | daiktavardis
+administratorius | administrator | администратор | daiktavardis
+aktorius | actor, actress | актёр, актриса | daiktavardis
+architektas | architect | архитектор | daiktavardis
 baigti darbą | finish work | заканчивать работу | veiksmažodis
-bendradarbis, -io; -ė | colleague | коллега | daiktavardis
+bendradarbis | colleague | коллега | daiktavardis
 biuras | bureau, office | офис | daiktavardis
-buhalteris, -ė | accountant | бухгалтер | daiktavardis
-dainininkas, -ė | singer | певец, певица | daiktavardis
+buhalteris | accountant | бухгалтер | daiktavardis
+dainininkas | singer | певец, певица | daiktavardis
 darbas | work, job | работа | daiktavardis
 darbovietė | workplace | место работы | daiktavardis
-darbuotojas, -a | employee | сотрудник, сотрудница | daiktavardis
-dėstytojas, -a | university teacher, lecturer | преподаватель | daiktavardis
-direktorius, -ė | head, manager, CEO | директор | daiktavardis
-gydytojas, -a | doctor, physician | врач | daiktavardis
-inžinierius, -ė | engineer | инженер | daiktavardis
+darbuotojas | employee | сотрудник, сотрудница | daiktavardis
+dėstytojas | university teacher, lecturer | преподаватель | daiktavardis
+direktorius | head, manager, CEO | директор | daiktavardis
+gydytojas | doctor, physician | врач | daiktavardis
+inžinierius | engineer | инженер | daiktavardis
 įmonė | enterprise, company | компания | daiktavardis
-kirpėjas, -a | hairdresser | парикмахер | daiktavardis
-klientas, -ė | client | клиент, клиентка | daiktavardis
-kolega, -ė | colleague | коллега | daiktavardis
+kirpėjas | hairdresser | парикмахер | daiktavardis
+klientas | client | клиент, клиентка | daiktavardis
+kolega | colleague | коллега | daiktavardis
 komandiruotė | business trip | командировка | daiktavardis
-meistras, -ė | handyman, handywoman | мастер | daiktavardis
-mokytojas, -a | teacher | учитель, учительница | daiktavardis
-muzikantas, -ė | musician | музыкант | daiktavardis
-namų tvarkytojas, -a | house cleaner | уборщик, уборщица | daiktavardis
-odontologas, -ė | dentist | стоматолог | daiktavardis
-padavėjas, -a | waiter, waitress | официант, официантка | daiktavardis
-pardavėjas, -a | seller, salesman, saleswoman | продавец, продавщица | daiktavardis
+meistras | handyman, handywoman | мастер | daiktavardis
+mokytojas | teacher | учитель, учительница | daiktavardis
+muzikantas | musician | музыкант | daiktavardis
+namų tvarkytojas | house cleaner | уборщик, уборщица | daiktavardis
+odontologas | dentist | стоматолог | daiktavardis
+padavėjas | waiter, waitress | официант, официантка | daiktavardis
+pardavėjas | seller, salesman, saleswoman | продавец, продавщица | daiktavardis
 pietų pertrauka | lunch break | обеденный перерыв | daiktavardis
-prezidentas, -ė | president | президент | daiktavardis
+prezidentas | president | президент | daiktavardis
 profesija | profession | профессия | daiktavardis
-profesorius, -ė | professor | профессор | daiktavardis
-santechnikas, -ė | plumber | сантехник | daiktavardis
-sekretorius, -ė | secretary | секретарь | daiktavardis
-siuvėjas, -a | tailor | портной, портниха | daiktavardis
-statybininkas, -ė | builder | строитель | daiktavardis
+profesorius | professor | профессор | daiktavardis
+santechnikas | plumber | сантехник | daiktavardis
+sekretorius | secretary | секретарь | daiktavardis
+siuvėjas | tailor | портной, портниха | daiktavardis
+statybininkas | builder | строитель | daiktavardis
 susirinkimas | meeting, assembly | собрание | daiktavardis
 susitikimas | meeting | встреча | daiktavardis
-sutartis, -ies | contract | договор | daiktavardis
-teisininkas, -ė | lawyer | юрист | daiktavardis
-vadybininkas, -ė | manager | менеджер | daiktavardis
-vairuotojas, -a | driver | водитель | daiktavardis
-verslininkas, -ė | businessman, businesswoman | предприниматель | daiktavardis
-veterinaras, -ė | veterinarian | ветеринар | daiktavardis
-žurnalistas, -ė | journalist | журналист, журналистка | daiktavardis
+sutartis | contract | договор | daiktavardis
+teisininkas | lawyer | юрист | daiktavardis
+vadybininkas | manager | менеджер | daiktavardis
+vairuotojas | driver | водитель | daiktavardis
+verslininkas | businessman, businesswoman | предприниматель | daiktavardis
+veterinaras | veterinarian | ветеринар | daiktavardis
+žurnalistas | journalist | журналист, журналистка | daiktavardis

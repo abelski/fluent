@@ -13,7 +13,7 @@ batonas | long loaf | батон | daiktavardis
 bazilikai | basil | базилик | daiktavardis
 braškės | strawberries | клубника | daiktavardis
 bulvė | potato | картофель | daiktavardis
-burokėlis, -io | beetroot | свёкла | daiktavardis
+burokėlis | beetroot | свёкла | daiktavardis
 česnakas | garlic | чеснок | daiktavardis
 citrina | lemon | лимон | daiktavardis
 cukinija | courgette | кабачок | daiktavardis
@@ -29,14 +29,14 @@ jautiena | beef | говядина | daiktavardis
 jogurtas | yogurt | йогурт | daiktavardis
 juoda duona | brown bread | чёрный хлеб | daiktavardis
 kalakutiena | turkey | индейка | daiktavardis
-kiaušinis, -io | egg | яйцо | daiktavardis
+kiaušinis | egg | яйцо | daiktavardis
 kiauliena | pork | свинина | daiktavardis
 kmynai | caraway seeds | тмин | daiktavardis
 kopūstas | cabbage | капуста | daiktavardis
 krapai | dill | укроп | daiktavardis
 kriaušė | pear | груша | daiktavardis
 krienai | horseradish | хрен | daiktavardis
-kumpis, -io | ham | ветчина | daiktavardis
+kumpis | ham | ветчина | daiktavardis
 lauro lapai | bay leaves | лавровый лист | daiktavardis
 majonezas | mayonnaise | майонез | daiktavardis
 makaronai | pasta | макароны | daiktavardis
@@ -71,4 +71,4 @@ vištiena | chicken | курица | daiktavardis
 vynuogės | grapes | виноград | daiktavardis
 vyšnios | cherries | вишня | daiktavardis
 žirniai | peas | горох | daiktavardis
-žuvis, -ies | fish | рыба | daiktavardis
+žuvis | fish | рыба | daiktavardis

@@ -16,19 +16,25 @@ klinika | clinic | клиника | daiktavardis
 kraujo tyrimas | blood test | анализ крови | daiktavardis
 lašai | drops | капли | daiktavardis
 ligoninė | hospital | больница | daiktavardis
-ligonis, -ė | patient | пациент, пациентка | daiktavardis
+ligonis | patient | пациент, пациентка | daiktavardis
 nosies purškalas | nose spray | спрей для носа | daiktavardis
 palata | ward | палата | daiktavardis
-pasiskiepyti, pasiskiepija, pasiskiepijo | be vaccinated against | прививаться от | veiksmažodis
-pasveikti, pasveiksta, pasveiko | get better, recover | выздороветь | veiksmažodis
+pasiskiepyti | be vaccinated against | прививаться от | veiksmažodis
+pasiskiepija | is vaccinated against | прививается от | veiksmažodis
+pasiskiepijo | was vaccinated against | привился от | veiksmažodis
+pasveikti | get better, recover | выздороветь | veiksmažodis
+pasveiksta | gets better, recovers | выздоравливает | veiksmažodis
+pasveiko | got better, recovered | выздоровел | veiksmažodis
 poliklinika | polyclinic | поликлиника | daiktavardis
 purškalas | spray | спрей | daiktavardis
 receptas | prescription | рецепт | daiktavardis
 sirupas nuo kosulio | syrup for cough | сироп от кашля | daiktavardis
-slaugytojas, -a | nurse | медбрат, медсестра | daiktavardis
+slaugytojas | nurse | медбрат, медсестра | daiktavardis
 sveikatos draudimas | health insurance | медицинская страховка | daiktavardis
-sveikti, sveiksta, sveiko | get better, recover | выздоравливать | veiksmažodis
-šeimos gydytojas, -a | general practitioner, family doctor | семейный врач | daiktavardis
+sveikti | get better, recover | выздоравливать | veiksmažodis
+sveiksta | gets better, recovers | выздоравливает | veiksmažodis
+sveiko | got better, recovered | выздоровел | veiksmažodis
+šeimos gydytojas | general practitioner, family doctor | семейный врач | daiktavardis
 širdies lašai | heart drops | сердечные капли | daiktavardis
 šlapimo tyrimas | urine test | анализ мочи | daiktavardis
 tabletė | tablet | таблетка | daiktavardis

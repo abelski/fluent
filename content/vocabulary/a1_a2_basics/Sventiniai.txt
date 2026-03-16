@@ -1,29 +1,41 @@
 # Description: Праздники и торжества
 
 # lithuanian | english | russian | hint
-dažyti, dažo, dažė kiaušinius | dye Easter eggs | красить яйца | veiksmažodis
+dažyti | dye Easter eggs | красить яйца | veiksmažodis
+dažo | dyes Easter eggs | красит яйца | veiksmažodis
+dažė kiaušinius | dyed Easter eggs | красил яйца | veiksmažodis
 dovana | gift, present | подарок | daiktavardis
 eglė | Christmas tree | ель | daiktavardis
 eglutė | Christmas tree (decorated) | ёлочка | daiktavardis
 fejerverkai | fireworks | фейерверк | daiktavardis
-giedoti, gieda, giedojo himną | sing the anthem | петь гимн | veiksmažodis
-gimtadienis, -io | birthday | день рождения | daiktavardis
+giedoti | sing the anthem | петь гимн | veiksmažodis
+gieda | sings the anthem | поёт гимн | veiksmažodis
+giedojo himną | sang the anthem | пел гимн | veiksmažodis
+gimtadienis | birthday | день рождения | daiktavardis
 himnas | anthem | гимн | daiktavardis
 jubiliejus | anniversary | юбилей | daiktavardis
 Kalėdos | Christmas | Рождество | daiktavardis
 Kalėdų senelis | Santa Claus | Дед Мороз | daiktavardis
 Kūčios | Christmas Eve | Сочельник | daiktavardis
 kūčiukai | Christmas Eve cookies | рождественское печенье | daiktavardis
-linkėti, linki, linkėjo | wish | желать | veiksmažodis
-margutis, -io | Easter egg | пасхальное яйцо | daiktavardis
+linkėti | wish | желать | veiksmažodis
+linki | wishes | желает | veiksmažodis
+linkėjo | wished | желал | veiksmažodis
+margutis | Easter egg | пасхальное яйцо | daiktavardis
 Naujieji metai | New Year | Новый год | daiktavardis
-ridenti, ridena, rideno margučius | roll Easter eggs | катать яйца | veiksmažodis
+ridenti | roll Easter eggs | катать яйца | veiksmažodis
+ridena | rolls Easter eggs | катает яйца | veiksmažodis
+rideno margučius | rolled Easter eggs | катал яйца | veiksmažodis
 sutikti Naujuosius metus | celebrate New Year's Eve | встречать Новый год | veiksmažodis
-sveikinti, sveikina, sveikino | congratulate | поздравлять | veiksmažodis
-šventė | holiday, feast, celebration | праздник | daiktavardis
-švęsti, švenčia, šventė | celebrate | праздновать | veiksmažodis
+sveikinti | congratulate | поздравлять | veiksmažodis
+sveikina | congratulates | поздравляет | veiksmažodis
+sveikino | congratulated | поздравлял | veiksmažodis
+šventė | celebrated | праздновал | daiktavardis
+švęsti | celebrate | праздновать | veiksmažodis
+švenčia | celebrates | празднует | veiksmažodis
+šventė | celebrated | праздновал | veiksmažodis
 valstybinės šventės | public holidays | государственные праздники | daiktavardis
-vardadienis, -io | name day | именины | daiktavardis
+vardadienis | name day | именины | daiktavardis
 vėliava | flag | флаг | daiktavardis
 Velykos | Easter | Пасха | daiktavardis
 žvakė | candle | свеча | daiktavardis
