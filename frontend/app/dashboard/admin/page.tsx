@@ -644,12 +644,37 @@ export default function AdminPage() {
                         </div>
                         <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
                           <label className="text-xs text-gray-400">{tr.admin.colArticleUrl}</label>
+                          {/* Dropdown for internal articles — auto-fills URL and names */}
+                          <select
+                            value={articles.find(a => `/dashboard/articles/${a.slug}` === listDraft.article_url) ? listDraft.article_url : ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (!val) {
+                                setListDraft((d) => ({ ...d, article_url: '' }));
+                              } else {
+                                const art = articles.find(a => `/dashboard/articles/${a.slug}` === val);
+                                setListDraft((d) => ({
+                                  ...d,
+                                  article_url: val,
+                                  article_name_ru: art?.title_ru ?? d.article_name_ru,
+                                  article_name_en: art?.title_en ?? d.article_name_en,
+                                }));
+                              }
+                            }}
+                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                          >
+                            <option value="">— нет —</option>
+                            {articles.filter(a => a.published).map(a => (
+                              <option key={a.slug} value={`/dashboard/articles/${a.slug}`}>{a.title_ru}</option>
+                            ))}
+                          </select>
+                          {/* Text input for external URLs */}
                           <input
                             type="text"
-                            value={listDraft.article_url}
+                            value={listDraft.article_url.startsWith('http') || (!articles.find(a => `/dashboard/articles/${a.slug}` === listDraft.article_url) && listDraft.article_url !== '') ? listDraft.article_url : ''}
                             onChange={(e) => setListDraft((d) => ({ ...d, article_url: e.target.value }))}
-                            placeholder="/dashboard/articles/slug or https://…"
-                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                            placeholder="https://… (внешняя ссылка)"
+                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full mt-1"
                           />
                         </div>
                         <div className="flex flex-col gap-1 min-w-[140px]">

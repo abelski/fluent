@@ -9,16 +9,19 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, Response
+from sqlmodel import Session, select
 from auth import router as auth_router
 from routers.words import router as words_router
 from routers.grammar import router as grammar_router
 from routers.admin import router as admin_router
 from routers.reports import router as reports_router
 from routers.articles import router as articles_router
-from database import create_db_and_tables
+from database import create_db_and_tables, get_session
+from models import WordList, Article
+from data.grammar.lessons import LESSON_CONFIG
 
 # Resolve the static export directory relative to this file so the path works
 # regardless of where the process is started from.
@@ -63,6 +66,138 @@ def health():
 
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def sitemap(session: Session = Depends(get_session)):
+    """Dynamically generated sitemap. Includes static pages plus all published
+    articles and public word lists fetched live from the database."""
+    base = FRONTEND_URL.rstrip("/")
+
+    # Static pages with priorities
+    static_pages = [
+        (f"{base}/", "1.0", "weekly"),
+        (f"{base}/pricing/", "0.7", "monthly"),
+        (f"{base}/dashboard/grammar/", "0.9", "weekly"),
+        (f"{base}/dashboard/lists/", "0.8", "weekly"),
+        (f"{base}/dashboard/articles/", "0.8", "weekly"),
+    ]
+
+    urls = []
+    for loc, priority, changefreq in static_pages:
+        urls.append(
+            f"  <url>\n"
+            f"    <loc>{loc}</loc>\n"
+            f"    <priority>{priority}</priority>\n"
+            f"    <changefreq>{changefreq}</changefreq>\n"
+            f"  </url>"
+        )
+
+    # Published articles — individual pages
+    articles = session.exec(
+        select(Article).where(Article.published == True)
+    ).all()
+    for article in articles:
+        lastmod = article.updated_at.strftime("%Y-%m-%d")
+        urls.append(
+            f"  <url>\n"
+            f"    <loc>{base}/dashboard/articles/{article.slug}/</loc>\n"
+            f"    <lastmod>{lastmod}</lastmod>\n"
+            f"    <priority>0.7</priority>\n"
+            f"    <changefreq>monthly</changefreq>\n"
+            f"  </url>"
+        )
+
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(urls)
+        + "\n</urlset>"
+    )
+    return Response(content=xml, media_type="application/xml")
+
+
+@app.get("/robots.txt", include_in_schema=False)
+def robots_txt():
+    """robots.txt pointing crawlers at the sitemap and blocking auth-only areas."""
+    base = FRONTEND_URL.rstrip("/")
+    content = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Allow: /pricing/\n"
+        "Allow: /dashboard/grammar/\n"
+        "Allow: /dashboard/articles/\n"
+        "Allow: /dashboard/lists/\n"
+        "Disallow: /dashboard/admin/\n"
+        "Disallow: /dashboard/practice/\n"
+        "Disallow: /dashboard/review/\n"
+        "Disallow: /api/\n"
+        f"\nSitemap: {base}/sitemap.xml\n"
+    )
+    return Response(content=content, media_type="text/plain")
+
+
+@app.get("/llms.txt", include_in_schema=False)
+def llms_txt(session: Session = Depends(get_session)):
+    """llms.txt — machine-readable site description for AI crawlers (llmstxt.org standard).
+    Content counts and topic names are fetched live from the database."""
+    base = FRONTEND_URL.rstrip("/")
+
+    lists = session.exec(
+        select(WordList).where(WordList.is_public == True, WordList.archived == False)
+    ).all()
+    articles = session.exec(
+        select(Article).where(Article.published == True)
+    ).all()
+
+    lesson_count = len(LESSON_CONFIG)
+    list_count = len(lists)
+    article_count = len(articles)
+
+    # Group list titles by subcategory
+    by_subcategory: dict[str, list[str]] = {}
+    for wl in lists:
+        key = wl.subcategory or "General"
+        by_subcategory.setdefault(key, []).append(wl.title)
+
+    vocab_lines = []
+    for subcat, titles in by_subcategory.items():
+        vocab_lines.append(f"- {subcat}: {', '.join(titles)}")
+
+    article_lines = [f"- [{a.title_en}]({base}/dashboard/articles/{a.slug}/)" for a in articles]
+
+    content = (
+        f"# Fluent\n\n"
+        f"> Free Lithuanian language learning app with spaced repetition flashcards, "
+        f"grammar exercises, and real-world reading articles.\n\n"
+        f"## What this app teaches\n"
+        f"Lithuanian vocabulary and grammar for English and Russian speakers, "
+        f"organized by CEFR levels (A1–B2). Covers all major Lithuanian noun cases "
+        f"with fill-in-the-gap exercises, plus a growing library of reading texts.\n\n"
+        f"## Vocabulary ({list_count} lists)\n"
+        + "\n".join(vocab_lines)
+        + f"\n\n## Grammar ({lesson_count} lessons)\n"
+        f"Interactive exercises covering Lithuanian noun cases: Galininkas, Kilmininkas, "
+        f"Naudininkas, Vardininkas, Įnagininkas, Vietininkas and more. "
+        f"Each lesson uses spaced repetition with fill-in-the-gap sentences.\n\n"
+        f"## Reading articles ({article_count} texts)\n"
+        + "\n".join(article_lines)
+        + f"\n\n## Who it's for\n"
+        f"Beginners to intermediate learners of Lithuanian (A1–B2 level). "
+        f"Interface available in English and Russian.\n\n"
+        f"## Key features\n"
+        f"- Spaced repetition flashcard study\n"
+        f"- Grammar exercises with immediate feedback\n"
+        f"- Progress tracking across sessions\n"
+        f"- Free to use, no account required to browse\n\n"
+        f"## Links\n"
+        f"- App: {base}/\n"
+        f"- Grammar lessons: {base}/dashboard/grammar/\n"
+        f"- Vocabulary lists: {base}/dashboard/lists/\n"
+        f"- Reading articles: {base}/dashboard/articles/\n"
+        f"- Pricing: {base}/pricing/\n"
+    )
+    return Response(content=content, media_type="text/plain; charset=utf-8")
 
 
 @app.get("/")

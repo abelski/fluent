@@ -72,7 +72,14 @@
       "Bash(python3 -m json.tool)",
       "Bash(python3:*)",
       "Bash(curl -sv http://localhost:8000/api/grammar/cases)",
-      "Bash(curl -sL http://localhost:8000/api/grammar/cases)"
+      "Bash(curl -sL http://localhost:8000/api/grammar/cases)",
+      "Bash(grep -n \"router\\\\.\\\\\\(get\\\\|post\\\\|put\\\\|patch\\\\|delete\\\\\\)\" /Users/Artur_Belski/Documents/src/fluent/backend/routers/*.py)",
+      "Bash(grep -n \"generateStaticParams\\\\|_\\\\|placeholder\" /Users/Artur_Belski/Documents/src/fluent/frontend/app/dashboard/articles/[slug]/layout.tsx /Users/Artur_Belski/Documents/src/fluent/frontend/app/dashboard/articles/[slug]/page.tsx)",
+      "Bash(while read:*)",
+      "Bash(do if:*)",
+      "Bash(then echo:*)",
+      "Bash(grep -r og: /Users/Artur_Belski/Documents/src/fluent/frontend/app --include=*.tsx --include=*.ts)",
+      "Bash(curl -s http://localhost:8000/dashboard/admin)"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"
