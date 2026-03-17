@@ -49,7 +49,9 @@ interface SubcategoryRow {
   article_name_en: string | null;
 }
 
-type Tab = 'users' | 'reports' | 'articles' | 'lists' | 'content';
+type Area = 'admin' | 'content';
+type AdminSubTab = 'users' | 'reports';
+type ContentSubTab = 'articles' | 'vocabularies';
 
 interface ContentList {
   id: number;
@@ -82,14 +84,15 @@ interface EditingWord {
 export default function AdminPage() {
   const router = useRouter();
   const { tr, lang } = useT();
-  const [tab, setTab] = useState<Tab>('users');
+  const [area, setArea] = useState<Area>('admin');
+  const [adminTab, setAdminTab] = useState<AdminSubTab>('users');
+  const [contentTab, setContentTab] = useState<ContentSubTab>('articles');
   const [users, setUsers] = useState<UserRow[]>([]);
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [articles, setArticles] = useState<ArticleRow[]>([]);
   const [subcategories, setSubcategories] = useState<SubcategoryRow[]>([]);
   const [editingListKey, setEditingListKey] = useState<string | null>(null);
   const [listDraft, setListDraft] = useState<{ cefr_level: string; difficulty: string; article_url: string; article_name_ru: string; article_name_en: string }>({ cefr_level: '', difficulty: '', article_url: '', article_name_ru: '', article_name_en: '' });
-  // Content tab state
   const [contentLists, setContentLists] = useState<ContentList[]>([]);
   const [expandedSubcats, setExpandedSubcats] = useState<Set<string>>(new Set());
   const [expandedLists, setExpandedLists] = useState<Set<number>>(new Set());
@@ -166,7 +169,6 @@ export default function AdminPage() {
     });
   }
 
-  // Derive unique subcategories from contentLists in current order
   function getContentSubcats(): string[] {
     const seen = new Set<string>();
     const result: string[] = [];
@@ -182,7 +184,6 @@ export default function AdminPage() {
     const idx = subcats.indexOf(key);
     const newIdx = idx + dir;
     if (newIdx < 0 || newIdx >= subcats.length) return;
-    // Swap
     const swapped = [...subcats];
     [swapped[idx], swapped[newIdx]] = [swapped[newIdx], swapped[idx]];
     const body = swapped.map((k, i) => ({ key: k, sort_order: i }));
@@ -223,7 +224,6 @@ export default function AdminPage() {
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body),
     });
-    // Optimistic update
     setListWords((prev) => ({
       ...prev,
       [listId]: swapped.map((w, i) => ({ ...w, position: i })),
@@ -256,7 +256,6 @@ export default function AdminPage() {
     }).catch(() => null);
     setWordSaving(false);
     if (res?.ok) {
-      // Update local cache
       setListWords((prev) => {
         const updated = { ...prev };
         for (const [listId, words] of Object.entries(updated)) {
@@ -417,45 +416,63 @@ export default function AdminPage() {
         <h1 className="text-3xl font-bold mb-2">{tr.admin.title}</h1>
         <p className="text-gray-400 mb-6">{tr.admin.subtitle}</p>
 
-        {/* Tabs */}
-        <div className="flex gap-1 bg-gray-50 border border-gray-900 rounded-xl p-1 w-fit mb-8">
+        {/* Top-level area tabs */}
+        <div className="flex gap-1 bg-gray-50 border border-gray-900 rounded-xl p-1 w-fit mb-4">
           <button
-            onClick={() => setTab('users')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'users' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+            onClick={() => setArea('admin')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${area === 'admin' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
-            {tr.admin.tabUsers}
+            Администрирование
           </button>
           <button
-            onClick={() => setTab('reports')}
-            className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'reports' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+            onClick={() => setArea('content')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${area === 'content' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
-            {tr.admin.tabReports}
-            {openReports > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 rounded-full">{openReports}</span>
-            )}
-          </button>
-          <button
-            onClick={() => setTab('articles')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'articles' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
-          >
-            {tr.admin.tabArticles}
-          </button>
-          <button
-            onClick={() => setTab('lists')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'lists' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
-          >
-            {tr.admin.tabLists}
-          </button>
-          <button
-            onClick={() => setTab('content')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'content' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
-          >
-            {tr.admin.tabContent}
+            Контент
           </button>
         </div>
 
-        {/* ── Users tab ── */}
-        {tab === 'users' && (
+        {/* Sub-tabs for admin area */}
+        {area === 'admin' && (
+          <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 w-fit mb-6">
+            <button
+              onClick={() => setAdminTab('users')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${adminTab === 'users' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              {tr.admin.tabUsers}
+            </button>
+            <button
+              onClick={() => setAdminTab('reports')}
+              className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${adminTab === 'reports' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              {tr.admin.tabReports}
+              {openReports > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full">{openReports}</span>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Sub-tabs for content area */}
+        {area === 'content' && (
+          <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 w-fit mb-6">
+            <button
+              onClick={() => setContentTab('articles')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'articles' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              {tr.admin.tabArticles}
+            </button>
+            <button
+              onClick={() => setContentTab('vocabularies')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'vocabularies' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              Словари
+            </button>
+          </div>
+        )}
+
+        {/* ── Users ── */}
+        {area === 'admin' && adminTab === 'users' && (
           <div className="overflow-x-auto rounded-2xl border border-gray-900">
             <table className="w-full text-sm">
               <thead>
@@ -552,8 +569,8 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── Reports tab ── */}
-        {tab === 'reports' && (
+        {/* ── Reports ── */}
+        {area === 'admin' && adminTab === 'reports' && (
           <div className="flex flex-col gap-3">
             {reports.length === 0 && (
               <p className="text-gray-400 text-sm py-8 text-center">{tr.admin.noReports}</p>
@@ -607,152 +624,8 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── Lists tab ── */}
-        {tab === 'lists' && (
-          <div>
-            {subcategories.length === 0 && (
-              <p className="text-gray-400 text-sm py-8 text-center">{tr.admin.noLists}</p>
-            )}
-            <div className="flex flex-col gap-3">
-              {subcategories.map((sc) => (
-                <div key={sc.key} className="rounded-2xl border border-gray-900 bg-white px-4 py-3">
-                  {editingListKey === sc.key ? (
-                    <div className="flex flex-col gap-3">
-                      <p className="font-medium text-gray-900 text-sm font-mono">{tr.lists.subcategories[sc.key] ?? sc.key}</p>
-                      <div className="flex flex-wrap gap-3">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-xs text-gray-400">{tr.admin.colCefr}</label>
-                          <input
-                            type="text"
-                            value={listDraft.cefr_level}
-                            onChange={(e) => setListDraft((d) => ({ ...d, cefr_level: e.target.value }))}
-                            placeholder="A1, A1-A2, B1…"
-                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-32"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-xs text-gray-400">{tr.admin.colDifficulty}</label>
-                          <select
-                            value={listDraft.difficulty}
-                            onChange={(e) => setListDraft((d) => ({ ...d, difficulty: e.target.value }))}
-                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none"
-                          >
-                            {Object.entries(tr.admin.difficultyOptions).map(([val, label]) => (
-                              <option key={val} value={val}>{label}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
-                          <label className="text-xs text-gray-400">{tr.admin.colArticleUrl}</label>
-                          {/* Dropdown for internal articles — auto-fills URL and names */}
-                          <select
-                            value={articles.find(a => `/dashboard/articles/${a.slug}` === listDraft.article_url) ? listDraft.article_url : ''}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (!val) {
-                                setListDraft((d) => ({ ...d, article_url: '' }));
-                              } else {
-                                const art = articles.find(a => `/dashboard/articles/${a.slug}` === val);
-                                setListDraft((d) => ({
-                                  ...d,
-                                  article_url: val,
-                                  article_name_ru: art?.title_ru ?? d.article_name_ru,
-                                  article_name_en: art?.title_en ?? d.article_name_en,
-                                }));
-                              }
-                            }}
-                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
-                          >
-                            <option value="">— нет —</option>
-                            {articles.filter(a => a.published).map(a => (
-                              <option key={a.slug} value={`/dashboard/articles/${a.slug}`}>{a.title_ru}</option>
-                            ))}
-                          </select>
-                          {/* Text input for external URLs */}
-                          <input
-                            type="text"
-                            value={listDraft.article_url.startsWith('http') || (!articles.find(a => `/dashboard/articles/${a.slug}` === listDraft.article_url) && listDraft.article_url !== '') ? listDraft.article_url : ''}
-                            onChange={(e) => setListDraft((d) => ({ ...d, article_url: e.target.value }))}
-                            placeholder="https://… (внешняя ссылка)"
-                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full mt-1"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1 min-w-[140px]">
-                          <label className="text-xs text-gray-400">{tr.admin.colArticleName} RU</label>
-                          <input
-                            type="text"
-                            value={listDraft.article_name_ru}
-                            onChange={(e) => setListDraft((d) => ({ ...d, article_name_ru: e.target.value }))}
-                            placeholder="Читать статью…"
-                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1 min-w-[140px]">
-                          <label className="text-xs text-gray-400">{tr.admin.colArticleName} EN</label>
-                          <input
-                            type="text"
-                            value={listDraft.article_name_en}
-                            onChange={(e) => setListDraft((d) => ({ ...d, article_name_en: e.target.value }))}
-                            placeholder="Read article…"
-                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => saveSubcatMeta(sc.key)}
-                          disabled={saving}
-                          className="text-xs px-3 py-1.5 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
-                        >
-                          {saving ? '...' : tr.admin.save}
-                        </button>
-                        <button
-                          onClick={() => setEditingListKey(null)}
-                          className="text-xs px-2 py-1.5 text-gray-400 hover:text-gray-900 transition-colors"
-                        >
-                          {tr.admin.cancel}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900">{tr.lists.subcategories[sc.key] ?? sc.key}</p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {sc.cefr_level && (
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full border border-gray-900 bg-blue-50 text-blue-700">{sc.cefr_level}</span>
-                          )}
-                          {sc.difficulty && (
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border border-gray-900 ${
-                              sc.difficulty === 'easy' ? 'bg-emerald-50 text-emerald-700' :
-                              sc.difficulty === 'medium' ? 'bg-amber-50 text-amber-700' :
-                              'bg-red-50 text-red-700'
-                            }`}>{tr.admin.difficultyOptions[sc.difficulty] ?? sc.difficulty}</span>
-                          )}
-                          {sc.article_url && (
-                            <span className="text-xs text-gray-400 font-mono truncate max-w-[200px]">{sc.article_url}</span>
-                          )}
-                          {!sc.cefr_level && !sc.difficulty && !sc.article_url && (
-                            <span className="text-xs text-gray-300">—</span>
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => startEditSubcat(sc)}
-                        className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg text-emerald-600 hover:bg-gray-50 transition-colors shrink-0"
-                      >
-                        {tr.articles.editArticle}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Articles tab ── */}
-        {tab === 'articles' && (
+        {/* ── Articles ── */}
+        {area === 'content' && contentTab === 'articles' && (
           <div>
             <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
               <div className="flex items-center gap-2 flex-wrap">
@@ -829,8 +702,9 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-        {/* ── Content tab ── */}
-        {tab === 'content' && (() => {
+
+        {/* ── Vocabularies (словари + контент merged) ── */}
+        {area === 'content' && contentTab === 'vocabularies' && (() => {
           const subcats = getContentSubcats();
           return (
             <div className="flex flex-col gap-3">
@@ -841,45 +715,172 @@ export default function AdminPage() {
                 const label = tr.lists.subcategories[subcatKey] ?? subcatKey;
                 const subcatLists = contentLists.filter((l) => (l.subcategory ?? 'other') === subcatKey);
                 const isSubcatOpen = expandedSubcats.has(subcatKey);
+                const scMeta: SubcategoryRow = subcategories.find((s) => s.key === subcatKey) ?? {
+                  key: subcatKey,
+                  cefr_level: null,
+                  difficulty: null,
+                  article_url: null,
+                  article_name_ru: null,
+                  article_name_en: null,
+                };
+                const isEditingMeta = editingListKey === subcatKey;
+
                 return (
                   <div key={subcatKey} className="border border-gray-900 rounded-2xl overflow-hidden">
                     {/* Subcategory header */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-                      <button
-                        onClick={() => toggleExpandSubcat(subcatKey)}
-                        className="flex items-center gap-2 flex-1 text-left"
-                      >
-                        <svg
-                          width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
-                          className={`text-gray-400 transition-transform duration-200 shrink-0 ${isSubcatOpen ? 'rotate-180' : ''}`}
-                        >
-                          <path d="M6 8L1 3h10L6 8z" />
-                        </svg>
-                        <span className="font-semibold text-gray-900 text-sm">{label}</span>
-                        <span className="text-gray-400 text-xs">{subcatLists.length} {tr.admin.contentWordLists}</span>
-                      </button>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => moveSubcat(subcatKey, -1)}
-                          disabled={subcatIdx === 0}
-                          title={tr.admin.contentMoveUp}
-                          className="w-7 h-7 flex items-center justify-center rounded border border-gray-900 text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          onClick={() => moveSubcat(subcatKey, 1)}
-                          disabled={subcatIdx === subcats.length - 1}
-                          title={tr.admin.contentMoveDown}
-                          className="w-7 h-7 flex items-center justify-center rounded border border-gray-900 text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          ↓
-                        </button>
+                    {isEditingMeta ? (
+                      <div className="px-4 py-3 bg-gray-50 border-b border-gray-900">
+                        <p className="font-semibold text-gray-900 text-sm mb-3">{label}</p>
+                        <div className="flex flex-wrap gap-3">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-gray-400">{tr.admin.colCefr}</label>
+                            <input
+                              type="text"
+                              value={listDraft.cefr_level}
+                              onChange={(e) => setListDraft((d) => ({ ...d, cefr_level: e.target.value }))}
+                              placeholder="A1, A1-A2, B1…"
+                              className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-32"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-gray-400">{tr.admin.colDifficulty}</label>
+                            <select
+                              value={listDraft.difficulty}
+                              onChange={(e) => setListDraft((d) => ({ ...d, difficulty: e.target.value }))}
+                              className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none"
+                            >
+                              {Object.entries(tr.admin.difficultyOptions).map(([val, lbl]) => (
+                                <option key={val} value={val}>{lbl}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
+                            <label className="text-xs text-gray-400">{tr.admin.colArticleUrl}</label>
+                            <select
+                              value={articles.find(a => `/dashboard/articles/${a.slug}` === listDraft.article_url) ? listDraft.article_url : ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (!val) {
+                                  setListDraft((d) => ({ ...d, article_url: '' }));
+                                } else {
+                                  const art = articles.find(a => `/dashboard/articles/${a.slug}` === val);
+                                  setListDraft((d) => ({
+                                    ...d,
+                                    article_url: val,
+                                    article_name_ru: art?.title_ru ?? d.article_name_ru,
+                                    article_name_en: art?.title_en ?? d.article_name_en,
+                                  }));
+                                }
+                              }}
+                              className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                            >
+                              <option value="">— нет —</option>
+                              {articles.filter(a => a.published).map(a => (
+                                <option key={a.slug} value={`/dashboard/articles/${a.slug}`}>{a.title_ru}</option>
+                              ))}
+                            </select>
+                            <input
+                              type="text"
+                              value={listDraft.article_url.startsWith('http') || (!articles.find(a => `/dashboard/articles/${a.slug}` === listDraft.article_url) && listDraft.article_url !== '') ? listDraft.article_url : ''}
+                              onChange={(e) => setListDraft((d) => ({ ...d, article_url: e.target.value }))}
+                              placeholder="https://… (внешняя ссылка)"
+                              className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full mt-1"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-[140px]">
+                            <label className="text-xs text-gray-400">{tr.admin.colArticleName} RU</label>
+                            <input
+                              type="text"
+                              value={listDraft.article_name_ru}
+                              onChange={(e) => setListDraft((d) => ({ ...d, article_name_ru: e.target.value }))}
+                              placeholder="Читать статью…"
+                              className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-[140px]">
+                            <label className="text-xs text-gray-400">{tr.admin.colArticleName} EN</label>
+                            <input
+                              type="text"
+                              value={listDraft.article_name_en}
+                              onChange={(e) => setListDraft((d) => ({ ...d, article_name_en: e.target.value }))}
+                              placeholder="Read article…"
+                              className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={() => saveSubcatMeta(subcatKey)}
+                            disabled={saving}
+                            className="text-xs px-3 py-1.5 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+                          >
+                            {saving ? '...' : tr.admin.save}
+                          </button>
+                          <button
+                            onClick={() => setEditingListKey(null)}
+                            className="text-xs px-2 py-1.5 text-gray-400 hover:text-gray-900 transition-colors"
+                          >
+                            {tr.admin.cancel}
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
+                        <button
+                          onClick={() => toggleExpandSubcat(subcatKey)}
+                          className="flex items-center gap-2 flex-1 text-left min-w-0"
+                        >
+                          <svg
+                            width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
+                            className={`text-gray-400 transition-transform duration-200 shrink-0 ${isSubcatOpen ? 'rotate-180' : ''}`}
+                          >
+                            <path d="M6 8L1 3h10L6 8z" />
+                          </svg>
+                          <span className="font-semibold text-gray-900 text-sm">{label}</span>
+                          <span className="text-gray-400 text-xs">{subcatLists.length} {tr.admin.contentWordLists}</span>
+                          <div className="flex items-center gap-1.5 ml-1">
+                            {scMeta.cefr_level && (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full border border-gray-200 bg-blue-50 text-blue-700">{scMeta.cefr_level}</span>
+                            )}
+                            {scMeta.difficulty && (
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border border-gray-200 ${
+                                scMeta.difficulty === 'easy' ? 'bg-emerald-50 text-emerald-700' :
+                                scMeta.difficulty === 'medium' ? 'bg-amber-50 text-amber-700' :
+                                'bg-red-50 text-red-700'
+                              }`}>{tr.admin.difficultyOptions[scMeta.difficulty] ?? scMeta.difficulty}</span>
+                            )}
+                          </div>
+                        </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => startEditSubcat(scMeta)}
+                            title="Редактировать метаданные"
+                            className="w-7 h-7 flex items-center justify-center rounded border border-gray-900 text-emerald-600 hover:bg-white transition-colors text-xs"
+                          >
+                            ✎
+                          </button>
+                          <button
+                            onClick={() => moveSubcat(subcatKey, -1)}
+                            disabled={subcatIdx === 0}
+                            title={tr.admin.contentMoveUp}
+                            className="w-7 h-7 flex items-center justify-center rounded border border-gray-900 text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            onClick={() => moveSubcat(subcatKey, 1)}
+                            disabled={subcatIdx === subcats.length - 1}
+                            title={tr.admin.contentMoveDown}
+                            className="w-7 h-7 flex items-center justify-center rounded border border-gray-900 text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Word lists inside subcategory */}
-                    {isSubcatOpen && (
+                    {isSubcatOpen && !isEditingMeta && (
                       <div className="border-t border-gray-900 divide-y divide-gray-100">
                         {subcatLists.map((list, listIdx) => {
                           const isListOpen = expandedLists.has(list.id);

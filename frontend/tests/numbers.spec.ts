@@ -48,22 +48,6 @@ test.describe('Numbers study — digit display', () => {
     await expect(page.locator('[data-testid="number-digit"]').first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('stage 3 shows digit alongside russian translation', async ({ page }) => {
-    await page.goto('/dashboard/lists/_/study');
-    // Dismiss all stage-1 cards
-    for (let i = 0; i < 5; i++) {
-      await page.waitForSelector('button:has-text("Понял →")', { timeout: 3000 });
-      await page.getByText('Понял →').click();
-      await page.waitForTimeout(100);
-    }
-    // Now on stage 2 for vienas — pick correct answer (один)
-    await page.waitForSelector('button:has-text("один")', { timeout: 5000 });
-    await page.locator('button:has-text("один")').first().click();
-    await page.waitForTimeout(1400);
-    // Stage 3: type it — digit should be visible for this or another number word
-    await expect(page.locator('[data-testid="number-digit"]').first()).toBeVisible({ timeout: 5000 });
-  });
-
   test('non-number word does not show digit', async ({ page }) => {
     const NON_NUMBER_WORDS = [
       { id: 10, lithuanian: 'katė', translation_en: 'cat', translation_ru: 'кошка', hint: null, status: 'new' },

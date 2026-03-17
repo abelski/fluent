@@ -12,3 +12,5 @@ class User(SQLModel, table=True):
     picture: Optional[str] = None
     lang: str = Field(default="en")  # preferred UI language: 'en' | 'ru'
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_admin: bool = Field(default=False)
+    is_superadmin: bool = Field(default=False)

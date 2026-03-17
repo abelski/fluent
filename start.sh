@@ -11,6 +11,6 @@ cd "$ROOT/frontend"
 npm run build
 
 echo "=== Starting api ==="
-cd "$ROOT/api"
+cd "$ROOT/backend"
 source .venv/bin/activate
 exec uvicorn main:app --reload --port 8000

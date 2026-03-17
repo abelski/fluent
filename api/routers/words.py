@@ -323,3 +323,13 @@ def get_stats(
         streak += 1
         check -= timedelta(days=1)
     return {"known": known, "learning": learning, "total_studied": known + learning, "streak": streak}
+
+
+@router.get("/me/quota")
+def get_quota(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return quota and admin flags for the current user."""
+    user = _require_user(authorization, session)
+    return {"is_admin": user.is_admin, "is_superadmin": user.is_superadmin}

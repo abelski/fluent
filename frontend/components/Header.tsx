@@ -50,7 +50,7 @@ export default function Header() {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data?.is_admin) setIsAdmin(true); })
+        .then((data) => { if (data?.is_admin || data?.is_superadmin) setIsAdmin(true); })
         .catch(() => {});
     }
   }, []);

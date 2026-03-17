@@ -79,7 +79,11 @@
       "Bash(do if:*)",
       "Bash(then echo:*)",
       "Bash(grep -r og: /Users/Artur_Belski/Documents/src/fluent/frontend/app --include=*.tsx --include=*.ts)",
-      "Bash(curl -s http://localhost:8000/dashboard/admin)"
+      "Bash(curl -s http://localhost:8000/dashboard/admin)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(pkill -f \"next-server\")",
+      "Bash(pkill -f \"next dev\\\\|next-server\")",
+      "Bash(pkill -f \"npm run dev\")"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"
