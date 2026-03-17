@@ -140,6 +140,7 @@ export interface Translations {
     tabReports: string;
     tabArticles: string;
     tabLists: string;
+    tabContent: string;
     colList: string;
     colCefr: string;
     colDifficulty: string;
@@ -168,6 +169,19 @@ export interface Translations {
     resolve: string;
     delete: string;
     deleteConfirm: string;
+    // Content management
+    contentSubcategories: string;
+    contentWordLists: string;
+    contentWords: string;
+    contentNoWords: string;
+    contentEditWord: string;
+    contentFieldLithuanian: string;
+    contentFieldRu: string;
+    contentFieldEn: string;
+    contentFieldHint: string;
+    contentMoveUp: string;
+    contentMoveDown: string;
+    contentWordsCount: string;
   };
   articles: {
     title: string;

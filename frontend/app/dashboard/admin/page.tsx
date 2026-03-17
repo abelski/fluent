@@ -49,7 +49,35 @@ interface SubcategoryRow {
   article_name_en: string | null;
 }
 
-type Tab = 'users' | 'reports' | 'articles' | 'lists';
+type Tab = 'users' | 'reports' | 'articles' | 'lists' | 'content';
+
+interface ContentList {
+  id: number;
+  title: string;
+  description: string | null;
+  subcategory: string | null;
+  sort_order: number;
+  word_count: number;
+}
+
+interface ContentWord {
+  id: number;
+  item_id: number;
+  lithuanian: string;
+  translation_en: string;
+  translation_ru: string;
+  hint: string | null;
+  position: number;
+}
+
+interface EditingWord {
+  id: number;
+  item_id: number;
+  lithuanian: string;
+  translation_en: string;
+  translation_ru: string;
+  hint: string;
+}
 
 export default function AdminPage() {
   const router = useRouter();
@@ -61,6 +89,13 @@ export default function AdminPage() {
   const [subcategories, setSubcategories] = useState<SubcategoryRow[]>([]);
   const [editingListKey, setEditingListKey] = useState<string | null>(null);
   const [listDraft, setListDraft] = useState<{ cefr_level: string; difficulty: string; article_url: string; article_name_ru: string; article_name_en: string }>({ cefr_level: '', difficulty: '', article_url: '', article_name_ru: '', article_name_en: '' });
+  // Content tab state
+  const [contentLists, setContentLists] = useState<ContentList[]>([]);
+  const [expandedSubcats, setExpandedSubcats] = useState<Set<string>>(new Set());
+  const [expandedLists, setExpandedLists] = useState<Set<number>>(new Set());
+  const [listWords, setListWords] = useState<Record<number, ContentWord[]>>({});
+  const [editingWord, setEditingWord] = useState<EditingWord | null>(null);
+  const [wordSaving, setWordSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [grantDate, setGrantDate] = useState('');
@@ -84,8 +119,9 @@ export default function AdminPage() {
       fetch(`${BACKEND_URL}/api/admin/reports`, { headers }),
       fetch(`${BACKEND_URL}/api/admin/articles`, { headers }),
       fetch(`${BACKEND_URL}/api/admin/subcategories`, { headers }),
+      fetch(`${BACKEND_URL}/api/admin/content/word-lists`, { headers }),
     ])
-      .then(async ([usersRes, quotaRes, reportsRes, articlesRes, subcatsRes]) => {
+      .then(async ([usersRes, quotaRes, reportsRes, articlesRes, subcatsRes, contentRes]) => {
         if (usersRes.status === 403 || usersRes.status === 401) { router.replace('/dashboard/lists'); return; }
         const [usersData, quotaData] = await Promise.all([usersRes.json(), quotaRes.json()]);
         setUsers(usersData);
@@ -93,9 +129,147 @@ export default function AdminPage() {
         if (reportsRes.ok) setReports(await reportsRes.json());
         if (articlesRes.ok) setArticles(await articlesRes.json());
         if (subcatsRes.ok) setSubcategories(await subcatsRes.json());
+        if (contentRes.ok) setContentLists(await contentRes.json());
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  }
+
+  async function loadListWords(listId: number) {
+    const res = await fetch(`${BACKEND_URL}/api/admin/content/word-lists/${listId}/words`, {
+      headers: authHeaders(),
+    });
+    if (res.ok) {
+      const words = await res.json();
+      setListWords((prev) => ({ ...prev, [listId]: words }));
+    }
+  }
+
+  function toggleExpandList(listId: number) {
+    setExpandedLists((prev) => {
+      const next = new Set(prev);
+      if (next.has(listId)) {
+        next.delete(listId);
+      } else {
+        next.add(listId);
+        if (!listWords[listId]) loadListWords(listId);
+      }
+      return next;
+    });
+  }
+
+  function toggleExpandSubcat(key: string) {
+    setExpandedSubcats((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
+
+  // Derive unique subcategories from contentLists in current order
+  function getContentSubcats(): string[] {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const l of contentLists) {
+      const key = l.subcategory ?? 'other';
+      if (!seen.has(key)) { seen.add(key); result.push(key); }
+    }
+    return result;
+  }
+
+  async function moveSubcat(key: string, dir: -1 | 1) {
+    const subcats = getContentSubcats();
+    const idx = subcats.indexOf(key);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= subcats.length) return;
+    // Swap
+    const swapped = [...subcats];
+    [swapped[idx], swapped[newIdx]] = [swapped[newIdx], swapped[idx]];
+    const body = swapped.map((k, i) => ({ key: k, sort_order: i }));
+    await fetch(`${BACKEND_URL}/api/admin/content/subcategories/reorder`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
+    });
+    loadData();
+  }
+
+  async function moveList(listId: number, subcatKey: string, dir: -1 | 1) {
+    const lists = contentLists.filter((l) => (l.subcategory ?? 'other') === subcatKey);
+    const idx = lists.findIndex((l) => l.id === listId);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= lists.length) return;
+    const swapped = [...lists];
+    [swapped[idx], swapped[newIdx]] = [swapped[newIdx], swapped[idx]];
+    const body = swapped.map((l, i) => ({ id: l.id, sort_order: i }));
+    await fetch(`${BACKEND_URL}/api/admin/content/word-lists/reorder`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
+    });
+    loadData();
+  }
+
+  async function moveWord(listId: number, itemId: number, dir: -1 | 1) {
+    const words = listWords[listId] ?? [];
+    const idx = words.findIndex((w) => w.item_id === itemId);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= words.length) return;
+    const swapped = [...words];
+    [swapped[idx], swapped[newIdx]] = [swapped[newIdx], swapped[idx]];
+    const body = swapped.map((w, i) => ({ item_id: w.item_id, position: i }));
+    await fetch(`${BACKEND_URL}/api/admin/content/word-lists/${listId}/words/reorder`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
+    });
+    // Optimistic update
+    setListWords((prev) => ({
+      ...prev,
+      [listId]: swapped.map((w, i) => ({ ...w, position: i })),
+    }));
+  }
+
+  function startEditWord(word: ContentWord) {
+    setEditingWord({
+      id: word.id,
+      item_id: word.item_id,
+      lithuanian: word.lithuanian,
+      translation_en: word.translation_en,
+      translation_ru: word.translation_ru,
+      hint: word.hint ?? '',
+    });
+  }
+
+  async function saveWord() {
+    if (!editingWord) return;
+    setWordSaving(true);
+    const res = await fetch(`${BACKEND_URL}/api/admin/content/words/${editingWord.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        lithuanian: editingWord.lithuanian,
+        translation_en: editingWord.translation_en,
+        translation_ru: editingWord.translation_ru,
+        hint: editingWord.hint || null,
+      }),
+    }).catch(() => null);
+    setWordSaving(false);
+    if (res?.ok) {
+      // Update local cache
+      setListWords((prev) => {
+        const updated = { ...prev };
+        for (const [listId, words] of Object.entries(updated)) {
+          updated[Number(listId)] = words.map((w) =>
+            w.id === editingWord.id
+              ? { ...w, lithuanian: editingWord.lithuanian, translation_en: editingWord.translation_en, translation_ru: editingWord.translation_ru, hint: editingWord.hint || null }
+              : w
+          );
+        }
+        return updated;
+      });
+      setEditingWord(null);
+    }
   }
 
   useEffect(() => { loadData(); }, []);
@@ -271,6 +445,12 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'lists' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
             {tr.admin.tabLists}
+          </button>
+          <button
+            onClick={() => setTab('content')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'content' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+          >
+            {tr.admin.tabContent}
           </button>
         </div>
 
@@ -624,6 +804,212 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+        {/* ── Content tab ── */}
+        {tab === 'content' && (() => {
+          const subcats = getContentSubcats();
+          return (
+            <div className="flex flex-col gap-3">
+              {subcats.length === 0 && (
+                <p className="text-gray-400 text-sm py-8 text-center">{tr.admin.noLists}</p>
+              )}
+              {subcats.map((subcatKey, subcatIdx) => {
+                const label = tr.lists.subcategories[subcatKey] ?? subcatKey;
+                const subcatLists = contentLists.filter((l) => (l.subcategory ?? 'other') === subcatKey);
+                const isSubcatOpen = expandedSubcats.has(subcatKey);
+                return (
+                  <div key={subcatKey} className="border border-gray-900 rounded-2xl overflow-hidden">
+                    {/* Subcategory header */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
+                      <button
+                        onClick={() => toggleExpandSubcat(subcatKey)}
+                        className="flex items-center gap-2 flex-1 text-left"
+                      >
+                        <svg
+                          width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
+                          className={`text-gray-400 transition-transform duration-200 shrink-0 ${isSubcatOpen ? 'rotate-180' : ''}`}
+                        >
+                          <path d="M6 8L1 3h10L6 8z" />
+                        </svg>
+                        <span className="font-semibold text-gray-900 text-sm">{label}</span>
+                        <span className="text-gray-400 text-xs">{subcatLists.length} {tr.admin.contentWordLists}</span>
+                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => moveSubcat(subcatKey, -1)}
+                          disabled={subcatIdx === 0}
+                          title={tr.admin.contentMoveUp}
+                          className="w-7 h-7 flex items-center justify-center rounded border border-gray-900 text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          onClick={() => moveSubcat(subcatKey, 1)}
+                          disabled={subcatIdx === subcats.length - 1}
+                          title={tr.admin.contentMoveDown}
+                          className="w-7 h-7 flex items-center justify-center rounded border border-gray-900 text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Word lists inside subcategory */}
+                    {isSubcatOpen && (
+                      <div className="border-t border-gray-900 divide-y divide-gray-100">
+                        {subcatLists.map((list, listIdx) => {
+                          const isListOpen = expandedLists.has(list.id);
+                          const words = listWords[list.id];
+                          return (
+                            <div key={list.id}>
+                              <div className="flex items-center justify-between px-5 py-3 bg-white hover:bg-gray-50">
+                                <button
+                                  onClick={() => toggleExpandList(list.id)}
+                                  className="flex items-center gap-2 flex-1 text-left min-w-0"
+                                >
+                                  <svg
+                                    width="10" height="10" viewBox="0 0 12 12" fill="currentColor"
+                                    className={`text-gray-300 transition-transform duration-200 shrink-0 ${isListOpen ? 'rotate-180' : ''}`}
+                                  >
+                                    <path d="M6 8L1 3h10L6 8z" />
+                                  </svg>
+                                  <span className="font-medium text-gray-900 text-sm truncate">{list.title}</span>
+                                  <span className="text-gray-400 text-xs shrink-0">{list.word_count} {tr.admin.contentWordsCount}</span>
+                                </button>
+                                <div className="flex items-center gap-1 ml-2">
+                                  <button
+                                    onClick={() => moveList(list.id, subcatKey, -1)}
+                                    disabled={listIdx === 0}
+                                    title={tr.admin.contentMoveUp}
+                                    className="w-6 h-6 flex items-center justify-center rounded border border-gray-900 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed text-xs transition-colors"
+                                  >
+                                    ↑
+                                  </button>
+                                  <button
+                                    onClick={() => moveList(list.id, subcatKey, 1)}
+                                    disabled={listIdx === subcatLists.length - 1}
+                                    title={tr.admin.contentMoveDown}
+                                    className="w-6 h-6 flex items-center justify-center rounded border border-gray-900 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed text-xs transition-colors"
+                                  >
+                                    ↓
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Words inside list */}
+                              {isListOpen && (
+                                <div className="bg-gray-50 border-t border-gray-100 px-5 py-3">
+                                  {!words && (
+                                    <div className="flex justify-center py-4">
+                                      <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                    </div>
+                                  )}
+                                  {words && words.length === 0 && (
+                                    <p className="text-gray-400 text-xs py-2">{tr.admin.contentNoWords}</p>
+                                  )}
+                                  {words && words.length > 0 && (
+                                    <div className="flex flex-col gap-1">
+                                      {words.map((word, wordIdx) => (
+                                        <div key={word.item_id}>
+                                          {editingWord?.id === word.id ? (
+                                            <div className="bg-white border border-gray-900 rounded-xl p-3 flex flex-col gap-2">
+                                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                <div className="flex flex-col gap-1">
+                                                  <label className="text-xs text-gray-400">{tr.admin.contentFieldLithuanian}</label>
+                                                  <input
+                                                    value={editingWord.lithuanian}
+                                                    onChange={(e) => setEditingWord((d) => d ? { ...d, lithuanian: e.target.value } : d)}
+                                                    className="bg-gray-50 border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
+                                                  />
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                  <label className="text-xs text-gray-400">{tr.admin.contentFieldRu}</label>
+                                                  <input
+                                                    value={editingWord.translation_ru}
+                                                    onChange={(e) => setEditingWord((d) => d ? { ...d, translation_ru: e.target.value } : d)}
+                                                    className="bg-gray-50 border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
+                                                  />
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                  <label className="text-xs text-gray-400">{tr.admin.contentFieldEn}</label>
+                                                  <input
+                                                    value={editingWord.translation_en}
+                                                    onChange={(e) => setEditingWord((d) => d ? { ...d, translation_en: e.target.value } : d)}
+                                                    className="bg-gray-50 border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
+                                                  />
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                  <label className="text-xs text-gray-400">{tr.admin.contentFieldHint}</label>
+                                                  <input
+                                                    value={editingWord.hint}
+                                                    onChange={(e) => setEditingWord((d) => d ? { ...d, hint: e.target.value } : d)}
+                                                    className="bg-gray-50 border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
+                                                  />
+                                                </div>
+                                              </div>
+                                              <div className="flex gap-2">
+                                                <button
+                                                  onClick={saveWord}
+                                                  disabled={wordSaving}
+                                                  className="text-xs px-3 py-1.5 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+                                                >
+                                                  {wordSaving ? '...' : tr.admin.save}
+                                                </button>
+                                                <button
+                                                  onClick={() => setEditingWord(null)}
+                                                  className="text-xs px-2 py-1.5 text-gray-400 hover:text-gray-900 transition-colors"
+                                                >
+                                                  {tr.admin.cancel}
+                                                </button>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center gap-2 py-1.5 group">
+                                              <div className="flex items-center gap-1 shrink-0">
+                                                <button
+                                                  onClick={() => moveWord(list.id, word.item_id, -1)}
+                                                  disabled={wordIdx === 0}
+                                                  title={tr.admin.contentMoveUp}
+                                                  className="w-5 h-5 flex items-center justify-center rounded border border-gray-200 text-gray-300 hover:border-gray-900 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed text-xs transition-colors"
+                                                >
+                                                  ↑
+                                                </button>
+                                                <button
+                                                  onClick={() => moveWord(list.id, word.item_id, 1)}
+                                                  disabled={wordIdx === words.length - 1}
+                                                  title={tr.admin.contentMoveDown}
+                                                  className="w-5 h-5 flex items-center justify-center rounded border border-gray-200 text-gray-300 hover:border-gray-900 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed text-xs transition-colors"
+                                                >
+                                                  ↓
+                                                </button>
+                                              </div>
+                                              <span className="text-sm font-medium text-gray-900 min-w-[120px]">{word.lithuanian}</span>
+                                              <span className="text-sm text-gray-500 min-w-[100px]">{word.translation_ru}</span>
+                                              <span className="text-xs text-gray-400 flex-1">{word.translation_en}{word.hint ? ` · ${word.hint}` : ''}</span>
+                                              <button
+                                                onClick={() => startEditWord(word)}
+                                                className="text-xs px-2 py-1 border border-gray-900 rounded-lg text-emerald-600 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+                                              >
+                                                {tr.articles.editArticle}
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
     </main>
   );

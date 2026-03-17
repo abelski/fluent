@@ -41,6 +41,7 @@ class WordList(SQLModel, table=True):
     cefr_level: Optional[str] = None     # e.g. "A1", "A1-A2", "B1-B2"
     difficulty: Optional[str] = None     # "easy" | "medium" | "hard"
     article_url: Optional[str] = None    # internal path or external URL
+    sort_order: Optional[int] = Field(default=0)  # display order within subcategory
 
 
 class Word(SQLModel, table=True):
@@ -119,6 +120,7 @@ class SubcategoryMeta(SQLModel, table=True):
     article_url: Optional[str] = None       # internal path (e.g. /dashboard/articles/slug) or external URL
     article_name_ru: Optional[str] = None  # display label in Russian
     article_name_en: Optional[str] = None  # display label in English
+    sort_order: Optional[int] = Field(default=0)  # display order on the lists page
 
 
 class GrammarSentence(SQLModel, table=True):

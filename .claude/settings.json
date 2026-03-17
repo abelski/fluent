@@ -70,7 +70,9 @@
       "Bash(python -c \"from routers.admin import router; from routers.words import router as wr; from models import SubcategoryMeta; print\\(''OK''\\)\")",
       "Bash(curl -s http://localhost:8000/api/subcategory-meta)",
       "Bash(python3 -m json.tool)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(curl -sv http://localhost:8000/api/grammar/cases)",
+      "Bash(curl -sL http://localhost:8000/api/grammar/cases)"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"

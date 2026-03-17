@@ -87,6 +87,16 @@ def _run_migrations():
             s.commit()
         except Exception:
             s.rollback()
+        try:
+            s.exec(text("ALTER TABLE word_list ADD COLUMN sort_order INTEGER DEFAULT 0"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE subcategory_meta ADD COLUMN sort_order INTEGER DEFAULT 0"))
+            s.commit()
+        except Exception:
+            s.rollback()
 
 
 def get_session():

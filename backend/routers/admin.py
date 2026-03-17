@@ -2,15 +2,15 @@
 # All routes require is_admin=True on the authenticated user, otherwise 403.
 
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem
 from constants import DAILY_LIMIT
 
 router = APIRouter()
@@ -105,10 +105,15 @@ def list_subcategories(
     _require_admin(authorization, session)
     # Collect all distinct subcategory keys from word lists
     lists = session.exec(select(WordList).where(WordList.archived == False)).all()  # noqa: E712
-    keys = sorted({wl.subcategory for wl in lists if wl.subcategory})
+    all_keys = sorted({wl.subcategory for wl in lists if wl.subcategory})
     # Load existing metadata rows
     meta_rows = session.exec(select(SubcategoryMeta)).all()
     meta_map = {r.key: r for r in meta_rows}
+    # Sort by sort_order (keys without a meta row sort last alphabetically)
+    keys = sorted(
+        all_keys,
+        key=lambda k: (meta_map[k].sort_order or 0 if k in meta_map else 9999, k),
+    )
     return [
         {
             "key": key,
@@ -117,6 +122,7 @@ def list_subcategories(
             "article_url": meta_map[key].article_url if key in meta_map else None,
             "article_name_ru": meta_map[key].article_name_ru if key in meta_map else None,
             "article_name_en": meta_map[key].article_name_en if key in meta_map else None,
+            "sort_order": meta_map[key].sort_order or 0 if key in meta_map else 0,
         }
         for key in keys
     ]
@@ -179,5 +185,183 @@ def set_premium(
     target.is_premium = body.is_premium
     target.premium_until = body.premium_until
     session.add(target)
+    session.commit()
+    return {"ok": True}
+
+
+# ── Content management ──────────────────────────────────────────────────────
+
+
+@router.get("/content/word-lists")
+def get_content_word_lists(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return all non-archived word lists ordered by subcategory sort_order then list sort_order."""
+    _require_admin(authorization, session)
+    lists = session.exec(
+        select(WordList).where(WordList.archived == False)  # noqa: E712
+    ).all()
+    meta_rows = session.exec(select(SubcategoryMeta)).all()
+    meta_map = {r.key: r for r in meta_rows}
+
+    # Count words per list in one query
+    counts = dict(
+        session.exec(
+            select(WordListItem.word_list_id, func.count(WordListItem.id))
+            .group_by(WordListItem.word_list_id)
+        ).all()
+    )
+
+    def _subcat_order(key: Optional[str]) -> int:
+        if key and key in meta_map and meta_map[key].sort_order is not None:
+            return meta_map[key].sort_order
+        return 9999
+
+    sorted_lists = sorted(
+        lists,
+        key=lambda wl: (_subcat_order(wl.subcategory), wl.sort_order or 0, wl.id or 0),
+    )
+    return [
+        {
+            "id": wl.id,
+            "title": wl.title,
+            "description": wl.description,
+            "subcategory": wl.subcategory,
+            "sort_order": wl.sort_order or 0,
+            "word_count": counts.get(wl.id, 0),
+        }
+        for wl in sorted_lists
+    ]
+
+
+class SubcategoryReorderItem(BaseModel):
+    key: str
+    sort_order: int
+
+
+@router.patch("/content/subcategories/reorder")
+def reorder_subcategories(
+    body: List[SubcategoryReorderItem],
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Update sort_order for multiple subcategories at once. Upserts SubcategoryMeta rows."""
+    _require_admin(authorization, session)
+    for item in body:
+        row = session.exec(select(SubcategoryMeta).where(SubcategoryMeta.key == item.key)).first()
+        if row is None:
+            row = SubcategoryMeta(key=item.key)
+            session.add(row)
+        row.sort_order = item.sort_order
+    session.commit()
+    return {"ok": True}
+
+
+class WordListReorderItem(BaseModel):
+    id: int
+    sort_order: int
+
+
+@router.patch("/content/word-lists/reorder")
+def reorder_word_lists(
+    body: List[WordListReorderItem],
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Update sort_order for multiple word lists at once."""
+    _require_admin(authorization, session)
+    for item in body:
+        wl = session.get(WordList, item.id)
+        if wl:
+            wl.sort_order = item.sort_order
+            session.add(wl)
+    session.commit()
+    return {"ok": True}
+
+
+@router.get("/content/word-lists/{list_id}/words")
+def get_list_words_admin(
+    list_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return all words in a list ordered by position, for admin editing."""
+    _require_admin(authorization, session)
+    wl = session.get(WordList, list_id)
+    if not wl:
+        raise HTTPException(status_code=404, detail="List not found")
+    rows = session.exec(
+        select(Word, WordListItem)
+        .join(WordListItem, WordListItem.word_id == Word.id)
+        .where(WordListItem.word_list_id == list_id)
+        .where(Word.archived == False)  # noqa: E712
+        .order_by(WordListItem.position)
+    ).all()
+    return [
+        {
+            "id": w.id,
+            "lithuanian": w.lithuanian,
+            "translation_en": w.translation_en,
+            "translation_ru": w.translation_ru,
+            "hint": w.hint,
+            "position": wli.position,
+            "item_id": wli.id,
+        }
+        for w, wli in rows
+    ]
+
+
+class WordUpdate(BaseModel):
+    lithuanian: str
+    translation_en: str
+    translation_ru: str
+    hint: Optional[str] = None
+
+
+@router.patch("/content/words/{word_id}")
+def update_word(
+    word_id: int,
+    body: WordUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Edit a word's content. Validates required fields server-side."""
+    _require_admin(authorization, session)
+    if not body.lithuanian.strip():
+        raise HTTPException(status_code=400, detail="lithuanian is required")
+    if not body.translation_ru.strip():
+        raise HTTPException(status_code=400, detail="translation_ru is required")
+    word = session.get(Word, word_id)
+    if not word or word.archived:
+        raise HTTPException(status_code=404, detail="Word not found")
+    word.lithuanian = body.lithuanian.strip()
+    word.translation_en = body.translation_en.strip()
+    word.translation_ru = body.translation_ru.strip()
+    word.hint = body.hint.strip() if body.hint and body.hint.strip() else None
+    session.add(word)
+    session.commit()
+    return {"ok": True}
+
+
+class WordPositionItem(BaseModel):
+    item_id: int   # WordListItem.id
+    position: int
+
+
+@router.patch("/content/word-lists/{list_id}/words/reorder")
+def reorder_words(
+    list_id: int,
+    body: List[WordPositionItem],
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Update position for words in a list. item_id refers to WordListItem.id."""
+    _require_admin(authorization, session)
+    for item in body:
+        wli = session.get(WordListItem, item.item_id)
+        if wli and wli.word_list_id == list_id:
+            wli.position = item.position
+            session.add(wli)
     session.commit()
     return {"ok": True}

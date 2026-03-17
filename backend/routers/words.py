@@ -56,7 +56,7 @@ def get_subcategory_meta(session: Session = Depends(get_session)):
 
 @router.get("/lists")
 def get_lists(session: Session = Depends(get_session)):
-    """Return all public word lists with their word counts.
+    """Return all public word lists ordered by subcategory sort_order then list sort_order.
     Word counts are fetched in a single aggregation query to avoid N+1."""
     lists = session.exec(
         select(WordList).where(WordList.is_public == True, WordList.archived == False)  # noqa: E712
@@ -68,6 +68,14 @@ def get_lists(session: Session = Depends(get_session)):
             .group_by(WordListItem.word_list_id)
         ).all()
     )
+    # Load subcategory sort orders for stable ordering
+    meta_rows = session.exec(select(SubcategoryMeta)).all()
+    subcat_order = {r.key: (r.sort_order or 0) for r in meta_rows}
+
+    sorted_lists = sorted(
+        lists,
+        key=lambda wl: (subcat_order.get(wl.subcategory or "", 9999), wl.sort_order or 0, wl.id or 0),
+    )
     return [
         {
             "id": wl.id,
@@ -76,7 +84,7 @@ def get_lists(session: Session = Depends(get_session)):
             "subcategory": wl.subcategory,
             "word_count": counts.get(wl.id, 0),
         }
-        for wl in lists
+        for wl in sorted_lists
     ]
 
 
