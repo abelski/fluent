@@ -40,7 +40,16 @@ interface ArticleRow {
   updated_at: string;
 }
 
-type Tab = 'users' | 'reports' | 'articles';
+interface SubcategoryRow {
+  key: string;
+  cefr_level: string | null;
+  difficulty: string | null;
+  article_url: string | null;
+  article_name_ru: string | null;
+  article_name_en: string | null;
+}
+
+type Tab = 'users' | 'reports' | 'articles' | 'lists';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -49,6 +58,9 @@ export default function AdminPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [articles, setArticles] = useState<ArticleRow[]>([]);
+  const [subcategories, setSubcategories] = useState<SubcategoryRow[]>([]);
+  const [editingListKey, setEditingListKey] = useState<string | null>(null);
+  const [listDraft, setListDraft] = useState<{ cefr_level: string; difficulty: string; article_url: string; article_name_ru: string; article_name_en: string }>({ cefr_level: '', difficulty: '', article_url: '', article_name_ru: '', article_name_en: '' });
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [grantDate, setGrantDate] = useState('');
@@ -71,14 +83,16 @@ export default function AdminPage() {
       fetch(`${BACKEND_URL}/api/me/quota`, { headers }),
       fetch(`${BACKEND_URL}/api/admin/reports`, { headers }),
       fetch(`${BACKEND_URL}/api/admin/articles`, { headers }),
+      fetch(`${BACKEND_URL}/api/admin/subcategories`, { headers }),
     ])
-      .then(async ([usersRes, quotaRes, reportsRes, articlesRes]) => {
+      .then(async ([usersRes, quotaRes, reportsRes, articlesRes, subcatsRes]) => {
         if (usersRes.status === 403 || usersRes.status === 401) { router.replace('/dashboard/lists'); return; }
         const [usersData, quotaData] = await Promise.all([usersRes.json(), quotaRes.json()]);
         setUsers(usersData);
         setIsSuperadmin(!!quotaData.is_superadmin);
         if (reportsRes.ok) setReports(await reportsRes.json());
         if (articlesRes.ok) setArticles(await articlesRes.json());
+        if (subcatsRes.ok) setSubcategories(await subcatsRes.json());
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -180,6 +194,35 @@ export default function AdminPage() {
     if (res.ok) loadData();
   }
 
+  function startEditSubcat(sc: SubcategoryRow) {
+    setEditingListKey(sc.key);
+    setListDraft({
+      cefr_level: sc.cefr_level ?? '',
+      difficulty: sc.difficulty ?? '',
+      article_url: sc.article_url ?? '',
+      article_name_ru: sc.article_name_ru ?? '',
+      article_name_en: sc.article_name_en ?? '',
+    });
+  }
+
+  async function saveSubcatMeta(key: string) {
+    setSaving(true);
+    await fetch(`${BACKEND_URL}/api/admin/subcategories/${encodeURIComponent(key)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        cefr_level: listDraft.cefr_level || null,
+        difficulty: listDraft.difficulty || null,
+        article_url: listDraft.article_url || null,
+        article_name_ru: listDraft.article_name_ru || null,
+        article_name_en: listDraft.article_name_en || null,
+      }),
+    }).catch(() => {});
+    setSaving(false);
+    setEditingListKey(null);
+    loadData();
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -222,6 +265,12 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'articles' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
             {tr.admin.tabArticles}
+          </button>
+          <button
+            onClick={() => setTab('lists')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'lists' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+          >
+            {tr.admin.tabLists}
           </button>
         </div>
 
@@ -375,6 +424,125 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ── Lists tab ── */}
+        {tab === 'lists' && (
+          <div>
+            {subcategories.length === 0 && (
+              <p className="text-gray-400 text-sm py-8 text-center">{tr.admin.noLists}</p>
+            )}
+            <div className="flex flex-col gap-3">
+              {subcategories.map((sc) => (
+                <div key={sc.key} className="rounded-2xl border border-gray-900 bg-white px-4 py-3">
+                  {editingListKey === sc.key ? (
+                    <div className="flex flex-col gap-3">
+                      <p className="font-medium text-gray-900 text-sm font-mono">{tr.lists.subcategories[sc.key] ?? sc.key}</p>
+                      <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.admin.colCefr}</label>
+                          <input
+                            type="text"
+                            value={listDraft.cefr_level}
+                            onChange={(e) => setListDraft((d) => ({ ...d, cefr_level: e.target.value }))}
+                            placeholder="A1, A1-A2, B1…"
+                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-32"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.admin.colDifficulty}</label>
+                          <select
+                            value={listDraft.difficulty}
+                            onChange={(e) => setListDraft((d) => ({ ...d, difficulty: e.target.value }))}
+                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none"
+                          >
+                            {Object.entries(tr.admin.difficultyOptions).map(([val, label]) => (
+                              <option key={val} value={val}>{label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
+                          <label className="text-xs text-gray-400">{tr.admin.colArticleUrl}</label>
+                          <input
+                            type="text"
+                            value={listDraft.article_url}
+                            onChange={(e) => setListDraft((d) => ({ ...d, article_url: e.target.value }))}
+                            placeholder="/dashboard/articles/slug or https://…"
+                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1 min-w-[140px]">
+                          <label className="text-xs text-gray-400">{tr.admin.colArticleName} RU</label>
+                          <input
+                            type="text"
+                            value={listDraft.article_name_ru}
+                            onChange={(e) => setListDraft((d) => ({ ...d, article_name_ru: e.target.value }))}
+                            placeholder="Читать статью…"
+                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1 min-w-[140px]">
+                          <label className="text-xs text-gray-400">{tr.admin.colArticleName} EN</label>
+                          <input
+                            type="text"
+                            value={listDraft.article_name_en}
+                            onChange={(e) => setListDraft((d) => ({ ...d, article_name_en: e.target.value }))}
+                            placeholder="Read article…"
+                            className="bg-gray-50 border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => saveSubcatMeta(sc.key)}
+                          disabled={saving}
+                          className="text-xs px-3 py-1.5 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+                        >
+                          {saving ? '...' : tr.admin.save}
+                        </button>
+                        <button
+                          onClick={() => setEditingListKey(null)}
+                          className="text-xs px-2 py-1.5 text-gray-400 hover:text-gray-900 transition-colors"
+                        >
+                          {tr.admin.cancel}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900">{tr.lists.subcategories[sc.key] ?? sc.key}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {sc.cefr_level && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full border border-gray-900 bg-blue-50 text-blue-700">{sc.cefr_level}</span>
+                          )}
+                          {sc.difficulty && (
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border border-gray-900 ${
+                              sc.difficulty === 'easy' ? 'bg-emerald-50 text-emerald-700' :
+                              sc.difficulty === 'medium' ? 'bg-amber-50 text-amber-700' :
+                              'bg-red-50 text-red-700'
+                            }`}>{tr.admin.difficultyOptions[sc.difficulty] ?? sc.difficulty}</span>
+                          )}
+                          {sc.article_url && (
+                            <span className="text-xs text-gray-400 font-mono truncate max-w-[200px]">{sc.article_url}</span>
+                          )}
+                          {!sc.cefr_level && !sc.difficulty && !sc.article_url && (
+                            <span className="text-xs text-gray-300">—</span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => startEditSubcat(sc)}
+                        className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg text-emerald-600 hover:bg-gray-50 transition-colors shrink-0"
+                      >
+                        {tr.articles.editArticle}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

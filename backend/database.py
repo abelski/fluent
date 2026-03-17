@@ -57,6 +57,36 @@ def _run_migrations():
             s.commit()
         except Exception:
             s.rollback()
+        try:
+            s.exec(text("ALTER TABLE word_list ADD COLUMN cefr_level VARCHAR"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE word_list ADD COLUMN difficulty VARCHAR"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE word_list ADD COLUMN article_url VARCHAR"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE subcategory_meta ADD COLUMN article_name VARCHAR"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE subcategory_meta ADD COLUMN article_name_ru VARCHAR"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE subcategory_meta ADD COLUMN article_name_en VARCHAR"))
+            s.commit()
+        except Exception:
+            s.rollback()
 
 
 def get_session():

@@ -38,6 +38,9 @@ class WordList(SQLModel, table=True):
     is_public: bool = Field(default=True)
     created_at: datetime = Field(default_factory=_utcnow)
     archived: bool = Field(default=False)  # soft-delete: hide but preserve FK integrity
+    cefr_level: Optional[str] = None     # e.g. "A1", "A1-A2", "B1-B2"
+    difficulty: Optional[str] = None     # "easy" | "medium" | "hard"
+    article_url: Optional[str] = None    # internal path or external URL
 
 
 class Word(SQLModel, table=True):
@@ -103,6 +106,19 @@ class MistakeReport(SQLModel, table=True):
     description: str = Field(default="", max_length=500)
     status: str = Field(default="open")  # open | resolved
     created_at: datetime = Field(default_factory=_utcnow)
+
+
+class SubcategoryMeta(SQLModel, table=True):
+    """Metadata (CEFR level, difficulty, article link) for a word list subcategory.
+    Keyed by the subcategory string (e.g. 'a1_basics', 'everyday')."""
+    __tablename__ = "subcategory_meta"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    key: str = Field(unique=True, index=True)  # matches WordList.subcategory
+    cefr_level: Optional[str] = None     # e.g. "A1", "A1-A2", "B1-B2"
+    difficulty: Optional[str] = None     # "easy" | "medium" | "hard"
+    article_url: Optional[str] = None       # internal path (e.g. /dashboard/articles/slug) or external URL
+    article_name_ru: Optional[str] = None  # display label in Russian
+    article_name_en: Optional[str] = None  # display label in English
 
 
 class GrammarSentence(SQLModel, table=True):

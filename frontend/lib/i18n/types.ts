@@ -139,6 +139,14 @@ export interface Translations {
     tabUsers: string;
     tabReports: string;
     tabArticles: string;
+    tabLists: string;
+    colList: string;
+    colCefr: string;
+    colDifficulty: string;
+    colArticleUrl: string;
+    colArticleName: string;
+    noLists: string;
+    difficultyOptions: Record<string, string>;
     colUser: string;
     colPlan: string;
     colPremiumUntil: string;

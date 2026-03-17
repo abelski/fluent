@@ -64,7 +64,12 @@
       "Bash(grep -E \"\\\\.py$|^d\")",
       "Bash(wc -l /Users/Artur_Belski/Documents/src/fluent/frontend/lib/i18n/*.ts)",
       "Bash(grep -r \"const.*\\\\[\" /Users/Artur_Belski/Documents/src/fluent/backend/routers/*.py)",
-      "Bash(python load.py --only vocabulary)"
+      "Bash(python load.py --only vocabulary)",
+      "WebFetch(domain:www.lrs.lt)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(python -c \"from routers.admin import router; from routers.words import router as wr; from models import SubcategoryMeta; print\\(''OK''\\)\")",
+      "Bash(curl -s http://localhost:8000/api/subcategory-meta)",
+      "Bash(python3 -m json.tool)"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"

@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select, col, func
 
 from database import get_session
-from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession
+from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta
 from constants import DAILY_LIMIT
 from auth import require_user as _require_user, try_get_user as _try_get_user
 
@@ -36,6 +36,22 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
         }
         for w in rows
     ]
+
+
+@router.get("/subcategory-meta")
+def get_subcategory_meta(session: Session = Depends(get_session)):
+    """Return CEFR/difficulty/article metadata keyed by subcategory string."""
+    rows = session.exec(select(SubcategoryMeta)).all()
+    return {
+        r.key: {
+            "cefr_level": r.cefr_level,
+            "difficulty": r.difficulty,
+            "article_url": r.article_url,
+            "article_name_ru": r.article_name_ru,
+            "article_name_en": r.article_name_en,
+        }
+        for r in rows
+    }
 
 
 @router.get("/lists")

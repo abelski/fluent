@@ -14,6 +14,14 @@ interface WordListSummary {
   word_count: number;
 }
 
+interface SubcategoryMeta {
+  cefr_level: string | null;
+  difficulty: string | null;
+  article_url: string | null;
+  article_name_ru: string | null;
+  article_name_en: string | null;
+}
+
 interface ListProgress {
   total: number;
   known: number;
@@ -29,8 +37,9 @@ interface Quota {
 }
 
 export default function ListsPage() {
-  const { tr, plural } = useT();
+  const { tr, plural, lang } = useT();
   const [lists, setLists] = useState<WordListSummary[]>([]);
+  const [subcategoryMeta, setSubcategoryMeta] = useState<Record<string, SubcategoryMeta>>({});
   const [progress, setProgress] = useState<Record<number, ListProgress>>({});
   const [loading, setLoading] = useState(true);
   const [quota, setQuota] = useState<Quota | null>(null);
@@ -49,6 +58,11 @@ export default function ListsPage() {
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data) setQuota(data); })
+      .catch(() => {});
+
+    fetch(`${BACKEND_URL}/api/subcategory-meta`)
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data: Record<string, SubcategoryMeta>) => setSubcategoryMeta(data))
       .catch(() => {});
 
     fetch(`${BACKEND_URL}/api/lists`)
@@ -144,6 +158,7 @@ export default function ListsPage() {
             <div className="flex flex-col gap-4">
               {grouped.map((group) => {
                 const isOpen = openSubcategories.has(group.key);
+                const meta = subcategoryMeta[group.key];
                 return (
                   <div key={group.key} className="border border-gray-900 rounded-2xl overflow-hidden">
                     <button
@@ -155,9 +170,44 @@ export default function ListsPage() {
                       aria-expanded={isOpen}
                       className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left cursor-pointer"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <span className="font-semibold text-gray-900">{group.label}</span>
                         <span className="text-gray-400 text-sm">{group.lists.length} {plural(group.lists.length, tr.lists.listsCount)}</span>
+                        {meta?.cefr_level && (
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full border border-gray-900 bg-blue-50 text-blue-700">
+                            {meta.cefr_level}
+                          </span>
+                        )}
+                        {meta?.difficulty && (
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border border-gray-900 ${
+                            meta.difficulty === 'easy' ? 'bg-emerald-50 text-emerald-700' :
+                            meta.difficulty === 'medium' ? 'bg-amber-50 text-amber-700' :
+                            'bg-red-50 text-red-700'
+                          }`}>
+                            {tr.admin.difficultyOptions[meta.difficulty] ?? meta.difficulty}
+                          </span>
+                        )}
+                        {meta?.article_url && (() => {
+                          const isExternal = meta.article_url.startsWith('http');
+                          // Ensure internal paths always have a leading slash
+                          const href = isExternal || meta.article_url.startsWith('/')
+                            ? meta.article_url
+                            : `/${meta.article_url}`;
+                          return (
+                            <a
+                              href={href}
+                              target={isExternal ? '_blank' : undefined}
+                              rel={isExternal ? 'noopener noreferrer' : undefined}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
+                            >
+                              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <path d="M7 1h4v4M11 1L5.5 6.5M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V8" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              {(lang === 'ru' ? meta.article_name_ru : meta.article_name_en) || 'Статья'}
+                            </a>
+                          );
+                        })()}
                       </div>
                       <svg
                         width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
