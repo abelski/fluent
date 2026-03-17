@@ -1,0 +1,35 @@
+# Description: Право и конституция
+
+# lithuanian | english | russian | hint
+konstitucija | constitution | конституция | daiktavardis
+įstatymas | law / statute | закон | daiktavardis
+įstatymai | laws | законы | daiktavardis
+aktas | act / legal document | акт | daiktavardis
+aktai | acts | акты | daiktavardis
+sutartis | treaty / contract | договор, соглашение | daiktavardis
+tvarka | order / procedure | порядок | daiktavardis
+procesas | process / proceedings | процесс | daiktavardis
+byla | case (legal) | дело (судебное) | daiktavardis
+apkalta | impeachment | импичмент | daiktavardis
+straipsnis | article | статья | daiktavardis
+skirsnis | section / chapter | раздел | daiktavardis
+nuostata | provision | положение | daiktavardis
+projektas | draft / bill | проект | daiktavardis
+posėdis | session / sitting | заседание | daiktavardis
+teisinis | legal | правовой | būdvardis
+tarptautinis | international | международный | būdvardis
+priima | adopts / accepts | принимает | veiksmažodis
+pasirašo | signs | подписывает | veiksmažodis
+paskelbia | announces / proclaims | провозглашает, объявляет | veiksmažodis
+tvirtina | approves / confirms | утверждает | veiksmažodis
+sprendžia | decides | решает | veiksmažodis
+nustato | establishes / determines | устанавливает | veiksmažodis
+nustatyta | established / determined | установлено | veiksmažodis
+įsigalioja | comes into force | вступает в силу | veiksmažodis
+neprieštarauja | does not contradict | не противоречит | veiksmažodis
+prieštarauja | contradicts | противоречит | veiksmažodis
+priimti | to adopt | принять | veiksmažodis
+paskelbti | to announce | объявить | veiksmažodis
+svarstyti | to consider | рассматривать | veiksmažodis
+remiantis | based on | основываясь на | prieveiksmis
+pagal | according to | согласно | prielinksnis

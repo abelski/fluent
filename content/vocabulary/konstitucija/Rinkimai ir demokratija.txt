@@ -1,0 +1,30 @@
+# Description: Выборы и демократия
+
+# lithuanian | english | russian | hint
+rinkimai | elections | выборы | daiktavardis
+referendumas | referendum | референдум | daiktavardis
+balsavimas | voting | голосование | daiktavardis
+balsas | vote | голос | daiktavardis
+dauguma | majority | большинство | daiktavardis
+kandidatas | candidate | кандидат | daiktavardis
+partija | party | партия | daiktavardis
+narys | member | член | daiktavardis
+nariai | members | члены | daiktavardis
+rinkėjas | voter | избиратель | daiktavardis
+tauta | nation / people | народ, нация | daiktavardis
+suverenitetas | sovereignty | суверенитет | daiktavardis
+demokratija | democracy | демократия | daiktavardis
+įgaliojimai | powers / mandate | полномочия | daiktavardis
+pirmalaikiai rinkimai | early elections | досрочные выборы | daiktavardis
+nepasitikėjimas | no-confidence / distrust | недоверие | daiktavardis
+renkamas | is elected | избирается | veiksmažodis
+renkami | are elected | избираются | veiksmažodis
+išrinktas | elected | избранный | būdvardis
+prisiekia | takes an oath / swears | присягает | veiksmažodis
+atsistatydina | resigns | уходит в отставку | veiksmažodis
+pripažįsta | recognizes | признаёт | veiksmažodis
+pritarimu | with approval | с одобрением | daiktavardis
+sutikimas | consent | согласие | daiktavardis
+visuotinis | universal | всеобщий | būdvardis
+slaptas | secret | тайный | būdvardis
+tiesioginis | direct | прямой | būdvardis

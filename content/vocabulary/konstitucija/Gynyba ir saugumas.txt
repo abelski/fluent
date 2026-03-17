@@ -1,0 +1,18 @@
+# Description: Оборона и безопасность
+
+# lithuanian | english | russian | hint
+gynyba | defense | оборона | daiktavardis
+saugumas | security | безопасность | daiktavardis
+kariuomenė | army | армия | daiktavardis
+karas | war | война | daiktavardis
+ginkluotosios pajėgos | armed forces | вооружённые силы | daiktavardis
+kraštas | country / land | страна, край | daiktavardis
+užsienio politika | foreign policy | внешняя политика | daiktavardis
+apsauga | protection / security | охрана, защита | daiktavardis
+tarnyba | service | служба | daiktavardis
+policija | police | полиция | daiktavardis
+vadas | commander / leader | командующий, вождь | daiktavardis
+mobilizacija | mobilization | мобилизация | daiktavardis
+nepaprastoji padėtis | state of emergency | чрезвычайное положение | daiktavardis
+karinis | military | военный | būdvardis
+ginti | to defend | защищать | veiksmažodis

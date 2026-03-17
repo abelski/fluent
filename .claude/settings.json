@@ -69,7 +69,8 @@
       "Bash(./node_modules/.bin/tsc --noEmit)",
       "Bash(python -c \"from routers.admin import router; from routers.words import router as wr; from models import SubcategoryMeta; print\\(''OK''\\)\")",
       "Bash(curl -s http://localhost:8000/api/subcategory-meta)",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Bash(python3:*)"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"

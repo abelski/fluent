@@ -1,0 +1,42 @@
+# Description: Частые слова конституции
+
+# lithuanian | english | russian | hint
+straipsnis | article | статья | daiktavardis
+skirsnis | section / chapter | раздел | daiktavardis
+dalis | part | часть | daiktavardis
+tvarka | order / procedure | порядок | daiktavardis
+atvejis | case | случай | daiktavardis
+laikas | time | время | daiktavardis
+diena | day | день | daiktavardis
+metai | year | год | daiktavardis
+nuoroda | reference / link | ссылка | daiktavardis
+interesai | interests | интересы | daiktavardis
+pareigos | duties / position | обязанности, должность | daiktavardis
+arba | or | или | jungtukas
+bei | and / as well as | и, а также | jungtukas
+jeigu | if | если | jungtukas
+kad | that / so that | что, чтобы | jungtukas
+kai | when | когда | jungtukas
+bet | but | но | jungtukas
+tarp | between / among | между, среди | prielinksnis
+per | through / within | через, в течение | prielinksnis
+nuo | from / since | от, с | prielinksnis
+iki | until / up to | до | prielinksnis
+pagal | according to | согласно | prielinksnis
+išskyrus | except | за исключением | prielinksnis
+remiantis | based on | основываясь на | prieveiksmis
+tiesiogiai | directly | непосредственно | prieveiksmis
+oficialiai | officially | официально | prieveiksmis
+laisvai | freely | свободно | prieveiksmis
+viešai | publicly | публично | prieveiksmis
+anksčiau | earlier / before | раньше | prieveiksmis
+vėliau | later | позже | prieveiksmis
+laikinai | temporarily | временно | prieveiksmis
+būtina | necessary | необходимо | būdvardis
+kiekvienas | everyone / each | каждый | įvardis
+niekas | nobody / nothing | никто, ничего | įvardis
+privalo | must / is obliged | обязан | veiksmažodis
+negali | cannot | не может | veiksmažodis
+gali | can | может | veiksmažodis
+turi | has / must | имеет, должен | veiksmažodis
+priklauso | belongs / depends | принадлежит, зависит | veiksmažodis

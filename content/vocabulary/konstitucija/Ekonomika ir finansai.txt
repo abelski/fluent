@@ -1,0 +1,25 @@
+# Description: Экономика и финансы
+
+# lithuanian | english | russian | hint
+biudžetas | budget | бюджет | daiktavardis
+bankas | bank | банк | daiktavardis
+finansai | finances | финансы | daiktavardis
+mokestis | tax | налог | daiktavardis
+darbas | work / job | работа, труд | daiktavardis
+atlyginimas | salary / compensation | зарплата, вознаграждение | daiktavardis
+nuosavybė | property | собственность | daiktavardis
+turtas | property / assets | имущество | daiktavardis
+žemė | land | земля | daiktavardis
+gamta | nature | природа | daiktavardis
+ištekliai | resources | ресурсы | daiktavardis
+ūkis | economy / farm | хозяйство, экономика | daiktavardis
+verslas | business | бизнес | daiktavardis
+darbuotojas | employee | сотрудник | daiktavardis
+draudimas | insurance / prohibition | страхование | daiktavardis
+pensija | pension | пенсия | daiktavardis
+parama | support / assistance | поддержка, помощь | daiktavardis
+sveikata | health | здоровье | daiktavardis
+sąlygos | conditions | условия | daiktavardis
+socialinis | social | социальный | būdvardis
+dirbti | to work | работать | veiksmažodis
+gauti | to receive / get | получать | veiksmažodis
