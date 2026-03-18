@@ -226,13 +226,39 @@ def get_content_word_lists(
         {
             "id": wl.id,
             "title": wl.title,
+            "title_en": wl.title_en,
             "description": wl.description,
+            "description_en": wl.description_en,
             "subcategory": wl.subcategory,
             "sort_order": wl.sort_order or 0,
             "word_count": counts.get(wl.id, 0),
         }
         for wl in sorted_lists
     ]
+
+
+class WordListMetaUpdate(BaseModel):
+    title_en: Optional[str] = None
+    description_en: Optional[str] = None
+
+
+@router.patch("/content/word-lists/{list_id}/meta")
+def update_word_list_meta(
+    list_id: int,
+    body: WordListMetaUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Update the English title and description for a word list."""
+    _require_admin(authorization, session)
+    wl = session.get(WordList, list_id)
+    if not wl:
+        raise HTTPException(status_code=404, detail="List not found")
+    wl.title_en = body.title_en.strip() if body.title_en and body.title_en.strip() else None
+    wl.description_en = body.description_en.strip() if body.description_en and body.description_en.strip() else None
+    session.add(wl)
+    session.commit()
+    return {"ok": True}
 
 
 class SubcategoryReorderItem(BaseModel):

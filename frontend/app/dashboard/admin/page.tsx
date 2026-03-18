@@ -56,7 +56,9 @@ type ContentSubTab = 'articles' | 'vocabularies';
 interface ContentList {
   id: number;
   title: string;
+  title_en: string | null;
   description: string | null;
+  description_en: string | null;
   subcategory: string | null;
   sort_order: number;
   word_count: number;
@@ -81,6 +83,66 @@ interface EditingWord {
   hint: string;
 }
 
+function ListMetaEditForm({
+  list,
+  onSave,
+  onCancel,
+}: {
+  list: ContentList;
+  onSave: (titleEn: string | null, descEn: string | null) => void;
+  onCancel: () => void;
+}) {
+  const { tr } = useT();
+  const [titleEn, setTitleEn] = useState(list.title_en ?? '');
+  const [descEn, setDescEn] = useState(list.description_en ?? '');
+  const [saving, setSaving] = useState(false);
+
+  function authHeaders() {
+    const token = getToken();
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    const res = await fetch(`${BACKEND_URL}/api/admin/content/word-lists/${list.id}/meta`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ title_en: titleEn.trim() || null, description_en: descEn.trim() || null }),
+    }).catch(() => null);
+    setSaving(false);
+    if (res?.ok) onSave(titleEn.trim() || null, descEn.trim() || null);
+  }
+
+  return (
+    <div className="bg-blue-50 border-t border-gray-900 px-5 py-3 flex flex-col gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-400">{tr.admin.contentFieldTitleEn}</label>
+          <input
+            value={titleEn}
+            onChange={(e) => setTitleEn(e.target.value)}
+            placeholder={list.title}
+            className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-400">{tr.admin.contentFieldDescEn}</label>
+          <input
+            value={descEn}
+            onChange={(e) => setDescEn(e.target.value)}
+            placeholder={list.description ?? ''}
+            className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
+          />
+        </div>
+      </div>
+      <div className="flex gap-2 justify-end">
+        <button onClick={onCancel} className="text-xs text-gray-400 hover:text-gray-900 px-3 py-1 border border-gray-900 rounded-lg transition-colors">{tr.admin.cancel}</button>
+        <button onClick={handleSave} disabled={saving} className="text-xs bg-gray-900 text-white px-3 py-1 rounded-lg disabled:opacity-50 transition-colors">{tr.admin.save}</button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const { tr, lang } = useT();
@@ -99,6 +161,7 @@ export default function AdminPage() {
   const [listWords, setListWords] = useState<Record<number, ContentWord[]>>({});
   const [editingWord, setEditingWord] = useState<EditingWord | null>(null);
   const [wordSaving, setWordSaving] = useState(false);
+  const [editingListId, setEditingListId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [grantDate, setGrantDate] = useState('');
@@ -899,9 +962,17 @@ export default function AdminPage() {
                                     <path d="M6 8L1 3h10L6 8z" />
                                   </svg>
                                   <span className="font-medium text-gray-900 text-sm truncate">{list.title}</span>
+                                  {list.title_en && <span className="text-gray-400 text-xs shrink-0 italic">{list.title_en}</span>}
                                   <span className="text-gray-400 text-xs shrink-0">{list.word_count} {tr.admin.contentWordsCount}</span>
                                 </button>
                                 <div className="flex items-center gap-1 ml-2">
+                                  <button
+                                    onClick={() => setEditingListId(editingListId === list.id ? null : list.id)}
+                                    title={tr.admin.contentEditList}
+                                    className="w-6 h-6 flex items-center justify-center rounded border border-gray-900 text-gray-400 hover:text-gray-900 text-xs transition-colors"
+                                  >
+                                    ✎
+                                  </button>
                                   <button
                                     onClick={() => moveList(list.id, subcatKey, -1)}
                                     disabled={listIdx === 0}
@@ -920,6 +991,20 @@ export default function AdminPage() {
                                   </button>
                                 </div>
                               </div>
+
+                              {/* List meta edit form */}
+                              {editingListId === list.id && (
+                                <ListMetaEditForm
+                                  list={list}
+                                  onSave={(titleEn, descEn) => {
+                                    setContentLists((prev) => prev.map((l) =>
+                                      l.id === list.id ? { ...l, title_en: titleEn, description_en: descEn } : l
+                                    ));
+                                    setEditingListId(null);
+                                  }}
+                                  onCancel={() => setEditingListId(null)}
+                                />
+                              )}
 
                               {/* Words inside list */}
                               {isListOpen && (

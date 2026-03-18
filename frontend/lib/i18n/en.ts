@@ -197,6 +197,9 @@ const en: Translations = {
     contentMoveUp: 'Move up',
     contentMoveDown: 'Move down',
     contentWordsCount: 'words',
+    contentEditList: 'Edit list',
+    contentFieldTitleEn: 'Title (EN)',
+    contentFieldDescEn: 'Description (EN)',
   },
   stats: {
     wordsLearned: 'words learned',

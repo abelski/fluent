@@ -9,7 +9,9 @@ import { useT } from '../../../lib/useT';
 interface WordListSummary {
   id: number;
   title: string;
+  title_en: string | null;
   description: string | null;
+  description_en: string | null;
   subcategory: string | null;
   word_count: number;
 }
@@ -224,15 +226,17 @@ export default function ListsPage() {
                             const p = progress[list.id];
                             const knownPct = p ? (p.known / p.total) * 100 : 0;
                             const learningPct = p ? (p.learning / p.total) * 100 : 0;
+                            const displayTitle = lang === 'en' ? (list.title_en || list.title) : list.title;
+                            const displayDesc = lang === 'en' ? (list.description_en || list.description) : list.description;
                             return (
                               <div
                                 key={list.id}
                                 className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-4"
                               >
                                 <div>
-                                  <h2 className="text-lg font-semibold">{list.title}</h2>
-                                  {list.description && (
-                                    <p className="text-gray-400 text-sm mt-1">{list.description}</p>
+                                  <h2 className="text-lg font-semibold">{displayTitle}</h2>
+                                  {displayDesc && (
+                                    <p className="text-gray-400 text-sm mt-1">{displayDesc}</p>
                                   )}
                                 </div>
 

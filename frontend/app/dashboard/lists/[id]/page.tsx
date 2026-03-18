@@ -17,7 +17,9 @@ interface Word {
 interface WordListDetail {
   id: number;
   title: string;
+  title_en: string | null;
   description: string | null;
+  description_en: string | null;
   words: Word[];
 }
 
@@ -70,10 +72,16 @@ export default function ListDetailPage() {
 
         <div className="flex items-start justify-between gap-4 mb-10">
           <div>
-            <h1 className="text-3xl font-bold">{list.title}</h1>
-            {list.description && (
-              <p className="text-gray-400 mt-1">{list.description}</p>
-            )}
+            {(() => {
+              const displayTitle = lang === 'en' ? (list.title_en || list.title) : list.title;
+              const displayDesc = lang === 'en' ? (list.description_en || list.description) : list.description;
+              return (
+                <>
+                  <h1 className="text-3xl font-bold">{displayTitle}</h1>
+                  {displayDesc && <p className="text-gray-400 mt-1">{displayDesc}</p>}
+                </>
+              );
+            })()}
             <p className="text-gray-400 text-sm mt-2">{list.words.length} {plural(list.words.length, tr.detail.wordsCount)}</p>
           </div>
           <button

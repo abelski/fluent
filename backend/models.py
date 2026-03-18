@@ -33,7 +33,9 @@ class WordList(SQLModel, table=True):
     __tablename__ = "word_list"
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
+    title_en: Optional[str] = None       # English translation of the list title
     description: Optional[str] = None
+    description_en: Optional[str] = None  # English translation of the description
     subcategory: Optional[str] = None  # parent folder name from content/vocabulary/<subcategory>/
     is_public: bool = Field(default=True)
     created_at: datetime = Field(default_factory=_utcnow)

@@ -80,7 +80,9 @@ def get_lists(session: Session = Depends(get_session)):
         {
             "id": wl.id,
             "title": wl.title,
+            "title_en": wl.title_en,
             "description": wl.description,
+            "description_en": wl.description_en,
             "subcategory": wl.subcategory,
             "word_count": counts.get(wl.id, 0),
         }
@@ -97,7 +99,9 @@ def get_list(list_id: int, session: Session = Depends(get_session)):
     return {
         "id": wl.id,
         "title": wl.title,
+        "title_en": wl.title_en,
         "description": wl.description,
+        "description_en": wl.description_en,
         "words": _list_words(list_id, session),
     }
 

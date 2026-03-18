@@ -197,6 +197,9 @@ const ru: Translations = {
     contentMoveUp: 'Вверх',
     contentMoveDown: 'Вниз',
     contentWordsCount: 'слов',
+    contentEditList: 'Редактировать список',
+    contentFieldTitleEn: 'Название (EN)',
+    contentFieldDescEn: 'Описание (EN)',
   },
   stats: {
     wordsLearned: 'слов выучено',

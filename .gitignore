@@ -28,12 +28,13 @@ client_secret_*.json
 *.pdf
 
 CLAUDE.md
+.claude/
 
 # Local planning docs
 plan/
 
 #temp files
-temp files/
+temp_files/
 
 # Playwright test results
 frontend/test-results/
