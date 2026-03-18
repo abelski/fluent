@@ -90,7 +90,19 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/dashboard/grammar)",
       "Bash(for i:*)",
       "Bash(do curl:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_take_screenshot",
+      "Read(//Users/Artur_Belski/.claude/**)",
+      "Bash(cat ~/.claude/ide/*.json)",
+      "Bash(cat ~/.claude/ide/*)",
+      "Read(//Users/Artur_Belski/**)",
+      "Bash(claude mcp:*)",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_install"
     ],
     "additionalDirectories": [
       "/Users/Artur_Belski/Documents/src/fluent/frontend/.next"

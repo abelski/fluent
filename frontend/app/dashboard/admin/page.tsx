@@ -53,7 +53,7 @@ interface SubcategoryRow {
 
 type Area = 'admin' | 'content';
 type AdminSubTab = 'users' | 'reports';
-type ContentSubTab = 'articles' | 'vocabularies';
+type ContentSubTab = 'articles' | 'vocabularies' | 'grammar';
 
 interface ContentList {
   id: number;
@@ -535,6 +535,12 @@ export default function AdminPage() {
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'vocabularies' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
               Словари
+            </button>
+            <button
+              onClick={() => router.push('/dashboard/admin/grammar')}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:text-gray-900"
+            >
+              Грамматика
             </button>
           </div>
         )}

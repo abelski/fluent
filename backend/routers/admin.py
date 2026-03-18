@@ -10,7 +10,7 @@ from sqlmodel import Session, select, func
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule
 from constants import DAILY_LIMIT
 
 router = APIRouter()
@@ -398,5 +398,192 @@ def reorder_words(
         if wli and wli.word_list_id == list_id:
             wli.position = item.position
             session.add(wli)
+    session.commit()
+    return {"ok": True}
+
+
+# ── Grammar content management ───────────────────────────────────────────────
+
+
+@router.get("/grammar/sentences")
+def list_grammar_sentences(
+    case_index: Optional[int] = None,
+    show_archived: bool = False,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return grammar sentences, optionally filtered by case_index.
+
+    By default archived sentences are excluded. Pass show_archived=true to include them.
+    """
+    _require_admin(authorization, session)
+    stmt = select(GrammarSentence)
+    if case_index is not None:
+        stmt = stmt.where(GrammarSentence.case_index == case_index)
+    if not show_archived:
+        stmt = stmt.where(GrammarSentence.archived == False)  # noqa: E712
+    stmt = stmt.order_by(GrammarSentence.case_index, GrammarSentence.id)
+    rows = session.exec(stmt).all()
+    return [
+        {
+            "id": s.id,
+            "case_index": s.case_index,
+            "display": s.display,
+            "answer_ending": s.answer_ending,
+            "full_word": s.full_word,
+            "russian": s.russian,
+            "archived": s.archived,
+        }
+        for s in rows
+    ]
+
+
+class GrammarSentenceCreate(BaseModel):
+    case_index: int
+    display: str
+    answer_ending: str
+    full_word: str
+    russian: str
+
+
+@router.post("/grammar/sentences")
+def create_grammar_sentence(
+    body: GrammarSentenceCreate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Create a new grammar sentence."""
+    _require_admin(authorization, session)
+    if not (1 <= body.case_index <= 14):
+        raise HTTPException(status_code=400, detail="case_index must be between 1 and 14")
+    if "___" not in body.display:
+        raise HTTPException(status_code=400, detail="display must contain ___ blank placeholder")
+    if not body.answer_ending.strip():
+        raise HTTPException(status_code=400, detail="answer_ending is required")
+    if not body.full_word.strip():
+        raise HTTPException(status_code=400, detail="full_word is required")
+    if not body.russian.strip():
+        raise HTTPException(status_code=400, detail="russian is required")
+    sentence = GrammarSentence(
+        case_index=body.case_index,
+        display=body.display.strip(),
+        answer_ending=body.answer_ending.strip(),
+        full_word=body.full_word.strip(),
+        russian=body.russian.strip(),
+    )
+    session.add(sentence)
+    session.commit()
+    session.refresh(sentence)
+    return {"ok": True, "id": sentence.id}
+
+
+class GrammarSentenceUpdate(BaseModel):
+    display: str
+    answer_ending: str
+    full_word: str
+    russian: str
+
+
+@router.patch("/grammar/sentences/{sentence_id}")
+def update_grammar_sentence(
+    sentence_id: int,
+    body: GrammarSentenceUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Edit a grammar sentence."""
+    _require_admin(authorization, session)
+    if "___" not in body.display:
+        raise HTTPException(status_code=400, detail="display must contain ___ blank placeholder")
+    if not body.answer_ending.strip():
+        raise HTTPException(status_code=400, detail="answer_ending is required")
+    if not body.full_word.strip():
+        raise HTTPException(status_code=400, detail="full_word is required")
+    if not body.russian.strip():
+        raise HTTPException(status_code=400, detail="russian is required")
+    sentence = session.get(GrammarSentence, sentence_id)
+    if not sentence:
+        raise HTTPException(status_code=404, detail="Sentence not found")
+    sentence.display = body.display.strip()
+    sentence.answer_ending = body.answer_ending.strip()
+    sentence.full_word = body.full_word.strip()
+    sentence.russian = body.russian.strip()
+    session.add(sentence)
+    session.commit()
+    return {"ok": True}
+
+
+@router.delete("/grammar/sentences/{sentence_id}")
+def archive_grammar_sentence(
+    sentence_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Soft-delete a grammar sentence (sets archived=True)."""
+    _require_admin(authorization, session)
+    sentence = session.get(GrammarSentence, sentence_id)
+    if not sentence:
+        raise HTTPException(status_code=404, detail="Sentence not found")
+    sentence.archived = True
+    session.add(sentence)
+    session.commit()
+    return {"ok": True}
+
+
+@router.get("/grammar/rules")
+def list_grammar_rules(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return all grammar case rules ordered by case_index."""
+    _require_admin(authorization, session)
+    rules = session.exec(
+        select(GrammarCaseRule).order_by(GrammarCaseRule.case_index)
+    ).all()
+    return [
+        {
+            "id": r.id,
+            "case_index": r.case_index,
+            "name_ru": r.name_ru,
+            "question": r.question,
+            "usage": r.usage,
+            "endings_sg": r.endings_sg,
+            "endings_pl": r.endings_pl,
+            "transform": r.transform,
+        }
+        for r in rules
+    ]
+
+
+class GrammarRuleUpdate(BaseModel):
+    name_ru: str
+    question: str
+    usage: str
+    endings_sg: str
+    endings_pl: str
+    transform: str
+
+
+@router.patch("/grammar/rules/{rule_id}")
+def update_grammar_rule(
+    rule_id: int,
+    body: GrammarRuleUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Edit a grammar case rule."""
+    _require_admin(authorization, session)
+    if not body.name_ru.strip():
+        raise HTTPException(status_code=400, detail="name_ru is required")
+    rule = session.get(GrammarCaseRule, rule_id)
+    if not rule:
+        raise HTTPException(status_code=404, detail="Rule not found")
+    rule.name_ru = body.name_ru.strip()
+    rule.question = body.question.strip()
+    rule.usage = body.usage.strip()
+    rule.endings_sg = body.endings_sg.strip()
+    rule.endings_pl = body.endings_pl.strip()
+    rule.transform = body.transform.strip()
+    session.add(rule)
     session.commit()
     return {"ok": True}
