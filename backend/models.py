@@ -138,6 +138,9 @@ class GrammarSentence(SQLModel, table=True):
     full_word: str                             # "brolį"
     russian: str                               # "Лайма видит брата."
     archived: bool = Field(default=False)      # soft-delete: keep row, hide from exercises
+    use_in_basic: bool = Field(default=True)    # include in basic lessons
+    use_in_advanced: bool = Field(default=True) # include in advanced lessons
+    use_in_practice: bool = Field(default=True) # include in practice lessons
 
 
 class GrammarCaseRule(SQLModel, table=True):

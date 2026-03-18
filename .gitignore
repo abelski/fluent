@@ -29,6 +29,7 @@ client_secret_*.json
 
 CLAUDE.md
 .claude/
+.claude/settings.json
 
 # Local planning docs
 plan/
@@ -40,5 +41,6 @@ temp_files/
 frontend/test-results/
 backend/test-results/
 **/playwright-report/
-.claude/settings.json
-.claude/settings.json
+
+.mcp.json
+

@@ -23,6 +23,66 @@ const CASE_NAMES: Record<number, string> = {
   14: 'Šauksmininkas pl',
 };
 
+// Lesson configuration derived from content/grammar/lessons.json
+// Format: [lesson_id, level, [case_indices], task_count, title]
+// basic    = sentence gap-fill, grammar rule always visible
+// advanced = sentence gap-fill, grammar rule collapsible
+// practice = sentence gap-fill, no grammar rule shown
+interface LessonInfo {
+  id: number;
+  level: 'basic' | 'advanced' | 'practice';
+  title: string;
+  task_count: number;
+}
+const LESSONS_BY_CASE: Record<number, LessonInfo[]> = {
+  4:  [{ id: 1,  level: 'basic',    title: 'Galininkas Vns.',    task_count: 24 },
+       { id: 2,  level: 'advanced', title: 'Galininkas Vns.',    task_count: 35 },
+       { id: 3,  level: 'practice', title: 'Galininkas Vns.',    task_count: 20 }],
+  6:  [{ id: 4,  level: 'basic',    title: 'Vietininkas Vns.',   task_count: 24 },
+       { id: 5,  level: 'advanced', title: 'Vietininkas Vns.',   task_count: 35 },
+       { id: 6,  level: 'practice', title: 'Vietininkas Vns.',   task_count: 20 }],
+  2:  [{ id: 10, level: 'basic',    title: 'Kilmininkas Vns.',   task_count: 24 },
+       { id: 11, level: 'advanced', title: 'Kilmininkas Vns.',   task_count: 35 },
+       { id: 12, level: 'practice', title: 'Kilmininkas Vns.',   task_count: 20 }],
+  8:  [{ id: 16, level: 'basic',    title: 'Vardininkas Dgs.',   task_count: 24 },
+       { id: 17, level: 'advanced', title: 'Vardininkas Dgs.',   task_count: 35 },
+       { id: 18, level: 'practice', title: 'Vardininkas Dgs.',   task_count: 20 }],
+  9:  [{ id: 22, level: 'basic',    title: 'Kilmininkas Dgs.',   task_count: 24 },
+       { id: 23, level: 'advanced', title: 'Kilmininkas Dgs.',   task_count: 35 },
+       { id: 24, level: 'practice', title: 'Kilmininkas Dgs.',   task_count: 20 }],
+  5:  [{ id: 28, level: 'basic',    title: 'Įnagininkas Vns.',   task_count: 24 },
+       { id: 29, level: 'advanced', title: 'Įnagininkas Vns.',   task_count: 35 },
+       { id: 30, level: 'practice', title: 'Įnagininkas Vns.',   task_count: 10 }],
+  3:  [{ id: 34, level: 'basic',    title: 'Naudininkas Vns.',   task_count: 24 },
+       { id: 35, level: 'advanced', title: 'Naudininkas Vns.',   task_count: 35 },
+       { id: 36, level: 'practice', title: 'Naudininkas Vns.',   task_count: 10 }],
+  7:  [{ id: 40, level: 'basic',    title: 'Šauksmininkas Vns.', task_count: 24 },
+       { id: 41, level: 'advanced', title: 'Šauksmininkas Vns.', task_count: 35 },
+       { id: 42, level: 'practice', title: 'Šauksmininkas Vns.', task_count: 10 }],
+  13: [{ id: 46, level: 'basic',    title: 'Vietininkas Dgs.',   task_count: 24 },
+       { id: 47, level: 'advanced', title: 'Vietininkas Dgs.',   task_count: 35 },
+       { id: 48, level: 'practice', title: 'Vietininkas Dgs.',   task_count: 10 }],
+  11: [{ id: 52, level: 'basic',    title: 'Galininkas Dgs.',    task_count: 24 },
+       { id: 53, level: 'advanced', title: 'Galininkas Dgs.',    task_count: 35 },
+       { id: 54, level: 'practice', title: 'Galininkas Dgs.',    task_count: 10 }],
+  12: [{ id: 58, level: 'basic',    title: 'Įnagininkas Dgs.',   task_count: 24 },
+       { id: 59, level: 'advanced', title: 'Įnagininkas Dgs.',   task_count: 35 },
+       { id: 60, level: 'practice', title: 'Įnagininkas Dgs.',   task_count: 10 }],
+  10: [{ id: 64, level: 'basic',    title: 'Naudininkas Dgs.',   task_count: 24 },
+       { id: 65, level: 'advanced', title: 'Naudininkas Dgs.',   task_count: 35 },
+       { id: 66, level: 'practice', title: 'Naudininkas Dgs.',   task_count: 35 }],
+};
+
+// Case tabs ordered by learning sequence (matches user-facing grammar page order).
+// Cases with no lessons (1, 14) are appended at the end.
+const CASE_ORDER: number[] = [4, 6, 2, 8, 9, 5, 3, 7, 13, 11, 12, 10, 1, 14];
+
+const LEVEL_LABELS: Record<string, { label: string; color: string; desc: string }> = {
+  basic:    { label: 'Basic',    color: 'bg-blue-100 text-blue-700 border-blue-200',     desc: 'Предложения, правило всегда видно' },
+  advanced: { label: 'Advanced', color: 'bg-amber-100 text-amber-700 border-amber-200',  desc: 'Предложения с подсказкой правила' },
+  practice: { label: 'Practice', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', desc: 'Предложения без подсказки' },
+};
+
 interface GrammarSentence {
   id: number;
   case_index: number;
@@ -31,6 +91,9 @@ interface GrammarSentence {
   full_word: string;
   russian: string;
   archived: boolean;
+  use_in_basic: boolean;
+  use_in_advanced: boolean;
+  use_in_practice: boolean;
 }
 
 interface GrammarRule {
@@ -174,6 +237,30 @@ export default function GrammarAdminPage() {
     if (res?.ok) loadData();
   }
 
+  async function toggleSentenceLevel(s: GrammarSentence, level: 'basic' | 'advanced' | 'practice') {
+    const key = `use_in_${level}` as 'use_in_basic' | 'use_in_advanced' | 'use_in_practice';
+    const updated = { ...s, [key]: !s[key] };
+    // Optimistic update
+    setSentences((prev) => prev.map((row) => row.id === s.id ? updated : row));
+    const res = await fetch(`${BACKEND_URL}/api/admin/grammar/sentences/${s.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        display: s.display,
+        answer_ending: s.answer_ending,
+        full_word: s.full_word,
+        russian: s.russian,
+        use_in_basic: updated.use_in_basic,
+        use_in_advanced: updated.use_in_advanced,
+        use_in_practice: updated.use_in_practice,
+      }),
+    }).catch(() => null);
+    if (!res?.ok) {
+      // Revert on failure
+      setSentences((prev) => prev.map((row) => row.id === s.id ? s : row));
+    }
+  }
+
   function startEditRule(rule: GrammarRule) {
     setEditingRule({ ...rule });
     setError('');
@@ -238,8 +325,9 @@ export default function GrammarAdminPage() {
 
         {/* Case tabs */}
         <div className="flex flex-wrap gap-1 mb-6">
-          {Array.from({ length: 14 }, (_, i) => i + 1).map((idx) => {
+          {CASE_ORDER.map((idx, pos) => {
             const count = sentences.filter((s) => s.case_index === idx && !s.archived).length;
+            const hasLessons = !!LESSONS_BY_CASE[idx];
             return (
               <button
                 key={idx}
@@ -247,13 +335,18 @@ export default function GrammarAdminPage() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                   selectedCase === idx
                     ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-900 hover:text-gray-900'
+                    : hasLessons
+                      ? 'bg-white text-gray-600 border-gray-200 hover:border-gray-900 hover:text-gray-900'
+                      : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-500'
                 }`}
               >
-                {idx}. {CASE_NAMES[idx]?.split(' ')[0]}
+                {pos + 1}. {CASE_NAMES[idx]}
                 <span className={`ml-1 text-[10px] ${selectedCase === idx ? 'text-gray-300' : 'text-gray-400'}`}>
                   {count}
                 </span>
+                {!hasLessons && (
+                  <span className={`ml-1 text-[9px] ${selectedCase === idx ? 'text-gray-400' : 'text-gray-300'}`} title="Нет уроков">⚠</span>
+                )}
               </button>
             );
           })}
@@ -267,6 +360,9 @@ export default function GrammarAdminPage() {
             </h2>
             {currentRule && (
               <p className="text-gray-400 text-xs mt-0.5">{currentRule.name_ru} · {currentRule.question}</p>
+            )}
+            {!LESSONS_BY_CASE[selectedCase] && (
+              <p className="text-[11px] text-gray-300 mt-0.5">нет уроков — предложения не используются в практике</p>
             )}
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -371,9 +467,28 @@ export default function GrammarAdminPage() {
                   className={`flex items-start gap-3 px-4 py-3 group hover:bg-gray-50 transition-colors ${s.archived ? 'opacity-40' : ''}`}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 font-mono">
-                      {s.display.replace('___', `[${s.answer_ending}]`)}
-                    </p>
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      {LESSONS_BY_CASE[s.case_index] && (['basic', 'advanced', 'practice'] as const).map((level) => {
+                        const meta = LEVEL_LABELS[level];
+                        const active = s[`use_in_${level}`];
+                        return (
+                          <button
+                            key={level}
+                            onClick={() => !s.archived && toggleSentenceLevel(s, level)}
+                            disabled={s.archived}
+                            title={active ? `Убрать из ${meta.label}` : `Добавить в ${meta.label}`}
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border shrink-0 transition-all ${
+                              active ? `${meta.color} hover:opacity-70` : 'bg-gray-50 text-gray-300 border-gray-200 hover:border-gray-400 hover:text-gray-400'
+                            } ${s.archived ? 'cursor-default' : 'cursor-pointer'}`}
+                          >
+                            {meta.label}
+                          </button>
+                        );
+                      })}
+                      <p className="text-sm text-gray-900 font-mono">
+                        {s.display.replace('___', `[${s.answer_ending}]`)}
+                      </p>
+                    </div>
                     <p className="text-xs text-gray-400 mt-0.5">
                       <span className="text-emerald-600 font-medium">{s.full_word}</span>
                       {' · '}

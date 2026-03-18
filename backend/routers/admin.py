@@ -433,6 +433,9 @@ def list_grammar_sentences(
             "full_word": s.full_word,
             "russian": s.russian,
             "archived": s.archived,
+            "use_in_basic": s.use_in_basic,
+            "use_in_advanced": s.use_in_advanced,
+            "use_in_practice": s.use_in_practice,
         }
         for s in rows
     ]
@@ -444,6 +447,9 @@ class GrammarSentenceCreate(BaseModel):
     answer_ending: str
     full_word: str
     russian: str
+    use_in_basic: bool = True
+    use_in_advanced: bool = True
+    use_in_practice: bool = True
 
 
 @router.post("/grammar/sentences")
@@ -470,6 +476,9 @@ def create_grammar_sentence(
         answer_ending=body.answer_ending.strip(),
         full_word=body.full_word.strip(),
         russian=body.russian.strip(),
+        use_in_basic=body.use_in_basic,
+        use_in_advanced=body.use_in_advanced,
+        use_in_practice=body.use_in_practice,
     )
     session.add(sentence)
     session.commit()
@@ -482,6 +491,9 @@ class GrammarSentenceUpdate(BaseModel):
     answer_ending: str
     full_word: str
     russian: str
+    use_in_basic: bool = True
+    use_in_advanced: bool = True
+    use_in_practice: bool = True
 
 
 @router.patch("/grammar/sentences/{sentence_id}")
@@ -508,6 +520,9 @@ def update_grammar_sentence(
     sentence.answer_ending = body.answer_ending.strip()
     sentence.full_word = body.full_word.strip()
     sentence.russian = body.russian.strip()
+    sentence.use_in_basic = body.use_in_basic
+    sentence.use_in_advanced = body.use_in_advanced
+    sentence.use_in_practice = body.use_in_practice
     session.add(sentence)
     session.commit()
     return {"ok": True}

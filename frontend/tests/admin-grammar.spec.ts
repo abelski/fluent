@@ -21,6 +21,9 @@ const MOCK_SENTENCES = [
     full_word: 'namas',
     russian: 'Здесь есть дом.',
     archived: false,
+    use_in_basic: true,
+    use_in_advanced: true,
+    use_in_practice: true,
   },
   {
     id: 2,
@@ -30,6 +33,9 @@ const MOCK_SENTENCES = [
     full_word: 'knyga',
     russian: 'Это книга.',
     archived: false,
+    use_in_basic: true,
+    use_in_advanced: true,
+    use_in_practice: true,
   },
   {
     id: 3,
@@ -39,6 +45,9 @@ const MOCK_SENTENCES = [
     full_word: 'namo',
     russian: 'Нет дома.',
     archived: false,
+    use_in_basic: true,
+    use_in_advanced: true,
+    use_in_practice: true,
   },
 ];
 
@@ -113,9 +122,9 @@ test.describe('Admin Grammar page — content', () => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    // First case tab should be visible
-    await expect(page.getByRole('button', { name: /^1\. Vardininkas/ })).toBeVisible({ timeout: 5000 });
-    // Last case tab should be visible
+    // First tab is Galininkas (first in learning order)
+    await expect(page.getByRole('button', { name: /^1\. Galininkas/ })).toBeVisible({ timeout: 5000 });
+    // Last tab is Šauksmininkas pl (position 14)
     await expect(page.getByRole('button', { name: /^14\. Šauksmininkas/ })).toBeVisible();
   });
 
@@ -132,7 +141,7 @@ test.describe('Admin Grammar page — content', () => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    await page.getByRole('button', { name: /^2\. Kilmininkas/ }).click();
+    await page.getByRole('button', { name: /^3\. Kilmininkas/ }).click();
     await expect(page.getByText('Nėra nam[o].')).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Нет дома.')).toBeVisible();
   });
@@ -187,5 +196,24 @@ test.describe('Admin Grammar page — content', () => {
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
     await expect(page.getByRole('link', { name: '← Админ' })).toBeVisible({ timeout: 5000 });
+  });
+
+  test('shows no-lessons notice for case 13 (Vardininkas has no lessons configured)', async ({ page }) => {
+    await setAdminToken(page);
+    setupMocks(page);
+    await page.goto('/dashboard/admin/grammar');
+    // Vardininkas is selected by default (case_index 1, position 13 in learning order)
+    await expect(page.getByText(/нет уроков/)).toBeVisible({ timeout: 5000 });
+  });
+
+  test('shows Basic, Advanced and Practice toggle buttons on sentence rows for Kilmininkas', async ({ page }) => {
+    await setAdminToken(page);
+    setupMocks(page);
+    await page.goto('/dashboard/admin/grammar');
+    await page.getByRole('button', { name: /^3\. Kilmininkas/ }).click();
+    // Level toggles are buttons — one per level per sentence row
+    await expect(page.getByRole('button', { name: /^Basic$/ }).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: /^Advanced$/ }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Practice$/ }).first()).toBeVisible();
   });
 });

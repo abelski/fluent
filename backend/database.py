@@ -107,6 +107,21 @@ def _run_migrations():
             s.commit()
         except Exception:
             s.rollback()
+        try:
+            s.exec(text("ALTER TABLE grammar_sentence ADD COLUMN use_in_basic BOOLEAN NOT NULL DEFAULT TRUE"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE grammar_sentence ADD COLUMN use_in_advanced BOOLEAN NOT NULL DEFAULT TRUE"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE grammar_sentence ADD COLUMN use_in_practice BOOLEAN NOT NULL DEFAULT TRUE"))
+            s.commit()
+        except Exception:
+            s.rollback()
 
 
 def get_session():

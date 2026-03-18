@@ -154,17 +154,24 @@ def _generate_declension_tasks(cases: list[int], count: int) -> list[dict]:
     return tasks
 
 
-def _generate_sentence_tasks(cases: list[int], count: int, session: Session) -> list[dict]:
+def _generate_sentence_tasks(cases: list[int], count: int, session: Session, level: str = "advanced") -> list[dict]:
     """Generate sentence gap-fill tasks from the grammar_sentence DB table for given cases.
 
-    Each task includes base_lt — the nominative form of the target word — derived
-    by looking up the word stem in the WORDS list. Falls back to declension tasks
-    if no sentences are found for the requested cases.
+    Filters by the use_in_<level> flag so admins can control which sentences
+    appear in each lesson type. Falls back to declension tasks if no matching
+    sentences are found for the requested cases.
     """
+    level_filter = {
+        "basic":    GrammarSentence.use_in_basic == True,    # noqa: E712
+        "advanced": GrammarSentence.use_in_advanced == True,  # noqa: E712
+        "practice": GrammarSentence.use_in_practice == True,  # noqa: E712
+    }.get(level, GrammarSentence.use_in_advanced == True)    # noqa: E712
+
     rows = session.exec(
         select(GrammarSentence).where(
             GrammarSentence.case_index.in_(cases),
             GrammarSentence.archived == False,  # noqa: E712
+            level_filter,
         )
     ).all()
 
@@ -195,16 +202,14 @@ def get_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None:
 
     Returns None if the lesson_id is not found — the router converts this to 404.
     Level determines task type:
-      'basic'    → declension tasks (with grammar rule shown on frontend)
+      'basic'    → sentence puzzle tasks (grammar rule always visible on frontend)
       'advanced' → sentence puzzle tasks (with collapsible grammar rule)
       'practice' → sentence puzzle tasks (no grammar rule shown)
+    All levels use grammar_sentence rows. Falls back to declension tasks if no
+    sentences exist for the requested cases.
     """
     config = next((e for e in LESSON_CONFIG if e[0] == lesson_id), None)
     if config is None:
         return None
     num, level, cases, task_count, title = config
-    if level == "basic":
-        return _generate_declension_tasks(cases, task_count)
-    else:
-        # Both 'advanced' and 'practice' use sentence-style puzzle tasks.
-        return _generate_sentence_tasks(cases, task_count, session)
+    return _generate_sentence_tasks(cases, task_count, session, level)
