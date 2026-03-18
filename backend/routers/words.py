@@ -49,6 +49,8 @@ def get_subcategory_meta(session: Session = Depends(get_session)):
             "article_url": r.article_url,
             "article_name_ru": r.article_name_ru,
             "article_name_en": r.article_name_en,
+            "name_ru": r.name_ru,
+            "name_en": r.name_en,
         }
         for r in rows
     }

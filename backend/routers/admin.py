@@ -123,6 +123,8 @@ def list_subcategories(
             "article_name_ru": meta_map[key].article_name_ru if key in meta_map else None,
             "article_name_en": meta_map[key].article_name_en if key in meta_map else None,
             "sort_order": meta_map[key].sort_order or 0 if key in meta_map else 0,
+            "name_ru": meta_map[key].name_ru if key in meta_map else None,
+            "name_en": meta_map[key].name_en if key in meta_map else None,
         }
         for key in keys
     ]
@@ -134,6 +136,8 @@ class SubcategoryMetaUpdate(BaseModel):
     article_url: Optional[str] = None
     article_name_ru: Optional[str] = None
     article_name_en: Optional[str] = None
+    name_ru: Optional[str] = None
+    name_en: Optional[str] = None
 
 
 @router.patch("/subcategories/{key}")
@@ -154,6 +158,8 @@ def update_subcategory_meta(
     row.article_url = body.article_url
     row.article_name_ru = body.article_name_ru
     row.article_name_en = body.article_name_en
+    row.name_ru = body.name_ru.strip() if body.name_ru and body.name_ru.strip() else None
+    row.name_en = body.name_en.strip() if body.name_en and body.name_en.strip() else None
     session.commit()
     return {"ok": True}
 
@@ -238,8 +244,8 @@ def get_content_word_lists(
 
 
 class WordListMetaUpdate(BaseModel):
+    title_ru: Optional[str] = None
     title_en: Optional[str] = None
-    description_en: Optional[str] = None
 
 
 @router.patch("/content/word-lists/{list_id}/meta")
@@ -249,13 +255,16 @@ def update_word_list_meta(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Update the English title and description for a word list."""
+    """Update the Russian and English title for a word list."""
     _require_admin(authorization, session)
     wl = session.get(WordList, list_id)
     if not wl:
         raise HTTPException(status_code=404, detail="List not found")
+    if body.title_ru is not None:
+        stripped = body.title_ru.strip()
+        if stripped:
+            wl.title = stripped
     wl.title_en = body.title_en.strip() if body.title_en and body.title_en.strip() else None
-    wl.description_en = body.description_en.strip() if body.description_en and body.description_en.strip() else None
     session.add(wl)
     session.commit()
     return {"ok": True}

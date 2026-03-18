@@ -123,6 +123,8 @@ class SubcategoryMeta(SQLModel, table=True):
     article_name_ru: Optional[str] = None  # display label in Russian
     article_name_en: Optional[str] = None  # display label in English
     sort_order: Optional[int] = Field(default=0)  # display order on the lists page
+    name_ru: Optional[str] = None  # overrides hardcoded translation key in Russian
+    name_en: Optional[str] = None  # overrides hardcoded translation key in English
 
 
 class GrammarSentence(SQLModel, table=True):

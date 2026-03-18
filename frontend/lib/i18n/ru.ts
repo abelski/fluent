@@ -198,8 +198,10 @@ const ru: Translations = {
     contentMoveDown: 'Вниз',
     contentWordsCount: 'слов',
     contentEditList: 'Редактировать список',
+    contentFieldTitleRu: 'Название (RU)',
     contentFieldTitleEn: 'Название (EN)',
-    contentFieldDescEn: 'Описание (EN)',
+    contentFieldCategoryNameRu: 'Название категории (RU)',
+    contentFieldCategoryNameEn: 'Название категории (EN)',
   },
   stats: {
     wordsLearned: 'слов выучено',

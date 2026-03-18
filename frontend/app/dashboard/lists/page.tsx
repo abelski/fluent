@@ -22,6 +22,8 @@ interface SubcategoryMeta {
   article_url: string | null;
   article_name_ru: string | null;
   article_name_en: string | null;
+  name_ru: string | null;
+  name_en: string | null;
 }
 
 interface ListProgress {
@@ -153,7 +155,9 @@ export default function ListsPage() {
             if (existing) {
               existing.lists.push(list);
             } else {
-              grouped.push({ key, label: tr.lists.subcategories[key] ?? key, lists: [list] });
+              const scMeta = subcategoryMeta[key];
+              const scLabel = (lang === 'en' ? scMeta?.name_en : scMeta?.name_ru) ?? tr.lists.subcategories[key] ?? key;
+              grouped.push({ key, label: scLabel, lists: [list] });
             }
           }
           return (

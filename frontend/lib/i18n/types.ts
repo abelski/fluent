@@ -183,8 +183,10 @@ export interface Translations {
     contentMoveDown: string;
     contentWordsCount: string;
     contentEditList: string;
+    contentFieldTitleRu: string;
     contentFieldTitleEn: string;
-    contentFieldDescEn: string;
+    contentFieldCategoryNameRu: string;
+    contentFieldCategoryNameEn: string;
   };
   articles: {
     title: string;

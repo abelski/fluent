@@ -47,6 +47,8 @@ interface SubcategoryRow {
   article_url: string | null;
   article_name_ru: string | null;
   article_name_en: string | null;
+  name_ru: string | null;
+  name_en: string | null;
 }
 
 type Area = 'admin' | 'content';
@@ -89,12 +91,12 @@ function ListMetaEditForm({
   onCancel,
 }: {
   list: ContentList;
-  onSave: (titleEn: string | null, descEn: string | null) => void;
+  onSave: (titleRu: string, titleEn: string | null) => void;
   onCancel: () => void;
 }) {
   const { tr } = useT();
+  const [titleRu, setTitleRu] = useState(list.title);
   const [titleEn, setTitleEn] = useState(list.title_en ?? '');
-  const [descEn, setDescEn] = useState(list.description_en ?? '');
   const [saving, setSaving] = useState(false);
 
   function authHeaders() {
@@ -103,34 +105,33 @@ function ListMetaEditForm({
   }
 
   async function handleSave() {
+    if (!titleRu.trim()) return;
     setSaving(true);
     const res = await fetch(`${BACKEND_URL}/api/admin/content/word-lists/${list.id}/meta`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify({ title_en: titleEn.trim() || null, description_en: descEn.trim() || null }),
+      body: JSON.stringify({ title_ru: titleRu.trim(), title_en: titleEn.trim() || null }),
     }).catch(() => null);
     setSaving(false);
-    if (res?.ok) onSave(titleEn.trim() || null, descEn.trim() || null);
+    if (res?.ok) onSave(titleRu.trim(), titleEn.trim() || null);
   }
 
   return (
     <div className="bg-blue-50 border-t border-gray-900 px-5 py-3 flex flex-col gap-2">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-400">{tr.admin.contentFieldTitleEn}</label>
+          <label className="text-xs text-gray-400">{tr.admin.contentFieldTitleRu}</label>
           <input
-            value={titleEn}
-            onChange={(e) => setTitleEn(e.target.value)}
-            placeholder={list.title}
+            value={titleRu}
+            onChange={(e) => setTitleRu(e.target.value)}
             className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-400">{tr.admin.contentFieldDescEn}</label>
+          <label className="text-xs text-gray-400">{tr.admin.contentFieldTitleEn}</label>
           <input
-            value={descEn}
-            onChange={(e) => setDescEn(e.target.value)}
-            placeholder={list.description ?? ''}
+            value={titleEn}
+            onChange={(e) => setTitleEn(e.target.value)}
             className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
           />
         </div>
@@ -154,7 +155,7 @@ export default function AdminPage() {
   const [articles, setArticles] = useState<ArticleRow[]>([]);
   const [subcategories, setSubcategories] = useState<SubcategoryRow[]>([]);
   const [editingListKey, setEditingListKey] = useState<string | null>(null);
-  const [listDraft, setListDraft] = useState<{ cefr_level: string; difficulty: string; article_url: string; article_name_ru: string; article_name_en: string }>({ cefr_level: '', difficulty: '', article_url: '', article_name_ru: '', article_name_en: '' });
+  const [listDraft, setListDraft] = useState<{ cefr_level: string; difficulty: string; article_url: string; article_name_ru: string; article_name_en: string; name_ru: string; name_en: string }>({ cefr_level: '', difficulty: '', article_url: '', article_name_ru: '', article_name_en: '', name_ru: '', name_en: '' });
   const [contentLists, setContentLists] = useState<ContentList[]>([]);
   const [expandedSubcats, setExpandedSubcats] = useState<Set<string>>(new Set());
   const [expandedLists, setExpandedLists] = useState<Set<number>>(new Set());
@@ -438,6 +439,8 @@ export default function AdminPage() {
       article_url: sc.article_url ?? '',
       article_name_ru: sc.article_name_ru ?? '',
       article_name_en: sc.article_name_en ?? '',
+      name_ru: sc.name_ru ?? '',
+      name_en: sc.name_en ?? '',
     });
   }
 
@@ -452,6 +455,8 @@ export default function AdminPage() {
         article_url: listDraft.article_url || null,
         article_name_ru: listDraft.article_name_ru || null,
         article_name_en: listDraft.article_name_en || null,
+        name_ru: listDraft.name_ru || null,
+        name_en: listDraft.name_en || null,
       }),
     }).catch(() => {});
     setSaving(false);
@@ -775,7 +780,6 @@ export default function AdminPage() {
                 <p className="text-gray-400 text-sm py-8 text-center">{tr.admin.noLists}</p>
               )}
               {subcats.map((subcatKey, subcatIdx) => {
-                const label = tr.lists.subcategories[subcatKey] ?? subcatKey;
                 const subcatLists = contentLists.filter((l) => (l.subcategory ?? 'other') === subcatKey);
                 const isSubcatOpen = expandedSubcats.has(subcatKey);
                 const scMeta: SubcategoryRow = subcategories.find((s) => s.key === subcatKey) ?? {
@@ -785,7 +789,10 @@ export default function AdminPage() {
                   article_url: null,
                   article_name_ru: null,
                   article_name_en: null,
+                  name_ru: null,
+                  name_en: null,
                 };
+                const label = (lang === 'en' ? scMeta.name_en : scMeta.name_ru) ?? tr.lists.subcategories[subcatKey] ?? subcatKey;
                 const isEditingMeta = editingListKey === subcatKey;
 
                 return (
@@ -867,6 +874,25 @@ export default function AdminPage() {
                               value={listDraft.article_name_en}
                               onChange={(e) => setListDraft((d) => ({ ...d, article_name_en: e.target.value }))}
                               placeholder="Read article…"
+                              className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-[140px]">
+                            <label className="text-xs text-gray-400">{tr.admin.contentFieldCategoryNameRu}</label>
+                            <input
+                              type="text"
+                              value={listDraft.name_ru}
+                              onChange={(e) => setListDraft((d) => ({ ...d, name_ru: e.target.value }))}
+                              placeholder={label}
+                              className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-[140px]">
+                            <label className="text-xs text-gray-400">{tr.admin.contentFieldCategoryNameEn}</label>
+                            <input
+                              type="text"
+                              value={listDraft.name_en}
+                              onChange={(e) => setListDraft((d) => ({ ...d, name_en: e.target.value }))}
                               className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
                             />
                           </div>
@@ -996,9 +1022,9 @@ export default function AdminPage() {
                               {editingListId === list.id && (
                                 <ListMetaEditForm
                                   list={list}
-                                  onSave={(titleEn, descEn) => {
+                                  onSave={(titleRu, titleEn) => {
                                     setContentLists((prev) => prev.map((l) =>
-                                      l.id === list.id ? { ...l, title_en: titleEn, description_en: descEn } : l
+                                      l.id === list.id ? { ...l, title: titleRu, title_en: titleEn } : l
                                     ));
                                     setEditingListId(null);
                                   }}

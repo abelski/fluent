@@ -198,8 +198,10 @@ const en: Translations = {
     contentMoveDown: 'Move down',
     contentWordsCount: 'words',
     contentEditList: 'Edit list',
+    contentFieldTitleRu: 'Title (RU)',
     contentFieldTitleEn: 'Title (EN)',
-    contentFieldDescEn: 'Description (EN)',
+    contentFieldCategoryNameRu: 'Category name (RU)',
+    contentFieldCategoryNameEn: 'Category name (EN)',
   },
   stats: {
     wordsLearned: 'words learned',

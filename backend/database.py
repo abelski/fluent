@@ -97,6 +97,16 @@ def _run_migrations():
             s.commit()
         except Exception:
             s.rollback()
+        try:
+            s.exec(text("ALTER TABLE subcategory_meta ADD COLUMN name_ru VARCHAR"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE subcategory_meta ADD COLUMN name_en VARCHAR"))
+            s.commit()
+        except Exception:
+            s.rollback()
 
 
 def get_session():

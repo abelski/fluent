@@ -40,3 +40,5 @@ temp_files/
 frontend/test-results/
 backend/test-results/
 **/playwright-report/
+.claude/settings.json
+.claude/settings.json
