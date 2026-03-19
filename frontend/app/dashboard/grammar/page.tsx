@@ -145,23 +145,48 @@ function SubcategoryGroup({
 }) {
   const { tr, plural } = useT();
   const [open, setOpen] = useState(false);
+
+  const passedCount = group.lessons.filter(
+    (l) => l.best_score_pct !== null && l.best_score_pct !== undefined && l.best_score_pct > 0.75
+  ).length;
+  const total = group.lessons.length;
+  const progressPct = total > 0 ? (passedCount / total) * 100 : 0;
+
   return (
     <div>
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         data-testid="subcategory-toggle"
-        className="w-full flex items-center justify-between px-5 py-3 bg-white hover:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center justify-between px-5 py-3 bg-white hover:bg-gray-50 transition-colors text-left relative"
       >
         <span className="text-sm font-medium text-gray-700">{group.title}</span>
         <div className="flex items-center gap-2">
-          <span className="text-gray-400 text-xs">{group.lessons.length} {plural(group.lessons.length, tr.grammar.levelsCount)}</span>
+          <span className="text-gray-400 text-xs">
+            {passedCount > 0 ? (
+              <span className={passedCount === total ? 'text-emerald-600' : 'text-amber-500'}>
+                {passedCount}/{total}
+              </span>
+            ) : (
+              total
+            )}{' '}
+            {plural(total, tr.grammar.levelsCount)}
+          </span>
           <svg
             width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
             className={`text-gray-400 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
           >
             <path d="M6 8L1 3h10L6 8z" />
           </svg>
+        </div>
+        {/* Progress bar */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100">
+          {progressPct > 0 && (
+            <div
+              className={`h-full transition-all duration-500 ${passedCount === total ? 'bg-emerald-500' : 'bg-amber-400'}`}
+              style={{ width: `${progressPct}%` }}
+            />
+          )}
         </div>
       </button>
       {open && (

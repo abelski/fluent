@@ -10,7 +10,7 @@ from sqlmodel import Session, select, func
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult
 from constants import DAILY_LIMIT
 
 router = APIRouter()
@@ -67,6 +67,7 @@ def list_users(
             "is_superadmin": u.is_superadmin,
             "sessions_today": counts.get(u.id, 0),
             "daily_limit": None if _is_premium_active(u) else DAILY_LIMIT,
+            "last_login": u.last_login,
         }
         for u in users
     ]
@@ -92,6 +93,35 @@ def set_admin(
         raise HTTPException(status_code=400, detail="Cannot change superadmin role")
     target.is_admin = body.is_admin
     session.add(target)
+    session.commit()
+    return {"ok": True}
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: str,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Permanently delete a user and all their progress data. Superadmin-only."""
+    requester = _require_superadmin(authorization, session)
+    if requester.id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    target = session.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Delete all related data before removing the user
+    for row in session.exec(select(GrammarLessonResult).where(GrammarLessonResult.user_id == user_id)).all():
+        session.delete(row)
+    for row in session.exec(select(UserWordProgress).where(UserWordProgress.user_id == user_id)).all():
+        session.delete(row)
+    for row in session.exec(select(DailyStudySession).where(DailyStudySession.user_id == user_id)).all():
+        session.delete(row)
+    for row in session.exec(select(MistakeReport).where(MistakeReport.user_id == user_id)).all():
+        session.delete(row)
+
+    session.delete(target)
     session.commit()
     return {"ok": True}
 

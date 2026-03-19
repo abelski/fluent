@@ -150,11 +150,13 @@ async def google_callback(code: str, session: Session = Depends(get_session)):
     # Upsert user record so _require_user can find them.
     # Update name/picture in case the user changed their Google profile.
     user = session.exec(select(User).where(User.email == email)).first()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     if user:
         user.name = name
         user.picture = picture
+        user.last_login = now
     else:
-        user = User(email=email, name=name, picture=picture)
+        user = User(email=email, name=name, picture=picture, last_login=now)
         session.add(user)
     session.commit()
 

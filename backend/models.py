@@ -25,6 +25,7 @@ class User(SQLModel, table=True):
     premium_until: Optional[datetime] = None  # None = no expiry; past date = expired
     is_admin: bool = Field(default=False)
     is_superadmin: bool = Field(default=False)
+    last_login: Optional[datetime] = None
 
 
 class WordList(SQLModel, table=True):

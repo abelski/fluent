@@ -134,6 +134,11 @@ def _run_migrations():
             s.commit()
         except Exception:
             s.rollback()
+        try:
+            s.exec(text('ALTER TABLE "user" ADD COLUMN last_login TIMESTAMP'))
+            s.commit()
+        except Exception:
+            s.rollback()
 
 
 def get_session():

@@ -17,6 +17,7 @@ interface UserRow {
   is_superadmin: boolean;
   sessions_today: number;
   daily_limit: number | null;
+  last_login: string | null;
 }
 
 interface ReportRow {
@@ -358,6 +359,18 @@ export default function AdminPage() {
     setGrantDate('');
   }
 
+  async function deleteUser(userId: string, userName: string) {
+    if (!confirm(`Удалить пользователя «${userName}» и все его данные? Это действие необратимо.`)) return;
+    setSaving(true);
+    const token = getToken();
+    await fetch(`${BACKEND_URL}/api/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {});
+    setSaving(false);
+    loadData();
+  }
+
   async function applyAdmin(userId: string, isAdmin: boolean) {
     setSaving(true);
     const token = getToken();
@@ -590,6 +603,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3 font-medium">{tr.admin.colPlan}</th>
                   <th className="px-4 py-3 font-medium hidden sm:table-cell">{tr.admin.colPremiumUntil}</th>
                   <th className="px-4 py-3 font-medium hidden sm:table-cell">{tr.admin.colSessionsToday}</th>
+                  <th className="px-4 py-3 font-medium hidden lg:table-cell">Последний вход</th>
                   <th className="px-4 py-3 font-medium">{tr.admin.colAction}</th>
                 </tr>
               </thead>
@@ -618,6 +632,11 @@ export default function AdminPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">
                       {u.sessions_today} / {u.daily_limit ?? '∞'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 hidden lg:table-cell text-xs">
+                      {u.last_login
+                        ? new Date(u.last_login).toLocaleString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        : '—'}
                     </td>
                     <td className="px-4 py-3">
                       {editingId === u.id ? (
@@ -666,6 +685,15 @@ export default function AdminPage() {
                               }`}
                             >
                               {u.is_admin ? tr.admin.removeAdmin : tr.admin.makeAdmin}
+                            </button>
+                          )}
+                          {isSuperadmin && !u.is_superadmin && (
+                            <button
+                              onClick={() => deleteUser(u.id, u.name)}
+                              disabled={saving}
+                              className="text-xs px-3 py-1.5 text-red-500 hover:text-red-700 border border-red-200 hover:border-red-500 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              Удалить
                             </button>
                           )}
                         </div>
