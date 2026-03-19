@@ -11,6 +11,20 @@ interface Stats {
   mistakes: number;
 }
 
+const VOCAB_MILESTONES = [10, 25, 50, 100, 200, 500, 1000];
+const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100];
+
+function nextMilestone(value: number, milestones: number[]): number | null {
+  return milestones.find((m) => m > value) ?? null;
+}
+
+function milestoneProgress(value: number, milestones: number[]): number {
+  const next = nextMilestone(value, milestones);
+  if (!next) return 100;
+  const prev = [...milestones].reverse().find((m) => m <= value) ?? 0;
+  return Math.round(((value - prev) / (next - prev)) * 100);
+}
+
 export default function StatsBar() {
   const { tr, plural } = useT();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -43,64 +57,118 @@ export default function StatsBar() {
     return m.none;
   }
 
-  return (
-    <div className="relative mb-10 rounded-2xl overflow-hidden">
-      {/* glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-emerald-200/40 via-emerald-100/30 to-transparent pointer-events-none" />
-      <div className="absolute inset-px rounded-2xl bg-white/80 pointer-events-none" />
+  const vocabNext = nextMilestone(stats.known, VOCAB_MILESTONES);
+  const vocabPct = milestoneProgress(stats.known, VOCAB_MILESTONES);
+  const streakNext = nextMilestone(stats.streak, STREAK_MILESTONES);
+  const streakPct = milestoneProgress(stats.streak, STREAK_MILESTONES);
 
-      <div className="relative border border-gray-900 rounded-2xl px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
-        {/* stats */}
-        <div className="flex items-center gap-6 flex-1">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl leading-none">📚</span>
-            <div>
-              <p className="text-2xl font-bold text-gray-900 leading-none">{stats.known}</p>
-              <p className="text-gray-400 text-xs mt-0.5">{tr.stats.wordsLearned}</p>
-              {stats.known > 0 && (
-                <>
-                  <Link
-                    href="/dashboard/review?mode=known"
-                    className="text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors whitespace-nowrap"
-                  >
-                    {tr.stats.reviewLearned}
-                  </Link>
-                  <Link
-                    href="/dashboard/vocabulary"
-                    className="block text-xs text-gray-400 hover:text-gray-700 font-medium transition-colors whitespace-nowrap"
-                  >
-                    {tr.stats.viewVocabulary}
-                  </Link>
-                </>
-              )}
+  return (
+    <div className="mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+        {/* Vocabulary card */}
+        <div className="relative rounded-2xl bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 shadow-sm overflow-hidden p-5">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
+          <div className="flex items-start justify-between gap-3 relative">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center text-xl">
+                📚
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{stats.known}</p>
+                <p className="text-gray-500 text-xs mt-1 font-medium">{tr.stats.wordsLearned}</p>
+              </div>
+            </div>
+            {vocabNext && (
+              <div className="text-right flex-shrink-0">
+                <p className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wide">Next</p>
+                <p className="text-sm font-bold text-emerald-700">{vocabNext}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Progress bar */}
+          <div className="mt-4">
+            <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all duration-700"
+                style={{ width: `${vocabPct}%` }}
+              />
+            </div>
+            {vocabNext && (
+              <p className="text-[10px] text-gray-400 mt-1">{stats.known} / {vocabNext} до следующей цели</p>
+            )}
+          </div>
+
+          {/* Action links */}
+          {stats.known > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href="/dashboard/review?mode=known"
+                className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3 py-1 rounded-full transition-colors"
+              >
+                {tr.stats.reviewLearned}
+              </Link>
+              <Link
+                href="/dashboard/vocabulary"
+                className="text-xs border border-emerald-200 hover:bg-emerald-50 text-emerald-700 font-medium px-3 py-1 rounded-full transition-colors"
+              >
+                {tr.stats.viewVocabulary}
+              </Link>
               {stats.mistakes > 0 && (
                 <Link
                   href="/dashboard/review?mode=mistakes"
-                  className="block text-xs text-amber-600 hover:text-amber-700 font-medium transition-colors whitespace-nowrap"
+                  className="text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium px-3 py-1 rounded-full transition-colors"
                 >
                   {tr.stats.reviewMistakes.replace('{n}', String(stats.mistakes))}
                 </Link>
               )}
             </div>
-          </div>
-
-          {stats.streak > 0 && (
-            <>
-              <div className="w-px h-8 bg-gray-200 hidden sm:block" />
-              <div className="flex items-center gap-3">
-                <span className="text-2xl leading-none">🔥</span>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900 leading-none">{stats.streak}</p>
-                  <p className="text-gray-400 text-xs mt-0.5">{plural(stats.streak, tr.stats.streakDay)}</p>
-                </div>
-              </div>
-            </>
           )}
         </div>
 
-        <p className="text-emerald-600 text-sm font-medium sm:text-right">
-          {motivation(stats.known, stats.streak)}
-        </p>
+        {/* Streak card */}
+        <div className="relative rounded-2xl bg-gradient-to-br from-orange-50 to-white border border-orange-100 shadow-sm overflow-hidden p-5">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-orange-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
+          <div className="flex items-start justify-between gap-3 relative">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-orange-100 flex items-center justify-center text-xl">
+                🔥
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{stats.streak}</p>
+                <p className="text-gray-500 text-xs mt-1 font-medium">{plural(stats.streak, tr.stats.streakDay)}</p>
+              </div>
+            </div>
+            {streakNext && stats.streak > 0 && (
+              <div className="text-right flex-shrink-0">
+                <p className="text-[10px] text-orange-600 font-semibold uppercase tracking-wide">Next</p>
+                <p className="text-sm font-bold text-orange-700">{streakNext}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Progress bar */}
+          {stats.streak > 0 && (
+            <div className="mt-4">
+              <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-orange-500 rounded-full transition-all duration-700"
+                  style={{ width: `${streakPct}%` }}
+                />
+              </div>
+              {streakNext && (
+                <p className="text-[10px] text-gray-400 mt-1">{stats.streak} / {streakNext} до следующей цели</p>
+              )}
+            </div>
+          )}
+
+          {/* Motivation */}
+          <p className="mt-3 text-sm text-orange-700 font-medium">
+            {motivation(stats.known, stats.streak)}
+          </p>
+        </div>
+
       </div>
     </div>
   );
