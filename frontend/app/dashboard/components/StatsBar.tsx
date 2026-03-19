@@ -58,12 +58,20 @@ export default function StatsBar() {
               <p className="text-2xl font-bold text-gray-900 leading-none">{stats.known}</p>
               <p className="text-gray-400 text-xs mt-0.5">{tr.stats.wordsLearned}</p>
               {stats.known > 0 && (
-                <Link
-                  href="/dashboard/review?mode=known"
-                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors whitespace-nowrap"
-                >
-                  {tr.stats.reviewLearned}
-                </Link>
+                <>
+                  <Link
+                    href="/dashboard/review?mode=known"
+                    className="text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors whitespace-nowrap"
+                  >
+                    {tr.stats.reviewLearned}
+                  </Link>
+                  <Link
+                    href="/dashboard/vocabulary"
+                    className="block text-xs text-gray-400 hover:text-gray-700 font-medium transition-colors whitespace-nowrap"
+                  >
+                    {tr.stats.viewVocabulary}
+                  </Link>
+                </>
               )}
               {stats.mistakes > 0 && (
                 <Link

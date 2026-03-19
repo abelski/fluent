@@ -217,10 +217,22 @@ export interface Translations {
     published: string;
     draft: string;
   };
+  vocabulary: {
+    title: string;
+    subtitle: string;
+    searchPlaceholder: string;
+    columnLithuanian: string;
+    columnTranslation: string;
+    columnList: string;
+    columnDate: string;
+    empty: string;
+    backToLists: string;
+  };
   stats: {
     wordsLearned: string;
     reviewLearned: string;
     reviewMistakes: string; // "{n}" interpolated by caller
+    viewVocabulary: string;
     streakDay: PluralForms;
     motivations: {
       streak30: string;

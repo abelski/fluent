@@ -203,10 +203,22 @@ const ru: Translations = {
     contentFieldCategoryNameRu: 'Название категории (RU)',
     contentFieldCategoryNameEn: 'Название категории (EN)',
   },
+  vocabulary: {
+    title: 'Мой словарь',
+    subtitle: 'Слова, которые вы уже выучили',
+    searchPlaceholder: 'Поиск по слову или переводу...',
+    columnLithuanian: 'Литовский',
+    columnTranslation: 'Перевод',
+    columnList: 'Список',
+    columnDate: 'Выучено',
+    empty: 'Пока нет выученных слов. Начните учить!',
+    backToLists: '← Назад',
+  },
   stats: {
     wordsLearned: 'слов выучено',
     reviewLearned: 'Повторить выученные →',
     reviewMistakes: 'Повторить ошибки ({n}) →',
+    viewVocabulary: 'Весь словарь →',
     streakDay: { one: 'день подряд', few: 'дня подряд', many: 'дней подряд' },
     motivations: {
       streak30: 'Невероятно! Ты настоящая машина.',

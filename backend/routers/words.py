@@ -483,6 +483,67 @@ def get_stats(
     return {"known": known, "learning": learning, "total_studied": known + learning, "streak": streak, "mistakes": mistakes}
 
 
+@router.get("/me/known-words")
+def get_known_words(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return all words the user has learned (status='known'), ordered by last_seen DESC.
+
+    Each word includes the title of the first list it belongs to (if any)
+    so the frontend can group or label words by topic.
+    """
+    user = _require_user(authorization, session)
+
+    progress_records = session.exec(
+        select(UserWordProgress)
+        .where(
+            UserWordProgress.user_id == user.id,
+            UserWordProgress.status == "known",
+        )
+        .order_by(col(UserWordProgress.last_seen).desc())
+    ).all()
+
+    if not progress_records:
+        return []
+
+    word_ids = [p.word_id for p in progress_records]
+    words = session.exec(
+        select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
+    ).all()
+    word_map = {w.id: w for w in words}
+
+    # One query to get a list title per word (use the first list found)
+    list_rows = session.exec(
+        select(WordListItem.word_id, WordList.title, WordList.title_en, WordList.id)
+        .join(WordList, WordList.id == WordListItem.word_list_id)
+        .where(col(WordListItem.word_id).in_(word_ids))
+    ).all()
+    list_title_map: dict[int, tuple[str, str | None, int]] = {}
+    for wid, title, title_en, list_id in list_rows:
+        if wid not in list_title_map:
+            list_title_map[wid] = (title, title_en, list_id)
+
+    result = []
+    for p in progress_records:
+        w = word_map.get(p.word_id)
+        if not w:
+            continue
+        list_info = list_title_map.get(p.word_id)
+        result.append({
+            "id": w.id,
+            "lithuanian": w.lithuanian,
+            "translation_ru": w.translation_ru,
+            "translation_en": w.translation_en,
+            "hint": w.hint,
+            "last_seen": p.last_seen.isoformat() if p.last_seen else None,
+            "list_title": list_info[0] if list_info else None,
+            "list_title_en": list_info[1] if list_info else None,
+            "list_id": list_info[2] if list_info else None,
+        })
+    return result
+
+
 @router.get("/me/quota")
 def get_quota(
     authorization: Optional[str] = Header(None),

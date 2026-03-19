@@ -203,10 +203,22 @@ const en: Translations = {
     contentFieldCategoryNameRu: 'Category name (RU)',
     contentFieldCategoryNameEn: 'Category name (EN)',
   },
+  vocabulary: {
+    title: 'My vocabulary',
+    subtitle: 'Words you have already learned',
+    searchPlaceholder: 'Search by word or translation...',
+    columnLithuanian: 'Lithuanian',
+    columnTranslation: 'Translation',
+    columnList: 'List',
+    columnDate: 'Learned',
+    empty: 'No learned words yet. Start studying!',
+    backToLists: '← Back',
+  },
   stats: {
     wordsLearned: 'words learned',
     reviewLearned: 'Review learned words →',
     reviewMistakes: 'Review mistakes ({n}) →',
+    viewVocabulary: 'View all vocabulary →',
     streakDay: { one: 'day in a row', few: 'days in a row', many: 'days in a row' },
     motivations: {
       streak30: 'Incredible! You are a learning machine.',
