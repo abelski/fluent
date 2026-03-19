@@ -60,9 +60,82 @@ interface GrammarRuleRow {
   is_published: boolean;
 }
 
+interface ConstitutionQuestionRow {
+  id: number;
+  question_ru: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_option: string;
+  category: string | null;
+  is_active: boolean;
+  sort_order: number;
+}
+
+const BLANK_QUESTION: Omit<ConstitutionQuestionRow, 'id' | 'sort_order'> = {
+  question_ru: '',
+  option_a: '',
+  option_b: '',
+  option_c: '',
+  option_d: '',
+  correct_option: 'a',
+  category: '',
+  is_active: true,
+};
+
+interface PracticeTestRow {
+  id: number;
+  title_ru: string;
+  title_en: string | null;
+  description_ru: string | null;
+  description_en: string | null;
+  question_count: number;
+  pass_threshold: number;
+  is_active: boolean;
+  sort_order: number;
+  total_questions: number;
+  active_questions: number;
+}
+
+interface PracticeQuestionRow {
+  id: number;
+  question_ru: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_option: string;
+  category: string | null;
+  is_active: boolean;
+  sort_order: number;
+}
+
+const BLANK_PRACTICE_QUESTION: Omit<PracticeQuestionRow, 'id' | 'sort_order'> = {
+  question_ru: '',
+  option_a: '',
+  option_b: '',
+  option_c: '',
+  option_d: '',
+  correct_option: 'a',
+  category: '',
+  is_active: true,
+};
+
+const BLANK_TEST: Omit<PracticeTestRow, 'id' | 'total_questions' | 'active_questions'> = {
+  title_ru: '',
+  title_en: '',
+  description_ru: '',
+  description_en: '',
+  question_count: 20,
+  pass_threshold: 0.75,
+  is_active: true,
+  sort_order: 0,
+};
+
 type Area = 'admin' | 'content' | 'publication';
 type AdminSubTab = 'users' | 'reports';
-type ContentSubTab = 'articles' | 'vocabularies' | 'grammar';
+type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'constitution' | 'practice';
 
 interface ContentList {
   id: number;
@@ -180,6 +253,26 @@ export default function AdminPage() {
   const [importMsg, setImportMsg] = useState('');
   const importRef = useRef<HTMLInputElement>(null);
   const [grammarRules, setGrammarRules] = useState<GrammarRuleRow[]>([]);
+  const [constitutionQuestions, setConstitutionQuestions] = useState<ConstitutionQuestionRow[]>([]);
+  const [constitutionLoaded, setConstitutionLoaded] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<ConstitutionQuestionRow | null>(null);
+  const [addingQuestion, setAddingQuestion] = useState(false);
+  const [newQuestion, setNewQuestion] = useState({ ...BLANK_QUESTION });
+  const [questionSaving, setQuestionSaving] = useState(false);
+
+  // Generic practice tests state
+  const [practiceTests, setPracticeTests] = useState<PracticeTestRow[]>([]);
+  const [practiceLoaded, setPracticeLoaded] = useState(false);
+  const [selectedTestId, setSelectedTestId] = useState<number | null>(null);
+  const [practiceQuestions, setPracticeQuestions] = useState<PracticeQuestionRow[]>([]);
+  const [editingPracticeQ, setEditingPracticeQ] = useState<PracticeQuestionRow | null>(null);
+  const [addingPracticeQ, setAddingPracticeQ] = useState(false);
+  const [newPracticeQ, setNewPracticeQ] = useState({ ...BLANK_PRACTICE_QUESTION });
+  const [editingTest, setEditingTest] = useState<PracticeTestRow | null>(null);
+  const [addingTest, setAddingTest] = useState(false);
+  const [newTest, setNewTest] = useState({ ...BLANK_TEST });
+  const [practiceSaving, setPracticeSaving] = useState(false);
+  const practiceImportRef = useRef<HTMLInputElement>(null);
 
   function authHeaders() {
     const token = getToken();
@@ -497,6 +590,205 @@ export default function AdminPage() {
     loadData();
   }
 
+  // ── Practice tests CRUD ──────────────────────────────────────────────────
+
+  async function loadPracticeTests() {
+    const res = await fetch(`${BACKEND_URL}/api/admin/practice/tests`, { headers: authHeaders() }).catch(() => null);
+    if (res?.ok) { setPracticeTests(await res.json()); setPracticeLoaded(true); }
+  }
+
+  async function loadPracticeQuestions(testId: number) {
+    const res = await fetch(`${BACKEND_URL}/api/admin/practice/tests/${testId}/questions`, { headers: authHeaders() }).catch(() => null);
+    if (res?.ok) setPracticeQuestions(await res.json());
+  }
+
+  async function saveNewTest() {
+    if (!newTest.title_ru.trim()) return;
+    setPracticeSaving(true);
+    const res = await fetch(`${BACKEND_URL}/api/admin/practice/tests`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ ...newTest, title_ru: newTest.title_ru.trim() }),
+    }).catch(() => null);
+    setPracticeSaving(false);
+    if (res?.ok) { setAddingTest(false); setNewTest({ ...BLANK_TEST }); loadPracticeTests(); }
+  }
+
+  async function saveEditTest() {
+    if (!editingTest) return;
+    setPracticeSaving(true);
+    const res = await fetch(`${BACKEND_URL}/api/admin/practice/tests/${editingTest.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        title_ru: editingTest.title_ru,
+        title_en: editingTest.title_en || null,
+        description_ru: editingTest.description_ru || null,
+        description_en: editingTest.description_en || null,
+        question_count: editingTest.question_count,
+        pass_threshold: editingTest.pass_threshold,
+        is_active: editingTest.is_active,
+      }),
+    }).catch(() => null);
+    setPracticeSaving(false);
+    if (res?.ok) { setEditingTest(null); loadPracticeTests(); }
+  }
+
+  async function deletePracticeTest(id: number) {
+    if (!confirm(tr.adminPractice.deleteTestConfirm)) return;
+    await fetch(`${BACKEND_URL}/api/admin/practice/tests/${id}`, { method: 'DELETE', headers: authHeaders() }).catch(() => {});
+    setSelectedTestId(null);
+    loadPracticeTests();
+  }
+
+  async function saveNewPracticeQ(testId: number) {
+    if (!newPracticeQ.question_ru.trim()) return;
+    setPracticeSaving(true);
+    const res = await fetch(`${BACKEND_URL}/api/admin/practice/tests/${testId}/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ ...newPracticeQ, sort_order: practiceQuestions.length }),
+    }).catch(() => null);
+    setPracticeSaving(false);
+    if (res?.ok) { setAddingPracticeQ(false); setNewPracticeQ({ ...BLANK_PRACTICE_QUESTION }); loadPracticeQuestions(testId); }
+  }
+
+  async function saveEditPracticeQ(testId: number) {
+    if (!editingPracticeQ) return;
+    setPracticeSaving(true);
+    const res = await fetch(`${BACKEND_URL}/api/admin/practice/questions/${editingPracticeQ.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        question_ru: editingPracticeQ.question_ru,
+        option_a: editingPracticeQ.option_a,
+        option_b: editingPracticeQ.option_b,
+        option_c: editingPracticeQ.option_c,
+        option_d: editingPracticeQ.option_d,
+        correct_option: editingPracticeQ.correct_option,
+        category: editingPracticeQ.category || null,
+        is_active: editingPracticeQ.is_active,
+      }),
+    }).catch(() => null);
+    setPracticeSaving(false);
+    if (res?.ok) { setEditingPracticeQ(null); loadPracticeQuestions(testId); }
+  }
+
+  async function deletePracticeQ(id: number, testId: number) {
+    if (!confirm(tr.adminPractice.deleteQuestionConfirm)) return;
+    await fetch(`${BACKEND_URL}/api/admin/practice/questions/${id}`, { method: 'DELETE', headers: authHeaders() }).catch(() => {});
+    loadPracticeQuestions(testId);
+  }
+
+  async function togglePracticeQActive(q: PracticeQuestionRow, testId: number) {
+    await fetch(`${BACKEND_URL}/api/admin/practice/questions/${q.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ is_active: !q.is_active }),
+    }).catch(() => {});
+    loadPracticeQuestions(testId);
+  }
+
+  function exportPracticeTest(testId: number) {
+    const token = getToken();
+    const link = document.createElement('a');
+    link.href = `${BACKEND_URL}/api/admin/practice/tests/${testId}/export`;
+    link.setAttribute('download', '');
+    // Pass auth via query param not ideal, so open with fetch + blob
+    fetch(`${BACKEND_URL}/api/admin/practice/tests/${testId}/export`, { headers: authHeaders() })
+      .then((r) => r.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }).catch(() => {});
+  }
+
+  async function importPracticeTest(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${BACKEND_URL}/api/admin/practice/tests/import`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: form,
+    }).catch(() => null);
+    if (res?.ok) loadPracticeTests();
+    if (practiceImportRef.current) practiceImportRef.current.value = '';
+  }
+
+  async function loadConstitutionQuestions() {
+    const res = await fetch(`${BACKEND_URL}/api/admin/constitution/questions`, {
+      headers: authHeaders(),
+    }).catch(() => null);
+    if (res?.ok) {
+      setConstitutionQuestions(await res.json());
+      setConstitutionLoaded(true);
+    }
+  }
+
+  async function saveNewQuestion() {
+    if (!newQuestion.question_ru.trim()) return;
+    setQuestionSaving(true);
+    const res = await fetch(`${BACKEND_URL}/api/admin/constitution/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ ...newQuestion, sort_order: constitutionQuestions.length }),
+    }).catch(() => null);
+    setQuestionSaving(false);
+    if (res?.ok) {
+      setAddingQuestion(false);
+      setNewQuestion({ ...BLANK_QUESTION });
+      loadConstitutionQuestions();
+    }
+  }
+
+  async function saveEditQuestion() {
+    if (!editingQuestion) return;
+    setQuestionSaving(true);
+    const res = await fetch(`${BACKEND_URL}/api/admin/constitution/questions/${editingQuestion.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        question_ru: editingQuestion.question_ru,
+        option_a: editingQuestion.option_a,
+        option_b: editingQuestion.option_b,
+        option_c: editingQuestion.option_c,
+        option_d: editingQuestion.option_d,
+        correct_option: editingQuestion.correct_option,
+        category: editingQuestion.category || null,
+        is_active: editingQuestion.is_active,
+      }),
+    }).catch(() => null);
+    setQuestionSaving(false);
+    if (res?.ok) {
+      setEditingQuestion(null);
+      loadConstitutionQuestions();
+    }
+  }
+
+  async function deleteQuestion(id: number) {
+    if (!confirm(tr.adminConstitution.deleteConfirm)) return;
+    await fetch(`${BACKEND_URL}/api/admin/constitution/questions/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    }).catch(() => {});
+    loadConstitutionQuestions();
+  }
+
+  async function toggleQuestionActive(q: ConstitutionQuestionRow) {
+    await fetch(`${BACKEND_URL}/api/admin/constitution/questions/${q.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ is_active: !q.is_active }),
+    }).catch(() => {});
+    loadConstitutionQuestions();
+  }
+
   async function toggleGrammarRulePublication(ruleId: number, isPublished: boolean) {
     await fetch(`${BACKEND_URL}/api/admin/grammar/rules/${ruleId}/publication`, {
       method: 'PATCH',
@@ -589,6 +881,18 @@ export default function AdminPage() {
               className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:text-gray-900"
             >
               Грамматика
+            </button>
+            <button
+              onClick={() => { setContentTab('constitution'); if (!constitutionLoaded) loadConstitutionQuestions(); }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'constitution' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              {tr.adminConstitution.tabLabel}
+            </button>
+            <button
+              onClick={() => { setContentTab('practice'); if (!practiceLoaded) loadPracticeTests(); }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'practice' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              {tr.adminPractice.tabLabel}
             </button>
           </div>
         )}
@@ -1292,6 +1596,445 @@ export default function AdminPage() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* ── Practice Tests ── */}
+        {area === 'content' && contentTab === 'practice' && (
+          <div className="flex flex-col gap-4">
+            <input ref={practiceImportRef} type="file" accept=".json" className="hidden" onChange={importPracticeTest} />
+
+            {/* Test list view */}
+            {selectedTestId === null ? (
+              <>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <h2 className="font-semibold text-gray-900">{tr.adminPractice.tabLabel}</h2>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => practiceImportRef.current?.click()}
+                      className="text-sm px-3 py-1.5 border border-gray-900 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      {tr.adminPractice.importTest}
+                    </button>
+                    <button
+                      onClick={() => { setAddingTest(true); setNewTest({ ...BLANK_TEST }); }}
+                      className="text-sm px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      {tr.adminPractice.addTest}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Add test form */}
+                {addingTest && (
+                  <div className="border border-gray-900 rounded-2xl p-4 bg-amber-50 flex flex-col gap-3">
+                    <h3 className="font-medium text-sm text-gray-900">{tr.adminPractice.addTest}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-400">{tr.adminPractice.fieldTitleRu}</label>
+                        <input value={newTest.title_ru} onChange={(e) => setNewTest((p) => ({ ...p, title_ru: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-400">{tr.adminPractice.fieldTitleEn}</label>
+                        <input value={newTest.title_en ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, title_en: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-400">{tr.adminPractice.fieldDescRu}</label>
+                        <input value={newTest.description_ru ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, description_ru: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestionCount}</label>
+                          <input type="number" value={newTest.question_count} onChange={(e) => setNewTest((p) => ({ ...p, question_count: Number(e.target.value) }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.adminPractice.fieldPassThreshold}</label>
+                          <input type="number" step="0.05" min="0" max="1" value={newTest.pass_threshold} onChange={(e) => setNewTest((p) => ({ ...p, pass_threshold: Number(e.target.value) }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => setAddingTest(false)} className="text-xs text-gray-400 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminPractice.cancel}</button>
+                      <button onClick={saveNewTest} disabled={practiceSaving} className="text-xs bg-gray-900 text-white px-3 py-1 rounded-lg disabled:opacity-50">{tr.adminPractice.save}</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tests list */}
+                <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white">
+                  {practiceTests.length === 0 && <p className="text-gray-400 text-sm py-8 text-center">{tr.adminPractice.noTests}</p>}
+                  <div className="divide-y divide-gray-100">
+                    {practiceTests.map((t) => (
+                      <div key={t.id}>
+                        {editingTest?.id === t.id ? (
+                          <div className="p-4 bg-blue-50 flex flex-col gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs text-gray-400">{tr.adminPractice.fieldTitleRu}</label>
+                                <input value={editingTest.title_ru} onChange={(e) => setEditingTest((p) => p ? { ...p, title_ru: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs text-gray-400">{tr.adminPractice.fieldTitleEn}</label>
+                                <input value={editingTest.title_en ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, title_en: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs text-gray-400">{tr.adminPractice.fieldDescRu}</label>
+                                <input value={editingTest.description_ru ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, description_ru: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestionCount}</label>
+                                  <input type="number" value={editingTest.question_count} onChange={(e) => setEditingTest((p) => p ? { ...p, question_count: Number(e.target.value) } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.fieldPassThreshold}</label>
+                                  <input type="number" step="0.05" min="0" max="1" value={editingTest.pass_threshold} onChange={(e) => setEditingTest((p) => p ? { ...p, pass_threshold: Number(e.target.value) } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <label className="text-xs text-gray-400">{tr.adminPractice.fieldActive}</label>
+                              <input type="checkbox" checked={editingTest.is_active} onChange={(e) => setEditingTest((p) => p ? { ...p, is_active: e.target.checked } : p)} className="w-4 h-4" />
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <button onClick={() => setEditingTest(null)} className="text-xs text-gray-400 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminPractice.cancel}</button>
+                              <button onClick={saveEditTest} disabled={practiceSaving} className="text-xs bg-gray-900 text-white px-3 py-1 rounded-lg disabled:opacity-50">{tr.adminPractice.save}</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="px-5 py-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors">
+                            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setSelectedTestId(t.id); loadPracticeQuestions(t.id); }}>
+                              <p className="font-semibold text-gray-900">{t.title_ru}</p>
+                              {t.title_en && <p className="text-xs text-gray-400">{t.title_en}</p>}
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                {t.active_questions}/{t.total_questions} {tr.adminPractice.questionsCount} · {Math.round(t.pass_threshold * 100)}% · {t.question_count} на экзамен
+                                {!t.is_active && <span className="ml-2 text-amber-600 font-medium">· Неактивен</span>}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button onClick={() => exportPracticeTest(t.id)} className="text-xs px-2 py-1 rounded-lg border border-gray-300 text-gray-500 hover:border-gray-900 transition-colors">{tr.adminPractice.exportTest}</button>
+                              <button onClick={() => setEditingTest(t)} className="text-xs px-2 py-1 rounded-lg border border-gray-900 text-gray-600 hover:bg-gray-100 transition-colors">{tr.adminPractice.editTest}</button>
+                              <button onClick={() => deletePracticeTest(t.id)} className="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-500 hover:bg-red-50 transition-colors">{tr.adminPractice.delete}</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              // Question management for selected test
+              (() => {
+                const test = practiceTests.find((t) => t.id === selectedTestId);
+                return (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => { setSelectedTestId(null); setEditingPracticeQ(null); setAddingPracticeQ(false); }} className="text-sm text-gray-400 hover:text-gray-900 transition-colors">{tr.adminPractice.backToTests}</button>
+                        <h2 className="font-semibold text-gray-900">{test?.title_ru}</h2>
+                      </div>
+                      <button
+                        onClick={() => { setAddingPracticeQ(true); setNewPracticeQ({ ...BLANK_PRACTICE_QUESTION }); }}
+                        className="text-sm px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      >
+                        {tr.adminPractice.addQuestion}
+                      </button>
+                    </div>
+
+                    {/* Add question form */}
+                    {addingPracticeQ && (
+                      <div className="border border-gray-900 rounded-2xl p-4 bg-amber-50 flex flex-col gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestion}</label>
+                          <textarea value={newPracticeQ.question_ru} onChange={(e) => setNewPracticeQ((p) => ({ ...p, question_ru: e.target.value }))} rows={2} className="bg-white border border-gray-900 rounded-lg px-2 py-1.5 text-sm outline-none resize-none" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {(['a', 'b', 'c', 'd'] as const).map((opt) => (
+                            <div key={opt} className="flex flex-col gap-1">
+                              <label className="text-xs text-gray-400">{tr.adminPractice[`fieldOption${opt.toUpperCase() as 'A'|'B'|'C'|'D'}`]}</label>
+                              <input value={newPracticeQ[`option_${opt}` as 'option_a'|'option_b'|'option_c'|'option_d']} onChange={(e) => setNewPracticeQ((p) => ({ ...p, [`option_${opt}`]: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-gray-400">{tr.adminPractice.fieldCorrect}</label>
+                            <select value={newPracticeQ.correct_option} onChange={(e) => setNewPracticeQ((p) => ({ ...p, correct_option: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none">
+                              {['a','b','c','d'].map((o) => <option key={o} value={o}>{o.toUpperCase()}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-gray-400">{tr.adminPractice.fieldCategory}</label>
+                            <input value={newPracticeQ.category ?? ''} onChange={(e) => setNewPracticeQ((p) => ({ ...p, category: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                          </div>
+                          <div className="flex items-end gap-2 pb-1">
+                            <label className="text-xs text-gray-400">{tr.adminPractice.fieldActive}</label>
+                            <input type="checkbox" checked={newPracticeQ.is_active} onChange={(e) => setNewPracticeQ((p) => ({ ...p, is_active: e.target.checked }))} className="w-4 h-4" />
+                          </div>
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <button onClick={() => setAddingPracticeQ(false)} className="text-xs text-gray-400 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminPractice.cancel}</button>
+                          <button onClick={() => saveNewPracticeQ(selectedTestId!)} disabled={practiceSaving} className="text-xs bg-gray-900 text-white px-3 py-1 rounded-lg disabled:opacity-50">{tr.adminPractice.save}</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Questions list */}
+                    <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white">
+                      {practiceQuestions.length === 0 && <p className="text-gray-400 text-sm py-8 text-center">{tr.adminPractice.noQuestions}</p>}
+                      <div className="divide-y divide-gray-100">
+                        {practiceQuestions.map((q) => (
+                          <div key={q.id}>
+                            {editingPracticeQ?.id === q.id ? (
+                              <div className="p-4 bg-blue-50 flex flex-col gap-3">
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestion}</label>
+                                  <textarea value={editingPracticeQ.question_ru} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, question_ru: e.target.value } : p)} rows={2} className="bg-white border border-gray-900 rounded-lg px-2 py-1.5 text-sm outline-none resize-none" />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {(['a', 'b', 'c', 'd'] as const).map((opt) => (
+                                    <div key={opt} className="flex flex-col gap-1">
+                                      <label className="text-xs text-gray-400">{tr.adminPractice[`fieldOption${opt.toUpperCase() as 'A'|'B'|'C'|'D'}`]}</label>
+                                      <input value={editingPracticeQ[`option_${opt}` as 'option_a'|'option_b'|'option_c'|'option_d']} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, [`option_${opt}`]: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs text-gray-400">{tr.adminPractice.fieldCorrect}</label>
+                                    <select value={editingPracticeQ.correct_option} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, correct_option: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none">
+                                      {['a','b','c','d'].map((o) => <option key={o} value={o}>{o.toUpperCase()}</option>)}
+                                    </select>
+                                  </div>
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs text-gray-400">{tr.adminPractice.fieldCategory}</label>
+                                    <input value={editingPracticeQ.category ?? ''} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, category: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                                  </div>
+                                  <div className="flex items-end gap-2 pb-1">
+                                    <label className="text-xs text-gray-400">{tr.adminPractice.fieldActive}</label>
+                                    <input type="checkbox" checked={editingPracticeQ.is_active} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, is_active: e.target.checked } : p)} className="w-4 h-4" />
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 justify-end">
+                                  <button onClick={() => setEditingPracticeQ(null)} className="text-xs text-gray-400 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminPractice.cancel}</button>
+                                  <button onClick={() => saveEditPracticeQ(selectedTestId!)} disabled={practiceSaving} className="text-xs bg-gray-900 text-white px-3 py-1 rounded-lg disabled:opacity-50">{tr.adminPractice.save}</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="px-4 py-3 flex items-start justify-between gap-3 hover:bg-gray-50 transition-colors">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 leading-snug">{q.question_ru}</p>
+                                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                                    {(['a','b','c','d'] as const).map((opt) => (
+                                      <span key={opt} className={`text-xs ${q.correct_option === opt ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
+                                        {opt.toUpperCase()}. {q[`option_${opt}` as keyof PracticeQuestionRow] as string}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  {q.category && <span className="mt-1 inline-block text-[10px] px-1.5 py-px bg-amber-50 border border-amber-200 text-amber-700 rounded">{q.category}</span>}
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button onClick={() => togglePracticeQActive(q, selectedTestId!)} className={`text-xs px-2 py-1 rounded-lg border font-medium transition-colors ${q.is_active ? 'border-emerald-500 text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'border-gray-300 text-gray-400 hover:border-gray-500'}`}>
+                                    {q.is_active ? tr.adminPractice.activeLabel : tr.adminPractice.inactiveLabel}
+                                  </button>
+                                  <button onClick={() => setEditingPracticeQ(q)} className="text-xs px-2 py-1 rounded-lg border border-gray-900 text-gray-600 hover:bg-gray-100 transition-colors">{tr.adminPractice.editQuestion}</button>
+                                  <button onClick={() => deletePracticeQ(q.id, selectedTestId!)} className="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-500 hover:bg-red-50 transition-colors">{tr.adminPractice.delete}</button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            )}
+          </div>
+        )}
+
+        {/* ── Constitution questions ── */}
+        {area === 'content' && contentTab === 'constitution' && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-gray-900">{tr.adminConstitution.tabLabel}</h2>
+              <button
+                onClick={() => { setAddingQuestion(true); setNewQuestion({ ...BLANK_QUESTION }); }}
+                className="text-sm px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                {tr.adminConstitution.addQuestion}
+              </button>
+            </div>
+
+            {/* Add new question form */}
+            {addingQuestion && (
+              <div className="border border-gray-900 rounded-2xl p-4 bg-amber-50 flex flex-col gap-3">
+                <h3 className="font-medium text-gray-900 text-sm">{tr.adminConstitution.addQuestion}</h3>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs text-gray-400">{tr.adminConstitution.fieldQuestion}</label>
+                  <textarea
+                    value={newQuestion.question_ru}
+                    onChange={(e) => setNewQuestion((p) => ({ ...p, question_ru: e.target.value }))}
+                    rows={2}
+                    className="bg-white border border-gray-900 rounded-lg px-2 py-1.5 text-sm text-gray-900 outline-none resize-none"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {(['a', 'b', 'c', 'd'] as const).map((opt) => (
+                    <div key={opt} className="flex flex-col gap-1">
+                      <label className="text-xs text-gray-400">{tr.adminConstitution[`fieldOption${opt.toUpperCase() as 'A' | 'B' | 'C' | 'D'}`]}</label>
+                      <input
+                        value={newQuestion[`option_${opt}` as 'option_a' | 'option_b' | 'option_c' | 'option_d']}
+                        onChange={(e) => setNewQuestion((p) => ({ ...p, [`option_${opt}`]: e.target.value }))}
+                        className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm text-gray-900 outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-400">{tr.adminConstitution.fieldCorrect}</label>
+                    <select
+                      value={newQuestion.correct_option}
+                      onChange={(e) => setNewQuestion((p) => ({ ...p, correct_option: e.target.value }))}
+                      className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm text-gray-900 outline-none"
+                    >
+                      {['a', 'b', 'c', 'd'].map((o) => <option key={o} value={o}>{o.toUpperCase()}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-400">{tr.adminConstitution.fieldCategory}</label>
+                    <input
+                      value={newQuestion.category ?? ''}
+                      onChange={(e) => setNewQuestion((p) => ({ ...p, category: e.target.value }))}
+                      placeholder="history / structure / rights…"
+                      className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm text-gray-900 outline-none"
+                    />
+                  </div>
+                  <div className="flex items-end gap-2 pb-1">
+                    <label className="text-xs text-gray-400">{tr.adminConstitution.fieldActive}</label>
+                    <input
+                      type="checkbox"
+                      checked={newQuestion.is_active}
+                      onChange={(e) => setNewQuestion((p) => ({ ...p, is_active: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => setAddingQuestion(false)} className="text-xs text-gray-400 hover:text-gray-900 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminConstitution.cancel}</button>
+                  <button onClick={saveNewQuestion} disabled={questionSaving} className="text-xs bg-gray-900 text-white px-3 py-1 rounded-lg disabled:opacity-50">{tr.adminConstitution.save}</button>
+                </div>
+              </div>
+            )}
+
+            {/* Questions list */}
+            <div className="border border-gray-900 rounded-2xl overflow-hidden">
+              {constitutionQuestions.length === 0 && (
+                <p className="text-gray-400 text-sm py-8 text-center">{tr.adminConstitution.noQuestions}</p>
+              )}
+              <div className="divide-y divide-gray-100">
+                {constitutionQuestions.map((q) => (
+                  <div key={q.id}>
+                    {editingQuestion?.id === q.id ? (
+                      <div className="p-4 bg-blue-50 flex flex-col gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.adminConstitution.fieldQuestion}</label>
+                          <textarea
+                            value={editingQuestion.question_ru}
+                            onChange={(e) => setEditingQuestion((p) => p ? { ...p, question_ru: e.target.value } : p)}
+                            rows={2}
+                            className="bg-white border border-gray-900 rounded-lg px-2 py-1.5 text-sm text-gray-900 outline-none resize-none"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {(['a', 'b', 'c', 'd'] as const).map((opt) => (
+                            <div key={opt} className="flex flex-col gap-1">
+                              <label className="text-xs text-gray-400">{tr.adminConstitution[`fieldOption${opt.toUpperCase() as 'A' | 'B' | 'C' | 'D'}`]}</label>
+                              <input
+                                value={editingQuestion[`option_${opt}` as 'option_a' | 'option_b' | 'option_c' | 'option_d']}
+                                onChange={(e) => setEditingQuestion((p) => p ? { ...p, [`option_${opt}`]: e.target.value } : p)}
+                                className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm text-gray-900 outline-none"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-gray-400">{tr.adminConstitution.fieldCorrect}</label>
+                            <select
+                              value={editingQuestion.correct_option}
+                              onChange={(e) => setEditingQuestion((p) => p ? { ...p, correct_option: e.target.value } : p)}
+                              className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm text-gray-900 outline-none"
+                            >
+                              {['a', 'b', 'c', 'd'].map((o) => <option key={o} value={o}>{o.toUpperCase()}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-gray-400">{tr.adminConstitution.fieldCategory}</label>
+                            <input
+                              value={editingQuestion.category ?? ''}
+                              onChange={(e) => setEditingQuestion((p) => p ? { ...p, category: e.target.value } : p)}
+                              className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm text-gray-900 outline-none"
+                            />
+                          </div>
+                          <div className="flex items-end gap-2 pb-1">
+                            <label className="text-xs text-gray-400">{tr.adminConstitution.fieldActive}</label>
+                            <input
+                              type="checkbox"
+                              checked={editingQuestion.is_active}
+                              onChange={(e) => setEditingQuestion((p) => p ? { ...p, is_active: e.target.checked } : p)}
+                              className="w-4 h-4"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <button onClick={() => setEditingQuestion(null)} className="text-xs text-gray-400 hover:text-gray-900 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminConstitution.cancel}</button>
+                          <button onClick={saveEditQuestion} disabled={questionSaving} className="text-xs bg-gray-900 text-white px-3 py-1 rounded-lg disabled:opacity-50">{tr.adminConstitution.save}</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="px-4 py-3 flex items-start justify-between gap-3 hover:bg-gray-50 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-900 font-medium leading-snug">{q.question_ru}</p>
+                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                            {(['a', 'b', 'c', 'd'] as const).map((opt) => (
+                              <span key={opt} className={`text-xs ${q.correct_option === opt ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
+                                {opt.toUpperCase()}. {q[`option_${opt}` as keyof ConstitutionQuestionRow] as string}
+                              </span>
+                            ))}
+                          </div>
+                          {q.category && (
+                            <span className="mt-1 inline-block text-[10px] px-1.5 py-px bg-amber-50 border border-amber-200 text-amber-700 rounded">{q.category}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => toggleQuestionActive(q)}
+                            className={`text-xs px-2 py-1 rounded-lg border font-medium transition-colors ${q.is_active ? 'border-emerald-500 text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'border-gray-300 text-gray-400 hover:border-gray-500'}`}
+                          >
+                            {q.is_active ? tr.adminConstitution.activeLabel : tr.adminConstitution.inactiveLabel}
+                          </button>
+                          <button
+                            onClick={() => setEditingQuestion(q)}
+                            className="text-xs px-2 py-1 rounded-lg border border-gray-900 text-gray-600 hover:bg-gray-100 transition-colors"
+                          >
+                            {tr.adminConstitution.editQuestion}
+                          </button>
+                          <button
+                            onClick={() => deleteQuestion(q.id)}
+                            className="text-xs px-2 py-1 rounded-lg border border-red-300 text-red-500 hover:bg-red-50 transition-colors"
+                          >
+                            {tr.adminConstitution.delete}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

@@ -1,0 +1,371 @@
+[
+  {
+    "question_ru": "Когда была принята Конституция Литовской Республики?",
+    "option_a": "25 октября 1990 года",
+    "option_b": "25 октября 1992 года",
+    "option_c": "11 марта 1990 года",
+    "option_d": "16 февраля 1918 года",
+    "correct_option": "b",
+    "category": "history"
+  },
+  {
+    "question_ru": "Каким государством является Литва согласно Конституции?",
+    "option_a": "Федеративной демократической республикой",
+    "option_b": "Конституционной монархией",
+    "option_c": "Независимой демократической республикой",
+    "option_d": "Парламентской монархией",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Сколько членов насчитывает Сейм Литовской Республики?",
+    "option_a": "100",
+    "option_b": "120",
+    "option_c": "200",
+    "option_d": "141",
+    "correct_option": "d",
+    "category": "structure"
+  },
+  {
+    "question_ru": "На сколько лет избирается Президент Литовской Республики?",
+    "option_a": "4 года",
+    "option_b": "6 лет",
+    "option_c": "5 лет",
+    "option_d": "7 лет",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "На сколько лет избирается Сейм Литовской Республики?",
+    "option_a": "5 лет",
+    "option_b": "4 года",
+    "option_c": "3 года",
+    "option_d": "6 лет",
+    "correct_option": "b",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Каков минимальный возраст для кандидата на пост Президента Литвы?",
+    "option_a": "35 лет",
+    "option_b": "38 лет",
+    "option_c": "45 лет",
+    "option_d": "40 лет",
+    "correct_option": "d",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Кто осуществляет правосудие в Литовской Республике?",
+    "option_a": "Президент",
+    "option_b": "Правительство",
+    "option_c": "Суды",
+    "option_d": "Сейм",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Кто является главой государства в Литовской Республике?",
+    "option_a": "Премьер-министр",
+    "option_b": "Спикер Сейма",
+    "option_c": "Председатель Конституционного суда",
+    "option_d": "Президент",
+    "correct_option": "d",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Как называется парламент Литовской Республики?",
+    "option_a": "Дума",
+    "option_b": "Рийгикогу",
+    "option_c": "Сейм",
+    "option_d": "Саэйма",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Какова столица Литовской Республики?",
+    "option_a": "Каунас",
+    "option_b": "Клайпеда",
+    "option_c": "Шяуляй",
+    "option_d": "Вильнюс",
+    "correct_option": "d",
+    "category": "geography"
+  },
+  {
+    "question_ru": "Какой является государственный язык Литовской Республики?",
+    "option_a": "Русский",
+    "option_b": "Польский",
+    "option_c": "Литовский",
+    "option_d": "Немецкий",
+    "correct_option": "c",
+    "category": "rights"
+  },
+  {
+    "question_ru": "Кто имеет право голосовать на выборах в Сейм?",
+    "option_a": "Граждане старше 21 года",
+    "option_b": "Все жители старше 18 лет",
+    "option_c": "Граждане старше 16 лет",
+    "option_d": "Граждане старше 18 лет",
+    "correct_option": "d",
+    "category": "rights"
+  },
+  {
+    "question_ru": "Что является основой экономической системы Литвы согласно Конституции?",
+    "option_a": "Государственная собственность",
+    "option_b": "Коллективная собственность",
+    "option_c": "Частная собственность",
+    "option_d": "Смешанная собственность",
+    "correct_option": "c",
+    "category": "rights"
+  },
+  {
+    "question_ru": "Когда была провозглашена реставрация независимости Литвы?",
+    "option_a": "16 февраля 1918 года",
+    "option_b": "25 октября 1992 года",
+    "option_c": "11 марта 1990 года",
+    "option_d": "13 января 1991 года",
+    "correct_option": "c",
+    "category": "history"
+  },
+  {
+    "question_ru": "Когда была провозглашена первая независимость Литвы?",
+    "option_a": "11 марта 1990 года",
+    "option_b": "16 февраля 1918 года",
+    "option_c": "25 октября 1992 года",
+    "option_d": "6 июля 1253 года",
+    "correct_option": "b",
+    "category": "history"
+  },
+  {
+    "question_ru": "Сколько судей в Конституционном суде Литвы?",
+    "option_a": "7",
+    "option_b": "11",
+    "option_c": "15",
+    "option_d": "9",
+    "correct_option": "d",
+    "category": "structure"
+  },
+  {
+    "question_ru": "На сколько лет назначается судья Конституционного суда Литвы?",
+    "option_a": "6 лет",
+    "option_b": "8 лет",
+    "option_c": "9 лет",
+    "option_d": "12 лет",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Кто является Верховным главнокомандующим Вооружёнными силами Литвы?",
+    "option_a": "Премьер-министр",
+    "option_b": "Министр обороны",
+    "option_c": "Председатель Сейма",
+    "option_d": "Президент",
+    "correct_option": "d",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Каковы цвета национального флага Литвы (сверху вниз)?",
+    "option_a": "Красный, белый, синий",
+    "option_b": "Зелёный, белый, красный",
+    "option_c": "Жёлтый, зелёный, красный",
+    "option_d": "Синий, белый, зелёный",
+    "correct_option": "c",
+    "category": "symbols"
+  },
+  {
+    "question_ru": "Кто назначает Премьер-министра Литвы?",
+    "option_a": "Сейм",
+    "option_b": "Правительство",
+    "option_c": "Конституционный суд",
+    "option_d": "Президент",
+    "correct_option": "d",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Когда Литва вступила в Европейский союз?",
+    "option_a": "1 января 2000 года",
+    "option_b": "1 мая 2004 года",
+    "option_c": "29 марта 2004 года",
+    "option_d": "21 июня 2004 года",
+    "correct_option": "b",
+    "category": "history"
+  },
+  {
+    "question_ru": "Когда Литва вступила в НАТО?",
+    "option_a": "1 мая 2004 года",
+    "option_b": "1 января 2000 года",
+    "option_c": "29 марта 2004 года",
+    "option_d": "16 февраля 2004 года",
+    "correct_option": "c",
+    "category": "history"
+  },
+  {
+    "question_ru": "Каков минимальный возраст для членства в Сейме?",
+    "option_a": "18 лет",
+    "option_b": "21 год",
+    "option_c": "24 года",
+    "option_d": "28 лет",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Как избирается Президент Литвы?",
+    "option_a": "Сеймом",
+    "option_b": "Правительством",
+    "option_c": "Региональными советами",
+    "option_d": "Непосредственно гражданами",
+    "correct_option": "d",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Сколько раз одно лицо может быть избрано Президентом Литвы?",
+    "option_a": "Только один раз",
+    "option_b": "Два раза",
+    "option_c": "Три раза",
+    "option_d": "Неограниченное количество раз",
+    "correct_option": "b",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Как называется государственный гимн Литвы?",
+    "option_a": "Lietuva tėvyne mūsų",
+    "option_b": "Tautiška giesmė",
+    "option_c": "Lietuva brangi",
+    "option_d": "Mūsų Lietuva",
+    "correct_option": "b",
+    "category": "symbols"
+  },
+  {
+    "question_ru": "Какой орган может признать закон неконституционным в Литве?",
+    "option_a": "Сейм",
+    "option_b": "Президент",
+    "option_c": "Верховный суд",
+    "option_d": "Конституционный суд",
+    "correct_option": "d",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Какова текущая валюта Литовской Республики?",
+    "option_a": "Лит",
+    "option_b": "Крона",
+    "option_c": "Евро",
+    "option_d": "Злотый",
+    "correct_option": "c",
+    "category": "geography"
+  },
+  {
+    "question_ru": "Какой главный принцип организации государственной власти в Литве?",
+    "option_a": "Единство власти",
+    "option_b": "Президентская республика",
+    "option_c": "Разделение властей",
+    "option_d": "Парламентское верховенство",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Что символизирует герб Литвы — Витис?",
+    "option_a": "Белый орёл на красном щите",
+    "option_b": "Белый рыцарь на коне на красном щите",
+    "option_c": "Золотой лев на синем щите",
+    "option_d": "Три короны",
+    "correct_option": "b",
+    "category": "symbols"
+  },
+  {
+    "question_ru": "Кто подписал Акт восстановления независимости Литвы 11 марта 1990 года первым?",
+    "option_a": "Вальдас Адамкус",
+    "option_b": "Альгирдас Бразаускас",
+    "option_c": "Витаутас Ландсбергис",
+    "option_d": "Роландас Паксас",
+    "correct_option": "c",
+    "category": "history"
+  },
+  {
+    "question_ru": "Что гарантирует каждому человеку Конституция Литвы?",
+    "option_a": "Бесплатное жильё",
+    "option_b": "Гарантированное трудоустройство",
+    "option_c": "Прирождённые права и свободы",
+    "option_d": "Только бесплатное образование",
+    "correct_option": "c",
+    "category": "rights"
+  },
+  {
+    "question_ru": "Какова обязанность каждого гражданина Литвы согласно Конституции?",
+    "option_a": "Уплата специальных налогов",
+    "option_b": "Обязательная государственная служба",
+    "option_c": "Защита государства",
+    "option_d": "Вступление в политическую партию",
+    "correct_option": "c",
+    "category": "rights"
+  },
+  {
+    "question_ru": "Какому органу подотчётно Правительство Литвы?",
+    "option_a": "Только Президенту",
+    "option_b": "Конституционному суду",
+    "option_c": "Сейму и Президенту",
+    "option_d": "Верховному суду",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Что является высшей ценностью Литовского государства согласно Конституции?",
+    "option_a": "Государственный суверенитет",
+    "option_b": "Права и свободы человека",
+    "option_c": "Экономическое развитие",
+    "option_d": "Национальная безопасность",
+    "correct_option": "b",
+    "category": "rights"
+  },
+  {
+    "question_ru": "Кому принадлежит суверенная власть в Литовской Республике?",
+    "option_a": "Президенту",
+    "option_b": "Сейму",
+    "option_c": "Народу",
+    "option_d": "Правительству",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "В каком году Литва впервые вступила в Лигу Наций?",
+    "option_a": "1918",
+    "option_b": "1921",
+    "option_c": "1930",
+    "option_d": "1938",
+    "correct_option": "b",
+    "category": "history"
+  },
+  {
+    "question_ru": "Какой орган утверждает Государственный бюджет Литвы?",
+    "option_a": "Президент",
+    "option_b": "Правительство",
+    "option_c": "Конституционный суд",
+    "option_d": "Сейм",
+    "correct_option": "d",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Кто имеет право законодательной инициативы в Литве?",
+    "option_a": "Только члены Сейма",
+    "option_b": "Только Президент",
+    "option_c": "Члены Сейма, Президент, Правительство, граждане (по 50 000 подписей)",
+    "option_d": "Только Правительство",
+    "correct_option": "c",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Какова минимальная продолжительность проживания в Литве для кандидата на пост Президента?",
+    "option_a": "1 год",
+    "option_b": "3 года",
+    "option_c": "5 лет",
+    "option_d": "10 лет",
+    "correct_option": "b",
+    "category": "structure"
+  },
+  {
+    "question_ru": "Гражданином какого государства должен быть кандидат на пост Президента Литвы?",
+    "option_a": "Гражданином ЕС",
+    "option_b": "Гражданином Литвы по рождению",
+    "option_c": "Гражданином Литвы",
+    "option_d": "Гражданином любой страны НАТО",
+    "correct_option": "c",
+    "category": "structure"
+  }
+]

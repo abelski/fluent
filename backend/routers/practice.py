@@ -1,0 +1,491 @@
+# Generic practice-test endpoints.
+# Supports multiple named tests (e.g. "Lithuanian Constitution", "History", …).
+# Admins create/edit/delete tests and their questions via admin endpoints.
+# Export/import allow moving tests between environments as JSON.
+
+import json
+import random
+from typing import Optional, List
+
+from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from sqlmodel import Session, select
+
+from auth import require_user as _require_user
+from database import get_session
+from models import PracticeTest, PracticeQuestion, PracticeExamResult, User
+
+router = APIRouter()
+
+
+def _require_admin(authorization: Optional[str], session: Session) -> User:
+    user = _require_user(authorization, session)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return user
+
+
+def _valid_option(v: str) -> bool:
+    return v in ("a", "b", "c", "d")
+
+
+# ── User-facing endpoints ────────────────────────────────────────────────────
+
+@router.get("/practice/tests")
+def list_active_tests(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """List all active practice tests for authenticated users."""
+    _require_user(authorization, session)
+    tests = session.exec(
+        select(PracticeTest)
+        .where(PracticeTest.is_active == True)
+        .order_by(PracticeTest.sort_order, PracticeTest.id)
+    ).all()
+    result = []
+    for t in tests:
+        count = len(session.exec(
+            select(PracticeQuestion)
+            .where(PracticeQuestion.test_id == t.id, PracticeQuestion.is_active == True)
+        ).all())
+        result.append({
+            "id": t.id,
+            "title_ru": t.title_ru,
+            "title_en": t.title_en,
+            "description_ru": t.description_ru,
+            "description_en": t.description_en,
+            "question_count": t.question_count,
+            "pass_threshold": t.pass_threshold,
+            "active_question_count": count,
+        })
+    return result
+
+
+@router.get("/practice/tests/{test_id}/exam")
+def get_exam_questions(
+    test_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return a random set of active questions for the given test."""
+    _require_user(authorization, session)
+    test = session.get(PracticeTest, test_id)
+    if not test or not test.is_active:
+        raise HTTPException(status_code=404, detail="Test not found")
+    active = session.exec(
+        select(PracticeQuestion)
+        .where(PracticeQuestion.test_id == test_id, PracticeQuestion.is_active == True)
+    ).all()
+    count = min(test.question_count, len(active))
+    chosen = random.sample(active, count) if len(active) >= count else list(active)
+    return {
+        "test": {
+            "id": test.id,
+            "title_ru": test.title_ru,
+            "title_en": test.title_en,
+            "pass_threshold": test.pass_threshold,
+        },
+        "questions": [
+            {
+                "id": q.id,
+                "question_ru": q.question_ru,
+                "option_a": q.option_a,
+                "option_b": q.option_b,
+                "option_c": q.option_c,
+                "option_d": q.option_d,
+                "correct_option": q.correct_option,
+                "category": q.category,
+            }
+            for q in chosen
+        ],
+    }
+
+
+class ExamResultIn(BaseModel):
+    score: int
+    total: int
+
+
+@router.post("/practice/tests/{test_id}/results")
+def save_exam_result(
+    test_id: int,
+    body: ExamResultIn,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Save a completed exam result."""
+    user = _require_user(authorization, session)
+    test = session.get(PracticeTest, test_id)
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+    if body.total <= 0 or body.score < 0 or body.score > body.total:
+        raise HTTPException(status_code=400, detail="Invalid score values")
+    session.add(PracticeExamResult(
+        user_id=user.id, test_id=test_id, score=body.score, total=body.total
+    ))
+    session.commit()
+    return {"ok": True}
+
+
+# ── Admin — Tests CRUD ───────────────────────────────────────────────────────
+
+@router.get("/admin/practice/tests")
+def admin_list_tests(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """List all practice tests (admin)."""
+    _require_admin(authorization, session)
+    tests = session.exec(
+        select(PracticeTest).order_by(PracticeTest.sort_order, PracticeTest.id)
+    ).all()
+    result = []
+    for t in tests:
+        total = len(session.exec(
+            select(PracticeQuestion).where(PracticeQuestion.test_id == t.id)
+        ).all())
+        active = len(session.exec(
+            select(PracticeQuestion)
+            .where(PracticeQuestion.test_id == t.id, PracticeQuestion.is_active == True)
+        ).all())
+        result.append({
+            "id": t.id,
+            "title_ru": t.title_ru,
+            "title_en": t.title_en,
+            "description_ru": t.description_ru,
+            "description_en": t.description_en,
+            "question_count": t.question_count,
+            "pass_threshold": t.pass_threshold,
+            "is_active": t.is_active,
+            "sort_order": t.sort_order,
+            "total_questions": total,
+            "active_questions": active,
+        })
+    return result
+
+
+class TestIn(BaseModel):
+    title_ru: str
+    title_en: Optional[str] = None
+    description_ru: Optional[str] = None
+    description_en: Optional[str] = None
+    question_count: int = 20
+    pass_threshold: float = 0.75
+    is_active: bool = True
+    sort_order: int = 0
+
+
+@router.post("/admin/practice/tests")
+def admin_create_test(
+    body: TestIn,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    _require_admin(authorization, session)
+    if not body.title_ru.strip():
+        raise HTTPException(status_code=400, detail="title_ru required")
+    t = PracticeTest(
+        title_ru=body.title_ru.strip(),
+        title_en=body.title_en,
+        description_ru=body.description_ru,
+        description_en=body.description_en,
+        question_count=body.question_count,
+        pass_threshold=body.pass_threshold,
+        is_active=body.is_active,
+        sort_order=body.sort_order,
+    )
+    session.add(t)
+    session.commit()
+    session.refresh(t)
+    return {"id": t.id, "ok": True}
+
+
+class TestUpdate(BaseModel):
+    title_ru: Optional[str] = None
+    title_en: Optional[str] = None
+    description_ru: Optional[str] = None
+    description_en: Optional[str] = None
+    question_count: Optional[int] = None
+    pass_threshold: Optional[float] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+@router.patch("/admin/practice/tests/{test_id}")
+def admin_update_test(
+    test_id: int,
+    body: TestUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    _require_admin(authorization, session)
+    t = session.get(PracticeTest, test_id)
+    if not t:
+        raise HTTPException(status_code=404, detail="Test not found")
+    if body.title_ru is not None:
+        t.title_ru = body.title_ru.strip()
+    if body.title_en is not None:
+        t.title_en = body.title_en
+    if body.description_ru is not None:
+        t.description_ru = body.description_ru
+    if body.description_en is not None:
+        t.description_en = body.description_en
+    if body.question_count is not None:
+        t.question_count = body.question_count
+    if body.pass_threshold is not None:
+        t.pass_threshold = body.pass_threshold
+    if body.is_active is not None:
+        t.is_active = body.is_active
+    if body.sort_order is not None:
+        t.sort_order = body.sort_order
+    session.add(t)
+    session.commit()
+    return {"ok": True}
+
+
+@router.delete("/admin/practice/tests/{test_id}")
+def admin_delete_test(
+    test_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    _require_admin(authorization, session)
+    t = session.get(PracticeTest, test_id)
+    if not t:
+        raise HTTPException(status_code=404, detail="Test not found")
+    # Delete all questions in this test first
+    questions = session.exec(
+        select(PracticeQuestion).where(PracticeQuestion.test_id == test_id)
+    ).all()
+    for q in questions:
+        session.delete(q)
+    session.delete(t)
+    session.commit()
+    return {"ok": True}
+
+
+# ── Admin — Questions CRUD ───────────────────────────────────────────────────
+
+@router.get("/admin/practice/tests/{test_id}/questions")
+def admin_list_questions(
+    test_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    _require_admin(authorization, session)
+    questions = session.exec(
+        select(PracticeQuestion)
+        .where(PracticeQuestion.test_id == test_id)
+        .order_by(PracticeQuestion.sort_order, PracticeQuestion.id)
+    ).all()
+    return [
+        {
+            "id": q.id,
+            "question_ru": q.question_ru,
+            "option_a": q.option_a,
+            "option_b": q.option_b,
+            "option_c": q.option_c,
+            "option_d": q.option_d,
+            "correct_option": q.correct_option,
+            "category": q.category,
+            "is_active": q.is_active,
+            "sort_order": q.sort_order,
+        }
+        for q in questions
+    ]
+
+
+class QuestionIn(BaseModel):
+    question_ru: str
+    option_a: str
+    option_b: str
+    option_c: str
+    option_d: str
+    correct_option: str
+    category: Optional[str] = None
+    is_active: bool = True
+    sort_order: int = 0
+
+
+@router.post("/admin/practice/tests/{test_id}/questions")
+def admin_create_question(
+    test_id: int,
+    body: QuestionIn,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    _require_admin(authorization, session)
+    if not session.get(PracticeTest, test_id):
+        raise HTTPException(status_code=404, detail="Test not found")
+    if not _valid_option(body.correct_option):
+        raise HTTPException(status_code=400, detail="correct_option must be a/b/c/d")
+    q = PracticeQuestion(
+        test_id=test_id,
+        question_ru=body.question_ru.strip(),
+        option_a=body.option_a.strip(),
+        option_b=body.option_b.strip(),
+        option_c=body.option_c.strip(),
+        option_d=body.option_d.strip(),
+        correct_option=body.correct_option,
+        category=body.category or None,
+        is_active=body.is_active,
+        sort_order=body.sort_order,
+    )
+    session.add(q)
+    session.commit()
+    session.refresh(q)
+    return {"id": q.id, "ok": True}
+
+
+class QuestionUpdate(BaseModel):
+    question_ru: Optional[str] = None
+    option_a: Optional[str] = None
+    option_b: Optional[str] = None
+    option_c: Optional[str] = None
+    option_d: Optional[str] = None
+    correct_option: Optional[str] = None
+    category: Optional[str] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+@router.patch("/admin/practice/questions/{question_id}")
+def admin_update_question(
+    question_id: int,
+    body: QuestionUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    _require_admin(authorization, session)
+    q = session.get(PracticeQuestion, question_id)
+    if not q:
+        raise HTTPException(status_code=404, detail="Question not found")
+    if body.correct_option is not None and not _valid_option(body.correct_option):
+        raise HTTPException(status_code=400, detail="correct_option must be a/b/c/d")
+    for field in ("question_ru", "option_a", "option_b", "option_c", "option_d",
+                  "correct_option", "category", "is_active", "sort_order"):
+        val = getattr(body, field)
+        if val is not None:
+            setattr(q, field, val.strip() if isinstance(val, str) else val)
+    session.add(q)
+    session.commit()
+    return {"ok": True}
+
+
+@router.delete("/admin/practice/questions/{question_id}")
+def admin_delete_question(
+    question_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    _require_admin(authorization, session)
+    q = session.get(PracticeQuestion, question_id)
+    if not q:
+        raise HTTPException(status_code=404, detail="Question not found")
+    session.delete(q)
+    session.commit()
+    return {"ok": True}
+
+
+# ── Admin — Export / Import ──────────────────────────────────────────────────
+
+@router.get("/admin/practice/tests/{test_id}/export")
+def admin_export_test(
+    test_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Export a test and all its questions as a JSON file."""
+    _require_admin(authorization, session)
+    t = session.get(PracticeTest, test_id)
+    if not t:
+        raise HTTPException(status_code=404, detail="Test not found")
+    questions = session.exec(
+        select(PracticeQuestion)
+        .where(PracticeQuestion.test_id == test_id)
+        .order_by(PracticeQuestion.sort_order, PracticeQuestion.id)
+    ).all()
+    payload = {
+        "title_ru": t.title_ru,
+        "title_en": t.title_en,
+        "description_ru": t.description_ru,
+        "description_en": t.description_en,
+        "question_count": t.question_count,
+        "pass_threshold": t.pass_threshold,
+        "questions": [
+            {
+                "question_ru": q.question_ru,
+                "option_a": q.option_a,
+                "option_b": q.option_b,
+                "option_c": q.option_c,
+                "option_d": q.option_d,
+                "correct_option": q.correct_option,
+                "category": q.category,
+                "is_active": q.is_active,
+                "sort_order": q.sort_order,
+            }
+            for q in questions
+        ],
+    }
+    slug = t.title_ru[:30].replace(" ", "_").lower()
+    return JSONResponse(
+        content=payload,
+        headers={"Content-Disposition": f'attachment; filename="practice_{slug}.json"'},
+    )
+
+
+@router.post("/admin/practice/tests/import")
+async def admin_import_test(
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Import a test from a JSON file. Creates a new test with all questions."""
+    _require_admin(authorization, session)
+    try:
+        raw = await file.read()
+        data = json.loads(raw)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON file")
+
+    title_ru = data.get("title_ru", "").strip()
+    if not title_ru:
+        raise HTTPException(status_code=400, detail="title_ru is required in JSON")
+
+    t = PracticeTest(
+        title_ru=title_ru,
+        title_en=data.get("title_en"),
+        description_ru=data.get("description_ru"),
+        description_en=data.get("description_en"),
+        question_count=int(data.get("question_count", 20)),
+        pass_threshold=float(data.get("pass_threshold", 0.75)),
+        is_active=True,
+        sort_order=0,
+    )
+    session.add(t)
+    session.flush()  # get t.id before adding questions
+
+    imported = 0
+    for i, item in enumerate(data.get("questions", [])):
+        opt = item.get("correct_option", "")
+        if not _valid_option(opt):
+            continue
+        q = PracticeQuestion(
+            test_id=t.id,
+            question_ru=str(item.get("question_ru", "")).strip(),
+            option_a=str(item.get("option_a", "")).strip(),
+            option_b=str(item.get("option_b", "")).strip(),
+            option_c=str(item.get("option_c", "")).strip(),
+            option_d=str(item.get("option_d", "")).strip(),
+            correct_option=opt,
+            category=item.get("category") or None,
+            is_active=bool(item.get("is_active", True)),
+            sort_order=int(item.get("sort_order", i)),
+        )
+        session.add(q)
+        imported += 1
+
+    session.commit()
+    return {"ok": True, "test_id": t.id, "imported_questions": imported}

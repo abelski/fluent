@@ -190,3 +190,76 @@ class GrammarLessonResult(SQLModel, table=True):
     total: int       # total tasks in the attempt
     passed: bool     # score / total > 0.75
     created_at: datetime = Field(default_factory=_utcnow)
+
+
+class PracticeTest(SQLModel, table=True):
+    """A named multiple-choice test (e.g. 'Lithuanian Constitution').
+    Admins create and manage tests; each test has its own question pool."""
+    __tablename__ = "practice_test"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title_ru: str
+    title_en: Optional[str] = None
+    description_ru: Optional[str] = None
+    description_en: Optional[str] = None
+    question_count: int = Field(default=20)       # questions shown per exam session
+    pass_threshold: float = Field(default=0.75)   # fraction required to pass (0–1)
+    is_active: bool = Field(default=True)
+    sort_order: int = Field(default=0)
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class PracticeQuestion(SQLModel, table=True):
+    """A single multiple-choice question belonging to a PracticeTest.
+    correct_option is one of: 'a', 'b', 'c', 'd'."""
+    __tablename__ = "practice_question"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    test_id: int = Field(foreign_key="practice_test.id", index=True)
+    question_ru: str
+    option_a: str
+    option_b: str
+    option_c: str
+    option_d: str
+    correct_option: str                     # 'a' | 'b' | 'c' | 'd'
+    category: Optional[str] = None
+    is_active: bool = Field(default=True)
+    sort_order: int = Field(default=0)
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class PracticeExamResult(SQLModel, table=True):
+    """Records a completed practice exam attempt for a user."""
+    __tablename__ = "practice_exam_result"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    test_id: int = Field(foreign_key="practice_test.id", index=True)
+    score: int
+    total: int
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class ConstitutionQuestion(SQLModel, table=True):
+    """A multiple-choice question about the Lithuanian Constitution.
+    Used in the Practice section for citizenship/residency exam preparation.
+    correct_option is one of: 'a', 'b', 'c', 'd'."""
+    __tablename__ = "constitution_question"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    question_ru: str                        # question text in Russian
+    option_a: str
+    option_b: str
+    option_c: str
+    option_d: str
+    correct_option: str                     # 'a' | 'b' | 'c' | 'd'
+    category: Optional[str] = None         # e.g. 'structure', 'history', 'rights'
+    is_active: bool = Field(default=True)  # False = hidden from exams
+    sort_order: int = Field(default=0)
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class ConstitutionExamResult(SQLModel, table=True):
+    """Records a completed constitution exam attempt for a user."""
+    __tablename__ = "constitution_exam_result"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    score: int       # number of correct answers
+    total: int       # total questions in the attempt
+    created_at: datetime = Field(default_factory=_utcnow)
