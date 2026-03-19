@@ -122,6 +122,18 @@ def _run_migrations():
             s.commit()
         except Exception:
             s.rollback()
+        try:
+            s.exec(text("ALTER TABLE subcategory_meta ADD COLUMN is_published BOOLEAN NOT NULL DEFAULT FALSE"))
+            s.exec(text("UPDATE subcategory_meta SET is_published = TRUE"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE grammar_case_rule ADD COLUMN is_published BOOLEAN NOT NULL DEFAULT FALSE"))
+            s.exec(text("UPDATE grammar_case_rule SET is_published = TRUE"))
+            s.commit()
+        except Exception:
+            s.rollback()
 
 
 def get_session():

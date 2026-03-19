@@ -100,9 +100,6 @@ export default function Header() {
         }`}
       >
         {tr.nav.grammar}
-        <span className="ml-1.5 inline-block text-[9px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-600 border border-gray-900 rounded px-1 py-px leading-tight align-middle">
-          {tr.nav.beta}
-        </span>
       </Link>
       <Link
         href="/dashboard/practice"

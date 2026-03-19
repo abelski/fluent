@@ -23,6 +23,7 @@ interface Lesson {
   rules: GrammarRule[];
   is_locked: boolean;
   best_score_pct: number | null;
+  is_published?: boolean;
 }
 
 interface DeclensionTask {
@@ -56,7 +57,6 @@ const LEVEL_STYLES: Record<string, string> = {
 interface Category {
   key: string;
   label: string;
-  comingSoon: boolean;
 }
 
 function normalizeLt(text: string): string {
@@ -182,7 +182,7 @@ function SubcategoryGroup({
                       : 'border-gray-900 hover:bg-white cursor-pointer'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {locked && (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 shrink-0">
                         <path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/>
@@ -191,6 +191,11 @@ function SubcategoryGroup({
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${LEVEL_STYLES[lesson.level] ?? ''}`}>
                       {tr.grammar.levels[lesson.level] ?? lesson.level}
                     </span>
+                    {lesson.is_published === false && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px leading-tight">
+                        В тестировании
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="text-gray-400 text-xs">{lesson.task_count} {plural(lesson.task_count, tr.grammar.tasksCount)}</div>
@@ -217,8 +222,7 @@ function SubcategoryGroup({
 export default function GrammarPage() {
   const { tr, plural } = useT();
   const CATEGORIES: Category[] = [
-    { key: 'padezhi', label: tr.grammar.categories.padezhi, comingSoon: false },
-    { key: 'vremena', label: tr.grammar.categories.vremena, comingSoon: true },
+    { key: 'padezhi', label: tr.grammar.categories.padezhi },
   ];
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
@@ -358,11 +362,6 @@ export default function GrammarPage() {
           <h1 className="text-3xl font-bold mb-2">{tr.grammar.title}</h1>
           <p className="text-gray-400 mb-6">{tr.grammar.subtitle}</p>
 
-          <div className="flex items-start gap-3 bg-amber-50 border border-gray-900 rounded-2xl px-5 py-4 mb-8">
-            <span className="text-amber-600 text-lg shrink-0 mt-0.5">⚠</span>
-            <p className="text-gray-500 text-sm leading-relaxed">{tr.grammar.betaNotice}</p>
-          </div>
-
           {loading ? (
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
@@ -391,35 +390,24 @@ export default function GrammarPage() {
                     data-testid={`category-${cat.key}`}
                   >
                     <button
-                      onClick={() => !cat.comingSoon && toggleCategory(cat.key)}
-                      disabled={cat.comingSoon}
+                      onClick={() => toggleCategory(cat.key)}
                       aria-expanded={isOpen}
                       data-testid={`category-toggle-${cat.key}`}
-                      className={`w-full flex items-center justify-between px-5 py-4 bg-gray-50 transition-colors text-left ${
-                        cat.comingSoon ? 'cursor-default opacity-70' : 'hover:bg-gray-100 cursor-pointer'
-                      }`}
+                      className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
                         <span className="font-semibold text-gray-900">{cat.label}</span>
-                        {cat.comingSoon ? (
-                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-400 border border-gray-900 rounded px-1.5 py-px leading-tight">
-                            {tr.grammar.comingSoon}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-sm">{categoryLessons.length} {plural(categoryLessons.length, tr.grammar.lessonsCount)}</span>
-                        )}
+                        <span className="text-gray-400 text-sm">{categoryLessons.length} {plural(categoryLessons.length, tr.grammar.lessonsCount)}</span>
                       </div>
-                      {!cat.comingSoon && (
-                        <svg
-                          width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
-                          className={`text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-                        >
-                          <path d="M6 8L1 3h10L6 8z" />
-                        </svg>
-                      )}
+                      <svg
+                        width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
+                        className={`text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                      >
+                        <path d="M6 8L1 3h10L6 8z" />
+                      </svg>
                     </button>
 
-                    {isOpen && !cat.comingSoon && (
+                    {isOpen && (
                       <div className="divide-y divide-gray-900 border-t border-gray-900">
                         {subcategoryGroups.map((group, gi) => (
                           <SubcategoryGroup key={`${group.title}-${gi}`} group={group} onStartLesson={startLesson} />

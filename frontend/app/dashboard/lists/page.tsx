@@ -24,6 +24,7 @@ interface SubcategoryMeta {
   article_name_en: string | null;
   name_ru: string | null;
   name_en: string | null;
+  is_published?: boolean;
 }
 
 interface ListProgress {
@@ -64,12 +65,12 @@ export default function ListsPage() {
       .then((data) => { if (data) setQuota(data); })
       .catch(() => {});
 
-    fetch(`${BACKEND_URL}/api/subcategory-meta`)
+    fetch(`${BACKEND_URL}/api/subcategory-meta`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : {}))
       .then((data: Record<string, SubcategoryMeta>) => setSubcategoryMeta(data))
       .catch(() => {});
 
-    fetch(`${BACKEND_URL}/api/lists`)
+    fetch(`${BACKEND_URL}/api/lists`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((data: WordListSummary[]) => {
         const validData = Array.isArray(data) ? data : [];
@@ -179,6 +180,11 @@ export default function ListsPage() {
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className="font-semibold text-gray-900">{group.label}</span>
                         <span className="text-gray-400 text-sm">{group.lists.length} {plural(group.lists.length, tr.lists.listsCount)}</span>
+                        {meta?.is_published === false && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px leading-tight">
+                            В тестировании
+                          </span>
+                        )}
                         {meta?.cefr_level && (
                           <span className="text-xs font-semibold px-2 py-0.5 rounded-full border border-gray-900 bg-blue-50 text-blue-700">
                             {meta.cefr_level}

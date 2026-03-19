@@ -26,11 +26,12 @@ def list_lessons(
     Locking rule: lesson N is locked until lesson N-1 best score > 75%.
     Unauthenticated users see all lessons unlocked (no progression tracking).
     """
-    lessons = get_lessons(session)
+    user = _try_get_user(authorization, session)
+    is_admin = user is not None and user.is_admin
+    lessons = get_lessons(session, is_admin=is_admin)
 
     best_scores: dict[int, float] = {}
 
-    user = _try_get_user(authorization, session)
     user_authenticated = user is not None
     if user:
         results = session.exec(

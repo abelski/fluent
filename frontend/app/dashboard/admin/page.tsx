@@ -49,9 +49,17 @@ interface SubcategoryRow {
   article_name_en: string | null;
   name_ru: string | null;
   name_en: string | null;
+  is_published: boolean;
 }
 
-type Area = 'admin' | 'content';
+interface GrammarRuleRow {
+  id: number;
+  case_index: number;
+  name_ru: string;
+  is_published: boolean;
+}
+
+type Area = 'admin' | 'content' | 'publication';
 type AdminSubTab = 'users' | 'reports';
 type ContentSubTab = 'articles' | 'vocabularies' | 'grammar';
 
@@ -170,6 +178,7 @@ export default function AdminPage() {
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [importMsg, setImportMsg] = useState('');
   const importRef = useRef<HTMLInputElement>(null);
+  const [grammarRules, setGrammarRules] = useState<GrammarRuleRow[]>([]);
 
   function authHeaders() {
     const token = getToken();
@@ -187,8 +196,9 @@ export default function AdminPage() {
       fetch(`${BACKEND_URL}/api/admin/articles`, { headers }),
       fetch(`${BACKEND_URL}/api/admin/subcategories`, { headers }),
       fetch(`${BACKEND_URL}/api/admin/content/word-lists`, { headers }),
+      fetch(`${BACKEND_URL}/api/admin/grammar/rules`, { headers }),
     ])
-      .then(async ([usersRes, quotaRes, reportsRes, articlesRes, subcatsRes, contentRes]) => {
+      .then(async ([usersRes, quotaRes, reportsRes, articlesRes, subcatsRes, contentRes, grammarRulesRes]) => {
         if (usersRes.status === 403 || usersRes.status === 401) { router.replace('/dashboard/lists'); return; }
         const [usersData, quotaData] = await Promise.all([usersRes.json(), quotaRes.json()]);
         setUsers(usersData);
@@ -197,6 +207,7 @@ export default function AdminPage() {
         if (articlesRes.ok) setArticles(await articlesRes.json());
         if (subcatsRes.ok) setSubcategories(await subcatsRes.json());
         if (contentRes.ok) setContentLists(await contentRes.json());
+        if (grammarRulesRes.ok) setGrammarRules(await grammarRulesRes.json());
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -464,6 +475,24 @@ export default function AdminPage() {
     loadData();
   }
 
+  async function toggleSubcatPublication(key: string, isPublished: boolean) {
+    await fetch(`${BACKEND_URL}/api/admin/subcategories/${encodeURIComponent(key)}/publication`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ is_published: isPublished }),
+    }).catch(() => {});
+    loadData();
+  }
+
+  async function toggleGrammarRulePublication(ruleId: number, isPublished: boolean) {
+    await fetch(`${BACKEND_URL}/api/admin/grammar/rules/${ruleId}/publication`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ is_published: isPublished }),
+    }).catch(() => {});
+    loadData();
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -497,6 +526,12 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${area === 'content' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
             Контент
+          </button>
+          <button
+            onClick={() => setArea('publication')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${area === 'publication' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+          >
+            Публикация
           </button>
         </div>
 
@@ -797,6 +832,7 @@ export default function AdminPage() {
                   article_name_en: null,
                   name_ru: null,
                   name_en: null,
+                  is_published: false,
                 };
                 const label = (lang === 'en' ? scMeta.name_en : scMeta.name_ru) ?? tr.lists.subcategories[subcatKey] ?? subcatKey;
                 const isEditingMeta = editingListKey === subcatKey;
@@ -1153,6 +1189,84 @@ export default function AdminPage() {
             </div>
           );
         })()}
+        {/* ── Publication tab ── */}
+        {area === 'publication' && (
+          <div className="flex flex-col gap-6">
+
+            {/* Vocabulary subcategories */}
+            <div className="border border-gray-900 rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 bg-gray-50 border-b border-gray-900">
+                <h2 className="font-semibold text-gray-900">Словари — группы</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Группы, отмеченные «В тестировании», видны только администраторам</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {subcategories.length === 0 && (
+                  <p className="text-gray-400 text-sm py-6 text-center">Нет групп</p>
+                )}
+                {subcategories.map((sc) => {
+                  const label = sc.name_ru ?? sc.key;
+                  return (
+                    <div key={sc.key} className="flex items-center justify-between px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-gray-900">{label}</span>
+                        <span className="text-xs text-gray-400 font-mono">{sc.key}</span>
+                        {!sc.is_published && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px">В тестировании</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => toggleSubcatPublication(sc.key, !sc.is_published)}
+                        className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
+                          sc.is_published
+                            ? 'border-gray-900 text-gray-600 hover:bg-gray-100'
+                            : 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-500'
+                        }`}
+                      >
+                        {sc.is_published ? 'Скрыть' : 'Опубликовать'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Grammar case groups */}
+            <div className="border border-gray-900 rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 bg-gray-50 border-b border-gray-900">
+                <h2 className="font-semibold text-gray-900">Грамматика — падежи</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Уроки по неопубликованным падежам видны только администраторам</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {grammarRules.length === 0 && (
+                  <p className="text-gray-400 text-sm py-6 text-center">Нет правил</p>
+                )}
+                {grammarRules.map((rule) => (
+                  <div key={rule.id} className="flex items-center justify-between px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-400 font-mono w-6">{rule.case_index}</span>
+                      <span className="text-sm text-gray-900">{rule.name_ru}</span>
+                      {!rule.is_published && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px">В тестировании</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => toggleGrammarRulePublication(rule.id, !rule.is_published)}
+                      className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
+                        rule.is_published
+                          ? 'border-gray-900 text-gray-600 hover:bg-gray-100'
+                          : 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-500'
+                      }`}
+                    >
+                      {rule.is_published ? 'Скрыть' : 'Опубликовать'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
       </div>
     </main>
   );

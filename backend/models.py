@@ -125,6 +125,7 @@ class SubcategoryMeta(SQLModel, table=True):
     sort_order: Optional[int] = Field(default=0)  # display order on the lists page
     name_ru: Optional[str] = None  # overrides hardcoded translation key in Russian
     name_en: Optional[str] = None  # overrides hardcoded translation key in English
+    is_published: bool = Field(default=False)  # False = testing (admins only); True = visible to all
 
 
 class GrammarSentence(SQLModel, table=True):
@@ -155,6 +156,7 @@ class GrammarCaseRule(SQLModel, table=True):
     endings_sg: str                 # singular endings, e.g. "-ą, -į, -ų"
     endings_pl: str                 # plural endings, e.g. "-us, -ius, -as, -es"
     transform: str                  # transformation rules description
+    is_published: bool = Field(default=False)  # False = testing (admins only); True = visible to all
 
 
 class Article(SQLModel, table=True):

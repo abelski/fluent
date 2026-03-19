@@ -39,8 +39,14 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
 
 
 @router.get("/subcategory-meta")
-def get_subcategory_meta(session: Session = Depends(get_session)):
-    """Return CEFR/difficulty/article metadata keyed by subcategory string."""
+def get_subcategory_meta(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return CEFR/difficulty/article metadata keyed by subcategory string.
+    Admins receive is_published field for all subcategories."""
+    user = _try_get_user(authorization, session)
+    is_admin = user is not None and user.is_admin
     rows = session.exec(select(SubcategoryMeta)).all()
     return {
         r.key: {
@@ -51,15 +57,23 @@ def get_subcategory_meta(session: Session = Depends(get_session)):
             "article_name_en": r.article_name_en,
             "name_ru": r.name_ru,
             "name_en": r.name_en,
+            **({"is_published": r.is_published} if is_admin else {}),
         }
         for r in rows
     }
 
 
 @router.get("/lists")
-def get_lists(session: Session = Depends(get_session)):
+def get_lists(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
     """Return all public word lists ordered by subcategory sort_order then list sort_order.
+    Non-admins only see lists from published subcategories.
     Word counts are fetched in a single aggregation query to avoid N+1."""
+    user = _try_get_user(authorization, session)
+    is_admin = user is not None and user.is_admin
+
     lists = session.exec(
         select(WordList).where(WordList.is_public == True, WordList.archived == False)  # noqa: E712
     ).all()
@@ -70,9 +84,14 @@ def get_lists(session: Session = Depends(get_session)):
             .group_by(WordListItem.word_list_id)
         ).all()
     )
-    # Load subcategory sort orders for stable ordering
+    # Load subcategory metadata for ordering and publication filtering
     meta_rows = session.exec(select(SubcategoryMeta)).all()
     subcat_order = {r.key: (r.sort_order or 0) for r in meta_rows}
+    published_subcats = {r.key for r in meta_rows if r.is_published}
+
+    # Filter unpublished subcategories for non-admins
+    if not is_admin:
+        lists = [wl for wl in lists if (wl.subcategory or "") in published_subcats]
 
     sorted_lists = sorted(
         lists,

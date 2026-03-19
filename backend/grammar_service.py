@@ -62,14 +62,18 @@ def _extract_stem(display: str) -> str:
     return match.group(1) if match else ''
 
 
-def get_lessons(session: Session) -> list[dict]:
+def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
     """Return metadata for all lessons defined in LESSON_CONFIG.
 
     LESSON_CONFIG entries are tuples: (id, level, cases, task_count, title).
     Each lesson includes the grammar rules for its cases so the frontend can
     display hints without an extra API round-trip.
     Rules are loaded from the grammar_case_rule DB table.
+    Non-admins only receive lessons where all case indices are published.
+    Admins receive all lessons with an is_published field on each.
     """
+    case_rules = session.exec(select(GrammarCaseRule)).all()
+    published_cases: set[int] = {r.case_index for r in case_rules if r.is_published}
     db_rules = {
         row.case_index: {
             "question": row.question,
@@ -79,19 +83,26 @@ def get_lessons(session: Session) -> list[dict]:
             "endings_pl": row.endings_pl,
             "transform": row.transform,
         }
-        for row in session.exec(select(GrammarCaseRule)).all()
+        for row in case_rules
     }
-    return [
-        {
+    result = []
+    for entry in LESSON_CONFIG:
+        lesson_cases: list[int] = entry[2]
+        lesson_published = all(c in published_cases for c in lesson_cases)
+        if not is_admin and not lesson_published:
+            continue
+        lesson: dict = {
             "id": entry[0],
             "title": entry[4],
             "level": entry[1],
-            "cases": entry[2],
+            "cases": lesson_cases,
             "task_count": entry[3],
-            "rules": [db_rules[c] for c in entry[2] if c in db_rules],
+            "rules": [db_rules[c] for c in lesson_cases if c in db_rules],
         }
-        for entry in LESSON_CONFIG
-    ]
+        if is_admin:
+            lesson["is_published"] = lesson_published
+        result.append(lesson)
+    return result
 
 
 def _word_form(word_entry: list, case_idx: int) -> str | None:
