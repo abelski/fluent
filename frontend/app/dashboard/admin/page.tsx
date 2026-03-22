@@ -303,7 +303,7 @@ export default function AdminPage() {
         if (contentRes.ok) setContentLists(await contentRes.json());
         if (grammarRulesRes.ok) setGrammarRules(await grammarRulesRes.json());
       })
-      .catch(() => {})
+      .catch((err) => console.error('API error:', err))
       .finally(() => setLoading(false));
   }
 
@@ -459,7 +459,7 @@ export default function AdminPage() {
     await fetch(`${BACKEND_URL}/api/admin/users/${userId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     setSaving(false);
     loadData();
   }
@@ -471,7 +471,7 @@ export default function AdminPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ is_admin: isAdmin }),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     setSaving(false);
     loadData();
   }
@@ -483,7 +483,7 @@ export default function AdminPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ is_premium: isPremium, premium_until: until ? `${until}T00:00:00` : null }),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     setSaving(false);
     setEditingId(null);
     setGrantDate('');
@@ -495,7 +495,7 @@ export default function AdminPage() {
     await fetch(`${BACKEND_URL}/api/admin/reports/${id}/resolve`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     loadData();
   }
 
@@ -505,7 +505,7 @@ export default function AdminPage() {
     await fetch(`${BACKEND_URL}/api/admin/reports/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     loadData();
   }
 
@@ -514,7 +514,7 @@ export default function AdminPage() {
     await fetch(`${BACKEND_URL}/api/admin/articles/${slug}`, {
       method: 'DELETE',
       headers: authHeaders(),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     loadData();
   }
 
@@ -575,7 +575,7 @@ export default function AdminPage() {
         name_ru: listDraft.name_ru || null,
         name_en: listDraft.name_en || null,
       }),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     setSaving(false);
     setEditingListKey(null);
     loadData();
@@ -586,7 +586,7 @@ export default function AdminPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ is_published: isPublished }),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     loadData();
   }
 
@@ -636,7 +636,7 @@ export default function AdminPage() {
 
   async function deletePracticeTest(id: number) {
     if (!confirm(tr.adminPractice.deleteTestConfirm)) return;
-    await fetch(`${BACKEND_URL}/api/admin/practice/tests/${id}`, { method: 'DELETE', headers: authHeaders() }).catch(() => {});
+    await fetch(`${BACKEND_URL}/api/admin/practice/tests/${id}`, { method: 'DELETE', headers: authHeaders() }).catch((err) => console.error('API error:', err));
     setSelectedTestId(null);
     loadPracticeTests();
   }
@@ -676,7 +676,7 @@ export default function AdminPage() {
 
   async function deletePracticeQ(id: number, testId: number) {
     if (!confirm(tr.adminPractice.deleteQuestionConfirm)) return;
-    await fetch(`${BACKEND_URL}/api/admin/practice/questions/${id}`, { method: 'DELETE', headers: authHeaders() }).catch(() => {});
+    await fetch(`${BACKEND_URL}/api/admin/practice/questions/${id}`, { method: 'DELETE', headers: authHeaders() }).catch((err) => console.error('API error:', err));
     loadPracticeQuestions(testId);
   }
 
@@ -685,7 +685,7 @@ export default function AdminPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ is_active: !q.is_active }),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     loadPracticeQuestions(testId);
   }
 
@@ -704,7 +704,7 @@ export default function AdminPage() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      }).catch(() => {});
+      }).catch((err) => console.error('API error:', err));
   }
 
   async function importPracticeTest(e: React.ChangeEvent<HTMLInputElement>) {
@@ -776,7 +776,7 @@ export default function AdminPage() {
     await fetch(`${BACKEND_URL}/api/admin/constitution/questions/${id}`, {
       method: 'DELETE',
       headers: authHeaders(),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     loadConstitutionQuestions();
   }
 
@@ -785,7 +785,7 @@ export default function AdminPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ is_active: !q.is_active }),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     loadConstitutionQuestions();
   }
 
@@ -794,7 +794,7 @@ export default function AdminPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ is_published: isPublished }),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     loadData();
   }
 

@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getToken } from '../../lib/api';
 
 export default function DashboardPage() {
+  const router = useRouter();
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
@@ -16,12 +19,13 @@ export default function DashboardPage() {
     const token = urlToken || getToken();
 
     if (!token) {
-      window.location.href = '/login';
+      router.replace('/login');
       return;
     }
 
+    // Full reload so all components pick up the newly stored token
     window.location.href = '/dashboard/lists';
-  }, []);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">

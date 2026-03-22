@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 import { useT } from '../../../lib/useT';
@@ -43,16 +44,18 @@ interface Quota {
 
 export default function ListsPage() {
   const { tr, plural, lang } = useT();
+  const router = useRouter();
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [subcategoryMeta, setSubcategoryMeta] = useState<Record<string, SubcategoryMeta>>({});
   const [progress, setProgress] = useState<Record<number, ListProgress>>({});
   const [loading, setLoading] = useState(true);
   const [quota, setQuota] = useState<Quota | null>(null);
   const [openSubcategories, setOpenSubcategories] = useState<Set<string>>(new Set());
+  const firstSubcategoryOpened = useRef(false);
 
   useEffect(() => {
     if (!getToken()) {
-      window.location.href = '/login';
+      router.replace('/login');
       return;
     }
 
@@ -63,12 +66,12 @@ export default function ListsPage() {
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data) setQuota(data); })
-      .catch(() => {});
+      .catch((err) => console.error('Failed to fetch quota:', err));
 
     fetch(`${BACKEND_URL}/api/subcategory-meta`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : {}))
       .then((data: Record<string, SubcategoryMeta>) => setSubcategoryMeta(data))
-      .catch(() => {});
+      .catch((err) => console.error('Failed to fetch subcategory meta:', err));
 
     fetch(`${BACKEND_URL}/api/lists`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
@@ -89,19 +92,20 @@ export default function ListsPage() {
             }
             setProgress(map);
           })
-          .catch(() => {});
+          .catch((err) => console.error('Failed to fetch lists progress:', err));
       })
-      .catch(() => {})
+      .catch((err) => console.error('Failed to fetch lists:', err))
       .finally(() => setLoading(false));
   }, []);
 
-  // Open the first subcategory when lists load
+  // Open the first subcategory when lists load (only once)
   useEffect(() => {
-    if (lists.length > 0 && openSubcategories.size === 0) {
+    if (lists.length > 0 && !firstSubcategoryOpened.current) {
+      firstSubcategoryOpened.current = true;
       const firstKey = lists[0].subcategory ?? 'other';
       setOpenSubcategories(new Set([firstKey]));
     }
-  }, [lists]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lists]);
 
   const limitReached = quota !== null && quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
 

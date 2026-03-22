@@ -101,7 +101,7 @@ function ReviewContent() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ status, mistake, clear_mistake: clearMistake }),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
   }, []);
 
   const loadWords = useCallback(() => {
@@ -252,7 +252,7 @@ function ReviewContent() {
               {tr.common.getPremium}
             </Link>
             <button
-              onClick={() => { window.location.href = '/dashboard/lists'; }}
+              onClick={() => router.push('/dashboard/lists')}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
             >
               {tr.common.backToLists}
@@ -311,7 +311,7 @@ function ReviewContent() {
               {tr.common.repeatMore}
             </button>
             <button
-              onClick={() => { window.location.href = '/dashboard/lists'; }}
+              onClick={() => router.push('/dashboard/lists')}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
             >
               {tr.common.backToLists}

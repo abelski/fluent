@@ -66,7 +66,7 @@ export default function PracticePage() {
     })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: PracticeTest[]) => setTests(Array.isArray(data) ? data : []))
-      .catch(() => {})
+      .catch((err) => console.error('API error:', err))
       .finally(() => setTestsLoading(false));
   }, []);
 
@@ -111,7 +111,7 @@ export default function PracticePage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ score, total }),
-        }).catch(() => {});
+        }).catch((err) => console.error('API error:', err));
       }
       setPageState('result');
     } else {

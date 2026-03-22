@@ -120,7 +120,7 @@ export default function QuizPage() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ status, mistake }),
-    }).catch(() => {});
+    }).catch((err) => console.error('Failed to save word progress:', err));
   }, []);
 
   const loadWords = useCallback(() => {

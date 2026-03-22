@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, resolveListId, getToken } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 
@@ -26,6 +26,7 @@ interface WordListDetail {
 export default function ListDetailPage() {
   const { id: _id } = useParams<{ id: string }>();
   const id = resolveListId(_id);
+  const router = useRouter();
   const { tr, plural, lang } = useT();
 
   const [list, setList] = useState<WordListDetail | null>(null);
@@ -33,9 +34,9 @@ export default function ListDetailPage() {
 
   function handleStudyClick() {
     if (!getToken()) {
-      window.location.href = '/login';
+      router.replace('/login');
     } else {
-      window.location.href = `/dashboard/lists/${id}/study`;
+      router.push(`/dashboard/lists/${id}/study`);
     }
   }
 

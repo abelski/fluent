@@ -78,7 +78,7 @@ export default function ArticleEditorPage() {
           });
         }
       })
-      .catch(() => {})
+      .catch((err) => console.error('API error:', err))
       .finally(() => setLoading(false));
   }, []);
 

@@ -51,7 +51,7 @@ export default function Header() {
       })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => { if (data?.is_admin || data?.is_superadmin) setIsAdmin(true); })
-        .catch(() => {});
+        .catch((err) => console.error('Failed to fetch admin status:', err));
     }
   }, []);
 

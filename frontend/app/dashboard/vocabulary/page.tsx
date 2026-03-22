@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
@@ -19,6 +20,7 @@ interface KnownWord {
 
 export default function VocabularyPage() {
   const { tr, lang } = useT();
+  const router = useRouter();
   const [words, setWords] = useState<KnownWord[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -26,7 +28,7 @@ export default function VocabularyPage() {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      window.location.href = '/login';
+      router.replace('/login');
       return;
     }
     fetch(`${BACKEND_URL}/api/me/known-words`, {
@@ -34,9 +36,9 @@ export default function VocabularyPage() {
     })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: KnownWord[]) => setWords(Array.isArray(data) ? data : []))
-      .catch(() => {})
+      .catch((err) => console.error('Failed to fetch vocabulary:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return words;

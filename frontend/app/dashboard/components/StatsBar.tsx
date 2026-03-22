@@ -39,7 +39,7 @@ export default function StatsBar() {
       .then((data) => {
         if (data) setStats({ known: data.known, streak: data.streak, mistakes: data.mistakes ?? 0 });
       })
-      .catch(() => {});
+      .catch((err) => console.error('API error:', err));
   }, []);
 
   if (!stats) return null;

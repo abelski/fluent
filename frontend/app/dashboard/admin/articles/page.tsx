@@ -39,7 +39,7 @@ export default function AdminArticlesPage() {
         return r.ok ? r.json() : null;
       })
       .then((data) => { if (data) setArticles(data); })
-      .catch(() => {})
+      .catch((err) => console.error('API error:', err))
       .finally(() => setLoading(false));
   }
 
@@ -50,7 +50,7 @@ export default function AdminArticlesPage() {
     await fetch(`${BACKEND_URL}/api/admin/articles/${slug}`, {
       method: 'DELETE',
       headers: authHeaders(),
-    }).catch(() => {});
+    }).catch((err) => console.error('API error:', err));
     loadArticles();
   }
 

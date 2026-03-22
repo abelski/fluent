@@ -290,7 +290,7 @@ export default function GrammarPage() {
     fetch(`${BACKEND_URL}/api/grammar/lessons`, { headers })
       .then((r) => r.json())
       .then((data: Lesson[]) => setLessons(Array.isArray(data) ? data : []))
-      .catch(() => {})
+      .catch((err) => console.error('API error:', err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -307,7 +307,7 @@ export default function GrammarPage() {
       body: JSON.stringify({ score, total }),
     })
       .then(() => fetchLessons()) // refresh locked status in background
-      .catch(() => {});
+      .catch((err) => console.error('API error:', err));
   }
 
   function startLesson(lesson: Lesson) {
