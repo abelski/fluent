@@ -108,7 +108,7 @@ class MistakeReport(SQLModel, table=True):
     user_id: str = Field(foreign_key="user.id", index=True)
     context: Optional[str] = None   # e.g. 'word:42', 'grammar:3'
     description: str = Field(default="", max_length=500)
-    status: str = Field(default="open")  # open | resolved
+    status: str = Field(default="open")  # open | onhold | resolved
     created_at: datetime = Field(default_factory=_utcnow)
 
 

@@ -234,7 +234,9 @@ export interface Translations {
     removeAdmin: string;
     noReports: string;
     resolvedBadge: string;
+    onholdBadge: string;
     resolve: string;
+    hold: string;
     delete: string;
     deleteConfirm: string;
     // Content management

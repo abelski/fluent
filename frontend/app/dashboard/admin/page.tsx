@@ -26,7 +26,7 @@ interface ReportRow {
   user_email: string;
   context: string | null;
   description: string;
-  status: 'open' | 'resolved';
+  status: 'open' | 'onhold' | 'resolved';
   created_at: string;
 }
 
@@ -496,6 +496,15 @@ export default function AdminPage() {
   async function resolveReport(id: number) {
     const token = getToken();
     await fetch(`${BACKEND_URL}/api/admin/reports/${id}/resolve`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch((err) => console.error('API error:', err));
+    loadData();
+  }
+
+  async function holdReport(id: number) {
+    const token = getToken();
+    await fetch(`${BACKEND_URL}/api/admin/reports/${id}/hold`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
     }).catch((err) => console.error('API error:', err));
@@ -1008,12 +1017,16 @@ export default function AdminPage() {
               <div
                 key={r.id}
                 className={`rounded-2xl border p-4 transition-colors ${
-                  r.status === 'resolved' ? 'border-gray-900 bg-white opacity-50' : 'border-gray-900 bg-gray-50'
+                  r.status === 'resolved' ? 'border-gray-900 bg-white opacity-50'
+                  : r.status === 'onhold' ? 'border-gray-300 bg-white opacity-60'
+                  : 'border-gray-900 bg-gray-50'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono text-gray-400">#{r.id}</span>
+                      <span className="text-gray-300 text-xs">·</span>
                       <span className="text-xs font-medium text-gray-500 truncate">{r.user_name}</span>
                       <span className="text-gray-300 text-xs">·</span>
                       <span className="text-gray-400 text-xs">{new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
@@ -1028,12 +1041,23 @@ export default function AdminPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {r.status === 'open' && (
-                      <button
-                        onClick={() => resolveReport(r.id)}
-                        className="text-xs px-3 py-1.5 text-emerald-600 hover:text-emerald-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
-                      >
-                        {tr.admin.resolve}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => holdReport(r.id)}
+                          className="text-xs px-3 py-1.5 text-amber-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
+                        >
+                          {tr.admin.hold}
+                        </button>
+                        <button
+                          onClick={() => resolveReport(r.id)}
+                          className="text-xs px-3 py-1.5 text-emerald-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
+                        >
+                          {tr.admin.resolve}
+                        </button>
+                      </>
+                    )}
+                    {r.status === 'onhold' && (
+                      <span className="text-xs text-amber-500">{tr.admin.onholdBadge}</span>
                     )}
                     {r.status === 'resolved' && (
                       <span className="text-xs text-gray-300">{tr.admin.resolvedBadge}</span>

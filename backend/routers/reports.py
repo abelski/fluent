@@ -111,3 +111,20 @@ def resolve_report(
     session.add(report)
     session.commit()
     return {"ok": True}
+
+
+@router.patch("/admin/reports/{report_id}/hold")
+def hold_report(
+    report_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Put a report on hold (excluded from triage). Admin-only."""
+    _require_admin(authorization, session)
+    report = session.get(MistakeReport, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    report.status = "onhold"
+    session.add(report)
+    session.commit()
+    return {"ok": True}
