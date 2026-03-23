@@ -193,11 +193,24 @@ class GrammarLessonResult(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_utcnow)
 
 
+class PracticeCategory(SQLModel, table=True):
+    """A top-level grouping of practice tests (e.g. 'Constitution', 'History').
+    Admins create categories; each category can contain multiple PracticeTests."""
+    __tablename__ = "practice_category"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name_ru: str
+    name_en: Optional[str] = None
+    description_ru: Optional[str] = None
+    sort_order: int = Field(default=0)
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
 class PracticeTest(SQLModel, table=True):
     """A named multiple-choice test (e.g. 'Lithuanian Constitution').
     Admins create and manage tests; each test has its own question pool."""
     __tablename__ = "practice_test"
     id: Optional[int] = Field(default=None, primary_key=True)
+    category_id: Optional[int] = Field(default=None, foreign_key="practice_category.id", index=True)
     title_ru: str
     title_en: Optional[str] = None
     description_ru: Optional[str] = None
@@ -205,6 +218,7 @@ class PracticeTest(SQLModel, table=True):
     question_count: int = Field(default=20)       # questions shown per exam session
     pass_threshold: float = Field(default=0.75)   # fraction required to pass (0–1)
     status: str = Field(default="draft")          # draft | testing | published
+    is_premium: bool = Field(default=False)       # requires premium subscription
     created_by: Optional[str] = Field(default=None, foreign_key="user.id")  # admin who created
     sort_order: int = Field(default=0)
     created_at: datetime = Field(default_factory=_utcnow)

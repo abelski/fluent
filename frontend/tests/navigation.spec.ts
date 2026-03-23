@@ -286,10 +286,10 @@ test.describe('Grammar progression — locking', () => {
 });
 
 test.describe('Practice page', () => {
-  test('shows coming soon text', async ({ page }) => {
+  test('shows Практика heading and category prompt', async ({ page }) => {
     await page.goto('/dashboard/practice');
     await expect(page.getByRole('heading', { name: 'Практика' })).toBeVisible();
-    await expect(page.getByText('Скоро здесь появятся упражнения')).toBeVisible();
+    await expect(page.getByText('Выберите категорию для начала практики')).toBeVisible();
   });
 });
 

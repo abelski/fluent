@@ -139,6 +139,45 @@ def _run_migrations():
             s.commit()
         except Exception:
             s.rollback()
+        try:
+            s.exec(text(
+                "CREATE TABLE IF NOT EXISTS practice_category ("
+                "  id SERIAL PRIMARY KEY,"
+                "  name_ru VARCHAR NOT NULL,"
+                "  name_en VARCHAR,"
+                "  description_ru VARCHAR,"
+                "  sort_order INTEGER NOT NULL DEFAULT 0,"
+                "  created_at TIMESTAMP NOT NULL DEFAULT NOW()"
+                ")"
+            ))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE practice_test ADD COLUMN category_id INTEGER REFERENCES practice_category(id)"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE practice_test ADD COLUMN is_premium BOOLEAN NOT NULL DEFAULT FALSE"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            # Seed: create Constitution category and link existing test if not already done
+            existing = s.exec(text("SELECT id FROM practice_category WHERE name_ru = 'Конституция'")).first()
+            if not existing:
+                s.exec(text(
+                    "INSERT INTO practice_category (name_ru, name_en, description_ru, sort_order, created_at) "
+                    "VALUES ('Конституция', 'Constitution', 'Подготовка к гражданству и ПМЖ', 0, NOW())"
+                ))
+                s.commit()
+            cat = s.exec(text("SELECT id FROM practice_category WHERE name_ru = 'Конституция'")).first()
+            if cat:
+                s.exec(text(f"UPDATE practice_test SET category_id = {cat[0]} WHERE category_id IS NULL AND title_ru ILIKE '%конституц%'"))
+                s.commit()
+        except Exception:
+            s.rollback()
 
 
 def get_session():

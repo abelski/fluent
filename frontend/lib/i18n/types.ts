@@ -128,6 +128,13 @@ export interface Translations {
   practice: {
     title: string;
     comingSoon: string;
+    selectCategory: string;
+    backToCategories: string;
+    backToTests: string;
+    premiumBadge: string;
+    premiumLocked: string;
+    startBtn: string;
+    noTests: string;
     constitution: {
       title: string;
       subtitle: string;
@@ -196,6 +203,19 @@ export interface Translations {
     cancel: string;
     delete: string;
     backToTests: string;
+    // Category management
+    addCategory: string;
+    editCategory: string;
+    deleteCategoryConfirm: string;
+    noCategories: string;
+    backToCategories: string;
+    fieldCategoryNameRu: string;
+    fieldCategoryNameEn: string;
+    fieldCategoryDescRu: string;
+    fieldIsPremium: string;
+    premiumBadge: string;
+    comingSoon: string;
+    testsCount: string;
   };
   review: {
     mistakesMode: string;
