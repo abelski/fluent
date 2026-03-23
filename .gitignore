@@ -41,6 +41,8 @@ temp_files/
 frontend/test-results/
 backend/test-results/
 **/playwright-report/
+**/test-output/
 
 .mcp.json
+.playwright-mcp/
 

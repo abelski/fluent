@@ -73,7 +73,10 @@ def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
     Admins receive all lessons with an is_published field on each.
     """
     case_rules = session.exec(select(GrammarCaseRule)).all()
-    published_cases: set[int] = {r.case_index for r in case_rules if r.is_published}
+    # published cases visible to all; testing+draft visible to admins
+    published_cases: set[int] = {r.case_index for r in case_rules if r.status == "published"}
+    admin_visible_cases: set[int] = {r.case_index for r in case_rules if r.status in ("published", "testing", "draft")}
+    case_status: dict[int, str] = {r.case_index: r.status for r in case_rules}
     db_rules = {
         row.case_index: {
             "question": row.question,
@@ -89,7 +92,10 @@ def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
     for entry in LESSON_CONFIG:
         lesson_cases: list[int] = entry[2]
         lesson_published = all(c in published_cases for c in lesson_cases)
+        lesson_admin_visible = all(c in admin_visible_cases for c in lesson_cases)
         if not is_admin and not lesson_published:
+            continue
+        if is_admin and not lesson_admin_visible:
             continue
         lesson: dict = {
             "id": entry[0],
@@ -100,7 +106,10 @@ def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
             "rules": [db_rules[c] for c in lesson_cases if c in db_rules],
         }
         if is_admin:
-            lesson["is_published"] = lesson_published
+            # Show the "worst" status among lesson cases (draft < testing < published)
+            statuses = [case_status.get(c, "testing") for c in lesson_cases]
+            priority = {"draft": 0, "testing": 1, "published": 2}
+            lesson["status"] = min(statuses, key=lambda s: priority.get(s, 1))
         result.append(lesson)
     return result
 

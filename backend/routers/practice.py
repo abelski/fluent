@@ -10,9 +10,10 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlmodel import Session, select
 
-from auth import require_user as _require_user
+from auth import require_user as _require_user, try_get_user as _try_get_user
 from database import get_session
 from models import PracticeTest, PracticeQuestion, PracticeExamResult, User
 
@@ -37,20 +38,38 @@ def list_active_tests(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """List all active practice tests for authenticated users."""
-    _require_user(authorization, session)
-    tests = session.exec(
-        select(PracticeTest)
-        .where(PracticeTest.is_active == True)
-        .order_by(PracticeTest.sort_order, PracticeTest.id)
+    """List practice tests visible to the authenticated user.
+
+    Visibility rules:
+      published  → everyone
+      testing    → admins only
+      draft      → only the admin who created it
+    """
+    user = _require_user(authorization, session)
+    is_admin = user.is_admin
+
+    all_tests = session.exec(
+        select(PracticeTest).order_by(PracticeTest.sort_order, PracticeTest.id)
     ).all()
-    result = []
-    for t in tests:
-        count = len(session.exec(
-            select(PracticeQuestion)
-            .where(PracticeQuestion.test_id == t.id, PracticeQuestion.is_active == True)
-        ).all())
-        result.append({
+
+    def _visible(t: PracticeTest) -> bool:
+        if t.status == "published":
+            return True
+        if is_admin and t.status == "testing":
+            return True
+        if is_admin and t.status == "draft" and t.created_by == user.id:
+            return True
+        return False
+
+    tests = [t for t in all_tests if _visible(t)]
+
+    active_counts = dict(session.exec(
+        select(PracticeQuestion.test_id, func.count(PracticeQuestion.id))
+        .where(PracticeQuestion.is_active == True)
+        .group_by(PracticeQuestion.test_id)
+    ).all())
+    return [
+        {
             "id": t.id,
             "title_ru": t.title_ru,
             "title_en": t.title_en,
@@ -58,9 +77,10 @@ def list_active_tests(
             "description_en": t.description_en,
             "question_count": t.question_count,
             "pass_threshold": t.pass_threshold,
-            "active_question_count": count,
-        })
-    return result
+            "active_question_count": active_counts.get(t.id, 0),
+        }
+        for t in tests
+    ]
 
 
 @router.get("/practice/tests/{test_id}/exam")
@@ -70,9 +90,11 @@ def get_exam_questions(
     session: Session = Depends(get_session),
 ):
     """Return a random set of active questions for the given test."""
-    _require_user(authorization, session)
+    user = _require_user(authorization, session)
     test = session.get(PracticeTest, test_id)
-    if not test or not test.is_active:
+    if not test or (test.status != "published" and not (
+        user.is_admin and (test.status == "testing" or (test.status == "draft" and test.created_by == user.id))
+    )):
         raise HTTPException(status_code=404, detail="Test not found")
     active = session.exec(
         select(PracticeQuestion)
@@ -141,16 +163,17 @@ def admin_list_tests(
     tests = session.exec(
         select(PracticeTest).order_by(PracticeTest.sort_order, PracticeTest.id)
     ).all()
-    result = []
-    for t in tests:
-        total = len(session.exec(
-            select(PracticeQuestion).where(PracticeQuestion.test_id == t.id)
-        ).all())
-        active = len(session.exec(
-            select(PracticeQuestion)
-            .where(PracticeQuestion.test_id == t.id, PracticeQuestion.is_active == True)
-        ).all())
-        result.append({
+    total_counts = dict(session.exec(
+        select(PracticeQuestion.test_id, func.count(PracticeQuestion.id))
+        .group_by(PracticeQuestion.test_id)
+    ).all())
+    active_counts = dict(session.exec(
+        select(PracticeQuestion.test_id, func.count(PracticeQuestion.id))
+        .where(PracticeQuestion.is_active == True)
+        .group_by(PracticeQuestion.test_id)
+    ).all())
+    return [
+        {
             "id": t.id,
             "title_ru": t.title_ru,
             "title_en": t.title_en,
@@ -158,12 +181,14 @@ def admin_list_tests(
             "description_en": t.description_en,
             "question_count": t.question_count,
             "pass_threshold": t.pass_threshold,
-            "is_active": t.is_active,
+            "status": t.status,
+            "created_by": t.created_by,
             "sort_order": t.sort_order,
-            "total_questions": total,
-            "active_questions": active,
-        })
-    return result
+            "total_questions": total_counts.get(t.id, 0),
+            "active_questions": active_counts.get(t.id, 0),
+        }
+        for t in tests
+    ]
 
 
 class TestIn(BaseModel):
@@ -173,7 +198,7 @@ class TestIn(BaseModel):
     description_en: Optional[str] = None
     question_count: int = 20
     pass_threshold: float = 0.75
-    is_active: bool = True
+    status: str = "draft"
     sort_order: int = 0
 
 
@@ -183,9 +208,11 @@ def admin_create_test(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    _require_admin(authorization, session)
+    admin = _require_admin(authorization, session)
     if not body.title_ru.strip():
         raise HTTPException(status_code=400, detail="title_ru required")
+    if body.status not in ("draft", "testing", "published"):
+        raise HTTPException(status_code=400, detail="status must be draft, testing, or published")
     t = PracticeTest(
         title_ru=body.title_ru.strip(),
         title_en=body.title_en,
@@ -193,7 +220,8 @@ def admin_create_test(
         description_en=body.description_en,
         question_count=body.question_count,
         pass_threshold=body.pass_threshold,
-        is_active=body.is_active,
+        status=body.status,
+        created_by=admin.id,
         sort_order=body.sort_order,
     )
     session.add(t)
@@ -209,7 +237,7 @@ class TestUpdate(BaseModel):
     description_en: Optional[str] = None
     question_count: Optional[int] = None
     pass_threshold: Optional[float] = None
-    is_active: Optional[bool] = None
+    status: Optional[str] = None
     sort_order: Optional[int] = None
 
 
@@ -236,8 +264,10 @@ def admin_update_test(
         t.question_count = body.question_count
     if body.pass_threshold is not None:
         t.pass_threshold = body.pass_threshold
-    if body.is_active is not None:
-        t.is_active = body.is_active
+    if body.status is not None:
+        if body.status not in ("draft", "testing", "published"):
+            raise HTTPException(status_code=400, detail="status must be draft, testing, or published")
+        t.status = body.status
     if body.sort_order is not None:
         t.sort_order = body.sort_order
     session.add(t)
@@ -443,7 +473,7 @@ async def admin_import_test(
     session: Session = Depends(get_session),
 ):
     """Import a test from a JSON file. Creates a new test with all questions."""
-    _require_admin(authorization, session)
+    admin = _require_admin(authorization, session)
     try:
         raw = await file.read()
         data = json.loads(raw)
@@ -461,7 +491,8 @@ async def admin_import_test(
         description_en=data.get("description_en"),
         question_count=int(data.get("question_count", 20)),
         pass_threshold=float(data.get("pass_threshold", 0.75)),
-        is_active=True,
+        status="draft",
+        created_by=admin.id,
         sort_order=0,
     )
     session.add(t)

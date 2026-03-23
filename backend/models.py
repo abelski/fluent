@@ -126,7 +126,8 @@ class SubcategoryMeta(SQLModel, table=True):
     sort_order: Optional[int] = Field(default=0)  # display order on the lists page
     name_ru: Optional[str] = None  # overrides hardcoded translation key in Russian
     name_en: Optional[str] = None  # overrides hardcoded translation key in English
-    is_published: bool = Field(default=False)  # False = testing (admins only); True = visible to all
+    status: str = Field(default="draft")  # draft | testing | published
+    created_by: Optional[str] = Field(default=None, foreign_key="user.id")  # admin who created
 
 
 class GrammarSentence(SQLModel, table=True):
@@ -157,7 +158,7 @@ class GrammarCaseRule(SQLModel, table=True):
     endings_sg: str                 # singular endings, e.g. "-ą, -į, -ų"
     endings_pl: str                 # plural endings, e.g. "-us, -ius, -as, -es"
     transform: str                  # transformation rules description
-    is_published: bool = Field(default=False)  # False = testing (admins only); True = visible to all
+    status: str = Field(default="testing")  # draft | testing | published (no creator tracking for seeded rules)
 
 
 class Article(SQLModel, table=True):
@@ -203,7 +204,8 @@ class PracticeTest(SQLModel, table=True):
     description_en: Optional[str] = None
     question_count: int = Field(default=20)       # questions shown per exam session
     pass_threshold: float = Field(default=0.75)   # fraction required to pass (0–1)
-    is_active: bool = Field(default=True)
+    status: str = Field(default="draft")          # draft | testing | published
+    created_by: Optional[str] = Field(default=None, foreign_key="user.id")  # admin who created
     sort_order: int = Field(default=0)
     created_at: datetime = Field(default_factory=_utcnow)
 

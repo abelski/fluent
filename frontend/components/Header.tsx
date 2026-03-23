@@ -124,7 +124,7 @@ export default function Header() {
     <header className="relative z-20 border-b border-gray-900 bg-slate-50 sticky top-0">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
-        <Link href="/dashboard/lists" className="font-bold text-[1.75rem] tracking-tight shrink-0 leading-none">
+        <Link href="/" className="font-bold text-[1.75rem] tracking-tight shrink-0 leading-none">
           fluent<span className="text-emerald-600">.</span>
         </Link>
 

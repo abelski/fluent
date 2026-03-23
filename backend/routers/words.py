@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select, col, func
 
 from database import get_session
-from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta
+from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult
 from constants import DAILY_LIMIT
 from auth import require_user as _require_user, try_get_user as _try_get_user
 
@@ -57,7 +57,7 @@ def get_subcategory_meta(
             "article_name_en": r.article_name_en,
             "name_ru": r.name_ru,
             "name_en": r.name_en,
-            **({"is_published": r.is_published} if is_admin else {}),
+            **({"status": r.status, "created_by": r.created_by} if is_admin else {}),
         }
         for r in rows
     }
@@ -84,14 +84,27 @@ def get_lists(
             .group_by(WordListItem.word_list_id)
         ).all()
     )
-    # Load subcategory metadata for ordering and publication filtering
+    # Load subcategory metadata for ordering and status filtering
     meta_rows = session.exec(select(SubcategoryMeta)).all()
     subcat_order = {r.key: (r.sort_order or 0) for r in meta_rows}
-    published_subcats = {r.key for r in meta_rows if r.is_published}
+    meta_map = {r.key: r for r in meta_rows}
 
-    # Filter unpublished subcategories for non-admins
-    if not is_admin:
-        lists = [wl for wl in lists if (wl.subcategory or "") in published_subcats]
+    user_id = user.id if user else None
+
+    def _subcat_visible(subcat: Optional[str]) -> bool:
+        key = subcat or ""
+        if key not in meta_map:
+            return is_admin  # subcategories without metadata only visible to admins
+        row = meta_map[key]
+        if row.status == "published":
+            return True
+        if is_admin and row.status == "testing":
+            return True
+        if is_admin and row.status == "draft" and row.created_by == user_id:
+            return True
+        return False
+
+    lists = [wl for wl in lists if _subcat_visible(wl.subcategory)]
 
     sorted_lists = sorted(
         lists,
@@ -480,7 +493,33 @@ def get_stats(
     while check in studied_dates:
         streak += 1
         check -= timedelta(days=1)
-    return {"known": known, "learning": learning, "total_studied": known + learning, "streak": streak, "mistakes": mistakes}
+
+    # Grammar: count distinct lessons passed (best score > 75%)
+    grammar_results = session.exec(
+        select(GrammarLessonResult).where(GrammarLessonResult.user_id == user.id)
+    ).all()
+    best_grammar: dict[int, float] = {}
+    for r in grammar_results:
+        pct = r.score / r.total if r.total > 0 else 0.0
+        if r.lesson_id not in best_grammar or pct > best_grammar[r.lesson_id]:
+            best_grammar[r.lesson_id] = pct
+    grammar_lessons_passed = sum(1 for pct in best_grammar.values() if pct > 0.75)
+
+    # Practice: count completed exam attempts
+    practice_results = session.exec(
+        select(PracticeExamResult).where(PracticeExamResult.user_id == user.id)
+    ).all()
+    practice_exams_completed = len(practice_results)
+
+    return {
+        "known": known,
+        "learning": learning,
+        "total_studied": known + learning,
+        "streak": streak,
+        "mistakes": mistakes,
+        "grammar_lessons_passed": grammar_lessons_passed,
+        "practice_exams_completed": practice_exams_completed,
+    }
 
 
 @router.get("/me/known-words")

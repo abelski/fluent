@@ -105,6 +105,7 @@ interface GrammarRule {
   endings_sg: string;
   endings_pl: string;
   transform: string;
+  status: string;
 }
 
 interface EditingSentence {
@@ -163,6 +164,15 @@ export default function GrammarAdminPage() {
   }
 
   useEffect(() => { loadData(); }, []);
+
+  async function setRuleStatus(ruleId: number, status: string) {
+    await fetch(`${BACKEND_URL}/api/admin/grammar/rules/${ruleId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ status }),
+    }).catch((err) => console.error('API error:', err));
+    setRules((prev) => prev.map((r) => r.id === ruleId ? { ...r, status } : r));
+  }
 
   const visibleSentences = sentences.filter(
     (s) => s.case_index === selectedCase && (showArchived || !s.archived)
@@ -525,21 +535,36 @@ export default function GrammarAdminPage() {
         {/* Case rule section */}
         {currentRule && (
           <div className="border border-gray-900 rounded-2xl overflow-hidden">
-            <button
-              onClick={() => setRulesOpen((v) => !v)}
-              className="flex items-center gap-2 w-full px-4 py-3 bg-gray-50 text-left"
-            >
-              <svg
-                width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
-                className={`text-gray-400 transition-transform duration-200 shrink-0 ${rulesOpen ? 'rotate-180' : ''}`}
+            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50">
+              <button
+                onClick={() => setRulesOpen((v) => !v)}
+                className="flex items-center gap-2 flex-1 text-left"
               >
-                <path d="M6 8L1 3h10L6 8z" />
-              </svg>
-              <span className="font-semibold text-gray-900 text-sm">
-                Правило: {currentRule.name_ru}
-              </span>
-              <span className="text-gray-400 text-xs">{currentRule.question}</span>
-            </button>
+                <svg
+                  width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
+                  className={`text-gray-400 transition-transform duration-200 shrink-0 ${rulesOpen ? 'rotate-180' : ''}`}
+                >
+                  <path d="M6 8L1 3h10L6 8z" />
+                </svg>
+                <span className="font-semibold text-gray-900 text-sm">
+                  Правило: {currentRule.name_ru}
+                </span>
+                <span className="text-gray-400 text-xs">{currentRule.question}</span>
+              </button>
+              <select
+                value={currentRule.status}
+                onChange={(e) => setRuleStatus(currentRule.id, e.target.value)}
+                className={`text-xs border rounded-lg px-2 py-1 outline-none font-medium shrink-0 ${
+                  currentRule.status === 'published' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' :
+                  currentRule.status === 'testing' ? 'border-amber-400 bg-amber-50 text-amber-700' :
+                  'border-gray-300 bg-gray-50 text-gray-500'
+                }`}
+              >
+                <option value="draft">Черновик</option>
+                <option value="testing">Тестирование</option>
+                <option value="published">Опубликован</option>
+              </select>
+            </div>
 
             {rulesOpen && (
               <div className="border-t border-gray-900 px-4 py-4">

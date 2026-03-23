@@ -155,7 +155,8 @@ def list_subcategories(
             "sort_order": meta_map[key].sort_order or 0 if key in meta_map else 0,
             "name_ru": meta_map[key].name_ru if key in meta_map else None,
             "name_en": meta_map[key].name_en if key in meta_map else None,
-            "is_published": meta_map[key].is_published if key in meta_map else False,
+            "status": meta_map[key].status if key in meta_map else "draft",
+            "created_by": meta_map[key].created_by if key in meta_map else None,
         }
         for key in keys
     ]
@@ -195,24 +196,26 @@ def update_subcategory_meta(
     return {"ok": True}
 
 
-class PublicationUpdate(BaseModel):
-    is_published: bool
+class StatusUpdate(BaseModel):
+    status: str  # draft | testing | published
 
 
-@router.patch("/subcategories/{key}/publication")
-def set_subcategory_publication(
+@router.patch("/subcategories/{key}/status")
+def set_subcategory_status(
     key: str,
-    body: PublicationUpdate,
+    body: StatusUpdate,
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Publish or unpublish a vocabulary subcategory group."""
+    """Set visibility status for a vocabulary subcategory group."""
     _require_admin(authorization, session)
+    if body.status not in ("draft", "testing", "published"):
+        raise HTTPException(status_code=400, detail="status must be draft, testing, or published")
     row = session.exec(select(SubcategoryMeta).where(SubcategoryMeta.key == key)).first()
     if row is None:
         row = SubcategoryMeta(key=key)
         session.add(row)
-    row.is_published = body.is_published
+    row.status = body.status
     session.commit()
     return {"ok": True}
 
@@ -618,25 +621,27 @@ def list_grammar_rules(
             "endings_sg": r.endings_sg,
             "endings_pl": r.endings_pl,
             "transform": r.transform,
-            "is_published": r.is_published,
+            "status": r.status,
         }
         for r in rules
     ]
 
 
-@router.patch("/grammar/rules/{rule_id}/publication")
-def set_grammar_rule_publication(
+@router.patch("/grammar/rules/{rule_id}/status")
+def set_grammar_rule_status(
     rule_id: int,
-    body: PublicationUpdate,
+    body: StatusUpdate,
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Publish or unpublish a grammar case group."""
+    """Set visibility status for a grammar case group."""
     _require_admin(authorization, session)
+    if body.status not in ("draft", "testing", "published"):
+        raise HTTPException(status_code=400, detail="status must be draft, testing, or published")
     rule = session.get(GrammarCaseRule, rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
-    rule.is_published = body.is_published
+    rule.status = body.status
     session.add(rule)
     session.commit()
     return {"ok": True}

@@ -314,6 +314,35 @@ export interface Translations {
       none: string;
     };
   };
+  landing: {
+    progressTitle: string;
+    progressSubtitle: string;
+    cardWordsLabel: string;
+    cardWordsInProgress: string; // "{n} in progress"
+    cardGrammarLabel: string;
+    cardGrammarSub: string;
+    cardTestsLabel: string;
+    cardTestsSub: string;
+    cardStreakLabel: string;
+    cardStreakSub: string;
+    quickDictionaries: string;
+    quickDictionariesSub: string;
+    quickReview: string;
+    quickReviewSub: string;
+    toolsTagline: string;
+    premiumTitle: string;
+    premiumBody: string;
+    premiumCta: string;
+    guestHeading: string;
+    guestSubtitle: string;
+    guestCta: string;
+    featureDictionaries: string;
+    featureDictionariesDesc: string;
+    featureGrammar: string;
+    featureGrammarDesc: string;
+    featureTests: string;
+    featureTestsDesc: string;
+  };
   cookie: {
     message: string;
     messageNote: string;

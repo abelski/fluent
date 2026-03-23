@@ -50,14 +50,15 @@ interface SubcategoryRow {
   article_name_en: string | null;
   name_ru: string | null;
   name_en: string | null;
-  is_published: boolean;
+  status: string;
+  created_by: string | null;
 }
 
 interface GrammarRuleRow {
   id: number;
   case_index: number;
   name_ru: string;
-  is_published: boolean;
+  status: string;
 }
 
 interface ConstitutionQuestionRow {
@@ -92,7 +93,8 @@ interface PracticeTestRow {
   description_en: string | null;
   question_count: number;
   pass_threshold: number;
-  is_active: boolean;
+  status: string;
+  created_by: string | null;
   sort_order: number;
   total_questions: number;
   active_questions: number;
@@ -129,11 +131,12 @@ const BLANK_TEST: Omit<PracticeTestRow, 'id' | 'total_questions' | 'active_quest
   description_en: '',
   question_count: 20,
   pass_threshold: 0.75,
-  is_active: true,
+  status: 'draft',
+  created_by: null,
   sort_order: 0,
 };
 
-type Area = 'admin' | 'content' | 'publication';
+type Area = 'admin' | 'content';
 type AdminSubTab = 'users' | 'reports';
 type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'constitution' | 'practice';
 
@@ -581,13 +584,13 @@ export default function AdminPage() {
     loadData();
   }
 
-  async function toggleSubcatPublication(key: string, isPublished: boolean) {
-    await fetch(`${BACKEND_URL}/api/admin/subcategories/${encodeURIComponent(key)}/publication`, {
+  async function setSubcatStatus(key: string, status: string) {
+    await fetch(`${BACKEND_URL}/api/admin/subcategories/${encodeURIComponent(key)}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify({ is_published: isPublished }),
+      body: JSON.stringify({ status }),
     }).catch((err) => console.error('API error:', err));
-    loadData();
+    setSubcategories((prev) => prev.map((s) => s.key === key ? { ...s, status } : s));
   }
 
   // ── Practice tests CRUD ──────────────────────────────────────────────────
@@ -627,7 +630,7 @@ export default function AdminPage() {
         description_en: editingTest.description_en || null,
         question_count: editingTest.question_count,
         pass_threshold: editingTest.pass_threshold,
-        is_active: editingTest.is_active,
+        status: editingTest.status,
       }),
     }).catch(() => null);
     setPracticeSaving(false);
@@ -789,15 +792,6 @@ export default function AdminPage() {
     loadConstitutionQuestions();
   }
 
-  async function toggleGrammarRulePublication(ruleId: number, isPublished: boolean) {
-    await fetch(`${BACKEND_URL}/api/admin/grammar/rules/${ruleId}/publication`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify({ is_published: isPublished }),
-    }).catch((err) => console.error('API error:', err));
-    loadData();
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -831,12 +825,6 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${area === 'content' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
             Контент
-          </button>
-          <button
-            onClick={() => setArea('publication')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${area === 'publication' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
-          >
-            Публикация
           </button>
         </div>
 
@@ -1164,7 +1152,8 @@ export default function AdminPage() {
                   article_name_en: null,
                   name_ru: null,
                   name_en: null,
-                  is_published: false,
+                  status: 'draft',
+                  created_by: null,
                 };
                 const label = (lang === 'en' ? scMeta.name_en : scMeta.name_ru) ?? tr.lists.subcategories[subcatKey] ?? subcatKey;
                 const isEditingMeta = editingListKey === subcatKey;
@@ -1315,6 +1304,20 @@ export default function AdminPage() {
                           </div>
                         </button>
                         <div className="flex items-center gap-1 shrink-0">
+                          <select
+                            value={scMeta.status}
+                            onChange={(e) => { e.stopPropagation(); setSubcatStatus(subcatKey, e.target.value); }}
+                            onClick={(e) => e.stopPropagation()}
+                            className={`text-xs border rounded-lg px-2 py-1 outline-none font-medium ${
+                              scMeta.status === 'published' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' :
+                              scMeta.status === 'testing' ? 'border-amber-400 bg-amber-50 text-amber-700' :
+                              'border-gray-300 bg-gray-50 text-gray-500'
+                            }`}
+                          >
+                            <option value="draft">Черновик</option>
+                            <option value="testing">Тестирование</option>
+                            <option value="published">Опубликован</option>
+                          </select>
                           <button
                             onClick={() => startEditSubcat(scMeta)}
                             title="Редактировать метаданные"
@@ -1522,83 +1525,6 @@ export default function AdminPage() {
           );
         })()}
         {/* ── Publication tab ── */}
-        {area === 'publication' && (
-          <div className="flex flex-col gap-6">
-
-            {/* Vocabulary subcategories */}
-            <div className="border border-gray-900 rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 bg-gray-50 border-b border-gray-900">
-                <h2 className="font-semibold text-gray-900">Словари — группы</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Группы, отмеченные «В тестировании», видны только администраторам</p>
-              </div>
-              <div className="divide-y divide-gray-100">
-                {subcategories.length === 0 && (
-                  <p className="text-gray-400 text-sm py-6 text-center">Нет групп</p>
-                )}
-                {subcategories.map((sc) => {
-                  const label = sc.name_ru ?? sc.key;
-                  return (
-                    <div key={sc.key} className="flex items-center justify-between px-5 py-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-gray-900">{label}</span>
-                        <span className="text-xs text-gray-400 font-mono">{sc.key}</span>
-                        {!sc.is_published && (
-                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px">В тестировании</span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => toggleSubcatPublication(sc.key, !sc.is_published)}
-                        className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
-                          sc.is_published
-                            ? 'border-gray-900 text-gray-600 hover:bg-gray-100'
-                            : 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-500'
-                        }`}
-                      >
-                        {sc.is_published ? 'Скрыть' : 'Опубликовать'}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Grammar case groups */}
-            <div className="border border-gray-900 rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 bg-gray-50 border-b border-gray-900">
-                <h2 className="font-semibold text-gray-900">Грамматика — падежи</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Уроки по неопубликованным падежам видны только администраторам</p>
-              </div>
-              <div className="divide-y divide-gray-100">
-                {grammarRules.length === 0 && (
-                  <p className="text-gray-400 text-sm py-6 text-center">Нет правил</p>
-                )}
-                {grammarRules.map((rule) => (
-                  <div key={rule.id} className="flex items-center justify-between px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-400 font-mono w-6">{rule.case_index}</span>
-                      <span className="text-sm text-gray-900">{rule.name_ru}</span>
-                      {!rule.is_published && (
-                        <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px">В тестировании</span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => toggleGrammarRulePublication(rule.id, !rule.is_published)}
-                      className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
-                        rule.is_published
-                          ? 'border-gray-900 text-gray-600 hover:bg-gray-100'
-                          : 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-500'
-                      }`}
-                    >
-                      {rule.is_published ? 'Скрыть' : 'Опубликовать'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        )}
-
         {/* ── Practice Tests ── */}
         {area === 'content' && contentTab === 'practice' && (
           <div className="flex flex-col gap-4">
@@ -1642,7 +1568,7 @@ export default function AdminPage() {
                         <label className="text-xs text-gray-400">{tr.adminPractice.fieldDescRu}</label>
                         <input value={newTest.description_ru ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, description_ru: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <div className="flex flex-col gap-1">
                           <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestionCount}</label>
                           <input type="number" value={newTest.question_count} onChange={(e) => setNewTest((p) => ({ ...p, question_count: Number(e.target.value) }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
@@ -1650,6 +1576,14 @@ export default function AdminPage() {
                         <div className="flex flex-col gap-1">
                           <label className="text-xs text-gray-400">{tr.adminPractice.fieldPassThreshold}</label>
                           <input type="number" step="0.05" min="0" max="1" value={newTest.pass_threshold} onChange={(e) => setNewTest((p) => ({ ...p, pass_threshold: Number(e.target.value) }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">Статус</label>
+                          <select value={newTest.status} onChange={(e) => setNewTest((p) => ({ ...p, status: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none">
+                            <option value="draft">Черновик</option>
+                            <option value="testing">Тестирование</option>
+                            <option value="published">Опубликован</option>
+                          </select>
                         </div>
                       </div>
                     </div>
@@ -1693,8 +1627,12 @@ export default function AdminPage() {
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <label className="text-xs text-gray-400">{tr.adminPractice.fieldActive}</label>
-                              <input type="checkbox" checked={editingTest.is_active} onChange={(e) => setEditingTest((p) => p ? { ...p, is_active: e.target.checked } : p)} className="w-4 h-4" />
+                              <label className="text-xs text-gray-400">Статус</label>
+                              <select value={editingTest.status} onChange={(e) => setEditingTest((p) => p ? { ...p, status: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs outline-none">
+                                <option value="draft">Черновик</option>
+                                <option value="testing">Тестирование</option>
+                                <option value="published">Опубликован</option>
+                              </select>
                             </div>
                             <div className="flex gap-2 justify-end">
                               <button onClick={() => setEditingTest(null)} className="text-xs text-gray-400 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminPractice.cancel}</button>
@@ -1708,7 +1646,8 @@ export default function AdminPage() {
                               {t.title_en && <p className="text-xs text-gray-400">{t.title_en}</p>}
                               <p className="text-xs text-gray-400 mt-0.5">
                                 {t.active_questions}/{t.total_questions} {tr.adminPractice.questionsCount} · {Math.round(t.pass_threshold * 100)}% · {t.question_count} на экзамен
-                                {!t.is_active && <span className="ml-2 text-amber-600 font-medium">· Неактивен</span>}
+                                {t.status === 'draft' && <span className="ml-2 text-gray-500 font-medium">· Черновик</span>}
+                                {t.status === 'testing' && <span className="ml-2 text-amber-600 font-medium">· Тестирование</span>}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">

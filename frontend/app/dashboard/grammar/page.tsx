@@ -23,7 +23,7 @@ interface Lesson {
   rules: GrammarRule[];
   is_locked: boolean;
   best_score_pct: number | null;
-  is_published?: boolean;
+  status?: string;
 }
 
 interface DeclensionTask {
@@ -216,9 +216,9 @@ function SubcategoryGroup({
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${LEVEL_STYLES[lesson.level] ?? ''}`}>
                       {tr.grammar.levels[lesson.level] ?? lesson.level}
                     </span>
-                    {lesson.is_published === false && (
+                    {lesson.status && lesson.status !== 'published' && (
                       <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px leading-tight">
-                        В тестировании
+                        {lesson.status === 'draft' ? 'Черновик' : 'В тестировании'}
                       </span>
                     )}
                   </div>
