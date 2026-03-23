@@ -235,9 +235,6 @@ export default function PracticePage() {
                 </div>
                 <div className="px-6 py-5">
                   <p className="text-base font-semibold text-gray-900 leading-snug">{q.question_lt ?? q.question_ru}</p>
-                  {q.question_lt && (
-                    <p className="text-sm text-gray-400 mt-1 leading-snug">{q.question_ru}</p>
-                  )}
                 </div>
               </div>
 
