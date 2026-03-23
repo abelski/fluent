@@ -135,6 +135,11 @@ const en: Translations = {
     buildForm: 'Build the form',
     typeDeclension: 'Enter the word form...',
     typeEnding: 'Enter the ending...',
+    statsPassed: 'lessons passed',
+    statsOf: 'of',
+    statsLessonsUnit: 'lessons',
+    statsCompletion: 'complete',
+    statsAttempted: 'lessons started',
   },
   practice: {
     title: 'Practice',

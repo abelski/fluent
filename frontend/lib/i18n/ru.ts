@@ -135,6 +135,11 @@ const ru: Translations = {
     buildForm: 'Составьте форму',
     typeDeclension: 'Введите форму слова...',
     typeEnding: 'Введите окончание...',
+    statsPassed: 'уроков пройдено',
+    statsOf: 'из',
+    statsLessonsUnit: 'уроков',
+    statsCompletion: 'выполнено',
+    statsAttempted: 'уроков начато',
   },
   practice: {
     title: 'Практика',

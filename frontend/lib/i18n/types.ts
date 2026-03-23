@@ -119,6 +119,11 @@ export interface Translations {
     buildForm: string;
     typeDeclension: string;
     typeEnding: string;
+    statsPassed: string;
+    statsOf: string;
+    statsLessonsUnit: string;
+    statsCompletion: string;
+    statsAttempted: string;
   };
   practice: {
     title: string;

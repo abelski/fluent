@@ -11,6 +11,7 @@ from auth import require_user as _require_user, try_get_user as _try_get_user
 from database import get_session
 from grammar_service import get_lessons, get_lesson_tasks
 from models import GrammarLessonResult
+from quota import quota_check_and_increment as _quota_check_and_increment
 
 router = APIRouter()
 
@@ -54,12 +55,20 @@ def list_lessons(
 
 
 @router.get("/grammar/lessons/{lesson_id}/tasks")
-def lesson_tasks(lesson_id: int, session: Session = Depends(get_session)):
+def lesson_tasks(
+    lesson_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
     """Return a freshly generated set of tasks for the given lesson.
 
     Tasks are randomized on every call so students get variety each session.
+    Counts against the daily session quota for non-premium users.
     Returns 404 if the lesson_id doesn't match any entry in LESSON_CONFIG.
     """
+    user = _try_get_user(authorization, session)
+    if user:
+        _quota_check_and_increment(user, session)
     tasks = get_lesson_tasks(lesson_id, session)
     if tasks is None:
         raise HTTPException(status_code=404, detail="Lesson not found")

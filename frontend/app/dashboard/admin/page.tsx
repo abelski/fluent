@@ -279,6 +279,18 @@ export default function AdminPage() {
   const [practiceSaving, setPracticeSaving] = useState(false);
   const practiceImportRef = useRef<HTMLInputElement>(null);
 
+  // Report filter
+  type ReportFilter = 'open' | 'onhold' | 'resolved' | 'all';
+  const [reportFilter, setReportFilter] = useState<ReportFilter>('open');
+
+  // Pagination pages (1-based)
+  const PAGE_SIZE = 20;
+  const [usersPage, setUsersPage] = useState(1);
+  const [reportsPage, setReportsPage] = useState(1);
+  const [articlesPage, setArticlesPage] = useState(1);
+  const [constitutionPage, setConstitutionPage] = useState(1);
+  const [practiceQPage, setPracticeQPage] = useState(1);
+
   function authHeaders() {
     const token = getToken();
     return { Authorization: `Bearer ${token}` };
@@ -814,6 +826,38 @@ export default function AdminPage() {
 
   const openReports = reports.filter((r) => r.status === 'open').length;
 
+  // Filtered + paginated slices
+  const filteredReports = reportFilter === 'all' ? reports : reports.filter((r) => r.status === reportFilter);
+  const pagedUsers = users.slice((usersPage - 1) * PAGE_SIZE, usersPage * PAGE_SIZE);
+  const pagedReports = filteredReports.slice((reportsPage - 1) * PAGE_SIZE, reportsPage * PAGE_SIZE);
+  const pagedArticles = articles.slice((articlesPage - 1) * PAGE_SIZE, articlesPage * PAGE_SIZE);
+  const pagedConstitution = constitutionQuestions.slice((constitutionPage - 1) * PAGE_SIZE, constitutionPage * PAGE_SIZE);
+  const pagedPracticeQ = practiceQuestions.slice((practiceQPage - 1) * PAGE_SIZE, practiceQPage * PAGE_SIZE);
+
+  function Pagination({ total, page, onPage }: { total: number; page: number; onPage: (p: number) => void }) {
+    const pages = Math.ceil(total / PAGE_SIZE);
+    if (pages <= 1) return null;
+    return (
+      <div className="flex items-center gap-2 mt-4 justify-end">
+        <button
+          onClick={() => onPage(page - 1)}
+          disabled={page === 1}
+          className="px-3 py-1.5 text-xs border border-gray-900 rounded-lg disabled:opacity-30 hover:bg-gray-50 transition-colors"
+        >
+          ←
+        </button>
+        <span className="text-xs text-gray-400">{page} / {pages}</span>
+        <button
+          onClick={() => onPage(page + 1)}
+          disabled={page === pages}
+          className="px-3 py-1.5 text-xs border border-gray-900 rounded-lg disabled:opacity-30 hover:bg-gray-50 transition-colors"
+        >
+          →
+        </button>
+      </div>
+    );
+  }
+
   return (
     <main className="bg-slate-50 text-gray-900 min-h-screen">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
@@ -912,7 +956,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
+                {pagedUsers.map((u) => (
                   <tr key={u.id} className="border-b border-gray-900 hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-900 truncate max-w-[180px]">{u.name}</p>
@@ -1007,16 +1051,33 @@ export default function AdminPage() {
                 ))}
               </tbody>
             </table>
+            <Pagination total={users.length} page={usersPage} onPage={setUsersPage} />
           </div>
         )}
 
         {/* ── Reports ── */}
         {area === 'admin' && adminTab === 'reports' && (
           <div className="flex flex-col gap-3">
-            {reports.length === 0 && (
+            {/* Filter tabs */}
+            <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 w-fit mb-2">
+              {(['open', 'onhold', 'resolved', 'all'] as ReportFilter[]).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => { setReportFilter(f); setReportsPage(1); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${reportFilter === f ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+                >
+                  {f === 'open' ? 'Открытые' : f === 'onhold' ? 'На паузе' : f === 'resolved' ? 'Решённые' : 'Все'}
+                  {f === 'open' && openReports > 0 && (
+                    <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full">{openReports}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {filteredReports.length === 0 && (
               <p className="text-gray-400 text-sm py-8 text-center">{tr.admin.noReports}</p>
             )}
-            {reports.map((r) => (
+            {pagedReports.map((r) => (
               <div
                 key={r.id}
                 className={`rounded-2xl border p-4 transition-colors ${
@@ -1077,6 +1138,7 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+            <Pagination total={filteredReports.length} page={reportsPage} onPage={setReportsPage} />
           </div>
         )}
 
@@ -1112,7 +1174,7 @@ export default function AdminPage() {
             )}
 
             <div className="flex flex-col gap-3">
-              {articles.map((a) => {
+              {pagedArticles.map((a) => {
                 const title = lang === 'ru' ? a.title_ru : a.title_en;
                 return (
                   <div
@@ -1155,6 +1217,7 @@ export default function AdminPage() {
                   </div>
                 );
               })}
+              <Pagination total={articles.length} page={articlesPage} onPage={setArticlesPage} />
             </div>
           </div>
         )}
@@ -1668,7 +1731,7 @@ export default function AdminPage() {
                           </div>
                         ) : (
                           <div className="px-5 py-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors">
-                            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setSelectedTestId(t.id); loadPracticeQuestions(t.id); }}>
+                            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setSelectedTestId(t.id); setPracticeQPage(1); loadPracticeQuestions(t.id); }}>
                               <p className="font-semibold text-gray-900">{t.title_ru}</p>
                               {t.title_en && <p className="text-xs text-gray-400">{t.title_en}</p>}
                               <p className="text-xs text-gray-400 mt-0.5">
@@ -1754,7 +1817,7 @@ export default function AdminPage() {
                     <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white">
                       {practiceQuestions.length === 0 && <p className="text-gray-400 text-sm py-8 text-center">{tr.adminPractice.noQuestions}</p>}
                       <div className="divide-y divide-gray-100">
-                        {practiceQuestions.map((q) => (
+                        {pagedPracticeQ.map((q) => (
                           <div key={q.id}>
                             {editingPracticeQ?.id === q.id ? (
                               <div className="p-4 bg-blue-50 flex flex-col gap-3">
@@ -1820,6 +1883,7 @@ export default function AdminPage() {
                           </div>
                         ))}
                       </div>
+                      <Pagination total={practiceQuestions.length} page={practiceQPage} onPage={setPracticeQPage} />
                     </div>
                   </div>
                 );
@@ -1909,7 +1973,7 @@ export default function AdminPage() {
                 <p className="text-gray-400 text-sm py-8 text-center">{tr.adminConstitution.noQuestions}</p>
               )}
               <div className="divide-y divide-gray-100">
-                {constitutionQuestions.map((q) => (
+                {pagedConstitution.map((q) => (
                   <div key={q.id}>
                     {editingQuestion?.id === q.id ? (
                       <div className="p-4 bg-blue-50 flex flex-col gap-3">
@@ -2008,6 +2072,7 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
+              <Pagination total={constitutionQuestions.length} page={constitutionPage} onPage={setConstitutionPage} />
             </div>
           </div>
         )}

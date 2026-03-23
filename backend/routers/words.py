@@ -13,6 +13,7 @@ from database import get_session
 from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult
 from constants import DAILY_LIMIT
 from auth import require_user as _require_user, try_get_user as _try_get_user
+from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
 
 router = APIRouter()
 
@@ -144,14 +145,6 @@ def get_list(list_id: int, session: Session = Depends(get_session)):
 QUIZ_SIZE = 10
 
 
-def _is_premium_active(user: User) -> bool:
-    if not user.is_premium:
-        return False
-    if user.premium_until is None:
-        return True
-    now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
-    return user.premium_until > now_naive
-
 
 @router.get("/lists/{list_id}/study")
 def get_study_words(
@@ -178,24 +171,8 @@ def get_study_words(
     # Auth is optional here — unauthenticated users still get a study session.
     user = _try_get_user(authorization, session)
 
-    if user and not _is_premium_active(user):
-            today = datetime.now(timezone.utc).date()
-            row = session.exec(
-                select(DailyStudySession).where(
-                    DailyStudySession.user_id == user.id,
-                    DailyStudySession.study_date == today,
-                ).with_for_update()
-            ).first()
-            if not row:
-                row = DailyStudySession(user_id=user.id, study_date=today, session_count=0)
-                session.add(row)
-            if row.session_count >= DAILY_LIMIT:
-                raise HTTPException(
-                    status_code=429,
-                    detail={"code": "daily_limit_reached", "limit": DAILY_LIMIT, "sessions_today": row.session_count},
-                )
-            row.session_count += 1
-            session.commit()
+    if user:
+        _quota_check_and_increment(user, session)
 
     if user and all_words:
         word_ids = [w["id"] for w in all_words]
@@ -304,28 +281,6 @@ def update_progress(
     session.commit()
     return {"ok": True}
 
-
-def _quota_check_and_increment(user: User, session: Session) -> None:
-    """Enforce the daily session limit for basic users. Raises 429 if exceeded."""
-    if _is_premium_active(user):
-        return
-    today = datetime.now(timezone.utc).date()
-    row = session.exec(
-        select(DailyStudySession).where(
-            DailyStudySession.user_id == user.id,
-            DailyStudySession.study_date == today,
-        ).with_for_update()
-    ).first()
-    if not row:
-        row = DailyStudySession(user_id=user.id, study_date=today, session_count=0)
-        session.add(row)
-    if row.session_count >= DAILY_LIMIT:
-        raise HTTPException(
-            status_code=429,
-            detail={"code": "daily_limit_reached", "limit": DAILY_LIMIT, "sessions_today": row.session_count},
-        )
-    row.session_count += 1
-    session.commit()
 
 
 def _word_to_dict(w: Word, status: str) -> dict:

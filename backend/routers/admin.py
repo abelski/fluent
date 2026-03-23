@@ -12,6 +12,7 @@ from auth import require_user as _decode_user
 from database import get_session
 from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult
 from constants import DAILY_LIMIT
+from quota import is_premium_active as _is_premium_active
 
 router = APIRouter()
 
@@ -28,15 +29,6 @@ def _require_superadmin(authorization: Optional[str], session: Session) -> User:
     if not user.is_superadmin:
         raise HTTPException(status_code=403, detail="Forbidden")
     return user
-
-
-def _is_premium_active(user: User) -> bool:
-    if not user.is_premium:
-        return False
-    if user.premium_until is None:
-        return True
-    now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
-    return user.premium_until > now_naive
 
 
 @router.get("/users")

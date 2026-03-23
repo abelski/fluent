@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { BACKEND_URL, getToken } from '../../../lib/api';
-import StatsBar from '../components/StatsBar';
 import { useT } from '../../../lib/useT';
 
 interface GrammarRule {
@@ -71,6 +70,68 @@ function normalizeLt(text: string): string {
     .replace(/ę/g, 'e')
     .replace(/ė/g, 'e')
     .replace(/ą/g, 'a');
+}
+
+function GrammarStatsBar({ lessons }: { lessons: Lesson[] }) {
+  const { tr } = useT();
+  const total = lessons.length;
+  const passed = lessons.filter((l) => l.best_score_pct !== null && l.best_score_pct !== undefined && l.best_score_pct > 0.75).length;
+  const attempted = lessons.filter((l) => l.best_score_pct !== null && l.best_score_pct !== undefined).length;
+  const pct = total > 0 ? Math.round((passed / total) * 100) : 0;
+
+  if (total === 0) return null;
+
+  return (
+    <div className="mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Lessons passed card */}
+        <div className="relative rounded-2xl bg-gradient-to-br from-teal-50 to-white border border-teal-100 shadow-sm overflow-hidden p-5">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-teal-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
+          <div className="flex items-start justify-between gap-3 relative">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-teal-100 flex items-center justify-center text-xl">
+                🎓
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{passed}</p>
+                <p className="text-gray-500 text-xs mt-1 font-medium">{tr.grammar.statsPassed}</p>
+              </div>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-[10px] text-teal-600 font-semibold uppercase tracking-wide">{tr.grammar.statsOf}</p>
+              <p className="text-sm font-bold text-teal-700">{total}</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="h-1.5 bg-teal-100 rounded-full overflow-hidden">
+              <div className="h-full bg-teal-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1">{passed} / {total} {tr.grammar.statsLessonsUnit}</p>
+          </div>
+        </div>
+
+        {/* Progress card */}
+        <div className="relative rounded-2xl bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 shadow-sm overflow-hidden p-5">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
+          <div className="flex items-center gap-3 relative">
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center text-xl">
+              📊
+            </div>
+            <div>
+              <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{pct}%</p>
+              <p className="text-gray-500 text-xs mt-1 font-medium">{tr.grammar.statsCompletion}</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1">{attempted} {tr.grammar.statsAttempted}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collapsible: boolean }) {
@@ -382,7 +443,7 @@ export default function GrammarPage() {
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
-          <StatsBar />
+          <GrammarStatsBar lessons={lessons} />
 
           <h1 className="text-3xl font-bold mb-2">{tr.grammar.title}</h1>
           <p className="text-gray-400 mb-6">{tr.grammar.subtitle}</p>
