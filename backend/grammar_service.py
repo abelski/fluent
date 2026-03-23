@@ -26,8 +26,26 @@ WORDS = [
 ]
 
 # Precomputed mapping: stem → nominative singular form (stem + nominative ending).
-# Used to annotate sentence tasks with the base form of the target word.
+# Used as a fallback when the full-word lookup is ambiguous.
 _STEM_TO_NOMINATIVE: dict[str, str] = {w[0]: w[0] + w[1] for w in WORDS}
+
+# Mapping from any full word form → its nominative singular.
+# When two different words share the same form the value is set to None (ambiguous).
+# This is used in sentence tasks so that words with a shared stem (e.g. draugas/draugė)
+# are resolved correctly from the stored full_word rather than just the stem.
+_FORM_TO_NOMINATIVE: dict[str, str | None] = {}
+for _w in WORDS:
+    _nom = _w[0] + _w[1]
+    for _col in range(1, 15):  # columns 1-14 cover all singular and plural cases
+        _ending = _w[_col]
+        if _ending.startswith("!"):
+            continue
+        _form = _w[0] + _ending
+        if _form in _FORM_TO_NOMINATIVE:
+            if _FORM_TO_NOMINATIVE[_form] != _nom:
+                _FORM_TO_NOMINATIVE[_form] = None  # ambiguous — two words share this form
+        else:
+            _FORM_TO_NOMINATIVE[_form] = _nom
 
 # Stems of place/location nouns — used to restrict Vietininkas (locative) basic
 # declension tasks so every prompt makes semantic sense as a location.
@@ -205,7 +223,9 @@ def _generate_sentence_tasks(cases: list[int], count: int, session: Session, lev
     for i in range(count):
         row = pool[i % len(pool)]
         stem = _extract_stem(row.display)
-        base_lt = _STEM_TO_NOMINATIVE.get(stem)
+        # Prefer full-word lookup: handles shared-stem nouns (e.g. draugas vs draugė)
+        # where stem alone is ambiguous. Fall back to stem lookup if unresolved.
+        base_lt = _FORM_TO_NOMINATIVE.get(row.full_word) or _STEM_TO_NOMINATIVE.get(stem)
         tasks.append({
             "type": "sentence",
             "display": row.display,

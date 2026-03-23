@@ -35,7 +35,6 @@ const ru: Translations = {
     admin: 'Администрирование',
     signOut: 'Выйти',
     menu: 'Меню',
-    langToggleSoon: 'скоро',
   },
   login: {
     title: 'Войдите, чтобы учиться',

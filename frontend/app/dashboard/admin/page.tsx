@@ -103,6 +103,7 @@ interface PracticeTestRow {
 interface PracticeQuestionRow {
   id: number;
   question_ru: string;
+  question_lt: string | null;
   option_a: string;
   option_b: string;
   option_c: string;
@@ -115,6 +116,7 @@ interface PracticeQuestionRow {
 
 const BLANK_PRACTICE_QUESTION: Omit<PracticeQuestionRow, 'id' | 'sort_order'> = {
   question_ru: '',
+  question_lt: '',
   option_a: '',
   option_b: '',
   option_c: '',
@@ -673,6 +675,7 @@ export default function AdminPage() {
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         question_ru: editingPracticeQ.question_ru,
+        question_lt: editingPracticeQ.question_lt || null,
         option_a: editingPracticeQ.option_a,
         option_b: editingPracticeQ.option_b,
         option_c: editingPracticeQ.option_c,
@@ -1709,8 +1712,12 @@ export default function AdminPage() {
                     {addingPracticeQ && (
                       <div className="border border-gray-900 rounded-2xl p-4 bg-amber-50 flex flex-col gap-3">
                         <div className="flex flex-col gap-1">
-                          <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestion}</label>
+                          <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestion} (RU)</label>
                           <textarea value={newPracticeQ.question_ru} onChange={(e) => setNewPracticeQ((p) => ({ ...p, question_ru: e.target.value }))} rows={2} className="bg-white border border-gray-900 rounded-lg px-2 py-1.5 text-sm outline-none resize-none" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestion} (LT)</label>
+                          <textarea value={newPracticeQ.question_lt ?? ''} onChange={(e) => setNewPracticeQ((p) => ({ ...p, question_lt: e.target.value }))} rows={2} className="bg-white border border-gray-900 rounded-lg px-2 py-1.5 text-sm outline-none resize-none" placeholder="Lietuviškas klausimo tekstas (neprivaloma)" />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {(['a', 'b', 'c', 'd'] as const).map((opt) => (
@@ -1752,8 +1759,12 @@ export default function AdminPage() {
                             {editingPracticeQ?.id === q.id ? (
                               <div className="p-4 bg-blue-50 flex flex-col gap-3">
                                 <div className="flex flex-col gap-1">
-                                  <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestion}</label>
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestion} (RU)</label>
                                   <textarea value={editingPracticeQ.question_ru} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, question_ru: e.target.value } : p)} rows={2} className="bg-white border border-gray-900 rounded-lg px-2 py-1.5 text-sm outline-none resize-none" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestion} (LT)</label>
+                                  <textarea value={editingPracticeQ.question_lt ?? ''} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, question_lt: e.target.value } : p)} rows={2} className="bg-white border border-gray-900 rounded-lg px-2 py-1.5 text-sm outline-none resize-none" placeholder="Lietuviškas klausimo tekstas (neprivaloma)" />
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                   {(['a', 'b', 'c', 'd'] as const).map((opt) => (

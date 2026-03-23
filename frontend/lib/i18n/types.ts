@@ -39,7 +39,6 @@ export interface Translations {
     admin: string;
     signOut: string;
     menu: string;
-    langToggleSoon: string;
   };
   login: {
     title: string;

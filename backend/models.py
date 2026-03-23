@@ -217,6 +217,7 @@ class PracticeQuestion(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     test_id: int = Field(foreign_key="practice_test.id", index=True)
     question_ru: str
+    question_lt: Optional[str] = None
     option_a: str
     option_b: str
     option_c: str

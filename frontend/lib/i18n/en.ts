@@ -35,7 +35,6 @@ const en: Translations = {
     admin: 'Admin panel',
     signOut: 'Sign out',
     menu: 'Menu',
-    langToggleSoon: 'coming soon',
   },
   login: {
     title: 'Sign in to learn',

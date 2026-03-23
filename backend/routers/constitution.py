@@ -4,7 +4,7 @@
 # Admin:  full CRUD for questions
 
 import random
-from typing import Optional, List
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel

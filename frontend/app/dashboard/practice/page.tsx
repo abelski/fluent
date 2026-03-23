@@ -19,6 +19,7 @@ interface PracticeTest {
 interface Question {
   id: number;
   question_ru: string;
+  question_lt: string | null;
   option_a: string;
   option_b: string;
   option_c: string;
@@ -233,7 +234,10 @@ export default function PracticePage() {
                   />
                 </div>
                 <div className="px-6 py-5">
-                  <p className="text-base font-semibold text-gray-900 leading-snug">{q.question_ru}</p>
+                  <p className="text-base font-semibold text-gray-900 leading-snug">{q.question_lt ?? q.question_ru}</p>
+                  {q.question_lt && (
+                    <p className="text-sm text-gray-400 mt-1 leading-snug">{q.question_ru}</p>
+                  )}
                 </div>
               </div>
 
@@ -349,7 +353,7 @@ export default function PracticePage() {
                           {isCorrect ? '✓' : '✗'}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{q.question_ru}</p>
+                          <p className="text-sm font-medium text-gray-900">{q.question_lt ?? q.question_ru}</p>
                           {!isCorrect && (
                             <div className="mt-1.5 flex flex-col gap-0.5">
                               <p className="text-xs text-red-600">

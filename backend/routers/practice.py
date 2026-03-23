@@ -5,7 +5,7 @@
 
 import json
 import random
-from typing import Optional, List
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
@@ -113,6 +113,7 @@ def get_exam_questions(
             {
                 "id": q.id,
                 "question_ru": q.question_ru,
+                "question_lt": q.question_lt,
                 "option_a": q.option_a,
                 "option_b": q.option_b,
                 "option_c": q.option_c,
@@ -314,6 +315,7 @@ def admin_list_questions(
         {
             "id": q.id,
             "question_ru": q.question_ru,
+            "question_lt": q.question_lt,
             "option_a": q.option_a,
             "option_b": q.option_b,
             "option_c": q.option_c,
@@ -329,6 +331,7 @@ def admin_list_questions(
 
 class QuestionIn(BaseModel):
     question_ru: str
+    question_lt: Optional[str] = None
     option_a: str
     option_b: str
     option_c: str
@@ -354,6 +357,7 @@ def admin_create_question(
     q = PracticeQuestion(
         test_id=test_id,
         question_ru=body.question_ru.strip(),
+        question_lt=body.question_lt.strip() if body.question_lt else None,
         option_a=body.option_a.strip(),
         option_b=body.option_b.strip(),
         option_c=body.option_c.strip(),
@@ -371,6 +375,7 @@ def admin_create_question(
 
 class QuestionUpdate(BaseModel):
     question_ru: Optional[str] = None
+    question_lt: Optional[str] = None
     option_a: Optional[str] = None
     option_b: Optional[str] = None
     option_c: Optional[str] = None
@@ -394,7 +399,7 @@ def admin_update_question(
         raise HTTPException(status_code=404, detail="Question not found")
     if body.correct_option is not None and not _valid_option(body.correct_option):
         raise HTTPException(status_code=400, detail="correct_option must be a/b/c/d")
-    for field in ("question_ru", "option_a", "option_b", "option_c", "option_d",
+    for field in ("question_ru", "question_lt", "option_a", "option_b", "option_c", "option_d",
                   "correct_option", "category", "is_active", "sort_order"):
         val = getattr(body, field)
         if val is not None:
@@ -447,6 +452,7 @@ def admin_export_test(
         "questions": [
             {
                 "question_ru": q.question_ru,
+                "question_lt": q.question_lt,
                 "option_a": q.option_a,
                 "option_b": q.option_b,
                 "option_c": q.option_c,
@@ -506,6 +512,7 @@ async def admin_import_test(
         q = PracticeQuestion(
             test_id=t.id,
             question_ru=str(item.get("question_ru", "")).strip(),
+            question_lt=str(item["question_lt"]).strip() if item.get("question_lt") else None,
             option_a=str(item.get("option_a", "")).strip(),
             option_b=str(item.get("option_b", "")).strip(),
             option_c=str(item.get("option_c", "")).strip(),
