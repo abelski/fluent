@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import MistakeButton from '../components/MistakeButton';
 import CookieConsent from '../components/CookieConsent';
 import LangSync from '../components/LangSync';
+import Analytics from '../components/Analytics';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <MistakeButton />
         <CookieConsent />
+        <Analytics />
       </body>
     </html>
   );
