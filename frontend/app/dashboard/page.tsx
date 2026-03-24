@@ -8,8 +8,12 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlToken = params.get('token');
+    // Token arrives as a URL fragment (#token=...) so it never appears in
+    // server logs or Referrer headers. Also accept ?token= for backwards
+    // compatibility with any old redirect URLs still in circulation.
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    const queryParams = new URLSearchParams(window.location.search);
+    const urlToken = hashParams.get('token') || queryParams.get('token');
 
     if (urlToken) {
       localStorage.setItem('fluent_token', urlToken);

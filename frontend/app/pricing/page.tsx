@@ -34,6 +34,12 @@ export default function PricingPage() {
           <p className="text-gray-500 text-lg leading-relaxed">{tr.pricing.mission}</p>
         </div>
 
+        {/* Beta notice */}
+        <div className="max-w-2xl mx-auto mb-10 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+          <span className="text-xl shrink-0">🚧</span>
+          <p className="text-sm text-amber-800 leading-relaxed">{tr.pricing.betaBanner}</p>
+        </div>
+
         {/* Cards */}
         <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
 

@@ -174,7 +174,7 @@ def _run_migrations():
                 s.commit()
             cat = s.exec(text("SELECT id FROM practice_category WHERE name_ru = 'Конституция'")).first()
             if cat:
-                s.exec(text(f"UPDATE practice_test SET category_id = {cat[0]} WHERE category_id IS NULL AND title_ru ILIKE '%конституц%'"))
+                s.exec(text("UPDATE practice_test SET category_id = :cat_id WHERE category_id IS NULL AND title_ru ILIKE '%конституц%'").bindparams(cat_id=cat[0]))
                 s.commit()
         except Exception:
             s.rollback()

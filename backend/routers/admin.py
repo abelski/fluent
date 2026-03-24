@@ -388,6 +388,7 @@ def get_list_words_admin(
             "translation_en": w.translation_en,
             "translation_ru": w.translation_ru,
             "hint": w.hint,
+            "star": w.star,
             "position": wli.position,
             "item_id": wli.id,
         }
@@ -400,6 +401,7 @@ class WordUpdate(BaseModel):
     translation_en: str
     translation_ru: str
     hint: Optional[str] = None
+    star: Optional[int] = None  # 1=base form, 2=inflected/multi-form, 3=phrase
 
 
 @router.patch("/content/words/{word_id}")
@@ -415,6 +417,8 @@ def update_word(
         raise HTTPException(status_code=400, detail="lithuanian is required")
     if not body.translation_ru.strip():
         raise HTTPException(status_code=400, detail="translation_ru is required")
+    if body.star is not None and body.star not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="star must be 1, 2 or 3")
     word = session.get(Word, word_id)
     if not word or word.archived:
         raise HTTPException(status_code=404, detail="Word not found")
@@ -422,6 +426,8 @@ def update_word(
     word.translation_en = body.translation_en.strip()
     word.translation_ru = body.translation_ru.strip()
     word.hint = body.hint.strip() if body.hint and body.hint.strip() else None
+    if body.star is not None:
+        word.star = body.star
     session.add(word)
     session.commit()
     return {"ok": True}

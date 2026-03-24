@@ -9,7 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends, Response as FastAPIResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from sqlmodel import Session, select
@@ -34,21 +34,33 @@ DEV_MODE = os.getenv("DEV", "false").lower() in ("1", "true", "yes")
 app = FastAPI(title="Fluent API")
 
 
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
+
 @app.on_event("startup")
 def on_startup():
     # Create all SQLModel tables on startup if they don't exist yet.
     # Safe to run repeatedly — SQLModel uses CREATE TABLE IF NOT EXISTS.
     create_db_and_tables()
 
-# Allow all origins so the frontend (both localhost:3000 dev and production)
-# can reach the API. In production the frontend is served from the same origin,
-# so this mainly matters for local development.
+# Restrict CORS to the frontend origin. In production the frontend is served
+# from the same origin, so CORS only matters for local development.
+_frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+_allowed_origins = {"http://localhost:3000", "http://localhost:8000", _frontend_url}
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(_allowed_origins),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Register API routers — all API routes are prefixed with /api to avoid

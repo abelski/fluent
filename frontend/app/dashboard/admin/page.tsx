@@ -174,6 +174,7 @@ interface ContentWord {
   translation_en: string;
   translation_ru: string;
   hint: string | null;
+  star: number;
   position: number;
 }
 
@@ -184,6 +185,7 @@ interface EditingWord {
   translation_en: string;
   translation_ru: string;
   hint: string;
+  star: number;
 }
 
 function ListMetaEditForm({
@@ -444,6 +446,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       translation_en: word.translation_en,
       translation_ru: word.translation_ru,
       hint: word.hint ?? '',
+      star: word.star ?? 1,
     });
   }
 
@@ -458,6 +461,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         translation_en: editingWord.translation_en,
         translation_ru: editingWord.translation_ru,
         hint: editingWord.hint || null,
+        star: editingWord.star,
       }),
     }).catch(() => null);
     setWordSaving(false);
@@ -467,13 +471,30 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         for (const [listId, words] of Object.entries(updated)) {
           updated[Number(listId)] = words.map((w) =>
             w.id === editingWord.id
-              ? { ...w, lithuanian: editingWord.lithuanian, translation_en: editingWord.translation_en, translation_ru: editingWord.translation_ru, hint: editingWord.hint || null }
+              ? { ...w, lithuanian: editingWord.lithuanian, translation_en: editingWord.translation_en, translation_ru: editingWord.translation_ru, hint: editingWord.hint || null, star: editingWord.star }
               : w
           );
         }
         return updated;
       });
       setEditingWord(null);
+    }
+  }
+
+  async function saveWordStar(wordId: number, listId: number, star: number) {
+    const res = await fetch(`${BACKEND_URL}/api/admin/content/words/${wordId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ star }),
+    }).catch(() => null);
+    if (res?.ok) {
+      setListWords((prev) => {
+        const updated = { ...prev };
+        updated[listId] = (updated[listId] ?? []).map((w) =>
+          w.id === wordId ? { ...w, star } : w
+        );
+        return updated;
+      });
     }
   }
 
@@ -1601,6 +1622,21 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                                     className="bg-gray-50 border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
                                                   />
                                                 </div>
+                                                <div className="flex flex-col gap-1">
+                                                  <label className="text-xs text-gray-400">{tr.admin.contentFieldStar}</label>
+                                                  <div className="flex gap-1">
+                                                    {[1, 2, 3].map((s) => (
+                                                      <button
+                                                        key={s}
+                                                        type="button"
+                                                        onClick={() => setEditingWord((d) => d ? { ...d, star: s } : d)}
+                                                        className={`px-2 py-1 rounded text-xs border transition-colors ${editingWord.star === s ? 'bg-gray-900 text-white border-gray-900' : 'bg-gray-50 border-gray-300 text-gray-500 hover:border-gray-900'}`}
+                                                      >
+                                                        {'★'.repeat(s)}
+                                                      </button>
+                                                    ))}
+                                                  </div>
+                                                </div>
                                               </div>
                                               <div className="flex gap-2">
                                                 <button
@@ -1641,6 +1677,22 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                               <span className="text-sm font-medium text-gray-900 min-w-[120px]">{word.lithuanian}</span>
                                               <span className="text-sm text-gray-500 min-w-[100px]">{word.translation_ru}</span>
                                               <span className="text-xs text-gray-400 flex-1">{word.translation_en}{word.hint ? ` · ${word.hint}` : ''}</span>
+                                              <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                {[1, 2, 3].map((s) => (
+                                                  <button
+                                                    key={s}
+                                                    onClick={() => saveWordStar(word.id, list.id, s)}
+                                                    title={`★`.repeat(s)}
+                                                    className={`text-xs px-1 rounded transition-colors ${
+                                                      word.star === s
+                                                        ? 'text-gray-900'
+                                                        : 'text-gray-300 hover:text-gray-600'
+                                                    }`}
+                                                  >
+                                                    {'★'.repeat(s)}
+                                                  </button>
+                                                ))}
+                                              </div>
                                               <button
                                                 onClick={() => startEditWord(word)}
                                                 className="text-xs px-2 py-1 border border-gray-900 rounded-lg text-emerald-600 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"

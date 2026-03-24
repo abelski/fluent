@@ -57,6 +57,7 @@ export interface Translations {
     premiumPrice: string;
     contactUs: string;
     contactNote: string;
+    betaBanner: string;
     whyTitle: string;
     whyBody: string;
     backToLists: string;
@@ -77,6 +78,12 @@ export interface Translations {
     browse: string;
     study: string;
     studyDisabledTitle: string;
+    starSelectorLabel: string;
+    star1Label: string;
+    star2Label: string;
+    star3Label: string;
+    starNote: string;
+    noWordsAtLevel: string;
     subcategories: Record<string, string>;
   };
   detail: {
@@ -273,6 +280,7 @@ export interface Translations {
     contentFieldRu: string;
     contentFieldEn: string;
     contentFieldHint: string;
+    contentFieldStar: string;
     contentMoveUp: string;
     contentMoveDown: string;
     contentWordsCount: string;

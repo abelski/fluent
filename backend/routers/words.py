@@ -5,7 +5,7 @@ import random
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Literal
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
 from sqlmodel import Session, select, col, func
 
@@ -34,6 +34,7 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
             "translation_en": w.translation_en,
             "translation_ru": w.translation_ru,
             "hint": w.hint,
+            "star": w.star,
         }
         for w in rows
     ]
@@ -149,10 +150,14 @@ QUIZ_SIZE = 10
 @router.get("/lists/{list_id}/study")
 def get_study_words(
     list_id: int,
+    star_level: int = Query(default=1, ge=1, le=3),
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
     """Return a prioritized set of words for a study session.
+
+    star_level filters which words are included:
+      1 = only star=1 words, 2 = star<=2 words, 3 = all words.
 
     For authenticated users, words are sorted by learning status so that
     new and in-progress words appear before already-known words.
@@ -166,6 +171,9 @@ def get_study_words(
         raise HTTPException(status_code=404, detail="List not found")
 
     all_words = _list_words(list_id, session)
+
+    # Filter by complexity level
+    all_words = [w for w in all_words if w["star"] <= star_level]
 
     # Try to get authenticated user for progress-based prioritization.
     # Auth is optional here — unauthenticated users still get a study session.
@@ -190,17 +198,16 @@ def get_study_words(
             w["status"] = progress_map.get(w["id"], "new")
 
         # Prioritize: new first → still learning → already known
+        # Position order (set by DB migration / admin arrows) is preserved within each group
         new_words = [w for w in all_words if w["status"] == "new"]
         learning_words = [w for w in all_words if w["status"] == "learning"]
         known_words = [w for w in all_words if w["status"] == "known"]
-        random.shuffle(new_words)
-        random.shuffle(learning_words)
         random.shuffle(known_words)
         all_words = new_words + learning_words + known_words
     else:
         for w in all_words:
             w["status"] = "new"
-        random.shuffle(all_words)
+        # Position order already reflects short-to-long (set by migration)
 
     return all_words[:QUIZ_SIZE]
 

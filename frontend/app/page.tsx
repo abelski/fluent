@@ -173,16 +173,18 @@ function GuestLanding() {
           {t.guestCta}
         </Link>
 
-        <div className="grid grid-cols-3 gap-6 w-full max-w-lg mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg mb-10">
           {[
             { icon: '📚', title: t.featureDictionaries, desc: t.featureDictionariesDesc },
             { icon: '✏️', title: t.featureGrammar, desc: t.featureGrammarDesc },
             { icon: '🎯', title: t.featureTests, desc: t.featureTestsDesc },
           ].map((f) => (
-            <div key={f.title} className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col gap-2">
-              <span className="text-3xl">{f.icon}</span>
-              <p className="font-semibold text-sm">{f.title}</p>
-              <p className="text-xs text-gray-400">{f.desc}</p>
+            <div key={f.title} className="bg-white border border-gray-200 rounded-2xl p-5 flex sm:flex-col items-center sm:items-start gap-4 sm:gap-2">
+              <span className="text-3xl shrink-0">{f.icon}</span>
+              <div>
+                <p className="font-semibold text-sm">{f.title}</p>
+                <p className="text-xs text-gray-400">{f.desc}</p>
+              </div>
             </div>
           ))}
         </div>

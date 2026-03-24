@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, resolveListId } from '../../../../../lib/api';
 import { useT } from '../../../../../lib/useT';
 import type { Lang } from '../../../../../lib/useLang';
+import { getStarLevel } from '../../../../../lib/starLevel';
 
 interface Word {
   id: number;
@@ -126,7 +127,8 @@ export default function QuizPage() {
   const loadWords = useCallback(() => {
     setLoading(true);
     const token = getToken();
-    fetch(`${BACKEND_URL}/api/lists/${id}/study`, {
+    const starLevel = getStarLevel();
+    fetch(`${BACKEND_URL}/api/lists/${id}/study?star_level=${starLevel}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then((r) => {
@@ -317,6 +319,26 @@ export default function QuizPage() {
               {tr.study.backToLists}
             </button>
           </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!loading && totalWords === 0) {
+    return (
+      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
+        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
+          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
+        </div>
+        <div className="relative z-10 text-center max-w-sm w-full">
+          <div className="text-5xl mb-6">★</div>
+          <p className="text-gray-400 mb-8">{tr.lists.noWordsAtLevel}</p>
+          <button
+            onClick={() => router.push('/dashboard/lists')}
+            className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
+          >
+            {tr.study.backToLists}
+          </button>
         </div>
       </main>
     );

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 import { useT } from '../../../lib/useT';
+import { getStarLevel, setStarLevel } from '../../../lib/starLevel';
 
 interface WordListSummary {
   id: number;
@@ -45,6 +46,7 @@ interface Quota {
 export default function ListsPage() {
   const { tr, plural, lang } = useT();
   const router = useRouter();
+  const [starLevel, setStarLevelState] = useState<number>(1);
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [subcategoryMeta, setSubcategoryMeta] = useState<Record<string, SubcategoryMeta>>({});
   const [progress, setProgress] = useState<Record<number, ListProgress>>({});
@@ -98,6 +100,16 @@ export default function ListsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Read star level from cookie on mount
+  useEffect(() => {
+    setStarLevelState(getStarLevel());
+  }, []);
+
+  function handleStarLevel(level: number) {
+    setStarLevel(level);
+    setStarLevelState(level);
+  }
+
   // Open the first subcategory when lists load (only once)
   useEffect(() => {
     if (lists.length > 0 && !firstSubcategoryOpened.current) {
@@ -144,8 +156,35 @@ export default function ListsPage() {
           </div>
         )}
 
-        <h1 className="text-3xl font-bold mb-2">{tr.lists.title}</h1>
-        <p className="text-gray-400 mb-10">{tr.lists.subtitle}</p>
+        <div className="flex flex-wrap items-center gap-4 mb-2">
+          <h1 className="text-3xl font-bold">{tr.lists.title}</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">{tr.lists.starSelectorLabel}</span>
+            {([
+              [1, `★ — ${tr.lists.star1Label}`],
+              [2, `★★ — ${tr.lists.star2Label}`],
+              [3, `★★★ — ${tr.lists.star3Label}`],
+            ] as [number, string][]).map(([level, tooltip]) => (
+              <div key={level} className="relative group">
+                <button
+                  onClick={() => handleStarLevel(level)}
+                  className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                    starLevel === level
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-500 border-gray-300 hover:border-gray-900'
+                  }`}
+                >
+                  {'★'.repeat(level)}
+                </button>
+                <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                  {tooltip}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-gray-400 mb-8">{tr.lists.subtitle}</p>
 
         {loading ? (
           <div className="flex justify-center py-20">

@@ -82,7 +82,7 @@ if not _jwt_secret:
     _jwt_secret = "change-me-in-development"
 JWT_SECRET = _jwt_secret
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRE_DAYS = 30  # Token stays valid for 30 days before the user must re-login
+JWT_EXPIRE_DAYS = 7  # Token stays valid for 7 days before the user must re-login
 
 
 def create_jwt(email: str, name: str, picture: Optional[str]) -> str:
@@ -160,10 +160,11 @@ async def google_callback(code: str, session: Session = Depends(get_session)):
         session.add(user)
     session.commit()
 
-    # Issue our own JWT and pass it to the frontend via query param.
-    # The frontend (api.ts) picks it up on load and stores it in localStorage.
+    # Issue our own JWT and pass it to the frontend via URL fragment (#token=...).
+    # Fragments are never sent to the server, so the token won't appear in
+    # access logs, proxy logs, or Referrer headers sent to third parties.
     token = create_jwt(email=email, name=name, picture=picture)
-    return RedirectResponse(f"{FRONTEND_URL}/dashboard?token={token}")
+    return RedirectResponse(f"{FRONTEND_URL}/dashboard#token={token}")
 
 
 @router.get("/me")

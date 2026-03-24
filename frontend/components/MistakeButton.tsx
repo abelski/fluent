@@ -56,13 +56,13 @@ export default function MistakeButton({ context }: Props) {
       <button
         onClick={() => setOpen(true)}
         data-testid="mistake-button"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-900 rounded-full px-3 py-2 transition-colors shadow-sm"
+        className="fixed bottom-6 right-4 sm:right-6 z-40 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-900 rounded-full px-2 py-2 sm:px-3 transition-colors shadow-sm"
       >
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="8" cy="8" r="7" />
           <path d="M8 5v4M8 11v.5" strokeLinecap="round" />
         </svg>
-        {tr.mistake.trigger}
+        <span className="hidden sm:inline">{tr.mistake.trigger}</span>
       </button>
 
       {/* Modal */}
