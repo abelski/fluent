@@ -12,6 +12,7 @@ interface Word {
   translation_en: string;
   translation_ru: string;
   hint: string | null;
+  star: number;
 }
 
 interface WordListDetail {
@@ -94,21 +95,23 @@ export default function ListDetailPage() {
         </div>
 
         <div className="bg-white border border-gray-900 rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr_1fr_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-gray-900">
+          <div className="grid grid-cols-[1fr_1fr_auto] sm:grid-cols-[1fr_1fr_auto_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-gray-900">
             <span>{tr.detail.columnLithuanian}</span>
             <span>{tr.detail.columnTranslation}</span>
             <span className="hidden sm:block">{tr.detail.columnNote}</span>
+            <span />
           </div>
           {list.words.map((word, i) => (
             <div
               key={word.id}
-              className={`grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr_1fr_auto] px-4 sm:px-6 py-3.5 gap-4 items-center ${
+              className={`grid grid-cols-[1fr_1fr_auto] sm:grid-cols-[1fr_1fr_auto_auto] px-4 sm:px-6 py-3.5 gap-4 items-center ${
                 i < list.words.length - 1 ? 'border-b border-gray-900' : ''
               }`}
             >
               <span className="font-medium text-gray-900">{word.lithuanian}</span>
               <span className="text-gray-500 text-sm">{lang === 'en' ? word.translation_en : word.translation_ru}</span>
               <span className="text-gray-300 text-xs hidden sm:block">{word.hint ?? ''}</span>
+              <span className="text-gray-300 text-xs">{'★'.repeat(word.star ?? 1)}</span>
             </div>
           ))}
         </div>
