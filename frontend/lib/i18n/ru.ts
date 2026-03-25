@@ -33,6 +33,7 @@ const ru: Translations = {
     beta: 'Сайт находится в бета-тестировании. Возможны ошибки и изменения.',
     signIn: 'Войти',
     admin: 'Администрирование',
+    settings: 'Настройки',
     signOut: 'Выйти',
     menu: 'Меню',
   },
@@ -113,6 +114,7 @@ const ru: Translations = {
     fillMissing: 'Вставьте пропущенную форму',
     howInLithuanian: 'Как будет по-литовски?',
     typePlaceholder: 'Напишите пропущенное слово...',
+    typeEmptyHint: 'Введите ответ перед отправкой',
   },
   grammar: {
     title: 'Грамматика',
@@ -383,6 +385,17 @@ const ru: Translations = {
     error: 'Не удалось отправить, попробуйте ещё раз.',
     cancel: 'Отмена',
     send: 'Отправить',
+  },
+  settings: {
+    title: 'Настройки сессии',
+    sessionSizeLabel: 'Слов за одну сессию',
+    sessionSizeHint: 'Общее количество слов в каждой сессии',
+    ratioLabel: 'Соотношение новых и повторяемых слов',
+    ratioNewLabel: 'Новые',
+    ratioReviewLabel: 'Повторение',
+    ratioHint: 'Какую долю составляют новые слова. Если новых слов меньше, остаток займут повторяемые.',
+    saveButton: 'Сохранить',
+    savedMessage: 'Настройки сохранены',
   },
   articles: {
     title: 'Статьи',

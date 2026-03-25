@@ -22,7 +22,7 @@ test.describe('Numbers study — digit display', () => {
     }, makeFakeJwt('Test User'));
 
     await page.route('**/api/lists/*/study', async (route) => {
-      await route.fulfill({ json: NUMBERS_WORDS });
+      await route.fulfill({ json: { words: NUMBERS_WORDS, distractors: [] } });
     });
     await page.route('**/api/words/*/progress', async (route) => {
       await route.fulfill({ json: { ok: true } });
@@ -57,7 +57,7 @@ test.describe('Numbers study — digit display', () => {
       { id: 14, lithuanian: 'duona', translation_en: 'bread', translation_ru: 'хлеб', hint: null, status: 'new' },
     ];
     await page.route('**/api/lists/*/study', async (route) => {
-      await route.fulfill({ json: NON_NUMBER_WORDS });
+      await route.fulfill({ json: { words: NON_NUMBER_WORDS, distractors: [] } });
     });
     await page.goto('/dashboard/lists/_/study');
     await expect(page.locator('[data-testid="number-digit"]')).not.toBeVisible();

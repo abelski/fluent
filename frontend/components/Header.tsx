@@ -198,6 +198,13 @@ export default function Header() {
                       {tr.nav.admin}
                     </Link>
                   )}
+                  <Link
+                    href="/dashboard/settings"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-3 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                  >
+                    {tr.nav.settings}
+                  </Link>
                   <button
                     onClick={logout}
                     className="w-full text-left px-4 py-3 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"

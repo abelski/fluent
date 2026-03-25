@@ -37,6 +37,7 @@ export interface Translations {
     beta: string;
     signIn: string;
     admin: string;
+    settings: string;
     signOut: string;
     menu: string;
   };
@@ -101,6 +102,7 @@ export interface Translations {
     fillMissing: string;
     howInLithuanian: string;
     typePlaceholder: string;
+    typeEmptyHint: string;
   };
   grammar: {
     title: string;
@@ -392,5 +394,16 @@ export interface Translations {
     error: string;
     cancel: string;
     send: string;
+  };
+  settings: {
+    title: string;
+    sessionSizeLabel: string;
+    sessionSizeHint: string;
+    ratioLabel: string;
+    ratioNewLabel: string;
+    ratioReviewLabel: string;
+    ratioHint: string;
+    saveButton: string;
+    savedMessage: string;
   };
 }

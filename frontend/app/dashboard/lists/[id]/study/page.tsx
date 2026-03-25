@@ -20,9 +20,11 @@ interface Word {
 interface StudyCard {
   word: Word;
   stage: 1 | 2 | 3;
+  failCount: number;     // per-stage fail counter, starts at 0
+  standalone?: boolean;  // if true, correct answer removes card without advancing to next stage
 }
 
-type AnswerState = 'unanswered' | 'correct' | 'wrong';
+type AnswerState = 'unanswered' | 'correct' | 'wrong' | 'empty';
 
 // Maps English number word → digit string so we can display "11" alongside "vienuolika".
 // Number words are identified by hint === 'skaitvardis'.
@@ -69,13 +71,17 @@ function optionText(word: Word, lang: Lang): string {
   return digit ?? trans(word, lang);
 }
 
-function pickDistractors(word: Word, allWords: Word[]): Word[] {
-  const pool = allWords.filter((w) => w.id !== word.id);
+function pickDistractors(word: Word, allWords: Word[], distractorPool: Word[]): Word[] {
+  // Combine session words and extra distractors from other lists, excluding the current word.
+  const combined = [...allWords, ...distractorPool].filter((w) => w.id !== word.id);
+  // Deduplicate by id
+  const seen = new Set<number>();
+  const pool = combined.filter((w) => { if (seen.has(w.id)) return false; seen.add(w.id); return true; });
   return [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
 }
 
-function buildOptions(word: Word, allWords: Word[], lang: Lang): { text: string; correct: boolean }[] {
-  const distractors = pickDistractors(word, allWords);
+function buildOptions(word: Word, allWords: Word[], distractorPool: Word[], lang: Lang): { text: string; correct: boolean }[] {
+  const distractors = pickDistractors(word, allWords, distractorPool);
   return [
     { text: optionText(word, lang), correct: true },
     ...distractors.map((d) => ({ text: optionText(d, lang), correct: false })),
@@ -89,6 +95,7 @@ export default function QuizPage() {
 
   const { tr, lang } = useT();
   const [allWords, setAllWords] = useState<Word[]>([]);
+  const [distractorPool, setDistractorPool] = useState<Word[]>([]);
   const [queue, setQueue] = useState<StudyCard[]>([]);
   const [totalWords, setTotalWords] = useState(0);
   const [wordsDone, setWordsDone] = useState(0);   // words that exited the queue
@@ -143,15 +150,18 @@ export default function QuizPage() {
         }
         return r.json();
       })
-      .then((data: Word[] | null) => {
+      .then((data: { words: Word[]; distractors: Word[] } | null) => {
         if (!data) return;
-        const words = Array.isArray(data) ? data : [];
+        const words = Array.isArray(data) ? data : (data.words ?? []);
+        const distractors = Array.isArray(data) ? [] : (data.distractors ?? []);
         setAllWords(words);
+        setDistractorPool(distractors);
 
         // Always start every word at stage 1 (flashcard read) regardless of status.
         const initialQueue: StudyCard[] = words.map((w) => ({
           word: w,
           stage: 1,
+          failCount: 0,
         }));
 
         setQueue(initialQueue);
@@ -178,7 +188,7 @@ export default function QuizPage() {
   // Recompute options whenever the front card changes (stage 2 only)
   useEffect(() => {
     if (queue.length > 0 && queue[0].stage === 2) {
-      setOptions(buildOptions(queue[0].word, allWords, lang));
+      setOptions(buildOptions(queue[0].word, allWords, distractorPool, lang));
     }
     if (queue.length > 0 && queue[0].stage === 3) {
       const forms = parseForms(queue[0].word.lithuanian);
@@ -187,19 +197,40 @@ export default function QuizPage() {
     }
   }, [queue, allWords, lang]);
 
-  function advance(card: StudyCard, correct: boolean) {
+  function buildRetryCards(card: StudyCard): StudyCard[] {
+    if (card.stage === 2) {
+      if (card.failCount === 0) return [{ word: card.word, stage: 2, failCount: 1 }];
+      if (card.failCount === 1) return [
+        { word: card.word, stage: 1, failCount: 0, standalone: true },
+        { word: card.word, stage: 2, failCount: 2 },
+      ];
+      return []; // 3rd fail — no more retries
+    }
+    if (card.stage === 3) {
+      if (card.failCount === 0) return [{ word: card.word, stage: 3, failCount: 1 }];
+      if (card.failCount === 1) return [
+        { word: card.word, stage: 2, failCount: 0, standalone: true },
+        { word: card.word, stage: 3, failCount: 2 },
+      ];
+      return []; // 3rd fail — no more retries
+    }
+    return [];
+  }
+
+  function advance(card: StudyCard, correct: boolean, retryCards: StudyCard[] = []) {
     setQueue((prev) => {
       const rest = prev.slice(1);
+      if (correct && card.standalone) {
+        // Standalone review card confirmed/answered: just remove, don't auto-advance.
+        // The next retry card is already in the queue.
+        return rest;
+      }
       if (correct && card.stage < 3) {
-        // Skip MCQ (stage 2) when list is too small to build 4 distinct options.
-        // Go directly from stage 1 to stage 3 in that case.
-        const nextStage: 2 | 3 =
-          card.stage === 1 && allWords.length < 4 ? 3 : ((card.stage + 1) as 2 | 3);
-        return [...rest, { word: card.word, stage: nextStage }];
+        return [...rest, { word: card.word, stage: (card.stage + 1) as 2 | 3, failCount: 0 }];
       }
       // Stage 3 correct → word fully done.
-      // Wrong at any stage → word removed without retry (already saved as 'learning').
-      return rest;
+      // Wrong at any stage → remove and append retry cards (if any).
+      return [...rest, ...retryCards];
     });
   }
 
@@ -231,15 +262,20 @@ export default function QuizPage() {
 
   function handleStage2Dismiss() {
     const card = queue[0];
-    setWordsDone((c) => c + 1);
+    const retryCards = buildRetryCards(card);
+    if (!card.standalone && retryCards.length === 0) setWordsDone((c) => c + 1);
     setAnswerState('unanswered');
     setSelectedOption(null);
     blockUntilRef.current = Date.now() + 200;
-    advance(card, false);
+    advance(card, false, retryCards);
   }
 
   function handleStage3Submit() {
     if (answerState !== 'unanswered') return;
+    if (typedAnswer.trim() === '') {
+      setAnswerState('empty');
+      return;
+    }
     const card = queue[0];
     const forms = parseForms(card.word.lithuanian);
     const target = forms[blankIndex] ?? forms[0];
@@ -266,12 +302,13 @@ export default function QuizPage() {
 
   function handleStage3Dismiss() {
     const card = queue[0];
-    setWordsDone((c) => c + 1);
+    const retryCards = buildRetryCards(card);
+    if (!card.standalone && retryCards.length === 0) setWordsDone((c) => c + 1);
     setAnswerState('unanswered');
     setTypedAnswer('');
     setShownAnswer('');
     blockUntilRef.current = Date.now() + 200;
-    advance(card, false);
+    advance(card, false, retryCards);
   }
 
   // Check if session is done after queue empties
@@ -547,19 +584,26 @@ export default function QuizPage() {
                 ref={inputRef}
                 type="text"
                 value={typedAnswer}
-                onChange={(e) => setTypedAnswer(e.target.value)}
+                onChange={(e) => { setTypedAnswer(e.target.value); if (answerState === 'empty') setAnswerState('unanswered'); }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleStage3Submit();
                 }}
-                disabled={answerState !== 'unanswered'}
+                disabled={answerState === 'correct' || answerState === 'wrong'}
                 placeholder={tr.study.typePlaceholder}
                 className={`w-full py-4 px-5 rounded-xl border bg-white text-base text-gray-900 placeholder-gray-400 outline-none transition-all duration-200
                   ${answerState === 'correct' ? 'border-gray-900 bg-emerald-50' :
                     answerState === 'wrong' ? 'border-gray-900 bg-red-50' :
+                    answerState === 'empty' ? 'border-amber-400' :
                     'border-gray-900 focus:border-gray-900'}`}
               />
 
-              {answerState === 'unanswered' && (
+              {answerState === 'empty' && (
+                <p className="text-amber-600 text-sm text-center animate-in fade-in duration-150" data-testid="empty-hint">
+                  {tr.study.typeEmptyHint}
+                </p>
+              )}
+
+              {(answerState === 'unanswered' || answerState === 'empty') && (
                 <button
                   onClick={handleStage3Submit}
                   className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"

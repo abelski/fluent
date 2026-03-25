@@ -142,8 +142,10 @@ def get_list(list_id: int, session: Session = Depends(get_session)):
     }
 
 
-# Number of words returned per study session.
-QUIZ_SIZE = 10
+# Session sizing defaults (used both in study endpoint and settings endpoints)
+QUIZ_SIZE = 10           # legacy constant kept for review endpoints
+DEFAULT_SESSION_SIZE = 10
+DEFAULT_NEW_RATIO = 0.7  # 70% new words, 30% review
 
 
 
@@ -154,17 +156,22 @@ def get_study_words(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return a prioritized set of words for a study session.
+    """Return a prioritized set of words plus MCQ distractors for a study session.
 
     star_level filters which words are included:
       1 = only star=1 words, 2 = star<=2 words, 3 = all words.
 
-    For authenticated users, words are sorted by learning status so that
-    new and in-progress words appear before already-known words.
-    Within each status group the order is randomized.
+    Response: { "words": [...], "distractors": [...] }
+    - words: the session queue, ordered new → learning → known, limited by user settings
+    - distractors: up to 12 extra words from other lists for building MCQ options
 
-    For anonymous users all words are shuffled randomly.
-    Either way at most QUIZ_SIZE words are returned.
+    Session sizing (authenticated users):
+      total = user.words_per_session or DEFAULT_SESSION_SIZE
+      new_ratio = user.new_words_ratio or DEFAULT_NEW_RATIO
+      new_count = round(total * new_ratio), review_count = total - new_count
+      Gaps are filled: if not enough new words, extra slots go to review and vice versa.
+
+    For anonymous users: all words (up to DEFAULT_SESSION_SIZE), shuffled.
     """
     wl = session.get(WordList, list_id)
     if not wl or wl.archived:
@@ -192,24 +199,61 @@ def get_study_words(
         ).all()
         progress_map = {p.word_id: p.status for p in progress_records}
 
-        # Annotate words with their status for the frontend so it can show
-        # a coloured badge (new / learning / known) on each card.
         for w in all_words:
             w["status"] = progress_map.get(w["id"], "new")
 
-        # Prioritize: new first → still learning → already known
-        # Position order (set by DB migration / admin arrows) is preserved within each group
         new_words = [w for w in all_words if w["status"] == "new"]
         learning_words = [w for w in all_words if w["status"] == "learning"]
         known_words = [w for w in all_words if w["status"] == "known"]
         random.shuffle(known_words)
-        all_words = new_words + learning_words + known_words
+        review_words = learning_words + known_words
+
+        total = user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE
+        new_ratio = user.new_words_ratio if user.new_words_ratio is not None else DEFAULT_NEW_RATIO
+        new_count = round(total * new_ratio)
+        review_count = total - new_count
+
+        # Fill gaps: if fewer new words than requested, use extra review slots and vice versa
+        actual_new = min(len(new_words), new_count)
+        new_gap = new_count - actual_new  # unused new slots
+        actual_review = min(len(review_words), review_count + new_gap)
+
+        review_gap = review_count - min(len(review_words), review_count)
+        actual_new = min(len(new_words), new_count + review_gap)
+
+        session_words = new_words[:actual_new] + review_words[:actual_review]
     else:
         for w in all_words:
             w["status"] = "new"
-        # Position order already reflects short-to-long (set by migration)
+        session_words = all_words[:DEFAULT_SESSION_SIZE]
 
-    return all_words[:QUIZ_SIZE]
+    # Fetch distractors: random words from other lists for MCQ options.
+    # Exclude words already in the session so MCQ options don't overlap with answers.
+    session_word_ids = {w["id"] for w in session_words}
+    distractor_rows = session.exec(
+        select(Word)
+        .join(WordListItem, WordListItem.word_id == Word.id)
+        .where(
+            WordListItem.word_list_id != list_id,
+            Word.archived == False,  # noqa: E712
+            col(Word.id).not_in(list(session_word_ids)) if session_word_ids else True,
+        )
+        .order_by(func.random())
+        .limit(12)
+    ).all()
+    distractors = [
+        {
+            "id": w.id,
+            "lithuanian": w.lithuanian,
+            "translation_en": w.translation_en,
+            "translation_ru": w.translation_ru,
+            "hint": w.hint,
+            "status": "new",
+        }
+        for w in distractor_rows
+    ]
+
+    return {"words": session_words, "distractors": distractors}
 
 
 @router.get("/lists/{list_id}/progress")
@@ -239,6 +283,46 @@ def get_list_progress(
         "known": known,
         "learning": learning,
         "new": len(word_ids) - known - learning,
+    }
+
+
+class UserSettingsUpdate(BaseModel):
+    words_per_session: int
+    new_words_ratio: float
+
+
+@router.get("/me/settings")
+def get_user_settings(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return the current user's study session size settings."""
+    user = _require_user(authorization, session)
+    return {
+        "words_per_session": user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE,
+        "new_words_ratio": user.new_words_ratio if user.new_words_ratio is not None else DEFAULT_NEW_RATIO,
+    }
+
+
+@router.patch("/me/settings")
+def update_user_settings(
+    body: UserSettingsUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Update the current user's study session size settings."""
+    user = _require_user(authorization, session)
+    if not (1 <= body.words_per_session <= 50):
+        raise HTTPException(status_code=422, detail="words_per_session must be between 1 and 50")
+    if not (0.0 <= body.new_words_ratio <= 1.0):
+        raise HTTPException(status_code=422, detail="new_words_ratio must be between 0.0 and 1.0")
+    user.words_per_session = body.words_per_session
+    user.new_words_ratio = body.new_words_ratio
+    session.add(user)
+    session.commit()
+    return {
+        "words_per_session": user.words_per_session,
+        "new_words_ratio": user.new_words_ratio,
     }
 
 

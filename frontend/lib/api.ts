@@ -40,3 +40,31 @@ export function resolveListId(_id: string): string {
   }
   return _id;
 }
+
+export interface UserSettings {
+  words_per_session: number;
+  new_words_ratio: number;  // 0.0–1.0
+}
+
+export async function getSettings(): Promise<UserSettings> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/settings`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) throw new Error('Failed to load settings');
+  return r.json();
+}
+
+export async function updateSettings(data: UserSettings): Promise<UserSettings> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/settings`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error('Failed to save settings');
+  return r.json();
+}

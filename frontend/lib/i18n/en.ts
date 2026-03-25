@@ -33,6 +33,7 @@ const en: Translations = {
     beta: 'This site is in beta. Errors and changes are possible.',
     signIn: 'Sign in',
     admin: 'Admin panel',
+    settings: 'Settings',
     signOut: 'Sign out',
     menu: 'Menu',
   },
@@ -113,6 +114,7 @@ const en: Translations = {
     fillMissing: 'Fill in the missing form',
     howInLithuanian: 'How do you say it in Lithuanian?',
     typePlaceholder: 'Type the missing word...',
+    typeEmptyHint: 'Please type your answer before submitting',
   },
   grammar: {
     title: 'Grammar',
@@ -383,6 +385,17 @@ const en: Translations = {
     error: 'Failed to send. Please try again.',
     cancel: 'Cancel',
     send: 'Send',
+  },
+  settings: {
+    title: 'Session settings',
+    sessionSizeLabel: 'Words per session',
+    sessionSizeHint: 'Total number of words in each session',
+    ratioLabel: 'New vs review ratio',
+    ratioNewLabel: 'New',
+    ratioReviewLabel: 'Review',
+    ratioHint: 'What fraction should be new words. If fewer new words are available, the gap is filled with review words.',
+    saveButton: 'Save',
+    savedMessage: 'Settings saved',
   },
   articles: {
     title: 'Articles',

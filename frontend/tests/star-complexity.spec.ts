@@ -28,7 +28,7 @@ test.describe('Star complexity selector', () => {
       route.fulfill({ json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5 }] })
     );
     await page.route('**/api/me/lists-progress', (route) => route.fulfill({ json: {} }));
-    await page.route('**/api/lists/*/study**', (route) => route.fulfill({ json: WORDS }));
+    await page.route('**/api/lists/*/study**', (route) => route.fulfill({ json: { words: WORDS, distractors: [] } }));
     await page.route('**/api/words/*/progress', (route) => route.fulfill({ json: { ok: true } }));
   });
 
@@ -74,7 +74,7 @@ test.describe('Star complexity selector', () => {
     let studyUrl = '';
     await page.route('**/api/lists/*/study**', (route) => {
       studyUrl = route.request().url();
-      route.fulfill({ json: WORDS });
+      route.fulfill({ json: { words: WORDS, distractors: [] } });
     });
 
     await page.goto('/dashboard/lists/_/study');
@@ -94,7 +94,7 @@ test.describe('Star complexity selector', () => {
   });
 
   test('empty state shown when API returns 0 words', async ({ page }) => {
-    await page.route('**/api/lists/*/study**', (route) => route.fulfill({ json: [] }));
+    await page.route('**/api/lists/*/study**', (route) => route.fulfill({ json: { words: [], distractors: [] } }));
     await page.goto('/dashboard/lists/_/study');
     await expect(page.locator('text=★').first()).toBeVisible({ timeout: 5000 });
     // back-to-lists button should appear
