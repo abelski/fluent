@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Header from '../components/Header';
@@ -10,10 +11,22 @@ import BetaBanner from '../components/BetaBanner';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
-export const metadata = {
-  title: 'Fluent — Learn Lithuanian',
-  description: 'The fun way to master Lithuanian',
+export const metadata: Metadata = {
+  title: {
+    default: 'Fluent — Learn Lithuanian',
+    template: '%s | Fluent',
+  },
+  description: 'Learn Lithuanian vocabulary and grammar with spaced repetition, declension exercises, and reading articles. Free to start.',
   icons: { icon: '/favicon.svg' },
+  metadataBase: new URL('https://fluent.lt'),
+  verification: {
+    google: '-00UmFLXQcYnWqG0atvHSxdW2m5P6s0oHsfw7gZPtgQ',
+  },
+  openGraph: {
+    siteName: 'Fluent',
+    locale: 'en_US',
+    type: 'website',
+  },
 };
 
 export const viewport = {

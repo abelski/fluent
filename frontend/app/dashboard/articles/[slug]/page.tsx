@@ -110,6 +110,8 @@ export default function ArticlePage() {
           prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
           prose-p:text-gray-700 prose-p:leading-relaxed
           prose-li:text-gray-700
+          prose-ol:list-decimal prose-ol:pl-6
+          prose-ul:list-disc prose-ul:pl-6
           prose-strong:text-gray-900
           prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline
           prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-code:text-sm

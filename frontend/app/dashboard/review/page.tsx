@@ -245,7 +245,7 @@ function ReviewContent() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">⏳</div>
-          <h1 className="text-2xl font-bold mb-2">{tr.common.limitTitle}</h1>
+          <h2 className="text-2xl font-bold mb-2">{tr.common.limitTitle}</h2>
           <p className="text-gray-400 mb-8">{tr.common.limitBody}</p>
           <div className="flex flex-col gap-3">
             <Link href="/pricing" className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-center">
@@ -271,7 +271,7 @@ function ReviewContent() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">📭</div>
-          <h1 className="text-2xl font-bold mb-2">{tr.review.nothingTitle}</h1>
+          <h2 className="text-2xl font-bold mb-2">{tr.review.nothingTitle}</h2>
           <p className="text-gray-400 mb-8">{tr.review.nothingBody.many.replace('{mode}', modeLabel)}</p>
           <Link href="/dashboard/lists" className="w-full block py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-center">
             {tr.common.backToLists}
@@ -289,7 +289,7 @@ function ReviewContent() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">🎉</div>
-          <h1 className="text-2xl font-bold mb-2">{tr.common.sessionDone}</h1>
+          <h2 className="text-2xl font-bold mb-2">{tr.common.sessionDone}</h2>
           <p className="text-gray-400 mb-8">{tr.common.correctOf.replace('{correct}', String(correctWords)).replace('{total}', String(totalWords))}</p>
 
           <div className="flex gap-4 justify-center mb-10">

@@ -221,7 +221,7 @@ function SubcategoryGroup({
         data-testid="subcategory-toggle"
         className="w-full flex items-center justify-between px-5 py-3 bg-white hover:bg-gray-50 transition-colors text-left relative"
       >
-        <span className="text-sm font-medium text-gray-700">{group.title}</span>
+        <span role="heading" aria-level={3} className="text-sm font-medium text-gray-700">{group.title}</span>
         <div className="flex items-center gap-2">
           <span className="text-gray-400 text-xs">
             {passedCount > 0 ? (
@@ -482,7 +482,7 @@ export default function GrammarPage() {
                       className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="font-semibold text-gray-900">{cat.label}</span>
+                        <span role="heading" aria-level={2} className="font-semibold text-gray-900">{cat.label}</span>
                         <span className="text-gray-400 text-sm">{categoryLessons.length} {plural(categoryLessons.length, tr.grammar.lessonsCount)}</span>
                       </div>
                       <svg

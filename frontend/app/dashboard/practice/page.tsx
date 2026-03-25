@@ -275,9 +275,9 @@ export default function PracticePage() {
         {view === 'tests' && (
           <>
             <div className="mt-4 mb-8">
-              <h1 className="text-3xl font-bold">
+              <h2 className="text-3xl font-bold">
                 {lang === 'en' ? (selectedCategory?.name_en ?? selectedCategory?.name_ru) : selectedCategory?.name_ru}
-              </h1>
+              </h2>
               <p className="text-gray-400 mt-1">Выберите тест для прохождения</p>
             </div>
 

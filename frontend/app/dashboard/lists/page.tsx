@@ -222,7 +222,7 @@ export default function ListsPage() {
                       className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left cursor-pointer"
                     >
                       <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-semibold text-gray-900">{group.label}</span>
+                        <span role="heading" aria-level={2} className="font-semibold text-gray-900">{group.label}</span>
                         <span className="text-gray-400 text-sm">{group.lists.length} {plural(group.lists.length, tr.lists.listsCount)}</span>
                         {meta?.is_published === false && (
                           <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px leading-tight">
