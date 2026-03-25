@@ -16,6 +16,7 @@ interface WordListSummary {
   description_en: string | null;
   subcategory: string | null;
   word_count: number;
+  star_counts?: Record<string, number>;
 }
 
 interface SubcategoryMeta {
@@ -307,7 +308,12 @@ export default function ListsPage() {
                                 </div>
 
                                 <div className="flex items-center justify-between mt-auto">
-                                  <span className="text-gray-400 text-sm">{list.word_count} {plural(list.word_count, tr.lists.wordsCount)}</span>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-400 text-sm">{list.word_count} {plural(list.word_count, tr.lists.wordsCount)}</span>
+                                    {list.star_counts && starLevel !== 3 && list.star_counts[String(starLevel)] !== list.word_count && (
+                                      <span className="text-xs text-gray-400">{list.star_counts[String(starLevel)]} {'★'.repeat(starLevel)}</span>
+                                    )}
+                                  </div>
                                   <div className="flex gap-2">
                                     <Link
                                       href={`/dashboard/lists/${list.id}`}

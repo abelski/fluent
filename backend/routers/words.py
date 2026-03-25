@@ -86,6 +86,25 @@ def get_lists(
             .group_by(WordListItem.word_list_id)
         ).all()
     )
+    # Per-star counts: group by (word_list_id, star) to compute cumulative star_counts
+    _star_rows = session.exec(
+        select(WordListItem.word_list_id, Word.star, func.count(WordListItem.id))
+        .join(Word, WordListItem.word_id == Word.id)
+        .where(Word.archived == False)  # noqa: E712
+        .group_by(WordListItem.word_list_id, Word.star)
+    ).all()
+    # Build cumulative counts: star_counts[list_id][N] = # words with star <= N
+    _star_by_list: dict[int, dict[int, int]] = {}
+    for list_id, star, cnt in _star_rows:
+        _star_by_list.setdefault(list_id, {})
+        _star_by_list[list_id][star] = _star_by_list[list_id].get(star, 0) + cnt
+    star_counts_map: dict[int, dict[str, int]] = {}
+    for list_id, by_star in _star_by_list.items():
+        cumulative = 0
+        star_counts_map[list_id] = {}
+        for level in (1, 2, 3):
+            cumulative += by_star.get(level, 0)
+            star_counts_map[list_id][str(level)] = cumulative
     # Load subcategory metadata for ordering and status filtering
     meta_rows = session.exec(select(SubcategoryMeta)).all()
     subcat_order = {r.key: (r.sort_order or 0) for r in meta_rows}
@@ -121,6 +140,7 @@ def get_lists(
             "description_en": wl.description_en,
             "subcategory": wl.subcategory,
             "word_count": counts.get(wl.id, 0),
+            "star_counts": star_counts_map.get(wl.id, {"1": 0, "2": 0, "3": 0}),
         }
         for wl in sorted_lists
     ]

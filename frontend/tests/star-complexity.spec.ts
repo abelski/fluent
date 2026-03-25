@@ -100,4 +100,52 @@ test.describe('Star complexity selector', () => {
     // back-to-lists button should appear
     await expect(page.locator('button').filter({ hasText: /главную|назад|back/i }).first()).toBeVisible({ timeout: 5000 });
   });
+
+  test('star_counts label shown when filtered count differs from total', async ({ page }) => {
+    await page.route('**/api/lists', (route) =>
+      route.fulfill({
+        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5, star_counts: { '1': 3, '2': 4, '3': 5 } }],
+      })
+    );
+    // Default star level is 1, star_counts["1"]=3 != word_count=5 → label visible
+    await page.goto('/dashboard/lists');
+    await expect(page.locator('text=3 ★').first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test('star_counts label hidden when filtered count equals total', async ({ page }) => {
+    await page.route('**/api/lists', (route) =>
+      route.fulfill({
+        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5, star_counts: { '1': 5, '2': 5, '3': 5 } }],
+      })
+    );
+    await page.goto('/dashboard/lists');
+    // star_counts["1"]=5 == word_count=5 → no secondary label
+    await expect(page.locator('text=5 ★').first()).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('star_counts label updates when star level changes', async ({ page }) => {
+    await page.route('**/api/lists', (route) =>
+      route.fulfill({
+        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5, star_counts: { '1': 2, '2': 4, '3': 5 } }],
+      })
+    );
+    await page.goto('/dashboard/lists');
+    // At ★ level: label shows "2 ★"
+    await expect(page.locator('text=2 ★').first()).toBeVisible({ timeout: 5000 });
+    // Switch to ★★ level
+    await page.locator('button').filter({ hasText: /^★★$/ }).click();
+    // At ★★ level: star_counts["2"]=4, word_count=5 → label shows "4 ★★"
+    await expect(page.locator('text=4 ★★').first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test('star_counts label never shown at ★★★ level', async ({ page }) => {
+    await page.route('**/api/lists', (route) =>
+      route.fulfill({
+        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5, star_counts: { '1': 2, '2': 4, '3': 5 } }],
+      })
+    );
+    await page.goto('/dashboard/lists');
+    await page.locator('button').filter({ hasText: /^★★★$/ }).click();
+    await expect(page.locator('text=5 ★★★').first()).not.toBeVisible({ timeout: 5000 });
+  });
 });
