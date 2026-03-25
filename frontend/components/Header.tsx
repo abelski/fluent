@@ -87,32 +87,32 @@ export default function Header() {
     <>
       <Link
         href="/dashboard/lists"
-        className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          listsActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
+        className={`px-3 py-2.5 rounded-full text-sm font-medium transition-colors ${
+          listsActive ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-emerald-600'
         }`}
       >
         {tr.nav.dictionaries}
       </Link>
       <Link
         href="/dashboard/grammar"
-        className={`relative px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          grammarActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
+        className={`relative px-3 py-2.5 rounded-full text-sm font-medium transition-colors ${
+          grammarActive ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-emerald-600'
         }`}
       >
         {tr.nav.grammar}
       </Link>
       <Link
         href="/dashboard/practice"
-        className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          practiceActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
+        className={`px-3 py-2.5 rounded-full text-sm font-medium transition-colors ${
+          practiceActive ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-emerald-600'
         }`}
       >
         {tr.nav.practice}
       </Link>
       <Link
         href="/dashboard/articles"
-        className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          articlesActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'
+        className={`px-3 py-2.5 rounded-full text-sm font-medium transition-colors ${
+          articlesActive ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-emerald-600'
         }`}
       >
         {tr.nav.articles}
@@ -121,7 +121,7 @@ export default function Header() {
   );
 
   return (
-    <header className="relative z-20 border-b border-gray-900 bg-slate-50 sticky top-0">
+    <header className="relative z-20 border-b border-gray-100 bg-white/90 backdrop-blur-md sticky top-0 shadow-sm">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
         <Link href="/" className="font-bold text-[1.75rem] tracking-tight shrink-0 leading-none">
@@ -129,7 +129,7 @@ export default function Header() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden sm:flex gap-1 bg-gray-50 border border-gray-900 rounded-xl p-1 shrink-0">
+        <nav className="hidden sm:flex gap-1 bg-gray-100/70 rounded-full p-1 shrink-0">
           {navLinks}
         </nav>
 
@@ -138,7 +138,7 @@ export default function Header() {
           <button
             onClick={() => { setLang(lang === 'ru' ? 'en' : 'ru'); window.location.reload(); }}
             data-testid="lang-toggle"
-            className="text-xs font-medium px-2 py-1 rounded-lg border border-gray-900 hover:bg-gray-50 transition-colors flex items-center gap-1"
+            className="text-xs font-medium px-2 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center gap-1"
           >
             <span className={lang === 'ru' ? 'text-gray-900 font-semibold' : 'text-gray-400'}>RU</span>
             <span className="text-gray-300">/</span>
@@ -151,7 +151,7 @@ export default function Header() {
           {isAuthed === false && (
             <a
               href={`${BACKEND_URL}/api/auth/google`}
-              className="flex items-center gap-2 bg-white text-gray-800 font-medium px-4 py-2.5 rounded-xl text-sm ring-1 ring-gray-900 shadow-sm hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 bg-gray-900 text-white font-medium px-4 py-2 rounded-xl text-sm hover:bg-gray-700 transition-colors shadow-sm"
             >
               <GoogleIcon />
               {tr.nav.signIn}
@@ -167,7 +167,7 @@ export default function Header() {
                   <img
                     src={user.picture}
                     alt={user.name}
-                    className="w-8 h-8 rounded-full ring-1 ring-gray-900"
+                    className="w-8 h-8 rounded-full ring-2 ring-white ring-offset-1 ring-offset-gray-100"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
@@ -185,8 +185,8 @@ export default function Header() {
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-900 rounded-xl shadow-xl overflow-hidden">
-                  <div className="px-4 py-3 border-b border-gray-900">
+                <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100">
                     <p className="text-gray-900 text-sm font-medium truncate">{user.name}</p>
                   </div>
                   {isAdmin && (
@@ -231,7 +231,7 @@ export default function Header() {
 
       {/* Mobile nav dropdown */}
       {mobileNavOpen && (
-        <div className="sm:hidden border-t border-gray-900 bg-slate-50 px-4 py-3 flex flex-col gap-1">
+        <div className="sm:hidden border-t border-gray-100 bg-white/95 px-4 py-3 flex flex-col gap-1">
           {navLinks}
         </div>
       )}
