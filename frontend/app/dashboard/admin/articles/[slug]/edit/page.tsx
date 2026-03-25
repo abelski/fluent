@@ -20,6 +20,7 @@ interface ArticleForm {
   body_en: string;
   tags: string;
   published: boolean;
+  show_in_footer: boolean;
 }
 
 const EMPTY: ArticleForm = {
@@ -30,6 +31,7 @@ const EMPTY: ArticleForm = {
   body_en: '',
   tags: '',
   published: true,
+  show_in_footer: false,
 };
 
 function resolveSlug(): string {
@@ -75,6 +77,7 @@ export default function ArticleEditorPage() {
             body_en: data.body_en,
             tags: data.tags,
             published: data.published,
+            show_in_footer: data.show_in_footer ?? false,
           });
         }
       })
@@ -181,15 +184,26 @@ export default function ArticleEditorPage() {
                 className="w-full bg-white border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
-            <label className="flex items-center gap-2 cursor-pointer mb-2">
-              <input
-                type="checkbox"
-                checked={form.published}
-                onChange={(e) => set('published', e.target.checked)}
-                className="w-4 h-4 accent-emerald-600"
-              />
-              <span className="text-sm text-gray-700">{tr.articles.publishedLabel}</span>
-            </label>
+            <div className="flex flex-col gap-2 mb-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.published}
+                  onChange={(e) => set('published', e.target.checked)}
+                  className="w-4 h-4 accent-emerald-600"
+                />
+                <span className="text-sm text-gray-700">{tr.articles.publishedLabel}</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.show_in_footer}
+                  onChange={(e) => set('show_in_footer', e.target.checked)}
+                  className="w-4 h-4 accent-emerald-600"
+                />
+                <span className="text-sm text-gray-700">Show in footer</span>
+              </label>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">

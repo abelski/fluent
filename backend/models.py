@@ -174,6 +174,7 @@ class Article(SQLModel, table=True):
     body_en: str = Field(default="")                   # Markdown content in English
     tags: str = Field(default="")                      # comma-separated tag list
     published: bool = Field(default=True)
+    show_in_footer: bool = Field(default=False)        # show in footer nav (hidden from main articles list)
     created_at: datetime = Field(default_factory=_utcnow)
     updated_at: datetime = Field(default_factory=_utcnow)
 

@@ -13,6 +13,7 @@ interface ArticleRow {
   title_en: string;
   tags: string[];
   published: boolean;
+  show_in_footer: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -151,6 +152,11 @@ export default function AdminArticlesPage() {
                     }`}>
                       {a.published ? tr.articles.published : tr.articles.draft}
                     </span>
+                    {a.show_in_footer && (
+                      <span className="text-xs px-2 py-0.5 rounded-full border border-blue-300 bg-blue-50 text-blue-600 font-medium">
+                        footer
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5 font-mono">{a.slug}</p>
                 </div>

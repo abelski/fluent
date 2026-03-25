@@ -13,6 +13,7 @@ const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 export const metadata = {
   title: 'Fluent — Learn Lithuanian',
   description: 'The fun way to master Lithuanian',
+  icons: { icon: '/favicon.svg' },
 };
 
 export const viewport = {

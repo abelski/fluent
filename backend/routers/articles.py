@@ -40,10 +40,11 @@ def _tags_list(tags_str: str) -> list[str]:
 
 @router.get("/articles")
 def list_articles(session: Session = Depends(get_session)):
-    """Return all published articles (summary only, no body)."""
+    """Return all published articles that are not pinned to the footer (summary only, no body)."""
     articles = session.exec(
         select(Article)
         .where(Article.published == True)  # noqa: E712
+        .where(Article.show_in_footer == False)  # noqa: E712
         .order_by(Article.created_at.desc())
     ).all()
     return [
@@ -53,6 +54,25 @@ def list_articles(session: Session = Depends(get_session)):
             "title_en": a.title_en,
             "tags": _tags_list(a.tags),
             "created_at": a.created_at,
+        }
+        for a in articles
+    ]
+
+
+@router.get("/footer-articles")
+def list_footer_articles(session: Session = Depends(get_session)):
+    """Return published articles pinned to the footer nav (slug + titles only)."""
+    articles = session.exec(
+        select(Article)
+        .where(Article.published == True)  # noqa: E712
+        .where(Article.show_in_footer == True)  # noqa: E712
+        .order_by(Article.created_at.asc())
+    ).all()
+    return [
+        {
+            "slug": a.slug,
+            "title_ru": a.title_ru,
+            "title_en": a.title_en,
         }
         for a in articles
     ]
@@ -94,6 +114,7 @@ def admin_list_articles(
             "title_en": a.title_en,
             "tags": _tags_list(a.tags),
             "published": a.published,
+            "show_in_footer": a.show_in_footer,
             "created_at": a.created_at,
             "updated_at": a.updated_at,
         }
@@ -121,6 +142,7 @@ def admin_get_article(
         "body_en": article.body_en,
         "tags": article.tags,
         "published": article.published,
+        "show_in_footer": article.show_in_footer,
         "created_at": article.created_at,
         "updated_at": article.updated_at,
     }
@@ -134,6 +156,7 @@ class ArticleBody(BaseModel):
     body_en: str = ""
     tags: str = ""
     published: bool = True
+    show_in_footer: bool = False
 
 
 @router.post("/admin/articles")
@@ -157,6 +180,7 @@ def create_article(
         body_en=body.body_en,
         tags=body.tags,
         published=body.published,
+        show_in_footer=body.show_in_footer,
     )
     session.add(article)
     session.commit()
@@ -188,6 +212,7 @@ def update_article(
     article.body_en = body.body_en
     article.tags = body.tags
     article.published = body.published
+    article.show_in_footer = body.show_in_footer
     article.updated_at = _utcnow()
     session.add(article)
     session.commit()
