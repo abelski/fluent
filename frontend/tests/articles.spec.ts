@@ -109,6 +109,7 @@ test.describe('Article link in vocabulary subcategory', () => {
     await page.route('**/api/lists', async (route) => route.fulfill({ json: MOCK_LISTS }));
     await page.route('**/api/subcategory-meta', async (route) => route.fulfill({ json: MOCK_SUBCAT_META }));
     await page.route('**/api/me/**', async (route) => route.fulfill({ json: {} }));
+    await page.route('**/api/me/programs', async (route) => route.fulfill({ json: ['a1_basics'] }));
     await page.goto('/dashboard/lists');
     await expect(page.getByRole('link', { name: 'Как подготовиться к A2' })).toBeVisible({ timeout: 5000 });
   });
@@ -118,6 +119,7 @@ test.describe('Article link in vocabulary subcategory', () => {
     await page.route('**/api/lists', async (route) => route.fulfill({ json: MOCK_LISTS }));
     await page.route('**/api/subcategory-meta', async (route) => route.fulfill({ json: MOCK_SUBCAT_META }));
     await page.route('**/api/me/**', async (route) => route.fulfill({ json: {} }));
+    await page.route('**/api/me/programs', async (route) => route.fulfill({ json: ['a1_basics'] }));
     await page.goto('/dashboard/lists');
     const link = page.getByRole('link', { name: 'Как подготовиться к A2' });
     await expect(link).toHaveAttribute('href', '/dashboard/articles/prepare-for-lithuanian-a2');
@@ -128,6 +130,7 @@ test.describe('Article link in vocabulary subcategory', () => {
     await page.route('**/api/lists', async (route) => route.fulfill({ json: MOCK_LISTS }));
     await page.route('**/api/subcategory-meta', async (route) => route.fulfill({ json: { a1_basics: { cefr_level: 'A1', difficulty: null, article_url: null, article_name_ru: null, article_name_en: null } } }));
     await page.route('**/api/me/**', async (route) => route.fulfill({ json: {} }));
+    await page.route('**/api/me/programs', async (route) => route.fulfill({ json: ['a1_basics'] }));
     await page.goto('/dashboard/lists');
     await expect(page.getByRole('link', { name: /Как подготовиться/ })).not.toBeVisible();
   });

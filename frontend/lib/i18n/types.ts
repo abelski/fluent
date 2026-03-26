@@ -34,6 +34,7 @@ export interface Translations {
     grammar: string;
     practice: string;
     articles: string;
+    programs: string;
     beta: string;
     signIn: string;
     admin: string;
@@ -394,6 +395,19 @@ export interface Translations {
     error: string;
     cancel: string;
     send: string;
+  };
+  programs: {
+    title: string;
+    subtitle: string;
+    addBtn: string;
+    enrolledBadge: string;
+    removeBtn: string;
+    wordsCount: PluralForms;
+    enrolledCount: string;  // "{n} изучают"
+    emptyState: string;
+    emptyStateCta: string;
+    seeMore: string;
+    details: string;
   };
   settings: {
     title: string;

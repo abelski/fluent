@@ -68,3 +68,44 @@ export async function updateSettings(data: UserSettings): Promise<UserSettings> 
   if (!r.ok) throw new Error('Failed to save settings');
   return r.json();
 }
+
+/** Return subcategory keys the current user is enrolled in. */
+export async function getEnrolledPrograms(): Promise<string[]> {
+  const token = getToken();
+  if (!token) return [];
+  const r = await fetch(`${BACKEND_URL}/api/me/programs`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) return [];
+  return r.json();
+}
+
+/** Enroll the current user in a program (subcategory). Throws on network error. */
+export async function enrollProgram(subcategory: string): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/programs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ subcategory }),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to enroll');
+  }
+}
+
+/** Unenroll the current user from a program (subcategory). Throws on network error. */
+export async function unenrollProgram(subcategory: string): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/programs/${encodeURIComponent(subcategory)}`, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to unenroll');
+  }
+}

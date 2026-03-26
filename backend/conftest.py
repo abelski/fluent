@@ -39,7 +39,7 @@ def _override_get_session():
 
 # ── 2. Create all tables in SQLite ────────────────────────────────────────────
 # Import models so their metadata is registered before create_all.
-from models import User, WordList, Word, WordListItem, UserWordProgress, DailyStudySession, GrammarLessonResult, MistakeReport  # noqa: E402
+from models import User, WordList, Word, WordListItem, UserWordProgress, DailyStudySession, GrammarLessonResult, MistakeReport, SubcategoryMeta, UserProgram  # noqa: E402
 
 SQLModel.metadata.create_all(_test_engine)
 
@@ -66,8 +66,12 @@ def _seed_static() -> None:
         )
         s.add(regular)
 
+        # One subcategory — required by program enrollment tests.
+        subcat = SubcategoryMeta(key="test_program", name_ru="Тест", name_en="Test")
+        s.add(subcat)
+
         # One word list with one word — required by daily-limit enforcement tests.
-        wl = WordList(id=1, title="Test List", is_public=True)
+        wl = WordList(id=1, title="Test List", is_public=True, subcategory="test_program")
         s.add(wl)
         w = Word(id=1, lithuanian="vienas", translation_en="one", translation_ru="один")
         s.add(w)

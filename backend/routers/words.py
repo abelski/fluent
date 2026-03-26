@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select, col, func
 
 from database import get_session
-from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult
+from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram
 from constants import DAILY_LIMIT
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
@@ -46,10 +46,19 @@ def get_subcategory_meta(
     session: Session = Depends(get_session),
 ):
     """Return CEFR/difficulty/article metadata keyed by subcategory string.
-    Admins receive is_published field for all subcategories."""
+    Includes enrollment_count (number of distinct users enrolled in each program).
+    Admins receive is_published/status/created_by fields."""
     user = _try_get_user(authorization, session)
     is_admin = user is not None and user.is_admin
     rows = session.exec(select(SubcategoryMeta)).all()
+
+    # One aggregation query: distinct user count per subcategory
+    enrollment_rows = session.exec(
+        select(UserProgram.subcategory_key, func.count(func.distinct(UserProgram.user_id)))
+        .group_by(UserProgram.subcategory_key)
+    ).all()
+    enrollment_counts: dict[str, int] = {key: cnt for key, cnt in enrollment_rows}
+
     return {
         r.key: {
             "cefr_level": r.cefr_level,
@@ -59,6 +68,7 @@ def get_subcategory_meta(
             "article_name_en": r.article_name_en,
             "name_ru": r.name_ru,
             "name_en": r.name_en,
+            "enrollment_count": enrollment_counts.get(r.key, 0),
             **({"status": r.status, "created_by": r.created_by} if is_admin else {}),
         }
         for r in rows
@@ -674,3 +684,70 @@ def get_quota(
         "is_admin": user.is_admin,
         "is_superadmin": user.is_superadmin,
     }
+
+
+# ── Program enrollment ──────────────────────────────────────────────────────
+
+class EnrollBody(BaseModel):
+    subcategory: str  # matches SubcategoryMeta.key
+
+
+@router.get("/me/programs")
+def get_enrolled_programs(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return the subcategory keys the current user has enrolled in."""
+    user = _require_user(authorization, session)
+    rows = session.exec(
+        select(UserProgram).where(UserProgram.user_id == user.id)
+    ).all()
+    return [r.subcategory_key for r in rows]
+
+
+@router.post("/me/programs", status_code=201)
+def enroll_program(
+    body: EnrollBody,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Enroll the current user in a program (subcategory). Returns 400 if already enrolled."""
+    user = _require_user(authorization, session)
+    meta = session.exec(
+        select(SubcategoryMeta).where(SubcategoryMeta.key == body.subcategory)
+    ).first()
+    if not meta:
+        raise HTTPException(status_code=404, detail="Program not found")
+    existing = session.exec(
+        select(UserProgram).where(
+            UserProgram.user_id == user.id,
+            UserProgram.subcategory_key == body.subcategory,
+        )
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Already enrolled")
+    enrollment = UserProgram(user_id=user.id, subcategory_key=body.subcategory)
+    session.add(enrollment)
+    session.commit()
+    return {"ok": True, "subcategory": body.subcategory}
+
+
+@router.delete("/me/programs/{subcategory}", status_code=200)
+def unenroll_program(
+    subcategory: str,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Remove the current user's enrollment in a program. Returns 404 if not enrolled."""
+    user = _require_user(authorization, session)
+    existing = session.exec(
+        select(UserProgram).where(
+            UserProgram.user_id == user.id,
+            UserProgram.subcategory_key == subcategory,
+        )
+    ).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not enrolled in this program")
+    session.delete(existing)
+    session.commit()
+    return {"ok": True}

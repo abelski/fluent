@@ -40,7 +40,8 @@ function setupRoutes(page: import('@playwright/test').Page) {
   page.route('**/api/me/quota', (route) =>
     route.fulfill({ json: { is_premium: false, premium_active: false, sessions_today: 0, daily_limit: 10, is_admin: false, is_superadmin: false } })
   );
-  page.route('**/api/subcategory-meta', (route) => route.fulfill({ json: {} }));
+  page.route('**/api/me/programs', (route) => route.fulfill({ json: ['a1_basics'] }));
+  page.route('**/api/subcategory-meta', (route) => route.fulfill({ json: { a1_basics: { cefr_level: 'A1', difficulty: null, article_url: null, article_name_ru: null, article_name_en: null, name_ru: 'Базовый A1', name_en: 'Basic A1' } } }));
   page.route('**/api/lists', (route) => route.fulfill({ json: LISTS }));
   page.route('**/api/me/lists-progress', (route) => route.fulfill({ json: {} }));
   page.route('**/api/lists/1', (route) => route.fulfill({ json: LIST_DETAIL }));

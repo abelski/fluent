@@ -83,6 +83,9 @@ test.describe('Quota banner', () => {
     await page.route('**/api/me/lists-progress', async (route) => {
       await route.fulfill({ json: {} });
     });
+    await page.route('**/api/me/programs', async (route) => route.fulfill({ json: ['a1_basics'] }));
+    await page.route('**/api/lists', async (route) => route.fulfill({ json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: 'a1_basics', word_count: 5 }] }));
+    await page.route('**/api/subcategory-meta', async (route) => route.fulfill({ json: { a1_basics: { cefr_level: 'A1', difficulty: null, article_url: null, article_name_ru: null, article_name_en: null, name_ru: 'Basic A1', name_en: 'Basic A1' } } }));
     await setToken(page);
     await page.goto('/dashboard/lists');
     // Wait for lists to load

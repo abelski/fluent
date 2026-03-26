@@ -23,9 +23,10 @@ test.describe('Star complexity selector', () => {
     await page.route('**/api/me/quota', (route) =>
       route.fulfill({ json: { is_premium: false, premium_active: false, sessions_today: 0, daily_limit: 10, is_admin: false, is_superadmin: false } })
     );
-    await page.route('**/api/subcategory-meta', (route) => route.fulfill({ json: {} }));
+    await page.route('**/api/me/programs', (route) => route.fulfill({ json: ['test'] }));
+    await page.route('**/api/subcategory-meta', (route) => route.fulfill({ json: { test: { cefr_level: null, difficulty: null, article_url: null, article_name_ru: null, article_name_en: null, name_ru: 'Test', name_en: 'Test' } } }));
     await page.route('**/api/lists', (route) =>
-      route.fulfill({ json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5 }] })
+      route.fulfill({ json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: 'test', word_count: 5 }] })
     );
     await page.route('**/api/me/lists-progress', (route) => route.fulfill({ json: {} }));
     await page.route('**/api/lists/*/study**', (route) => route.fulfill({ json: { words: WORDS, distractors: [] } }));
@@ -104,7 +105,7 @@ test.describe('Star complexity selector', () => {
   test('star_counts label shown when filtered count differs from total', async ({ page }) => {
     await page.route('**/api/lists', (route) =>
       route.fulfill({
-        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5, star_counts: { '1': 3, '2': 4, '3': 5 } }],
+        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: 'test', word_count: 5, star_counts: { '1': 3, '2': 4, '3': 5 } }],
       })
     );
     // Default star level is 1, star_counts["1"]=3 != word_count=5 → label visible
@@ -115,7 +116,7 @@ test.describe('Star complexity selector', () => {
   test('star_counts label hidden when filtered count equals total', async ({ page }) => {
     await page.route('**/api/lists', (route) =>
       route.fulfill({
-        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5, star_counts: { '1': 5, '2': 5, '3': 5 } }],
+        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: 'test', word_count: 5, star_counts: { '1': 5, '2': 5, '3': 5 } }],
       })
     );
     await page.goto('/dashboard/lists');
@@ -126,7 +127,7 @@ test.describe('Star complexity selector', () => {
   test('star_counts label updates when star level changes', async ({ page }) => {
     await page.route('**/api/lists', (route) =>
       route.fulfill({
-        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5, star_counts: { '1': 2, '2': 4, '3': 5 } }],
+        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: 'test', word_count: 5, star_counts: { '1': 2, '2': 4, '3': 5 } }],
       })
     );
     await page.goto('/dashboard/lists');
@@ -141,7 +142,7 @@ test.describe('Star complexity selector', () => {
   test('star_counts label never shown at ★★★ level', async ({ page }) => {
     await page.route('**/api/lists', (route) =>
       route.fulfill({
-        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: null, word_count: 5, star_counts: { '1': 2, '2': 4, '3': 5 } }],
+        json: [{ id: 1, title: 'Test List', title_en: null, description: null, description_en: null, subcategory: 'test', word_count: 5, star_counts: { '1': 2, '2': 4, '3': 5 } }],
       })
     );
     await page.goto('/dashboard/lists');

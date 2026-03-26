@@ -22,7 +22,7 @@ from routers.articles import router as articles_router
 from routers.constitution import router as constitution_router
 from routers.practice import router as practice_router
 from database import create_db_and_tables, get_session
-from models import WordList, Article
+from models import WordList, Article, SubcategoryMeta
 from data.grammar.lessons import LESSON_CONFIG
 
 # Resolve the static export directory relative to this file so the path works
@@ -97,6 +97,7 @@ def sitemap(session: Session = Depends(get_session)):
         (f"{base}/dashboard/grammar/", "0.9", "weekly"),
         (f"{base}/dashboard/lists/", "0.8", "weekly"),
         (f"{base}/dashboard/articles/", "0.8", "weekly"),
+        (f"{base}/programs/", "0.8", "weekly"),
     ]
 
     urls = []
@@ -124,6 +125,17 @@ def sitemap(session: Session = Depends(get_session)):
             f"  </url>"
         )
 
+    # Program detail pages — one per published subcategory
+    programs = session.exec(select(SubcategoryMeta)).all()
+    for program in programs:
+        urls.append(
+            f"  <url>\n"
+            f"    <loc>{base}/programs/{program.key}/</loc>\n"
+            f"    <priority>0.7</priority>\n"
+            f"    <changefreq>weekly</changefreq>\n"
+            f"  </url>"
+        )
+
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -144,6 +156,7 @@ def robots_txt():
         "Allow: /dashboard/grammar/\n"
         "Allow: /dashboard/articles/\n"
         "Allow: /dashboard/lists/\n"
+        "Allow: /programs/\n"
         "Disallow: /dashboard/admin/\n"
         "Disallow: /dashboard/practice/\n"
         "Disallow: /dashboard/review/\n"
@@ -165,10 +178,12 @@ def llms_txt(session: Session = Depends(get_session)):
     articles = session.exec(
         select(Article).where(Article.published == True)
     ).all()
+    programs = session.exec(select(SubcategoryMeta)).all()
 
     lesson_count = len(LESSON_CONFIG)
     list_count = len(lists)
     article_count = len(articles)
+    program_count = len(programs)
 
     # Group list titles by subcategory
     by_subcategory: dict[str, list[str]] = {}
@@ -190,6 +205,10 @@ def llms_txt(session: Session = Depends(get_session)):
         f"Lithuanian vocabulary and grammar for English and Russian speakers, "
         f"organized by CEFR levels (A1–B2). Covers all major Lithuanian noun cases "
         f"with fill-in-the-gap exercises, plus a growing library of reading texts.\n\n"
+        f"## Programs ({program_count} learning programs)\n"
+        f"Curated vocabulary programs organized by topic and CEFR level. "
+        f"Each program contains multiple card stacks with words and phrases. "
+        f"Browse at {base}/programs/\n\n"
         f"## Vocabulary ({list_count} lists)\n"
         + "\n".join(vocab_lines)
         + f"\n\n## Grammar ({lesson_count} lessons)\n"
@@ -211,6 +230,7 @@ def llms_txt(session: Session = Depends(get_session)):
         f"- Grammar lessons: {base}/dashboard/grammar/\n"
         f"- Vocabulary lists: {base}/dashboard/lists/\n"
         f"- Reading articles: {base}/dashboard/articles/\n"
+        f"- Programs catalog: {base}/programs/\n"
         f"- Pricing: {base}/pricing/\n"
     )
     return Response(content=content, media_type="text/plain; charset=utf-8")

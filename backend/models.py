@@ -284,3 +284,14 @@ class ConstitutionExamResult(SQLModel, table=True):
     score: int       # number of correct answers
     total: int       # total questions in the attempt
     created_at: datetime = Field(default_factory=_utcnow)
+
+
+class UserProgram(SQLModel, table=True):
+    """Tracks which programs (subcategory groups) a user has enrolled in.
+    A program corresponds to a SubcategoryMeta key (e.g. 'a1_basics').
+    Only enrolled programs' card stacks appear on /dashboard/lists."""
+    __tablename__ = "user_program"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    subcategory_key: str = Field(index=True)  # matches SubcategoryMeta.key
+    enrolled_at: datetime = Field(default_factory=_utcnow)

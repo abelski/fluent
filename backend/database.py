@@ -147,7 +147,7 @@ def _run_migrations():
                 "  name_en VARCHAR,"
                 "  description_ru VARCHAR,"
                 "  sort_order INTEGER NOT NULL DEFAULT 0,"
-                "  created_at TIMESTAMP NOT NULL DEFAULT NOW()"
+                "  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
                 ")"
             ))
             s.commit()
@@ -169,7 +169,7 @@ def _run_migrations():
             if not existing:
                 s.exec(text(
                     "INSERT INTO practice_category (name_ru, name_en, description_ru, sort_order, created_at) "
-                    "VALUES ('Конституция', 'Constitution', 'Подготовка к гражданству и ПМЖ', 0, NOW())"
+                    "VALUES ('Конституция', 'Constitution', 'Подготовка к гражданству и ПМЖ', 0, CURRENT_TIMESTAMP)"
                 ))
                 s.commit()
             cat = s.exec(text("SELECT id FROM practice_category WHERE name_ru = 'Конституция'")).first()
@@ -180,6 +180,40 @@ def _run_migrations():
             s.rollback()
         try:
             s.exec(text("ALTER TABLE article ADD COLUMN show_in_footer BOOLEAN NOT NULL DEFAULT FALSE"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            # Migrate user_program: add subcategory_key (derived from word_list.subcategory),
+            # then drop the old list_id column.
+            s.exec(text("ALTER TABLE user_program ADD COLUMN subcategory_key VARCHAR"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            # Backfill subcategory_key from word_list.subcategory where list_id is set
+            s.exec(text(
+                "UPDATE user_program up "
+                "SET subcategory_key = wl.subcategory "
+                "FROM word_list wl "
+                "WHERE up.list_id = wl.id AND up.subcategory_key IS NULL"
+            ))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            # Remove rows where subcategory_key is still null (orphaned / no subcategory)
+            s.exec(text("DELETE FROM user_program WHERE subcategory_key IS NULL"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE user_program DROP COLUMN IF EXISTS list_id"))
+            s.commit()
+        except Exception:
+            s.rollback()
+        try:
+            s.exec(text("ALTER TABLE user_program ADD COLUMN enrolled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"))
             s.commit()
         except Exception:
             s.rollback()
@@ -344,7 +378,7 @@ def _seed_footer_articles(s):
         if not existing:
             s.exec(text(
                 "INSERT INTO article (slug, title_ru, title_en, body_ru, body_en, tags, published, show_in_footer, created_at, updated_at) "
-                "VALUES (:slug, :title_ru, :title_en, :body_ru, :body_en, :tags, TRUE, TRUE, NOW(), NOW())"
+                "VALUES (:slug, :title_ru, :title_en, :body_ru, :body_en, :tags, TRUE, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
             ).bindparams(**a))
             s.commit()
         else:
