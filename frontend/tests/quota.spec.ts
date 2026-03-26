@@ -125,7 +125,7 @@ test.describe('Quota banner', () => {
 
 test.describe('Study page limit reached', () => {
   test('shows limit screen when API returns 429', async ({ page }) => {
-    await page.route('**/api/lists/*/study', async (route) => {
+    await page.route('**/api/lists/*/study**', async (route) => {
       await route.fulfill({ status: 429, json: { detail: { code: 'daily_limit_reached', limit: 10, sessions_today: 10 } } });
     });
     await setToken(page);
@@ -135,7 +135,7 @@ test.describe('Study page limit reached', () => {
   });
 
   test('limit screen has link to pricing page', async ({ page }) => {
-    await page.route('**/api/lists/*/study', async (route) => {
+    await page.route('**/api/lists/*/study**', async (route) => {
       await route.fulfill({ status: 429, json: { detail: { code: 'daily_limit_reached', limit: 10, sessions_today: 10 } } });
     });
     await setToken(page);

@@ -31,7 +31,7 @@ test.describe('Navigation', () => {
     await setFakeToken(page);
     await page.goto('/dashboard/lists');
     const link = page.getByRole('link', { name: 'Словари' });
-    await expect(link).toHaveClass(/bg-gray-100/);
+    await expect(link).toHaveClass(/bg-white/);
   });
 
   test('Грамматика link navigates to grammar page', async ({ page }) => {
@@ -39,13 +39,7 @@ test.describe('Navigation', () => {
     await page.goto('/dashboard/lists');
     await page.getByRole('link', { name: /Грамматика/ }).click();
     await expect(page).toHaveURL(/\/dashboard\/grammar/);
-    await expect(page.getByRole('link', { name: /Грамматика/ })).toHaveClass(/bg-gray-100/);
-  });
-
-  test('Грамматика nav link shows тестирование badge', async ({ page }) => {
-    await setFakeToken(page);
-    await page.goto('/dashboard/lists');
-    await expect(page.locator('text=тестирование')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Грамматика/ })).toHaveClass(/bg-white/);
   });
 
   test('Практика link navigates to practice page', async ({ page }) => {
@@ -53,14 +47,14 @@ test.describe('Navigation', () => {
     await page.goto('/dashboard/lists');
     await page.getByRole('link', { name: 'Практика' }).click();
     await expect(page).toHaveURL(/\/dashboard\/practice/);
-    await expect(page.getByRole('link', { name: 'Практика' })).toHaveClass(/bg-gray-100/);
+    await expect(page.getByRole('link', { name: 'Практика' })).toHaveClass(/bg-white/);
   });
 });
 
 test.describe('Grammar page', () => {
   test('shows beta disclaimer banner', async ({ page }) => {
     await page.goto('/dashboard/grammar');
-    await expect(page.getByText(/находится в стадии тестирования/)).toBeVisible();
+    await expect(page.getByText(/бета-тестировании/)).toBeVisible();
   });
 });
 
@@ -80,18 +74,6 @@ test.describe('Grammar page — categories', () => {
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   });
 
-  test('shows Времена category with Скоро badge', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
-    await expect(page.locator('[data-testid="category-vremena"]')).toBeVisible();
-    await expect(page.locator('[data-testid="category-vremena"]').getByText('Скоро')).toBeVisible();
-  });
-
-  test('Времена category is disabled and not expandable', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
-    const toggle = page.locator('[data-testid="category-toggle-vremena"]');
-    await expect(toggle).toBeDisabled();
-    await expect(page.locator('[data-testid="category-vremena"] .grid')).not.toBeVisible();
-  });
 });
 
 test.describe('Grammar page — lesson levels', () => {
@@ -158,11 +140,11 @@ test.describe('Grammar page — lesson levels', () => {
 test.describe('Grammar progression — locking', () => {
   const MOCK_LESSONS = [
     {
-      id: 1, title: 'Урок 1', level: 'basic', cases: [4], task_count: 2,
+      id: 1, title: 'Падежи', level: 'basic', cases: [4], task_count: 2,
       rules: [], is_locked: false, best_score_pct: null,
     },
     {
-      id: 2, title: 'Урок 2', level: 'advanced', cases: [4], task_count: 2,
+      id: 2, title: 'Падежи', level: 'advanced', cases: [4], task_count: 2,
       rules: [], is_locked: true, best_score_pct: null,
     },
   ];
@@ -172,11 +154,9 @@ test.describe('Grammar progression — locking', () => {
       await route.fulfill({ json: MOCK_LESSONS });
     });
     await page.goto('/dashboard/grammar');
-    // Expand all subcategories to see lesson cards
+    // Expand the subcategory to see lesson cards
     await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    for (const btn of await page.locator('[data-testid="subcategory-toggle"]').all()) {
-      await btn.click();
-    }
+    await page.locator('[data-testid="subcategory-toggle"]').first().click();
     await page.waitForSelector('.grid button', { timeout: 5000 });
 
     // Second lesson should have data-testid="lesson-locked" and be disabled

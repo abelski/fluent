@@ -49,7 +49,7 @@ test.describe('Nav — Articles link', () => {
     await page.goto('/dashboard/lists');
     await page.getByRole('link', { name: 'Статьи' }).click();
     await expect(page).toHaveURL(/\/dashboard\/articles/);
-    await expect(page.getByRole('link', { name: 'Статьи' })).toHaveClass(/bg-gray-100/);
+    await expect(page.getByRole('link', { name: 'Статьи' })).toHaveClass(/bg-white/);
   });
 });
 

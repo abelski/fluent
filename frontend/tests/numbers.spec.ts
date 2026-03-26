@@ -21,7 +21,7 @@ test.describe('Numbers study — digit display', () => {
       localStorage.setItem('fluent_token', token);
     }, makeFakeJwt('Test User'));
 
-    await page.route('**/api/lists/*/study', async (route) => {
+    await page.route('**/api/lists/*/study**', async (route) => {
       await route.fulfill({ json: { words: NUMBERS_WORDS, distractors: [] } });
     });
     await page.route('**/api/words/*/progress', async (route) => {
@@ -56,7 +56,7 @@ test.describe('Numbers study — digit display', () => {
       { id: 13, lithuanian: 'vanduo', translation_en: 'water', translation_ru: 'вода', hint: null, status: 'new' },
       { id: 14, lithuanian: 'duona', translation_en: 'bread', translation_ru: 'хлеб', hint: null, status: 'new' },
     ];
-    await page.route('**/api/lists/*/study', async (route) => {
+    await page.route('**/api/lists/*/study**', async (route) => {
       await route.fulfill({ json: { words: NON_NUMBER_WORDS, distractors: [] } });
     });
     await page.goto('/dashboard/lists/_/study');

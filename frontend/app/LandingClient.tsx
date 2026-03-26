@@ -89,26 +89,18 @@ function RefreshIcon() {
 
 export default function LandingClient() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
     const token = getToken();
-    if (!token) { setLoggedIn(false); return; }
+    if (!token) return;
     fetch(`${BACKEND_URL}/api/me/stats`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => { if (!r.ok) { setLoggedIn(false); return null; } return r.json(); })
+      .then((r) => { if (!r.ok) return null; return r.json(); })
       .then((data) => { if (data) { setStats(data); setLoggedIn(true); } })
-      .catch(() => setLoggedIn(false));
+      .catch(() => {});
   }, []);
-
-  if (loggedIn === null) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return loggedIn ? <UserHome stats={stats} /> : <GuestLanding />;
 }

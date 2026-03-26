@@ -19,7 +19,7 @@ test.describe('Wrong answer — vocabulary study', () => {
     await page.addInitScript((token) => {
       localStorage.setItem('fluent_token', token);
     }, makeFakeJwt('Test User'));
-    await page.route('**/api/lists/*/study', async (route) => {
+    await page.route('**/api/lists/*/study**', async (route) => {
       await route.fulfill({ json: { words: WORDS, distractors: [] } });
     });
     await page.route('**/api/words/*/progress', async (route) => {
@@ -92,7 +92,7 @@ test.describe('Wrong answer — vocabulary study', () => {
     ];
     const ruMap: Record<string, string> = { vienas: 'один', du: 'два', trys: 'три', keturi: 'четыре', penki: 'пять' };
 
-    await page.route('**/api/lists/*/study', async (route) => {
+    await page.route('**/api/lists/*/study**', async (route) => {
       await route.fulfill({ json: { words: DISTINCT, distractors: [] } });
     });
     await page.goto('/dashboard/lists/_/study');

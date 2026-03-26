@@ -22,7 +22,7 @@ test.describe('Language switch', () => {
     await page.route('**/api/me/quota', async (route) => {
       await route.fulfill({ json: { is_premium: false, premium_active: false, sessions_today: 0, daily_limit: 10, is_admin: false, is_superadmin: false } });
     });
-    await page.route('**/api/lists/*/study', async (route) => {
+    await page.route('**/api/lists/*/study**', async (route) => {
       await route.fulfill({ json: { words: WORDS, distractors: [] } });
     });
     await page.route('**/api/words/*/progress', async (route) => {
