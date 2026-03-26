@@ -402,6 +402,10 @@ export interface Translations {
     addBtn: string;
     enrolledBadge: string;
     removeBtn: string;
+    removeConfirmTitle: string;
+    removeConfirmBody: string;
+    removeConfirmOk: string;
+    removeConfirmCancel: string;
     wordsCount: PluralForms;
     enrolledCount: string;  // "{n} изучают"
     emptyState: string;

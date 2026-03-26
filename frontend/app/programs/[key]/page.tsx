@@ -61,6 +61,7 @@ export default function ProgramDetailPage() {
   const [stacks, setStacks] = useState<WordListSummary[]>([]);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollPending, setEnrollPending] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [stackStates, setStackStates] = useState<Record<number, StackState>>({});
   const [loading, setLoading] = useState(true);
 
@@ -95,15 +96,27 @@ export default function ProgramDetailPage() {
   }, []);
 
   async function handleToggle() {
+    if (isEnrolled) {
+      setShowConfirm(true);
+      return;
+    }
     setEnrollPending(true);
     try {
-      if (isEnrolled) {
-        await unenrollProgram(programKey);
-        setIsEnrolled(false);
-      } else {
-        await enrollProgram(programKey);
-        setIsEnrolled(true);
-      }
+      await enrollProgram(programKey);
+      setIsEnrolled(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setEnrollPending(false);
+    }
+  }
+
+  async function handleConfirmUnenroll() {
+    setShowConfirm(false);
+    setEnrollPending(true);
+    try {
+      await unenrollProgram(programKey);
+      setIsEnrolled(false);
     } catch (err) {
       console.error(err);
     } finally {
@@ -287,6 +300,29 @@ export default function ProgramDetailPage() {
           </div>
         )}
       </div>
+
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">{tr.programs.removeConfirmTitle}</h2>
+            <p className="text-sm text-gray-500 mb-6">{tr.programs.removeConfirmBody}</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                {tr.programs.removeConfirmCancel}
+              </button>
+              <button
+                onClick={handleConfirmUnenroll}
+                className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors"
+              >
+                {tr.programs.removeConfirmOk}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

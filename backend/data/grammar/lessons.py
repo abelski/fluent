@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 _data = json.loads(
-    (Path(__file__).parent.parent.parent.parent / "content/grammar/lessons.json")
+    (Path(__file__).parent / "lessons.json")
     .read_text(encoding="utf-8")
 )
 

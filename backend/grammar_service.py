@@ -5,7 +5,7 @@
 #   "sentence"   — user must fill in a blank in a real Lithuanian sentence (advanced/practice)
 #
 # Sentences and case rules are loaded from the DB (populated by the content loader).
-# Word declension table is loaded from content/grammar/words.txt.
+# Word declension table is loaded from data/grammar/words.txt.
 
 import re
 import random
@@ -18,7 +18,7 @@ from models import GrammarSentence, GrammarCaseRule
 
 # Load noun declension table from content file.
 # Each row: [stem, sg1..sg7, pl1..pl7, ru_translation] (17 fields total)
-_WORDS_PATH = Path(__file__).parent.parent / "content/words.txt"
+_WORDS_PATH = Path(__file__).parent / "data/grammar/words.txt"
 WORDS = [
     line.strip().split("\t")
     for line in _WORDS_PATH.read_text(encoding="utf-8").splitlines()

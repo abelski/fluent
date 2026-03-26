@@ -180,6 +180,81 @@ test.describe('Programs detail page (/programs/[key])', () => {
   });
 });
 
+const MOCK_SEKMES_LISTS = [
+  {
+    id: 101,
+    title: 'Koks jūsų vardas?',
+    title_en: 'What is your name?',
+    description: null,
+    description_en: null,
+    subcategory: 'sekmes',
+    word_count: 15,
+    star_counts: { '1': 10, '2': 3, '3': 2 },
+  },
+  {
+    id: 102,
+    title: 'Čia mano draugas',
+    title_en: 'This is my friend',
+    description: null,
+    description_en: null,
+    subcategory: 'sekmes',
+    word_count: 21,
+    star_counts: { '1': 15, '2': 4, '3': 2 },
+  },
+];
+
+const MOCK_SEKMES_META = {
+  sekmes: {
+    cefr_level: 'A1',
+    difficulty: null,
+    name_ru: 'Сэкмес!',
+    name_en: 'Sekmės!',
+    article_url: 'https://www.vu.lt/leidyba/knygos/sekmes',
+    article_name_ru: 'Учебник Sekmės!',
+    article_name_en: 'Sekmės! textbook',
+    enrollment_count: 0,
+  },
+};
+
+test.describe('Sekmės! program (/programs/sekmes)', () => {
+  test('sekmes program card is visible on /programs', async ({ page }) => {
+    await setFakeToken(page);
+    await page.route('**/api/lists', (route) => route.fulfill({ json: MOCK_SEKMES_LISTS }));
+    await page.route('**/api/subcategory-meta', (route) => route.fulfill({ json: MOCK_SEKMES_META }));
+    await page.route('**/api/me/programs', (route) => route.fulfill({ json: [] }));
+
+    await page.goto('/programs');
+    await expect(page.getByText('Sekmės!')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('sekmes detail page shows chapter stacks', async ({ page }) => {
+    await setFakeToken(page);
+    await page.route('**/api/lists', (route) => route.fulfill({ json: MOCK_SEKMES_LISTS }));
+    await page.route('**/api/subcategory-meta', (route) => route.fulfill({ json: MOCK_SEKMES_META }));
+    await page.route('**/api/me/programs', (route) => route.fulfill({ json: [] }));
+    await page.route(/\/api\/lists\/\d+$/, (route) => route.fulfill({ json: {
+      id: 101,
+      title: 'Koks jūsų vardas?',
+      words: [{ id: 1, lithuanian: 'Lietuva', translation_ru: 'Литва', translation_en: 'Lithuania', hint: null }],
+    }}));
+
+    await page.goto('/programs/sekmes');
+    await expect(page.getByText('Sekmės!')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Koks jūsų vardas?')).toBeVisible();
+    await expect(page.getByText('Čia mano draugas')).toBeVisible();
+  });
+
+  test('sekmes detail page shows textbook external link', async ({ page }) => {
+    await setFakeToken(page);
+    await page.route('**/api/lists', (route) => route.fulfill({ json: MOCK_SEKMES_LISTS }));
+    await page.route('**/api/subcategory-meta', (route) => route.fulfill({ json: MOCK_SEKMES_META }));
+    await page.route('**/api/me/programs', (route) => route.fulfill({ json: [] }));
+
+    await page.goto('/programs/sekmes');
+    await expect(page.getByText('Учебник Sekmės!')).toBeVisible({ timeout: 5000 });
+  });
+});
+
 test.describe('/dashboard/lists empty state', () => {
   test('shows empty state CTA when no enrolled programs', async ({ page }) => {
     await setFakeToken(page);
