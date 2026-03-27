@@ -57,6 +57,36 @@ function normalizeLt(text: string): string {
     .replace(/ą/g, 'a');
 }
 
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+type Complexity = 'easy' | 'medium' | 'hard';
+
+function checkAnswer(typed: string, target: string, complexity: Complexity): boolean {
+  if (complexity === 'hard') {
+    return typed.toLowerCase() === target.toLowerCase();
+  }
+  const normTyped = normalizeLt(typed);
+  const normTarget = normalizeLt(target);
+  if (complexity === 'easy') {
+    const threshold = Math.max(1, Math.floor(normTarget.length * 0.15));
+    return levenshtein(normTyped, normTarget) <= threshold;
+  }
+  // medium (default)
+  return normTyped === normTarget;
+}
+
 function parseForms(lithuanian: string): string[] {
   const parts = lithuanian.split(/[,/]/).map((s) => s.trim()).filter(Boolean);
   return parts.length > 1 ? parts : [lithuanian.trim()];
@@ -94,6 +124,7 @@ export default function QuizPage() {
   const router = useRouter();
 
   const { tr, lang } = useT();
+  const [complexity, setComplexity] = useState<Complexity>('medium');
   const [allWords, setAllWords] = useState<Word[]>([]);
   const [distractorPool, setDistractorPool] = useState<Word[]>([]);
   const [queue, setQueue] = useState<StudyCard[]>([]);
@@ -194,6 +225,10 @@ export default function QuizPage() {
     if (!getToken()) {
       router.replace('/login');
       return;
+    }
+    const stored = localStorage.getItem('fluent_complexity') as Complexity | null;
+    if (stored === 'easy' || stored === 'medium' || stored === 'hard') {
+      setComplexity(stored);
     }
     loadWords();
   }, [loadWords, router]);
@@ -297,7 +332,7 @@ export default function QuizPage() {
     const card = queue[0];
     const forms = parseForms(card.word.lithuanian);
     const target = forms[blankIndex] ?? forms[0];
-    const isCorrect = normalizeLt(typedAnswer.trim()) === normalizeLt(target);
+    const isCorrect = checkAnswer(typedAnswer.trim(), target, complexity);
 
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     if (!isCorrect) {

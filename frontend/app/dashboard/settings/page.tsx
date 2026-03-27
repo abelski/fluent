@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import { getToken, getSettings, updateSettings, type UserSettings } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
+type Complexity = 'easy' | 'medium' | 'hard';
+
 export default function SettingsPage() {
   const router = useRouter();
   const { tr } = useT();
   const [settings, setSettings] = useState<UserSettings>({ words_per_session: 10, new_words_ratio: 0.7 });
+  const [complexity, setComplexity] = useState<Complexity>('medium');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -19,11 +22,20 @@ export default function SettingsPage() {
       router.replace('/login');
       return;
     }
+    const stored = localStorage.getItem('fluent_complexity') as Complexity | null;
+    if (stored === 'easy' || stored === 'medium' || stored === 'hard') {
+      setComplexity(stored);
+    }
     getSettings()
       .then(setSettings)
       .catch(() => setError('Не удалось загрузить настройки'))
       .finally(() => setLoading(false));
   }, [router]);
+
+  function handleComplexityChange(value: Complexity) {
+    setComplexity(value);
+    localStorage.setItem('fluent_complexity', value);
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -125,6 +137,31 @@ export default function SettingsPage() {
             <div className="flex justify-between text-xs text-gray-400 mt-1">
               <span>{tr.settings.ratioNewLabel}: ~{newCount}</span>
               <span>{tr.settings.ratioReviewLabel}: ~{reviewCount}</span>
+            </div>
+          </div>
+
+          {/* Complexity selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1">
+              {tr.settings.complexityLabel}
+            </label>
+            <p className="text-xs text-gray-400 mb-3">{tr.settings.complexityHint}</p>
+            <div className="flex gap-2">
+              {(['easy', 'medium', 'hard'] as Complexity[]).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  data-testid={`complexity-${mode}`}
+                  onClick={() => handleComplexityChange(mode)}
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                    complexity === mode
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'
+                  }`}
+                >
+                  {tr.settings[`complexity${mode.charAt(0).toUpperCase()}${mode.slice(1)}` as 'complexityEasy' | 'complexityMedium' | 'complexityHard']}
+                </button>
+              ))}
             </div>
           </div>
 

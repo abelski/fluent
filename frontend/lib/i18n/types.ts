@@ -423,6 +423,11 @@ export interface Translations {
     ratioNewLabel: string;
     ratioReviewLabel: string;
     ratioHint: string;
+    complexityLabel: string;
+    complexityHint: string;
+    complexityEasy: string;
+    complexityMedium: string;
+    complexityHard: string;
     saveButton: string;
     savedMessage: string;
   };
