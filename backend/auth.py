@@ -13,7 +13,7 @@ from urllib.parse import urlencode
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from fastapi.responses import RedirectResponse
 from jose import jwt, JWTError
 from sqlmodel import Session, select
@@ -75,6 +75,7 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 _jwt_secret = os.getenv("JWT_SECRET")
 if not _jwt_secret:
     if os.getenv("APP_ENV") == "production":
@@ -96,12 +97,20 @@ def create_jwt(email: str, name: str, picture: Optional[str]) -> str:
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
+def _origin(request: Request) -> str:
+    """Reconstruct the public-facing origin (scheme + host) from the request."""
+    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("host", "")
+    return f"{scheme}://{host}" if host else FRONTEND_URL
+
+
 @router.get("/google")
-def google_login():
+def google_login(request: Request):
     """Redirect the browser to Google's OAuth consent screen."""
+    origin = _origin(request)
     params = {
         "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "redirect_uri": f"{origin}/api/auth/callback",
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
@@ -112,13 +121,14 @@ def google_login():
 
 
 @router.get("/callback")
-async def google_callback(code: str, session: Session = Depends(get_session)):
+async def google_callback(code: str, request: Request, session: Session = Depends(get_session)):
     """Handle the OAuth callback from Google.
 
     Exchanges the authorization code for an access token, fetches the user's
     Google profile, upserts their DB record, then redirects to the frontend
     dashboard with our own JWT appended as a query parameter.
     """
+    origin = _origin(request)
     async with httpx.AsyncClient() as client:
         # Step 1: exchange the one-time code for a Google access token
         token_resp = await client.post(
@@ -127,7 +137,7 @@ async def google_callback(code: str, session: Session = Depends(get_session)):
                 "code": code,
                 "client_id": GOOGLE_CLIENT_ID,
                 "client_secret": GOOGLE_CLIENT_SECRET,
-                "redirect_uri": GOOGLE_REDIRECT_URI,
+                "redirect_uri": f"{origin}/api/auth/callback",
                 "grant_type": "authorization_code",
             },
         )
@@ -164,7 +174,7 @@ async def google_callback(code: str, session: Session = Depends(get_session)):
     # Fragments are never sent to the server, so the token won't appear in
     # access logs, proxy logs, or Referrer headers sent to third parties.
     token = create_jwt(email=email, name=name, picture=picture)
-    return RedirectResponse(f"{FRONTEND_URL}/dashboard#token={token}")
+    return RedirectResponse(f"{origin}/dashboard#token={token}")
 
 
 @router.get("/me")
