@@ -102,6 +102,8 @@ export default function QuizPage() {
   const [correctWords, setCorrectWords] = useState(0); // words correctly finished at stage 3
   const [done, setDone] = useState(false);
   const learnedWordIdsRef = useRef<Set<number>>(new Set());
+  const mistakeWordIdsRef = useRef<Set<number>>(new Set()); // words that had at least one wrong answer
+  const [mistakeWordCount, setMistakeWordCount] = useState(0); // reactive mirror for render
   const [limitReached, setLimitReached] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -131,6 +133,13 @@ export default function QuizPage() {
       body: JSON.stringify({ status, mistake }),
     }).catch((err) => console.error('Failed to save word progress:', err));
   }, []);
+
+  const finishSession = useCallback(() => {
+    if (mistakeWordIdsRef.current.size / totalWords > 0.3) {
+      learnedWordIdsRef.current.forEach((wordId) => saveProgress(wordId, 'learning'));
+    }
+    setDone(true);
+  }, [totalWords, saveProgress]);
 
   const loadWords = useCallback(() => {
     setLoading(true);
@@ -166,6 +175,8 @@ export default function QuizPage() {
         }));
 
         learnedWordIdsRef.current = new Set();
+        mistakeWordIdsRef.current = new Set();
+        setMistakeWordCount(0);
         setQueue(initialQueue);
         setTotalWords(words.length);
         setWordsDone(0);
@@ -248,6 +259,10 @@ export default function QuizPage() {
     const isCorrect = options[index].correct;
     setSelectedOption(index);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
+    if (!isCorrect && !mistakeWordIdsRef.current.has(card.word.id)) {
+      mistakeWordIdsRef.current.add(card.word.id);
+      setMistakeWordCount((c) => c + 1);
+    }
     saveProgress(card.word.id, isCorrect ? 'known' : 'learning', !isCorrect);
 
     if (isCorrect) {
@@ -270,6 +285,7 @@ export default function QuizPage() {
     setSelectedOption(null);
     blockUntilRef.current = Date.now() + 200;
     advance(card, false, retryCards);
+    if (mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
   }
 
   function handleStage3Submit() {
@@ -284,7 +300,13 @@ export default function QuizPage() {
     const isCorrect = normalizeLt(typedAnswer.trim()) === normalizeLt(target);
 
     setAnswerState(isCorrect ? 'correct' : 'wrong');
-    if (!isCorrect) setShownAnswer(target);
+    if (!isCorrect) {
+      setShownAnswer(target);
+      if (!mistakeWordIdsRef.current.has(card.word.id)) {
+        mistakeWordIdsRef.current.add(card.word.id);
+        setMistakeWordCount((c) => c + 1);
+      }
+    }
     saveProgress(card.word.id, isCorrect ? 'known' : 'learning', !isCorrect);
 
     if (isCorrect) {
@@ -312,21 +334,15 @@ export default function QuizPage() {
     setShownAnswer('');
     blockUntilRef.current = Date.now() + 200;
     advance(card, false, retryCards);
+    if (mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
   }
 
   // Check if session is done after queue empties
   useEffect(() => {
-    if (!loading && totalWords > 0 && queue.length === 0) {
-      // If mistake rate > 30%, undo 'known' saves — downgrade learned words back to 'learning'
-      const mistakes = totalWords - correctWords;
-      if (mistakes / totalWords > 0.3) {
-        learnedWordIdsRef.current.forEach((wordId) => {
-          saveProgress(wordId, 'learning');
-        });
-      }
-      setDone(true);
+    if (!loading && totalWords > 0 && queue.length === 0 && !done) {
+      finishSession();
     }
-  }, [queue, loading, totalWords, correctWords, saveProgress]);
+  }, [queue, loading, totalWords, done, finishSession]);
 
   // Focus dismiss button after a short delay so the Enter keypress that
   // triggered the wrong answer doesn't immediately activate it.
@@ -392,7 +408,7 @@ export default function QuizPage() {
   }
 
   if (done) {
-    const mistakeRate = totalWords > 0 ? (totalWords - correctWords) / totalWords : 0;
+    const mistakeRate = totalWords > 0 ? mistakeWordCount / totalWords : 0;
     const highMistakes = mistakeRate > 0.3;
     return (
       <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
@@ -410,7 +426,7 @@ export default function QuizPage() {
               <div className="text-gray-400 text-sm mt-1">{tr.common.correctLabel}</div>
             </div>
             <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-amber-600">{totalWords - correctWords}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-amber-600">{mistakeWordCount}</div>
               <div className="text-gray-400 text-sm mt-1">{tr.common.errorsLabel}</div>
             </div>
           </div>
@@ -472,6 +488,9 @@ export default function QuizPage() {
             <span className="text-gray-400 text-sm">
               {wordsDone} / {totalWords}
             </span>
+            {mistakeWordCount > 0 && (
+              <span className="text-amber-500 text-sm">{mistakeWordCount} ✗</span>
+            )}
           </div>
         </div>
 
