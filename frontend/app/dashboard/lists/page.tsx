@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, unenrollProgram } from '../../../lib/api';
@@ -57,6 +57,7 @@ export default function ListsPage() {
   const [quota, setQuota] = useState<Quota | null>(null);
   const [openSubcategories, setOpenSubcategories] = useState<Set<string>>(new Set());
   const [removingKeys, setRemovingKeys] = useState<Set<string>>(new Set());
+  const [confirmKey, setConfirmKey] = useState<string | null>(null);
   const firstSubcategoryOpened = useRef(false);
 
   useEffect(() => {
@@ -119,6 +120,15 @@ export default function ListsPage() {
       setRemovingKeys((prev: Set<string>) => { const next = new Set(prev); next.delete(subcategoryKey); return next; });
     }
   }
+
+  // Close confirm modal on Escape
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setConfirmKey(null);
+  }, []);
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [handleEscape]);
 
   // Read star level from cookie on mount
   useEffect(() => {
@@ -295,12 +305,14 @@ export default function ListsPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleUnenroll(group.key); }}
+                          onClick={(e) => { e.stopPropagation(); setConfirmKey(group.key); }}
                           disabled={removingKeys.has(group.key)}
                           title={tr.programs.removeBtn}
-                          className="text-gray-300 hover:text-red-500 transition-colors disabled:opacity-40 text-lg leading-none px-1"
+                          className="text-gray-300 hover:text-red-500 transition-colors disabled:opacity-40 p-1 rounded"
                         >
-                          ×
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
+                          </svg>
                         </button>
                         <svg
                           width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
@@ -399,6 +411,49 @@ export default function ListsPage() {
           );
         })()}
       </div>
+
+      {/* Confirm remove program modal */}
+      {confirmKey !== null && (() => {
+        const meta = subcategoryMeta[confirmKey];
+        const label = (lang === 'en' ? meta?.name_en : meta?.name_ru) ?? tr.lists.subcategories[confirmKey] ?? confirmKey;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            onClick={() => setConfirmKey(null)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm flex flex-col gap-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold text-gray-900">
+                Убрать программу «{label}»?
+              </h2>
+              <p className="text-sm text-gray-500">
+                Ваш прогресс сохранится — вы сможете снова записаться в программу в любое время.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setConfirmKey(null)}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={async () => {
+                    const key = confirmKey;
+                    setConfirmKey(null);
+                    await handleUnenroll(key);
+                  }}
+                  disabled={removingKeys.has(confirmKey)}
+                  className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors disabled:opacity-40"
+                >
+                  Убрать
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </main>
   );
 }

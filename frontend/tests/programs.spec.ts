@@ -255,6 +255,95 @@ test.describe('Sekmės! program (/programs/sekmes)', () => {
   });
 });
 
+test.describe('/dashboard/lists — delete program confirmation modal', () => {
+  const COMMON_ROUTES = async (page: import('@playwright/test').Page) => {
+    await page.route('**/api/lists', (route) => route.fulfill({ json: MOCK_LISTS }));
+    await page.route('**/api/subcategory-meta', (route) => route.fulfill({ json: MOCK_META }));
+    await page.route('**/api/me/quota', (route) => route.fulfill({ json: {
+      is_premium: false, premium_active: false, premium_until: null,
+      sessions_today: 0, daily_limit: 10, is_admin: false, is_superadmin: false,
+    }}));
+    await page.route('**/api/me/lists-progress', (route) => route.fulfill({ json: {} }));
+  };
+
+  test('clicking trash icon opens confirmation modal', async ({ page }) => {
+    await setFakeToken(page);
+    await COMMON_ROUTES(page);
+    await page.route('**/api/me/programs', (route) => route.fulfill({ json: ['a1_basics'] }));
+
+    await page.goto('/dashboard/lists');
+    await expect(page.getByText('Базовый A1')).toBeVisible({ timeout: 5000 });
+    await page.locator('button[title]').first().click();
+    await expect(page.getByText(/Убрать программу/)).toBeVisible();
+    await expect(page.getByText(/прогресс сохранится/)).toBeVisible();
+  });
+
+  test('Cancel button closes modal without removing program', async ({ page }) => {
+    await setFakeToken(page);
+    await COMMON_ROUTES(page);
+    await page.route('**/api/me/programs', (route) => route.fulfill({ json: ['a1_basics'] }));
+
+    await page.goto('/dashboard/lists');
+    await expect(page.getByText('Базовый A1')).toBeVisible({ timeout: 5000 });
+    await page.locator('button[title]').first().click();
+    await expect(page.getByText(/Убрать программу/)).toBeVisible();
+    await page.getByRole('button', { name: 'Отмена' }).click();
+    await expect(page.getByText(/Убрать программу/)).not.toBeVisible();
+    await expect(page.getByText('Базовый A1')).toBeVisible();
+  });
+
+  test('backdrop click closes modal without removing program', async ({ page }) => {
+    await setFakeToken(page);
+    await COMMON_ROUTES(page);
+    await page.route('**/api/me/programs', (route) => route.fulfill({ json: ['a1_basics'] }));
+
+    await page.goto('/dashboard/lists');
+    await expect(page.getByText('Базовый A1')).toBeVisible({ timeout: 5000 });
+    await page.locator('button[title]').first().click();
+    await expect(page.getByText(/Убрать программу/)).toBeVisible();
+    await page.mouse.click(10, 10);
+    await expect(page.getByText(/Убрать программу/)).not.toBeVisible();
+    await expect(page.getByText('Базовый A1')).toBeVisible();
+  });
+
+  test('Escape key closes modal without removing program', async ({ page }) => {
+    await setFakeToken(page);
+    await COMMON_ROUTES(page);
+    await page.route('**/api/me/programs', (route) => route.fulfill({ json: ['a1_basics'] }));
+
+    await page.goto('/dashboard/lists');
+    await expect(page.getByText('Базовый A1')).toBeVisible({ timeout: 5000 });
+    await page.locator('button[title]').first().click();
+    await expect(page.getByText(/Убрать программу/)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByText(/Убрать программу/)).not.toBeVisible();
+    await expect(page.getByText('Базовый A1')).toBeVisible();
+  });
+
+  test('confirming removal calls DELETE and hides program', async ({ page }) => {
+    await setFakeToken(page);
+    await COMMON_ROUTES(page);
+
+    let deleteCallCount = 0;
+    await page.route('**/api/me/programs**', async (route) => {
+      if (route.request().method() === 'DELETE') {
+        deleteCallCount++;
+        await route.fulfill({ json: { ok: true } });
+      } else {
+        await route.fulfill({ json: ['a1_basics'] });
+      }
+    });
+
+    await page.goto('/dashboard/lists');
+    await expect(page.getByText('Базовый A1')).toBeVisible({ timeout: 5000 });
+    await page.locator('button[title]').first().click();
+    await expect(page.getByText(/Убрать программу/)).toBeVisible();
+    await page.getByRole('button', { name: 'Убрать' }).click();
+    await expect(page.getByText(/Убрать программу/)).not.toBeVisible({ timeout: 3000 });
+    expect(deleteCallCount).toBe(1);
+  });
+});
+
 test.describe('/dashboard/lists empty state', () => {
   test('shows empty state CTA when no enrolled programs', async ({ page }) => {
     await setFakeToken(page);
