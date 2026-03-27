@@ -140,14 +140,18 @@ export default function ListsPage() {
     setStarLevelState(level);
   }
 
-  // Open the first subcategory when lists load (only once)
+  // Open all enrolled subcategories when lists load (only once)
   useEffect(() => {
     if (lists.length > 0 && !firstSubcategoryOpened.current) {
       firstSubcategoryOpened.current = true;
-      const firstKey = lists[0].subcategory ?? 'other';
-      setOpenSubcategories(new Set([firstKey]));
+      const allKeys = new Set(
+        lists
+          .filter((l) => enrolledKeys.has(l.subcategory ?? ''))
+          .map((l) => l.subcategory ?? 'other')
+      );
+      setOpenSubcategories(allKeys.size > 0 ? allKeys : new Set([lists[0].subcategory ?? 'other']));
     }
-  }, [lists]);
+  }, [lists, enrolledKeys]);
 
   const limitReached = quota !== null && quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
 
@@ -332,11 +336,17 @@ export default function ListsPage() {
                             const learningPct = p ? (p.learning / p.total) * 100 : 0;
                             const displayTitle = lang === 'en' ? (list.title_en || list.title) : list.title;
                             const displayDesc = lang === 'en' ? (list.description_en || list.description) : list.description;
+                            const isDone = p && p.total > 0 && p.known >= p.total;
                             return (
                               <div
                                 key={list.id}
-                                className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4"
+                                className="relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4"
                               >
+                                {isDone && (
+                                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
+                                    ✓ Done
+                                  </div>
+                                )}
                                 <div>
                                   <h2 className="text-lg font-semibold">{displayTitle}</h2>
                                   {displayDesc && (

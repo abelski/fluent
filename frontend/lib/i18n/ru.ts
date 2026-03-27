@@ -7,6 +7,8 @@ const ru: Translations = {
     learn: 'Учить',
     repeat: 'Повторить',
     repeatMore: 'Повторить ещё',
+    oneLessonMore: 'Ещё один урок',
+    relearnSuggestion: 'Не страшно! Попробуйте пройти урок ещё раз — так слова запомнятся гораздо лучше 💪',
     cancel: 'Отмена',
     save: 'Сохранить',
     check: 'Проверить',

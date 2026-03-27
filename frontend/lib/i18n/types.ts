@@ -11,6 +11,8 @@ export interface Translations {
     learn: string;
     repeat: string;
     repeatMore: string;
+    oneLessonMore: string;
+    relearnSuggestion: string;
     cancel: string;
     save: string;
     check: string;

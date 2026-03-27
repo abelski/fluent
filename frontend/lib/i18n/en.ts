@@ -7,6 +7,8 @@ const en: Translations = {
     learn: 'Learn',
     repeat: 'Try again',
     repeatMore: 'Review more',
+    oneLessonMore: 'One more lesson',
+    relearnSuggestion: "No worries! Try the lesson again — you'll remember them much better next time 💪",
     cancel: 'Cancel',
     save: 'Save',
     check: 'Check',

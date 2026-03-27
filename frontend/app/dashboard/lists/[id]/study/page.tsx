@@ -101,6 +101,7 @@ export default function QuizPage() {
   const [wordsDone, setWordsDone] = useState(0);   // words that exited the queue
   const [correctWords, setCorrectWords] = useState(0); // words correctly finished at stage 3
   const [done, setDone] = useState(false);
+  const learnedWordIdsRef = useRef<Set<number>>(new Set());
   const [limitReached, setLimitReached] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -164,6 +165,7 @@ export default function QuizPage() {
           failCount: 0,
         }));
 
+        learnedWordIdsRef.current = new Set();
         setQueue(initialQueue);
         setTotalWords(words.length);
         setWordsDone(0);
@@ -286,6 +288,7 @@ export default function QuizPage() {
     saveProgress(card.word.id, isCorrect ? 'known' : 'learning', !isCorrect);
 
     if (isCorrect) {
+      learnedWordIdsRef.current.add(card.word.id);
       // Correct: auto-advance after short delay
       setTimeout(() => {
         setWordsDone((c) => c + 1);
@@ -314,9 +317,16 @@ export default function QuizPage() {
   // Check if session is done after queue empties
   useEffect(() => {
     if (!loading && totalWords > 0 && queue.length === 0) {
+      // If mistake rate > 30%, undo 'known' saves — downgrade learned words back to 'learning'
+      const mistakes = totalWords - correctWords;
+      if (mistakes / totalWords > 0.3) {
+        learnedWordIdsRef.current.forEach((wordId) => {
+          saveProgress(wordId, 'learning');
+        });
+      }
       setDone(true);
     }
-  }, [queue, loading, totalWords]);
+  }, [queue, loading, totalWords, correctWords, saveProgress]);
 
   // Focus dismiss button after a short delay so the Enter keypress that
   // triggered the wrong answer doesn't immediately activate it.
@@ -382,6 +392,8 @@ export default function QuizPage() {
   }
 
   if (done) {
+    const mistakeRate = totalWords > 0 ? (totalWords - correctWords) / totalWords : 0;
+    const highMistakes = mistakeRate > 0.3;
     return (
       <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
@@ -392,7 +404,7 @@ export default function QuizPage() {
           <h1 className="text-2xl font-bold mb-2">{tr.common.sessionDone}</h1>
           <p className="text-gray-400 mb-8">{tr.common.correctOf.replace('{correct}', String(correctWords)).replace('{total}', String(totalWords))}</p>
 
-          <div className="flex gap-4 justify-center mb-10">
+          <div className="flex gap-4 justify-center mb-8">
             <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{correctWords}</div>
               <div className="text-gray-400 text-sm mt-1">{tr.common.correctLabel}</div>
@@ -403,12 +415,16 @@ export default function QuizPage() {
             </div>
           </div>
 
+          {highMistakes && (
+            <p className="text-gray-500 text-sm mb-6 px-2">{tr.common.relearnSuggestion}</p>
+          )}
+
           <div className="flex flex-col gap-3">
             <button
               onClick={loadWords}
               className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
             >
-              {tr.common.repeat}
+              {tr.common.oneLessonMore}
             </button>
             <button
               onClick={() => router.push('/dashboard/lists')}
@@ -437,14 +453,14 @@ export default function QuizPage() {
   const digit = getDigit(word);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col px-6 py-8">
+    <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col px-6 py-4 sm:py-8">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
         <div className="w-full max-w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
       <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col flex-1">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-4 sm:mb-8">
           <Link
             href="/dashboard/lists"
             className="text-gray-400 hover:text-gray-900 text-sm transition-colors"
@@ -460,7 +476,7 @@ export default function QuizPage() {
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-1 bg-gray-100 rounded-full mb-10">
+        <div className="w-full h-1 bg-gray-100 rounded-full mb-5 sm:mb-10">
           <div
             className="h-1 bg-emerald-500 rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
@@ -469,9 +485,9 @@ export default function QuizPage() {
 
         {/* ── Stage 1: Flashcard ── */}
         {stage === 1 && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-8">
+          <div className="flex flex-col items-center justify-center flex-1 gap-4 sm:gap-8">
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-10 text-center">
-              <p className="text-gray-400 text-xs uppercase tracking-wider mb-6">{tr.common.newWord}</p>
+              <p className="text-gray-400 text-xs uppercase tracking-wider mb-4 sm:mb-6">{tr.common.newWord}</p>
               <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
               {digit && (
                 <p className="text-5xl sm:text-7xl font-bold text-emerald-600 mb-4" data-testid="number-digit">{digit}</p>
@@ -494,7 +510,7 @@ export default function QuizPage() {
 
         {/* ── Stage 2: Multiple choice ── */}
         {stage === 2 && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-8">
+          <div className="flex flex-col items-center justify-center flex-1 gap-4 sm:gap-8">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.whatMeans}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.lithuanian}</p>
@@ -556,7 +572,7 @@ export default function QuizPage() {
 
         {/* ── Stage 3: Type it ── */}
         {stage === 3 && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-8">
+          <div className="flex flex-col items-center justify-center flex-1 gap-4 sm:gap-8">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">
                 {cloveIsCloze ? tr.study.fillMissing : tr.study.howInLithuanian}
