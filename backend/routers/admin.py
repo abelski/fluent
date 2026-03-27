@@ -1,7 +1,7 @@
 # Admin-only endpoints for managing user tiers and premium access.
 # All routes require is_admin=True on the authenticated user, otherwise 403.
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -10,7 +10,7 @@ from sqlmodel import Session, select, func
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
 
@@ -63,6 +63,77 @@ def list_users(
         }
         for u in users
     ]
+
+
+@router.get("/users/{user_id}/progress")
+def get_user_progress(
+    user_id: str,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return learning progress stats for a specific user. Admin-only."""
+    _require_admin(authorization, session)
+    target = session.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    all_progress = session.exec(
+        select(UserWordProgress).where(UserWordProgress.user_id == user_id)
+    ).all()
+    words_known = sum(1 for p in all_progress if p.status == "known")
+    words_learning = sum(1 for p in all_progress if p.status == "learning")
+    words_new = sum(1 for p in all_progress if p.status == "new")
+    mistakes_total = sum(p.mistake_count for p in all_progress)
+
+    # Streak: consecutive study days from UserWordProgress.last_seen
+    studied_dates = {p.last_seen.date() for p in all_progress if p.last_seen}
+    today = datetime.now(timezone.utc).date()
+    streak = 0
+    check = today if today in studied_dates else today - timedelta(days=1)
+    while check in studied_dates:
+        streak += 1
+        check -= timedelta(days=1)
+
+    # Sessions
+    all_sessions = session.exec(
+        select(DailyStudySession).where(DailyStudySession.user_id == user_id)
+    ).all()
+    sessions_total = sum(s.session_count for s in all_sessions)
+    sessions_today = next(
+        (s.session_count for s in all_sessions if s.study_date == today), 0
+    )
+
+    # Grammar: best score per lesson, count passed (>75%)
+    grammar_results = session.exec(
+        select(GrammarLessonResult).where(GrammarLessonResult.user_id == user_id)
+    ).all()
+    best_grammar: dict[int, float] = {}
+    for r in grammar_results:
+        pct = r.score / r.total if r.total > 0 else 0.0
+        if r.lesson_id not in best_grammar or pct > best_grammar[r.lesson_id]:
+            best_grammar[r.lesson_id] = pct
+    grammar_lessons_passed = sum(1 for pct in best_grammar.values() if pct > 0.75)
+
+    # Practice exams
+    practice_results = session.exec(
+        select(PracticeExamResult).where(PracticeExamResult.user_id == user_id)
+    ).all()
+    practice_exams_completed = len(practice_results)
+
+    return {
+        "words_known": words_known,
+        "words_learning": words_learning,
+        "words_new": words_new,
+        "mistakes_total": mistakes_total,
+        "sessions_today": sessions_today,
+        "sessions_total": sessions_total,
+        "streak": streak,
+        "grammar_lessons_passed": grammar_lessons_passed,
+        "grammar_lessons_total": 14,
+        "practice_exams_completed": practice_exams_completed,
+        "last_active": target.last_login.isoformat() if target.last_login else None,
+        "member_since": target.created_at.isoformat() if target.created_at else None,
+    }
 
 
 class AdminUpdate(BaseModel):

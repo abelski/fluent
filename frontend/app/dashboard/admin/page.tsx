@@ -247,6 +247,161 @@ function ListMetaEditForm({
   );
 }
 
+interface UserProgress {
+  words_known: number;
+  words_learning: number;
+  words_new: number;
+  mistakes_total: number;
+  sessions_today: number;
+  sessions_total: number;
+  streak: number;
+  grammar_lessons_passed: number;
+  grammar_lessons_total: number;
+  practice_exams_completed: number;
+  last_active: string | null;
+  member_since: string | null;
+}
+
+function UserProgressModal({ userId, userName, onClose }: { userId: string; userName: string; onClose: () => void }) {
+  const [data, setData] = useState<UserProgress | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const token = getToken();
+    fetch(`${BACKEND_URL}/api/admin/users/${userId}/progress`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => { setData(d); setLoading(false); })
+      .catch(() => { setError(true); setLoading(false); });
+  }, [userId]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl border border-gray-900 shadow-xl w-full max-w-md mx-4 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div>
+            <p className="font-semibold text-gray-900">{userName}</p>
+            <p className="text-xs text-gray-400">Прогресс обучения</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 transition-colors text-xl leading-none">×</button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5">
+          {loading && <p className="text-sm text-gray-400 text-center py-6">Загрузка...</p>}
+          {error && <p className="text-sm text-red-500 text-center py-6">Не удалось загрузить данные</p>}
+          {data && (
+            <div className="flex flex-col gap-4">
+              {/* Vocabulary */}
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Словарный запас</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Выучено', value: data.words_known, color: 'text-emerald-600' },
+                    { label: 'Учится', value: data.words_learning, color: 'text-amber-600' },
+                    { label: 'Новые', value: data.words_new, color: 'text-gray-500' },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="bg-gray-50 rounded-xl px-3 py-3 text-center">
+                      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Activity */}
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Активность</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Серия', value: `${data.streak} д.`, color: 'text-orange-500' },
+                    { label: 'Сессий сегодня', value: data.sessions_today, color: 'text-gray-900' },
+                    { label: 'Сессий всего', value: data.sessions_total, color: 'text-gray-900' },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="bg-gray-50 rounded-xl px-3 py-3 text-center">
+                      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Grammar & Practice */}
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Грамматика и тесты</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gray-50 rounded-xl px-3 py-3 text-center">
+                    <p className="text-2xl font-bold text-gray-900">{data.grammar_lessons_passed}<span className="text-sm font-normal text-gray-400"> / {data.grammar_lessons_total}</span></p>
+                    <p className="text-xs text-gray-400 mt-0.5">Уроков грамматики</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl px-3 py-3 text-center">
+                    <p className="text-2xl font-bold text-gray-900">{data.practice_exams_completed}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Практических тестов</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Meta */}
+              <div className="flex justify-between text-xs text-gray-400 pt-1 border-t border-gray-100">
+                <span>Последний вход: {data.last_active ? new Date(data.last_active).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+                <span>С нами с: {data.member_since ? new Date(data.member_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActionMenu({
+  items,
+}: {
+  items: { label: string; danger?: boolean; onClick: () => void }[];
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="text-sm px-2 py-1 text-gray-400 hover:text-gray-900 border border-gray-200 hover:border-gray-900 rounded-lg transition-colors"
+        title="Действия"
+      >
+        ···
+      </button>
+      {open && (
+        <div className="absolute right-0 z-10 mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-lg py-1">
+          {items.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => { setOpen(false); item.onClick(); }}
+              className={`w-full text-left px-4 py-2 text-sm transition-colors hover:bg-gray-50 ${item.danger ? 'text-red-600' : 'text-gray-700'}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const { tr, lang } = useT();
@@ -305,6 +460,13 @@ export default function AdminPage() {
   // Report filter
   type ReportFilter = 'open' | 'onhold' | 'resolved' | 'all';
   const [reportFilter, setReportFilter] = useState<ReportFilter>('open');
+
+  // User search
+  const [userSearch, setUserSearch] = useState('');
+
+  // User progress modal
+  const [progressUserId, setProgressUserId] = useState<string | null>(null);
+  const [progressUserName, setProgressUserName] = useState('');
 
   // Pagination pages (1-based)
   const PAGE_SIZE = 20;
@@ -907,7 +1069,13 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
   // Filtered + paginated slices
   const filteredReports = reportFilter === 'all' ? reports : reports.filter((r) => r.status === reportFilter);
-  const pagedUsers = users.slice((usersPage - 1) * PAGE_SIZE, usersPage * PAGE_SIZE);
+  const filteredUsers = userSearch.trim()
+    ? users.filter((u) => {
+        const q = userSearch.toLowerCase();
+        return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+      })
+    : users;
+  const pagedUsers = filteredUsers.slice((usersPage - 1) * PAGE_SIZE, usersPage * PAGE_SIZE);
   const pagedReports = filteredReports.slice((reportsPage - 1) * PAGE_SIZE, reportsPage * PAGE_SIZE);
   const pagedArticles = articles.slice((articlesPage - 1) * PAGE_SIZE, articlesPage * PAGE_SIZE);
   const pagedPracticeQ = practiceQuestions.slice((practiceQPage - 1) * PAGE_SIZE, practiceQPage * PAGE_SIZE);
@@ -938,6 +1106,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
   }
 
   return (
+    <>
     <main className="bg-slate-50 text-gray-900 min-h-screen">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
         <div className="w-full max-w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
@@ -968,9 +1137,12 @@ const [practiceQPage, setPracticeQPage] = useState(1);
           <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 w-fit mb-6">
             <button
               onClick={() => setAdminTab('users')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${adminTab === 'users' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+              className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${adminTab === 'users' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
               {tr.admin.tabUsers}
+              {users.length > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 text-[10px] font-bold bg-gray-500 text-white rounded-full">{users.length}</span>
+              )}
             </button>
             <button
               onClick={() => setAdminTab('reports')}
@@ -1016,6 +1188,14 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
         {/* ── Users ── */}
         {area === 'admin' && adminTab === 'users' && (
+          <div className="flex flex-col gap-3">
+          <input
+            type="text"
+            placeholder="Поиск по имени или email..."
+            value={userSearch}
+            onChange={(e) => { setUserSearch(e.target.value); setUsersPage(1); }}
+            className="w-full max-w-sm bg-white border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:border-gray-600"
+          />
           <div className="overflow-x-auto rounded-2xl border border-gray-900">
             <table className="w-full text-sm">
               <thead>
@@ -1095,28 +1275,25 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           >
                             {u.premium_active ? tr.admin.extend : tr.admin.grantPremium}
                           </button>
-                          {isSuperadmin && !u.is_superadmin && (
-                            <button
-                              onClick={() => applyAdmin(u.id, !u.is_admin)}
-                              disabled={saving}
-                              className={`text-xs px-3 py-1.5 border rounded-lg transition-colors disabled:opacity-50 ${
-                                u.is_admin
-                                  ? 'text-amber-600 hover:text-amber-700 border-gray-900 hover:border-gray-900'
-                                  : 'text-amber-500 hover:text-amber-600 border-amber-500/10 hover:border-gray-900'
-                              }`}
-                            >
-                              {u.is_admin ? tr.admin.removeAdmin : tr.admin.makeAdmin}
-                            </button>
-                          )}
-                          {isSuperadmin && !u.is_superadmin && (
-                            <button
-                              onClick={() => deleteUser(u.id, u.name)}
-                              disabled={saving}
-                              className="text-xs px-3 py-1.5 text-red-500 hover:text-red-700 border border-red-200 hover:border-red-500 rounded-lg transition-colors disabled:opacity-50"
-                            >
-                              Удалить
-                            </button>
-                          )}
+                          <ActionMenu
+                            items={[
+                              {
+                                label: 'Прогресс',
+                                onClick: () => { setProgressUserId(u.id); setProgressUserName(u.name); },
+                              },
+                              ...(isSuperadmin && !u.is_superadmin ? [
+                                {
+                                  label: u.is_admin ? tr.admin.removeAdmin : tr.admin.makeAdmin,
+                                  onClick: () => applyAdmin(u.id, !u.is_admin),
+                                },
+                                {
+                                  label: 'Удалить',
+                                  danger: true,
+                                  onClick: () => deleteUser(u.id, u.name),
+                                },
+                              ] : []),
+                            ]}
+                          />
                         </div>
                       )}
                     </td>
@@ -1124,7 +1301,8 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 ))}
               </tbody>
             </table>
-            <Pagination total={users.length} page={usersPage} onPage={setUsersPage} />
+            <Pagination total={filteredUsers.length} page={usersPage} onPage={setUsersPage} />
+          </div>
           </div>
         )}
 
@@ -2081,5 +2259,14 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
       </div>
     </main>
+
+    {progressUserId && (
+      <UserProgressModal
+        userId={progressUserId}
+        userName={progressUserName}
+        onClose={() => setProgressUserId(null)}
+      />
+    )}
+    </>
   );
 }
