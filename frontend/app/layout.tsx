@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: 'Fluent',
     locale: 'ru_RU',
-    alternateLocale: 'en_US',
+    alternateLocale: ['en_US'],
     type: 'website',
     images: [
       { url: '/og-default-ru.svg', width: 1200, height: 630, alt: 'Fluent — Учите литовский' },

@@ -47,7 +47,7 @@ export async function generateMetadata({
         description: desc,
         url: `https://fluent.lt/programs/${params.key}/`,
         locale: 'ru_RU',
-        alternateLocale: 'en_US',
+        alternateLocale: ['en_US'],
         images: [
           { url: '/og-default-ru.svg', width: 1200, height: 630, alt: nameRu },
           { url: '/og-default-en.svg', width: 1200, height: 630, alt: nameEn },
