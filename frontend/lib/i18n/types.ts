@@ -428,6 +428,12 @@ export interface Translations {
     complexityEasy: string;
     complexityMedium: string;
     complexityHard: string;
+    complexityEasyKf: string;
+    complexityEasyTk: string;
+    complexityMediumKf: string;
+    complexityMediumTk: string;
+    complexityHardKf: string;
+    complexityHardTk: string;
     saveButton: string;
     savedMessage: string;
   };

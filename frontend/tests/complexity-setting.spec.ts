@@ -19,36 +19,33 @@ test.describe('Complexity setting', () => {
     });
   });
 
-  test('complexity buttons are visible on settings page', async ({ page }) => {
+  test('complexity slider is visible on settings page', async ({ page }) => {
     await page.goto('/dashboard/settings');
-    await expect(page.locator('[data-testid="complexity-easy"]')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('[data-testid="complexity-medium"]')).toBeVisible();
-    await expect(page.locator('[data-testid="complexity-hard"]')).toBeVisible();
+    await expect(page.locator('[data-testid="complexity-slider"]')).toBeVisible({ timeout: 5000 });
   });
 
-  test('selecting a complexity mode persists in localStorage', async ({ page }) => {
+  test('moving slider to 1 stores easy in localStorage', async ({ page }) => {
     await page.goto('/dashboard/settings');
-    await page.locator('[data-testid="complexity-easy"]').click();
+    await page.locator('[data-testid="complexity-slider"]').fill('1');
     const stored = await page.evaluate(() => localStorage.getItem('fluent_complexity'));
     expect(stored).toBe('easy');
   });
 
   test('complexity selection persists after page reload', async ({ page }) => {
     await page.goto('/dashboard/settings');
-    await page.locator('[data-testid="complexity-hard"]').click();
+    await page.locator('[data-testid="complexity-slider"]').fill('3');
     await page.reload();
-    await page.waitForSelector('[data-testid="complexity-hard"]');
-    // Hard button should appear active (bg-gray-900 text-white)
+    await page.waitForSelector('[data-testid="complexity-slider"]');
     const stored = await page.evaluate(() => localStorage.getItem('fluent_complexity'));
     expect(stored).toBe('hard');
   });
 
-  test('medium is the default when nothing is stored', async ({ page }) => {
+  test('medium (value 2) is the default when nothing is stored', async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.removeItem('fluent_complexity');
     });
     await page.goto('/dashboard/settings');
-    const stored = await page.evaluate(() => localStorage.getItem('fluent_complexity') ?? 'medium');
-    expect(stored).toBe('medium');
+    const value = await page.locator('[data-testid="complexity-slider"]').inputValue();
+    expect(value).toBe('2');
   });
 });

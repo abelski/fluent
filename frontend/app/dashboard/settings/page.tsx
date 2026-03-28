@@ -146,22 +146,37 @@ export default function SettingsPage() {
               {tr.settings.complexityLabel}
             </label>
             <p className="text-xs text-gray-400 mb-3">{tr.settings.complexityHint}</p>
-            <div className="flex gap-2">
-              {(['easy', 'medium', 'hard'] as Complexity[]).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  data-testid={`complexity-${mode}`}
-                  onClick={() => handleComplexityChange(mode)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                    complexity === mode
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'
-                  }`}
-                >
-                  {tr.settings[`complexity${mode.charAt(0).toUpperCase()}${mode.slice(1)}` as 'complexityEasy' | 'complexityMedium' | 'complexityHard']}
-                </button>
-              ))}
+            <div className="flex items-center gap-3 mb-2">
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={1}
+                value={complexity === 'easy' ? 1 : complexity === 'medium' ? 2 : 3}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  handleComplexityChange(val === 1 ? 'easy' : val === 2 ? 'medium' : 'hard');
+                }}
+                data-testid="complexity-slider"
+                className="flex-1 accent-emerald-600"
+              />
+              <span className="w-16 text-right text-sm font-semibold text-gray-900">
+                {tr.settings[`complexity${complexity.charAt(0).toUpperCase()}${complexity.slice(1)}` as 'complexityEasy' | 'complexityMedium' | 'complexityHard']}
+              </span>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 flex flex-col gap-2 text-sm">
+              <div className="flex gap-2">
+                <span className="text-gray-400 shrink-0">📌</span>
+                <span className="text-gray-700">
+                  {tr.settings[`complexity${complexity.charAt(0).toUpperCase()}${complexity.slice(1)}Kf` as 'complexityEasyKf' | 'complexityMediumKf' | 'complexityHardKf']}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-gray-400 shrink-0">💡</span>
+                <span className="text-gray-500 italic">
+                  {tr.settings[`complexity${complexity.charAt(0).toUpperCase()}${complexity.slice(1)}Tk` as 'complexityEasyTk' | 'complexityMediumTk' | 'complexityHardTk']}
+                </span>
+              </div>
             </div>
           </div>
 

@@ -308,16 +308,19 @@ export default function ListsPage() {
                         })()}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setConfirmKey(group.key); }}
-                          disabled={removingKeys.has(group.key)}
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); if (!removingKeys.has(group.key)) setConfirmKey(group.key); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); if (!removingKeys.has(group.key)) setConfirmKey(group.key); } }}
+                          aria-disabled={removingKeys.has(group.key)}
                           title={tr.programs.removeBtn}
-                          className="text-gray-300 hover:text-red-500 transition-colors disabled:opacity-40 p-1 rounded"
+                          className={`text-gray-300 hover:text-red-500 transition-colors p-1 rounded cursor-pointer ${removingKeys.has(group.key) ? 'opacity-40 pointer-events-none' : ''}`}
                         >
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
                           </svg>
-                        </button>
+                        </div>
                         <svg
                           width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
                           className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}

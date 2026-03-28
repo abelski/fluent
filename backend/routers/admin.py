@@ -13,6 +13,7 @@ from database import get_session
 from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
+from grammar_service import get_lessons as _get_grammar_lessons
 
 router = APIRouter()
 
@@ -129,7 +130,7 @@ def get_user_progress(
         "sessions_total": sessions_total,
         "streak": streak,
         "grammar_lessons_passed": grammar_lessons_passed,
-        "grammar_lessons_total": 14,
+        "grammar_lessons_total": len(_get_grammar_lessons(session)),
         "practice_exams_completed": practice_exams_completed,
         "last_active": target.last_login.isoformat() if target.last_login else None,
         "member_since": target.created_at.isoformat() if target.created_at else None,

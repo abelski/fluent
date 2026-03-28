@@ -20,9 +20,8 @@ def is_premium_active(user: User) -> bool:
 
 
 def quota_check_and_increment(user: User, session: Session) -> None:
-    """Enforce the daily session limit for basic users. Raises 429 if exceeded."""
-    if is_premium_active(user):
-        return
+    """Enforce the daily session limit for basic users and record the session for all users."""
+    premium = is_premium_active(user)
     today = datetime.now(timezone.utc).date()
     row = session.exec(
         select(DailyStudySession).where(
@@ -33,7 +32,7 @@ def quota_check_and_increment(user: User, session: Session) -> None:
     if not row:
         row = DailyStudySession(user_id=user.id, study_date=today, session_count=0)
         session.add(row)
-    if row.session_count >= DAILY_LIMIT:
+    if not premium and row.session_count >= DAILY_LIMIT:
         raise HTTPException(
             status_code=429,
             detail={"code": "daily_limit_reached", "limit": DAILY_LIMIT, "sessions_today": row.session_count},
