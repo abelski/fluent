@@ -38,6 +38,12 @@ export async function generateMetadata({
         description: desc,
         url: `https://fluent.lt/dashboard/articles/${article.slug}/`,
         type: 'article',
+        locale: 'ru_RU',
+        alternateLocale: 'en_US',
+        images: [
+          { url: '/og-default-ru.svg', width: 1200, height: 630, alt: article.title_ru },
+          { url: '/og-default-en.svg', width: 1200, height: 630, alt: article.title_en },
+        ],
       },
     };
   } catch {

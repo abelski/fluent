@@ -25,8 +25,13 @@ export const metadata: Metadata = {
   },
   openGraph: {
     siteName: 'Fluent',
-    locale: 'en_US',
+    locale: 'ru_RU',
+    alternateLocale: 'en_US',
     type: 'website',
+    images: [
+      { url: '/og-default-ru.svg', width: 1200, height: 630, alt: 'Fluent — Учите литовский' },
+      { url: '/og-default-en.svg', width: 1200, height: 630, alt: 'Fluent — Learn Lithuanian' },
+    ],
   },
 };
 
@@ -35,10 +40,22 @@ export const viewport = {
   initialScale: 1,
 };
 
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Fluent',
+  url: 'https://fluent.lt',
+  description: 'Learn Lithuanian vocabulary and grammar with spaced repetition, declension exercises, and reading articles.',
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className={`${inter.variable} ${plusJakarta.variable} font-sans bg-white text-gray-900 min-h-screen flex flex-col`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <LangSync />
         <BetaBanner />
         <Header />

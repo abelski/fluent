@@ -18,7 +18,24 @@ export default async function ArticlePage({
     const res = await fetch(`${BACKEND_URL}/api/articles/${params.slug}`);
     if (!res.ok) return <ArticleContent initialArticle={null} />;
     const article: Article = await res.json();
-    return <ArticleContent initialArticle={article} />;
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: article.title_ru,
+      datePublished: article.created_at,
+      dateModified: article.updated_at,
+      url: `https://fluent.lt/dashboard/articles/${article.slug}/`,
+      publisher: { '@type': 'Organization', name: 'Fluent', url: 'https://fluent.lt' },
+    };
+    return (
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <ArticleContent initialArticle={article} />
+      </>
+    );
   } catch {
     return <ArticleContent initialArticle={null} />;
   }

@@ -7,10 +7,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Pricing — Fluent Lithuanian Learning',
     description: 'Free and premium plans for learning Lithuanian. Unlimited sessions with Premium.',
-    url: 'https://fluent.lt/pricing',
+    url: 'https://fluent.lt/pricing/',
+    images: [
+      { url: '/og-default-en.svg', width: 1200, height: 630, alt: 'Fluent Pricing' },
+      { url: '/og-default-ru.svg', width: 1200, height: 630, alt: 'Fluent Цены' },
+    ],
   },
   alternates: {
-    canonical: 'https://fluent.lt/pricing',
+    canonical: 'https://fluent.lt/pricing/',
   },
 };
 

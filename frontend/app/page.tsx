@@ -7,11 +7,15 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Fluent — Learn Lithuanian Online',
     description: 'Master Lithuanian vocabulary and grammar with smart spaced repetition.',
-    url: 'https://fluent.lt',
+    url: 'https://fluent.lt/',
     type: 'website',
+    images: [
+      { url: '/og-default-en.svg', width: 1200, height: 630, alt: 'Fluent — Learn Lithuanian Online' },
+      { url: '/og-default-ru.svg', width: 1200, height: 630, alt: 'Fluent — Учите литовский' },
+    ],
   },
   alternates: {
-    canonical: 'https://fluent.lt',
+    canonical: 'https://fluent.lt/',
   },
 };
 

@@ -5,6 +5,7 @@
 #      so a single process handles both frontend and backend in production.
 
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
@@ -90,6 +91,8 @@ def sitemap(session: Session = Depends(get_session)):
     articles and public word lists fetched live from the database."""
     base = FRONTEND_URL.rstrip("/")
 
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
     # Static pages with priorities
     static_pages = [
         (f"{base}/", "1.0", "weekly"),
@@ -105,6 +108,7 @@ def sitemap(session: Session = Depends(get_session)):
         urls.append(
             f"  <url>\n"
             f"    <loc>{loc}</loc>\n"
+            f"    <lastmod>{today}</lastmod>\n"
             f"    <priority>{priority}</priority>\n"
             f"    <changefreq>{changefreq}</changefreq>\n"
             f"  </url>"
