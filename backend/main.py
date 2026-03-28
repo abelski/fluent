@@ -22,6 +22,7 @@ from routers.reports import router as reports_router
 from routers.articles import router as articles_router
 from routers.constitution import router as constitution_router
 from routers.practice import router as practice_router
+from routers.feedback import router as feedback_router
 from database import create_db_and_tables, get_session
 from models import WordList, Article, SubcategoryMeta
 from data.grammar.lessons import LESSON_CONFIG
@@ -74,6 +75,7 @@ app.include_router(reports_router, prefix="/api")
 app.include_router(articles_router, prefix="/api")
 app.include_router(constitution_router, prefix="/api")
 app.include_router(practice_router, prefix="/api")
+app.include_router(feedback_router, prefix="/api")
 
 
 @app.get("/health")

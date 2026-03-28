@@ -152,8 +152,15 @@ const BLANK_TEST: Omit<PracticeTestRow, 'id' | 'total_questions' | 'active_quest
   sort_order: 0,
 };
 
+interface FeedbackRow {
+  id: number;
+  email: string;
+  message: string;
+  created_at: string;
+}
+
 type Area = 'admin' | 'content';
-type AdminSubTab = 'users' | 'reports';
+type AdminSubTab = 'users' | 'reports' | 'feedback';
 type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'practice';
 
 interface ContentList {
@@ -457,6 +464,9 @@ export default function AdminPage() {
   const [practiceSaving, setPracticeSaving] = useState(false);
   const practiceImportRef = useRef<HTMLInputElement>(null);
 
+  const [feedbackList, setFeedbackList] = useState<FeedbackRow[]>([]);
+  const [feedbackPage, setFeedbackPage] = useState(1);
+
   // Report filter
   type ReportFilter = 'open' | 'onhold' | 'resolved' | 'all';
   const [reportFilter, setReportFilter] = useState<ReportFilter>('open');
@@ -492,8 +502,9 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       fetch(`${BACKEND_URL}/api/admin/subcategories`, { headers }),
       fetch(`${BACKEND_URL}/api/admin/content/word-lists`, { headers }),
       fetch(`${BACKEND_URL}/api/admin/grammar/rules`, { headers }),
+      fetch(`${BACKEND_URL}/api/admin/feedback`, { headers }),
     ])
-      .then(async ([usersRes, quotaRes, reportsRes, articlesRes, subcatsRes, contentRes, grammarRulesRes]) => {
+      .then(async ([usersRes, quotaRes, reportsRes, articlesRes, subcatsRes, contentRes, grammarRulesRes, feedbackRes]) => {
         if (usersRes.status === 403 || usersRes.status === 401) { router.replace('/dashboard/lists'); return; }
         const [usersData, quotaData] = await Promise.all([usersRes.json(), quotaRes.json()]);
         setUsers(usersData);
@@ -503,6 +514,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         if (subcatsRes.ok) setSubcategories(await subcatsRes.json());
         if (contentRes.ok) setContentLists(await contentRes.json());
         if (grammarRulesRes.ok) setGrammarRules(await grammarRulesRes.json());
+        if (feedbackRes.ok) setFeedbackList(await feedbackRes.json());
       })
       .catch((err) => console.error('API error:', err))
       .finally(() => setLoading(false));
@@ -734,6 +746,15 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     await fetch(`${BACKEND_URL}/api/admin/reports/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
+    }).catch((err) => console.error('API error:', err));
+    loadData();
+  }
+
+  async function deleteFeedback(id: number) {
+    if (!confirm('Удалить это сообщение?')) return;
+    await fetch(`${BACKEND_URL}/api/admin/feedback/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
     }).catch((err) => console.error('API error:', err));
     loadData();
   }
@@ -1153,6 +1174,15 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full">{openReports}</span>
               )}
             </button>
+            <button
+              onClick={() => setAdminTab('feedback')}
+              className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${adminTab === 'feedback' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              Обратная связь
+              {feedbackList.length > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 text-[10px] font-bold bg-gray-500 text-white rounded-full">{feedbackList.length}</span>
+              )}
+            </button>
           </div>
         )}
 
@@ -1390,6 +1420,36 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               </div>
             ))}
             <Pagination total={filteredReports.length} page={reportsPage} onPage={setReportsPage} />
+          </div>
+        )}
+
+        {/* ── Feedback ── */}
+        {area === 'admin' && adminTab === 'feedback' && (
+          <div className="flex flex-col gap-3">
+            {feedbackList.length === 0 ? (
+              <p className="text-gray-400 text-sm">Сообщений пока нет.</p>
+            ) : (
+              <>
+                {feedbackList.slice((feedbackPage - 1) * PAGE_SIZE, feedbackPage * PAGE_SIZE).map((f) => (
+                  <div key={f.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-gray-900">{f.email}</span>
+                      <span className="text-xs text-gray-400">{new Date(f.created_at).toLocaleString('ru-RU')}</span>
+                    </div>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{f.message}</p>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => deleteFeedback(f.id)}
+                        className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 rounded-lg transition-colors"
+                      >
+                        {tr.admin.delete}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <Pagination total={feedbackList.length} page={feedbackPage} onPage={setFeedbackPage} />
+              </>
+            )}
           </div>
         )}
 

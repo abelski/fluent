@@ -49,6 +49,15 @@ class WordList(SQLModel, table=True):
     sort_order: Optional[int] = Field(default=0)  # display order within subcategory
 
 
+class Feedback(SQLModel, table=True):
+    """User-submitted feedback message (anonymous — no auth required)."""
+    __tablename__ = "feedback"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    email: str
+    message: str
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
 class Word(SQLModel, table=True):
     """A single Lithuanian word with translations in both English and Russian.
     Words are shared across lists — the same word can belong to multiple lists."""
