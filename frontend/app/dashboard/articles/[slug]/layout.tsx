@@ -1,7 +1,50 @@
-export function generateStaticParams() {
-  return [{ slug: '_' }];
+import type { Metadata } from 'next';
+import type { Article } from './types';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:8000';
+
+export async function generateStaticParams() {
+  try {
+    const [regular, footer] = await Promise.all([
+      fetch(`${BACKEND_URL}/api/articles`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`${BACKEND_URL}/api/footer-articles`).then((r) => (r.ok ? r.json() : [])),
+    ]);
+    const slugs = [...regular, ...footer].map((a: { slug: string }) => ({ slug: a.slug }));
+    return [{ slug: '_' }, ...slugs];
+  } catch {
+    return [{ slug: '_' }];
+  }
 }
 
-export default function ArticleLayout({ children }: { children: React.ReactNode }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  if (params.slug === '_') return { title: 'Статьи о литовском языке' };
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/articles/${params.slug}`);
+    if (!res.ok) return {};
+    const article: Article = await res.json();
+    const desc = article.body_ru.replace(/[#*`[\]]/g, '').slice(0, 160).trim();
+    return {
+      title: article.title_ru,
+      description: desc,
+      alternates: {
+        canonical: `https://fluent.lt/dashboard/articles/${article.slug}/`,
+      },
+      openGraph: {
+        title: article.title_ru,
+        description: desc,
+        url: `https://fluent.lt/dashboard/articles/${article.slug}/`,
+        type: 'article',
+      },
+    };
+  } catch {
+    return {};
+  }
+}
+
+export default function ArticleSlugLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
