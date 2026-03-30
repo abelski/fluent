@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+
 import { BACKEND_URL, getToken, enrollProgram, unenrollProgram } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
@@ -54,8 +54,6 @@ function resolveKey(): string {
 
 export default function ProgramDetailPage() {
   const { tr, plural, lang } = useT();
-  const router = useRouter();
-
   const [programKey, setProgramKey] = useState<string>('_');
   const [meta, setMeta] = useState<SubcategoryMeta | null>(null);
   const [stacks, setStacks] = useState<WordListSummary[]>([]);
@@ -64,24 +62,25 @@ export default function ProgramDetailPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [stackStates, setStackStates] = useState<Record<number, StackState>>({});
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const key = resolveKey();
     setProgramKey(key);
 
     const token = getToken();
-    if (!token) {
-      router.replace('/');
-      return;
-    }
+    setIsLoggedIn(!!token);
+    const authHeaders: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
     Promise.all([
-      fetch(`${BACKEND_URL}/api/subcategory-meta`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${BACKEND_URL}/api/subcategory-meta`, { headers: authHeaders })
         .then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
-      fetch(`${BACKEND_URL}/api/lists`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${BACKEND_URL}/api/lists`, { headers: authHeaders })
         .then((r) => (r.ok ? r.json() : [])).catch(() => []),
-      fetch(`${BACKEND_URL}/api/me/programs`, { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      token
+        ? fetch(`${BACKEND_URL}/api/me/programs`, { headers: { Authorization: `Bearer ${token}` } })
+            .then((r) => (r.ok ? r.json() : [])).catch(() => [])
+        : Promise.resolve([]),
     ]).then(([metaData, listsData, enrolledData]: [Record<string, SubcategoryMeta>, WordListSummary[], string[]]) => {
       const programMeta = metaData[key] ?? null;
       setMeta(programMeta);
@@ -208,7 +207,7 @@ export default function ProgramDetailPage() {
               )}
             </div>
             <button
-              onClick={handleToggle}
+              onClick={() => { if (!isLoggedIn) { window.location.href = `${BACKEND_URL}/api/auth/google`; return; } handleToggle(); }}
               disabled={enrollPending}
               className={`shrink-0 text-sm font-semibold px-6 py-2.5 rounded-full transition-all active:scale-95 disabled:opacity-50 ${
                 isEnrolled

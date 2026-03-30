@@ -381,6 +381,10 @@ export interface Translations {
     featureGrammarDesc: string;
     featureTests: string;
     featureTestsDesc: string;
+    continueCta: string;
+    continueCtaSub: string;
+    continueCtaNew: string;
+    continueCtaNewSub: string;
   };
   cookie: {
     message: string;

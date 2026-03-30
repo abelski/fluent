@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, enrollProgram, unenrollProgram } from '../../lib/api';
 import { useT } from '../../lib/useT';
 
@@ -43,29 +42,30 @@ function BookIcon() {
 
 export default function ProgramsPage() {
   const { tr, plural, lang } = useT();
-  const router = useRouter();
+
   const [programs, setPrograms] = useState<ProgramCard[]>([]);
   const [enrolledKeys, setEnrolledKeys] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<Set<string>>(new Set());
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const token = getToken();
-    if (!token) {
-      router.replace('/');
-      return;
-    }
+    setIsLoggedIn(!!token);
+    const authHeaders: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
     Promise.all([
-      fetch(`${BACKEND_URL}/api/lists`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${BACKEND_URL}/api/lists`, { headers: authHeaders })
         .then((r) => (r.ok ? r.json() : []))
         .catch(() => []),
-      fetch(`${BACKEND_URL}/api/subcategory-meta`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${BACKEND_URL}/api/subcategory-meta`, { headers: authHeaders })
         .then((r) => (r.ok ? r.json() : {}))
         .catch(() => ({})),
-      fetch(`${BACKEND_URL}/api/me/programs`, { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => (r.ok ? r.json() : []))
-        .catch(() => []),
+      token
+        ? fetch(`${BACKEND_URL}/api/me/programs`, { headers: { Authorization: `Bearer ${token}` } })
+            .then((r) => (r.ok ? r.json() : []))
+            .catch(() => [])
+        : Promise.resolve([]),
     ]).then(([listsData, metaData, enrolledData]: [WordListSummary[], Record<string, SubcategoryMeta>, string[]]) => {
       const enrolled = new Set<string>(Array.isArray(enrolledData) ? enrolledData : []);
       setEnrolledKeys(enrolled);
@@ -212,7 +212,10 @@ export default function ProgramsPage() {
                       {tr.programs.details} →
                     </Link>
                     <button
-                      onClick={() => handleToggle(prog.key)}
+                      onClick={() => {
+                        if (!isLoggedIn) { window.location.href = `${BACKEND_URL}/api/auth/google`; return; }
+                        handleToggle(prog.key);
+                      }}
                       disabled={isPending}
                       className={`text-sm font-semibold px-5 py-2 rounded-full transition-all active:scale-95 disabled:opacity-50 ${
                         isEnrolled

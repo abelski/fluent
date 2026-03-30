@@ -78,6 +78,14 @@ function FolderIcon() {
   );
 }
 
+function PlayIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M6 4l14 8-14 8V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function RefreshIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -113,7 +121,7 @@ function UserHome({ stats }: { stats: Stats | null }) {
     { label: t.cardWordsLabel, value: stats?.known ?? '—', sub: stats ? t.cardWordsInProgress.replace('{n}', String(stats.learning)) : '', icon: <BookmarkIcon />, color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/dashboard/vocabulary' },
     { label: t.cardGrammarLabel, value: stats?.grammar_lessons_passed ?? '—', sub: t.cardGrammarSub, icon: <PencilIcon />, color: 'text-blue-600', bg: 'bg-blue-50', href: '/dashboard/grammar' },
     { label: t.cardTestsLabel, value: stats?.practice_exams_completed ?? '—', sub: t.cardTestsSub, icon: <TargetIcon />, color: 'text-purple-600', bg: 'bg-purple-50', href: '/dashboard/practice' },
-    { label: t.cardStreakLabel, value: stats ? `${stats.streak} дн.` : '—', sub: t.cardStreakSub, icon: <FlameIcon />, color: 'text-amber-600', bg: 'bg-amber-50', href: '/dashboard/lists' },
+    { label: t.cardStreakLabel, value: stats?.streak ?? '—', sub: t.cardStreakSub, icon: <FlameIcon />, color: 'text-amber-600', bg: 'bg-amber-50', href: '/dashboard/lists' },
   ];
 
   return (
@@ -155,6 +163,28 @@ function UserHome({ stats }: { stats: Stats | null }) {
             </div>
           </Link>
         </div>
+
+        {(() => {
+          const hasStudied = (stats?.total_studied ?? 0) > 0;
+          return (
+            <Link
+              href={hasStudied ? '/dashboard/review' : '/dashboard/lists'}
+              className="bg-emerald-600 rounded-2xl p-4 flex items-center gap-3 hover:bg-emerald-700 transition-colors active:scale-[0.98] mb-4"
+            >
+              <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
+                <PlayIcon />
+              </div>
+              <div>
+                <p className="font-semibold text-sm text-white leading-tight">
+                  {hasStudied ? t.continueCta : t.continueCtaNew}
+                </p>
+                <p className="text-xs text-emerald-200">
+                  {hasStudied ? t.continueCtaSub : t.continueCtaNewSub}
+                </p>
+              </div>
+            </Link>
+          );
+        })()}
 
         <div className="bg-white rounded-2xl p-5 flex items-center justify-between gap-4">
           <div>
@@ -198,7 +228,6 @@ function GuestLanding() {
             <GoogleIcon />
             {t.guestCta}
           </a>
-          <p className="text-xs text-gray-400 mt-3">Бесплатно · Без рекламы</p>
         </div>
       </section>
 
@@ -219,20 +248,6 @@ function GuestLanding() {
         </div>
       </section>
 
-      {/* Premium */}
-      <section className="bg-white px-5 pb-12 sm:pb-16">
-        <div className="max-w-xl mx-auto">
-          <div className="bg-gray-900 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <p className="font-semibold text-white mb-1">{t.premiumTitle}</p>
-              <p className="text-sm text-gray-400 leading-relaxed">{t.premiumBody}</p>
-            </div>
-            <Link href="/pricing" className="shrink-0 inline-flex items-center gap-1 text-emerald-400 font-semibold text-sm hover:text-emerald-300 transition-colors whitespace-nowrap">
-              {t.premiumCta}
-            </Link>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }
