@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, unenrollProgram } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 import { useT } from '../../../lib/useT';
@@ -47,8 +46,8 @@ interface Quota {
 
 export default function ListsPage() {
   const { tr, plural, lang } = useT();
-  const router = useRouter();
   const [starLevel, setStarLevelState] = useState<number>(1);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [enrolledKeys, setEnrolledKeys] = useState<Set<string>>(new Set());
   const [subcategoryMeta, setSubcategoryMeta] = useState<Record<string, SubcategoryMeta>>({});
@@ -62,9 +61,11 @@ export default function ListsPage() {
 
   useEffect(() => {
     if (!getToken()) {
-      router.replace('/login');
+      setIsLoggedIn(false);
+      setLoading(false);
       return;
     }
+    setIsLoggedIn(true);
 
     const token = getToken()!;
 
@@ -160,8 +161,20 @@ export default function ListsPage() {
       <div className="max-w-4xl mx-auto px-6 py-8">
         <StatsBar />
 
+        {isLoggedIn === false && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+            <p className="text-gray-500 text-lg">Войдите, чтобы получить доступ к словарям</p>
+            <a
+              href={`${BACKEND_URL}/api/auth/google`}
+              className="px-6 py-3 bg-emerald-600 text-white text-sm font-semibold rounded-full hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-600/20"
+            >
+              Войти с Google
+            </a>
+          </div>
+        )}
+
         {/* Quota banner */}
-        {quota && !quota.premium_active && (
+        {isLoggedIn && quota && !quota.premium_active && (
           <div className={`mb-6 rounded-xl px-5 py-4 border flex flex-col sm:flex-row sm:items-center gap-3 ${
             limitReached
               ? 'bg-red-50 border-red-200'
