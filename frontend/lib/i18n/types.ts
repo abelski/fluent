@@ -386,6 +386,27 @@ export interface Translations {
     continueCtaNew: string;
     continueCtaNewSub: string;
   };
+  news: {
+    sectionTitle: string;
+    showMore: string;
+    showLess: string;
+    noNews: string;
+    langRu: string;
+    langEn: string;
+    // admin
+    adminTitle: string;
+    newPost: string;
+    deleteConfirm: string;
+    fieldTitleRu: string;
+    fieldTitleEn: string;
+    fieldBodyRu: string;
+    fieldBodyEn: string;
+    fieldPublishedAt: string;
+    fieldPublished: string;
+    save: string;
+    cancel: string;
+    delete: string;
+  };
   cookie: {
     message: string;
     messageNote: string;

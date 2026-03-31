@@ -295,6 +295,20 @@ class ConstitutionExamResult(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_utcnow)
 
 
+class NewsPost(SQLModel, table=True):
+    """An admin-authored news post displayed on the landing page.
+    Supports bilingual content (RU + EN). published_at controls sort order."""
+    __tablename__ = "news_post"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title_ru: str
+    title_en: str
+    body_ru: str = Field(default="")
+    body_en: str = Field(default="")
+    published_at: datetime = Field(default_factory=_utcnow)
+    created_at: datetime = Field(default_factory=_utcnow)
+    published: bool = Field(default=True)
+
+
 class UserProgram(SQLModel, table=True):
     """Tracks which programs (subcategory groups) a user has enrolled in.
     A program corresponds to a SubcategoryMeta key (e.g. 'a1_basics').

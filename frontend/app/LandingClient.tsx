@@ -54,21 +54,6 @@ function TargetIcon() {
   );
 }
 
-function BookmarkIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M5 4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v17l-7-3.5L5 21V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function FlameIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M12 21c-4-1-7-4.5-7-8.5 0-2.5 1.5-4.5 3-5.5.5 1.5 1 2.5 2 3C10 8 10.5 6 10.5 4c2 1.5 4.5 4 4.5 8 .75-.75 1-2 1-3 1.5 1.5 2 3.5 2 4.5 0 2.5-2.5 6-6 8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 function FolderIcon() {
   return (
@@ -95,6 +80,74 @@ function RefreshIcon() {
   );
 }
 
+interface NewsItem {
+  id: number;
+  title_ru: string;
+  title_en: string;
+  body_ru: string;
+  body_en: string;
+  published_at: string;
+}
+
+function NewsSection({ inline = false }: { inline?: boolean }) {
+  const { tr, lang } = useT();
+  const t = tr.news;
+  const [posts, setPosts] = useState<NewsItem[]>([]);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/api/news?limit=20`)
+      .then((r) => { if (!r.ok) return null; return r.json(); })
+      .then((data) => { if (Array.isArray(data)) setPosts(data); })
+      .catch(() => {});
+  }, []);
+
+  if (posts.length === 0) return null;
+
+  const INITIAL = 3;
+  const visible = showAll ? posts : posts.slice(0, INITIAL);
+  const hasMore = posts.length > INITIAL;
+
+  const content = (
+    <>
+      <h2 className="font-headline text-xl font-bold text-gray-900 mb-4">{t.sectionTitle}</h2>
+      <div className="flex flex-col gap-3">
+        {visible.map((post) => {
+          const title = lang === 'ru' ? post.title_ru : post.title_en;
+          const body = lang === 'ru' ? post.body_ru : post.body_en;
+          const truncated = body.length > 120 ? body.slice(0, 120).trimEnd() + '…' : body;
+          const date = new Date(post.published_at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+          return (
+            <div key={post.id} className="bg-white rounded-2xl p-5">
+              <p className="font-semibold text-sm text-gray-900 mb-1">{title}</p>
+              {truncated && <p className="text-xs text-gray-500 leading-relaxed mb-2">{truncated}</p>}
+              <p className="text-xs text-gray-400">{date}</p>
+            </div>
+          );
+        })}
+      </div>
+      {hasMore && (
+        <button
+          onClick={() => setShowAll((v) => !v)}
+          className="mt-4 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+        >
+          {showAll ? t.showLess : `${t.showMore} (${posts.length - INITIAL})`}
+        </button>
+      )}
+    </>
+  );
+
+  if (inline) {
+    return <div className="mt-2 mb-3">{content}</div>;
+  }
+
+  return (
+    <section className="bg-[#F5F5F7] px-5 py-12 sm:py-16">
+      <div className="max-w-xl mx-auto">{content}</div>
+    </section>
+  );
+}
+
 export default function LandingClient() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
@@ -113,16 +166,98 @@ export default function LandingClient() {
   return loggedIn ? <UserHome stats={stats} /> : <GuestLanding />;
 }
 
+function StatsGauge({ stats, t }: {
+  stats: Stats | null;
+  t: { cardWordsLabel: string; cardGrammarLabel: string; cardTestsLabel: string; cardStreakLabel: string };
+}) {
+  const known = stats?.known ?? 0;
+  const MAX = 500;
+  const ratio = Math.min(known / MAX, 1);
+
+  // Speedometer arc: 240° CW from 150° (8 o'clock) to 30° (4 o'clock), gap at bottom
+  // SVG coords: angle θ → (cx + R·cos θ, cy + R·sin θ), sweep-flag=1 = CW on screen
+  const R = 72, cx = 100, cy = 90;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const sx = +(cx + R * Math.cos(toRad(150))).toFixed(1); // 37.6
+  const sy = +(cy + R * Math.sin(toRad(150))).toFixed(1); // 126
+  const ex = +(cx + R * Math.cos(toRad(30))).toFixed(1);  // 162.4
+  const ey = +(cy + R * Math.sin(toRad(30))).toFixed(1);  // 126
+  const arcLen = +(R * toRad(240)).toFixed(2); // ≈ 301.6
+  // large-arc-flag=1 (240° > 180°), sweep-flag=1 (CW)
+  const arcPath = `M ${sx},${sy} A ${R},${R} 0 1,1 ${ex},${ey}`;
+
+  const miniStats = [
+    {
+      value: stats?.grammar_lessons_passed ?? 0,
+      label: t.cardGrammarLabel,
+      href: '/dashboard/grammar',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M4 4h9a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H4V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          <path d="M8 9h5M8 12h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+    {
+      value: stats?.practice_exams_completed ?? 0,
+      label: t.cardTestsLabel,
+      href: '/dashboard/practice',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <rect x="8" y="2" width="8" height="4" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M8 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
+    {
+      value: stats?.streak ?? 0,
+      label: t.cardStreakLabel,
+      href: '/dashboard/lists',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M12 2c0 0-1 3.5 1 6 0 0-1-1-3-1 0 0 1 3 0 5s-1 4 3 6c0 0-1-2 0-3 0 0 1 2 3 2s4-2 4-5-3-5-3-5 1 2 0 4c0 0-2-4-2-6s-1-3-3-3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl p-5 mb-3 border border-gray-100">
+      <Link href="/dashboard/vocabulary" className="block">
+        <svg viewBox="0 0 200 140" className="w-full max-w-[280px] mx-auto block">
+          {/* background track */}
+          <path d={arcPath} stroke="#e5e7eb" strokeWidth="16" fill="none" strokeLinecap="round" />
+          {/* progress fill — starts at arc beginning (150°) and fills CW */}
+          <path
+            d={arcPath}
+            stroke="#10b981"
+            strokeWidth="16"
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={arcLen}
+            strokeDashoffset={arcLen * (1 - ratio)}
+          />
+          <text x="100" y="84" textAnchor="middle" fontSize="36" fontWeight="700" fill="#111827">{known}</text>
+          <text x="100" y="102" textAnchor="middle" fontSize="12" fill="#9ca3af">{t.cardWordsLabel}</text>
+        </svg>
+      </Link>
+      <div className="grid grid-cols-3 divide-x divide-gray-100 border-t border-gray-100 pt-3 mt-1">
+        {miniStats.map((s) => (
+          <Link key={s.label} href={s.href} className="flex flex-col items-center gap-1 px-2 py-2 hover:bg-gray-50 rounded-xl transition-colors">
+            <span className="text-gray-400">{s.icon}</span>
+            <p className="text-lg font-bold text-gray-900 leading-none">{s.value}</p>
+            <p className="text-[10px] text-gray-400 leading-tight text-center">{s.label}</p>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function UserHome({ stats }: { stats: Stats | null }) {
   const { tr } = useT();
   const t = tr.landing;
-
-  const cards = [
-    { label: t.cardWordsLabel, value: stats?.known ?? '—', sub: stats ? t.cardWordsInProgress.replace('{n}', String(stats.learning)) : '', icon: <BookmarkIcon />, color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/dashboard/vocabulary' },
-    { label: t.cardGrammarLabel, value: stats?.grammar_lessons_passed ?? '—', sub: t.cardGrammarSub, icon: <PencilIcon />, color: 'text-blue-600', bg: 'bg-blue-50', href: '/dashboard/grammar' },
-    { label: t.cardTestsLabel, value: stats?.practice_exams_completed ?? '—', sub: t.cardTestsSub, icon: <TargetIcon />, color: 'text-purple-600', bg: 'bg-purple-50', href: '/dashboard/practice' },
-    { label: t.cardStreakLabel, value: stats?.streak ?? '—', sub: t.cardStreakSub, icon: <FlameIcon />, color: 'text-amber-600', bg: 'bg-amber-50', href: '/dashboard/lists' },
-  ];
 
   return (
     <main className="bg-[#F5F5F7] min-h-screen">
@@ -130,36 +265,21 @@ function UserHome({ stats }: { stats: Stats | null }) {
         <h1 className="font-headline text-2xl font-bold mb-1">{t.progressTitle}</h1>
         <p className="text-gray-500 text-sm mb-6">{t.progressSubtitle}</p>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {cards.map((c) => (
-            <Link key={c.label} href={c.href}
-              className="bg-white rounded-2xl p-4 flex flex-col gap-3 hover:shadow-md transition-all active:scale-[0.98]"
-            >
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${c.bg} ${c.color}`}>
-                {c.icon}
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900 leading-none mb-1">{c.value}</p>
-                <p className="text-xs font-medium text-gray-700">{c.label}</p>
-                {c.sub && <p className="text-xs text-gray-400 mt-0.5">{c.sub}</p>}
-              </div>
-            </Link>
-          ))}
-        </div>
+        <StatsGauge stats={stats} t={t} />
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <Link href="/dashboard/lists" className="bg-white rounded-2xl p-4 flex items-center gap-3 hover:shadow-md transition-all active:scale-[0.98]">
-            <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shrink-0"><FolderIcon /></div>
-            <div>
-              <p className="font-semibold text-sm leading-tight">{t.quickDictionaries}</p>
-              <p className="text-xs text-gray-400">{t.quickDictionariesSub}</p>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <Link href="/dashboard/lists" className="bg-white rounded-2xl px-4 py-3 flex items-center gap-3 hover:shadow-md transition-all active:scale-[0.98]">
+            <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shrink-0"><FolderIcon /></div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm leading-tight truncate">{t.quickDictionaries}</p>
+              <p className="text-xs text-gray-400 truncate">{t.quickDictionariesSub}</p>
             </div>
           </Link>
-          <Link href="/dashboard/review" className="bg-white rounded-2xl p-4 flex items-center gap-3 hover:shadow-md transition-all active:scale-[0.98]">
-            <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shrink-0"><RefreshIcon /></div>
-            <div>
-              <p className="font-semibold text-sm leading-tight">{t.quickReview}</p>
-              <p className="text-xs text-gray-400">{t.quickReviewSub}</p>
+          <Link href="/dashboard/review" className="bg-white rounded-2xl px-4 py-3 flex items-center gap-3 hover:shadow-md transition-all active:scale-[0.98]">
+            <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shrink-0"><RefreshIcon /></div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm leading-tight truncate">{t.quickReview}</p>
+              <p className="text-xs text-gray-400 truncate">{t.quickReviewSub}</p>
             </div>
           </Link>
         </div>
@@ -185,6 +305,8 @@ function UserHome({ stats }: { stats: Stats | null }) {
             </Link>
           );
         })()}
+
+        <NewsSection inline />
 
         <div className="bg-white rounded-2xl p-5 flex items-center justify-between gap-4">
           <div>
@@ -248,6 +370,7 @@ function GuestLanding() {
         </div>
       </section>
 
+      <NewsSection />
     </main>
   );
 }

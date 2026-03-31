@@ -159,9 +159,28 @@ interface FeedbackRow {
   created_at: string;
 }
 
+interface NewsRow {
+  id: number;
+  title_ru: string;
+  title_en: string;
+  body_ru: string;
+  body_en: string;
+  published_at: string;
+  published: boolean;
+}
+
+const BLANK_NEWS: Omit<NewsRow, 'id'> = {
+  title_ru: '',
+  title_en: '',
+  body_ru: '',
+  body_en: '',
+  published_at: new Date().toISOString().slice(0, 10),
+  published: true,
+};
+
 type Area = 'admin' | 'content';
 type AdminSubTab = 'users' | 'reports' | 'feedback';
-type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'practice';
+type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'practice' | 'news';
 
 interface ContentList {
   id: number;
@@ -467,6 +486,13 @@ export default function AdminPage() {
   const [feedbackList, setFeedbackList] = useState<FeedbackRow[]>([]);
   const [feedbackPage, setFeedbackPage] = useState(1);
 
+  const [newsList, setNewsList] = useState<NewsRow[]>([]);
+  const [newsLoaded, setNewsLoaded] = useState(false);
+  const [editingNews, setEditingNews] = useState<NewsRow | null>(null);
+  const [addingNews, setAddingNews] = useState(false);
+  const [newsDraft, setNewsDraft] = useState<Omit<NewsRow, 'id'>>({ ...BLANK_NEWS });
+  const [newsSaving, setNewsSaving] = useState(false);
+
   // Report filter
   type ReportFilter = 'open' | 'onhold' | 'resolved' | 'all';
   const [reportFilter, setReportFilter] = useState<ReportFilter>('open');
@@ -518,6 +544,50 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       })
       .catch((err) => console.error('API error:', err))
       .finally(() => setLoading(false));
+  }
+
+  async function loadNews() {
+    const res = await fetch(`${BACKEND_URL}/api/admin/news`, { headers: authHeaders() });
+    if (res.ok) {
+      setNewsList(await res.json());
+      setNewsLoaded(true);
+    }
+  }
+
+  async function saveNews() {
+    setNewsSaving(true);
+    try {
+      const payload = {
+        ...newsDraft,
+        published_at: newsDraft.published_at ? new Date(newsDraft.published_at).toISOString() : undefined,
+      };
+      let res: Response;
+      if (editingNews) {
+        res = await fetch(`${BACKEND_URL}/api/admin/news/${editingNews.id}`, {
+          method: 'PUT', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch(`${BACKEND_URL}/api/admin/news`, {
+          method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+      if (res.ok) {
+        setEditingNews(null);
+        setAddingNews(false);
+        setNewsDraft({ ...BLANK_NEWS });
+        await loadNews();
+      }
+    } finally {
+      setNewsSaving(false);
+    }
+  }
+
+  async function deleteNews(id: number) {
+    if (!window.confirm(tr.news.deleteConfirm)) return;
+    await fetch(`${BACKEND_URL}/api/admin/news/${id}`, { method: 'DELETE', headers: authHeaders() });
+    await loadNews();
   }
 
   async function loadListWords(listId: number) {
@@ -1212,6 +1282,12 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'practice' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
               {tr.adminPractice.tabLabel}
+            </button>
+            <button
+              onClick={() => { setContentTab('news'); if (!newsLoaded) loadNews(); }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'news' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              {tr.news.adminTitle}
             </button>
           </div>
         )}
@@ -2314,6 +2390,134 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 </div>
               );
             })()}
+          </div>
+        )}
+
+        {/* ── News ── */}
+        {area === 'content' && contentTab === 'news' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-gray-900">{tr.news.adminTitle}</h2>
+              <button
+                onClick={() => { setAddingNews(true); setEditingNews(null); setNewsDraft({ ...BLANK_NEWS }); }}
+                className="text-xs px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+              >
+                + {tr.news.newPost}
+              </button>
+            </div>
+
+            {(addingNews || editingNews) && (
+              <div className="mb-4 p-4 rounded-2xl border border-gray-900 bg-white flex flex-col gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{tr.news.fieldTitleRu}</label>
+                    <input
+                      type="text"
+                      value={newsDraft.title_ru}
+                      onChange={(e) => setNewsDraft((d) => ({ ...d, title_ru: e.target.value }))}
+                      className="w-full border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{tr.news.fieldTitleEn}</label>
+                    <input
+                      type="text"
+                      value={newsDraft.title_en}
+                      onChange={(e) => setNewsDraft((d) => ({ ...d, title_en: e.target.value }))}
+                      className="w-full border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{tr.news.fieldBodyRu}</label>
+                    <textarea
+                      rows={4}
+                      value={newsDraft.body_ru}
+                      onChange={(e) => setNewsDraft((d) => ({ ...d, body_ru: e.target.value }))}
+                      className="w-full border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none resize-y"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{tr.news.fieldBodyEn}</label>
+                    <textarea
+                      rows={4}
+                      value={newsDraft.body_en}
+                      onChange={(e) => setNewsDraft((d) => ({ ...d, body_en: e.target.value }))}
+                      className="w-full border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none resize-y"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{tr.news.fieldPublishedAt}</label>
+                    <input
+                      type="date"
+                      value={newsDraft.published_at.slice(0, 10)}
+                      onChange={(e) => setNewsDraft((d) => ({ ...d, published_at: e.target.value }))}
+                      className="border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={newsDraft.published}
+                      onChange={(e) => setNewsDraft((d) => ({ ...d, published: e.target.checked }))}
+                    />
+                    {tr.news.fieldPublished}
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={saveNews}
+                    disabled={newsSaving}
+                    className="text-xs px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium disabled:opacity-50"
+                  >
+                    {tr.news.save}
+                  </button>
+                  <button
+                    onClick={() => { setAddingNews(false); setEditingNews(null); setNewsDraft({ ...BLANK_NEWS }); }}
+                    className="text-xs px-3 py-2 border border-gray-900 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    {tr.news.cancel}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {newsList.length === 0 && !addingNews && (
+              <p className="text-gray-400 text-sm py-8 text-center">{tr.news.noNews}</p>
+            )}
+
+            <div className="flex flex-col gap-3">
+              {newsList.map((post) => (
+                <div key={post.id} className="flex items-center justify-between gap-4 rounded-2xl border border-gray-900 bg-white px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-gray-900 truncate">{post.title_ru}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full border border-gray-900 font-medium ${post.published ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-400'}`}>
+                        {post.published ? tr.articles.published : tr.articles.draft}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">{new Date(post.published_at).toLocaleDateString('ru-RU')}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => { setEditingNews(post); setAddingNews(false); setNewsDraft({ title_ru: post.title_ru, title_en: post.title_en, body_ru: post.body_ru, body_en: post.body_en, published_at: post.published_at.slice(0, 10), published: post.published }); }}
+                      className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg text-emerald-600 hover:bg-gray-50 transition-colors"
+                    >
+                      {tr.articles.editArticle}
+                    </button>
+                    <button
+                      onClick={() => deleteNews(post.id)}
+                      className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg text-red-500 hover:bg-gray-50 transition-colors"
+                    >
+                      {tr.news.delete}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
