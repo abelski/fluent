@@ -106,6 +106,7 @@ interface GrammarRule {
   endings_pl: string;
   transform: string;
   status: string;
+  article_slug: string | null;
 }
 
 interface EditingSentence {
@@ -126,6 +127,7 @@ interface EditingRule {
   endings_sg: string;
   endings_pl: string;
   transform: string;
+  article_slug: string;
 }
 
 function authHeaders() {
@@ -272,7 +274,7 @@ export default function GrammarAdminPage() {
   }
 
   function startEditRule(rule: GrammarRule) {
-    setEditingRule({ ...rule });
+    setEditingRule({ ...rule, article_slug: rule.article_slug ?? '' });
     setError('');
   }
 
@@ -294,6 +296,7 @@ export default function GrammarAdminPage() {
         endings_sg: editingRule.endings_sg.trim(),
         endings_pl: editingRule.endings_pl.trim(),
         transform: editingRule.transform.trim(),
+        article_slug: editingRule.article_slug.trim() || null,
       }),
     }).catch(() => null);
     setSaving(false);
@@ -621,6 +624,15 @@ export default function GrammarAdminPage() {
                           className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm outline-none resize-none"
                         />
                       </div>
+                      <div className="sm:col-span-2 flex flex-col gap-1">
+                        <label className="text-xs text-gray-500">Статья (slug)</label>
+                        <input
+                          value={editingRule.article_slug}
+                          onChange={(e) => setEditingRule((d) => d ? { ...d, article_slug: e.target.value } : d)}
+                          placeholder="например: daiktavardžiai-linksniavimas"
+                          className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm outline-none font-mono"
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -657,6 +669,19 @@ export default function GrammarAdminPage() {
                         <p className="text-xs text-gray-400 mb-0.5">Окончания мн.ч.</p>
                         <p className="text-gray-700 font-mono">{currentRule.endings_pl}</p>
                       </div>
+                      {currentRule.article_slug && (
+                        <div className="sm:col-span-2">
+                          <p className="text-xs text-gray-400 mb-0.5">Статья</p>
+                          <a
+                            href={`/dashboard/articles/${currentRule.article_slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-teal-600 hover:underline text-sm font-mono"
+                          >
+                            {currentRule.article_slug}
+                          </a>
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => startEditRule(currentRule)}

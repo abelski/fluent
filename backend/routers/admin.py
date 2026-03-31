@@ -10,7 +10,7 @@ from sqlmodel import Session, select, func
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
 from grammar_service import get_lessons as _get_grammar_lessons
@@ -692,6 +692,7 @@ def list_grammar_rules(
             "endings_pl": r.endings_pl,
             "transform": r.transform,
             "status": r.status,
+            "article_slug": r.article_slug,
         }
         for r in rules
     ]
@@ -724,6 +725,7 @@ class GrammarRuleUpdate(BaseModel):
     endings_sg: str
     endings_pl: str
     transform: str
+    article_slug: Optional[str] = None
 
 
 @router.patch("/grammar/rules/{rule_id}")
@@ -740,12 +742,18 @@ def update_grammar_rule(
     rule = session.get(GrammarCaseRule, rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
+    slug = body.article_slug.strip() if body.article_slug else None
+    if slug:
+        article = session.exec(select(Article).where(Article.slug == slug)).first()
+        if not article:
+            raise HTTPException(status_code=400, detail=f"Article '{slug}' not found")
     rule.name_ru = body.name_ru.strip()
     rule.question = body.question.strip()
     rule.usage = body.usage.strip()
     rule.endings_sg = body.endings_sg.strip()
     rule.endings_pl = body.endings_pl.strip()
     rule.transform = body.transform.strip()
+    rule.article_slug = slug
     session.add(rule)
     session.commit()
     return {"ok": True}

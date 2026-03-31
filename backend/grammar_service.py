@@ -14,7 +14,7 @@ from pathlib import Path
 from sqlmodel import Session, select
 
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
-from models import GrammarSentence, GrammarCaseRule
+from models import GrammarSentence, GrammarCaseRule, Article
 
 # Load noun declension table from content file.
 # Each row: [stem, sg1..sg7, pl1..pl7, ru_translation] (17 fields total)
@@ -95,6 +95,14 @@ def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
     published_cases: set[int] = {r.case_index for r in case_rules if r.status == "published"}
     admin_visible_cases: set[int] = {r.case_index for r in case_rules if r.status in ("published", "testing", "draft")}
     case_status: dict[int, str] = {r.case_index: r.status for r in case_rules}
+
+    # Load article titles for any linked slugs (one query, keyed by slug)
+    linked_slugs = {r.article_slug for r in case_rules if r.article_slug}
+    article_titles: dict[str, tuple[str, str]] = {}
+    if linked_slugs:
+        articles = session.exec(select(Article).where(Article.slug.in_(linked_slugs))).all()
+        article_titles = {a.slug: (a.title_ru, a.title_en) for a in articles}
+
     db_rules = {
         row.case_index: {
             "question": row.question,
@@ -103,6 +111,9 @@ def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
             "endings_sg": row.endings_sg,
             "endings_pl": row.endings_pl,
             "transform": row.transform,
+            "article_slug": row.article_slug,
+            "article_title_ru": article_titles.get(row.article_slug, (None, None))[0] if row.article_slug else None,
+            "article_title_en": article_titles.get(row.article_slug, (None, None))[1] if row.article_slug else None,
         }
         for row in case_rules
     }

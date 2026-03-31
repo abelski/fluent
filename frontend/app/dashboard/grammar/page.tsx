@@ -11,6 +11,9 @@ interface GrammarRule {
   endings_sg: string;
   endings_pl: string;
   transform?: string;
+  article_slug?: string;
+  article_title_ru?: string;
+  article_title_en?: string;
 }
 
 interface Lesson {
@@ -204,7 +207,7 @@ function SubcategoryGroup({
   group: { title: string; lessons: Lesson[] };
   onStartLesson: (lesson: Lesson) => void;
 }) {
-  const { tr, plural } = useT();
+  const { tr, plural, lang } = useT();
   const [open, setOpen] = useState(false);
 
   const passedCount = group.lessons.filter(
@@ -221,7 +224,26 @@ function SubcategoryGroup({
         data-testid="subcategory-toggle"
         className="w-full flex items-center justify-between px-5 py-3 bg-white hover:bg-gray-50 transition-colors text-left relative"
       >
-        <span role="heading" aria-level={3} className="text-sm font-medium text-gray-700">{group.title}</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span role="heading" aria-level={3} className="text-sm font-medium text-gray-700">{group.title}</span>
+          {(() => {
+            const rule = group.lessons[0]?.rules?.find((r) => r.article_slug);
+            if (!rule?.article_slug) return null;
+            const title = (lang === 'ru' ? rule.article_title_ru : rule.article_title_en) || 'Статья';
+            return (
+              <a
+                href={`/dashboard/articles/${rule.article_slug}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
+              >
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M7 1h4v4M11 1L5.5 6.5M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {title}
+              </a>
+            );
+          })()}
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-gray-400 text-xs">
             {passedCount > 0 ? (

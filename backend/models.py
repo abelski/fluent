@@ -171,6 +171,7 @@ class GrammarCaseRule(SQLModel, table=True):
     endings_pl: str                 # plural endings, e.g. "-us, -ius, -as, -es"
     transform: str                  # transformation rules description
     status: str = Field(default="testing")  # draft | testing | published (no creator tracking for seeded rules)
+    article_slug: Optional[str] = Field(default=None)  # slug of a supporting article for this case
 
 
 class Article(SQLModel, table=True):
