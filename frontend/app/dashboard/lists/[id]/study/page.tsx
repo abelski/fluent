@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { BACKEND_URL, getToken, resolveListId } from '../../../../../lib/api';
+import { BACKEND_URL, getToken, resolveListId, getSettings } from '../../../../../lib/api';
 import { useT } from '../../../../../lib/useT';
 import type { Lang } from '../../../../../lib/useLang';
 import { getStarLevel } from '../../../../../lib/starLevel';
@@ -125,6 +125,9 @@ export default function QuizPage() {
 
   const { tr, lang } = useT();
   const [complexity, setComplexity] = useState<Complexity>('medium');
+  const [lessonMode, setLessonMode] = useState<'thorough' | 'quick'>('thorough');
+  const [useTimer, setUseTimer] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(5);
   const [allWords, setAllWords] = useState<Word[]>([]);
   const [distractorPool, setDistractorPool] = useState<Word[]>([]);
   const [queue, setQueue] = useState<StudyCard[]>([]);
@@ -230,6 +233,10 @@ export default function QuizPage() {
     if (stored === 'easy' || stored === 'medium' || stored === 'hard') {
       setComplexity(stored);
     }
+    getSettings().then((s) => {
+      setLessonMode(s.lesson_mode);
+      setUseTimer(s.use_question_timer);
+    }).catch(() => {/* use defaults */});
     loadWords();
   }, [loadWords, router]);
 
@@ -246,6 +253,17 @@ export default function QuizPage() {
   }, [queue, allWords, lang]);
 
   function buildRetryCards(card: StudyCard): StudyCard[] {
+    // Thorough mode: every mistake adds 2 extra same-stage repetitions at end of queue
+    if (lessonMode === 'thorough') {
+      if (card.stage === 2 || card.stage === 3) {
+        return [
+          { word: card.word, stage: card.stage, failCount: card.failCount + 1 },
+          { word: card.word, stage: card.stage, failCount: card.failCount + 1 },
+        ];
+      }
+      return [];
+    }
+    // Quick mode: standard retry scheme
     if (card.stage === 2) {
       if (card.failCount === 0) return [{ word: card.word, stage: 2, failCount: 1 }];
       if (card.failCount === 1) return [
@@ -320,7 +338,7 @@ export default function QuizPage() {
     setSelectedOption(null);
     blockUntilRef.current = Date.now() + 200;
     advance(card, false, retryCards);
-    if (mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
+    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
   }
 
   function handleStage3Submit() {
@@ -369,7 +387,7 @@ export default function QuizPage() {
     setShownAnswer('');
     blockUntilRef.current = Date.now() + 200;
     advance(card, false, retryCards);
-    if (mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
+    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
   }
 
   // Check if session is done after queue empties
@@ -386,6 +404,32 @@ export default function QuizPage() {
     const id = setTimeout(() => dismissBtnRef.current?.focus(), 100);
     return () => clearTimeout(id);
   }, [answerState]);
+
+  // Reset timer whenever the front card changes (stage 2 or 3)
+  const frontCard = queue[0];
+  useEffect(() => {
+    if (useTimer && frontCard && frontCard.stage >= 2) {
+      setTimeLeft(5);
+    }
+  }, [frontCard, useTimer]);
+
+  // Count down the timer every second when active
+  useEffect(() => {
+    if (!useTimer || !frontCard || frontCard.stage < 2 || answerState !== 'unanswered') return;
+    if (timeLeft <= 0) {
+      // Time's up — record mistake and dismiss
+      if (!mistakeWordIdsRef.current.has(frontCard.word.id)) {
+        mistakeWordIdsRef.current.add(frontCard.word.id);
+        setMistakeWordCount((c) => c + 1);
+      }
+      saveProgress(frontCard.word.id, 'learning', true);
+      setAnswerState('wrong');
+      setShownAnswer(parseForms(frontCard.word.lithuanian)[blankIndex] ?? frontCard.word.lithuanian);
+      return;
+    }
+    const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearInterval(id);
+  }, [useTimer, frontCard, answerState, timeLeft, saveProgress, blankIndex]);
 
 
   if (loading) {
@@ -530,11 +574,22 @@ export default function QuizPage() {
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-1 bg-gray-100 rounded-full mb-5 sm:mb-10">
+        <div className="w-full h-1 bg-gray-100 rounded-full mb-2 sm:mb-4">
           <div
             className="h-1 bg-emerald-500 rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
+        </div>
+
+        {/* Timer bar — shown during stages 2 & 3 when timer is enabled */}
+        <div className={`w-full h-1 rounded-full mb-3 sm:mb-6 ${useTimer && stage >= 2 ? 'bg-gray-100' : 'bg-transparent'}`}>
+          {useTimer && stage >= 2 && (
+            <div
+              data-testid="timer-bar"
+              className={`h-1 rounded-full transition-all duration-1000 ${timeLeft <= 1 ? 'bg-red-400' : 'bg-amber-400'}`}
+              style={{ width: `${(timeLeft / 5) * 100}%` }}
+            />
+          )}
         </div>
 
         {/* ── Stage 1: Flashcard ── */}

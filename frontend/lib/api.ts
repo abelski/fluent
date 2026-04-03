@@ -44,6 +44,8 @@ export function resolveListId(_id: string): string {
 export interface UserSettings {
   words_per_session: number;
   new_words_ratio: number;  // 0.0–1.0
+  lesson_mode: 'thorough' | 'quick';
+  use_question_timer: boolean;
 }
 
 export async function getSettings(): Promise<UserSettings> {

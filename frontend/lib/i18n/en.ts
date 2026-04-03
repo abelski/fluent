@@ -451,6 +451,12 @@ const en: Translations = {
     complexityHardTk: 'For those who want to master precise spelling',
     saveButton: 'Save',
     savedMessage: 'Settings saved',
+    lessonModeLabel: 'Lesson end criteria',
+    lessonModeThoroughLabel: 'Thorough',
+    lessonModeQuickLabel: 'Quick',
+    lessonModeThoroughInfo: 'The lesson ends only when you complete all words. Every mistake adds 2 extra repetitions of that word.',
+    lessonModeQuickInfo: 'The lesson stops if you make mistakes on more than 25% of words, or ends naturally when the list is complete.',
+    timerLabel: 'Answer timer (5 sec)',
   },
   articles: {
     title: 'Articles',

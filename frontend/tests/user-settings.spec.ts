@@ -13,7 +13,7 @@ test.describe('User settings page', () => {
     }, makeFakeJwt('Test User'));
     await page.route('**/api/me/settings', async (route) => {
       if (route.request().method() === 'GET') {
-        await route.fulfill({ json: { words_per_session: 10, new_words_ratio: 0.7 } });
+        await route.fulfill({ json: { words_per_session: 10, new_words_ratio: 0.7, lesson_mode: 'thorough', use_question_timer: false } });
       } else {
         const body = JSON.parse(route.request().postData() ?? '{}');
         await route.fulfill({ json: body });
@@ -52,5 +52,50 @@ test.describe('User settings page', () => {
     });
     await page.goto('/dashboard/settings');
     await expect(page).toHaveURL(/\/login/, { timeout: 5000 });
+  });
+
+  test('lesson mode slider renders and toggles between thorough and quick', async ({ page }) => {
+    await page.goto('/dashboard/settings');
+    await page.waitForSelector('[data-testid="lesson-mode-slider"]');
+
+    const slider = page.locator('[data-testid="lesson-mode-slider"]');
+    await expect(slider).toHaveValue('1'); // thorough = position 1
+
+    await slider.fill('2');
+    await expect(slider).toHaveValue('2'); // quick = position 2
+  });
+
+  test('timer checkbox renders and toggles', async ({ page }) => {
+    await page.goto('/dashboard/settings');
+    await page.waitForSelector('[data-testid="timer-checkbox"]');
+
+    const checkbox = page.locator('[data-testid="timer-checkbox"]');
+    await expect(checkbox).not.toBeChecked();
+
+    await checkbox.check();
+    await expect(checkbox).toBeChecked();
+  });
+
+  test('save button sends lesson_mode and use_question_timer', async ({ page }) => {
+    let savedBody: Record<string, unknown> = {};
+    await page.route('**/api/me/settings', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ json: { words_per_session: 10, new_words_ratio: 0.7, lesson_mode: 'thorough', use_question_timer: false } });
+      } else {
+        savedBody = JSON.parse(route.request().postData() ?? '{}');
+        await route.fulfill({ json: savedBody });
+      }
+    });
+
+    await page.goto('/dashboard/settings');
+    await page.waitForSelector('[data-testid="lesson-mode-slider"]');
+
+    await page.locator('[data-testid="lesson-mode-slider"]').fill('2'); // switch to quick
+    await page.locator('[data-testid="timer-checkbox"]').check();
+    await page.locator('[data-testid="save-settings-btn"]').click();
+
+    await expect(page.locator('[data-testid="saved-message"]')).toBeVisible({ timeout: 3000 });
+    expect(savedBody.lesson_mode).toBe('quick');
+    expect(savedBody.use_question_timer).toBe(true);
   });
 });

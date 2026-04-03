@@ -94,6 +94,7 @@ function NewsSection({ inline = false }: { inline?: boolean }) {
   const t = tr.news;
   const [posts, setPosts] = useState<NewsItem[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/news?limit=20`)
@@ -115,12 +116,26 @@ function NewsSection({ inline = false }: { inline?: boolean }) {
         {visible.map((post) => {
           const title = lang === 'ru' ? post.title_ru : post.title_en;
           const body = lang === 'ru' ? post.body_ru : post.body_en;
-          const truncated = body.length > 120 ? body.slice(0, 120).trimEnd() + '…' : body;
+          const isLong = body.length > 120;
+          const expanded = expandedIds.has(post.id);
+          const displayBody = isLong && !expanded ? body.slice(0, 120).trimEnd() + '…' : body;
           const date = new Date(post.published_at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
           return (
             <div key={post.id} className="bg-white rounded-2xl p-5">
               <p className="font-semibold text-sm text-gray-900 mb-1">{title}</p>
-              {truncated && <p className="text-xs text-gray-500 leading-relaxed mb-2">{truncated}</p>}
+              {displayBody && <p className="text-xs text-gray-500 leading-relaxed mb-2">{displayBody}</p>}
+              {isLong && (
+                <button
+                  onClick={() => setExpandedIds((prev) => {
+                    const next = new Set(prev);
+                    expanded ? next.delete(post.id) : next.add(post.id);
+                    return next;
+                  })}
+                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium mb-2"
+                >
+                  {expanded ? (lang === 'ru' ? 'Свернуть' : 'Show less') : (lang === 'ru' ? 'Читать далее' : 'Read more')}
+                </button>
+              )}
               <p className="text-xs text-gray-400">{date}</p>
             </div>
           );

@@ -451,6 +451,12 @@ const ru: Translations = {
     complexityHardTk: 'Для тех, кто хочет отточить точное написание слов',
     saveButton: 'Сохранить',
     savedMessage: 'Настройки сохранены',
+    lessonModeLabel: 'Режим завершения урока',
+    lessonModeThoroughLabel: 'Тщательный',
+    lessonModeQuickLabel: 'Быстрый',
+    lessonModeThoroughInfo: 'Урок заканчивается, только когда вы пройдёте все слова. Каждая ошибка добавляет 2 дополнительных повторения этого слова.',
+    lessonModeQuickInfo: 'Урок прерывается, если вы допустили ошибки более чем в 25% слов, или заканчивается, когда вы прошли весь список.',
+    timerLabel: 'Таймер на ответ (5 сек)',
   },
   articles: {
     title: 'Статьи',

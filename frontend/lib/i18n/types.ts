@@ -461,5 +461,11 @@ export interface Translations {
     complexityHardTk: string;
     saveButton: string;
     savedMessage: string;
+    lessonModeLabel: string;
+    lessonModeThoroughLabel: string;
+    lessonModeQuickLabel: string;
+    lessonModeThoroughInfo: string;
+    lessonModeQuickInfo: string;
+    timerLabel: string;
   };
 }

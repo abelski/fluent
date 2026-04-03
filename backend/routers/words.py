@@ -319,6 +319,8 @@ def get_list_progress(
 class UserSettingsUpdate(BaseModel):
     words_per_session: int
     new_words_ratio: float
+    lesson_mode: str = 'thorough'
+    use_question_timer: bool = False
 
 
 @router.get("/me/settings")
@@ -331,6 +333,8 @@ def get_user_settings(
     return {
         "words_per_session": user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE,
         "new_words_ratio": user.new_words_ratio if user.new_words_ratio is not None else DEFAULT_NEW_RATIO,
+        "lesson_mode": user.lesson_mode,
+        "use_question_timer": user.use_question_timer,
     }
 
 
@@ -346,13 +350,19 @@ def update_user_settings(
         raise HTTPException(status_code=422, detail="words_per_session must be between 1 and 50")
     if not (0.0 <= body.new_words_ratio <= 1.0):
         raise HTTPException(status_code=422, detail="new_words_ratio must be between 0.0 and 1.0")
+    if body.lesson_mode not in ('thorough', 'quick'):
+        raise HTTPException(status_code=422, detail="lesson_mode must be 'thorough' or 'quick'")
     user.words_per_session = body.words_per_session
     user.new_words_ratio = body.new_words_ratio
+    user.lesson_mode = body.lesson_mode
+    user.use_question_timer = body.use_question_timer
     session.add(user)
     session.commit()
     return {
         "words_per_session": user.words_per_session,
         "new_words_ratio": user.new_words_ratio,
+        "lesson_mode": user.lesson_mode,
+        "use_question_timer": user.use_question_timer,
     }
 
 

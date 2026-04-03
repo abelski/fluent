@@ -28,6 +28,8 @@ class User(SQLModel, table=True):
     last_login: Optional[datetime] = None
     words_per_session: Optional[int] = None      # total words per session; treated as 10 when null
     new_words_ratio: Optional[float] = None      # fraction of new words (0.0–1.0); treated as 0.7 when null
+    lesson_mode: str = Field(default='thorough')  # 'thorough' | 'quick'
+    use_question_timer: bool = Field(default=False)  # 5-second per-question countdown
 
 
 class WordList(SQLModel, table=True):

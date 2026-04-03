@@ -10,7 +10,7 @@ type Complexity = 'easy' | 'medium' | 'hard';
 export default function SettingsPage() {
   const router = useRouter();
   const { tr } = useT();
-  const [settings, setSettings] = useState<UserSettings>({ words_per_session: 10, new_words_ratio: 0.7 });
+  const [settings, setSettings] = useState<UserSettings>({ words_per_session: 10, new_words_ratio: 0.7, lesson_mode: 'thorough', use_question_timer: false });
   const [complexity, setComplexity] = useState<Complexity>('medium');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -178,6 +178,45 @@ export default function SettingsPage() {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Lesson mode */}
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1">
+              {tr.settings.lessonModeLabel}
+            </label>
+            <div className="flex items-center gap-3 mb-2">
+              <input
+                type="range"
+                min={1}
+                max={2}
+                step={1}
+                value={settings.lesson_mode === 'thorough' ? 1 : 2}
+                onChange={(e) => setSettings((prev) => ({ ...prev, lesson_mode: parseInt(e.target.value, 10) === 1 ? 'thorough' : 'quick' }))}
+                data-testid="lesson-mode-slider"
+                className="flex-1 accent-emerald-600"
+              />
+              <span className="w-20 text-right text-sm font-semibold text-gray-900">
+                {settings.lesson_mode === 'thorough' ? tr.settings.lessonModeThoroughLabel : tr.settings.lessonModeQuickLabel}
+              </span>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+              {settings.lesson_mode === 'thorough' ? tr.settings.lessonModeThoroughInfo : tr.settings.lessonModeQuickInfo}
+            </div>
+          </div>
+
+          {/* Question timer */}
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={settings.use_question_timer}
+                onChange={(e) => setSettings((prev) => ({ ...prev, use_question_timer: e.target.checked }))}
+                data-testid="timer-checkbox"
+                className="w-4 h-4 accent-emerald-600"
+              />
+              <span className="text-sm font-medium text-gray-900">{tr.settings.timerLabel}</span>
+            </label>
           </div>
 
           {error && <p className="text-red-600 text-sm">{error}</p>}
