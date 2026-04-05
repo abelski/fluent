@@ -25,7 +25,7 @@ from routers.practice import router as practice_router
 from routers.feedback import router as feedback_router
 from routers.news import router as news_router
 from database import create_db_and_tables, get_session
-from models import WordList, Article, SubcategoryMeta
+from models import WordList, Article, SubcategoryMeta, AppSetting
 from data.grammar.lessons import LESSON_CONFIG
 
 # Resolve the static export directory relative to this file so the path works
@@ -48,11 +48,30 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 
+_DEFAULT_CEFR_THRESHOLDS = [
+    {"level": "0",  "threshold": 0},
+    {"level": "A1", "threshold": 500},
+    {"level": "A2", "threshold": 1000},
+    {"level": "B1", "threshold": 2000},
+    {"level": "B2", "threshold": 4000},
+    {"level": "C1", "threshold": 8000},
+    {"level": "C2", "threshold": 16000},
+]
+
+
 @app.on_event("startup")
 def on_startup():
     # Create all SQLModel tables on startup if they don't exist yet.
     # Safe to run repeatedly — SQLModel uses CREATE TABLE IF NOT EXISTS.
     create_db_and_tables()
+    # Seed default CEFR thresholds if not already set.
+    import json
+    from database import engine
+    with Session(engine) as session:
+        existing = session.exec(select(AppSetting).where(AppSetting.key == "cefr_thresholds")).first()
+        if not existing:
+            session.add(AppSetting(key="cefr_thresholds", value=json.dumps(_DEFAULT_CEFR_THRESHOLDS)))
+            session.commit()
 
 # Restrict CORS to the frontend origin. In production the frontend is served
 # from the same origin, so CORS only matters for local development.

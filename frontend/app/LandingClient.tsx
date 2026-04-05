@@ -163,11 +163,30 @@ function NewsSection({ inline = false }: { inline?: boolean }) {
   );
 }
 
+interface CefrLevel { level: string; threshold: number; }
+
+const CEFR_LEVELS_DEFAULT: CefrLevel[] = [
+  { level: '0',  threshold: 0 },
+  { level: 'A1', threshold: 500 },
+  { level: 'A2', threshold: 1000 },
+  { level: 'B1', threshold: 2000 },
+  { level: 'B2', threshold: 4000 },
+  { level: 'C1', threshold: 8000 },
+  { level: 'C2', threshold: 16000 },
+];
+
 export default function LandingClient() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [cefrLevels, setCefrLevels] = useState<CefrLevel[]>(CEFR_LEVELS_DEFAULT);
 
   useEffect(() => {
+    // Fetch CEFR thresholds (public endpoint, no auth needed)
+    fetch(`${BACKEND_URL}/api/admin/settings/cefr-thresholds`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (Array.isArray(data) && data.length) setCefrLevels(data); })
+      .catch(() => {});
+
     const token = getToken();
     if (!token) return;
     fetch(`${BACKEND_URL}/api/me/stats`, {
@@ -178,16 +197,37 @@ export default function LandingClient() {
       .catch(() => {});
   }, []);
 
-  return loggedIn ? <UserHome stats={stats} /> : <GuestLanding />;
+  return loggedIn ? <UserHome stats={stats} cefrLevels={cefrLevels} /> : <GuestLanding />;
 }
 
-function StatsGauge({ stats, t }: {
+function getCefrLevel(known: number, levels: CefrLevel[]): { level: string; prev: number; next: number; nextLevel: string } {
+  // levels[i].threshold = words needed to reach levels[i].level
+  // left badge = levels[i-1].level (where you came from)
+  // right badge = levels[i].level (where you're going)
+  for (let i = 1; i < levels.length; i++) {
+    if (known < levels[i].threshold) {
+      return {
+        level: levels[i - 1].level,
+        prev: levels[i - 1].threshold,
+        next: levels[i].threshold,
+        nextLevel: levels[i].level,
+      };
+    }
+  }
+  // User has reached or exceeded the final level
+  const last = levels[levels.length - 1];
+  const secondLast = levels[levels.length - 2];
+  return { level: secondLast.level, prev: secondLast.threshold, next: last.threshold, nextLevel: last.level };
+}
+
+function StatsGauge({ stats, t, cefrLevels }: {
   stats: Stats | null;
   t: { cardWordsLabel: string; cardGrammarLabel: string; cardTestsLabel: string; cardStreakLabel: string };
+  cefrLevels: CefrLevel[];
 }) {
   const known = stats?.known ?? 0;
-  const MAX = 500;
-  const ratio = Math.min(known / MAX, 1);
+  const { level, prev, next, nextLevel } = getCefrLevel(known, cefrLevels);
+  const ratio = Math.min((known - prev) / (next - prev), 1);
 
   // Speedometer arc: 240° CW from 150° (8 o'clock) to 30° (4 o'clock), gap at bottom
   // SVG coords: angle θ → (cx + R·cos θ, cy + R·sin θ), sweep-flag=1 = CW on screen
@@ -240,22 +280,35 @@ function StatsGauge({ stats, t }: {
   return (
     <div className="bg-white rounded-2xl p-5 mb-3 border border-gray-100">
       <Link href="/dashboard/vocabulary" className="block">
-        <svg viewBox="0 0 200 140" className="w-full max-w-[280px] mx-auto block">
-          {/* background track */}
-          <path d={arcPath} stroke="#e5e7eb" strokeWidth="16" fill="none" strokeLinecap="round" />
-          {/* progress fill — starts at arc beginning (150°) and fills CW */}
-          <path
-            d={arcPath}
-            stroke="#10b981"
-            strokeWidth="16"
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={arcLen}
-            strokeDashoffset={arcLen * (1 - ratio)}
-          />
-          <text x="100" y="84" textAnchor="middle" fontSize="36" fontWeight="700" fill="#111827">{known}</text>
-          <text x="100" y="102" textAnchor="middle" fontSize="12" fill="#9ca3af">{t.cardWordsLabel}</text>
-        </svg>
+        <div className="relative">
+          <svg viewBox="0 0 200 136" className="w-full max-w-[280px] mx-auto block">
+            {/* background track */}
+            <path d={arcPath} stroke="#e5e7eb" strokeWidth="14" fill="none" strokeLinecap="round" />
+            {/* progress fill */}
+            <path
+              d={arcPath}
+              stroke="#10b981"
+              strokeWidth="14"
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={arcLen}
+              strokeDashoffset={arcLen * (1 - ratio)}
+            />
+            {/* center: word count */}
+            <text x="100" y="82" textAnchor="middle" fontSize="38" fontWeight="700" fill="#111827">{known}</text>
+            <text x="100" y="100" textAnchor="middle" fontSize="12" fill="#9ca3af">{t.cardWordsLabel}</text>
+            {level !== nextLevel && (
+              <text x="100" y="116" textAnchor="middle" fontSize="10" fill="#10b981">{next - known} до {nextLevel}</text>
+            )}
+          </svg>
+          {/* level badges pinned to arc endpoints */}
+          <div className="flex justify-between items-center px-1 -mt-1 max-w-[280px] mx-auto">
+            <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">{level}</span>
+            {level !== nextLevel && (
+              <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">{nextLevel}</span>
+            )}
+          </div>
+        </div>
       </Link>
       <div className="grid grid-cols-3 divide-x divide-gray-100 border-t border-gray-100 pt-3 mt-1">
         {miniStats.map((s) => (
@@ -270,7 +323,7 @@ function StatsGauge({ stats, t }: {
   );
 }
 
-function UserHome({ stats }: { stats: Stats | null }) {
+function UserHome({ stats, cefrLevels }: { stats: Stats | null; cefrLevels: CefrLevel[] }) {
   const { tr } = useT();
   const t = tr.landing;
 
@@ -280,7 +333,7 @@ function UserHome({ stats }: { stats: Stats | null }) {
         <h1 className="font-headline text-2xl font-bold mb-1">{t.progressTitle}</h1>
         <p className="text-gray-500 text-sm mb-6">{t.progressSubtitle}</p>
 
-        <StatsGauge stats={stats} t={t} />
+        <StatsGauge stats={stats} t={t} cefrLevels={cefrLevels} />
 
         <div className="grid grid-cols-2 gap-3 mb-3">
           <Link href="/dashboard/lists" className="bg-white rounded-2xl px-4 py-3 flex items-center gap-3 hover:shadow-md transition-all active:scale-[0.98]">

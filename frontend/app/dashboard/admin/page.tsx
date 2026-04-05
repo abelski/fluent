@@ -180,7 +180,9 @@ const BLANK_NEWS: Omit<NewsRow, 'id'> = {
 
 type Area = 'admin' | 'content';
 type AdminSubTab = 'users' | 'reports' | 'feedback';
-type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'practice' | 'news';
+type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'practice' | 'news' | 'settings';
+
+interface CefrThresholdRow { level: string; threshold: number; }
 
 interface ContentList {
   id: number;
@@ -493,6 +495,12 @@ export default function AdminPage() {
   const [newsDraft, setNewsDraft] = useState<Omit<NewsRow, 'id'>>({ ...BLANK_NEWS });
   const [newsSaving, setNewsSaving] = useState(false);
 
+  // CEFR thresholds settings
+  const [cefrThresholds, setCefrThresholds] = useState<CefrThresholdRow[]>([]);
+  const [cefrLoaded, setCefrLoaded] = useState(false);
+  const [cefrSaving, setCefrSaving] = useState(false);
+  const [cefrMsg, setCefrMsg] = useState('');
+
   // Report filter
   type ReportFilter = 'open' | 'onhold' | 'resolved' | 'all';
   const [reportFilter, setReportFilter] = useState<ReportFilter>('open');
@@ -551,6 +559,34 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     if (res.ok) {
       setNewsList(await res.json());
       setNewsLoaded(true);
+    }
+  }
+
+  async function loadCefrThresholds() {
+    const res = await fetch(`${BACKEND_URL}/api/admin/settings/cefr-thresholds`);
+    if (res.ok) {
+      setCefrThresholds(await res.json());
+      setCefrLoaded(true);
+    }
+  }
+
+  async function saveCefrThresholds() {
+    setCefrSaving(true);
+    setCefrMsg('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/settings/cefr-thresholds`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(cefrThresholds),
+      });
+      if (res.ok) {
+        setCefrMsg('Сохранено');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setCefrMsg(err.detail ?? 'Ошибка');
+      }
+    } finally {
+      setCefrSaving(false);
     }
   }
 
@@ -1288,6 +1324,12 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'news' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
               {tr.news.adminTitle}
+            </button>
+            <button
+              onClick={() => { setContentTab('settings'); if (!cefrLoaded) loadCefrThresholds(); }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'settings' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              Настройки
             </button>
           </div>
         )}
@@ -2517,6 +2559,43 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Settings: CEFR thresholds ── */}
+        {area === 'content' && contentTab === 'settings' && (
+          <div>
+            <h2 className="font-semibold text-gray-900 mb-1">CEFR уровни — пороговые значения слов</h2>
+            <p className="text-sm text-gray-500 mb-4">Количество выученных слов, необходимое для достижения каждого уровня.</p>
+            {cefrLoaded && (
+              <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
+                {cefrThresholds.map((row) => (
+                  <div key={row.level} className="flex items-center gap-4 px-4 py-3">
+                    <span className="w-10 font-bold text-gray-900 text-sm">{row.level}</span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={row.threshold}
+                      onChange={(e) => setCefrThresholds((prev) =>
+                        prev.map((r) => r.level === row.level ? { ...r, threshold: Number(e.target.value) } : r)
+                      )}
+                      className="w-32 border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-emerald-500"
+                    />
+                    <span className="text-xs text-gray-400">слов</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={saveCefrThresholds}
+                disabled={cefrSaving || !cefrLoaded}
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              >
+                {cefrSaving ? 'Сохранение…' : 'Сохранить'}
+              </button>
+              {cefrMsg && <span className="text-sm text-emerald-600">{cefrMsg}</span>}
             </div>
           </div>
         )}

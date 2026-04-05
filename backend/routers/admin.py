@@ -10,7 +10,7 @@ from sqlmodel import Session, select, func
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
 from grammar_service import get_lessons as _get_grammar_lessons
@@ -714,6 +714,52 @@ def set_grammar_rule_status(
         raise HTTPException(status_code=404, detail="Rule not found")
     rule.status = body.status
     session.add(rule)
+    session.commit()
+    return {"ok": True}
+
+
+import json as _json
+
+# ---------------------------------------------------------------------------
+# CEFR threshold settings
+# ---------------------------------------------------------------------------
+
+VALID_CEFR_LEVELS = {"0", "A1", "A2", "B1", "B2", "C1", "C2"}
+
+
+@router.get("/settings/cefr-thresholds")
+def get_cefr_thresholds(session: Session = Depends(get_session)):
+    """Return current CEFR level word-count thresholds. Public — no auth required."""
+    row = session.exec(select(AppSetting).where(AppSetting.key == "cefr_thresholds")).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="CEFR thresholds not seeded")
+    return _json.loads(row.value)
+
+
+class CefrThresholdEntry(BaseModel):
+    level: str
+    threshold: int
+
+
+@router.patch("/settings/cefr-thresholds")
+def update_cefr_thresholds(
+    body: List[CefrThresholdEntry],
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Update CEFR level thresholds. Admin-only."""
+    _require_admin(authorization, session)
+    levels = {e.level for e in body}
+    if levels != VALID_CEFR_LEVELS:
+        raise HTTPException(status_code=400, detail="Must provide all 7 levels: 0 A1 A2 B1 B2 C1 C2")
+    for e in body:
+        if e.threshold <= 0:
+            raise HTTPException(status_code=400, detail=f"Threshold for {e.level} must be > 0")
+    row = session.exec(select(AppSetting).where(AppSetting.key == "cefr_thresholds")).first()
+    if not row:
+        row = AppSetting(key="cefr_thresholds", value="")
+        session.add(row)
+    row.value = _json.dumps([{"level": e.level, "threshold": e.threshold} for e in body])
     session.commit()
     return {"ok": True}
 

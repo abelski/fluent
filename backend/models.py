@@ -312,6 +312,14 @@ class NewsPost(SQLModel, table=True):
     published: bool = Field(default=True)
 
 
+class AppSetting(SQLModel, table=True):
+    """Generic app-wide key-value settings store. Values are JSON strings."""
+    __tablename__ = "app_setting"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    key: str = Field(unique=True, index=True)
+    value: str  # JSON-encoded value
+
+
 class UserProgram(SQLModel, table=True):
     """Tracks which programs (subcategory groups) a user has enrolled in.
     A program corresponds to a SubcategoryMeta key (e.g. 'a1_basics').
