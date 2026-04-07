@@ -262,6 +262,20 @@ function ReviewContent() {
     }
   }, [queue, loading, totalWords, router]);
 
+  // Enter / Space dismisses the "wrong answer" screen on stages 2 and 3
+  useEffect(() => {
+    if (answerState !== 'wrong' || queue.length === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (queue[0].stage === 2) handleStage2Dismiss();
+        else handleStage3Dismiss();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [answerState, queue]);
+
   const modeLabel = mode === 'mistakes' ? tr.review.mistakesLabel : tr.review.knownLabel;
 
   if (loading) {
