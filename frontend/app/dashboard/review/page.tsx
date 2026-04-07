@@ -94,13 +94,16 @@ function ReviewContent() {
   const inputRef = useRef<HTMLInputElement>(null);
   const blockUntilRef = useRef(0);
 
-  const saveProgress = useCallback((wordId: number, status: 'known' | 'learning', mistake = false, clearMistake = false) => {
+  // initialQualityRef maps wordId → quality chosen at Stage 1 (1=didn't know, 3=hard, 5=easy)
+  const initialQualityRef = useRef<Record<number, number>>({});
+
+  const saveProgress = useCallback((wordId: number, status: 'known' | 'learning', mistake = false, clearMistake = false, quality?: number) => {
     const token = getToken();
     if (!token) return;
     fetch(`${BACKEND_URL}/api/words/${wordId}/progress`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ status, mistake, clear_mistake: clearMistake }),
+      body: JSON.stringify({ status, mistake, clear_mistake: clearMistake, ...(quality !== undefined ? { quality } : {}) }),
     }).catch((err) => console.error('API error:', err));
   }, []);
 
@@ -150,19 +153,37 @@ function ReviewContent() {
     }
   }, [queue, allWords, lang]);
 
-  function advance(card: StudyCard, correct: boolean) {
+  function advance(card: StudyCard, correct: boolean, targetStage?: 2 | 3) {
     setQueue((prev) => {
       const rest = prev.slice(1);
       if (correct && card.stage < 3) {
-        return [...rest, { word: card.word, stage: (card.stage + 1) as 2 | 3 }];
+        const next = targetStage ?? ((card.stage + 1) as 2 | 3);
+        return [...rest, { word: card.word, stage: next }];
       }
       return rest;
     });
   }
 
-  function handleStage1Confirm() {
+  function handleStage1Quality(quality: 1 | 3 | 5) {
     if (Date.now() < blockUntilRef.current) return;
-    advance(queue[0], true);
+    const card = queue[0];
+    initialQualityRef.current[card.word.id] = quality;
+
+    if (quality === 1) {
+      // Didn't know — record as learning, apply SM-2 quality=1, skip remaining stages
+      setWordsDone((c) => c + 1);
+      saveProgress(card.word.id, 'learning', true, false, 1);
+      blockUntilRef.current = Date.now() + 200;
+      advance(card, false);
+    } else if (quality === 5) {
+      // Easy — skip straight to Stage 3
+      blockUntilRef.current = Date.now() + 200;
+      advance(card, true, 3);
+    } else {
+      // Hard — normal flow through Stage 2
+      blockUntilRef.current = Date.now() + 200;
+      advance(card, true, 2);
+    }
   }
 
   function handleStage2Select(index: number) {
@@ -171,7 +192,10 @@ function ReviewContent() {
     const isCorrect = options[index].correct;
     setSelectedOption(index);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
-    saveProgress(card.word.id, isCorrect ? 'known' : 'learning', !isCorrect);
+    if (!isCorrect) {
+      // Failed multiple choice — quality=1 regardless of initial choice
+      saveProgress(card.word.id, 'learning', true, false, 1);
+    }
     if (isCorrect) {
       setTimeout(() => {
         setAnswerState('unanswered');
@@ -199,8 +223,11 @@ function ReviewContent() {
     const isCorrect = normalizeLt(typedAnswer.trim()) === normalizeLt(target);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     if (!isCorrect) setShownAnswer(target);
-    saveProgress(card.word.id, isCorrect ? 'known' : 'learning', !isCorrect, isCorrect && mode === 'mistakes');
+    const initQ = initialQualityRef.current[card.word.id] ?? 3;
     if (isCorrect) {
+      // Easy+correct=5, Hard+correct=3 (initial quality preserved)
+      const finalQuality = initQ;
+      saveProgress(card.word.id, 'known', false, mode === 'mistakes', finalQuality);
       setTimeout(() => {
         setWordsDone((c) => c + 1);
         setCorrectWords((c) => c + 1);
@@ -210,6 +237,10 @@ function ReviewContent() {
         blockUntilRef.current = Date.now() + 200;
         advance(card, true);
       }, 1200);
+    } else {
+      // Easy+wrong=3, Hard+wrong=2
+      const finalQuality = initQ === 5 ? 3 : 2;
+      saveProgress(card.word.id, 'learning', true, false, finalQuality);
     }
   }
 
@@ -224,8 +255,12 @@ function ReviewContent() {
   }
 
   useEffect(() => {
-    if (!loading && totalWords > 0 && queue.length === 0) setDone(true);
-  }, [queue, loading, totalWords]);
+    if (!loading && totalWords > 0 && queue.length === 0) {
+      setDone(true);
+      // Bust Next.js router cache so vocabulary/stats pages refetch on next visit
+      router.refresh();
+    }
+  }, [queue, loading, totalWords, router]);
 
   const modeLabel = mode === 'mistakes' ? tr.review.mistakesLabel : tr.review.knownLabel;
 
@@ -341,7 +376,7 @@ function ReviewContent() {
         <div className="w-full max-w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
-      <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col flex-1">
+      <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <Link href="/dashboard/lists" className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
@@ -354,16 +389,16 @@ function ReviewContent() {
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-1 bg-gray-100 rounded-full mb-10">
+        <div className="w-full h-1 bg-gray-100 rounded-full mb-6">
           <div
             className="h-1 bg-emerald-500 rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
 
-        {/* Stage 1: Flashcard */}
+        {/* Stage 1: Flashcard + quality self-assessment */}
         {stage === 1 && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-8">
+          <div className="flex flex-col items-center gap-8">
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-10 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-6">{tr.common.review}</p>
               <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
@@ -372,19 +407,35 @@ function ReviewContent() {
               <div className="h-px bg-gray-100 mb-4" />
               <p className="text-xl text-gray-500">{trans(word, lang)}</p>
             </div>
-            <button
-              onClick={handleStage1Confirm}
-              tabIndex={-1}
-              className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-lg"
-            >
-              {tr.common.gotIt}
-            </button>
+            <div className="w-full grid grid-cols-3 gap-3">
+              <button
+                onClick={() => handleStage1Quality(1)}
+                tabIndex={-1}
+                className="py-4 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl font-medium text-red-600 transition-colors"
+              >
+                {tr.study.didntKnow}
+              </button>
+              <button
+                onClick={() => handleStage1Quality(3)}
+                tabIndex={-1}
+                className="py-4 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl font-medium text-amber-600 transition-colors"
+              >
+                {tr.study.hard}
+              </button>
+              <button
+                onClick={() => handleStage1Quality(5)}
+                tabIndex={-1}
+                className="py-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl font-medium text-emerald-600 transition-colors"
+              >
+                {tr.study.easy}
+              </button>
+            </div>
           </div>
         )}
 
         {/* Stage 2: Multiple choice */}
         {stage === 2 && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-8">
+          <div className="flex flex-col items-center gap-8">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.whatMeans}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.lithuanian}</p>
@@ -432,7 +483,7 @@ function ReviewContent() {
 
         {/* Stage 3: Type it */}
         {stage === 3 && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-8">
+          <div className="flex flex-col items-center gap-8">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">
                 {cloveIsCloze ? tr.study.fillMissing : tr.study.howInLithuanian}

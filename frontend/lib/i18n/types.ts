@@ -106,6 +106,9 @@ export interface Translations {
     howInLithuanian: string;
     typePlaceholder: string;
     typeEmptyHint: string;
+    didntKnow: string;   // SM-2 quality = 1
+    hard: string;        // SM-2 quality = 3
+    easy: string;        // SM-2 quality = 5
   };
   grammar: {
     title: string;
@@ -330,16 +333,24 @@ export interface Translations {
     searchPlaceholder: string;
     columnLithuanian: string;
     columnTranslation: string;
-    columnList: string;
+    columnMemory: string;
+    filterAll: string;
+    tooltipDue: string;
+    tooltipFading: string;
+    tooltipOk: string;
     columnDate: string;
+    columnNextReview: string;
     empty: string;
     backToLists: string;
   };
   stats: {
     wordsLearned: string;
-    reviewLearned: string;
-    reviewMistakes: string; // "{n}" interpolated by caller
+    remindForgotten: string;
     viewVocabulary: string;
+    dueReviewOf: string;       // "{due} of {total} words to refresh" — progress label
+    memoryOk: string;          // vocabulary status badge: remember
+    memoryFading: string;      // vocabulary status badge: probably forgetting
+    memoryDue: string;         // vocabulary status badge: need to repeat
     streakDay: PluralForms;
     motivations: {
       streak30: string;

@@ -2,7 +2,7 @@
 # Handles browsing lists, fetching study sessions, and recording per-word progress.
 
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
@@ -16,6 +16,43 @@ from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
 
 router = APIRouter()
+
+
+# ── SM-2 spaced repetition ────────────────────────────────────────────────────
+
+def _apply_sm2(progress: UserWordProgress, quality: int) -> None:
+    """Update SM-2 fields on a UserWordProgress row in-place.
+
+    quality 0–2 → failed  → interval resets to 1 day, reps reset to 0
+    quality 3–5 → correct → interval grows; ease_factor adjusted
+
+    SM-2 interval schedule:
+      reps == 0 (first correct) → interval = 1
+      reps == 1 (second correct) → interval = 6
+      reps > 1                   → interval = round(interval × ease_factor)
+    """
+    ef = progress.ease_factor
+    interval = progress.interval
+    reps = progress.sm2_reps
+
+    if quality < 3:
+        reps = 0
+        interval = 1
+    else:
+        if reps == 0:
+            interval = 1
+        elif reps == 1:
+            interval = 6
+        else:
+            interval = round(interval * ef)
+        reps += 1
+        ef = ef + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
+        ef = max(1.3, ef)
+
+    progress.sm2_reps = reps
+    progress.ease_factor = round(ef, 4)
+    progress.interval = interval
+    progress.next_review = date.today() + timedelta(days=interval)
 
 
 def _list_words(list_id: int, session: Session) -> list[dict]:
@@ -376,6 +413,7 @@ class ProgressUpdate(BaseModel):
     status: Literal["learning", "known"]
     mistake: bool = False       # True when the user answered this word incorrectly
     clear_mistake: bool = False  # True to reset mistake_count to 0 (word mastered in review)
+    quality: Optional[int] = None  # SM-2 quality score 0–5; when present, triggers SM-2 update
 
 
 @router.post("/words/{word_id}/progress")
@@ -390,6 +428,7 @@ def update_progress(
     Called after each card flip. Upserts the UserWordProgress row —
     creates it on first answer, increments review_count on subsequent ones.
     When mistake=True, also increments mistake_count.
+    When quality (0–5) is provided, runs the SM-2 algorithm to schedule next_review.
     """
     user = _require_user(authorization, session)
     progress = session.exec(
@@ -415,6 +454,11 @@ def update_progress(
             mistake_count=1 if body.mistake else 0,
         )
         session.add(progress)
+
+    if body.quality is not None:
+        q = max(0, min(5, body.quality))
+        _apply_sm2(progress, q)
+
     session.commit()
     return {"ok": True}
 
@@ -436,22 +480,24 @@ def get_review_known(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return up to 10 known words for a refresh session, oldest-reviewed first.
+    """Return up to 10 known words that are due for review today.
 
-    Words are ordered by last_seen ASC so the user revisits words they studied
-    longest ago first (spaced-repetition-like ordering).
-    Counts against the daily session quota same as regular study.
+    Words without a scheduled next_review (legacy rows or first-time review) are
+    always included. Words with next_review are included only when next_review <= today.
+    Ordered by next_review ASC (most overdue first), then last_seen ASC for unscheduled.
+    Does not count against the daily session quota.
     """
     user = _require_user(authorization, session)
-    _quota_check_and_increment(user, session)
+    today = date.today()
 
     progress_records = session.exec(
         select(UserWordProgress)
         .where(
             UserWordProgress.user_id == user.id,
             UserWordProgress.status == "known",
+            (UserWordProgress.next_review == None) | (UserWordProgress.next_review <= today),  # noqa: E711
         )
-        .order_by(UserWordProgress.last_seen)
+        .order_by(UserWordProgress.next_review.asc().nulls_first(), UserWordProgress.last_seen)
         .limit(QUIZ_SIZE)
     ).all()
 
@@ -478,10 +524,9 @@ def get_review_mistakes(
 ):
     """Return up to 10 words the user has answered wrong, most-mistaken first.
 
-    Counts against the daily session quota same as regular study.
+    Does not count against the daily session quota.
     """
     user = _require_user(authorization, session)
-    _quota_check_and_increment(user, session)
 
     progress_records = session.exec(
         select(UserWordProgress)
@@ -579,6 +624,10 @@ def get_stats(
     # Build a set of unique study dates, then count backwards from today
     studied_dates = {p.last_seen.date() for p in all_progress}
     today = datetime.now(timezone.utc).date()
+    due_review = sum(
+        1 for p in all_progress
+        if p.status == "known" and (p.next_review is None or p.next_review <= today)
+    )
     streak = 0
     # Start from today; if today wasn't a study day, check yesterday before giving up
     check = today if today in studied_dates else today - timedelta(days=1)
@@ -609,6 +658,7 @@ def get_stats(
         "total_studied": known + learning,
         "streak": streak,
         "mistakes": mistakes,
+        "due_review": due_review,
         "grammar_lessons_passed": grammar_lessons_passed,
         "practice_exams_completed": practice_exams_completed,
     }
@@ -632,7 +682,7 @@ def get_known_words(
             UserWordProgress.user_id == user.id,
             UserWordProgress.status == "known",
         )
-        .order_by(col(UserWordProgress.last_seen).desc())
+        .order_by(UserWordProgress.next_review.asc().nulls_first())
     ).all()
 
     if not progress_records:
@@ -668,6 +718,7 @@ def get_known_words(
             "translation_en": w.translation_en,
             "hint": w.hint,
             "last_seen": p.last_seen.isoformat() if p.last_seen else None,
+            "next_review": p.next_review.isoformat() if p.next_review else None,
             "list_title": list_info[0] if list_info else None,
             "list_title_en": list_info[1] if list_info else None,
             "list_id": list_info[2] if list_info else None,

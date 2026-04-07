@@ -9,6 +9,7 @@ interface Stats {
   known: number;
   streak: number;
   mistakes: number;
+  due_review: number;
 }
 
 const VOCAB_MILESTONES = [10, 25, 50, 100, 200, 500, 1000];
@@ -29,17 +30,26 @@ export default function StatsBar() {
   const { tr, plural } = useT();
   const [stats, setStats] = useState<Stats | null>(null);
 
-  useEffect(() => {
+  const fetchStats = () => {
     const token = getToken();
     if (!token) return;
     fetch(`${BACKEND_URL}/api/me/stats`, {
       headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data) setStats({ known: data.known, streak: data.streak, mistakes: data.mistakes ?? 0 });
+        if (data) setStats({ known: data.known, streak: data.streak, mistakes: data.mistakes ?? 0, due_review: data.due_review ?? 0 });
       })
       .catch((err) => console.error('API error:', err));
+  };
+
+  useEffect(() => {
+    fetchStats();
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchStats(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!stats) return null;
@@ -100,28 +110,37 @@ export default function StatsBar() {
             )}
           </div>
 
-          {/* Action links */}
+          {/* Remind me CTA */}
           {stats.known > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                href="/dashboard/review?mode=known"
-                className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3 py-1 rounded-full transition-colors"
-              >
-                {tr.stats.reviewLearned}
-              </Link>
-              <Link
-                href="/dashboard/vocabulary"
-                className="text-xs border border-emerald-200 hover:bg-emerald-50 text-emerald-700 font-medium px-3 py-1 rounded-full transition-colors"
-              >
-                {tr.stats.viewVocabulary}
-              </Link>
-              {stats.mistakes > 0 && (
+            <div className="mt-3">
+              <div className="flex flex-wrap gap-2">
                 <Link
-                  href="/dashboard/review?mode=mistakes"
-                  className="text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium px-3 py-1 rounded-full transition-colors"
+                  href="/dashboard/review?mode=known"
+                  className="inline-block text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3 py-1.5 rounded-full transition-colors"
                 >
-                  {tr.stats.reviewMistakes.replace('{n}', String(stats.mistakes))}
+                  {tr.stats.remindForgotten}
                 </Link>
+                <Link
+                  href="/dashboard/vocabulary"
+                  className="inline-block text-xs border border-emerald-200 hover:bg-emerald-50 text-emerald-700 font-medium px-3 py-1.5 rounded-full transition-colors"
+                >
+                  {tr.stats.viewVocabulary}
+                </Link>
+              </div>
+              {stats.due_review > 0 && (
+                <div className="mt-2">
+                  <div className="h-1 bg-emerald-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-400 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(100, (stats.due_review / stats.known) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    {tr.stats.dueReviewOf
+                      .replace('{due}', String(stats.due_review))
+                      .replace('{total}', String(stats.known))}
+                  </p>
+                </div>
               )}
             </div>
           )}

@@ -121,41 +121,6 @@ def test_review_mistakes_returns_words_with_mistakes(client):
     assert "lithuanian" in words[0]
 
 
-# ── Quota enforcement ─────────────────────────────────────────────────────────
-
-def test_review_known_counts_against_daily_quota(client):
-    token = make_token("review_quota_known@example.com")
-    headers = auth_headers(token)
-
-    # Mark word as known (no quota impact)
-    client.post("/api/words/1/progress", json={"status": "known", "mistake": False}, headers=headers)
-
-    # Exhaust remaining quota via study sessions
-    quota = client.get("/api/me/quota", headers=headers).json()
-    for _ in range(10 - quota["sessions_today"]):
-        client.get("/api/lists/1/study", headers=headers)
-
-    # Review should now be blocked
-    r = client.get("/api/review/known", headers=headers)
-    assert r.status_code == 429
-    assert r.json()["detail"]["code"] == "daily_limit_reached"
-
-
-def test_review_mistakes_counts_against_daily_quota(client):
-    token = make_token("review_quota_mistakes@example.com")
-    headers = auth_headers(token)
-
-    client.post("/api/words/1/progress", json={"status": "learning", "mistake": True}, headers=headers)
-
-    quota = client.get("/api/me/quota", headers=headers).json()
-    for _ in range(10 - quota["sessions_today"]):
-        client.get("/api/lists/1/study", headers=headers)
-
-    r = client.get("/api/review/mistakes", headers=headers)
-    assert r.status_code == 429
-    assert r.json()["detail"]["code"] == "daily_limit_reached"
-
-
 # ── clear_mistake resets count ───────────────────────────────────────────────
 
 def test_clear_mistake_resets_count(client):
@@ -169,6 +134,36 @@ def test_clear_mistake_resets_count(client):
     # Answer correctly with clear_mistake=True → count resets to 0
     client.post("/api/words/1/progress", json={"status": "known", "mistake": False, "clear_mistake": True}, headers=headers)
     assert client.get("/api/me/stats", headers=headers).json()["mistakes"] == 0
+
+
+# ── Review bypasses daily quota ──────────────────────────────────────────────
+
+def test_review_known_not_blocked_after_quota_exhausted(client):
+    token = make_token("review_no_quota_known@example.com")
+    headers = auth_headers(token)
+
+    client.post("/api/words/1/progress", json={"status": "known", "mistake": False}, headers=headers)
+
+    quota = client.get("/api/me/quota", headers=headers).json()
+    for _ in range(10 - quota["sessions_today"]):
+        client.get("/api/lists/1/study", headers=headers)
+
+    r = client.get("/api/review/known", headers=headers)
+    assert r.status_code == 200
+
+
+def test_review_mistakes_not_blocked_after_quota_exhausted(client):
+    token = make_token("review_no_quota_mistakes@example.com")
+    headers = auth_headers(token)
+
+    client.post("/api/words/1/progress", json={"status": "learning", "mistake": True}, headers=headers)
+
+    quota = client.get("/api/me/quota", headers=headers).json()
+    for _ in range(10 - quota["sessions_today"]):
+        client.get("/api/lists/1/study", headers=headers)
+
+    r = client.get("/api/review/mistakes", headers=headers)
+    assert r.status_code == 200
 
 
 # ── Stats include mistakes count ─────────────────────────────────────────────

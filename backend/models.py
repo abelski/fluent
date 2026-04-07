@@ -91,6 +91,12 @@ class UserWordProgress(SQLModel, table=True):
     Status transitions: new → learning → known
     review_count tracks total answer attempts; last_seen is used to calculate
     the study streak shown on the dashboard.
+
+    SM-2 spaced-repetition fields:
+      sm2_reps     — consecutive successful reviews (drives interval progression)
+      ease_factor  — SM-2 EF, starts at 2.5, min 1.3
+      interval     — days until next review (0 = not yet scheduled)
+      next_review  — date when the word is due again (NULL = not yet scheduled)
     """
     __tablename__ = "user_word_progress"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -100,6 +106,11 @@ class UserWordProgress(SQLModel, table=True):
     review_count: int = Field(default=0)
     mistake_count: int = Field(default=0)  # incremented each time user answers this word wrong
     last_seen: datetime = Field(default_factory=_utcnow)
+    # SM-2 fields
+    sm2_reps: int = Field(default=0)
+    ease_factor: float = Field(default=2.5)
+    interval: int = Field(default=0)
+    next_review: Optional[date] = Field(default=None)
 
 
 class DailyStudySession(SQLModel, table=True):
