@@ -127,7 +127,9 @@ export default function QuizPage() {
   const [complexity, setComplexity] = useState<Complexity>('medium');
   const [lessonMode, setLessonMode] = useState<'thorough' | 'quick'>('thorough');
   const [useTimer, setUseTimer] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(5);
   const [timeLeft, setTimeLeft] = useState(5);
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [allWords, setAllWords] = useState<Word[]>([]);
   const [distractorPool, setDistractorPool] = useState<Word[]>([]);
   const [queue, setQueue] = useState<StudyCard[]>([]);
@@ -236,6 +238,7 @@ export default function QuizPage() {
     getSettings().then((s) => {
       setLessonMode(s.lesson_mode);
       setUseTimer(s.use_question_timer);
+      setTimerSeconds(s.question_timer_seconds);
     }).catch(() => {/* use defaults */});
     loadWords();
   }, [loadWords, router]);
@@ -405,31 +408,53 @@ export default function QuizPage() {
     return () => clearTimeout(id);
   }, [answerState]);
 
-  // Reset timer whenever the front card changes (stage 2 or 3)
   const frontCard = queue[0];
-  useEffect(() => {
-    if (useTimer && frontCard && frontCard.stage >= 2) {
-      setTimeLeft(5);
-    }
-  }, [frontCard, useTimer]);
+  const frontCardId = frontCard?.word.id;
+  const frontCardStage = frontCard?.stage;
 
-  // Count down the timer every second when active
+  // Start/restart the interval when the card or stage changes.
+  // Using a ref-based interval so it is never accidentally cancelled by
+  // React re-renders caused by timeLeft state updates.
   useEffect(() => {
-    if (!useTimer || !frontCard || frontCard.stage < 2 || answerState !== 'unanswered') return;
-    if (timeLeft <= 0) {
-      // Time's up — record mistake and dismiss
-      if (!mistakeWordIdsRef.current.has(frontCard.word.id)) {
-        mistakeWordIdsRef.current.add(frontCard.word.id);
-        setMistakeWordCount((c) => c + 1);
-      }
-      saveProgress(frontCard.word.id, 'learning', true);
-      setAnswerState('wrong');
-      setShownAnswer(parseForms(frontCard.word.lithuanian)[blankIndex] ?? frontCard.word.lithuanian);
-      return;
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
-    const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
-    return () => clearInterval(id);
-  }, [useTimer, frontCard, answerState, timeLeft, saveProgress, blankIndex]);
+    if (!useTimer || frontCardStage === undefined || frontCardStage < 2) return;
+    setTimeLeft(timerSeconds);
+    timerIntervalRef.current = setInterval(() => setTimeLeft((t) => t - 1), 1000);
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frontCardId, frontCardStage, useTimer, timerSeconds]);
+
+  // Stop interval when the user answers
+  useEffect(() => {
+    if (answerState !== 'unanswered' && timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  }, [answerState]);
+
+  // Handle timeout when timeLeft reaches 0
+  useEffect(() => {
+    if (!useTimer || timeLeft > 0 || frontCardStage === undefined || frontCardStage < 2 || answerState !== 'unanswered') return;
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    if (frontCardId !== undefined && !mistakeWordIdsRef.current.has(frontCardId)) {
+      mistakeWordIdsRef.current.add(frontCardId);
+      setMistakeWordCount((c) => c + 1);
+    }
+    if (frontCardId !== undefined) saveProgress(frontCardId, 'learning', true);
+    setAnswerState('wrong');
+    if (frontCard) setShownAnswer(parseForms(frontCard.word.lithuanian)[blankIndex] ?? frontCard.word.lithuanian);
+  }, [timeLeft, useTimer, frontCardId, frontCardStage, answerState, saveProgress, blankIndex]);
 
 
   if (loading) {
@@ -582,19 +607,19 @@ export default function QuizPage() {
         </div>
 
         {/* Timer bar — shown during stages 2 & 3 when timer is enabled */}
-        <div className={`w-full h-1 rounded-full mb-3 sm:mb-6 ${useTimer && stage >= 2 ? 'bg-gray-100' : 'bg-transparent'}`}>
+        <div className={`w-full h-1 rounded-full ${useTimer && stage >= 2 ? 'bg-gray-100' : 'bg-transparent'}`}>
           {useTimer && stage >= 2 && (
             <div
               data-testid="timer-bar"
               className={`h-1 rounded-full transition-all duration-1000 ${timeLeft <= 1 ? 'bg-red-400' : 'bg-amber-400'}`}
-              style={{ width: `${(timeLeft / 5) * 100}%` }}
+              style={{ width: `${(timeLeft / timerSeconds) * 100}%` }}
             />
           )}
         </div>
 
         {/* ── Stage 1: Flashcard ── */}
         {stage === 1 && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-4 sm:gap-8">
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-10 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-4 sm:mb-6">{tr.common.newWord}</p>
               <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
@@ -619,7 +644,7 @@ export default function QuizPage() {
 
         {/* ── Stage 2: Multiple choice ── */}
         {stage === 2 && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-4 sm:gap-8">
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.whatMeans}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.lithuanian}</p>
@@ -681,7 +706,7 @@ export default function QuizPage() {
 
         {/* ── Stage 3: Type it ── */}
         {stage === 3 && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-4 sm:gap-8">
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">
                 {cloveIsCloze ? tr.study.fillMissing : tr.study.howInLithuanian}

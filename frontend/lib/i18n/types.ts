@@ -442,6 +442,11 @@ export interface Translations {
   };
   settings: {
     title: string;
+    tabVocabulary: string;
+    tabGrammar: string;
+    tabPractice: string;
+    tabOther: string;
+    tabEmptyPlaceholder: string;
     sessionSizeLabel: string;
     sessionSizeHint: string;
     ratioLabel: string;
@@ -467,5 +472,6 @@ export interface Translations {
     lessonModeThoroughInfo: string;
     lessonModeQuickInfo: string;
     timerLabel: string;
+    timerSecondsLabel: string;
   };
 }

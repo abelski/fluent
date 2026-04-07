@@ -431,7 +431,12 @@ const en: Translations = {
     details: 'Details',
   },
   settings: {
-    title: 'Session settings',
+    title: 'Settings',
+    tabVocabulary: 'Vocabulary',
+    tabGrammar: 'Grammar',
+    tabPractice: 'Practice',
+    tabOther: 'Other',
+    tabEmptyPlaceholder: 'Settings coming soon',
     sessionSizeLabel: 'Words per session',
     sessionSizeHint: 'Total number of words in each session',
     ratioLabel: 'New vs review ratio',
@@ -456,7 +461,8 @@ const en: Translations = {
     lessonModeQuickLabel: 'Quick',
     lessonModeThoroughInfo: 'The lesson ends only when you complete all words. Every mistake adds 2 extra repetitions of that word.',
     lessonModeQuickInfo: 'The lesson stops if you make mistakes on more than 25% of words, or ends naturally when the list is complete.',
-    timerLabel: 'Answer timer (5 sec)',
+    timerLabel: 'Answer timer',
+    timerSecondsLabel: 'Timer duration',
   },
   articles: {
     title: 'Articles',

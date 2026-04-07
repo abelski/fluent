@@ -46,6 +46,7 @@ export interface UserSettings {
   new_words_ratio: number;  // 0.0–1.0
   lesson_mode: 'thorough' | 'quick';
   use_question_timer: boolean;
+  question_timer_seconds: number;  // 5–30
 }
 
 export async function getSettings(): Promise<UserSettings> {

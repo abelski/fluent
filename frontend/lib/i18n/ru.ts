@@ -431,7 +431,12 @@ const ru: Translations = {
     details: 'Подробнее',
   },
   settings: {
-    title: 'Настройки сессии',
+    title: 'Настройки',
+    tabVocabulary: 'Словарь',
+    tabGrammar: 'Грамматика',
+    tabPractice: 'Практика',
+    tabOther: 'Другое',
+    tabEmptyPlaceholder: 'Настройки появятся скоро',
     sessionSizeLabel: 'Слов за одну сессию',
     sessionSizeHint: 'Общее количество слов в каждой сессии',
     ratioLabel: 'Соотношение новых и повторяемых слов',
@@ -456,7 +461,8 @@ const ru: Translations = {
     lessonModeQuickLabel: 'Быстрый',
     lessonModeThoroughInfo: 'Урок заканчивается, только когда вы пройдёте все слова. Каждая ошибка добавляет 2 дополнительных повторения этого слова.',
     lessonModeQuickInfo: 'Урок прерывается, если вы допустили ошибки более чем в 25% слов, или заканчивается, когда вы прошли весь список.',
-    timerLabel: 'Таймер на ответ (5 сек)',
+    timerLabel: 'Таймер на ответ',
+    timerSecondsLabel: 'Длительность таймера',
   },
   articles: {
     title: 'Статьи',
