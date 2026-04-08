@@ -177,7 +177,9 @@ const CEFR_LEVELS_DEFAULT: CefrLevel[] = [
 
 export default function LandingClient() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [loggedIn, setLoggedIn] = useState(false);
+  // null = still determining auth state (token exists, waiting for API)
+  // true = confirmed logged in, false = confirmed guest
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const [cefrLevels, setCefrLevels] = useState<CefrLevel[]>(CEFR_LEVELS_DEFAULT);
 
   useEffect(() => {
@@ -188,15 +190,19 @@ export default function LandingClient() {
       .catch(() => {});
 
     const token = getToken();
-    if (!token) return;
+    if (!token) { setLoggedIn(false); return; }
     fetch(`${BACKEND_URL}/api/me/stats`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => { if (!r.ok) return null; return r.json(); })
-      .then((data) => { if (data) { setStats(data); setLoggedIn(true); } })
-      .catch(() => {});
+      .then((data) => {
+        if (data) { setStats(data); setLoggedIn(true); }
+        else { setLoggedIn(false); }
+      })
+      .catch(() => { setLoggedIn(false); });
   }, []);
 
+  if (loggedIn === null) return null; // waiting for auth check — show nothing to avoid flash
   return loggedIn ? <UserHome stats={stats} cefrLevels={cefrLevels} /> : <GuestLanding />;
 }
 
