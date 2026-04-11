@@ -166,7 +166,11 @@ async def google_callback(code: str, request: Request, session: Session = Depend
         user.picture = picture
         user.last_login = now
     else:
-        user = User(email=email, name=name, picture=picture, last_login=now)
+        # Derive preferred language from Google's locale field (e.g. "ru", "en-US").
+        # Only 'en' and 'ru' are supported; anything else defaults to 'en'.
+        raw_locale = google_user.get("locale", "en")[:2].lower()
+        preferred_lang = raw_locale if raw_locale in ("en", "ru") else "en"
+        user = User(email=email, name=name, picture=picture, last_login=now, lang=preferred_lang)
         session.add(user)
     session.commit()
 

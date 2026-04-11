@@ -11,7 +11,7 @@ type Tab = 'vocabulary' | 'grammar' | 'practice' | 'other';
 export default function SettingsPage() {
   const router = useRouter();
   const { tr } = useT();
-  const [settings, setSettings] = useState<UserSettings>({ words_per_session: 10, new_words_ratio: 0.7, lesson_mode: 'thorough', use_question_timer: false, question_timer_seconds: 5 });
+  const [settings, setSettings] = useState<UserSettings>({ words_per_session: 10, new_words_ratio: 0.7, lesson_mode: 'thorough', use_question_timer: false, question_timer_seconds: 5, email_consent: true, lang: 'en' });
   const [complexity, setComplexity] = useState<Complexity>('medium');
   const [activeTab, setActiveTab] = useState<Tab>('vocabulary');
   const [loading, setLoading] = useState(true);
@@ -267,6 +267,59 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+
+            {saved && (
+              <p className="text-emerald-600 text-sm font-medium" data-testid="saved-message">
+                {tr.settings.savedMessage}
+              </p>
+            )}
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              data-testid="save-settings-btn"
+              className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
+            >
+              {saving ? '...' : tr.settings.saveButton}
+            </button>
+          </div>
+        ) : activeTab === 'other' ? (
+          <div className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-8">
+
+            {/* Language preference */}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                {tr.settings.langLabel}
+              </label>
+              <select
+                value={settings.lang}
+                onChange={(e) => setSettings((prev) => ({ ...prev, lang: e.target.value as 'en' | 'ru' }))}
+                data-testid="lang-select"
+                className="w-full border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white outline-none focus:border-gray-600 cursor-pointer"
+              >
+                <option value="en">{tr.settings.langEn}</option>
+                <option value="ru">{tr.settings.langRu}</option>
+              </select>
+            </div>
+
+            {/* Email consent */}
+            <div>
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={settings.email_consent}
+                  onChange={(e) => setSettings((prev) => ({ ...prev, email_consent: e.target.checked }))}
+                  data-testid="email-consent-checkbox"
+                  className="mt-0.5 w-4 h-4 accent-emerald-600"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-900">{tr.settings.emailConsentLabel}</span>
+                  <span className="block text-xs text-gray-400 mt-0.5">{tr.settings.emailConsentHint}</span>
+                </span>
+              </label>
             </div>
 
             {error && <p className="text-red-600 text-sm">{error}</p>}

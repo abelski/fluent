@@ -14,6 +14,7 @@ from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, Wor
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
 from grammar_service import get_lessons as _get_grammar_lessons
+import email_service
 
 router = APIRouter()
 
@@ -61,6 +62,7 @@ def list_users(
             "sessions_today": counts.get(u.id, 0),
             "daily_limit": None if _is_premium_active(u) else DAILY_LIMIT,
             "last_login": u.last_login,
+            "email_consent": u.email_consent,
         }
         for u in users
     ]
@@ -135,6 +137,35 @@ def get_user_progress(
         "last_active": target.last_login.isoformat() if target.last_login else None,
         "member_since": target.created_at.isoformat() if target.created_at else None,
     }
+
+
+class SendEmailBody(BaseModel):
+    subject: str
+    body: str
+
+
+@router.post("/users/{user_id}/send-email")
+def send_email_to_user(
+    user_id: str,
+    payload: SendEmailBody,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Send an email to a specific user. Superadmin-only.
+
+    Returns 403 if the user has not consented to receiving emails.
+    """
+    _require_superadmin(authorization, session)
+    target = session.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not target.email_consent:
+        raise HTTPException(status_code=403, detail="User has not consented to emails")
+    try:
+        email_service.send_email(target.email, payload.subject, payload.body)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    return {"ok": True}
 
 
 class AdminUpdate(BaseModel):

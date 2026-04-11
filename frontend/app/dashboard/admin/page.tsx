@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BACKEND_URL, getToken } from '../../../lib/api';
+import { BACKEND_URL, getToken, sendEmailToUser } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
 interface UserRow {
@@ -18,6 +18,7 @@ interface UserRow {
   sessions_today: number;
   daily_limit: number | null;
   last_login: string | null;
+  email_consent: boolean;
 }
 
 interface ReportRow {
@@ -512,6 +513,15 @@ export default function AdminPage() {
   const [progressUserId, setProgressUserId] = useState<string | null>(null);
   const [progressUserName, setProgressUserName] = useState('');
 
+  // Send email modal
+  const [emailUserId, setEmailUserId] = useState<string | null>(null);
+  const [emailUserName, setEmailUserName] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailSuccess, setEmailSuccess] = useState(false);
+
   // Pagination pages (1-based)
   const PAGE_SIZE = 20;
   const [usersPage, setUsersPage] = useState(1);
@@ -826,6 +836,28 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     setEditingId(null);
     setGrantDate('');
     loadData();
+  }
+
+  async function handleSendEmail() {
+    if (!emailUserId || !emailSubject.trim() || !emailBody.trim()) return;
+    setEmailSending(true);
+    setEmailError('');
+    setEmailSuccess(false);
+    try {
+      await sendEmailToUser(emailUserId, emailSubject.trim(), emailBody.trim());
+      setEmailSuccess(true);
+      setTimeout(() => {
+        setEmailUserId(null);
+        setEmailUserName('');
+        setEmailSubject('');
+        setEmailBody('');
+        setEmailSuccess(false);
+      }, 1500);
+    } catch (err: unknown) {
+      setEmailError(err instanceof Error ? err.message : 'Ошибка отправки');
+    } finally {
+      setEmailSending(false);
+    }
   }
 
   async function resolveReport(id: number) {
@@ -1423,6 +1455,15 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           >
                             {u.premium_active ? tr.admin.extend : tr.admin.grantPremium}
                           </button>
+                          {isSuperadmin && u.email_consent && (
+                            <button
+                              onClick={() => { setEmailUserId(u.id); setEmailUserName(u.name); setEmailSubject(''); setEmailBody(''); setEmailError(''); setEmailSuccess(false); }}
+                              title="Отправить письмо"
+                              className="text-xs px-2 py-1.5 text-blue-600 hover:text-blue-800 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
+                            >
+                              ✉
+                            </button>
+                          )}
                           <ActionMenu
                             items={[
                               {
@@ -2609,6 +2650,45 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         userName={progressUserName}
         onClose={() => setProgressUserId(null)}
       />
+    )}
+
+    {emailUserId && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="bg-white border border-gray-900 rounded-2xl p-6 w-full max-w-md flex flex-col gap-4">
+          <h2 className="text-base font-semibold text-gray-900">Письмо пользователю: {emailUserName}</h2>
+          <input
+            type="text"
+            placeholder="Тема письма"
+            value={emailSubject}
+            onChange={(e) => setEmailSubject(e.target.value)}
+            className="w-full border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none focus:border-gray-600"
+          />
+          <textarea
+            placeholder="Текст письма"
+            value={emailBody}
+            onChange={(e) => setEmailBody(e.target.value)}
+            rows={6}
+            className="w-full border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none focus:border-gray-600 resize-none"
+          />
+          {emailError && <p className="text-red-600 text-sm">{emailError}</p>}
+          {emailSuccess && <p className="text-emerald-600 text-sm font-medium">Письмо отправлено</p>}
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => { setEmailUserId(null); setEmailUserName(''); setEmailSubject(''); setEmailBody(''); setEmailError(''); }}
+              className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              Отмена
+            </button>
+            <button
+              onClick={handleSendEmail}
+              disabled={emailSending || !emailSubject.trim() || !emailBody.trim()}
+              className="px-4 py-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl text-sm font-medium text-white transition-colors"
+            >
+              {emailSending ? '...' : 'Отправить'}
+            </button>
+          </div>
+        </div>
+      </div>
     )}
     </>
   );

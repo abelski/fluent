@@ -359,6 +359,8 @@ class UserSettingsUpdate(BaseModel):
     lesson_mode: str = 'thorough'
     use_question_timer: bool = False
     question_timer_seconds: int = 5
+    email_consent: bool = True
+    lang: str = 'en'
 
 
 @router.get("/me/settings")
@@ -374,6 +376,8 @@ def get_user_settings(
         "lesson_mode": user.lesson_mode,
         "use_question_timer": user.use_question_timer,
         "question_timer_seconds": user.question_timer_seconds,
+        "email_consent": user.email_consent,
+        "lang": user.lang,
     }
 
 
@@ -393,11 +397,15 @@ def update_user_settings(
         raise HTTPException(status_code=422, detail="lesson_mode must be 'thorough' or 'quick'")
     if not (5 <= body.question_timer_seconds <= 30):
         raise HTTPException(status_code=422, detail="question_timer_seconds must be between 5 and 30")
+    if body.lang not in ('en', 'ru'):
+        raise HTTPException(status_code=422, detail="lang must be 'en' or 'ru'")
     user.words_per_session = body.words_per_session
     user.new_words_ratio = body.new_words_ratio
     user.lesson_mode = body.lesson_mode
     user.use_question_timer = body.use_question_timer
     user.question_timer_seconds = body.question_timer_seconds
+    user.email_consent = body.email_consent
+    user.lang = body.lang
     session.add(user)
     session.commit()
     return {
@@ -406,6 +414,8 @@ def update_user_settings(
         "lesson_mode": user.lesson_mode,
         "use_question_timer": user.use_question_timer,
         "question_timer_seconds": user.question_timer_seconds,
+        "email_consent": user.email_consent,
+        "lang": user.lang,
     }
 
 

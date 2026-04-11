@@ -31,6 +31,7 @@ class User(SQLModel, table=True):
     lesson_mode: str = Field(default='thorough')  # 'thorough' | 'quick'
     use_question_timer: bool = Field(default=False)  # per-question countdown
     question_timer_seconds: int = Field(default=5)   # countdown duration in seconds (5–30)
+    email_consent: bool = Field(default=True)         # user has consented to receive emails
 
 
 class WordList(SQLModel, table=True):

@@ -474,6 +474,11 @@ const en: Translations = {
     lessonModeQuickInfo: 'The lesson stops if you make mistakes on more than 25% of words, or ends naturally when the list is complete.',
     timerLabel: 'Answer timer',
     timerSecondsLabel: 'Timer duration',
+    langLabel: 'Interface language',
+    langEn: 'English',
+    langRu: 'Russian',
+    emailConsentLabel: 'Receive emails from Fluent',
+    emailConsentHint: 'We will send useful notifications about updates and new content',
   },
   articles: {
     title: 'Articles',

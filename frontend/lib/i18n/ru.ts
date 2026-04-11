@@ -474,6 +474,11 @@ const ru: Translations = {
     lessonModeQuickInfo: 'Урок прерывается, если вы допустили ошибки более чем в 25% слов, или заканчивается, когда вы прошли весь список.',
     timerLabel: 'Таймер на ответ',
     timerSecondsLabel: 'Длительность таймера',
+    langLabel: 'Язык интерфейса',
+    langEn: 'Английский',
+    langRu: 'Русский',
+    emailConsentLabel: 'Получать письма от Fluent',
+    emailConsentHint: 'Мы будем отправлять полезные уведомления об обновлениях и новых материалах',
   },
   articles: {
     title: 'Статьи',

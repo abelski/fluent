@@ -47,6 +47,8 @@ export interface UserSettings {
   lesson_mode: 'thorough' | 'quick';
   use_question_timer: boolean;
   question_timer_seconds: number;  // 5–30
+  email_consent: boolean;  // default: true
+  lang: 'en' | 'ru';
 }
 
 export async function getSettings(): Promise<UserSettings> {
@@ -70,6 +72,23 @@ export async function updateSettings(data: UserSettings): Promise<UserSettings> 
   });
   if (!r.ok) throw new Error('Failed to save settings');
   return r.json();
+}
+
+/** Send an email to a user. Superadmin-only. Throws if the user has not consented or SMTP is not configured. */
+export async function sendEmailToUser(userId: string, subject: string, body: string): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/users/${userId}/send-email`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ subject, body }),
+  });
+  if (!r.ok) {
+    const data = await r.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to send email');
+  }
 }
 
 /** Return subcategory keys the current user is enrolled in. */

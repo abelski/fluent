@@ -484,5 +484,10 @@ export interface Translations {
     lessonModeQuickInfo: string;
     timerLabel: string;
     timerSecondsLabel: string;
+    langLabel: string;
+    langEn: string;
+    langRu: string;
+    emailConsentLabel: string;
+    emailConsentHint: string;
   };
 }
