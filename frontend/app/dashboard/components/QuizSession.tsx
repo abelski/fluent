@@ -356,18 +356,16 @@ export default function QuizSession({
     initialQualityRef.current[card.word.id] = quality;
     blockUntilRef.current = Date.now() + 200;
 
-    // Stage 1 is self-assessment — no saveProgress.
+    // Stage 1 is self-assessment — no saveProgress, no mistake counter.
     if (quality === 1) {
-      // Didn't know — count as mistake, queue 2 practice rounds
-      if (!mistakeWordIdsRef.current.has(card.word.id)) {
-        mistakeWordIdsRef.current.add(card.word.id);
-        setMistakeWordCount((c) => c + 1);
-      }
+      // Didn't know — re-queue full 3-stage cycle (flashcard → MC → type), no mistake recorded
       setQueue((prev) => {
         const rest = prev.slice(1);
-        const r1: StudyCard = { word: card.word, stage: 2, failCount: 0 };
-        const r2: StudyCard = { word: card.word, stage: 2, failCount: 0 };
-        return insertRandom(insertRandom(rest, [r1]), [r2]);
+        const s1: StudyCard = { word: card.word, stage: 1, failCount: 0 };
+        const s2: StudyCard = { word: card.word, stage: 2, failCount: 0 };
+        const s3: StudyCard = { word: card.word, stage: 3, failCount: 0 };
+        // Insert the triplet together so they stay in order (1→2→3) at a random gap position
+        return insertRandom(rest, [s1, s2, s3]);
       });
     } else if (quality === 5) {
       // Easy — write-only round
