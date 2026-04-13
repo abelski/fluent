@@ -243,6 +243,9 @@ export interface Translations {
     knownLabel: string;
     nothingTitle: string;
     nothingBody: PluralForms; // "Пока нет {mistakes/learned} для повторения"
+    upcomingBtn: string;
+    randomBtn: string;
+    noWordsFound: string;
   };
   admin: {
     title: string;

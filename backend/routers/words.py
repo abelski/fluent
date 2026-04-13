@@ -527,6 +527,83 @@ def get_review_known(
     ]
 
 
+@router.get("/review/known/upcoming")
+def get_review_known_upcoming(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return up to 10 known words scheduled for review in the future (next_review > today).
+
+    Useful when there is nothing due today and the user wants to get ahead of schedule.
+    Ordered by next_review ASC (soonest first).
+    """
+    user = _require_user(authorization, session)
+    today = date.today()
+
+    progress_records = session.exec(
+        select(UserWordProgress)
+        .where(
+            UserWordProgress.user_id == user.id,
+            UserWordProgress.status == "known",
+            UserWordProgress.next_review > today,
+        )
+        .order_by(UserWordProgress.next_review.asc())
+        .limit(QUIZ_SIZE)
+    ).all()
+
+    if not progress_records:
+        return []
+
+    word_ids = [p.word_id for p in progress_records]
+    words = session.exec(
+        select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
+    ).all()
+    word_map = {w.id: w for w in words}
+
+    return [
+        _word_to_dict(word_map[p.word_id], p.status)
+        for p in progress_records
+        if p.word_id in word_map
+    ]
+
+
+@router.get("/review/known/random")
+def get_review_known_random(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return up to 10 random known words for unstructured practice.
+
+    Useful when the user wants to drill vocabulary without following the review schedule.
+    """
+    user = _require_user(authorization, session)
+
+    progress_records = session.exec(
+        select(UserWordProgress)
+        .where(
+            UserWordProgress.user_id == user.id,
+            UserWordProgress.status == "known",
+        )
+        .order_by(func.random())
+        .limit(QUIZ_SIZE)
+    ).all()
+
+    if not progress_records:
+        return []
+
+    word_ids = [p.word_id for p in progress_records]
+    words = session.exec(
+        select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
+    ).all()
+    word_map = {w.id: w for w in words}
+
+    return [
+        _word_to_dict(word_map[p.word_id], p.status)
+        for p in progress_records
+        if p.word_id in word_map
+    ]
+
+
 @router.get("/review/mistakes")
 def get_review_mistakes(
     authorization: Optional[str] = Header(None),

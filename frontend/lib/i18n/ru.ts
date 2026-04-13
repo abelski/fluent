@@ -199,6 +199,9 @@ const ru: Translations = {
     knownLabel: 'выученных слов',
     nothingTitle: 'Нечего повторять',
     nothingBody: { one: 'Пока нет {mode} для повторения.', few: 'Пока нет {mode} для повторения.', many: 'Пока нет {mode} для повторения.' },
+    upcomingBtn: 'Повторить следующие по расписанию',
+    randomBtn: 'Случайные слова из словаря',
+    noWordsFound: 'Слов не найдено',
   },
   admin: {
     title: 'Администрирование',

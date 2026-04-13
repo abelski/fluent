@@ -57,7 +57,7 @@ export default function MatchRound({ words, lang, onDone, backHref }: MatchRound
     const next: Line[] = [];
 
     // Draw a line for each correctly paired word
-    for (const wordId of paired) {
+    for (const wordId of Array.from(paired)) {
       const li = leftItems.findIndex((w) => w.id === wordId);
       const ri = rightItems.findIndex((w) => w.id === wordId);
       const lEl = leftRefs.current[li];

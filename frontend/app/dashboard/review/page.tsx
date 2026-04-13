@@ -17,6 +17,7 @@ function ReviewContent() {
   const [loading, setLoading] = useState(true);
   const [limitReached, setLimitReached] = useState(false);
   const [empty, setEmpty] = useState(false);
+  const [emptyAltMsg, setEmptyAltMsg] = useState<string | null>(null);
 
   const loadWords = useCallback(() => {
     setLoading(true);
@@ -82,6 +83,27 @@ function ReviewContent() {
     );
   }
 
+  const loadAlternative = (endpoint: string) => {
+    setLoading(true);
+    setEmptyAltMsg(null);
+    const token = getToken();
+    fetch(`${BACKEND_URL}${endpoint}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((r) => r.json())
+      .then((data: Word[]) => {
+        const ws = Array.isArray(data) ? data : [];
+        if (ws.length === 0) {
+          setEmptyAltMsg(tr.review.noWordsFound);
+          setLoading(false);
+          return;
+        }
+        setWords(ws);
+        setEmpty(false);
+      })
+      .finally(() => setLoading(false));
+  };
+
   if (empty) {
     return (
       <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
@@ -92,9 +114,28 @@ function ReviewContent() {
           <div className="text-5xl mb-6">📭</div>
           <h2 className="text-2xl font-bold mb-2">{tr.review.nothingTitle}</h2>
           <p className="text-gray-400 mb-8">{tr.review.nothingBody.many.replace('{mode}', modeLabel)}</p>
-          <Link href="/dashboard/lists" className="w-full block py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-center">
-            {tr.common.backToLists}
-          </Link>
+          {emptyAltMsg && <p className="text-sm text-amber-500 mb-4">{emptyAltMsg}</p>}
+          <div className="flex flex-col gap-3">
+            {mode === 'known' && (
+              <>
+                <button
+                  onClick={() => loadAlternative('/api/review/known/upcoming')}
+                  className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-center"
+                >
+                  {tr.review.upcomingBtn}
+                </button>
+                <button
+                  onClick={() => loadAlternative('/api/review/known/random')}
+                  className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-center"
+                >
+                  {tr.review.randomBtn}
+                </button>
+              </>
+            )}
+            <Link href="/dashboard/lists" className="w-full block py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center">
+              {tr.common.backToLists}
+            </Link>
+          </div>
         </div>
       </main>
     );
