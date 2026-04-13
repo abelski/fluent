@@ -306,8 +306,7 @@ export default function QuizSession({
       learnedWordIdsRef.current.forEach((wordId) => saveProgress(wordId, 'learning'));
     }
     setShowMatchRound(true);
-    router.refresh();
-  }, [sessionMode, totalWords, saveProgress, router]);
+  }, [sessionMode, totalWords, saveProgress]);
 
   useEffect(() => {
     if (totalWords > 0 && queue.length === 0 && !done && !showMatchRound) finishSession();
@@ -552,7 +551,7 @@ export default function QuizSession({
       <MatchRound
         words={words}
         lang={lang}
-        onDone={() => { setShowMatchRound(false); setDone(true); }}
+        onDone={() => { setShowMatchRound(false); setDone(true); router.refresh(); }}
         backHref={backHref}
       />
     );
