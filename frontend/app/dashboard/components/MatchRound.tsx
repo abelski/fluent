@@ -106,7 +106,7 @@ export default function MatchRound({ words, lang, onDone, backHref }: MatchRound
     const leftWord  = leftItems[selectedLeft];
     const rightWord = rightItems[j];
     if (leftWord.id === rightWord.id) {
-      setPaired((prev) => new Set([...prev, leftWord.id]));
+      setPaired((prev) => new Set(Array.from(prev).concat(leftWord.id)));
       setSelectedLeft(null);
     } else {
       setWrongFlash({ leftIdx: selectedLeft, rightIdx: j });
