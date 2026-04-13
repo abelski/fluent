@@ -110,6 +110,9 @@ export interface Translations {
     didntKnow: string;   // SM-2 quality = 1
     hard: string;        // SM-2 quality = 3
     easy: string;        // SM-2 quality = 5
+    matchTitle: string;
+    matchSubtitle: string;
+    matchCheckBtn: string;
   };
   grammar: {
     title: string;

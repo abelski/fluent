@@ -122,6 +122,9 @@ const ru: Translations = {
     didntKnow: 'Не знал',
     hard: 'С трудом',
     easy: 'Легко',
+    matchTitle: 'Соотнеси слово с переводом',
+    matchSubtitle: 'Соедините каждое слово с его переводом',
+    matchCheckBtn: 'Продолжить',
   },
   grammar: {
     title: 'Грамматика',

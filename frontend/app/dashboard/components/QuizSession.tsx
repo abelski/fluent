@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, getSettings } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import type { Lang } from '../../../lib/useLang';
+import MatchRound from './MatchRound';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -211,6 +212,7 @@ export default function QuizSession({
   const [wordsDone, setWordsDone] = useState(0);
   const [correctWords, setCorrectWords] = useState(0);
   const [done, setDone] = useState(false);
+  const [showMatchRound, setShowMatchRound] = useState(false);
 
   const learnedWordIdsRef   = useRef<Set<number>>(new Set());
   const mistakeWordIdsRef   = useRef<Set<number>>(new Set());
@@ -303,13 +305,13 @@ export default function QuizSession({
     if (sessionMode === 'study' && mistakeWordIdsRef.current.size / totalWords > 0.3) {
       learnedWordIdsRef.current.forEach((wordId) => saveProgress(wordId, 'learning'));
     }
-    setDone(true);
+    setShowMatchRound(true);
     router.refresh();
   }, [sessionMode, totalWords, saveProgress, router]);
 
   useEffect(() => {
-    if (totalWords > 0 && queue.length === 0 && !done) finishSession();
-  }, [queue, totalWords, done, finishSession]);
+    if (totalWords > 0 && queue.length === 0 && !done && !showMatchRound) finishSession();
+  }, [queue, totalWords, done, showMatchRound, finishSession]);
 
   // ── Focus dismiss button after wrong answer ─────────────────────────────────
   useEffect(() => {
@@ -542,6 +544,18 @@ export default function QuizSession({
     blockUntilRef.current = Date.now() + 200;
     advance(card, false, retryCards);
     if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
+  }
+
+  // ── Match round ───────────────────────────────────────────────────────────────
+  if (showMatchRound && !done) {
+    return (
+      <MatchRound
+        words={words}
+        lang={lang}
+        onDone={() => { setShowMatchRound(false); setDone(true); }}
+        backHref={backHref}
+      />
+    );
   }
 
   // ── Done screen ───────────────────────────────────────────────────────────────

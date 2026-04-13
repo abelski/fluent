@@ -122,6 +122,9 @@ const en: Translations = {
     didntKnow: "Didn't know",
     hard: 'Hard',
     easy: 'Easy',
+    matchTitle: 'Match the word to the translation',
+    matchSubtitle: 'Connect each word to its translation',
+    matchCheckBtn: 'Continue',
   },
   grammar: {
     title: 'Grammar',
