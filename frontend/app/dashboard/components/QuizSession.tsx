@@ -668,10 +668,7 @@ export default function QuizSession({
               <div className="h-px bg-gray-100 mb-4" />
               <p className="text-xl text-gray-500">{trans(word, lang)}</p>
             </div>
-            <div className="w-full grid grid-cols-3 gap-3">
-              <button onClick={() => handleStage1Quality(1)} tabIndex={-1} className="py-4 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl font-medium text-red-600 transition-colors">
-                {tr.study.didntKnow}
-              </button>
+            <div className="w-full grid grid-cols-2 gap-3">
               <button onClick={() => handleStage1Quality(3)} tabIndex={-1} className="py-4 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl font-medium text-amber-600 transition-colors">
                 {tr.study.hard}
               </button>
