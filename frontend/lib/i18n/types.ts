@@ -30,6 +30,7 @@ export interface Translations {
     newWord: string;
     gotIt: string;
     review: string; // "Повторение" — flashcard stage label in review mode
+    youTyped: string; // "You typed:" / "Вы написали:" label in char diff
   };
   nav: {
     dictionaries: string;

@@ -26,6 +26,7 @@ const en: Translations = {
     newWord: 'New word',
     gotIt: 'Got it →',
     review: 'Review',
+    youTyped: 'You typed:',
   },
   nav: {
     dictionaries: 'Dictionaries',

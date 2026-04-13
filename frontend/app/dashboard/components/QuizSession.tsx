@@ -119,6 +119,65 @@ function buildOptions(word: Word, allWords: Word[], distractorPool: Word[], lang
   ].sort(() => Math.random() - 0.5);
 }
 
+// ── Char-level diff helpers ───────────────────────────────────────────────────
+
+type CharOp = { char: string; ok: boolean };
+
+function diffChars(typed: string, target: string): CharOp[] {
+  const a = typed.toLowerCase();
+  const b = target.toLowerCase();
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) => {
+    const row = Array(n + 1).fill(0);
+    row[0] = i;
+    return row;
+  });
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+
+  // Backtrack to get alignment of the typed string
+  const ops: CharOp[] = [];
+  let i = m, j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+      ops.unshift({ char: typed[i - 1], ok: true });
+      i--; j--;
+    } else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) {
+      ops.unshift({ char: typed[i - 1], ok: false }); // substitution
+      i--; j--;
+    } else if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
+      ops.unshift({ char: typed[i - 1], ok: false }); // extra char
+      i--;
+    } else {
+      ops.unshift({ char: '_', ok: false }); // missing char
+      j--;
+    }
+  }
+  return ops;
+}
+
+function CharDiff({ typed, target, labelTyped, labelCorrect }: {
+  typed: string; target: string; labelTyped: string; labelCorrect: string;
+}) {
+  const ops = diffChars(typed, target);
+  return (
+    <div data-testid="char-diff" className="text-sm font-mono space-y-1 text-center">
+      <div>
+        <span className="text-gray-400 text-xs mr-1">{labelTyped}</span>
+        {ops.map((op, i) => (
+          <span key={i} className={op.ok ? 'text-gray-700' : 'text-red-500 font-semibold'}>{op.char}</span>
+        ))}
+      </div>
+      <div>
+        <span className="text-gray-400 text-xs mr-1">{labelCorrect}</span>
+        <span className="font-bold text-gray-900">{target}</span>
+      </div>
+    </div>
+  );
+}
+
 function insertRandom(rest: StudyCard[], newCards: StudyCard[]): StudyCard[] {
   if (rest.length === 0) return newCards;
   const minPos = Math.min(1, rest.length);
@@ -165,6 +224,7 @@ export default function QuizSession({
   const [options, setOptions] = useState<{ text: string; correct: boolean }[]>([]);
   const [typedAnswer, setTypedAnswer] = useState('');
   const [shownAnswer, setShownAnswer] = useState('');
+  const [nearMiss, setNearMiss] = useState<string | null>(null);
   const [blankIndex, setBlankIndex] = useState(0);
   const inputRef     = useRef<HTMLInputElement>(null);
   const dismissBtnRef = useRef<HTMLButtonElement>(null);
@@ -263,6 +323,7 @@ export default function QuizSession({
     if (answerState !== 'wrong' || queue.length === 0) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
+        if (Date.now() < blockUntilRef.current) return;
         e.preventDefault();
         if (queue[0].stage === 2) handleStage2Dismiss();
         else handleStage3Dismiss();
@@ -429,6 +490,8 @@ export default function QuizSession({
 
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     if (!isCorrect) {
+      // Block the window keydown dismiss listener from firing on the same Enter event
+      blockUntilRef.current = Date.now() + 300;
       setShownAnswer(target);
       if (!mistakeWordIdsRef.current.has(card.word.id)) {
         mistakeWordIdsRef.current.add(card.word.id);
@@ -440,6 +503,9 @@ export default function QuizSession({
     if (isCorrect) {
       saveProgress(card.word.id, 'known', false, clearMistakeOnSuccess, initQ);
       learnedWordIdsRef.current.add(card.word.id);
+      const isExact = typedAnswer.trim().toLowerCase() === target.toLowerCase();
+      if (!isExact) setNearMiss(target);
+      const delay = isExact ? 1200 : 2000;
       setTimeout(() => {
         if (!doneWordIdsRef.current.has(card.word.id)) {
           doneWordIdsRef.current.add(card.word.id);
@@ -452,9 +518,10 @@ export default function QuizSession({
         setAnswerState('unanswered');
         setTypedAnswer('');
         setShownAnswer('');
+        setNearMiss(null);
         blockUntilRef.current = Date.now() + 200;
         advance(card, true);
-      }, 1200);
+      }, delay);
     } else {
       // Only update backend in study mode on failure
       if (sessionMode === 'study') saveProgress(card.word.id, 'learning', true, false, initQ === 5 ? 3 : 2);
@@ -471,6 +538,7 @@ export default function QuizSession({
     setAnswerState('unanswered');
     setTypedAnswer('');
     setShownAnswer('');
+    setNearMiss(null);
     blockUntilRef.current = Date.now() + 200;
     advance(card, false, retryCards);
     if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
@@ -688,15 +756,30 @@ export default function QuizSession({
                 </button>
               )}
               {answerState === 'correct' && (
-                <p className="text-emerald-600 text-sm font-medium text-center animate-in fade-in duration-150">{tr.common.correct}</p>
+                <div className="flex flex-col gap-2 items-center animate-in fade-in duration-150">
+                  <p className="text-emerald-600 text-sm font-medium text-center">{tr.common.correct}</p>
+                  {nearMiss && (
+                    <CharDiff
+                      typed={typedAnswer}
+                      target={nearMiss}
+                      labelTyped={tr.common.youTyped}
+                      labelCorrect={tr.common.correctAnswer}
+                    />
+                  )}
+                </div>
               )}
               {answerState === 'wrong' && (
                 <div className="flex flex-col gap-3 animate-in fade-in duration-150">
                   <div className="text-center">
                     <p className="text-red-600 text-sm font-medium">{tr.common.notQuite}</p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      {tr.common.correctAnswer} <span className="text-gray-900 font-medium">{shownAnswer}</span>
-                    </p>
+                    <div className="mt-2">
+                      <CharDiff
+                        typed={typedAnswer}
+                        target={shownAnswer}
+                        labelTyped={tr.common.youTyped}
+                        labelCorrect={tr.common.correctAnswer}
+                      />
+                    </div>
                   </div>
                   <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage3Dismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
                     {tr.common.dismiss}

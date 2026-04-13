@@ -26,6 +26,7 @@ const ru: Translations = {
     newWord: 'Новое слово',
     gotIt: 'Понял →',
     review: 'Повторение',
+    youTyped: 'Вы написали:',
   },
   nav: {
     dictionaries: 'Словари',
