@@ -199,6 +199,9 @@ const en: Translations = {
     knownLabel: 'learned words',
     nothingTitle: 'Nothing to review',
     nothingBody: { one: 'No {mode} to review yet.', few: 'No {mode} to review yet.', many: 'No {mode} to review yet.' },
+    upcomingBtn: 'Review next scheduled words',
+    randomBtn: 'Random words from vocabulary',
+    noWordsFound: 'No words found',
   },
   admin: {
     title: 'Admin panel',
