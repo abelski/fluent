@@ -24,6 +24,7 @@ interface StudyCard {
   stage: 1 | 2 | '2r' | 3;
   failCount: number;
   standalone?: boolean;
+  easyChosen?: boolean;
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong' | 'empty';
@@ -382,6 +383,16 @@ export default function QuizSession({
 
   // ── Queue helpers ────────────────────────────────────────────────────────────
   function buildRetryCards(card: StudyCard): StudyCard[] {
+    // "Легко" + stage-3 fail: demote to С трудом path (MC → reverse MC → type once more)
+    if (card.stage === 3 && card.easyChosen) {
+      const mcStage: 2 | '2r' = Math.random() < 0.5 ? 2 : '2r';
+      const otherMc: 2 | '2r' = mcStage === 2 ? '2r' : 2;
+      return [
+        { word: card.word, stage: mcStage, failCount: 0, standalone: true },
+        { word: card.word, stage: otherMc, failCount: 0, standalone: true },
+        { word: card.word, stage: 3,       failCount: card.failCount + 1 },
+      ];
+    }
     if (lessonMode === 'thorough') {
       if (card.stage === 2 || card.stage === '2r' || card.stage === 3) {
         return [
@@ -451,8 +462,8 @@ export default function QuizSession({
         return insertRandom(rest, [s1, s2, s3]);
       });
     } else if (quality === 5) {
-      // Easy — write-only round
-      setQueue((prev) => insertRandom(prev.slice(1), [{ word: card.word, stage: 3, failCount: 0 }]));
+      // Easy — write-only round (easyChosen marks the card so a typing failure demotes to С трудом path)
+      setQueue((prev) => insertRandom(prev.slice(1), [{ word: card.word, stage: 3, failCount: 0, easyChosen: true }]));
     } else {
       // Medium — one full round (MC → write)
       setQueue((prev) => insertRandom(prev.slice(1), [{ word: card.word, stage: mcStage, failCount: 0 }]));
