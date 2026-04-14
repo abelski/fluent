@@ -115,6 +115,7 @@ const ru: Translations = {
     backToLists: '← На главную',
     stages: ['', 'Читаю', 'Выбор', 'Пишу'],
     whatMeans: 'Что это означает?',
+    selectLithuanian: 'Выберите литовское слово',
     fillMissing: 'Вставьте пропущенную форму',
     howInLithuanian: 'Как будет по-литовски?',
     typePlaceholder: 'Напишите пропущенное слово...',

@@ -103,6 +103,7 @@ export interface Translations {
     backToLists: string;
     stages: [string, string, string, string]; // index 0 unused
     whatMeans: string;
+    selectLithuanian: string;
     fillMissing: string;
     howInLithuanian: string;
     typePlaceholder: string;

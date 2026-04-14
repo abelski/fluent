@@ -21,7 +21,7 @@ export interface Word {
 
 interface StudyCard {
   word: Word;
-  stage: 1 | 2 | 3;
+  stage: 1 | 2 | '2r' | 3;
   failCount: number;
   standalone?: boolean;
 }
@@ -117,6 +117,14 @@ function buildOptions(word: Word, allWords: Word[], distractorPool: Word[], lang
   return [
     { text: optionText(word, lang), correct: true },
     ...distractors.map((d) => ({ text: optionText(d, lang), correct: false })),
+  ].sort(() => Math.random() - 0.5);
+}
+
+function buildOptions2r(word: Word, allWords: Word[], distractorPool: Word[]) {
+  const distractors = pickDistractors(word, allWords, distractorPool);
+  return [
+    { text: word.lithuanian, correct: true },
+    ...distractors.map((d) => ({ text: d.lithuanian, correct: false })),
   ].sort(() => Math.random() - 0.5);
 }
 
@@ -290,6 +298,9 @@ export default function QuizSession({
     if (queue.length > 0 && queue[0].stage === 2) {
       setOptions(buildOptions(queue[0].word, words, distractors, lang));
     }
+    if (queue.length > 0 && queue[0].stage === '2r') {
+      setOptions(buildOptions2r(queue[0].word, words, distractors));
+    }
     if (queue.length > 0 && queue[0].stage === 3) {
       const forms = parseForms(queue[0].word.lithuanian);
       setBlankIndex(Math.floor(Math.random() * forms.length));
@@ -327,6 +338,7 @@ export default function QuizSession({
         if (Date.now() < blockUntilRef.current) return;
         e.preventDefault();
         if (queue[0].stage === 2) handleStage2Dismiss();
+        else if (queue[0].stage === '2r') handleStage2rDismiss();
         else handleStage3Dismiss();
       }
     };
@@ -342,7 +354,7 @@ export default function QuizSession({
 
   useEffect(() => {
     if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
-    if (!useTimer || frontCardStage === undefined || frontCardStage < 2) return;
+    if (!useTimer || frontCardStage === undefined || frontCardStage === 1) return;
     setTimeLeft(timerSeconds);
     timerIntervalRef.current = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => { if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; } };
@@ -356,7 +368,7 @@ export default function QuizSession({
   }, [answerState]);
 
   useEffect(() => {
-    if (!useTimer || timeLeft > 0 || frontCardStage === undefined || frontCardStage < 2 || answerState !== 'unanswered') return;
+    if (!useTimer || timeLeft > 0 || frontCardStage === undefined || frontCardStage === 1 || answerState !== 'unanswered') return;
     if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
     if (frontCardId !== undefined && !mistakeWordIdsRef.current.has(frontCardId)) {
       mistakeWordIdsRef.current.add(frontCardId);
@@ -371,7 +383,7 @@ export default function QuizSession({
   // ── Queue helpers ────────────────────────────────────────────────────────────
   function buildRetryCards(card: StudyCard): StudyCard[] {
     if (lessonMode === 'thorough') {
-      if (card.stage === 2 || card.stage === 3) {
+      if (card.stage === 2 || card.stage === '2r' || card.stage === 3) {
         return [
           { word: card.word, stage: card.stage, failCount: card.failCount + 1 },
           { word: card.word, stage: card.stage, failCount: card.failCount + 1 },
@@ -384,6 +396,14 @@ export default function QuizSession({
       if (card.failCount === 1) return [
         { word: card.word, stage: 1, failCount: 0, standalone: true },
         { word: card.word, stage: 2, failCount: 2 },
+      ];
+      return [];
+    }
+    if (card.stage === '2r') {
+      if (card.failCount === 0) return [{ word: card.word, stage: '2r', failCount: 1 }];
+      if (card.failCount === 1) return [
+        { word: card.word, stage: 1, failCount: 0, standalone: true },
+        { word: card.word, stage: '2r', failCount: 2 },
       ];
       return [];
     }
@@ -402,8 +422,8 @@ export default function QuizSession({
     setQueue((prev) => {
       const rest = prev.slice(1);
       if (correct && card.standalone) return rest;
-      if (correct && card.stage < 3) {
-        return insertRandom(rest, [{ word: card.word, stage: (card.stage + 1) as 2 | 3, failCount: 0 }]);
+      if (correct && (card.stage === 2 || card.stage === '2r')) {
+        return insertRandom(rest, [{ word: card.word, stage: 3, failCount: 0 }]);
       }
       if (retryCards.length > 0) return insertRandom(rest, retryCards);
       return rest;
@@ -418,13 +438,14 @@ export default function QuizSession({
     initialQualityRef.current[card.word.id] = quality;
     blockUntilRef.current = Date.now() + 200;
 
+    const mcStage: 2 | '2r' = Math.random() < 0.5 ? 2 : '2r';
     // Stage 1 is self-assessment — no saveProgress, no mistake counter.
     if (quality === 1) {
       // Didn't know — re-queue full 3-stage cycle (flashcard → MC → type), no mistake recorded
       setQueue((prev) => {
         const rest = prev.slice(1);
         const s1: StudyCard = { word: card.word, stage: 1, failCount: 0 };
-        const s2: StudyCard = { word: card.word, stage: 2, failCount: 0 };
+        const s2: StudyCard = { word: card.word, stage: mcStage, failCount: 0 };
         const s3: StudyCard = { word: card.word, stage: 3, failCount: 0 };
         // Insert the triplet together so they stay in order (1→2→3) at a random gap position
         return insertRandom(rest, [s1, s2, s3]);
@@ -434,7 +455,7 @@ export default function QuizSession({
       setQueue((prev) => insertRandom(prev.slice(1), [{ word: card.word, stage: 3, failCount: 0 }]));
     } else {
       // Medium — one full round (MC → write)
-      setQueue((prev) => insertRandom(prev.slice(1), [{ word: card.word, stage: 2, failCount: 0 }]));
+      setQueue((prev) => insertRandom(prev.slice(1), [{ word: card.word, stage: mcStage, failCount: 0 }]));
     }
   }
 
@@ -467,6 +488,47 @@ export default function QuizSession({
   }
 
   function handleStage2Dismiss() {
+    const card = queue[0];
+    const retryCards = buildRetryCards(card);
+    if (!card.standalone && retryCards.length === 0 && !doneWordIdsRef.current.has(card.word.id)) {
+      doneWordIdsRef.current.add(card.word.id);
+      setWordsDone((c) => c + 1);
+    }
+    setAnswerState('unanswered');
+    setSelectedOption(null);
+    blockUntilRef.current = Date.now() + 200;
+    advance(card, false, retryCards);
+    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
+  }
+
+  function handleStage2rSelect(index: number) {
+    if (answerState !== 'unanswered') return;
+    const card = queue[0];
+    const isCorrect = options[index].correct;
+    setSelectedOption(index);
+    setAnswerState(isCorrect ? 'correct' : 'wrong');
+
+    if (!isCorrect) {
+      if (!mistakeWordIdsRef.current.has(card.word.id)) {
+        mistakeWordIdsRef.current.add(card.word.id);
+        setMistakeWordCount((c) => c + 1);
+      }
+      if (sessionMode === 'study') saveProgress(card.word.id, 'learning', true);
+    } else {
+      if (sessionMode === 'study') saveProgress(card.word.id, 'known', false);
+    }
+
+    if (isCorrect) {
+      setTimeout(() => {
+        setAnswerState('unanswered');
+        setSelectedOption(null);
+        blockUntilRef.current = Date.now() + 200;
+        advance(card, true);
+      }, 1200);
+    }
+  }
+
+  function handleStage2rDismiss() {
     const card = queue[0];
     const retryCards = buildRetryCards(card);
     if (!card.standalone && retryCards.length === 0 && !doneWordIdsRef.current.has(card.word.id)) {
@@ -610,7 +672,7 @@ export default function QuizSession({
   const word       = card.word;
   const stage      = card.stage;
   const progressPct = totalWords > 0 ? (wordsDone / totalWords) * 100 : 0;
-  const stageLabel  = tr.study.stages[stage];
+  const stageLabel  = tr.study.stages[stage === '2r' ? 2 : stage];
   const cloveForms  = parseForms(word.lithuanian);
   const cloveIsCloze = cloveForms.length > 1;
   const cloveText   = cloveForms.map((f, i) => i === blankIndex ? '______' : f).join(' / ');
@@ -645,8 +707,8 @@ export default function QuizSession({
         </div>
 
         {/* Timer bar */}
-        <div className={`w-full h-1 rounded-full ${useTimer && stage >= 2 ? 'bg-gray-100' : 'bg-transparent'}`}>
-          {useTimer && stage >= 2 && (
+        <div className={`w-full h-1 rounded-full ${useTimer && stage !== 1 ? 'bg-gray-100' : 'bg-transparent'}`}>
+          {useTimer && stage !== 1 && (
             <div
               data-testid="timer-bar"
               className={`h-1 rounded-full transition-all duration-1000 ${timeLeft <= 1 ? 'bg-red-400' : 'bg-amber-400'}`}
@@ -715,6 +777,49 @@ export default function QuizSession({
                   </p>
                 </div>
                 <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage2Dismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
+                  {tr.common.dismiss}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Stage 2r: Reverse multiple choice (show translation, select Lithuanian) ── */}
+        {stage === '2r' && (
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
+            <div className="text-center">
+              <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.selectLithuanian}</p>
+              <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
+              {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
+              {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
+            </div>
+            <div className="w-full grid grid-cols-1 gap-3">
+              {options.map((opt, i) => {
+                let cls = 'w-full py-4 px-5 rounded-xl font-medium text-left transition-all duration-200 border ';
+                if (answerState === 'unanswered') {
+                  cls += 'bg-white border-gray-900 hover:bg-gray-100 hover:border-gray-900 text-gray-900';
+                } else if (opt.correct) {
+                  cls += 'bg-emerald-100 border-gray-900 text-emerald-600';
+                } else if (i === selectedOption) {
+                  cls += 'bg-red-100 border-gray-900 text-red-600';
+                } else {
+                  cls += 'bg-gray-50 border-gray-900 text-gray-400';
+                }
+                return <button key={i} onClick={() => handleStage2rSelect(i)} className={cls}>{opt.text}</button>;
+              })}
+            </div>
+            {answerState === 'correct' && (
+              <p className="text-emerald-600 text-sm font-medium animate-in fade-in duration-150">{tr.common.correct}</p>
+            )}
+            {answerState === 'wrong' && (
+              <div className="w-full flex flex-col gap-3 animate-in fade-in duration-150">
+                <div className="text-center">
+                  <p className="text-red-600 text-sm font-medium">{tr.common.notQuite}</p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {tr.common.correctAnswer} <span className="text-gray-900 font-medium">{options.find((o) => o.correct)?.text}</span>
+                  </p>
+                </div>
+                <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage2rDismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
                   {tr.common.dismiss}
                 </button>
               </div>

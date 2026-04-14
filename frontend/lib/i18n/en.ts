@@ -115,6 +115,7 @@ const en: Translations = {
     backToLists: '← Back to lists',
     stages: ['', 'Reading', 'Choice', 'Writing'],
     whatMeans: 'What does it mean?',
+    selectLithuanian: 'Select the Lithuanian word',
     fillMissing: 'Fill in the missing form',
     howInLithuanian: 'How do you say it in Lithuanian?',
     typePlaceholder: 'Type the missing word...',
