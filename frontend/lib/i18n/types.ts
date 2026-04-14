@@ -382,10 +382,6 @@ export interface Translations {
     cardTestsSub: string;
     cardStreakLabel: string;
     cardStreakSub: string;
-    quickDictionaries: string;
-    quickDictionariesSub: string;
-    quickReview: string;
-    quickReviewSub: string;
     toolsTagline: string;
     premiumTitle: string;
     premiumBody: string;

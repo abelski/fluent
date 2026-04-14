@@ -55,14 +55,6 @@ function TargetIcon() {
 }
 
 
-function FolderIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M3 8a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function PlayIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -71,14 +63,6 @@ function PlayIcon() {
   );
 }
 
-function RefreshIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M4 12a8 8 0 1 0 8-8H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M4 6v6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 interface NewsItem {
   id: number;
@@ -251,7 +235,6 @@ function StatsGauge({ stats, t, cefrLevels }: {
     {
       value: stats?.grammar_lessons_passed ?? 0,
       label: t.cardGrammarLabel,
-      href: '/dashboard/grammar',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path d="M4 4h9a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H4V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -262,7 +245,6 @@ function StatsGauge({ stats, t, cefrLevels }: {
     {
       value: stats?.practice_exams_completed ?? 0,
       label: t.cardTestsLabel,
-      href: '/dashboard/practice',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
           <rect x="8" y="2" width="8" height="4" rx="1" stroke="currentColor" strokeWidth="1.5"/>
@@ -274,7 +256,6 @@ function StatsGauge({ stats, t, cefrLevels }: {
     {
       value: stats?.streak ?? 0,
       label: t.cardStreakLabel,
-      href: '/dashboard/lists',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path d="M12 2c0 0-1 3.5 1 6 0 0-1-1-3-1 0 0 1 3 0 5s-1 4 3 6c0 0-1-2 0-3 0 0 1 2 3 2s4-2 4-5-3-5-3-5 1 2 0 4c0 0-2-4-2-6s-1-3-3-3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -318,11 +299,11 @@ function StatsGauge({ stats, t, cefrLevels }: {
       </Link>
       <div className="grid grid-cols-3 divide-x divide-gray-100 border-t border-gray-100 pt-3 mt-1">
         {miniStats.map((s) => (
-          <Link key={s.label} href={s.href} className="flex flex-col items-center gap-1 px-2 py-2 hover:bg-gray-50 rounded-xl transition-colors">
+          <div key={s.label} className="flex flex-col items-center gap-1 px-2 py-2">
             <span className="text-gray-400">{s.icon}</span>
             <p className="text-lg font-bold text-gray-900 leading-none">{s.value}</p>
             <p className="text-[10px] text-gray-400 leading-tight text-center">{s.label}</p>
-          </Link>
+          </div>
         ))}
       </div>
     </div>
@@ -340,23 +321,6 @@ function UserHome({ stats, cefrLevels }: { stats: Stats | null; cefrLevels: Cefr
         <p className="text-gray-500 text-sm mb-6">{t.progressSubtitle}</p>
 
         <StatsGauge stats={stats} t={t} cefrLevels={cefrLevels} />
-
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <Link href="/dashboard/lists" className="bg-white rounded-2xl px-4 py-3 flex items-center gap-3 hover:shadow-md transition-all active:scale-[0.98]">
-            <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shrink-0"><FolderIcon /></div>
-            <div className="min-w-0">
-              <p className="font-semibold text-sm leading-tight truncate">{t.quickDictionaries}</p>
-              <p className="text-xs text-gray-400 truncate">{t.quickDictionariesSub}</p>
-            </div>
-          </Link>
-          <Link href="/dashboard/review" className="bg-white rounded-2xl px-4 py-3 flex items-center gap-3 hover:shadow-md transition-all active:scale-[0.98]">
-            <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shrink-0"><RefreshIcon /></div>
-            <div className="min-w-0">
-              <p className="font-semibold text-sm leading-tight truncate">{t.quickReview}</p>
-              <p className="text-xs text-gray-400 truncate">{t.quickReviewSub}</p>
-            </div>
-          </Link>
-        </div>
 
         {(() => {
           const hasStudied = (stats?.total_studied ?? 0) > 0;
