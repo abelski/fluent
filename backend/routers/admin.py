@@ -59,6 +59,7 @@ def list_users(
             "premium_active": _is_premium_active(u),
             "is_admin": u.is_admin,
             "is_superadmin": u.is_superadmin,
+            "is_redactor": u.is_redactor,
             "sessions_today": counts.get(u.id, 0),
             "daily_limit": None if _is_premium_active(u) else DAILY_LIMIT,
             "last_login": u.last_login,
@@ -187,6 +188,28 @@ def set_admin(
     if target.is_superadmin:
         raise HTTPException(status_code=400, detail="Cannot change superadmin role")
     target.is_admin = body.is_admin
+    session.add(target)
+    session.commit()
+    return {"ok": True}
+
+
+class RedactorUpdate(BaseModel):
+    is_redactor: bool
+
+
+@router.patch("/users/{user_id}/set-redactor")
+def set_redactor(
+    user_id: str,
+    body: RedactorUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Grant or revoke redactor role. Admin-only."""
+    _require_admin(authorization, session)
+    target = session.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    target.is_redactor = body.is_redactor
     session.add(target)
     session.commit()
     return {"ok": True}

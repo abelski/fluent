@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { BACKEND_URL, getToken, unenrollProgram } from '../../../lib/api';
+import {
+  BACKEND_URL,
+  getToken,
+  unenrollProgram,
+  getCustomProgramEnrollments,
+  unenrollCustomProgram,
+  type CustomProgramEnrollment,
+} from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 import { useT } from '../../../lib/useT';
 import { getStarLevel, setStarLevel } from '../../../lib/starLevel';
@@ -57,6 +64,10 @@ export default function ListsPage() {
   const [openSubcategories, setOpenSubcategories] = useState<Set<string>>(new Set());
   const [removingKeys, setRemovingKeys] = useState<Set<string>>(new Set());
   const [confirmKey, setConfirmKey] = useState<string | null>(null);
+  const [customEnrollments, setCustomEnrollments] = useState<CustomProgramEnrollment[]>([]);
+  const [removingCustomIds, setRemovingCustomIds] = useState<Set<number>>(new Set());
+  const [confirmCustomId, setConfirmCustomId] = useState<number | null>(null);
+  const [openCustomPrograms, setOpenCustomPrograms] = useState<Set<number>>(new Set());
   const firstSubcategoryOpened = useRef(false);
 
   useEffect(() => {
@@ -80,6 +91,8 @@ export default function ListsPage() {
       .then((r) => (r.ok ? r.json() : {}))
       .then((data: Record<string, SubcategoryMeta>) => setSubcategoryMeta(data))
       .catch((err) => console.error('Failed to fetch subcategory meta:', err));
+
+    getCustomProgramEnrollments().then(setCustomEnrollments).catch(() => {});
 
     Promise.all([
       fetch(`${BACKEND_URL}/api/lists`, { headers: { Authorization: `Bearer ${token}` } })
@@ -109,6 +122,18 @@ export default function ListsPage() {
       .catch((err) => console.error('Failed to fetch lists:', err))
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleUnenrollCustom(programId: number) {
+    setRemovingCustomIds((prev) => new Set(prev).add(programId));
+    try {
+      await unenrollCustomProgram(programId);
+      setCustomEnrollments((prev) => prev.filter((e) => e.id !== programId));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRemovingCustomIds((prev) => { const next = new Set(prev); next.delete(programId); return next; });
+    }
+  }
 
   async function handleUnenroll(subcategoryKey: string) {
     setRemovingKeys((prev: Set<string>) => new Set(prev).add(subcategoryKey));
@@ -153,6 +178,13 @@ export default function ListsPage() {
       setOpenSubcategories(allKeys.size > 0 ? allKeys : new Set([lists[0].subcategory ?? 'other']));
     }
   }, [lists, enrolledKeys]);
+
+  // Auto-open all custom program sections when they load
+  useEffect(() => {
+    if (customEnrollments.length > 0) {
+      setOpenCustomPrograms(new Set(customEnrollments.map((e) => e.id)));
+    }
+  }, [customEnrollments]);
 
   const limitReached = quota !== null && quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
 
@@ -233,7 +265,7 @@ export default function ListsPage() {
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : enrolledKeys.size === 0 ? (
+        ) : enrolledKeys.size === 0 && customEnrollments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
             <p className="text-gray-500 text-lg">{tr.programs.emptyState}</p>
             <Link
@@ -321,19 +353,17 @@ export default function ListsPage() {
                         })()}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <div
-                          role="button"
-                          tabIndex={0}
+                        <button
+                          type="button"
                           onClick={(e) => { e.stopPropagation(); if (!removingKeys.has(group.key)) setConfirmKey(group.key); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); if (!removingKeys.has(group.key)) setConfirmKey(group.key); } }}
-                          aria-disabled={removingKeys.has(group.key)}
+                          disabled={removingKeys.has(group.key)}
                           title={tr.programs.removeBtn}
-                          className={`text-gray-300 hover:text-red-500 transition-colors p-1 rounded cursor-pointer ${removingKeys.has(group.key) ? 'opacity-40 pointer-events-none' : ''}`}
+                          className={`text-gray-300 hover:text-red-500 transition-colors p-1 rounded ${removingKeys.has(group.key) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
                           </svg>
-                        </div>
+                        </button>
                         <svg
                           width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
                           className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
@@ -425,6 +455,110 @@ export default function ListsPage() {
                 );
               })}
             </div>
+            {/* Custom (community) program sections */}
+            {customEnrollments.map((enrollment) => {
+              const programLists = lists.filter((l) => enrollment.list_ids.includes(l.id));
+              if (programLists.length === 0) return null;
+              const isOpen = openCustomPrograms.has(enrollment.id);
+              return (
+                <div key={`custom-${enrollment.id}`} className="bg-white border border-purple-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <button
+                    onClick={() => setOpenCustomPrograms((prev) => {
+                      const next = new Set(prev);
+                      next.has(enrollment.id) ? next.delete(enrollment.id) : next.add(enrollment.id);
+                      return next;
+                    })}
+                    aria-expanded={isOpen}
+                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span role="heading" aria-level={2} className="font-semibold text-gray-900">{enrollment.title}</span>
+                      <span className="text-gray-400 text-sm">{programLists.length} {plural(programLists.length, tr.lists.listsCount)}</span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                        Сообщество
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); if (!removingCustomIds.has(enrollment.id)) setConfirmCustomId(enrollment.id); }}
+                        disabled={removingCustomIds.has(enrollment.id)}
+                        title={tr.programs.removeBtn}
+                        className={`text-gray-300 hover:text-red-500 transition-colors p-1 rounded ${removingCustomIds.has(enrollment.id) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
+                        </svg>
+                      </button>
+                      <svg
+                        width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
+                        className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      >
+                        <path d="M6 8L1 3h10L6 8z" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-5 py-4 border-t border-gray-100">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {programLists.map((list) => {
+                          const p = progress[list.id];
+                          const knownPct = p ? (p.known / p.total) * 100 : 0;
+                          const learningPct = p ? (p.learning / p.total) * 100 : 0;
+                          const displayTitle = lang === 'en' ? (list.title_en || list.title) : list.title;
+                          const displayDesc = lang === 'en' ? (list.description_en || list.description) : list.description;
+                          const isDone = p && p.total > 0 && p.known >= p.total;
+                          return (
+                            <div key={list.id} className="relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4">
+                              {isDone && (
+                                <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
+                                  ✓ Done
+                                </div>
+                              )}
+                              <div>
+                                <h2 className="text-lg font-semibold">{displayTitle}</h2>
+                                {displayDesc && <p className="text-gray-400 text-sm mt-1">{displayDesc}</p>}
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden flex">
+                                  <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${knownPct}%` }} />
+                                  <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${learningPct}%` }} />
+                                </div>
+                                {p && (
+                                  <p className="text-gray-400 text-xs">
+                                    {p.known} / {p.total} {tr.lists.learned}
+                                    {p.learning > 0 && <span className="text-amber-500 ml-1">· {p.learning} {plural(p.learning, tr.lists.inProgress)}</span>}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between mt-auto">
+                                <span className="text-gray-400 text-sm">{list.word_count} {plural(list.word_count, tr.lists.wordsCount)}</span>
+                                <div className="flex gap-2">
+                                  <Link href={`/dashboard/lists/${list.id}`} className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
+                                    {tr.lists.browse}
+                                  </Link>
+                                  {limitReached ? (
+                                    <button disabled title={tr.lists.studyDisabledTitle} className="px-4 py-2.5 text-sm bg-emerald-600/30 rounded-full font-semibold cursor-not-allowed opacity-40">
+                                      {tr.lists.study}
+                                    </button>
+                                  ) : (
+                                    <Link href={`/dashboard/lists/${list.id}/study`} className="px-4 py-2.5 text-sm bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors font-semibold text-white shadow-sm shadow-emerald-600/20">
+                                      {tr.lists.study}
+                                    </Link>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
             <div className="mt-6 text-center">
               <Link
                 href="/programs"
@@ -437,6 +571,31 @@ export default function ListsPage() {
           );
         })()}
       </div>
+
+      {/* Confirm remove custom program modal */}
+      {confirmCustomId !== null && (() => {
+        const enrollment = customEnrollments.find((e) => e.id === confirmCustomId);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setConfirmCustomId(null)}>
+            <div className="bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-lg font-semibold text-gray-900">Убрать программу «{enrollment?.title}»?</h2>
+              <p className="text-sm text-gray-500">Ваш прогресс сохранится — вы сможете снова записаться в программу в любое время.</p>
+              <div className="flex gap-3 justify-end">
+                <button onClick={() => setConfirmCustomId(null)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
+                  Отмена
+                </button>
+                <button
+                  onClick={async () => { const id = confirmCustomId; setConfirmCustomId(null); await handleUnenrollCustom(id); }}
+                  disabled={removingCustomIds.has(confirmCustomId)}
+                  className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors disabled:opacity-40"
+                >
+                  Убрать
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Confirm remove program modal */}
       {confirmKey !== null && (() => {

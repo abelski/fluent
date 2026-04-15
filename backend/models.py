@@ -25,6 +25,7 @@ class User(SQLModel, table=True):
     premium_until: Optional[datetime] = None  # None = no expiry; past date = expired
     is_admin: bool = Field(default=False)
     is_superadmin: bool = Field(default=False)
+    is_redactor: bool = Field(default=False)
     last_login: Optional[datetime] = None
     words_per_session: Optional[int] = None      # total words per session; treated as 10 when null
     new_words_ratio: Optional[float] = None      # fraction of new words (0.0–1.0); treated as 0.7 when null
@@ -36,7 +37,8 @@ class User(SQLModel, table=True):
 
 class WordList(SQLModel, table=True):
     """A named collection of words (e.g. "Numbers 1-20", "Animals").
-    is_public=True means any user can study it without special access."""
+    is_public=True means any user can study it without special access.
+    is_public=False lists are user-created word sets owned by a custom program."""
     __tablename__ = "word_list"
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
@@ -51,6 +53,7 @@ class WordList(SQLModel, table=True):
     difficulty: Optional[str] = None     # "easy" | "medium" | "hard"
     article_url: Optional[str] = None    # internal path or external URL
     sort_order: Optional[int] = Field(default=0)  # display order within subcategory
+    created_by: Optional[str] = Field(default=None, foreign_key="user.id")  # owner for user-created lists
 
 
 class Feedback(SQLModel, table=True):
@@ -341,4 +344,41 @@ class UserProgram(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="user.id", index=True)
     subcategory_key: str = Field(index=True)  # matches SubcategoryMeta.key
+    enrolled_at: datetime = Field(default_factory=_utcnow)
+
+
+class CustomProgram(SQLModel, table=True):
+    """User-created vocabulary program — a curated, ordered collection of word lists.
+    Created by users with is_redactor=True (or admins). Shareable via share_token.
+    Supports Russian and/or English audiences; lang_ru/lang_en flags control which
+    translation columns are filled and shown to learners."""
+    __tablename__ = "custom_program"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str                                  # Russian title (primary)
+    title_en: Optional[str] = None              # English title
+    description: Optional[str] = None          # Russian description
+    description_en: Optional[str] = None        # English description
+    lang_ru: bool = Field(default=True)         # program targets Russian-speaking users
+    lang_en: bool = Field(default=False)        # program targets English-speaking users
+    created_by: str = Field(foreign_key="user.id", index=True)
+    share_token: str = Field(default_factory=lambda: str(uuid.uuid4()), unique=True, index=True)
+    is_published: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class CustomProgramList(SQLModel, table=True):
+    """Ordered word list within a CustomProgram."""
+    __tablename__ = "custom_program_list"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    custom_program_id: int = Field(foreign_key="custom_program.id", index=True)
+    word_list_id: int = Field(foreign_key="word_list.id")
+    position: int = Field(default=0)
+
+
+class UserCustomProgramEnrollment(SQLModel, table=True):
+    """Tracks which custom programs a user has added to their learning plan."""
+    __tablename__ = "user_custom_program_enrollment"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    custom_program_id: int = Field(foreign_key="custom_program.id", index=True)
     enrolled_at: datetime = Field(default_factory=_utcnow)

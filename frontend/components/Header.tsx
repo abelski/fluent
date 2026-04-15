@@ -36,6 +36,7 @@ export default function Header() {
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const [user, setUser] = useState<JwtUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isRedactor, setIsRedactor] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -50,7 +51,10 @@ export default function Header() {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data?.is_admin || data?.is_superadmin) setIsAdmin(true); })
+        .then((data) => {
+          if (data?.is_admin || data?.is_superadmin) setIsAdmin(true);
+          if (data?.is_redactor) setIsRedactor(true);
+        })
         .catch((err) => console.error('Failed to fetch admin status:', err));
     }
   }, []);
@@ -196,6 +200,15 @@ export default function Header() {
                       className="block px-4 py-3 text-sm text-amber-600 hover:text-amber-600 hover:bg-gray-50 transition-colors"
                     >
                       {tr.nav.admin}
+                    </Link>
+                  )}
+                  {isRedactor && (
+                    <Link
+                      href="/dashboard/programs/new"
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-4 py-3 text-sm text-purple-600 hover:text-purple-700 hover:bg-gray-50 transition-colors"
+                    >
+                      + Создать программу
                     </Link>
                   )}
                   <Link

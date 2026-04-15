@@ -837,6 +837,8 @@ def get_quota(
         "daily_limit": None if premium_active else DAILY_LIMIT,
         "is_admin": user.is_admin,
         "is_superadmin": user.is_superadmin,
+        "is_redactor": user.is_redactor or user.is_admin or user.is_superadmin,
+        "user_id": user.id,
     }
 
 

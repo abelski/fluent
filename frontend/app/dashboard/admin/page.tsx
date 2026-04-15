@@ -15,6 +15,7 @@ interface UserRow {
   premium_active: boolean;
   is_admin: boolean;
   is_superadmin: boolean;
+  is_redactor: boolean;
   sessions_today: number;
   daily_limit: number | null;
   last_login: string | null;
@@ -824,6 +825,18 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     loadData();
   }
 
+  async function applyRedactor(userId: string, isRedactor: boolean) {
+    setSaving(true);
+    const token = getToken();
+    await fetch(`${BACKEND_URL}/api/admin/users/${userId}/set-redactor`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ is_redactor: isRedactor }),
+    }).catch((err) => console.error('API error:', err));
+    setSaving(false);
+    loadData();
+  }
+
   async function applyPremium(userId: string, isPremium: boolean, until: string | null) {
     setSaving(true);
     const token = getToken();
@@ -1400,6 +1413,8 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         <span className="text-xs font-semibold text-rose-600 bg-rose-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.superadmin}</span>
                       ) : u.is_admin ? (
                         <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.adminBadge}</span>
+                      ) : u.is_redactor ? (
+                        <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-gray-900 rounded-full px-2 py-0.5">Редактор</span>
                       ) : u.premium_active ? (
                         <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.premium}</span>
                       ) : (
@@ -1470,6 +1485,12 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                 label: 'Прогресс',
                                 onClick: () => { setProgressUserId(u.id); setProgressUserName(u.name); },
                               },
+                              ...(!u.is_superadmin ? [
+                                {
+                                  label: u.is_redactor ? 'Убрать редактора' : 'Сделать редактором',
+                                  onClick: () => applyRedactor(u.id, !u.is_redactor),
+                                },
+                              ] : []),
                               ...(isSuperadmin && !u.is_superadmin ? [
                                 {
                                   label: u.is_admin ? tr.admin.removeAdmin : tr.admin.makeAdmin,

@@ -131,3 +131,197 @@ export async function unenrollProgram(subcategory: string): Promise<void> {
     throw new Error((err as { detail?: string }).detail ?? 'Failed to unenroll');
   }
 }
+
+// ── Community (custom) programs ───────────────────────────────────────────────
+
+export interface CustomProgramSummary {
+  id: number;
+  title: string;
+  title_en: string | null;
+  description: string | null;
+  description_en: string | null;
+  lang_ru: boolean;
+  lang_en: boolean;
+  created_by: string;
+  author_name: string | null;
+  share_token: string;
+  is_published: boolean;
+  created_at: string;
+  list_ids: number[];
+  word_count: number;
+  enrollment_count: number;
+}
+
+export interface CustomProgramEnrollment {
+  id: number;
+  title: string;
+  share_token: string;
+  list_ids: number[];
+}
+
+export interface WordPair {
+  front: string;
+  back_ru: string;
+  back_en: string;
+}
+
+export interface WordSet {
+  title: string;
+  words: WordPair[];
+}
+
+export interface WordSetWithId {
+  id: number;
+  title: string;
+  words: WordPair[];
+}
+
+export async function getCommunityPrograms(): Promise<CustomProgramSummary[]> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/programs/community`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) return [];
+  return r.json();
+}
+
+export async function getCommunityProgram(shareToken: string): Promise<CustomProgramSummary> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/programs/community/${encodeURIComponent(shareToken)}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) throw new Error('Program not found');
+  return r.json();
+}
+
+export async function getMyCustomPrograms(): Promise<CustomProgramSummary[]> {
+  const token = getToken();
+  if (!token) return [];
+  const r = await fetch(`${BACKEND_URL}/api/me/custom-programs`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) return [];
+  return r.json();
+}
+
+export async function createCustomProgram(data: {
+  title: string;
+  title_en?: string;
+  description?: string;
+  description_en?: string;
+  lang_ru: boolean;
+  lang_en: boolean;
+  word_sets: WordSet[];
+}): Promise<CustomProgramSummary> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/custom-programs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to create program');
+  }
+  return r.json();
+}
+
+export async function updateCustomProgram(
+  id: number,
+  data: {
+    title?: string;
+    title_en?: string;
+    description?: string;
+    description_en?: string;
+    lang_ru?: boolean;
+    lang_en?: boolean;
+    word_sets?: WordSet[];
+  },
+): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/custom-programs/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to update program');
+  }
+}
+
+export async function getCommunityProgramWordSets(shareToken: string): Promise<WordSetWithId[]> {
+  const token = getToken();
+  if (!token) return [];
+  const r = await fetch(`${BACKEND_URL}/api/programs/community/${encodeURIComponent(shareToken)}/word-sets`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) return [];
+  return r.json();
+}
+
+export async function getCustomProgramWordSets(programId: number): Promise<WordSetWithId[]> {
+  const token = getToken();
+  if (!token) return [];
+  const r = await fetch(`${BACKEND_URL}/api/me/custom-programs/${programId}/word-sets`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) return [];
+  return r.json();
+}
+
+export async function deleteCustomProgram(id: number): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/custom-programs/${id}`, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to delete program');
+  }
+}
+
+export async function getCustomProgramEnrollments(): Promise<CustomProgramEnrollment[]> {
+  const token = getToken();
+  if (!token) return [];
+  const r = await fetch(`${BACKEND_URL}/api/me/custom-program-enrollments`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) return [];
+  return r.json();
+}
+
+export async function enrollCustomProgram(shareToken: string): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/custom-program-enrollments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ share_token: shareToken }),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to enroll');
+  }
+}
+
+export async function unenrollCustomProgram(programId: number): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/custom-program-enrollments/${programId}`, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to unenroll');
+  }
+}
