@@ -187,6 +187,26 @@ def test_word_lists_endpoint_includes_custom_program_lists(client):
     assert "Приветствия" in list_titles, "Custom program word set should appear in /api/lists"
 
 
+def test_lists_progress_includes_custom_program_lists(client):
+    """GET /api/me/lists-progress must return progress for custom program word lists."""
+    token = make_token("redactor_progress@example.com")
+    _ensure_redactor(client, token)
+    r = client.post("/api/me/custom-programs", json={
+        "title": "Progress Test",
+        "lang_ru": True,
+        "lang_en": False,
+        "word_sets": SAMPLE_WORD_SETS,
+    }, headers=auth(token))
+    assert r.status_code == 201
+    list_ids = r.json()["list_ids"]
+    assert len(list_ids) == 1
+    wl_id = list_ids[0]
+
+    progress = client.get("/api/me/lists-progress", headers=auth(token)).json()
+    assert str(wl_id) in progress or wl_id in progress, \
+        "Custom program word list must appear in lists-progress"
+
+
 def test_superadmin_can_delete_any_program(client):
     token_a = make_token("redactor_victim@example.com")
     _ensure_redactor(client, token_a)

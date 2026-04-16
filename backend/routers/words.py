@@ -681,12 +681,30 @@ def get_all_lists_progress(
     """
     user = _require_user(authorization, session)
 
-    # One query: all public list IDs + their word IDs
-    rows = session.exec(
+    # Collect list IDs the user can see: public lists + their custom program word lists
+    cp_enrollments = session.exec(
+        select(UserCustomProgramEnrollment)
+        .where(UserCustomProgramEnrollment.user_id == user.id)
+    ).all()
+    custom_list_ids: set[int] = set()
+    if cp_enrollments:
+        cp_links = session.exec(
+            select(CustomProgramList)
+            .where(CustomProgramList.custom_program_id.in_([e.custom_program_id for e in cp_enrollments]))
+        ).all()
+        custom_list_ids = {link.word_list_id for link in cp_links}
+
+    # All (list_id, word_id) pairs for public lists + enrolled custom program lists
+    public_rows = session.exec(
         select(WordListItem.word_list_id, WordListItem.word_id)
         .join(WordList, WordList.id == WordListItem.word_list_id)
         .where(WordList.is_public == True)
     ).all()
+    custom_rows = session.exec(
+        select(WordListItem.word_list_id, WordListItem.word_id)
+        .where(WordListItem.word_list_id.in_(list(custom_list_ids)))
+    ).all() if custom_list_ids else []
+    rows = list(public_rows) + list(custom_rows)
 
     # Group word IDs by list and collect the full set for the progress query
     list_word_ids: dict[int, list[int]] = {}
