@@ -295,6 +295,7 @@ export default function ListsPage() {
             <>
             <div className="flex flex-col gap-4">
               {grouped.map((group) => {
+
                 const isOpen = openSubcategories.has(group.key);
                 const meta = subcategoryMeta[group.key];
                 return (
@@ -454,9 +455,8 @@ export default function ListsPage() {
                   </div>
                 );
               })}
-            </div>
-            {/* Custom (community) program sections */}
-            {customEnrollments.map((enrollment) => {
+              {/* Custom (community) program sections */}
+              {customEnrollments.map((enrollment) => {
               const programLists = lists.filter((l) => enrollment.list_ids.includes(l.id));
               if (programLists.length === 0) return null;
               const isOpen = openCustomPrograms.has(enrollment.id);
@@ -558,6 +558,7 @@ export default function ListsPage() {
                 </div>
               );
             })}
+            </div>
 
             <div className="mt-6 text-center">
               <Link

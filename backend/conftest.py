@@ -39,7 +39,7 @@ def _override_get_session():
 
 # ── 2. Create all tables in SQLite ────────────────────────────────────────────
 # Import models so their metadata is registered before create_all.
-from models import User, WordList, Word, WordListItem, UserWordProgress, DailyStudySession, GrammarLessonResult, MistakeReport, SubcategoryMeta, UserProgram  # noqa: E402
+from models import User, WordList, Word, WordListItem, UserWordProgress, DailyStudySession, GrammarLessonResult, MistakeReport, SubcategoryMeta, UserProgram, CustomProgram, CustomProgramList, UserCustomProgramEnrollment  # noqa: E402
 
 SQLModel.metadata.create_all(_test_engine)
 

@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select, col, func
 
 from database import get_session
-from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram
+from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList
 from constants import DAILY_LIMIT
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
@@ -126,6 +126,30 @@ def get_lists(
     lists = session.exec(
         select(WordList).where(WordList.is_public == True, WordList.archived == False)  # noqa: E712
     ).all()
+
+    # Collect private word lists from the user's custom program enrollments (added after visibility filter)
+    custom_program_lists: list = []
+    if user:
+        enrollments = session.exec(
+            select(UserCustomProgramEnrollment)
+            .where(UserCustomProgramEnrollment.user_id == user.id)
+        ).all()
+        if enrollments:
+            enrolled_program_ids = [e.custom_program_id for e in enrollments]
+            cp_links = session.exec(
+                select(CustomProgramList)
+                .where(CustomProgramList.custom_program_id.in_(enrolled_program_ids))
+            ).all()
+            custom_list_ids = {link.word_list_id for link in cp_links}
+            existing_ids = {wl.id for wl in lists}
+            diff_ids = list(custom_list_ids - existing_ids)
+            if diff_ids:
+                custom_program_lists = session.exec(
+                    select(WordList).where(
+                        WordList.id.in_(diff_ids),
+                        WordList.archived == False,  # noqa: E712
+                    )
+                ).all()
     # Single aggregation query to get word counts for all lists at once
     counts = dict(
         session.exec(
@@ -173,6 +197,8 @@ def get_lists(
         return False
 
     lists = [wl for wl in lists if _subcat_visible(wl.subcategory)]
+    # Append custom program lists after visibility filter (they bypass subcategory visibility)
+    lists = lists + custom_program_lists
 
     sorted_lists = sorted(
         lists,

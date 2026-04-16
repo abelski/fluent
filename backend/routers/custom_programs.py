@@ -326,6 +326,8 @@ def create_program(
     session.add(program)
     session.flush()
     _create_word_sets(program, body.word_sets, user.id, session)
+    # Auto-enroll the creator so their program appears in their word lists
+    session.add(UserCustomProgramEnrollment(user_id=user.id, custom_program_id=program.id))
     session.commit()
     session.refresh(program)
     return _program_detail(program, session, author=user)
