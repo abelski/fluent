@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, col
 
 from database import get_session
 from models import (
@@ -16,6 +16,7 @@ from models import (
     WordList,
     WordListItem,
     Word,
+    UserWordProgress,
 )
 from auth import require_user as _require_user, try_get_user as _try_get_user
 
@@ -122,7 +123,16 @@ def _delete_owned_word_sets(program: CustomProgram, user_id: str, session: Sessi
         session.delete(wl)
     session.flush()
 
-    # Step 3: delete Word rows (no more FK references from word_list_item)
+    # Step 3: delete UserWordProgress records for these words (FK word_progress → word)
+    if words_to_delete:
+        word_ids = [w.id for w in words_to_delete if w.id is not None]
+        for progress_row in session.exec(
+            select(UserWordProgress).where(col(UserWordProgress.word_id).in_(word_ids))
+        ).all():
+            session.delete(progress_row)
+        session.flush()
+
+    # Step 4: delete Word rows
     for word in words_to_delete:
         session.delete(word)
     session.flush()
