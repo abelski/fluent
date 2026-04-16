@@ -76,6 +76,73 @@ function normalizeLt(text: string): string {
     .replace(/ą/g, 'a');
 }
 
+function InlineSentenceInput({
+  display,
+  value,
+  onChange,
+  onKeyDown,
+  disabled,
+  answerState,
+  inputRef,
+}: {
+  display: string;
+  value: string;
+  onChange: (v: string) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  disabled: boolean;
+  answerState: AnswerState;
+  inputRef: React.RefObject<HTMLInputElement>;
+}) {
+  const [before, after] = display.split('___');
+  const mirrorRef = useRef<HTMLSpanElement>(null);
+  const [inputWidth, setInputWidth] = useState('2ch');
+
+  useEffect(() => {
+    if (mirrorRef.current) {
+      const w = mirrorRef.current.offsetWidth;
+      setInputWidth(`${Math.max(w + 4, 24)}px`);
+    }
+  }, [value]);
+
+  const inputColor =
+    answerState === 'correct'
+      ? 'text-emerald-700 border-emerald-500 bg-emerald-50'
+      : answerState === 'wrong'
+      ? 'text-red-700 border-red-400 bg-red-50'
+      : 'text-gray-900 border-gray-900 bg-transparent';
+
+  return (
+    <p className="text-2xl sm:text-3xl font-mono tracking-tight leading-relaxed text-center inline-flex flex-wrap items-baseline justify-center gap-0">
+      <span>{before}</span>
+      <span className="relative inline-block">
+        {/* hidden mirror to measure text width */}
+        <span
+          ref={mirrorRef}
+          aria-hidden
+          className="absolute invisible whitespace-pre text-2xl sm:text-3xl font-mono tracking-tight"
+        >
+          {value || ' '}
+        </span>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          disabled={disabled}
+          autoCapitalize="none"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck={false}
+          style={{ width: inputWidth }}
+          className={`inline-block border-b-2 outline-none text-2xl sm:text-3xl font-mono tracking-tight text-center transition-colors duration-200 ${inputColor}`}
+        />
+      </span>
+      <span>{after}</span>
+    </p>
+  );
+}
+
 function GrammarStatsBar({ lessons }: { lessons: Lesson[] }) {
   const { tr } = useT();
   const total = lessons.length;
@@ -671,40 +738,40 @@ export default function GrammarPage() {
             </div>
           ) : (
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
-              {/* Puzzle header: base form → sentence */}
-              {task.base_lt ? (
-                <>
-                  <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">{tr.grammar.buildForm}</p>
-                  <div className="flex items-center justify-center gap-3 mb-5">
-                    <span className="text-2xl font-bold text-gray-900">{task.base_lt}</span>
-                    <span className="text-gray-400 text-xl">→</span>
-                    <span className="text-gray-500 text-base font-mono">{task.display}</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-gray-400 text-xs uppercase tracking-wider mb-4">{tr.grammar.fillBlank}</p>
-                  <p className="text-2xl font-mono tracking-tight mb-4">{task.display}</p>
-                </>
+              {task.base_lt && (
+                <p className="text-gray-400 text-xs mb-4">от: <span className="font-medium text-gray-500">{task.base_lt}</span></p>
               )}
+              <div className="mb-4">
+                <InlineSentenceInput
+                  display={task.display}
+                  value={typed}
+                  onChange={setTyped}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
+                  disabled={answerState !== 'unanswered'}
+                  answerState={answerState}
+                  inputRef={inputRef}
+                />
+              </div>
               <p className="text-gray-500 text-base">{task.translation_ru}</p>
             </div>
           )}
 
           <div className="w-full flex flex-col gap-3">
-            <input
-              ref={inputRef}
-              type="text"
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
-              disabled={answerState !== 'unanswered'}
-              placeholder={task.type === 'declension' ? tr.grammar.typeDeclension : tr.grammar.typeEnding}
-              className={`w-full py-4 px-5 rounded-xl border bg-white text-base text-gray-900 placeholder-gray-400 outline-none transition-all duration-200
-                ${answerState === 'correct' ? 'border-gray-900 bg-emerald-50' :
-                  answerState === 'wrong' ? 'border-gray-900 bg-red-50' :
-                  'border-gray-900 focus:border-gray-900'}`}
-            />
+            {task.type === 'declension' && (
+              <input
+                ref={inputRef}
+                type="text"
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
+                disabled={answerState !== 'unanswered'}
+                placeholder={tr.grammar.typeDeclension}
+                className={`w-full py-4 px-5 rounded-xl border bg-white text-base text-gray-900 placeholder-gray-400 outline-none transition-all duration-200
+                  ${answerState === 'correct' ? 'border-gray-900 bg-emerald-50' :
+                    answerState === 'wrong' ? 'border-gray-900 bg-red-50' :
+                    'border-gray-900 focus:border-gray-900'}`}
+              />
+            )}
 
             {answerState === 'unanswered' && (
               <button
