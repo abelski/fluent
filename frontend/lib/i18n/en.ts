@@ -124,7 +124,7 @@ const en: Translations = {
     hard: 'Hard',
     easy: 'Easy',
     matchTitle: 'Match the word to the translation',
-    matchSubtitle: 'Connect each word to its translation',
+    matchSubtitle: 'Click a translation on the left, then its Lithuanian match on the right',
     matchCheckBtn: 'Continue',
   },
   grammar: {

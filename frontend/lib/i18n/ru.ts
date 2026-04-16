@@ -124,7 +124,7 @@ const ru: Translations = {
     hard: 'С трудом',
     easy: 'Легко',
     matchTitle: 'Соотнеси слово с переводом',
-    matchSubtitle: 'Соедините каждое слово с его переводом',
+    matchSubtitle: 'Сначала кликните по переводу слева, затем по литовскому слову справа',
     matchCheckBtn: 'Продолжить',
   },
   grammar: {

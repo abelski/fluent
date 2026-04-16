@@ -63,6 +63,7 @@ interface Category {
 
 function normalizeLt(text: string): string {
   return text
+    .normalize('NFC')
     .toLowerCase()
     .replace(/į/g, 'i')
     .replace(/č/g, 'c')

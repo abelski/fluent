@@ -102,7 +102,7 @@ test.describe('Match round — appears after study session', () => {
     await driveStage3(page);
 
     await expect(page.getByText('Соотнеси слово с переводом')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('Соедините каждое слово с его переводом')).toBeVisible();
+    await expect(page.getByText('Сначала кликните по переводу слева, затем по литовскому слову справа')).toBeVisible();
   });
 
   test('correct pairs turn paired, continue button appears after all matched', async ({ page }) => {
