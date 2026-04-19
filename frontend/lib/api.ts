@@ -388,9 +388,12 @@ export async function unenrollPhraseProgram(programId: number): Promise<void> {
   }
 }
 
-export async function getPhrasesStudy(programId: number): Promise<PhraseStudySession> {
+export async function getPhrasesStudy(programId: number, chapter?: number): Promise<PhraseStudySession> {
   const token = getToken();
-  const r = await fetch(`${BACKEND_URL}/api/phrase-programs/${programId}/study`, {
+  const url = chapter !== undefined
+    ? `${BACKEND_URL}/api/phrase-programs/${programId}/study?chapter=${chapter}`
+    : `${BACKEND_URL}/api/phrase-programs/${programId}/study`;
+  const r = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!r.ok) {
@@ -538,6 +541,18 @@ export async function adminGetPhraseProgramStats(programId: number): Promise<{
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!r.ok) throw new Error('Failed to load stats');
+  return r.json();
+}
+
+export async function getPhraseReview(): Promise<PhraseStudySession> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/phrases/review`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to load review session');
+  }
   return r.json();
 }
 

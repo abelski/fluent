@@ -147,6 +147,21 @@ function NewsSection({ inline = false }: { inline?: boolean }) {
   );
 }
 
+// ── Streak card helpers ───────────────────────────────────────────────────────
+
+const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100];
+
+function nextStreakMilestone(value: number): number | null {
+  return STREAK_MILESTONES.find((m) => m > value) ?? null;
+}
+
+function streakMilestoneProgress(value: number): number {
+  const next = nextStreakMilestone(value);
+  if (!next) return 100;
+  const prev = [...STREAK_MILESTONES].reverse().find((m) => m <= value) ?? 0;
+  return Math.round(((value - prev) / (next - prev)) * 100);
+}
+
 interface CefrLevel { level: string; threshold: number; }
 
 const CEFR_LEVELS_DEFAULT: CefrLevel[] = [
@@ -311,8 +326,26 @@ function StatsGauge({ stats, t, cefrLevels }: {
 }
 
 function UserHome({ stats, cefrLevels }: { stats: Stats | null; cefrLevels: CefrLevel[] }) {
-  const { tr } = useT();
+  const { tr, plural } = useT();
   const t = tr.landing;
+
+  const streak = stats?.streak ?? 0;
+  const known = stats?.known ?? 0;
+  const streakNext = nextStreakMilestone(streak);
+  const streakPct = streakMilestoneProgress(streak);
+
+  function motivation(): string {
+    const m = tr.stats.motivations;
+    if (streak >= 30) return m.streak30;
+    if (streak >= 14) return m.streak14;
+    if (streak >= 7) return m.streak7;
+    if (streak >= 3) return m.streak3;
+    if (streak === 2) return m.streak2;
+    if (known >= 100) return m.known100;
+    if (known >= 50) return m.known50;
+    if (known > 0) return m.knownSome;
+    return m.none;
+  }
 
   return (
     <main className="bg-[#F5F5F7] min-h-screen">
@@ -321,6 +354,39 @@ function UserHome({ stats, cefrLevels }: { stats: Stats | null; cefrLevels: Cefr
         <p className="text-gray-500 text-sm mb-6">{t.progressSubtitle}</p>
 
         <StatsGauge stats={stats} t={t} cefrLevels={cefrLevels} />
+
+        {/* Streak card */}
+        <div className="relative rounded-2xl bg-gradient-to-br from-orange-50 to-white border border-orange-100 shadow-sm overflow-hidden p-5 mb-4">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-orange-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
+          <div className="flex items-start justify-between gap-3 relative">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-orange-100 flex items-center justify-center text-xl">
+                🔥
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{streak}</p>
+                <p className="text-gray-500 text-xs mt-1 font-medium">{plural(streak, tr.stats.streakDay)}</p>
+              </div>
+            </div>
+            {streakNext && streak > 0 && (
+              <div className="text-right flex-shrink-0">
+                <p className="text-[10px] text-orange-600 font-semibold uppercase tracking-wide">Next</p>
+                <p className="text-sm font-bold text-orange-700">{streakNext}</p>
+              </div>
+            )}
+          </div>
+          {streak > 0 && (
+            <div className="mt-4">
+              <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden">
+                <div className="h-full bg-orange-500 rounded-full transition-all duration-700" style={{ width: `${streakPct}%` }} />
+              </div>
+              {streakNext && (
+                <p className="text-[10px] text-gray-400 mt-1">{streak} / {streakNext} до следующей цели</p>
+              )}
+            </div>
+          )}
+          <p className="mt-3 text-sm text-orange-700 font-medium">{motivation()}</p>
+        </div>
 
         {(() => {
           const hasStudied = (stats?.total_studied ?? 0) > 0;

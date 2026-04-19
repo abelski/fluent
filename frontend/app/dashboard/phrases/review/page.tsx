@@ -2,18 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { getToken, getPhrasesStudy, resolvePhraseId, type PhraseStudyItem } from '../../../../../lib/api';
-import PhraseSession from '../../../components/PhraseSession';
+import { useRouter } from 'next/navigation';
+import { getToken, getPhraseReview, type PhraseStudyItem } from '../../../../lib/api';
+import PhraseSession from '../../components/PhraseSession';
 
-export default function PhrasesStudyPage() {
-  const { id: _id } = useParams<{ id: string }>();
-  const id = resolvePhraseId(_id);
+export default function PhraseReviewPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const chapterParam = searchParams.get('chapter');
-  const chapter = chapterParam !== null ? Number(chapterParam) : undefined;
-
   const [phrases, setPhrases] = useState<PhraseStudyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +15,7 @@ export default function PhrasesStudyPage() {
   const loadPhrases = useCallback(() => {
     setLoading(true);
     setError(null);
-    getPhrasesStudy(Number(id), chapter)
+    getPhraseReview()
       .then((data) => {
         if (data.phrases.length === 0) {
           setError('Нет фраз для повторения.');
@@ -30,17 +24,14 @@ export default function PhrasesStudyPage() {
         }
       })
       .catch((e: Error) => {
-        if (e.message === 'Not enrolled in this program') {
-          router.replace('/dashboard/phrases');
-        } else if (e.message === 'No phrases due for review') {
+        if (e.message === 'No phrases due for review') {
           setError('Нет фраз для повторения на сегодня. Возвращайтесь завтра!');
         } else {
           setError(e.message || 'Не удалось загрузить фразы.');
         }
       })
       .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, chapter, router]);
+  }, []);
 
   useEffect(() => {
     if (!getToken()) { router.replace('/login'); return; }
@@ -65,19 +56,17 @@ export default function PhrasesStudyPage() {
           <div className="text-5xl mb-6">💬</div>
           <p className="text-gray-500 mb-8">{error}</p>
           <Link href="/dashboard/phrases" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
-            ← Назад к программам
+            ← Назад к фразам
           </Link>
         </div>
       </main>
     );
   }
 
-  const backHref = `/dashboard/phrases/${id}`;
-
   return (
     <PhraseSession
       phrases={phrases}
-      backHref={backHref}
+      backHref="/dashboard/phrases"
       onRepeat={loadPhrases}
     />
   );

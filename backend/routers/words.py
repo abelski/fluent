@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select, col, func
 
 from database import get_session
-from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList
+from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress
 from constants import DAILY_LIMIT
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
@@ -783,6 +783,16 @@ def get_stats(
     ).all()
     practice_exams_completed = len(practice_results)
 
+    # Phrases: count learned (stage 2) and due for review
+    phrase_progress = session.exec(
+        select(UserPhraseProgress).where(UserPhraseProgress.user_id == user.id)
+    ).all()
+    phrases_learned = sum(1 for p in phrase_progress if p.lesson_stage >= 2)
+    phrases_due_review = sum(
+        1 for p in phrase_progress
+        if p.lesson_stage >= 2 and (p.next_review is None or p.next_review <= today)
+    )
+
     return {
         "known": known,
         "learning": learning,
@@ -792,6 +802,8 @@ def get_stats(
         "due_review": due_review,
         "grammar_lessons_passed": grammar_lessons_passed,
         "practice_exams_completed": practice_exams_completed,
+        "phrases_learned": phrases_learned,
+        "phrases_due_review": phrases_due_review,
     }
 
 

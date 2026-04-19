@@ -461,6 +461,66 @@ def admin_phrase_program_stats(
     }
 
 
+# ── Program detail (user-facing) ─────────────────────────────────────────────
+
+@router.get("/phrase-programs/{program_id}")
+def get_phrase_program(
+    program_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return a phrase program's details and its full phrase list.
+
+    If the user is authenticated, each phrase also carries the user's current
+    lesson_stage (0=new, 1=fill-word, 2=type-full) so the frontend can show
+    per-phrase progress.
+    """
+    program = session.get(PhraseProgram, program_id)
+    if not program or not program.is_public:
+        raise HTTPException(status_code=404, detail="Program not found")
+
+    phrases = session.exec(
+        select(Phrase)
+        .where(Phrase.program_id == program_id)
+        .order_by(Phrase.position)
+    ).all()
+
+    # Per-phrase progress for authenticated users
+    user = _try_get_user(authorization, session)
+    progress_map: dict[int, int] = {}
+    if user and phrases:
+        phrase_ids = [p.id for p in phrases if p.id is not None]
+        rows = session.exec(
+            select(UserPhraseProgress).where(
+                UserPhraseProgress.user_id == user.id,
+                col(UserPhraseProgress.phrase_id).in_(phrase_ids),
+            )
+        ).all()
+        progress_map = {r.phrase_id: r.lesson_stage for r in rows}
+
+    return {
+        "id": program.id,
+        "title": program.title,
+        "title_en": program.title_en,
+        "description": program.description,
+        "description_en": program.description_en,
+        "difficulty": program.difficulty,
+        "phrases": [
+            {
+                "id": p.id,
+                "text": p.text,
+                "translation": p.translation,
+                "translation_en": p.translation_en,
+                "chapter": p.chapter,
+                "chapter_title": p.chapter_title,
+                "position": p.position,
+                "lesson_stage": progress_map.get(p.id, 0),
+            }
+            for p in phrases
+        ],
+    }
+
+
 # ── Enrollment ───────────────────────────────────────────────────────────────
 
 @router.post("/me/phrase-programs/{program_id}")
@@ -514,6 +574,7 @@ def unenroll_phrase_program(
 @router.get("/phrase-programs/{program_id}/study")
 def get_phrase_study_session(
     program_id: int,
+    chapter: Optional[int] = None,
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
@@ -545,9 +606,10 @@ def get_phrase_study_session(
     if not enrollment:
         raise HTTPException(status_code=403, detail="Not enrolled in this program")
 
-    all_phrases = session.exec(
-        select(Phrase).where(Phrase.program_id == program_id).order_by(Phrase.position)
-    ).all()
+    phrase_query = select(Phrase).where(Phrase.program_id == program_id)
+    if chapter is not None:
+        phrase_query = phrase_query.where(Phrase.chapter == chapter)
+    all_phrases = session.exec(phrase_query.order_by(Phrase.position)).all()
     if not all_phrases:
         raise HTTPException(status_code=404, detail="No phrases in this program")
 
@@ -606,6 +668,93 @@ def get_phrase_study_session(
         # Build MCQ distractors (3 words different from blank_word)
         mcq_distractors = [w for w in distractor_pool if w.lower() != blank_word.lower()][:3]
 
+        result.append({
+            "id": phrase.id,
+            "text": phrase.text,
+            "translation": phrase.translation,
+            "translation_en": phrase.translation_en,
+            "lesson_stage": lesson_stage,
+            "blank_word": blank_word,
+            "mcq_distractors": mcq_distractors,
+            "next_review": prog.next_review.isoformat() if prog and prog.next_review else None,
+        })
+
+    return {"phrases": result}
+
+
+# ── Cross-program review ─────────────────────────────────────────────────────
+
+@router.get("/phrases/review")
+def get_phrase_review_session(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return due phrases across ALL enrolled programs for a review session.
+
+    Collects phrases where next_review <= today (or in-progress) from every
+    enrolled program, up to user.phrases_per_session total.
+    """
+    user = _require_user(authorization, session)
+
+    enrollments = session.exec(
+        select(UserPhraseProgramEnrollment).where(
+            UserPhraseProgramEnrollment.user_id == user.id
+        )
+    ).all()
+    if not enrollments:
+        raise HTTPException(status_code=404, detail="Not enrolled in any program")
+
+    program_ids = [e.program_id for e in enrollments]
+    all_phrases = session.exec(
+        select(Phrase)
+        .where(col(Phrase.program_id).in_(program_ids))
+        .order_by(Phrase.position)
+    ).all()
+
+    phrase_ids = [p.id for p in all_phrases]
+    progress_rows = session.exec(
+        select(UserPhraseProgress).where(
+            UserPhraseProgress.user_id == user.id,
+            col(UserPhraseProgress.phrase_id).in_(phrase_ids),
+        )
+    ).all()
+    progress_map = {r.phrase_id: r for r in progress_rows}
+
+    today = date.today()
+    total = user.phrases_per_session if user.phrases_per_session else DEFAULT_PHRASES_PER_SESSION
+
+    due_phrases = []
+    for phrase in all_phrases:
+        prog = progress_map.get(phrase.id)
+        if prog is None:
+            continue  # review only: skip unseen phrases
+        if prog.next_review is not None and prog.next_review <= today:
+            due_phrases.append(phrase)
+        elif prog.lesson_stage < 2:
+            due_phrases.append(phrase)
+
+    if not due_phrases:
+        raise HTTPException(status_code=404, detail="No phrases due for review")
+
+    session_phrases = due_phrases[:total]
+
+    # Build distractors from all phrases not in session
+    session_ids = {p.id for p in session_phrases}
+    other_words: list[str] = []
+    for phrase in all_phrases:
+        if phrase.id not in session_ids:
+            words = [w.strip(".,!?;:'\"()") for w in phrase.text.split() if len(w.strip(".,!?;:'\"()")) > 1]
+            other_words.extend(words)
+    random.shuffle(other_words)
+    distractor_pool = list(dict.fromkeys(other_words))
+
+    result = []
+    for phrase in session_phrases:
+        prog = progress_map.get(phrase.id)
+        lesson_stage = prog.lesson_stage if prog else 0
+        mistake_words_json = prog.mistake_words_json if prog else "{}"
+        blank_word = _pick_blank_word(phrase.text, mistake_words_json)
+        mcq_distractors = [w for w in distractor_pool if w.lower() != blank_word.lower()][:3]
         result.append({
             "id": phrase.id,
             "text": phrase.text,
