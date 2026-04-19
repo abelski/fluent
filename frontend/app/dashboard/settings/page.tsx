@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken, getSettings, updateSettings, type UserSettings } from '../../../lib/api';
+import { getToken, getSettings, updateSettings, getPhrasesSettings, updatePhrasesSettings, type UserSettings } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
 type Complexity = 'easy' | 'medium' | 'hard';
-type Tab = 'vocabulary' | 'grammar' | 'practice' | 'other';
+type Tab = 'vocabulary' | 'grammar' | 'practice' | 'phrases' | 'other';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -18,6 +18,9 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [phrasesPerSession, setPhrasesPerSession] = useState(10);
+  const [phrasesSaving, setPhrasesSaving] = useState(false);
+  const [phrasesSaved, setPhrasesSaved] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -28,11 +31,28 @@ export default function SettingsPage() {
     if (stored === 'easy' || stored === 'medium' || stored === 'hard') {
       setComplexity(stored);
     }
-    getSettings()
-      .then(setSettings)
+    Promise.all([
+      getSettings(),
+      getPhrasesSettings(),
+    ])
+      .then(([s, ps]) => { setSettings(s); setPhrasesPerSession(ps.phrases_per_session); })
       .catch(() => setError('Не удалось загрузить настройки'))
       .finally(() => setLoading(false));
   }, [router]);
+
+  async function handlePhrasesSave() {
+    setPhrasesSaving(true);
+    setPhrasesSaved(false);
+    try {
+      await updatePhrasesSettings(phrasesPerSession);
+      setPhrasesSaved(true);
+      setTimeout(() => setPhrasesSaved(false), 3000);
+    } catch {
+      setError('Не удалось сохранить настройки фраз');
+    } finally {
+      setPhrasesSaving(false);
+    }
+  }
 
   function handleComplexityChange(value: Complexity) {
     setComplexity(value);
@@ -64,6 +84,7 @@ export default function SettingsPage() {
     { key: 'vocabulary', label: tr.settings.tabVocabulary },
     { key: 'grammar', label: tr.settings.tabGrammar },
     { key: 'practice', label: tr.settings.tabPractice },
+    { key: 'phrases', label: 'Фразы' },
     { key: 'other', label: tr.settings.tabOther },
   ];
 
@@ -284,6 +305,44 @@ export default function SettingsPage() {
               className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
             >
               {saving ? '...' : tr.settings.saveButton}
+            </button>
+          </div>
+        ) : activeTab === 'phrases' ? (
+          <div className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-8">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                Фраз за сессию
+              </label>
+              <p className="text-xs text-gray-400 mb-3">Сколько фраз показывать в одной сессии изучения</p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={3}
+                  max={30}
+                  step={1}
+                  value={phrasesPerSession}
+                  onChange={(e) => setPhrasesPerSession(parseInt(e.target.value, 10))}
+                  data-testid="phrases-session-size-slider"
+                  className="flex-1 accent-emerald-600"
+                />
+                <span className="w-8 text-center font-semibold text-gray-900 tabular-nums">
+                  {phrasesPerSession}
+                </span>
+              </div>
+            </div>
+
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+
+            {phrasesSaved && (
+              <p className="text-emerald-600 text-sm font-medium">{tr.settings.savedMessage}</p>
+            )}
+
+            <button
+              onClick={handlePhrasesSave}
+              disabled={phrasesSaving}
+              className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
+            >
+              {phrasesSaving ? '...' : tr.settings.saveButton}
             </button>
           </div>
         ) : activeTab === 'other' ? (

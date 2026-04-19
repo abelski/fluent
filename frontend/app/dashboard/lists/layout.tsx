@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Словари литовского языка по уровням',
+  title: 'Слова литовского языка по уровням',
   description: 'Тематические словари литовского языка по уровням CEFR: A1, A2, B1. Учите слова с умным повторением и отслеживайте прогресс.',
   alternates: { canonical: 'https://fluent.lt/dashboard/lists/' },
 };

@@ -33,6 +33,7 @@ class User(SQLModel, table=True):
     use_question_timer: bool = Field(default=False)  # per-question countdown
     question_timer_seconds: int = Field(default=5)   # countdown duration in seconds (5–30)
     email_consent: bool = Field(default=True)         # user has consented to receive emails
+    phrases_per_session: int = Field(default=10)      # total phrases per phrase study session
 
 
 class WordList(SQLModel, table=True):
@@ -382,3 +383,72 @@ class UserCustomProgramEnrollment(SQLModel, table=True):
     user_id: str = Field(foreign_key="user.id", index=True)
     custom_program_id: int = Field(foreign_key="custom_program.id", index=True)
     enrolled_at: datetime = Field(default_factory=_utcnow)
+
+
+# ── Phrases feature ──────────────────────────────────────────────────────────
+
+class PhraseProgram(SQLModel, table=True):
+    """A curated collection of Lithuanian phrases for learners.
+    Admin-created programs (e.g. 'Tourist Basics'). Users enroll to study them."""
+    __tablename__ = "phrase_program"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str                                  # Russian title (primary)
+    title_en: Optional[str] = None              # English title
+    description: Optional[str] = None           # Russian description
+    description_en: Optional[str] = None        # English description
+    difficulty: int = Field(default=1)          # 1=easy, 2=medium, 3=hard
+    is_public: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class Phrase(SQLModel, table=True):
+    """A single Lithuanian phrase belonging to a PhraseProgram.
+    text is the full Lithuanian phrase; translation is the Russian translation."""
+    __tablename__ = "phrase"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    program_id: int = Field(foreign_key="phrase_program.id", index=True)
+    text: str                           # Lithuanian phrase, e.g. "Labas rytas!"
+    translation: str                    # Russian translation, e.g. "Доброе утро!"
+    translation_en: Optional[str] = None  # English translation, e.g. "Good morning!"
+    position: int = Field(default=0)    # display order within program
+    chapter: Optional[int] = None       # chapter number within the program (e.g. 1-9)
+    chapter_title: Optional[str] = None  # chapter label, e.g. "Koks jūsų vardas?"
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class UserPhraseProgramEnrollment(SQLModel, table=True):
+    """Tracks which phrase programs a user has enrolled in."""
+    __tablename__ = "user_phrase_program_enrollment"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    program_id: int = Field(foreign_key="phrase_program.id", index=True)
+    enrolled_at: datetime = Field(default_factory=_utcnow)
+
+
+import json as _json
+
+
+class UserPhraseProgress(SQLModel, table=True):
+    """Tracks a user's progress on a specific phrase across lesson stages.
+
+    Lesson stages:
+      0 = new (unseen) — show full phrase + translation
+      1 = fill-word   — blank one word, user selects then types it
+      2 = type-full   — user types the entire phrase from translation only
+
+    SM-2 spaced repetition fields mirror UserWordProgress.
+    mistake_words_json stores a JSON dict mapping word → mistake count,
+    used to select the 'hardest' word to blank in stage 1."""
+    __tablename__ = "user_phrase_progress"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    phrase_id: int = Field(foreign_key="phrase.id", index=True)
+    lesson_stage: int = Field(default=0)        # 0=new, 1=fill-word, 2=type-full
+    mistake_count: int = Field(default=0)
+    mistake_words_json: str = Field(default="{}")  # JSON: {word: count}
+    last_seen: datetime = Field(default_factory=_utcnow)
+    # SM-2 fields
+    sm2_reps: int = Field(default=0)
+    ease_factor: float = Field(default=2.5)
+    interval: int = Field(default=0)
+    next_review: Optional[date] = Field(default=None)

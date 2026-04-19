@@ -83,6 +83,7 @@ export default function Header() {
   }
 
   const listsActive = pathname.startsWith('/dashboard/lists') || pathname === '/dashboard';
+  const phrasesActive = pathname.startsWith('/dashboard/phrases');
   const grammarActive = pathname.startsWith('/dashboard/grammar');
   const practiceActive = pathname.startsWith('/dashboard/practice');
   const articlesActive = pathname.startsWith('/dashboard/articles');
@@ -96,6 +97,14 @@ export default function Header() {
         }`}
       >
         {tr.nav.dictionaries}
+      </Link>
+      <Link
+        href="/dashboard/phrases"
+        className={`px-3 py-2.5 rounded-full text-sm font-medium transition-colors ${
+          phrasesActive ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-emerald-600'
+        }`}
+      >
+        Фразы
       </Link>
       <Link
         href="/dashboard/grammar"

@@ -19,18 +19,18 @@ test.describe('Navigation', () => {
     await expect(page.locator('text=fluent').first()).toBeVisible();
   });
 
-  test('nav shows Словари, Грамматика, Практика', async ({ page }) => {
+  test('nav shows Слова, Грамматика, Практика', async ({ page }) => {
     await setFakeToken(page);
     await page.goto('/dashboard/lists');
-    await expect(page.getByRole('link', { name: 'Словари' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Слова' })).toBeVisible();
     await expect(page.getByRole('link', { name: /Грамматика/ })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Практика' })).toBeVisible();
   });
 
-  test('Словари link is active on /dashboard/lists', async ({ page }) => {
+  test('Слова link is active on /dashboard/lists', async ({ page }) => {
     await setFakeToken(page);
     await page.goto('/dashboard/lists');
-    const link = page.getByRole('link', { name: 'Словари' });
+    const link = page.getByRole('link', { name: 'Слова' });
     await expect(link).toHaveClass(/bg-white/);
   });
 

@@ -182,7 +182,7 @@ const BLANK_NEWS: Omit<NewsRow, 'id'> = {
 
 type Area = 'admin' | 'content';
 type AdminSubTab = 'users' | 'reports' | 'feedback';
-type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'practice' | 'news' | 'settings';
+type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'practice' | 'news' | 'settings' | 'phrases';
 
 interface CefrThresholdRow { level: string; threshold: number; }
 
@@ -502,6 +502,78 @@ export default function AdminPage() {
   const [cefrLoaded, setCefrLoaded] = useState(false);
   const [cefrSaving, setCefrSaving] = useState(false);
   const [cefrMsg, setCefrMsg] = useState('');
+
+  // Phrase programs admin
+  interface AdminPhraseProgram { id: number; title: string; title_en: string | null; description: string | null; description_en: string | null; difficulty: number; is_public: boolean; phrase_count: number; enrolled_count: number; }
+  interface AdminPhrase { id: number; text: string; translation: string; translation_en: string | null; position: number; chapter?: number | null; chapter_title?: string | null; }
+  const [phrasePrograms, setPhrasePrograms] = useState<AdminPhraseProgram[]>([]);
+  const [phraseProgramsLoaded, setPhraseProgramsLoaded] = useState(false);
+  const [expandedPhraseProgram, setExpandedPhraseProgram] = useState<number | null>(null);
+  const [phrasesMap, setPhrasesMap] = useState<Record<number, AdminPhrase[]>>({});
+  const [addingPhraseProgram, setAddingPhraseProgram] = useState(false);
+  const [editingPhraseProgram, setEditingPhraseProgram] = useState<AdminPhraseProgram | null>(null);
+  const [phraseProgramDraft, setPhraseProgramDraft] = useState({ title: '', title_en: '', description: '', description_en: '', difficulty: 1, is_public: true });
+  const [phraseProgramSaving, setPhraseProgramSaving] = useState(false);
+  const [addingPhrase, setAddingPhrase] = useState<number | null>(null);  // program id being added to
+  const [editingPhrase, setEditingPhrase] = useState<AdminPhrase | null>(null);
+  const [phraseDraft, setPhraseDraft] = useState({ text: '', translation: '', translation_en: '', position: 0 });
+  const [phraseSaving, setPhraseSaving] = useState(false);
+
+  async function loadPhrasePrograms() {
+    const token = getToken();
+    const r = await fetch(`${BACKEND_URL}/api/admin/phrase-programs`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (r.ok) { setPhrasePrograms(await r.json()); setPhraseProgramsLoaded(true); }
+  }
+
+  async function loadPhrasesForProgram(programId: number) {
+    const token = getToken();
+    const r = await fetch(`${BACKEND_URL}/api/admin/phrase-programs/${programId}/phrases`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (r.ok) { const data = await r.json(); setPhrasesMap((prev) => ({ ...prev, [programId]: data })); }
+  }
+
+  async function savePhraseProgram() {
+    setPhraseProgramSaving(true);
+    const token = getToken();
+    try {
+      if (editingPhraseProgram) {
+        await fetch(`${BACKEND_URL}/api/admin/phrase-programs/${editingPhraseProgram.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(phraseProgramDraft) });
+      } else {
+        await fetch(`${BACKEND_URL}/api/admin/phrase-programs`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(phraseProgramDraft) });
+      }
+      setAddingPhraseProgram(false);
+      setEditingPhraseProgram(null);
+      await loadPhrasePrograms();
+    } finally { setPhraseProgramSaving(false); }
+  }
+
+  async function deletePhraseProgram(id: number) {
+    if (!confirm('Удалить программу и все её фразы?')) return;
+    const token = getToken();
+    await fetch(`${BACKEND_URL}/api/admin/phrase-programs/${id}`, { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    await loadPhrasePrograms();
+  }
+
+  async function savePhrase(programId: number) {
+    setPhraseSaving(true);
+    const token = getToken();
+    try {
+      if (editingPhrase) {
+        await fetch(`${BACKEND_URL}/api/admin/phrases/${editingPhrase.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(phraseDraft) });
+        setEditingPhrase(null);
+      } else {
+        await fetch(`${BACKEND_URL}/api/admin/phrase-programs/${programId}/phrases`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(phraseDraft) });
+        setAddingPhrase(null);
+      }
+      await loadPhrasesForProgram(programId);
+    } finally { setPhraseSaving(false); }
+  }
+
+  async function deletePhrase(phraseId: number, programId: number) {
+    if (!confirm('Удалить фразу?')) return;
+    const token = getToken();
+    await fetch(`${BACKEND_URL}/api/admin/phrases/${phraseId}`, { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    await loadPhrasesForProgram(programId);
+  }
 
   // Report filter
   type ReportFilter = 'open' | 'onhold' | 'resolved' | 'all';
@@ -1350,7 +1422,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               onClick={() => setContentTab('vocabularies')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'vocabularies' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
-              Словари
+              Слова
             </button>
             <button
               onClick={() => router.push('/dashboard/admin/grammar')}
@@ -1375,6 +1447,12 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'settings' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
               Настройки
+            </button>
+            <button
+              onClick={() => { setContentTab('phrases'); if (!phraseProgramsLoaded) loadPhrasePrograms(); }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'phrases' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              Фразы
             </button>
           </div>
         )}
@@ -2621,6 +2699,132 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Phrase Programs ── */}
+        {area === 'content' && contentTab === 'phrases' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-gray-900">Программы фраз</h2>
+              <button
+                onClick={() => { setAddingPhraseProgram(true); setEditingPhraseProgram(null); setPhraseProgramDraft({ title: '', title_en: '', description: '', description_en: '', difficulty: 1, is_public: true }); }}
+                className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+              >
+                + Добавить программу
+              </button>
+            </div>
+
+            {(addingPhraseProgram || editingPhraseProgram) && (
+              <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4 space-y-3">
+                <h3 className="font-medium text-gray-900 text-sm">{editingPhraseProgram ? 'Редактировать программу' : 'Новая программа'}</h3>
+                <input value={phraseProgramDraft.title} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, title: e.target.value }))} placeholder="Название (RU)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                <input value={phraseProgramDraft.title_en} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, title_en: e.target.value }))} placeholder="Название (EN)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                <input value={phraseProgramDraft.description} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, description: e.target.value }))} placeholder="Описание (RU)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                <input value={phraseProgramDraft.description_en} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, description_en: e.target.value }))} placeholder="Описание (EN)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                <div className="flex items-center gap-4">
+                  <label className="text-sm text-gray-600">Сложность:</label>
+                  {[1, 2, 3].map((d) => (
+                    <button key={d} onClick={() => setPhraseProgramDraft((prev) => ({ ...prev, difficulty: d }))} className={`px-3 py-1 rounded-lg text-sm font-medium border transition-colors ${phraseProgramDraft.difficulty === d ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}>{d}</button>
+                  ))}
+                  <label className="flex items-center gap-2 text-sm text-gray-600 ml-4">
+                    <input type="checkbox" checked={phraseProgramDraft.is_public} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, is_public: e.target.checked }))} />
+                    Публичная
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={savePhraseProgram} disabled={phraseProgramSaving} className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+                    {phraseProgramSaving ? 'Сохранение…' : 'Сохранить'}
+                  </button>
+                  <button onClick={() => { setAddingPhraseProgram(false); setEditingPhraseProgram(null); }} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">Отмена</button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {phrasePrograms.map((prog) => (
+                <div key={prog.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div>
+                      <span className="font-medium text-gray-900 text-sm">{prog.title}</span>
+                      <span className="ml-2 text-xs text-gray-400">{prog.phrase_count} фраз · {prog.enrolled_count} пользователей</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          if (expandedPhraseProgram === prog.id) { setExpandedPhraseProgram(null); }
+                          else { setExpandedPhraseProgram(prog.id); if (!phrasesMap[prog.id]) loadPhrasesForProgram(prog.id); }
+                        }}
+                        className="text-xs text-gray-500 hover:text-gray-900 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        {expandedPhraseProgram === prog.id ? 'Свернуть' : 'Фразы'}
+                      </button>
+                      <button
+                        onClick={() => { setEditingPhraseProgram(prog); setAddingPhraseProgram(false); setPhraseProgramDraft({ title: prog.title, title_en: prog.title_en ?? '', description: prog.description ?? '', description_en: prog.description_en ?? '', difficulty: prog.difficulty, is_public: prog.is_public }); }}
+                        className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
+                      >
+                        Редактировать
+                      </button>
+                      <button onClick={() => deletePhraseProgram(prog.id)} className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+
+                  {expandedPhraseProgram === prog.id && (
+                    <div className="border-t border-gray-100 px-4 pb-4 pt-3">
+                      <div className="space-y-2 mb-3">
+                        {(phrasesMap[prog.id] ?? []).map((phrase) => (
+                          <div key={phrase.id} className="flex items-start justify-between gap-3 bg-gray-50 rounded-xl px-3 py-2">
+                            {editingPhrase?.id === phrase.id ? (
+                              <div className="flex-1 space-y-2">
+                                <input value={phraseDraft.text} onChange={(e) => setPhraseDraft((d) => ({ ...d, text: e.target.value }))} placeholder="Литовский текст" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                                <input value={phraseDraft.translation} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation: e.target.value }))} placeholder="Перевод (RU)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                                <input value={phraseDraft.translation_en} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation_en: e.target.value }))} placeholder="Translation (EN)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                                <div className="flex gap-2">
+                                  <button onClick={() => savePhrase(prog.id)} disabled={phraseSaving} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium disabled:opacity-50">Сохранить</button>
+                                  <button onClick={() => setEditingPhrase(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">Отмена</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-900">{phrase.text}</p>
+                                  <p className="text-xs text-gray-400">{phrase.translation}{phrase.translation_en ? ` · ${phrase.translation_en}` : ''}</p>
+                                </div>
+                                <div className="flex gap-1 shrink-0">
+                                  <button onClick={() => { setEditingPhrase(phrase); setPhraseDraft({ text: phrase.text, translation: phrase.translation, translation_en: phrase.translation_en ?? '', position: phrase.position }); }} className="text-xs text-blue-500 hover:text-blue-700 px-2 py-0.5 rounded hover:bg-blue-50">✏️</button>
+                                  <button onClick={() => deletePhrase(phrase.id, prog.id)} className="text-xs text-red-400 hover:text-red-600 px-2 py-0.5 rounded hover:bg-red-50">✕</button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {addingPhrase === prog.id ? (
+                        <div className="bg-gray-50 rounded-xl px-3 py-2 space-y-2">
+                          <input value={phraseDraft.text} onChange={(e) => setPhraseDraft((d) => ({ ...d, text: e.target.value }))} placeholder="Литовский текст" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                          <input value={phraseDraft.translation} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation: e.target.value }))} placeholder="Перевод (RU)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                          <input value={phraseDraft.translation_en} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation_en: e.target.value }))} placeholder="Translation (EN)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                          <div className="flex gap-2">
+                            <button onClick={() => savePhrase(prog.id)} disabled={phraseSaving} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium disabled:opacity-50">Добавить</button>
+                            <button onClick={() => setAddingPhrase(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">Отмена</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button onClick={() => { setAddingPhrase(prog.id); setPhraseDraft({ text: '', translation: '', translation_en: '', position: (phrasesMap[prog.id]?.length ?? 0) }); }} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">
+                          + Добавить фразу
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {phraseProgramsLoaded && phrasePrograms.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-6">Нет программ фраз.</p>
+              )}
             </div>
           </div>
         )}
