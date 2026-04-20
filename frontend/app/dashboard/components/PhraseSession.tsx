@@ -20,7 +20,7 @@
  *  - Live mistake counter in header
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { recordPhraseProgress, getSettings, type PhraseStudyItem } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
