@@ -27,7 +27,7 @@ from routers.news import router as news_router
 from routers.custom_programs import router as custom_programs_router
 from routers.phrases import router as phrases_router
 from database import create_db_and_tables, get_session
-from models import WordList, Article, SubcategoryMeta, AppSetting
+from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram
 from data.grammar.lessons import LESSON_CONFIG
 
 # Resolve the static export directory relative to this file so the path works
@@ -128,6 +128,7 @@ def sitemap(session: Session = Depends(get_session)):
         (f"{base}/dashboard/lists/", "0.8", "weekly"),
         (f"{base}/dashboard/articles/", "0.8", "weekly"),
         (f"{base}/programs/", "0.8", "weekly"),
+        (f"{base}/dashboard/phrases/", "0.8", "weekly"),
     ]
 
     urls = []
@@ -163,6 +164,19 @@ def sitemap(session: Session = Depends(get_session)):
             f"  <url>\n"
             f"    <loc>{base}/programs/{program.key}/</loc>\n"
             f"    <priority>0.7</priority>\n"
+            f"    <changefreq>weekly</changefreq>\n"
+            f"  </url>"
+        )
+
+    # Phrase program detail pages — one per public program
+    phrase_programs = session.exec(
+        select(PhraseProgram).where(PhraseProgram.is_public == True)  # noqa: E712
+    ).all()
+    for pp in phrase_programs:
+        urls.append(
+            f"  <url>\n"
+            f"    <loc>{base}/dashboard/phrases/{pp.id}/</loc>\n"
+            f"    <priority>0.6</priority>\n"
             f"    <changefreq>weekly</changefreq>\n"
             f"  </url>"
         )
