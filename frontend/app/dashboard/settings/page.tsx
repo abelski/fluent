@@ -43,8 +43,12 @@ export default function SettingsPage() {
   async function handlePhrasesSave() {
     setPhrasesSaving(true);
     setPhrasesSaved(false);
+    setError('');
     try {
-      await updatePhrasesSettings(phrasesPerSession);
+      await Promise.all([
+        updatePhrasesSettings(phrasesPerSession),
+        updateSettings(settings),
+      ]);
       setPhrasesSaved(true);
       setTimeout(() => setPhrasesSaved(false), 3000);
     } catch {
@@ -309,6 +313,8 @@ export default function SettingsPage() {
           </div>
         ) : activeTab === 'phrases' ? (
           <div className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-8">
+
+            {/* Phrases per session */}
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">
                 Фраз за сессию
@@ -329,6 +335,103 @@ export default function SettingsPage() {
                   {phrasesPerSession}
                 </span>
               </div>
+            </div>
+
+            {/* Complexity selector */}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                {tr.settings.complexityLabel}
+              </label>
+              <p className="text-xs text-gray-400 mb-3">{tr.settings.complexityHint}</p>
+              <div className="flex items-center gap-3 mb-2">
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={1}
+                  value={complexity === 'easy' ? 1 : complexity === 'medium' ? 2 : 3}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    handleComplexityChange(val === 1 ? 'easy' : val === 2 ? 'medium' : 'hard');
+                  }}
+                  className="flex-1 accent-emerald-600"
+                />
+                <span className="w-16 text-right text-sm font-semibold text-gray-900">
+                  {tr.settings[`complexity${complexity.charAt(0).toUpperCase()}${complexity.slice(1)}` as 'complexityEasy' | 'complexityMedium' | 'complexityHard']}
+                </span>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 flex flex-col gap-2 text-sm">
+                <div className="flex gap-2">
+                  <span className="text-gray-400 shrink-0">📌</span>
+                  <span className="text-gray-700">
+                    {tr.settings[`complexity${complexity.charAt(0).toUpperCase()}${complexity.slice(1)}Kf` as 'complexityEasyKf' | 'complexityMediumKf' | 'complexityHardKf']}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-gray-400 shrink-0">💡</span>
+                  <span className="text-gray-500 italic">
+                    {tr.settings[`complexity${complexity.charAt(0).toUpperCase()}${complexity.slice(1)}Tk` as 'complexityEasyTk' | 'complexityMediumTk' | 'complexityHardTk']}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Lesson mode */}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                {tr.settings.lessonModeLabel}
+              </label>
+              <div className="flex items-center gap-3 mb-2">
+                <input
+                  type="range"
+                  min={1}
+                  max={2}
+                  step={1}
+                  value={settings.lesson_mode === 'thorough' ? 1 : 2}
+                  onChange={(e) => setSettings((prev) => ({ ...prev, lesson_mode: parseInt(e.target.value, 10) === 1 ? 'thorough' : 'quick' }))}
+                  className="flex-1 accent-emerald-600"
+                />
+                <span className="w-20 text-right text-sm font-semibold text-gray-900">
+                  {settings.lesson_mode === 'thorough' ? tr.settings.lessonModeThoroughLabel : tr.settings.lessonModeQuickLabel}
+                </span>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                {settings.lesson_mode === 'thorough' ? tr.settings.lessonModeThoroughInfo : tr.settings.lessonModeQuickInfo}
+              </div>
+            </div>
+
+            {/* Question timer */}
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={settings.use_question_timer}
+                  onChange={(e) => setSettings((prev) => ({ ...prev, use_question_timer: e.target.checked }))}
+                  className="w-4 h-4 accent-emerald-600"
+                />
+                <span className="text-sm font-medium text-gray-900">{tr.settings.timerLabel}</span>
+              </label>
+
+              {settings.use_question_timer && (
+                <div>
+                  <label className="block text-xs text-gray-500 mb-2">
+                    {tr.settings.timerSecondsLabel}: <span className="font-semibold text-gray-900">{settings.question_timer_seconds}</span> с
+                  </label>
+                  <input
+                    type="range"
+                    min={5}
+                    max={30}
+                    step={1}
+                    value={settings.question_timer_seconds}
+                    onChange={(e) => setSettings((prev) => ({ ...prev, question_timer_seconds: parseInt(e.target.value, 10) }))}
+                    className="w-full accent-emerald-600"
+                  />
+                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                    <span>5 с</span>
+                    <span>30 с</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {error && <p className="text-red-600 text-sm">{error}</p>}

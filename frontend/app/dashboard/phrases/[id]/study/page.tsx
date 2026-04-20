@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getToken, getPhrasesStudy, resolvePhraseId, type PhraseStudyItem } from '../../../../../lib/api';
 import PhraseSession from '../../../components/PhraseSession';
 
-export default function PhrasesStudyPage() {
+function PhrasesStudyContent() {
   const { id: _id } = useParams<{ id: string }>();
   const id = resolvePhraseId(_id);
   const router = useRouter();
@@ -80,5 +80,17 @@ export default function PhrasesStudyPage() {
       backHref={backHref}
       onRepeat={loadPhrases}
     />
+  );
+}
+
+export default function PhrasesStudyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <PhrasesStudyContent />
+    </Suspense>
   );
 }
