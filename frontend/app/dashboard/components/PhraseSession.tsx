@@ -164,6 +164,14 @@ export default function PhraseSession({
   const current = queue[currentIdx];
   const stage   = current?.phrase.lesson_stage;
 
+  // Memoize MCQ options so they don't reshuffle on every re-render (e.g. timer ticks)
+  const mcqOptions = useMemo(() => {
+    if (!current || current.phrase.lesson_stage !== 1) return [];
+    return buildMcqOptions(current.phrase.blank_word, current.phrase.mcq_distractors);
+  // Recompute only when the card changes, not on every render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIdx]);
+
   // Timer: start/reset on each new card (skip stage 0 intro, same as QuizSession skipping stage 1)
   useEffect(() => {
     if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
@@ -494,7 +502,7 @@ export default function PhraseSession({
     const { before, after } = buildBlankedPhrase(phrase.text, phrase.blank_word);
 
     if (stage1Step === 'mcq') {
-      const options = buildMcqOptions(phrase.blank_word, phrase.mcq_distractors);
+      const options = mcqOptions;
 
       const handleMcqSelect = (word: string) => {
         if (mcqResult) return;
