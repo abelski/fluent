@@ -104,8 +104,20 @@ export default function ArticleContent({ initialArticle }: { initialArticle: Art
           prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline
           prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-code:text-sm
           prose-blockquote:border-l-emerald-500 prose-blockquote:text-gray-500
-          prose-hr:border-gray-200">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
+          prose-hr:border-gray-200
+          prose-table:my-0">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              table: ({ children }) => (
+                <div className="overflow-x-auto w-full my-8">
+                  <table>{children}</table>
+                </div>
+              ),
+            }}
+          >
+            {body}
+          </ReactMarkdown>
         </article>
       </div>
     </main>
