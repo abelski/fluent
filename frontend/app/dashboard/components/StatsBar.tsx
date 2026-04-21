@@ -14,22 +14,38 @@ interface Stats {
   phrases_due_review: number;
 }
 
-const VOCAB_MILESTONES = [10, 25, 50, 100, 200, 500, 1000];
+interface CefrLevel { level: string; threshold: number; }
 
-function nextMilestone(value: number, milestones: number[]): number | null {
-  return milestones.find((m) => m > value) ?? null;
-}
+const CEFR_LEVELS_DEFAULT: CefrLevel[] = [
+  { level: '0',  threshold: 0 },
+  { level: 'A1', threshold: 500 },
+  { level: 'A2', threshold: 1000 },
+  { level: 'B1', threshold: 2000 },
+  { level: 'B2', threshold: 4000 },
+  { level: 'C1', threshold: 8000 },
+  { level: 'C2', threshold: 16000 },
+];
 
-function milestoneProgress(value: number, milestones: number[]): number {
-  const next = nextMilestone(value, milestones);
-  if (!next) return 100;
-  const prev = [...milestones].reverse().find((m) => m <= value) ?? 0;
-  return Math.round(((value - prev) / (next - prev)) * 100);
+function getCefrProgress(known: number, levels: CefrLevel[]) {
+  for (let i = 1; i < levels.length; i++) {
+    if (known < levels[i].threshold) {
+      return {
+        currentLevel: levels[i - 1].level,
+        nextLevel: levels[i].level,
+        prev: levels[i - 1].threshold,
+        next: levels[i].threshold,
+        pct: Math.round(((known - levels[i - 1].threshold) / (levels[i].threshold - levels[i - 1].threshold)) * 100),
+      };
+    }
+  }
+  const last = levels[levels.length - 1];
+  return { currentLevel: last.level, nextLevel: null as string | null, prev: 0, next: 0, pct: 100 };
 }
 
 export default function StatsBar() {
   const { tr } = useT();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [cefrLevels, setCefrLevels] = useState<CefrLevel[]>(CEFR_LEVELS_DEFAULT);
 
   const fetchStats = () => {
     const token = getToken();
@@ -53,6 +69,10 @@ export default function StatsBar() {
   };
 
   useEffect(() => {
+    fetch(`${BACKEND_URL}/api/admin/settings/cefr-thresholds`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (Array.isArray(data) && data.length) setCefrLevels(data); })
+      .catch(() => {});
     fetchStats();
     const onVisible = () => { if (document.visibilityState === 'visible') fetchStats(); };
     document.addEventListener('visibilitychange', onVisible);
@@ -62,8 +82,7 @@ export default function StatsBar() {
 
   if (!stats) return null;
 
-  const vocabNext = nextMilestone(stats.known, VOCAB_MILESTONES);
-  const vocabPct = milestoneProgress(stats.known, VOCAB_MILESTONES);
+  const { currentLevel, nextLevel, next: cefrNext, pct: vocabPct } = getCefrProgress(stats.known, cefrLevels);
 
   return (
     <div className="mb-10">
@@ -76,14 +95,19 @@ export default function StatsBar() {
               📚
             </div>
             <div>
-              <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{stats.known}</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{stats.known}</p>
+                <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 whitespace-nowrap">
+                  ≈ {currentLevel === '0' ? 'A0' : currentLevel}
+                </span>
+              </div>
               <p className="text-gray-500 text-xs mt-1 font-medium">{tr.stats.wordsLearned}</p>
             </div>
           </div>
-          {vocabNext && (
+          {nextLevel && (
             <div className="text-right flex-shrink-0">
               <p className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wide">Next</p>
-              <p className="text-sm font-bold text-emerald-700">{vocabNext}</p>
+              <p className="text-sm font-bold text-emerald-700">{nextLevel}</p>
             </div>
           )}
         </div>
@@ -95,8 +119,8 @@ export default function StatsBar() {
               style={{ width: `${vocabPct}%` }}
             />
           </div>
-          {vocabNext && (
-            <p className="text-[10px] text-gray-400 mt-1">{stats.known} / {vocabNext} до следующей цели</p>
+          {nextLevel && (
+            <p className="text-[10px] text-gray-400 mt-1">{stats.known} / {cefrNext} до {nextLevel}</p>
           )}
         </div>
 

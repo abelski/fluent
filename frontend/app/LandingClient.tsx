@@ -162,32 +162,13 @@ function streakMilestoneProgress(value: number): number {
   return Math.round(((value - prev) / (next - prev)) * 100);
 }
 
-interface CefrLevel { level: string; threshold: number; }
-
-const CEFR_LEVELS_DEFAULT: CefrLevel[] = [
-  { level: '0',  threshold: 0 },
-  { level: 'A1', threshold: 500 },
-  { level: 'A2', threshold: 1000 },
-  { level: 'B1', threshold: 2000 },
-  { level: 'B2', threshold: 4000 },
-  { level: 'C1', threshold: 8000 },
-  { level: 'C2', threshold: 16000 },
-];
-
 export default function LandingClient() {
   const [stats, setStats] = useState<Stats | null>(null);
   // null = still determining auth state (token exists, waiting for API)
   // true = confirmed logged in, false = confirmed guest
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
-  const [cefrLevels, setCefrLevels] = useState<CefrLevel[]>(CEFR_LEVELS_DEFAULT);
 
   useEffect(() => {
-    // Fetch CEFR thresholds (public endpoint, no auth needed)
-    fetch(`${BACKEND_URL}/api/admin/settings/cefr-thresholds`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (Array.isArray(data) && data.length) setCefrLevels(data); })
-      .catch(() => {});
-
     const token = getToken();
     if (!token) { setLoggedIn(false); return; }
     fetch(`${BACKEND_URL}/api/me/stats`, {
@@ -202,130 +183,10 @@ export default function LandingClient() {
   }, []);
 
   if (loggedIn === null) return null; // waiting for auth check — show nothing to avoid flash
-  return loggedIn ? <UserHome stats={stats} cefrLevels={cefrLevels} /> : <GuestLanding />;
+  return loggedIn ? <UserHome stats={stats} /> : <GuestLanding />;
 }
 
-function getCefrLevel(known: number, levels: CefrLevel[]): { level: string; prev: number; next: number; nextLevel: string } {
-  // levels[i].threshold = words needed to reach levels[i].level
-  // left badge = levels[i-1].level (where you came from)
-  // right badge = levels[i].level (where you're going)
-  for (let i = 1; i < levels.length; i++) {
-    if (known < levels[i].threshold) {
-      return {
-        level: levels[i - 1].level,
-        prev: levels[i - 1].threshold,
-        next: levels[i].threshold,
-        nextLevel: levels[i].level,
-      };
-    }
-  }
-  // User has reached or exceeded the final level
-  const last = levels[levels.length - 1];
-  const secondLast = levels[levels.length - 2];
-  return { level: secondLast.level, prev: secondLast.threshold, next: last.threshold, nextLevel: last.level };
-}
-
-function StatsGauge({ stats, t, cefrLevels }: {
-  stats: Stats | null;
-  t: { cardWordsLabel: string; cardGrammarLabel: string; cardTestsLabel: string; cardStreakLabel: string };
-  cefrLevels: CefrLevel[];
-}) {
-  const known = stats?.known ?? 0;
-  const { level, prev, next, nextLevel } = getCefrLevel(known, cefrLevels);
-  const ratio = Math.min((known - prev) / (next - prev), 1);
-
-  // Speedometer arc: 240° CW from 150° (8 o'clock) to 30° (4 o'clock), gap at bottom
-  // SVG coords: angle θ → (cx + R·cos θ, cy + R·sin θ), sweep-flag=1 = CW on screen
-  const R = 72, cx = 100, cy = 90;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const sx = +(cx + R * Math.cos(toRad(150))).toFixed(1); // 37.6
-  const sy = +(cy + R * Math.sin(toRad(150))).toFixed(1); // 126
-  const ex = +(cx + R * Math.cos(toRad(30))).toFixed(1);  // 162.4
-  const ey = +(cy + R * Math.sin(toRad(30))).toFixed(1);  // 126
-  const arcLen = +(R * toRad(240)).toFixed(2); // ≈ 301.6
-  // large-arc-flag=1 (240° > 180°), sweep-flag=1 (CW)
-  const arcPath = `M ${sx},${sy} A ${R},${R} 0 1,1 ${ex},${ey}`;
-
-  const miniStats = [
-    {
-      value: stats?.grammar_lessons_passed ?? 0,
-      label: t.cardGrammarLabel,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M4 4h9a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H4V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-          <path d="M8 9h5M8 12h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-      ),
-    },
-    {
-      value: stats?.practice_exams_completed ?? 0,
-      label: t.cardTestsLabel,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <rect x="8" y="2" width="8" height="4" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-          <path d="M8 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2" stroke="currentColor" strokeWidth="1.5"/>
-          <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      ),
-    },
-    {
-      value: stats?.streak ?? 0,
-      label: t.cardStreakLabel,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M12 2c0 0-1 3.5 1 6 0 0-1-1-3-1 0 0 1 3 0 5s-1 4 3 6c0 0-1-2 0-3 0 0 1 2 3 2s4-2 4-5-3-5-3-5 1 2 0 4c0 0-2-4-2-6s-1-3-3-3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-        </svg>
-      ),
-    },
-  ];
-
-  return (
-    <div className="bg-white rounded-2xl p-5 mb-3 border border-gray-100">
-      <Link href="/dashboard/vocabulary" className="block">
-        <div className="relative">
-          <svg viewBox="0 0 200 136" className="w-full max-w-[280px] mx-auto block">
-            {/* background track */}
-            <path d={arcPath} stroke="#e5e7eb" strokeWidth="14" fill="none" strokeLinecap="round" />
-            {/* progress fill */}
-            <path
-              d={arcPath}
-              stroke="#10b981"
-              strokeWidth="14"
-              fill="none"
-              strokeLinecap="round"
-              strokeDasharray={arcLen}
-              strokeDashoffset={arcLen * (1 - ratio)}
-            />
-            {/* center: word count */}
-            <text x="100" y="82" textAnchor="middle" fontSize="38" fontWeight="700" fill="#111827">{known}</text>
-            <text x="100" y="100" textAnchor="middle" fontSize="12" fill="#9ca3af">{t.cardWordsLabel}</text>
-            {level !== nextLevel && (
-              <text x="100" y="116" textAnchor="middle" fontSize="10" fill="#10b981">{next - known} до {nextLevel}</text>
-            )}
-          </svg>
-          {/* level badges pinned to arc endpoints */}
-          <div className="flex justify-between items-center px-1 -mt-1 max-w-[280px] mx-auto">
-            <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">{level}</span>
-            {level !== nextLevel && (
-              <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">{nextLevel}</span>
-            )}
-          </div>
-        </div>
-      </Link>
-      <div className="grid grid-cols-3 divide-x divide-gray-100 border-t border-gray-100 pt-3 mt-1">
-        {miniStats.map((s) => (
-          <div key={s.label} className="flex flex-col items-center gap-1 px-2 py-2">
-            <span className="text-gray-400">{s.icon}</span>
-            <p className="text-lg font-bold text-gray-900 leading-none">{s.value}</p>
-            <p className="text-[10px] text-gray-400 leading-tight text-center">{s.label}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function UserHome({ stats, cefrLevels }: { stats: Stats | null; cefrLevels: CefrLevel[] }) {
+function UserHome({ stats }: { stats: Stats | null }) {
   const { tr, plural } = useT();
   const t = tr.landing;
 
@@ -350,11 +211,6 @@ function UserHome({ stats, cefrLevels }: { stats: Stats | null; cefrLevels: Cefr
   return (
     <main className="bg-[#F5F5F7] min-h-screen">
       <div className="max-w-2xl mx-auto px-4 py-10">
-        <h1 className="font-headline text-2xl font-bold mb-1">{t.progressTitle}</h1>
-        <p className="text-gray-500 text-sm mb-6">{t.progressSubtitle}</p>
-
-        <StatsGauge stats={stats} t={t} cefrLevels={cefrLevels} />
-
         {/* Streak card */}
         <div className="relative rounded-2xl bg-gradient-to-br from-orange-50 to-white border border-orange-100 shadow-sm overflow-hidden p-5 mb-4">
           <div className="absolute top-0 right-0 w-24 h-24 bg-orange-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
