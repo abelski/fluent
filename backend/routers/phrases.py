@@ -845,6 +845,60 @@ def update_phrase_progress(
     }
 
 
+@router.get("/me/learned-phrases")
+def get_learned_phrases(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return all phrases the user has started learning (lesson_stage >= 1),
+    ordered by next_review ASC so due phrases appear first."""
+    user = _require_user(authorization, session)
+
+    progress_rows = session.exec(
+        select(UserPhraseProgress)
+        .where(
+            UserPhraseProgress.user_id == user.id,
+            UserPhraseProgress.lesson_stage >= 2,
+        )
+        .order_by(UserPhraseProgress.next_review.asc().nulls_first())
+    ).all()
+
+    if not progress_rows:
+        return []
+
+    phrase_ids = [p.phrase_id for p in progress_rows]
+    phrases = session.exec(
+        select(Phrase).where(col(Phrase.id).in_(phrase_ids))
+    ).all()
+    phrase_map = {p.id: p for p in phrases}
+
+    program_ids = list({p.program_id for p in phrase_map.values()})
+    programs = session.exec(
+        select(PhraseProgram).where(col(PhraseProgram.id).in_(program_ids))
+    ).all()
+    program_map = {p.id: p for p in programs}
+
+    result = []
+    for prog in progress_rows:
+        phrase = phrase_map.get(prog.phrase_id)
+        if not phrase:
+            continue
+        program = program_map.get(phrase.program_id)
+        result.append({
+            "id": phrase.id,
+            "text": phrase.text,
+            "translation": phrase.translation,
+            "translation_en": phrase.translation_en,
+            "chapter": phrase.chapter,
+            "chapter_title": phrase.chapter_title,
+            "program_id": phrase.program_id,
+            "program_title": program.title if program else None,
+            "lesson_stage": prog.lesson_stage,
+            "next_review": prog.next_review.isoformat() if prog.next_review else None,
+        })
+    return result
+
+
 # ── User settings (phrases_per_session) ─────────────────────────────────────
 # Phrases-per-session is part of the main settings PATCH endpoint in words.py.
 # This endpoint exposes it for the phrases settings tab.

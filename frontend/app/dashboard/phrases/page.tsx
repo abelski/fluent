@@ -228,27 +228,31 @@ export default function PhrasesPage() {
                 <p className="text-gray-500 text-xs mt-1 font-medium">фраз выучено</p>
               </div>
             </div>
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap gap-2">
               <Link
                 href="/dashboard/phrases/review"
                 className="inline-block text-xs bg-purple-600 hover:bg-purple-700 text-white font-medium px-3 py-1.5 rounded-full transition-colors"
               >
                 Повторить фразы
               </Link>
+              <Link
+                href="/dashboard/phrases/vocabulary"
+                className="inline-block text-xs border border-purple-200 hover:bg-purple-50 text-purple-700 font-medium px-3 py-1.5 rounded-full transition-colors"
+              >
+                Все фразы →
+              </Link>
             </div>
-            {phrasesDueReview > 0 && (
-              <div className="mt-3">
-                <div className="h-1 bg-purple-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-purple-400 rounded-full transition-all duration-700"
-                    style={{ width: `${Math.min(100, (phrasesDueReview / phrasesLearned) * 100)}%` }}
-                  />
-                </div>
-                <p className="text-[10px] text-gray-400 mt-1">
-                  {phrasesDueReview} из {phrasesLearned} фраз нужно освежить
-                </p>
+            <div className="mt-3">
+              <div className="h-1 bg-purple-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-purple-400 rounded-full transition-all duration-700"
+                  style={{ width: `${Math.min(100, (phrasesDueReview / phrasesLearned) * 100)}%` }}
+                />
               </div>
-            )}
+              <p className="text-[10px] text-gray-400 mt-1">
+                {phrasesDueReview} из {phrasesLearned} фраз нужно освежить
+              </p>
+            </div>
           </div>
         )}
 
