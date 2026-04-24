@@ -7,6 +7,7 @@ from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlmodel import Session, select, col, func
 
 from database import get_session
@@ -805,6 +806,36 @@ def get_stats(
         "phrases_learned": phrases_learned,
         "phrases_due_review": phrases_due_review,
     }
+
+
+class LeaderboardEntry(BaseModel):
+    rank: int
+    picture: Optional[str]
+    score: int
+
+
+@router.get("/leaderboard", response_model=list[LeaderboardEntry])
+def get_leaderboard(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    _require_user(authorization, session)
+    rows = session.execute(
+        text("""
+            SELECT u.picture,
+                   SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
+                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) AS score
+            FROM   "user" u
+            JOIN   user_word_progress uwp ON uwp.user_id = u.id
+            GROUP  BY u.id, u.picture
+            ORDER  BY score DESC
+            LIMIT  10
+        """)
+    ).all()
+    return [
+        LeaderboardEntry(rank=i + 1, picture=row.picture, score=int(row.score))
+        for i, row in enumerate(rows)
+    ]
 
 
 @router.get("/me/known-words")

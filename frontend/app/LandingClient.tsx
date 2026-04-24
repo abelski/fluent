@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../lib/api';
 import { useT } from '../lib/useT';
+import Leaderboard from '../components/Leaderboard';
 
 interface Stats {
   known: number;
@@ -243,6 +244,8 @@ function UserHome({ stats }: { stats: Stats | null }) {
           )}
           <p className="mt-3 text-sm text-orange-700 font-medium">{motivation()}</p>
         </div>
+
+        <Leaderboard />
 
         {(() => {
           const hasStudied = (stats?.total_studied ?? 0) > 0;
