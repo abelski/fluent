@@ -30,6 +30,7 @@ const ru: Translations = {
   },
   nav: {
     dictionaries: 'Слова',
+    phrases: 'Фразы',
     grammar: 'Грамматика',
     practice: 'Практика',
     articles: 'Статьи',
@@ -37,6 +38,7 @@ const ru: Translations = {
     beta: 'Сайт находится в бета-тестировании.',
     signIn: 'Войти',
     admin: 'Администрирование',
+    createProgram: '+ Создать программу',
     settings: 'Настройки',
     signOut: 'Выйти',
     menu: 'Меню',
@@ -394,6 +396,8 @@ const ru: Translations = {
     continueCtaSub: 'Повторить слова с интервальным методом',
     continueCtaNew: 'Начать первый урок',
     continueCtaNewSub: 'Выбрать словарь и начать учить',
+    leaderboardTitle: 'Таблица лидеров',
+    leaderboardPts: 'очк.',
   },
   news: {
     sectionTitle: 'Новости',

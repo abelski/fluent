@@ -34,6 +34,7 @@ export interface Translations {
   };
   nav: {
     dictionaries: string;
+    phrases: string;
     grammar: string;
     practice: string;
     articles: string;
@@ -41,6 +42,7 @@ export interface Translations {
     beta: string;
     signIn: string;
     admin: string;
+    createProgram: string;
     settings: string;
     signOut: string;
     menu: string;
@@ -403,6 +405,8 @@ export interface Translations {
     continueCtaSub: string;
     continueCtaNew: string;
     continueCtaNewSub: string;
+    leaderboardTitle: string;
+    leaderboardPts: string;
   };
   news: {
     sectionTitle: string;

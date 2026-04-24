@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BACKEND_URL, getToken } from '../lib/api';
+import { useT } from '../lib/useT';
 
 interface Entry {
   rank: number;
@@ -34,6 +35,8 @@ function CrownIcon({ className }: { className: string }) {
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState<Entry[]>([]);
+  const { tr } = useT();
+  const t = tr.landing;
 
   useEffect(() => {
     const token = getToken();
@@ -53,7 +56,7 @@ export default function Leaderboard() {
 
   return (
     <div data-testid="leaderboard" className="bg-white rounded-2xl p-5 mb-4">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Таблица лидеров</p>
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">{t.leaderboardTitle}</p>
       <div className="flex gap-3 overflow-x-auto pb-1">
         {entries.map((entry) => {
           const isMe = currentPicture && entry.picture === currentPicture;
@@ -100,7 +103,7 @@ export default function Leaderboard() {
               <span className="text-xs font-semibold text-gray-600 tabular-nums leading-none">
                 {entry.score}
               </span>
-              <span className="text-[10px] text-gray-300 leading-none">pts</span>
+              <span className="text-[10px] text-gray-300 leading-none">{t.leaderboardPts}</span>
             </div>
           );
         })}

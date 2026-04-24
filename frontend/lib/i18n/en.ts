@@ -30,6 +30,7 @@ const en: Translations = {
   },
   nav: {
     dictionaries: 'Dictionaries',
+    phrases: 'Phrases',
     grammar: 'Grammar',
     practice: 'Practice',
     articles: 'Articles',
@@ -37,6 +38,7 @@ const en: Translations = {
     beta: 'This site is in beta.',
     signIn: 'Sign in',
     admin: 'Admin panel',
+    createProgram: '+ Create program',
     settings: 'Settings',
     signOut: 'Sign out',
     menu: 'Menu',
@@ -394,6 +396,8 @@ const en: Translations = {
     continueCtaSub: 'Spaced repetition review',
     continueCtaNew: 'Start your first lesson',
     continueCtaNewSub: 'Choose a vocabulary list',
+    leaderboardTitle: 'Leaderboard',
+    leaderboardPts: 'pts',
   },
   news: {
     sectionTitle: 'News',

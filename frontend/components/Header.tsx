@@ -104,7 +104,7 @@ export default function Header() {
           phrasesActive ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-emerald-600'
         }`}
       >
-        Фразы
+        {tr.nav.phrases}
       </Link>
       <Link
         href="/dashboard/grammar"
@@ -217,7 +217,7 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                       className="block px-4 py-3 text-sm text-purple-600 hover:text-purple-700 hover:bg-gray-50 transition-colors"
                     >
-                      + Создать программу
+                      {tr.nav.createProgram}
                     </Link>
                   )}
                   <Link
