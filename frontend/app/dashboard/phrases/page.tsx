@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   BACKEND_URL,
   getToken,
   getPhrasePrograms,
-  enrollPhraseProgram,
   unenrollPhraseProgram,
   type PhraseProgramSummary,
 } from '../../../lib/api';
@@ -50,11 +48,9 @@ const DIFFICULTY_BADGE: Record<number, string> = {
 };
 
 export default function PhrasesPage() {
-  const router = useRouter();
   const [programs, setPrograms] = useState<PhraseProgramSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [quota, setQuota] = useState<Quota | null>(null);
-  const [enrolling, setEnrolling] = useState<Set<number>>(new Set());
   const [confirmUnenroll, setConfirmUnenroll] = useState<number | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [phrasesLearned, setPhrasesLearned] = useState(0);
@@ -150,23 +146,7 @@ export default function PhrasesPage() {
     });
   }
 
-  async function handleEnroll(programId: number) {
-    if (!getToken()) { router.push('/login'); return; }
-    setEnrolling((s) => new Set(s).add(programId));
-    try {
-      await enrollPhraseProgram(programId);
-      setPrograms((prev) =>
-        prev.map((p) => (p.id === programId ? { ...p, enrolled: true } : p))
-      );
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setEnrolling((s) => { const n = new Set(s); n.delete(programId); return n; });
-    }
-  }
-
   async function handleUnenroll(programId: number) {
-    setEnrolling((s) => new Set(s).add(programId));
     try {
       await unenrollPhraseProgram(programId);
       setPrograms((prev) =>
@@ -176,7 +156,6 @@ export default function PhrasesPage() {
     } catch (e) {
       console.error(e);
     } finally {
-      setEnrolling((s) => { const n = new Set(s); n.delete(programId); return n; });
       setConfirmUnenroll(null);
     }
   }
@@ -203,7 +182,6 @@ export default function PhrasesPage() {
   }
 
   const enrolledPrograms = programs.filter((p) => p.enrolled);
-  const availablePrograms = programs.filter((p) => !p.enrolled);
 
   return (
     <main className="min-h-screen bg-[#F5F5F7] text-gray-900 flex flex-col items-center px-4 py-10" data-testid="phrases-page">
@@ -394,28 +372,27 @@ export default function PhrasesPage() {
           </div>
         )}
 
-        {/* Available programs */}
-        {availablePrograms.length > 0 && (
-          <section>
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              {enrolledPrograms.length > 0 ? 'Другие программы' : 'Доступные программы'}
-            </h2>
-            <div className="space-y-3">
-              {availablePrograms.map((p) => (
-                <ProgramCard
-                  key={p.id}
-                  program={p}
-                  limitReached={!!limitReached}
-                  enrolling={enrolling.has(p.id)}
-                  onEnroll={() => handleEnroll(p.id)}
-                />
-              ))}
-            </div>
-          </section>
+        {enrolledPrograms.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+            <p className="text-gray-500 text-lg">Вы ещё не добавили ни одной программы фраз</p>
+            <Link
+              href="/phrase-programs"
+              className="px-6 py-3 bg-emerald-600 text-white text-sm font-semibold rounded-full hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-600/20"
+            >
+              Смотреть все программы
+            </Link>
+          </div>
         )}
 
-        {programs.length === 0 && (
-          <p className="text-gray-400 text-center py-12">Программы фраз скоро появятся.</p>
+        {enrolledPrograms.length > 0 && (
+          <div className="mt-6 text-center">
+            <Link
+              href="/phrase-programs"
+              className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+            >
+              Смотреть все программы →
+            </Link>
+          </div>
         )}
       </div>
 
@@ -443,52 +420,5 @@ export default function PhrasesPage() {
         </div>
       )}
     </main>
-  );
-}
-
-function ProgramCard({
-  program,
-  limitReached,
-  enrolling,
-  onEnroll,
-}: {
-  program: PhraseProgramSummary;
-  limitReached: boolean;
-  enrolling: boolean;
-  onEnroll?: () => void;
-}) {
-  const DIFFICULTY_LABELS: Record<number, string> = { 1: 'Лёгкий', 2: 'Средний', 3: 'Сложный' };
-  const DIFFICULTY_COLORS: Record<number, string> = {
-    1: 'bg-emerald-100 text-emerald-700',
-    2: 'bg-amber-100 text-amber-700',
-    3: 'bg-red-100 text-red-700',
-  };
-
-  return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm" data-testid="phrase-program-card">
-      <div className="flex items-start justify-between gap-3">
-        <Link href={`/dashboard/phrases/${program.id}`} className="min-w-0 flex-1 group">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold text-gray-900 truncate group-hover:text-emerald-700 transition-colors">{program.title}</h3>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${DIFFICULTY_COLORS[program.difficulty] ?? 'bg-gray-100 text-gray-500'}`}>
-              {DIFFICULTY_LABELS[program.difficulty] ?? ''}
-            </span>
-          </div>
-          {program.description && (
-            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{program.description}</p>
-          )}
-          <p className="text-xs text-gray-400 mt-1">{program.phrase_count} фраз</p>
-        </Link>
-
-        <button
-          onClick={onEnroll}
-          disabled={enrolling || limitReached}
-          data-testid="enroll-button"
-          className="shrink-0 px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors disabled:opacity-50"
-        >
-          {enrolling ? '...' : 'Добавить'}
-        </button>
-      </div>
-    </div>
   );
 }

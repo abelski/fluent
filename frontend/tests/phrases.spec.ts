@@ -75,22 +75,19 @@ test.describe('Phrases — unauthenticated', () => {
 });
 
 test.describe('Phrases — program list', () => {
-  test('shows available programs when authenticated', async ({ page }) => {
+  test('shows available programs on /phrase-programs page', async ({ page }) => {
     await setFakeToken(page);
     await page.route('**/api/phrase-programs', async (route) => {
       await route.fulfill({ json: MOCK_PROGRAMS });
     });
-    await page.route('**/api/me/quota', async (route) => {
-      await route.fulfill({ json: { premium_active: false, sessions_today: 0, daily_limit: 10 } });
-    });
 
-    await page.goto('/dashboard/phrases');
+    await page.goto('/phrase-programs');
     await expect(page.getByText('Туристические фразы')).toBeVisible();
     await expect(page.getByText('25 фраз')).toBeVisible();
     await expect(page.getByTestId('enroll-button')).toBeVisible();
   });
 
-  test('enroll button calls API and shows Учить button', async ({ page }) => {
+  test('enroll button on /phrase-programs marks program as Добавлено', async ({ page }) => {
     await setFakeToken(page);
     let enrollCalled = false;
     await page.route('**/api/phrase-programs', async (route) => {
@@ -100,15 +97,12 @@ test.describe('Phrases — program list', () => {
       enrollCalled = true;
       await route.fulfill({ json: { ok: true } });
     });
-    await page.route('**/api/me/quota', async (route) => {
-      await route.fulfill({ json: { premium_active: false, sessions_today: 0, daily_limit: 10 } });
-    });
 
-    await page.goto('/dashboard/phrases');
+    await page.goto('/phrase-programs');
     await page.getByTestId('enroll-button').click();
 
-    // After enroll, Study button should appear
-    await expect(page.getByTestId('study-button')).toBeVisible({ timeout: 5000 });
+    // After enroll, the enrolled badge should appear
+    await expect(page.getByText('Добавлено')).toBeVisible({ timeout: 5000 });
   });
 
   test('shows enrolled program with stage progress bar', async ({ page }) => {
