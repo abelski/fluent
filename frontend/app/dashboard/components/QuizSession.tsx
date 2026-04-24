@@ -108,7 +108,9 @@ function optionText(word: Word, lang: Lang): string {
 }
 
 function pickDistractors(word: Word, allWords: Word[], distractorPool: Word[]): Word[] {
-  const combined = [...allWords, ...distractorPool].filter((w) => w.id !== word.id);
+  const combined = [...allWords, ...distractorPool].filter(
+    (w) => w.id !== word.id && w.translation_ru !== word.translation_ru,
+  );
   const seen = new Set<number>();
   const pool = combined.filter((w) => { if (seen.has(w.id)) return false; seen.add(w.id); return true; });
   return [...pool].sort(() => Math.random() - 0.5).slice(0, 3);

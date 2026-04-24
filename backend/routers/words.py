@@ -322,8 +322,9 @@ def get_study_words(
         session_words = all_words[:DEFAULT_SESSION_SIZE]
 
     # Fetch distractors: random words from other lists for MCQ options.
-    # Exclude words already in the session so MCQ options don't overlap with answers.
+    # Exclude words already in the session and semantic twins (same translation_ru).
     session_word_ids = {w["id"] for w in session_words}
+    session_translations_ru = {w["translation_ru"] for w in session_words if w.get("translation_ru")}
     distractor_rows = session.exec(
         select(Word)
         .join(WordListItem, WordListItem.word_id == Word.id)
@@ -331,6 +332,7 @@ def get_study_words(
             WordListItem.word_list_id != list_id,
             Word.archived == False,  # noqa: E712
             col(Word.id).not_in(list(session_word_ids)) if session_word_ids else True,
+            col(Word.translation_ru).not_in(list(session_translations_ru)) if session_translations_ru else True,
         )
         .order_by(func.random())
         .limit(12)
