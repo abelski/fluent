@@ -49,8 +49,15 @@ const MOCK_TASKS_CORRECT = [
   },
 ];
 
+const MOCK_GRAMMAR_PROGRAMS_ENROLLED = [
+  { id: 1, title: 'Литовские падежи', title_en: null, description: null, difficulty: 1, enrolled: true },
+];
+
 test.describe('Issue #25 — grammar base form: draugas vs draugė', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/grammar-programs', async (route) => {
+      await route.fulfill({ json: MOCK_GRAMMAR_PROGRAMS_ENROLLED });
+    });
     await page.route('**/api/grammar/lessons', async (route) => {
       await route.fulfill({ json: MOCK_LESSONS });
     });

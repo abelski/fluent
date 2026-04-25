@@ -570,3 +570,47 @@ export function resolvePhraseId(_id: string): string {
   }
   return _id;
 }
+
+// ── Grammar programs feature ──────────────────────────────────────────────────
+
+export interface GrammarProgramSummary {
+  id: number;
+  title: string;
+  title_en: string | null;
+  description: string | null;
+  difficulty: number;
+  enrolled: boolean;
+}
+
+export async function getGrammarPrograms(): Promise<GrammarProgramSummary[]> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/grammar-programs`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) return [];
+  return r.json();
+}
+
+export async function enrollGrammarProgram(programId: number): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/grammar-programs/${programId}`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to enroll');
+  }
+}
+
+export async function unenrollGrammarProgram(programId: number): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/grammar-programs/${programId}`, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to unenroll');
+  }
+}

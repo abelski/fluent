@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { BACKEND_URL, getToken } from '../../../lib/api';
+import Link from 'next/link';
+import { BACKEND_URL, getToken, getGrammarPrograms, unenrollGrammarProgram, type GrammarProgramSummary } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
 interface GrammarRule {
@@ -403,6 +404,9 @@ export default function GrammarPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['padezhi']));
+  const [programs, setPrograms] = useState<GrammarProgramSummary[]>([]);
+  const [programsLoading, setProgramsLoading] = useState(true);
+  const [unenrolling, setUnenrolling] = useState(false);
 
   function toggleCategory(key: string) {
     setOpenCategories((prev) => {
@@ -448,6 +452,25 @@ export default function GrammarPage() {
   useEffect(() => {
     fetchLessons();
   }, [fetchLessons]);
+
+  useEffect(() => {
+    getGrammarPrograms()
+      .then(setPrograms)
+      .catch(console.error)
+      .finally(() => setProgramsLoading(false));
+  }, []);
+
+  async function handleUnenroll(programId: number) {
+    setUnenrolling(true);
+    try {
+      await unenrollGrammarProgram(programId);
+      setPrograms((prev) => prev.map((p) => p.id === programId ? { ...p, enrolled: false } : p));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setUnenrolling(false);
+    }
+  }
 
   function postResult(lessonId: number, score: number, total: number) {
     const token = getToken();
@@ -526,6 +549,9 @@ export default function GrammarPage() {
 
   // ── Lesson list ────────────────────────────────────────────────────────────
   if (activeLesson === null) {
+    const enrolledPrograms = programs.filter((p) => p.enrolled);
+    const isEnrolled = enrolledPrograms.length > 0;
+
     return (
       <main className="bg-slate-50 text-gray-900">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
@@ -533,67 +559,110 @@ export default function GrammarPage() {
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
-          <GrammarStatsBar lessons={lessons} />
-
           <h1 className="text-3xl font-bold mb-2">{tr.grammar.title}</h1>
           <p className="text-gray-400 mb-6">{tr.grammar.subtitle}</p>
 
-          {loading ? (
+          {programsLoading ? (
             <div className="flex justify-center py-20">
-              <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : !isEnrolled ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+              <p className="text-gray-500">Добавьте программу, чтобы начать изучение грамматики</p>
+              <Link
+                href="/dashboard/grammar/programs"
+                className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-medium transition-colors"
+                data-testid="browse-programs-link"
+              >
+                Смотреть все программы
+              </Link>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
-              {CATEGORIES.map((cat) => {
-                const isOpen = openCategories.has(cat.key);
-                const categoryLessons = cat.key === 'padezhi' ? lessons : [];
+            <>
+              <GrammarStatsBar lessons={lessons} />
 
-                // Group lessons by consecutive title runs into subcategories
-                const subcategoryGroups: { title: string; lessons: Lesson[] }[] = [];
-                for (const lesson of categoryLessons) {
-                  const last = subcategoryGroups[subcategoryGroups.length - 1];
-                  if (last && last.title === lesson.title) {
-                    last.lessons.push(lesson);
-                  } else {
-                    subcategoryGroups.push({ title: lesson.title, lessons: [lesson] });
-                  }
-                }
-
-                return (
-                  <div
-                    key={cat.key}
-                    className="border border-gray-900 rounded-2xl overflow-hidden"
-                    data-testid={`category-${cat.key}`}
-                  >
+              {enrolledPrograms.map((program) => (
+                <div key={program.id} className="mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-semibold text-gray-700 text-sm">{program.title}</h2>
                     <button
-                      onClick={() => toggleCategory(cat.key)}
-                      aria-expanded={isOpen}
-                      data-testid={`category-toggle-${cat.key}`}
-                      className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-left"
+                      onClick={() => handleUnenroll(program.id)}
+                      disabled={unenrolling}
+                      className="text-xs text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                      data-testid="unenroll-button"
                     >
-                      <div className="flex items-center gap-3">
-                        <span role="heading" aria-level={2} className="font-semibold text-gray-900">{cat.label}</span>
-                        <span className="text-gray-400 text-sm">{categoryLessons.length} {plural(categoryLessons.length, tr.grammar.lessonsCount)}</span>
-                      </div>
-                      <svg
-                        width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
-                        className={`text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-                      >
-                        <path d="M6 8L1 3h10L6 8z" />
-                      </svg>
+                      Удалить
                     </button>
-
-                    {isOpen && (
-                      <div className="divide-y divide-gray-900 border-t border-gray-900">
-                        {subcategoryGroups.map((group, gi) => (
-                          <SubcategoryGroup key={`${group.title}-${gi}`} group={group} onStartLesson={startLesson} />
-                        ))}
-                      </div>
-                    )}
                   </div>
-                );
-              })}
-            </div>
+
+                  {loading ? (
+                    <div className="flex justify-center py-20">
+                      <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {CATEGORIES.map((cat) => {
+                        const isOpen = openCategories.has(cat.key);
+                        const categoryLessons = cat.key === 'padezhi' ? lessons : [];
+
+                        const subcategoryGroups: { title: string; lessons: Lesson[] }[] = [];
+                        for (const lesson of categoryLessons) {
+                          const last = subcategoryGroups[subcategoryGroups.length - 1];
+                          if (last && last.title === lesson.title) {
+                            last.lessons.push(lesson);
+                          } else {
+                            subcategoryGroups.push({ title: lesson.title, lessons: [lesson] });
+                          }
+                        }
+
+                        return (
+                          <div
+                            key={cat.key}
+                            className="border border-gray-900 rounded-2xl overflow-hidden"
+                            data-testid={`category-${cat.key}`}
+                          >
+                            <button
+                              onClick={() => toggleCategory(cat.key)}
+                              aria-expanded={isOpen}
+                              data-testid={`category-toggle-${cat.key}`}
+                              className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-left"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span role="heading" aria-level={2} className="font-semibold text-gray-900">{cat.label}</span>
+                                <span className="text-gray-400 text-sm">{categoryLessons.length} {plural(categoryLessons.length, tr.grammar.lessonsCount)}</span>
+                              </div>
+                              <svg
+                                width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
+                                className={`text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                              >
+                                <path d="M6 8L1 3h10L6 8z" />
+                              </svg>
+                            </button>
+
+                            {isOpen && (
+                              <div className="divide-y divide-gray-900 border-t border-gray-900">
+                                {subcategoryGroups.map((group, gi) => (
+                                  <SubcategoryGroup key={`${group.title}-${gi}`} group={group} onStartLesson={startLesson} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              <div className="mt-4 text-center">
+                <Link
+                  href="/dashboard/grammar/programs"
+                  className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
+                >
+                  Смотреть все программы →
+                </Link>
+              </div>
+            </>
           )}
         </div>
       </main>

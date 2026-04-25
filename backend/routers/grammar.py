@@ -10,8 +10,22 @@ from sqlmodel import Session, select
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from database import get_session
 from grammar_service import get_lessons, get_lesson_tasks
-from models import GrammarLessonResult
+from models import GrammarLessonResult, GrammarProgram, UserGrammarProgram
 from quota import quota_check_and_increment as _quota_check_and_increment
+
+_SEED_PROGRAM = {
+    "title": "Литовские падежи",
+    "title_en": "Lithuanian Cases",
+    "description": "Все грамматические падежи литовского языка: единственное и множественное число.",
+    "difficulty": 1,
+}
+
+
+def _ensure_seed(session: Session) -> None:
+    existing = session.exec(select(GrammarProgram)).first()
+    if not existing:
+        session.add(GrammarProgram(**_SEED_PROGRAM))
+        session.commit()
 
 router = APIRouter()
 
@@ -126,3 +140,76 @@ def get_progress(
         if r.lesson_id not in best or pct > best[r.lesson_id]:
             best[r.lesson_id] = pct
     return best
+
+
+@router.get("/grammar-programs")
+def list_grammar_programs(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return all public grammar programs with enrollment status for authenticated users."""
+    _ensure_seed(session)
+    user = _try_get_user(authorization, session)
+    programs = session.exec(
+        select(GrammarProgram).where(GrammarProgram.is_public == True)
+    ).all()
+    enrolled_ids: set[int] = set()
+    if user:
+        enrollments = session.exec(
+            select(UserGrammarProgram).where(UserGrammarProgram.user_id == user.id)
+        ).all()
+        enrolled_ids = {e.program_id for e in enrollments}
+    return [
+        {
+            "id": p.id,
+            "title": p.title,
+            "title_en": p.title_en,
+            "description": p.description,
+            "difficulty": p.difficulty,
+            "enrolled": p.id in enrolled_ids,
+        }
+        for p in programs
+    ]
+
+
+@router.post("/me/grammar-programs/{program_id}")
+def enroll_grammar_program(
+    program_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Enroll the authenticated user in a grammar program (idempotent)."""
+    user = _require_user(authorization, session)
+    program = session.get(GrammarProgram, program_id)
+    if not program or not program.is_public:
+        raise HTTPException(status_code=404, detail="Program not found")
+    existing = session.exec(
+        select(UserGrammarProgram).where(
+            UserGrammarProgram.user_id == user.id,
+            UserGrammarProgram.program_id == program_id,
+        )
+    ).first()
+    if not existing:
+        session.add(UserGrammarProgram(user_id=user.id, program_id=program_id))
+        session.commit()
+    return {"ok": True}
+
+
+@router.delete("/me/grammar-programs/{program_id}")
+def unenroll_grammar_program(
+    program_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Unenroll the authenticated user from a grammar program (idempotent)."""
+    user = _require_user(authorization, session)
+    enrollment = session.exec(
+        select(UserGrammarProgram).where(
+            UserGrammarProgram.user_id == user.id,
+            UserGrammarProgram.program_id == program_id,
+        )
+    ).first()
+    if enrollment:
+        session.delete(enrollment)
+        session.commit()
+    return {"ok": True}

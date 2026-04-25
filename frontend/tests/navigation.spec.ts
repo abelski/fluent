@@ -13,6 +13,14 @@ async function setFakeToken(page: import('@playwright/test').Page) {
   }, makeFakeJwt('Test User'));
 }
 
+async function mockGrammarProgramsEnrolled(page: import('@playwright/test').Page) {
+  await page.route('**/api/grammar-programs', async (route) => {
+    await route.fulfill({
+      json: [{ id: 1, title: 'Литовские падежи', title_en: null, description: null, difficulty: 1, enrolled: true }],
+    });
+  });
+}
+
 test.describe('Navigation', () => {
   test('landing page loads and shows branding', async ({ page }) => {
     await page.goto('/');
@@ -60,12 +68,14 @@ test.describe('Grammar page', () => {
 
 test.describe('Grammar page — categories', () => {
   test('shows Падежи category expanded by default', async ({ page }) => {
+    await mockGrammarProgramsEnrolled(page);
     await page.goto('/dashboard/grammar');
     const toggle = page.locator('[data-testid="category-toggle-padezhi"]');
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   });
 
   test('Падежи category can be collapsed and re-expanded', async ({ page }) => {
+    await mockGrammarProgramsEnrolled(page);
     await page.goto('/dashboard/grammar');
     const toggle = page.locator('[data-testid="category-toggle-padezhi"]');
     await toggle.click();
@@ -80,6 +90,7 @@ test.describe('Grammar page — lesson levels', () => {
   // Helper: click the first lesson card of the given level label.
   // Lessons are inside collapsible subcategories — expand the first one first.
   async function startFirstLessonOfLevel(page: import('@playwright/test').Page, levelLabel: string) {
+    await mockGrammarProgramsEnrolled(page);
     await page.goto('/dashboard/grammar');
     // Wait for subcategory toggles to load (Падежи is open by default)
     await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
@@ -150,6 +161,7 @@ test.describe('Grammar progression — locking', () => {
   ];
 
   test('locked lesson shows lock icon and cannot be clicked', async ({ page }) => {
+    await mockGrammarProgramsEnrolled(page);
     await page.route('**/api/grammar/lessons', async (route) => {
       await route.fulfill({ json: MOCK_LESSONS });
     });
@@ -166,6 +178,7 @@ test.describe('Grammar progression — locking', () => {
   });
 
   test('unlocked lesson is clickable', async ({ page }) => {
+    await mockGrammarProgramsEnrolled(page);
     await page.route('**/api/grammar/lessons', async (route) => {
       await route.fulfill({ json: MOCK_LESSONS });
     });
@@ -182,6 +195,7 @@ test.describe('Grammar progression — locking', () => {
   });
 
   test('passing lesson shows next lesson button on done screen', async ({ page }) => {
+    await mockGrammarProgramsEnrolled(page);
     // Lesson 1 passed → lesson 2 now unlocked
     const lessonsAfterPass = [
       { ...MOCK_LESSONS[0], best_score_pct: 0.9 },
@@ -228,6 +242,7 @@ test.describe('Grammar progression — locking', () => {
   });
 
   test('failing lesson shows retry recommendation, no next lesson button', async ({ page }) => {
+    await mockGrammarProgramsEnrolled(page);
     await page.route('**/api/grammar/lessons', async (route) => {
       await route.fulfill({ json: MOCK_LESSONS });
     });

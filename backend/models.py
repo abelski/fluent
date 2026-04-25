@@ -452,3 +452,26 @@ class UserPhraseProgress(SQLModel, table=True):
     ease_factor: float = Field(default=2.5)
     interval: int = Field(default=0)
     next_review: Optional[date] = Field(default=None)
+
+
+# ── Grammar programs feature ─────────────────────────────────────────────────
+
+class GrammarProgram(SQLModel, table=True):
+    """A grammar program grouping all grammar lessons for enrollment."""
+    __tablename__ = "grammar_program"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    title_en: Optional[str] = None
+    description: Optional[str] = None
+    difficulty: int = Field(default=1)
+    is_public: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class UserGrammarProgram(SQLModel, table=True):
+    """Tracks which grammar programs a user has enrolled in."""
+    __tablename__ = "user_grammar_program"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    program_id: int = Field(foreign_key="grammar_program.id", index=True)
+    enrolled_at: datetime = Field(default_factory=_utcnow)
