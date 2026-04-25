@@ -146,6 +146,14 @@ export interface Translations {
     statsLessonsUnit: string;
     statsCompletion: string;
     statsAttempted: string;
+    programsTitle: string;
+    programsSubtitle: string;
+    programsEmpty: string;
+    programsBack: string;
+    emptyState: string;
+    browsePrograms: string;
+    browseProgramsLink: string;
+    unenrollBtn: string;
   };
   practice: {
     title: string;

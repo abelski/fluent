@@ -568,13 +568,13 @@ export default function GrammarPage() {
             </div>
           ) : !isEnrolled ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-              <p className="text-gray-500">Добавьте программу, чтобы начать изучение грамматики</p>
+              <p className="text-gray-500">{tr.grammar.emptyState}</p>
               <Link
                 href="/dashboard/grammar/programs"
                 className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-medium transition-colors"
                 data-testid="browse-programs-link"
               >
-                Смотреть все программы
+                {tr.grammar.browsePrograms}
               </Link>
             </div>
           ) : (
@@ -591,7 +591,7 @@ export default function GrammarPage() {
                       className="text-xs text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
                       data-testid="unenroll-button"
                     >
-                      Удалить
+                      {tr.grammar.unenrollBtn}
                     </button>
                   </div>
 
@@ -659,7 +659,7 @@ export default function GrammarPage() {
                   href="/dashboard/grammar/programs"
                   className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
                 >
-                  Смотреть все программы →
+                  {tr.grammar.browseProgramsLink}
                 </Link>
               </div>
             </>
