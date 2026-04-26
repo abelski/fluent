@@ -571,6 +571,39 @@ export function resolvePhraseId(_id: string): string {
   return _id;
 }
 
+/**
+ * Resolve the real numeric practice category ID from the current browser URL.
+ * Handles Next.js static export '_' placeholder.
+ */
+export function resolvePracticeId(_id: string): string {
+  if (typeof window !== 'undefined' && !/^\d+$/.test(_id)) {
+    return (
+      window.location.pathname
+        .split('/')
+        .find((s, i, a) => a[i - 1] === 'practice' && /^\d+$/.test(s)) ?? _id
+    );
+  }
+  return _id;
+}
+
+export async function enrollPracticeCategory(categoryId: number): Promise<void> {
+  const token = getToken();
+  if (!token) return;
+  await fetch(`${BACKEND_URL}/api/me/practice-categories/${categoryId}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function unenrollPracticeCategory(categoryId: number): Promise<void> {
+  const token = getToken();
+  if (!token) return;
+  await fetch(`${BACKEND_URL}/api/me/practice-categories/${categoryId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 // ── Grammar programs feature ──────────────────────────────────────────────────
 
 export interface GrammarProgramSummary {

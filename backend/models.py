@@ -287,6 +287,15 @@ class PracticeExamResult(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_utcnow)
 
 
+class UserPracticeCategoryEnrollment(SQLModel, table=True):
+    """Tracks which practice categories a user has enrolled in."""
+    __tablename__ = "user_practice_category_enrollment"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    category_id: int = Field(foreign_key="practice_category.id", index=True)
+    enrolled_at: datetime = Field(default_factory=_utcnow)
+
+
 class ConstitutionQuestion(SQLModel, table=True):
     """A multiple-choice question about the Lithuanian Constitution.
     Used in the Practice section for citizenship/residency exam preparation.

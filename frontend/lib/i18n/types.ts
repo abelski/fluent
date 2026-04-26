@@ -165,6 +165,14 @@ export interface Translations {
     premiumLocked: string;
     startBtn: string;
     noTests: string;
+    browseProgramsLink: string;
+    allProgramsTitle: string;
+    allProgramsSubtitle: string;
+    enrollBtn: string;
+    unenrollBtn: string;
+    enrolledBadge: string;
+    emptyTitle: string;
+    emptyLink: string;
     constitution: {
       title: string;
       subtitle: string;

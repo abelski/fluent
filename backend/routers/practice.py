@@ -15,7 +15,7 @@ from sqlmodel import Session, select
 
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from database import get_session
-from models import PracticeTest, PracticeQuestion, PracticeExamResult, PracticeCategory, User
+from models import PracticeTest, PracticeQuestion, PracticeExamResult, PracticeCategory, User, UserPracticeCategoryEnrollment
 
 router = APIRouter()
 
@@ -61,6 +61,68 @@ def list_categories(
         if _visible(t) and t.category_id is not None:
             test_counts[t.category_id] = test_counts.get(t.category_id, 0) + 1
 
+    enrolled_ids: set[int] = {
+        e.category_id
+        for e in session.exec(
+            select(UserPracticeCategoryEnrollment).where(
+                UserPracticeCategoryEnrollment.user_id == user.id
+            )
+        ).all()
+    }
+
+    return [
+        {
+            "id": c.id,
+            "name_ru": c.name_ru,
+            "name_en": c.name_en,
+            "description_ru": c.description_ru,
+            "sort_order": c.sort_order,
+            "test_count": test_counts.get(c.id, 0),
+            "enrolled": c.id in enrolled_ids,
+        }
+        for c in categories
+    ]
+
+
+@router.get("/me/practice-categories")
+def list_enrolled_categories(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return practice categories the user has enrolled in."""
+    user = _require_user(authorization, session)
+    is_admin = user.is_admin
+
+    enrollments = session.exec(
+        select(UserPracticeCategoryEnrollment).where(
+            UserPracticeCategoryEnrollment.user_id == user.id
+        )
+    ).all()
+    enrolled_ids = {e.category_id for e in enrollments}
+
+    if not enrolled_ids:
+        return []
+
+    categories = session.exec(
+        select(PracticeCategory)
+        .where(PracticeCategory.id.in_(enrolled_ids))
+        .order_by(PracticeCategory.sort_order, PracticeCategory.id)
+    ).all()
+
+    all_tests = session.exec(select(PracticeTest)).all()
+
+    def _visible(t: PracticeTest) -> bool:
+        if t.status == "published":
+            return True
+        if is_admin and t.status in ("testing", "draft"):
+            return True
+        return False
+
+    test_counts: dict[int, int] = {}
+    for t in all_tests:
+        if _visible(t) and t.category_id is not None:
+            test_counts[t.category_id] = test_counts.get(t.category_id, 0) + 1
+
     return [
         {
             "id": c.id,
@@ -72,6 +134,50 @@ def list_categories(
         }
         for c in categories
     ]
+
+
+@router.post("/me/practice-categories/{category_id}")
+def enroll_category(
+    category_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Enroll the authenticated user in a practice category. Idempotent."""
+    user = _require_user(authorization, session)
+    category = session.get(PracticeCategory, category_id)
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    existing = session.exec(
+        select(UserPracticeCategoryEnrollment).where(
+            UserPracticeCategoryEnrollment.user_id == user.id,
+            UserPracticeCategoryEnrollment.category_id == category_id,
+        )
+    ).first()
+    if not existing:
+        session.add(UserPracticeCategoryEnrollment(user_id=user.id, category_id=category_id))
+        session.commit()
+    return {"ok": True}
+
+
+@router.delete("/me/practice-categories/{category_id}")
+def unenroll_category(
+    category_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Unenroll the authenticated user from a practice category."""
+    user = _require_user(authorization, session)
+    existing = session.exec(
+        select(UserPracticeCategoryEnrollment).where(
+            UserPracticeCategoryEnrollment.user_id == user.id,
+            UserPracticeCategoryEnrollment.category_id == category_id,
+        )
+    ).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not enrolled")
+    session.delete(existing)
+    session.commit()
+    return {"ok": True}
 
 
 @router.get("/practice/categories/{category_id}/tests")
