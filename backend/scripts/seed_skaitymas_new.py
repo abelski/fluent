@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 
 LESSONS = [
     {
-        "title_ru": "Урок 2 — «Это мой друг»",
+        "title_ru": "«Это мой друг»",
         "title_en": "2 skyrius — Cia mano draugas",
         "sort_order": 1,
         "lesson_text_lt": (
@@ -37,7 +37,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 3 — «Какой твой адрес?»",
+        "title_ru": "«Какой твой адрес?»",
         "title_en": "3 skyrius — Koks tavo adresas?",
         "sort_order": 2,
         "lesson_text_lt": (
@@ -67,7 +67,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 4 — «Когда и где встречаемся?»",
+        "title_ru": "«Когда и где встречаемся?»",
         "title_en": "4 skyrius — Kada ir kur susitinkame?",
         "sort_order": 3,
         "lesson_text_lt": (
@@ -87,7 +87,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 5 — «Это моя семья»",
+        "title_ru": "«Это моя семья»",
         "title_en": "5 skyrius — Cia mano seima",
         "sort_order": 4,
         "lesson_text_lt": (
@@ -113,7 +113,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 6 — «Семья Линаса и Кристины»",
+        "title_ru": "«Семья Линаса и Кристины»",
         "title_en": "6 skyrius — Lino ir Kristinos seima",
         "sort_order": 5,
         "lesson_text_lt": (
@@ -132,7 +132,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 7 — «Что мы едим»",
+        "title_ru": "«Что мы едим»",
         "title_en": "7 skyrius — Ka mes valgome",
         "sort_order": 6,
         "lesson_text_lt": (
@@ -164,7 +164,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 8 — На рынке",
+        "title_ru": "На рынке",
         "title_en": "8 skyrius — Turguje",
         "sort_order": 7,
         "lesson_text_lt": (
@@ -194,7 +194,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 10 — Сообщения",
+        "title_ru": "Сообщения",
         "title_en": "10 skyrius — Zinutės",
         "sort_order": 8,
         "lesson_text_lt": (
@@ -216,7 +216,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 11 — Аренда автомобиля",
+        "title_ru": "Аренда автомобиля",
         "title_en": "11 skyrius — Automobiliu nuoma",
         "sort_order": 9,
         "lesson_text_lt": (
@@ -237,7 +237,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 12 — Аренда квартиры",
+        "title_ru": "Аренда квартиры",
         "title_en": "12 skyrius — Buto nuoma",
         "sort_order": 10,
         "lesson_text_lt": (
@@ -261,7 +261,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 13 — «Дела дома»",
+        "title_ru": "«Дела дома»",
         "title_en": "13 skyrius — Darbai namie",
         "sort_order": 11,
         "lesson_text_lt": (
@@ -287,7 +287,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 14 — «Мои путешествия и шкаф»",
+        "title_ru": "«Мои путешествия и шкаф»",
         "title_en": "14 skyrius — Mano keliones ir spinta",
         "sort_order": 12,
         "lesson_text_lt": (
@@ -316,7 +316,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 15 — Объявления об услугах",
+        "title_ru": "Объявления об услугах",
         "title_en": "15 skyrius — Paslaugu skelbimai",
         "sort_order": 13,
         "lesson_text_lt": (
@@ -337,7 +337,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 16 — «Если простудились...»",
+        "title_ru": "«Если простудились...»",
         "title_en": "16 skyrius — Jeigu persalote...",
         "sort_order": 14,
         "lesson_text_lt": (
@@ -360,7 +360,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 17 — Инструкция к лекарству",
+        "title_ru": "Инструкция к лекарству",
         "title_en": "17 skyrius — Vaistu informacinis lapelis",
         "sort_order": 15,
         "lesson_text_lt": (
@@ -388,7 +388,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 18 — Объявления о работе",
+        "title_ru": "Объявления о работе",
         "title_en": "18 skyrius — Darbo skelbimai",
         "sort_order": 16,
         "lesson_text_lt": (
@@ -417,7 +417,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 19 — «Мой брат — студент»",
+        "title_ru": "«Мой брат — студент»",
         "title_en": "19 skyrius — Mano brolis studentas",
         "sort_order": 17,
         "lesson_text_lt": (
@@ -448,7 +448,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 20 — Кино и досуг",
+        "title_ru": "Кино и досуг",
         "title_en": "20 skyrius — Kinas ir laisvalaikis",
         "sort_order": 18,
         "lesson_text_lt": (
@@ -475,7 +475,7 @@ LESSONS = [
         ],
     },
     {
-        "title_ru": "Урок 21 — Открытки и литовские праздники",
+        "title_ru": "Открытки и литовские праздники",
         "title_en": "21 skyrius — Atvirukai ir lietuviskas sventes",
         "sort_order": 19,
         "lesson_text_lt": (

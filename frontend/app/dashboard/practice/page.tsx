@@ -12,6 +12,8 @@ interface EnrolledCategory {
   name_en: string | null;
   description_ru: string | null;
   test_count: number;
+  tests_passed: number;
+  tests_total: number;
 }
 
 export default function PracticePage() {
@@ -67,6 +69,8 @@ export default function PracticePage() {
           <div className="flex flex-col gap-3">
             {categories.map((cat) => {
               const name = lang === 'en' ? (cat.name_en ?? cat.name_ru) : cat.name_ru;
+              const progressPct = cat.tests_total > 0 ? (cat.tests_passed / cat.tests_total) * 100 : 0;
+              const allPassed = cat.tests_total > 0 && cat.tests_passed === cat.tests_total;
               return (
                 <button
                   key={cat.id}
@@ -80,10 +84,20 @@ export default function PracticePage() {
                         <p className="text-sm text-gray-400 mt-0.5">{cat.description_ru}</p>
                       )}
                       <p className="text-xs text-gray-400 mt-1">
-                        {cat.test_count === 0
+                        {cat.tests_total === 0
                           ? <span className="text-amber-600 font-medium">{t.noTests}</span>
-                          : `${cat.test_count} тест${cat.test_count === 1 ? '' : cat.test_count < 5 ? 'а' : 'ов'}`}
+                          : <span className={allPassed ? 'text-emerald-600 font-medium' : ''}>
+                              {cat.tests_passed}/{cat.tests_total} тест{cat.tests_total === 1 ? '' : cat.tests_total < 5 ? 'а' : 'ов'} пройдено
+                            </span>}
                       </p>
+                      {cat.tests_total > 0 && (
+                        <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${allPassed ? 'bg-emerald-500' : 'bg-amber-400'}`}
+                            style={{ width: `${progressPct}%` }}
+                          />
+                        </div>
+                      )}
                     </div>
                     <span className="text-gray-300 text-lg shrink-0">→</span>
                   </div>

@@ -1,13 +1,96 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
 import { BACKEND_URL, getToken, resolvePracticeId } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+
+// --- Dialogue rendering helpers ---
+
+function speakerColor(name: string): string {
+  const palette = [
+    'bg-indigo-100 text-indigo-700',
+    'bg-emerald-100 text-emerald-700',
+    'bg-rose-100 text-rose-700',
+    'bg-amber-100 text-amber-700',
+    'bg-violet-100 text-violet-700',
+  ];
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) % palette.length;
+  return palette[h];
+}
+
+const ANON_COLORS = [
+  'bg-blue-50 border-blue-200 text-blue-900',
+  'bg-slate-50 border-slate-200 text-slate-800',
+];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const InlineOnly = ({ children }: any) => <>{children}</>;
+
+function DialogueText({ text }: { text: string }) {
+  const lines = text.split('\n');
+  let turn = -1;
+  const lineData = lines.map((line) => {
+    const dashMatch = line.match(/^—\s?(.*)/);
+    const nameMatch = line.match(/^\*\*([^*]+):\*\*\s*(.*)/);
+    const isDialogue = !!(dashMatch || nameMatch);
+    if (isDialogue) turn++;
+    return { line, dashMatch, nameMatch, turn };
+  });
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {lineData.map(({ line, dashMatch, nameMatch, turn: t }, i) => {
+        if (line.trim() === '') return <div key={i} className="h-2" />;
+
+        if (dashMatch) {
+          const badge = t % 2 === 0
+            ? 'bg-blue-200 text-blue-800'
+            : 'bg-slate-200 text-slate-700';
+          return (
+            <div key={i} className={`px-3 py-2 rounded-lg border text-sm flex gap-2 items-start ${ANON_COLORS[t % 2]}`}>
+              <span className={`shrink-0 mt-0.5 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${badge}`}>
+                {t % 2 === 0 ? 'A' : 'B'}
+              </span>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ p: InlineOnly }}>
+                {dashMatch[1]}
+              </ReactMarkdown>
+            </div>
+          );
+        }
+
+        if (nameMatch) {
+          const colorCls = speakerColor(nameMatch[1]);
+          return (
+            <div key={i} className="flex items-start gap-2 px-3 py-2 text-sm text-gray-900">
+              <span className={`shrink-0 mt-0.5 text-xs font-bold px-2 py-0.5 rounded-full ${colorCls}`}>
+                {nameMatch[1]}
+              </span>
+              <span className="leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ p: InlineOnly }}>
+                  {nameMatch[2]}
+                </ReactMarkdown>
+              </span>
+            </div>
+          );
+        }
+
+        return (
+          <ReactMarkdown key={i} remarkPlugins={[remarkGfm]} components={{
+            p: ({ children }) => <p className="text-sm text-gray-600 leading-relaxed">{children}</p>,
+            strong: ({ children }) => <strong className="font-semibold text-gray-800">{children}</strong>,
+          }}>
+            {line}
+          </ReactMarkdown>
+        );
+      })}
+    </div>
+  );
+}
 
 interface PracticeTest {
   id: number;
@@ -20,6 +103,8 @@ interface PracticeTest {
   pass_threshold: number;
   is_premium: boolean;
   active_question_count: number;
+  is_locked: boolean;
+  best_score_pct: number | null;
 }
 
 interface Question {
@@ -62,6 +147,7 @@ export default function PracticeCategoryPage() {
   const [tests, setTests] = useState<PracticeTest[]>([]);
   const [testsLoading, setTestsLoading] = useState(true);
   const [categoryName, setCategoryName] = useState('');
+  const [categoryDescription, setCategoryDescription] = useState<string | null>(null);
 
   // Active exam state
   const [view, setView] = useState<PageView>('tests');
@@ -75,6 +161,17 @@ export default function PracticeCategoryPage() {
   const [selected, setSelected] = useState<Option | null>(null);
   const [answered, setAnswered] = useState(false);
   const [answers, setAnswers] = useState<(Option | null)[]>([]);
+
+  const fetchTests = useCallback(() => {
+    const token = getToken();
+    if (!token) return;
+    fetch(`${BACKEND_URL}/api/practice/categories/${categoryId}/tests`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data) setTests(data); })
+      .catch(console.error);
+  }, [categoryId]);
 
   useEffect(() => {
     const token = getToken();
@@ -103,11 +200,12 @@ export default function PracticeCategoryPage() {
     // Fetch category name and source_url for the heading
     fetch(`${BACKEND_URL}/api/practice/categories`, { headers })
       .then((r) => (r.ok ? r.json() : []))
-      .then((cats: { id: number; name_ru: string; name_en: string | null; source_url: string | null }[]) => {
+      .then((cats: { id: number; name_ru: string; name_en: string | null; description_ru: string | null; source_url: string | null }[]) => {
         const cat = cats.find((c) => String(c.id) === categoryId);
         if (cat) {
           setCategoryName(lang === 'en' ? (cat.name_en ?? cat.name_ru) : cat.name_ru);
           setSourceUrl(cat.source_url ?? null);
+          setCategoryDescription(cat.description_ru ?? null);
         }
       })
       .catch(console.error);
@@ -144,6 +242,7 @@ export default function PracticeCategoryPage() {
   }
 
   function startTest(test: PracticeTest) {
+    if (test.is_locked) return;
     if (test.is_premium && !isPremiumUser) {
       router.push('/dashboard/premium');
       return;
@@ -178,6 +277,7 @@ export default function PracticeCategoryPage() {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ score, total }),
         }).catch(console.error);
+        fetchTests(); // refresh lock state for next test
       }
       setView('result');
     } else {
@@ -231,7 +331,10 @@ export default function PracticeCategoryPage() {
           <>
             <div className="mt-4 mb-6">
               <h1 className="text-3xl font-bold">{categoryName}</h1>
-              <p className="text-gray-400 mt-1">Выберите тест для прохождения</p>
+              {categoryDescription
+                ? <p className="text-gray-600 mt-1">{categoryDescription}</p>
+                : <p className="text-gray-400 mt-1">Выберите тест для прохождения</p>
+              }
             </div>
 
             {/* Source URL callout (e.g. constitution link) */}
@@ -266,10 +369,20 @@ export default function PracticeCategoryPage() {
                 {tests.map((test) => {
                   const title = lang === 'en' ? (test.title_en ?? test.title_ru) : test.title_ru;
                   const desc = lang !== 'en' ? test.description_ru : null;
+                  const locked = test.is_locked;
+                  const scorePct = test.best_score_pct;
                   return (
-                    <div key={test.id} className="px-6 py-4 flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
+                    <div
+                      key={test.id}
+                      className={`px-6 py-4 flex items-center justify-between gap-4 transition-colors ${locked ? 'opacity-40 bg-gray-50' : 'hover:bg-gray-50'}`}
+                    >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
+                          {locked && (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 shrink-0">
+                              <path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/>
+                            </svg>
+                          )}
                           <p className="font-semibold text-gray-900">{title}</p>
                           {test.is_premium && (
                             <span className="text-[10px] px-2 py-0.5 bg-amber-50 border border-amber-300 text-amber-700 rounded-full font-semibold">
@@ -281,6 +394,15 @@ export default function PracticeCategoryPage() {
                               📄 Текст
                             </span>
                           )}
+                          {scorePct !== null && scorePct !== undefined && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+                              scorePct >= test.pass_threshold
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                : 'bg-amber-50 border-amber-200 text-amber-700'
+                            }`}>
+                              {Math.round(scorePct * 100)}%
+                            </span>
+                          )}
                         </div>
                         {desc && <p className="text-sm text-gray-400 mt-0.5 truncate">{desc}</p>}
                         <p className="text-xs text-gray-400 mt-1">
@@ -290,10 +412,10 @@ export default function PracticeCategoryPage() {
                       </div>
                       <button
                         onClick={() => startTest(test)}
-                        disabled={examLoading}
-                        className="shrink-0 px-5 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-50"
+                        disabled={examLoading || locked}
+                        className="shrink-0 px-5 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {examLoading ? '...' : test.is_premium && !isPremiumUser ? t.premiumLocked : t.startBtn}
+                        {examLoading && !locked ? '...' : locked ? '🔒' : test.is_premium && !isPremiumUser ? t.premiumLocked : t.startBtn}
                       </button>
                     </div>
                   );
@@ -315,10 +437,8 @@ export default function PracticeCategoryPage() {
                   Текст
                 </span>
               </div>
-              <div className="px-6 py-5 prose prose-sm max-w-none text-gray-800 leading-relaxed">
-                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-                  {pendingTest.lesson_text_lt ?? ''}
-                </ReactMarkdown>
+              <div className="px-6 py-5 text-gray-800 leading-relaxed">
+                <DialogueText text={pendingTest.lesson_text_lt ?? ''} />
               </div>
             </div>
             <div className="flex justify-end">
@@ -431,7 +551,13 @@ export default function PracticeCategoryPage() {
         })()}
 
         {/* ── Result screen ────────────────────────────────────────────────── */}
-        {view === 'result' && activeTest && (
+        {view === 'result' && activeTest && (() => {
+          const passed = score / activeTest.questions.length >= passThreshold;
+          const currentIdx = tests.findIndex((t) => t.id === activeTest.test.id);
+          const nextTest = passed && currentIdx >= 0 && currentIdx + 1 < tests.length
+            ? tests[currentIdx + 1]
+            : null;
+          return (
           <div className="flex flex-col gap-4 mt-6">
             <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white">
               <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -443,11 +569,19 @@ export default function PracticeCategoryPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold border border-gray-900 ${score / activeTest.questions.length >= passThreshold ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
-                    {score / activeTest.questions.length >= passThreshold
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold border border-gray-900 ${passed ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+                    {passed
                       ? `✓ Пройден (≥${Math.round(passThreshold * 100)}%)`
                       : `✗ Не пройден (<${Math.round(passThreshold * 100)}%)`}
                   </span>
+                  {nextTest && (
+                    <button
+                      onClick={() => startTest(nextTest)}
+                      className="px-4 py-1.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-500 transition-colors"
+                    >
+                      Следующий тест →
+                    </button>
+                  )}
                   <button
                     onClick={retry}
                     className="px-4 py-1.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors"
@@ -497,7 +631,8 @@ export default function PracticeCategoryPage() {
               </div>
             </div>
           </div>
-        )}
+        );
+        })()}
 
       </div>
     </main>

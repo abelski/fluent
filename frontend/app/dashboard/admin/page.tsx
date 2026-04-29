@@ -104,6 +104,7 @@ interface PracticeTestRow {
   title_en: string | null;
   description_ru: string | null;
   description_en: string | null;
+  lesson_text_lt: string | null;
   question_count: number;
   pass_threshold: number;
   status: string;
@@ -146,6 +147,7 @@ const BLANK_TEST: Omit<PracticeTestRow, 'id' | 'total_questions' | 'active_quest
   title_en: '',
   description_ru: '',
   description_en: '',
+  lesson_text_lt: null,
   question_count: 20,
   pass_threshold: 0.75,
   status: 'draft',
@@ -1135,6 +1137,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         title_en: editingTest.title_en || null,
         description_ru: editingTest.description_ru || null,
         description_en: editingTest.description_en || null,
+        lesson_text_lt: editingTest.lesson_text_lt || null,
         question_count: editingTest.question_count,
         pass_threshold: editingTest.pass_threshold,
         status: editingTest.status,
@@ -2335,6 +2338,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           <label className="text-xs text-gray-400">{tr.adminPractice.fieldDescRu}</label>
                           <input value={newTest.description_ru ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, description_ru: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                         </div>
+                        <div className="sm:col-span-2 flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">Текст урока (Markdown)</label>
+                          <textarea rows={6} value={newTest.lesson_text_lt ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, lesson_text_lt: e.target.value || null }))} placeholder="— Строка диалога&#10;**Говорящий:** Текст&#10;*Контекст*" className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none font-mono resize-y" />
+                        </div>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="flex flex-col gap-1">
                             <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestionCount}</label>
@@ -2384,6 +2391,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                 <div className="flex flex-col gap-1">
                                   <label className="text-xs text-gray-400">{tr.adminPractice.fieldDescRu}</label>
                                   <input value={editingTest.description_ru ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, description_ru: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                                </div>
+                                <div className="sm:col-span-2 flex flex-col gap-1">
+                                  <label className="text-xs text-gray-400">Текст урока (Markdown)</label>
+                                  <textarea rows={8} value={editingTest.lesson_text_lt ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, lesson_text_lt: e.target.value || null } : p)} placeholder="— Строка диалога&#10;**Говорящий:** Текст&#10;*Контекст*" className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none font-mono resize-y" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
                                   <div className="flex flex-col gap-1">

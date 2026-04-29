@@ -90,7 +90,7 @@ def list_enrolled_categories(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return practice categories the user has enrolled in."""
+    """Return practice categories the user has enrolled in, with per-category progress."""
     user = _require_user(authorization, session)
     is_admin = user.is_admin
 
@@ -119,22 +119,48 @@ def list_enrolled_categories(
             return True
         return False
 
-    test_counts: dict[int, int] = {}
+    # Build visible tests per category
+    tests_by_category: dict[int, list[PracticeTest]] = {}
     for t in all_tests:
         if _visible(t) and t.category_id is not None:
-            test_counts[t.category_id] = test_counts.get(t.category_id, 0) + 1
+            tests_by_category.setdefault(t.category_id, []).append(t)
 
-    return [
-        {
+    # Sort each category's tests by sort_order, id (same order as list_category_tests)
+    for cat_tests in tests_by_category.values():
+        cat_tests.sort(key=lambda t: (t.sort_order, t.id))
+
+    # Best score per test for this user (only for tests in enrolled categories)
+    all_test_ids = [t.id for tests in tests_by_category.values() for t in tests]
+    best_scores: dict[int, float] = {}
+    if all_test_ids:
+        results = session.exec(
+            select(PracticeExamResult)
+            .where(PracticeExamResult.user_id == user.id, PracticeExamResult.test_id.in_(all_test_ids))
+        ).all()
+        for r in results:
+            pct = r.score / r.total if r.total > 0 else 0.0
+            if r.test_id not in best_scores or pct > best_scores[r.test_id]:
+                best_scores[r.test_id] = pct
+
+    output = []
+    for c in categories:
+        cat_tests = tests_by_category.get(c.id, [])
+        tests_total = len(cat_tests)
+        tests_passed = sum(
+            1 for t in cat_tests
+            if best_scores.get(t.id, 0.0) >= t.pass_threshold
+        )
+        output.append({
             "id": c.id,
             "name_ru": c.name_ru,
             "name_en": c.name_en,
             "description_ru": c.description_ru,
             "sort_order": c.sort_order,
-            "test_count": test_counts.get(c.id, 0),
-        }
-        for c in categories
-    ]
+            "test_count": tests_total,
+            "tests_passed": tests_passed,
+            "tests_total": tests_total,
+        })
+    return output
 
 
 @router.post("/me/practice-categories/{category_id}")
@@ -187,7 +213,7 @@ def list_category_tests(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """List visible tests in a category."""
+    """List visible tests in a category with lock/progress state per user."""
     user = _require_user(authorization, session)
     is_admin = user.is_admin
 
@@ -216,8 +242,27 @@ def list_category_tests(
         .group_by(PracticeQuestion.test_id)
     ).all())
 
-    return [
-        {
+    # Compute best score per test for this user
+    test_ids = [t.id for t in tests]
+    best_scores: dict[int, float] = {}
+    if test_ids:
+        results = session.exec(
+            select(PracticeExamResult)
+            .where(PracticeExamResult.user_id == user.id, PracticeExamResult.test_id.in_(test_ids))
+        ).all()
+        for r in results:
+            pct = r.score / r.total if r.total > 0 else 0.0
+            if r.test_id not in best_scores or pct > best_scores[r.test_id]:
+                best_scores[r.test_id] = pct
+
+    output = []
+    for i, t in enumerate(tests):
+        if i == 0:
+            is_locked = False
+        else:
+            prev = tests[i - 1]
+            is_locked = best_scores.get(prev.id, 0.0) < prev.pass_threshold
+        output.append({
             "id": t.id,
             "title_ru": t.title_ru,
             "title_en": t.title_en,
@@ -228,9 +273,10 @@ def list_category_tests(
             "pass_threshold": t.pass_threshold,
             "is_premium": t.is_premium,
             "active_question_count": active_counts.get(t.id, 0),
-        }
-        for t in tests
-    ]
+            "is_locked": is_locked,
+            "best_score_pct": best_scores.get(t.id),
+        })
+    return output
 
 
 @router.get("/practice/tests")
