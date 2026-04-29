@@ -76,6 +76,7 @@ def list_categories(
             "name_ru": c.name_ru,
             "name_en": c.name_en,
             "description_ru": c.description_ru,
+            "source_url": c.source_url,
             "sort_order": c.sort_order,
             "test_count": test_counts.get(c.id, 0),
             "enrolled": c.id in enrolled_ids,
@@ -222,6 +223,7 @@ def list_category_tests(
             "title_en": t.title_en,
             "description_ru": t.description_ru,
             "description_en": t.description_en,
+            "lesson_text_lt": t.lesson_text_lt,
             "question_count": t.question_count,
             "pass_threshold": t.pass_threshold,
             "is_premium": t.is_premium,
@@ -307,6 +309,7 @@ def get_exam_questions(
             "title_ru": test.title_ru,
             "title_en": test.title_en,
             "pass_threshold": test.pass_threshold,
+            "lesson_text_lt": test.lesson_text_lt,
         },
         "questions": [
             {
@@ -378,6 +381,7 @@ def admin_list_categories(
             "name_ru": c.name_ru,
             "name_en": c.name_en,
             "description_ru": c.description_ru,
+            "source_url": c.source_url,
             "sort_order": c.sort_order,
             "total_tests": total_counts.get(c.id, 0),
             "published_tests": published_counts.get(c.id, 0),
@@ -390,6 +394,7 @@ class CategoryIn(BaseModel):
     name_ru: str
     name_en: Optional[str] = None
     description_ru: Optional[str] = None
+    source_url: Optional[str] = None
     sort_order: int = 0
 
 
@@ -406,6 +411,7 @@ def admin_create_category(
         name_ru=body.name_ru.strip(),
         name_en=body.name_en,
         description_ru=body.description_ru,
+        source_url=body.source_url,
         sort_order=body.sort_order,
     )
     session.add(c)
@@ -418,6 +424,7 @@ class CategoryUpdate(BaseModel):
     name_ru: Optional[str] = None
     name_en: Optional[str] = None
     description_ru: Optional[str] = None
+    source_url: Optional[str] = None
     sort_order: Optional[int] = None
 
 
@@ -438,6 +445,8 @@ def admin_update_category(
         c.name_en = body.name_en
     if body.description_ru is not None:
         c.description_ru = body.description_ru
+    if body.source_url is not None:
+        c.source_url = body.source_url
     if body.sort_order is not None:
         c.sort_order = body.sort_order
     session.add(c)
@@ -559,6 +568,7 @@ class TestIn(BaseModel):
     title_en: Optional[str] = None
     description_ru: Optional[str] = None
     description_en: Optional[str] = None
+    lesson_text_lt: Optional[str] = None
     question_count: int = 20
     pass_threshold: float = 0.75
     status: str = "draft"
@@ -583,6 +593,7 @@ def admin_create_test(
         title_en=body.title_en,
         description_ru=body.description_ru,
         description_en=body.description_en,
+        lesson_text_lt=body.lesson_text_lt,
         question_count=body.question_count,
         pass_threshold=body.pass_threshold,
         status=body.status,
@@ -602,6 +613,7 @@ class TestUpdate(BaseModel):
     title_en: Optional[str] = None
     description_ru: Optional[str] = None
     description_en: Optional[str] = None
+    lesson_text_lt: Optional[str] = None
     question_count: Optional[int] = None
     pass_threshold: Optional[float] = None
     status: Optional[str] = None
@@ -629,6 +641,8 @@ def admin_update_test(
         t.description_ru = body.description_ru
     if body.description_en is not None:
         t.description_en = body.description_en
+    if body.lesson_text_lt is not None:
+        t.lesson_text_lt = body.lesson_text_lt
     if body.question_count is not None:
         t.question_count = body.question_count
     if body.pass_threshold is not None:

@@ -234,6 +234,7 @@ class PracticeCategory(SQLModel, table=True):
     name_ru: str
     name_en: Optional[str] = None
     description_ru: Optional[str] = None
+    source_url: Optional[str] = None
     sort_order: int = Field(default=0)
     created_at: datetime = Field(default_factory=_utcnow)
 
@@ -253,6 +254,7 @@ class PracticeTest(SQLModel, table=True):
     status: str = Field(default="draft")          # draft | testing | published
     is_premium: bool = Field(default=False)       # requires premium subscription
     created_by: Optional[str] = Field(default=None, foreign_key="user.id")  # admin who created
+    lesson_text_lt: Optional[str] = None
     sort_order: int = Field(default=0)
     created_at: datetime = Field(default_factory=_utcnow)
 

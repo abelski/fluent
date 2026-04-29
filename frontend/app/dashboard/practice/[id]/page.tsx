@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { BACKEND_URL, getToken, resolvePracticeId } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 
@@ -12,6 +14,7 @@ interface PracticeTest {
   title_en: string | null;
   description_ru: string | null;
   description_en: string | null;
+  lesson_text_lt: string | null;
   question_count: number;
   pass_threshold: number;
   is_premium: boolean;
@@ -31,11 +34,11 @@ interface Question {
 }
 
 interface ActiveTest {
-  test: { id: number; title_ru: string; title_en: string | null; pass_threshold: number };
+  test: { id: number; title_ru: string; title_en: string | null; pass_threshold: number; lesson_text_lt: string | null };
   questions: Question[];
 }
 
-type PageView = 'tests' | 'question' | 'result';
+type PageView = 'tests' | 'reading' | 'question' | 'result';
 type Option = 'a' | 'b' | 'c' | 'd';
 
 const OPTIONS: Option[] = ['a', 'b', 'c', 'd'];
@@ -52,6 +55,7 @@ export default function PracticeCategoryPage() {
   const router = useRouter();
 
   const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null);
 
   // Tests list state
   const [tests, setTests] = useState<PracticeTest[]>([]);
@@ -61,6 +65,7 @@ export default function PracticeCategoryPage() {
   // Active exam state
   const [view, setView] = useState<PageView>('tests');
   const [activeTest, setActiveTest] = useState<ActiveTest | null>(null);
+  const [pendingTest, setPendingTest] = useState<PracticeTest | null>(null);
   const [examLoading, setExamLoading] = useState(false);
   const [examError, setExamError] = useState('');
 
@@ -94,23 +99,20 @@ export default function PracticeCategoryPage() {
       .catch(console.error)
       .finally(() => setTestsLoading(false));
 
-    // Fetch category name for the heading
+    // Fetch category name and source_url for the heading
     fetch(`${BACKEND_URL}/api/practice/categories`, { headers })
       .then((r) => (r.ok ? r.json() : []))
-      .then((cats: { id: number; name_ru: string; name_en: string | null }[]) => {
+      .then((cats: { id: number; name_ru: string; name_en: string | null; source_url: string | null }[]) => {
         const cat = cats.find((c) => String(c.id) === categoryId);
         if (cat) {
           setCategoryName(lang === 'en' ? (cat.name_en ?? cat.name_ru) : cat.name_ru);
+          setSourceUrl(cat.source_url ?? null);
         }
       })
       .catch(console.error);
   }, [categoryId, router, lang]);
 
-  async function startTest(test: PracticeTest) {
-    if (test.is_premium && !isPremiumUser) {
-      router.push('/dashboard/premium');
-      return;
-    }
+  async function startExam(test: PracticeTest) {
     setExamLoading(true);
     setExamError('');
     const token = getToken();
@@ -138,6 +140,19 @@ export default function PracticeCategoryPage() {
     setSelected(null);
     setAnswered(false);
     setView('question');
+  }
+
+  function startTest(test: PracticeTest) {
+    if (test.is_premium && !isPremiumUser) {
+      router.push('/dashboard/premium');
+      return;
+    }
+    if (test.lesson_text_lt) {
+      setPendingTest(test);
+      setView('reading');
+    } else {
+      startExam(test);
+    }
   }
 
   function handleSubmit() {
@@ -180,6 +195,7 @@ export default function PracticeCategoryPage() {
   function backToTests() {
     setView('tests');
     setActiveTest(null);
+    setPendingTest(null);
     setAnswers([]);
     setCurrent(0);
     setSelected(null);
@@ -203,7 +219,7 @@ export default function PracticeCategoryPage() {
             {t.backToCategories}
           </Link>
         )}
-        {(view === 'question' || view === 'result') && (
+        {(view === 'reading' || view === 'question' || view === 'result') && (
           <button onClick={backToTests} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
             {t.backToTests}
           </button>
@@ -212,10 +228,29 @@ export default function PracticeCategoryPage() {
         {/* ── Tests view ──────────────────────────────────────────────────── */}
         {view === 'tests' && (
           <>
-            <div className="mt-4 mb-8">
+            <div className="mt-4 mb-6">
               <h1 className="text-3xl font-bold">{categoryName}</h1>
               <p className="text-gray-400 mt-1">Выберите тест для прохождения</p>
             </div>
+
+            {/* Source URL callout (e.g. constitution link) */}
+            {sourceUrl && (
+              <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <span className="text-amber-600 text-base mt-0.5">📖</span>
+                <p className="text-sm text-amber-800">
+                  Перед прохождением тестов рекомендуем прочитать{' '}
+                  <a
+                    href={sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-semibold hover:text-amber-900"
+                  >
+                    Конституцию Литвы
+                  </a>
+                  .
+                </p>
+              </div>
+            )}
 
             {testsLoading ? (
               <div className="flex justify-center py-16">
@@ -240,6 +275,11 @@ export default function PracticeCategoryPage() {
                               {t.premiumBadge}
                             </span>
                           )}
+                          {test.lesson_text_lt && (
+                            <span className="text-[10px] px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full font-semibold">
+                              📄 Текст
+                            </span>
+                          )}
                         </div>
                         {desc && <p className="text-sm text-gray-400 mt-0.5 truncate">{desc}</p>}
                         <p className="text-xs text-gray-400 mt-1">
@@ -260,6 +300,36 @@ export default function PracticeCategoryPage() {
               </div>
             )}
           </>
+        )}
+
+        {/* ── Reading view ─────────────────────────────────────────────────── */}
+        {view === 'reading' && pendingTest && (
+          <div className="flex flex-col gap-4 mt-6">
+            <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white">
+              <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between gap-4">
+                <span className="text-sm font-medium text-gray-700">
+                  {lang === 'en' ? (pendingTest.title_en ?? pendingTest.title_ru) : pendingTest.title_ru}
+                </span>
+                <span className="text-xs px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full font-semibold">
+                  Текст
+                </span>
+              </div>
+              <div className="px-6 py-5 prose prose-sm max-w-none text-gray-800 leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {pendingTest.lesson_text_lt ?? ''}
+                </ReactMarkdown>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => startExam(pendingTest)}
+                disabled={examLoading}
+                className="px-6 py-2.5 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-40"
+              >
+                {examLoading ? '...' : 'Перейти к тесту →'}
+              </button>
+            </div>
+          </div>
         )}
 
         {/* ── Question screen ──────────────────────────────────────────────── */}
@@ -296,7 +366,7 @@ export default function PracticeCategoryPage() {
               </div>
 
               <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white divide-y divide-gray-100">
-                {OPTIONS.map((opt) => {
+                {OPTIONS.filter((opt) => getOptionText(q, opt).trim() !== '').map((opt) => {
                   const text = getOptionText(q, opt);
                   let rowStyle = 'hover:bg-gray-50';
                   let labelStyle = 'border-gray-200 bg-gray-50 text-gray-500';
