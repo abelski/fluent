@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { BACKEND_URL, getToken, resolvePracticeId } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 
@@ -315,7 +316,7 @@ export default function PracticeCategoryPage() {
                 </span>
               </div>
               <div className="px-6 py-5 prose prose-sm max-w-none text-gray-800 leading-relaxed">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                   {pendingTest.lesson_text_lt ?? ''}
                 </ReactMarkdown>
               </div>
