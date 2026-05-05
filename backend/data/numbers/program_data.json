@@ -1,0 +1,212 @@
+[
+  {
+    "sort_order": 1,
+    "title_ru": "Урок 1: Основные числительные 0–100",
+    "title_en": "Lesson 1: Cardinal Numbers 0–100",
+    "description_ru": "Числа от 0 до 100: закономерности образования, адреса и телефонные номера.",
+    "lesson_text_lt": "**Skaičiai 0–10:** nulis, vienas, du, trys, keturi, penki, šeši, septyni, aštuoni, devyni, dešimt.\n\n**Skaičiai 11–19** (galūnė **-olika**): vienuolika, dvylika, trylika, keturiolika, penkiolika, šešiolika, septyniolika, aštuoniolika, devyniolika.\n\n**Dešimtys:** dvidešimt, trisdešimt, keturiasdešimt, penkiasdešimt, šešiasdešimt, septyniasdešimt, aštuoniasdešimt, devyniasdešimt.\n\n**Šimtai:** šimtas (100), du šimtai (200), trys šimtai (300).\n\n**Sudėtiniai skaičiai:** dvidešimt vienas (21), trisdešimt du (32), keturiasdešimt penki (45).\n\n**Adresai:** Parko gatvė **4–10** → *keturi, dešimt*. Bokšto **29** → *dvidešimt devyni*.\n\n**Klausiamieji žodžiai:** *Koks tavo adresas? Koks tavo telefono numeris?*",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "Как по-литовски «семь»?", "a": "šeši", "b": "septyni", "c": "aštuoni", "d": "devyni", "correct": "b"},
+      {"q": "Как по-литовски «девятнадцать»?", "a": "devynolika", "b": "devyniasdešimt", "c": "devyniolika", "d": "devyni dešimt", "correct": "c"},
+      {"q": "Как по-литовски «сорок»?", "a": "keturiasdešimt", "b": "keturiolika", "c": "ketvirta", "d": "keturi", "correct": "a"},
+      {"q": "Как произносится число 28?", "a": "du aštuoni", "b": "dvidešimt aštuoni", "c": "du šimtai aštuoni", "d": "dvidešimt aštunta", "correct": "b"},
+      {"q": "Как по-литовски «сто»?", "a": "šimtai", "b": "du šimtai", "c": "šimtas", "d": "šimta", "correct": "c"},
+      {"q": "Как произносится адрес «Parko gatvė 8–3»?", "a": "aštuoni tris", "b": "aštuoni, trys", "c": "aštuntas, trys", "d": "aštuonias, tris", "correct": "b"},
+      {"q": "С помощью какого суффикса образуются числа 11–19?", "a": "-asdešimt", "b": "-olika", "c": "-etas", "d": "-intas", "correct": "b"},
+      {"q": "Как по-литовски «200»?", "a": "du šimtai", "b": "šimtai du", "c": "dvi šimtai", "d": "du šimtas", "correct": "a"},
+      {"q": "Как произносится число 57?", "a": "penkiasdešimt septyni", "b": "penki septinta", "c": "penkiasdešimt septinta", "d": "penkias septynias", "correct": "a"},
+      {"q": "Какой вопрос задают, чтобы узнать адрес?", "a": "Kiek?", "b": "Koks tavo adresas?", "c": "Kelintą valandą?", "d": "Kiek kainuoja?", "correct": "b"}
+    ]
+  },
+  {
+    "sort_order": 2,
+    "title_ru": "Урок 2: Числа с существительными — именительный падеж",
+    "title_en": "Lesson 2: Numbers with Nouns — Nominative",
+    "description_ru": "Согласование числительных с существительными по роду в именительном падеже.",
+    "lesson_text_lt": "Skaičiai keičiasi pagal daiktavardžio **giminę** (Vardininkas — *kiek?*):\n\n| Sk. | Vyriškoji (jis) | Moteriškoji (ji) |\n|-----|-----------------|------------------|\n| 1 | **vienas** brolis | **viena** sesuo |\n| 2 | **du** broliai | **dvi** seserys |\n| 3 | **trys** | **trys** |\n| 4 | **keturi** | **keturios** |\n| 5 | **penki** | **penkios** |\n| 6 | **šeši** | **šešios** |\n| 7 | **septyni** | **septynios** |\n| 8 | **aštuoni** | **aštuonios** |\n| 9 | **devyni** | **devynios** |\n\n**Pavyzdžiai:**\n- Auditorijoje yra **keturi** studentai ir **šešios** studentės.\n- Dvi mano seserys gyvena Vilniuje.",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "Выберите правильную форму числа 1 для мужского рода (именит.): ___ brolis", "a": "viena", "b": "vienas", "c": "vieną", "d": "vienu", "correct": "b"},
+      {"q": "Выберите правильную форму числа 2 для женского рода (именит.): ___ seserys", "a": "du", "b": "dvi", "c": "dviejų", "d": "dviem", "correct": "b"},
+      {"q": "Как звучит «6» с существительными женского рода в именительном падеже?", "a": "šeši", "b": "šešios", "c": "šešias", "d": "šešioms", "correct": "b"},
+      {"q": "Как звучит «4» с существительными женского рода в именительном падеже?", "a": "keturi", "b": "keturiai", "c": "keturios", "d": "keturias", "correct": "c"},
+      {"q": "Форма числа «3» в именительном падеже для обоих родов:", "a": "tris", "b": "trys", "c": "trims", "d": "trijų", "correct": "b"},
+      {"q": "Какая форма числа 4 используется с существительными мужского рода в именительном падеже?", "a": "keturias", "b": "keturios", "c": "keturi", "d": "keturiems", "correct": "c"},
+      {"q": "Выберите правильное предложение: «В аудитории шесть студенток.»", "a": "Auditorijoje yra šeši studentės.", "b": "Auditorijoje yra šešios studentės.", "c": "Auditorijoje yra šešias studentės.", "d": "Auditorijoje yra šešioms studentėms.", "correct": "b"},
+      {"q": "Как звучит «8» с существительными женского рода в именительном падеже?", "a": "aštuoni", "b": "aštuonias", "c": "aštuonioms", "d": "aštuonios", "correct": "d"},
+      {"q": "Выберите правильное предложение: «Один мой брат живёт в Германии.»", "a": "Viena mano brolis gyvena Vokietijoje.", "b": "Vienas mano brolis gyvena Vokietijoje.", "c": "Vieną mano brolį gyvena Vokietijoje.", "d": "Vienu mano broliu gyvena Vokietijoje.", "correct": "b"},
+      {"q": "Как звучит «9» с существительными мужского рода в именительном падеже?", "a": "devynios", "b": "devynias", "c": "devyni", "d": "devynioms", "correct": "c"}
+    ]
+  },
+  {
+    "sort_order": 3,
+    "title_ru": "Урок 3: Числа с существительными — винительный падеж",
+    "title_en": "Lesson 3: Numbers with Nouns — Accusative",
+    "description_ru": "Форма числительных в винительном падеже — конструкция «turiu» (у меня есть).",
+    "lesson_text_lt": "Galininkas (ką turiu?) — skaičiai su daiktavardžiais:\n\n| Sk. | Vyriškoji | Moteriškoji |\n|-----|-----------|-------------|\n| 1 | **vieną** brolį | **vieną** seserį |\n| 2 | **du** brolius | **dvi** seseris |\n| 3 | **tris** | **tris** |\n| 4 | **keturis** | **keturias** |\n| 5 | **penkis** | **penkias** |\n| 6 | **šešis** | **šešias** |\n| 7 | **septynis** | **septynias** |\n| 8 | **aštuonis** | **aštuonias** |\n| 9 | **devynis** | **devynias** |\n\n**Pavyzdžiai:**\n- Jis turi **du brolius**.\n- Ji turi **dvi seseris**.\n- Aš turiu **tris brolius** ir **penkias seseris**.",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "Выберите правильную форму: «Paulius turi ___ brolius.» (2)", "a": "dvi", "b": "du", "c": "dviem", "d": "dviejų", "correct": "b"},
+      {"q": "Выберите правильную форму: «Ji turi ___ seseris.» (2)", "a": "du", "b": "dvi", "c": "dviem", "d": "dviejų", "correct": "b"},
+      {"q": "Выберите правильную форму: «Aš turiu ___ brolius.» (3)", "a": "trys", "b": "tris", "c": "trims", "d": "trijų", "correct": "b"},
+      {"q": "Выберите правильную форму: «Jis turi ___ seseris.» (4)", "a": "keturios", "b": "keturis", "c": "keturias", "d": "keturi", "correct": "c"},
+      {"q": "Выберите правильную форму: «Rūta turi ___ tetas.» (4)", "a": "keturios", "b": "keturias", "c": "keturi", "d": "keturioms", "correct": "b"},
+      {"q": "Выберите правильную форму: «Turiu ___ seseris.» (5)", "a": "penki", "b": "penkios", "c": "penkias", "d": "penkioms", "correct": "c"},
+      {"q": "Выберите правильную форму: «Jis turi ___ brolius.» (6)", "a": "šeši", "b": "šešias", "c": "šešios", "d": "šešis", "correct": "d"},
+      {"q": "Выберите правильную форму: «Monika turi ___ anūkus.» (3)", "a": "trys", "b": "tris", "c": "trims", "d": "trijų", "correct": "b"},
+      {"q": "Выберите правильную форму: «Andrius ir Marija turi ___ dukterį.» (1)", "a": "vienas", "b": "viena", "c": "vieną", "d": "vienai", "correct": "c"},
+      {"q": "Выберите правильную форму: «Aš turiu ___ pusbrolių.» (7)", "a": "septyni", "b": "septynias", "c": "septynius", "d": "septynios", "correct": "c"}
+    ]
+  },
+  {
+    "sort_order": 4,
+    "title_ru": "Урок 4: Числа с ценами — родительный падеж",
+    "title_en": "Lesson 4: Numbers with Prices — Genitive",
+    "description_ru": "Правило: 1 euras / 2–4 eurai / 5+ eurų. Чтение цен и родительный падеж с числами.",
+    "lesson_text_lt": "**Taisyklė (ko? — kilmininkas):**\n- **1** → Vardininkas vns.: *vienas **euras***\n- **2, 3, 4** → Vardininkas dgs.: *trys **eurai***\n- **5–9, 11–19, 10, 20, 30…** → Kilmininkas dgs.: *penkių **eurų***\n\n**Kainų pavyzdžiai:**\n- 4,00 € → *keturi eurai*\n- 7,20 € → *septyni eurai dvidešimt centų*\n- 12,50 € → *dvylika eurų penkiasdešimt centų*\n- 31,00 € → *trisdešimt vienas euras*\n\n**Klausimas:** *Kiek kainuoja?*",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "Какое слово «евро» используется с числом 1?", "a": "eurų", "b": "eurai", "c": "euras", "d": "euro", "correct": "c"},
+      {"q": "Какое слово «евро» используется с числом 5?", "a": "euras", "b": "eurai", "c": "eurų", "d": "eurams", "correct": "c"},
+      {"q": "Какое слово «евро» используется с числом 3?", "a": "euras", "b": "eurai", "c": "eurų", "d": "eurams", "correct": "b"},
+      {"q": "Как правильно прочитать «12 €»?", "a": "dvylika eurai", "b": "dvylika eurų", "c": "dvylika euras", "d": "dvi eurai", "correct": "b"},
+      {"q": "Как правильно прочитать «31 €»?", "a": "trisdešimt vienas eurų", "b": "trisdešimt vienas eurai", "c": "trisdešimt vienas euras", "d": "trisdešimt viena euras", "correct": "c"},
+      {"q": "Как правильно прочитать «4,00 €»?", "a": "keturi eurų", "b": "keturias euras", "c": "keturi eurai", "d": "keturių eurų", "correct": "c"},
+      {"q": "Как правильно прочитать «12,50 €»?", "a": "dvylika eurų penkiasdešimt centų", "b": "dvylika eurai penkiasdešimt centų", "c": "dvylika euras penkiasdešimt centai", "d": "dvidešimt du eurų", "correct": "a"},
+      {"q": "Что означает «Kiek kainuoja?»?", "a": "Сколько вам лет?", "b": "Сколько стоит?", "c": "Во сколько встречаемся?", "d": "Сколько евро?", "correct": "b"},
+      {"q": "Какое слово «евро» используется с числом 21?", "a": "eurų", "b": "eurai", "c": "euras", "d": "eurams", "correct": "c"},
+      {"q": "Какое слово «евро» используется с числом 16?", "a": "euras", "b": "eurai", "c": "eurų", "d": "euro", "correct": "c"}
+    ]
+  },
+  {
+    "sort_order": 5,
+    "title_ru": "Урок 5: Время — который час и во сколько",
+    "title_en": "Lesson 5: Telling Time — What Time Is It and At What Time",
+    "description_ru": "Именительный падеж — «сейчас». Винительный падеж — «встречаемся». Полчаса.",
+    "lesson_text_lt": "**Kiek valandų? (Dabar yra …)** — Vardininkas (-a):\n- 9.00 → *devinta valanda*\n- 14.00 → *antra valanda / keturiolikta valanda*\n- 21.00 → *devinta valanda / dvidešimt pirma valanda*\n\n**Kelintą valandą? (Susitinkame …)** — Galininkas (-ą):\n- *Susitinkame **devintą** valandą.*\n- *Susitinkame **antrą** valandą.*\n\n**Pusė valandos** — *pusę* + Kilmininkas (-os):\n- 7.30 → *pusę aštuntos*\n- 13.30 → *pusę antros*\n- 15.30 → *pusę ketvirtos*",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "Как спросить «который сейчас час»?", "a": "Kelintą valandą?", "b": "Kiek valandų?", "c": "Koks laikas?", "d": "Kada?", "correct": "b"},
+      {"q": "Как сказать «сейчас восемь часов»?", "a": "Dabar yra aštuntą valandą.", "b": "Dabar yra aštunta valanda.", "c": "Susitinkame aštuntą.", "d": "Dabar yra aštuoni valandą.", "correct": "b"},
+      {"q": "Как спросить «во сколько встречаемся»?", "a": "Kiek valandų?", "b": "Kelinta valanda?", "c": "Kelintą valandą?", "d": "Koks laikas?", "correct": "c"},
+      {"q": "Как сказать «встретимся в семь»?", "a": "Dabar yra septinta valanda.", "b": "Susitinkame septinta valanda.", "c": "Susitinkame septintą valandą.", "d": "Susitinkame septintos valandos.", "correct": "c"},
+      {"q": "Как сказать 7:30?", "a": "pusė septintos", "b": "pusė aštuntos", "c": "septinta valanda", "d": "aštunta pusė", "correct": "b"},
+      {"q": "Что означает «pusę antros»?", "a": "2:00", "b": "1:30", "c": "13:00", "d": "13:30", "correct": "d"},
+      {"q": "Как образуется «половина часа» в литовском?", "a": "pusė + именительный", "b": "pusę + родительный (-os)", "c": "pusė + винительный", "d": "puse + творительный", "correct": "b"},
+      {"q": "Как звучит «antra valanda» в винительном падеже?", "a": "antros valandos", "b": "antra valanda", "c": "antrą valandą", "d": "antram valandai", "correct": "c"},
+      {"q": "Какое окончание получает порядковое числительное при вопросе «Kelintą valandą?»", "a": "-a", "b": "-os", "c": "-ą", "d": "-ai", "correct": "c"},
+      {"q": "Как сказать «сейчас полчетвёртого» (15:30)?", "a": "pusę trečios", "b": "pusę ketvirtos", "c": "trečia pusė", "d": "pusė penktos", "correct": "b"}
+    ]
+  },
+  {
+    "sort_order": 6,
+    "title_ru": "Урок 6: Рабочее время и продолжительность",
+    "title_en": "Lesson 6: Working Hours and Duration",
+    "description_ru": "Nuo … iki … (с … до …) — родительный падеж. Kiek laiko? — продолжительность в винительном.",
+    "lesson_text_lt": "**Nuo / iki + Kilmininkas (-os):**\n- *Bankas dirba **nuo aštuntos iki penktos** valandos.*\n- *Pietų pertrauka **nuo dvyliktos iki pirmos**.*\n- *Dirbame **nuo devintos iki šeštos**.*\n\n| Vardininkas | Kilmininkas |\n|-------------|-------------|\n| **pirma** | **pirmos** |\n| **antra** | **antros** |\n| **aštunta** | **aštuntos** |\n| **dvylikta** | **dvylikos** |\n\n**Kiek laiko? — Galininkas:**\n- *Sportavau **valandą**.*\n- *Komandiruotėje būsiu **dvi dienas**.*\n- *Atostogausiu **mėnesį**.*\n\n**Po + Kilmininkas** (через … времени):\n- *Autobusas atvažiuos po **keturių** minučių.*\n- *Būsiu po **penkių** minučių.*",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "Как сказать «банк работает с восьми до пяти»?", "a": "Bankas dirba nuo aštuntą iki penktą.", "b": "Bankas dirba nuo aštuntos iki penktos.", "c": "Bankas dirba nuo aštuntai iki penktai.", "d": "Bankas dirba nuo aštunta iki penkta.", "correct": "b"},
+      {"q": "Какое окончание получает порядковое числительное после nuo/iki?", "a": "-a", "b": "-ą", "c": "-os", "d": "-ai", "correct": "c"},
+      {"q": "Как сказать «обеденный перерыв с 12 до 13»?", "a": "nuo dvylikos iki pirmos", "b": "nuo dvylikta iki pirma", "c": "nuo dvyliktą iki pirmą", "d": "nuo dvylika iki pirma", "correct": "a"},
+      {"q": "Как спросить «сколько по времени» (продолжительность)?", "a": "Kelintą valandą?", "b": "Kiek laiko?", "c": "Nuo kelinto?", "d": "Kiek valandų?", "correct": "b"},
+      {"q": "Как сказать «я занимался спортом час»?", "a": "Sportavau valandos.", "b": "Sportavau valandai.", "c": "Sportavau valandą.", "d": "Sportavau valanda.", "correct": "c"},
+      {"q": "Как сказать «командировка длится два дня»?", "a": "Komandiruotėje būsiu dvi dienos.", "b": "Komandiruotėje būsiu dvi dienas.", "c": "Komandiruotėje būsiu dviejų dienų.", "d": "Komandiruotėje būsiu dviem dienoms.", "correct": "b"},
+      {"q": "Какой падеж используется для выражения продолжительности времени (kiek laiko)?", "a": "Именительный", "b": "Родительный", "c": "Дательный", "d": "Винительный", "correct": "d"},
+      {"q": "Как сказать «автобус приедет через четыре минуты»?", "a": "Autobusas atvažiuos po keturių minučių.", "b": "Autobusas atvažiuos po keturias minutes.", "c": "Autobusas atvažiuos po keturios minutės.", "d": "Autobusas atvažiuos keturias minutes.", "correct": "a"},
+      {"q": "Что означает конструкция «po + kilmininkas»?", "a": "на протяжении", "b": "через (спустя какое-то время)", "c": "до", "d": "с", "correct": "b"},
+      {"q": "Как сказать «хочу снять машину на пять дней»?", "a": "Noriu išsinuomoti automobilį penkioms dienoms.", "b": "Noriu išsinuomoti automobilį penkios dienos.", "c": "Noriu išsinuomoti automobilį penkių dienų.", "d": "Noriu išsinuomoti automobilį penkias dienas.", "correct": "a"}
+    ]
+  },
+  {
+    "sort_order": 7,
+    "title_ru": "Урок 7: Порядковые числительные — транспорт (творительный падеж)",
+    "title_en": "Lesson 7: Ordinal Numbers — Transport (Instrumental Case)",
+    "description_ru": "Номера автобусов и троллейбусов. Вопрос «Kaip važiuoji?» — творительный падеж (-u).",
+    "lesson_text_lt": "**Klausimas:** *Kaip važiuoji?* (Keliu numeriu?)\n\n**Taisyklė:** Vardininkas (-as) → Įnagininkas (-u)\n\n| Vardininkas | Įnagininkas |\n|-------------|-------------|\n| **pirmas** autobusas | **pirmu** autobusu |\n| **antras** | **antru** autobusu |\n| **trečias** | **trečiu** autobusu |\n| **ketvirtas** | **ketvirtu** autobusu |\n| **penktas** | **penktu** autobusu |\n| **dešimtas** | **dešimtu** autobusu |\n| **devynioliktas** | **devynioliktu** autobusu |\n| **dvidešimt pirmas** | **dvidešimt pirmu** autobusu |\n| **penkiasdešimt šeštas** | **penkiasdešimt šeštu** autobusu |\n\n**Frazės:**\n- *Reikia važiuoti **antru** autobusu.*\n- *Važiuoju **devynioliktu** troleibуsu.*\n- *Važiuok **penkiasdešimt šeštu** autobusu.*",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "Как спросить «на каком автобусе ты едешь»?", "a": "Koks autobusas?", "b": "Kaip važiuoji?", "c": "Kelintame?", "d": "Kelintą?", "correct": "b"},
+      {"q": "Как сказать «я еду на третьем автобусе»?", "a": "Važiuoju trečias autobusu.", "b": "Važiuoju trečiu autobusu.", "c": "Važiuoju trečiame autobuse.", "d": "Važiuoju trečią autobusą.", "correct": "b"},
+      {"q": "Какое окончание получает порядковое числительное мужского рода в творительном падеже?", "a": "-ame", "b": "-as", "c": "-ą", "d": "-u", "correct": "d"},
+      {"q": "Как звучит «19-й» в творительном падеже?", "a": "devynioliktu", "b": "devynioliktas", "c": "devynioliktame", "d": "devynioliktą", "correct": "a"},
+      {"q": "Как сказать «езжай на 56-м автобусе»?", "a": "Važiuok penkiasdešimt šeštame autobuse.", "b": "Važiuok penkiasdešimt šeštu autobusu.", "c": "Važiuok penkiasdešimt šeštas autobusas.", "d": "Važiuok penkiasdešimt šeštos autobusu.", "correct": "b"},
+      {"q": "Как сказать «в университет я еду на 19-м троллейбусе»?", "a": "Į universitetą važiuoju devynioliktu troleibуsu.", "b": "Į universitetą važiuoju devynioliktame troleibuse.", "c": "Į universitetą važiuoju devynioliktas troleibusas.", "d": "Į universitetą važiuoju devynioliktų troleibusų.", "correct": "a"},
+      {"q": "Как спросить «какой автобус едет в центр» (какой именно)?", "a": "Kaip važiuoti į centrą?", "b": "Koks autobusas važiuoja į centrą?", "c": "Kelintame autobuse?", "d": "Kaip autobusas?", "correct": "b"},
+      {"q": "На каком автобусе нужно ехать, если говорят «Reikia važiuoti antru autobusu»?", "a": "12-м", "b": "11-м", "c": "2-м", "d": "1-м", "correct": "c"},
+      {"q": "Как звучит «1-й» в творительном падеже?", "a": "pirmu", "b": "pirmas", "c": "pirmame", "d": "pirmos", "correct": "a"},
+      {"q": "Как правильно сказать «нужно ехать на четвёртом троллейбусе»?", "a": "Reikia važiuoti ketvirtu troleibуsu.", "b": "Reikia važiuoti ketvirtu autobuse.", "c": "Reikia važiuoti ketvirtame troleibuse.", "d": "Reikia važiuoti ketvirtą troleibusą.", "correct": "a"}
+    ]
+  },
+  {
+    "sort_order": 8,
+    "title_ru": "Урок 8: Порядковые числительные — этажи и аудитории (местный падеж)",
+    "title_en": "Lesson 8: Ordinal Numbers — Floors and Rooms (Locative Case)",
+    "description_ru": "Этажи — местный падеж мужского рода (-ame). Аудитории — местный падеж женского рода (-oje).",
+    "lesson_text_lt": "**Kelintame aukšte?** (мужской род) → Vietininkas: -as → **-ame**\n- *Gyvenu **šeštame** aukšte.*\n- *Kavinė yra **pirmame** aukšte.*\n- *Mano butas yra **ketvirtame** aukšte.*\n\n**Kelintoje auditorijoje?** (женский род) → Vietininkas: -a → **-oje**\n- *Paskaita bus **dvidešimt antroje** (22) auditorijoje.*\n- *Egzaminas bus **šimtas trisdešimtoje** (130) auditorijoje.*\n- *Seminaras **šimtas pirmoje** (101) auditorijoje.*",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "Как спросить «на каком этаже»?", "a": "Kelintame aukšte?", "b": "Kelintoje aukšte?", "c": "Kaip aukšte?", "d": "Koks aukštas?", "correct": "a"},
+      {"q": "Какое окончание получает порядковое числительное мужского рода в местном падеже?", "a": "-u", "b": "-ame", "c": "-oje", "d": "-os", "correct": "b"},
+      {"q": "Как сказать «я живу на шестом этаже»?", "a": "Gyvenu šeštame aukšte.", "b": "Gyvenu šeštoje aukšte.", "c": "Gyvenu šeštu aukštu.", "d": "Gyvenu šeštos aukštos.", "correct": "a"},
+      {"q": "Как спросить «в какой аудитории будет семинар»?", "a": "Kelintame auditorijoje?", "b": "Kelintoje auditorijoje?", "c": "Kaip auditorijoje?", "d": "Koks auditorija?", "correct": "b"},
+      {"q": "Какое окончание получает порядковое числительное женского рода в местном падеже?", "a": "-u", "b": "-ame", "c": "-oje", "d": "-ų", "correct": "c"},
+      {"q": "Как сказать «кафе на первом этаже»?", "a": "Kavinė yra pirmoje aukšte.", "b": "Kavinė yra pirmame aukšte.", "c": "Kavinė yra pirmu aukštu.", "d": "Kavinė yra pirmą aukštą.", "correct": "b"},
+      {"q": "Как сказать «лекция в аудитории 22»?", "a": "Paskaita bus dvidešimt antroje auditorijoje.", "b": "Paskaita bus dvidešimt antrame auditorijoje.", "c": "Paskaita bus dvidešimt antrą auditoriją.", "d": "Paskaita bus dvidešimt antru auditorijumi.", "correct": "a"},
+      {"q": "Как сказать «экзамен в аудитории 130»?", "a": "Egzaminas šimtas trisdešimtame.", "b": "Egzaminas šimtas trisdešimtoje auditorijoje.", "c": "Egzaminas šimtas trisdešimt auditorijoje.", "d": "Egzaminas šimtas trisdešimtu.", "correct": "b"},
+      {"q": "Как правильно сказать «я живу на десятом этаже»?", "a": "Gyvenu dešimtoje aukšte.", "b": "Gyvenu dešimtame aukšte.", "c": "Gyvenu dešimtu aukštu.", "d": "Gyvenu dešimtos aukštos.", "correct": "b"},
+      {"q": "Какой падеж используется при вопросе «Kelintame aukšte?»?", "a": "Творительный", "b": "Родительный", "c": "Местный", "d": "Именительный", "correct": "c"}
+    ]
+  },
+  {
+    "sort_order": 9,
+    "title_ru": "Урок 9: Возраст — собирательные числительные",
+    "title_en": "Lesson 9: Age — Collective Numbers",
+    "description_ru": "Дательный падеж: «Kiek tau metų?». Собирательные числительные 1–9 для возраста.",
+    "lesson_text_lt": "**Kiek tau metų?** — дательный падеж:\n\n| Sk. | Dauginiai skaitvardžiai |\n|-----|--------------------------|\n| 1 | **vieni** metai |\n| 2 | **dveji** metai |\n| 3 | **treji** metai |\n| 4 | **ketveri** metai |\n| 5 | **penkeri** metai |\n| 6 | **šešeri** metai |\n| 7 | **septyneri** metai |\n| 8 | **aštuoneri** metai |\n| 9 | **devyneri** metai |\n\n**10+** → kilmininkas: *dešimt metų, penkiolika metų*.\n\n**Sudėtiniai:** *dvidešimt **penkeri** metai (25), šešiasdešimt **penkeri** (65)*.\n\n**Pavyzdžiai:**\n- *Kiek **tau** metų? — Man **dvidešimt penkeri**.*\n- *Kiek metų **draugui**? — **Septyniolika** metų.*\n- *Kiek metų **dukteriai**? — **Devyneri** metai.*",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "Какое числительное используется для выражения «2 года» (возраст)?", "a": "du metai", "b": "dveji metai", "c": "dviejų metų", "d": "dviem metais", "correct": "b"},
+      {"q": "Как спросить «сколько тебе лет»?", "a": "Kiek tau metai?", "b": "Kiek tau metų?", "c": "Kiek tau metai yra?", "d": "Kiek tavo metų?", "correct": "b"},
+      {"q": "Как сказать «мне 5 лет»?", "a": "Man penki metai.", "b": "Man penkeri metai.", "c": "Man penkių metų.", "d": "Man penktai metai.", "correct": "b"},
+      {"q": "В каком падеже стоит тот, о чьём возрасте спрашивают (kiek tau)?", "a": "Именительный", "b": "Родительный", "c": "Дательный", "d": "Винительный", "correct": "c"},
+      {"q": "Как сказать «другу 17 лет»?", "a": "Draugas septyniolika metų.", "b": "Draugui septyniolika metų.", "c": "Draugą septyniolika metų.", "d": "Draugo septyniolika metų.", "correct": "b"},
+      {"q": "Как сказать «мне 25 лет»?", "a": "Man dvidešimt penki metai.", "b": "Man dvidešimt penkeri metai.", "c": "Man dvidešimt penkių metų.", "d": "Man dvidešimt penktai metai.", "correct": "b"},
+      {"q": "Какое числительное используется для «9 лет» (возраст)?", "a": "devyni metai", "b": "devyniolika metų", "c": "devyneri metai", "d": "devynios metų", "correct": "c"},
+      {"q": "Как сказать «сколько лет вашей дочери»?", "a": "Kiek metų dukteriai?", "b": "Kiek metų dukterį?", "c": "Kiek metų duktė?", "d": "Kiek metų dukters?", "correct": "a"},
+      {"q": "Как сказать «дочери 9 лет»?", "a": "Dukteriai devyni metai.", "b": "Dukteriai devyneri metai.", "c": "Dukteriai devynios metai.", "d": "Dukteriai devynių metų.", "correct": "b"},
+      {"q": "Начиная с какого числа вместо собирательных используется родительный падеж?", "a": "С 5", "b": "С 9", "c": "С 10", "d": "С 11", "correct": "c"}
+    ]
+  },
+  {
+    "sort_order": 10,
+    "title_ru": "Урок 10: Даты и годы",
+    "title_en": "Lesson 10: Dates and Years",
+    "description_ru": "Даты: месяц в родительном + порядковое в винительном. Годы: du tūkstančiai + порядковое во мн. ч.",
+    "lesson_text_lt": "**Datos — Galininkas:**\n- *Šiandien yra sausio **trylikta** diena.*\n- *Gimtadienis yra sausio **tryliktą** dieną.*\n- *Gegužės **trečią** dieną.*\n\n**Mėnesiai (kilmininkas):** sausio, vasario, kovo, balandžio, gegužės, birželio, liepos, rugpjūčio, rugsėjo, spalio, lapkričio, gruodžio.\n\n**Šventės:**\n- Vasario **šešiolikta** (02-16) — Lietuvos valstybės atkūrimo diena\n- Kovo **vienuolikta** (03-11) — nepriklausomybės atkūrimo diena\n- Liepos **šešta** (07-06) — Valstybės diena\n\n**Metai — Vardininkas Dgs.:**\n- 2021 → *du tūkstančiai dvidešimt **pirmi** metai*\n- 2000 → ***dutūkstantieji** metai*\n- 1994 → *devyniasdešimt **ketvirti*** (trumpoji forma)",
+    "question_count": 10,
+    "pass_threshold": 0.7,
+    "questions": [
+      {"q": "В каком падеже стоит порядковое числительное в конструкции «Gimtadienis yra …»?", "a": "Именительный", "b": "Родительный", "c": "Дательный", "d": "Винительный", "correct": "d"},
+      {"q": "Как по-литовски «январь» в родительном падеже?", "a": "sausis", "b": "sausio", "c": "sausiu", "d": "sausiai", "correct": "b"},
+      {"q": "Как сказать «день рождения 13 января»?", "a": "sausio trylikta diena", "b": "sausio tryliktą dieną", "c": "sausis trylikta", "d": "sausio tryliktai dienai", "correct": "b"},
+      {"q": "Что такое «kovo vienuolikta»?", "a": "11 января", "b": "11 марта", "c": "3 ноября", "d": "11 апреля", "correct": "b"},
+      {"q": "Как по-литовски «август» в родительном падеже?", "a": "rugpjūtis", "b": "rugpjūčio", "c": "rugpjūčiui", "d": "rugpjūtį", "correct": "b"},
+      {"q": "Какой праздник отмечается «vasario šešiolikta»?", "a": "День государственности Литвы", "b": "День восстановления независимости (1990)", "c": "День восстановления государства Литвы (1918)", "d": "День победы", "correct": "c"},
+      {"q": "Как сказать «2021 год»?", "a": "du tūkstančiai dvidešimt pirmas", "b": "du tūkstančiai dvidešimt pirmi metai", "c": "du tūkstančiai dvidešimt pirma", "d": "du tūkstančiai dvidešimt pirmo", "correct": "b"},
+      {"q": "Как произносится 2000 год?", "a": "du tūkstančiai metai", "b": "dutūkstantieji metai", "c": "du tūkstantas pirmi", "d": "du tūkstančiai", "correct": "b"},
+      {"q": "Как кратко по-литовски произносится год рождения 1994?", "a": "tūkstantis devyni šimtai devyniasdešimt ketvirtais", "b": "devyniasdešimt ketvirti", "c": "devyniasdešimt ketvirtais", "d": "tūkstantis devyni", "correct": "b"},
+      {"q": "В каком числе/падеже стоит порядковое числительное при обозначении года?", "a": "Единственное число, именительный", "b": "Множественное число, именительный", "c": "Единственное число, родительный", "d": "Множественное число, родительный", "correct": "b"}
+    ]
+  }
+]

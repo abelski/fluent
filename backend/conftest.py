@@ -70,13 +70,16 @@ def _seed_static() -> None:
         subcat = SubcategoryMeta(key="test_program", name_ru="Тест", name_en="Test")
         s.add(subcat)
 
-        # One word list with one word — required by daily-limit enforcement tests.
+        # One word list with three words — required by daily-limit and study-ordering tests.
         wl = WordList(id=1, title="Test List", is_public=True, subcategory="test_program")
         s.add(wl)
-        w = Word(id=1, lithuanian="vienas", translation_en="one", translation_ru="один")
-        s.add(w)
-        item = WordListItem(id=1, word_list_id=1, word_id=1, position=0)
-        s.add(item)
+        w1 = Word(id=1, lithuanian="vienas", translation_en="one", translation_ru="один")
+        w2 = Word(id=2, lithuanian="du", translation_en="two", translation_ru="два")
+        w3 = Word(id=3, lithuanian="trys", translation_en="three", translation_ru="три")
+        s.add(w1); s.add(w2); s.add(w3)
+        s.add(WordListItem(id=1, word_list_id=1, word_id=1, position=0))
+        s.add(WordListItem(id=2, word_list_id=1, word_id=2, position=1))
+        s.add(WordListItem(id=3, word_list_id=1, word_id=3, position=2))
 
         s.commit()
 

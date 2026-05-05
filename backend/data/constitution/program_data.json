@@ -1,0 +1,598 @@
+[
+  {
+    "sort_order": 1, "lesson_type": "lesson",
+    "title_ru": "1 pamoka: Valstybiniai pagrindai (1–6 str.)",
+    "title_en": "Lesson 1: Art. 1–6", "description_ru": "Perskaitykite 1–6 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [1,2,3,4,5,6],
+    "questions": [
+      {"q":"Kokia valstybė yra Lietuva pagal Konstitucijos 1 straipsnį?","a":"Prezidentinė respublika","b":"Nepriklausoma demokratinė respublika","c":"Konstitucinė monarchija","d":"Federalinė respublika","correct":"b"},
+      {"q":"Kam priklauso suverenumas Lietuvoje?","a":"Prezidentui","b":"Seimui","c":"Tautai","d":"Vyriausybei","correct":"c"},
+      {"q":"Kaip Tauta vykdo aukščiausiąją suverenią galią?","a":"Tik per Prezidentą","b":"Tik per Seimą","c":"Tiesiogiai arba per demokratiškai išrinktus atstovus","d":"Tik per referendumą","correct":"c"},
+      {"q":"Kokie organai vykdo valstybės valdžią Lietuvoje?","a":"Prezidentas, Vyriausybė, kariuomenė ir teismai","b":"Seimas, Prezidentas, Vyriausybė ir teismai","c":"Seimas, Prezidentas ir Konstitucinis Teismas","d":"Tauta, Seimas ir Vyriausybė","correct":"b"},
+      {"q":"Kas atsitinka su Konstitucijai prieštaraujančiais įstatymais?","a":"Juos panaikina Prezidentas","b":"Jiems reikalingas papildomas balsavimas","c":"Jie negalioja","d":"Juos patikrina Konstitucinis Teismas","correct":"c"},
+      {"q":"Ar Konstitucija yra tiesiogiai taikoma?","a":"Ne, reikalingi specialūs įgyvendinimo įstatymai","b":"Tik žmogaus teisių bylose","c":"Taip, Konstitucija yra vientisas ir tiesiogiai taikomas aktas","d":"Tik jei tai tiesiogiai nurodyta straipsniuose","correct":"c"},
+      {"q":"Ką turi teisę daryti pilietis, kai valdžia uzurpuojama prievarta?","a":"Kreiptis į Prezidentą","b":"Emigruoti","c":"Priešintis","d":"Pateikti skundą teismui","correct":"c"},
+      {"q":"Kuo Konstitucija apriboja valstybės valdžią?","a":"Prezidento valia","b":"Seimo sprendimais","c":"Konstitucija","d":"Tarptautinėmis sutartimis","correct":"c"},
+      {"q":"Kokią teisę Konstitucijos 6 straipsnis suteikia piliečiams?","a":"Dalyvauti referendumuose","b":"Ginti savo teises remdamiesi Konstitucija","c":"Kreiptis į tarptautinius teismus","d":"Apskųsti įstatymus Seime","correct":"b"},
+      {"q":"Valstybės valdžios uzurpavimas prievartiniu būdu yra...","a":"Leistinas ypatingomis aplinkybėmis","b":"Nekonstitucinis ir neteisėtas","c":"Galimas Prezidentui pritariant","d":"Galimas daugumos piliečių palaikomas","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 2, "lesson_type": "lesson",
+    "title_ru": "2 pamoka: Įstatymai, teritorija, pilietybė (7–12 str.)",
+    "title_en": "Lesson 2: Art. 7–12", "description_ru": "Perskaitykite 7–12 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [7,8,9,10,11,12],
+    "questions": [
+      {"q":"Kiek piliečių gali inicijuoti referendumą?","a":"100 000","b":"200 000","c":"300 000","d":"500 000","correct":"c"},
+      {"q":"Kas dar gali inicijuoti referendumą be piliečių?","a":"Prezidentas","b":"Seimas","c":"Vyriausybė","d":"Konstitucinis Teismas","correct":"b"},
+      {"q":"Kokia Seimo balsų dauguma reikalinga ratifikuoti sutartį dėl sienos pakeitimo?","a":"Paprasta dauguma","b":"2/3","c":"3/4","d":"4/5","correct":"d"},
+      {"q":"Ar Lietuvos valstybės teritorija yra nedaloma?","a":"Taip, teritorija nedaloma","b":"Ne, galima padalinti referendumu","c":"Ne, Seimui pritarus","d":"Ne, Prezidentui sutinkant","correct":"a"},
+      {"q":"Kaip nustatomas administracinis Lietuvos suskirstymas?","a":"Prezidento dekretu","b":"Referendumu","c":"Įstatymu","d":"Vyriausybės nutarimu","correct":"c"},
+      {"q":"Kaip įgyjama Lietuvos pilietybė?","a":"Tik gimimu","b":"Gimimu arba kitaip įstatymo nustatyta tvarka","c":"Tik naturalizacijos būdu","d":"Prezidento sprendimu","correct":"b"},
+      {"q":"Ką Konstitucija sako apie dvigubą pilietybę?","a":"Ji leidžiama visiems","b":"Ji leidžiama tik su ES šalimis","c":"Paprastai ji neleidžiama","d":"Ji draudžiama absoliučiai","correct":"c"},
+      {"q":"Įstatymų nežinojimas...","a":"Atleidžia nuo atsakomybės, jei įstatymas nepaskelbtas","b":"Neatleidžia nuo atsakomybės","c":"Yra lengvinanti aplinkybė","d":"Atleidžia tik civilinėse bylose","correct":"b"},
+      {"q":"Kokius klausimus Konstitucija skirsto referendumui spręsti?","a":"Tik tiesiogiai Konstitucijoje nurodytus","b":"Visus teisės aktus","c":"Svarbiausius valstybės klausimus","d":"Tik žmogaus teisių klausimus","correct":"c"},
+      {"q":"Lietuvos valstybės sienų keitimas galimas tik...","a":"Prezidento dekretu","b":"Referendumu","c":"Tarptautine sutartimi, kurią ratifikuoja 4/5 Seimo narių","d":"Seimo paprasta balsų dauguma","correct":"c"}
+    ]
+  },
+  {
+    "sort_order": 3, "lesson_type": "lesson",
+    "title_ru": "3 pamoka: Kalba, simboliai, sostinė (13–17 str.)",
+    "title_en": "Lesson 3: Art. 13–17", "description_ru": "Perskaitykite 13–17 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [13,14,15,16,17],
+    "questions": [
+      {"q":"Kokia kalba yra valstybinė Lietuvoje?","a":"Lenkų","b":"Rusų","c":"Lietuvių","d":"Latvių","correct":"c"},
+      {"q":"Kokios spalvos yra Lietuvos vėliava?","a":"Raudona, balta, žalia","b":"Mėlyna, geltona, žalia","c":"Geltona, žalia, raudona","d":"Žalia, balta, raudona","correct":"c"},
+      {"q":"Kas vaizduojamas Lietuvos herbe?","a":"Erelis mėlyname fone","b":"Baltas Vytis raudoname lauke","c":"Raudonas Vytis baltame lauke","d":"Liūtas aukso lauke","correct":"b"},
+      {"q":"Kas sukūrė Lietuvos himną?","a":"Jonas Basanavičius","b":"Martynas Mažvydas","c":"Maironis","d":"Vincas Kudirka","correct":"d"},
+      {"q":"Kaip vadinamas Lietuvos himnas?","a":"Lietuva, Tėvyne mūsų","b":"Tautiška giesmė","c":"Lietuva brangi","d":"Gražūs mūsų namai","correct":"b"},
+      {"q":"Koks miestas yra Lietuvos sostinė?","a":"Kaunas","b":"Klaipėda","c":"Šiauliai","d":"Vilnius","correct":"d"},
+      {"q":"Ar gali Lietuvos pilietis būti išduotas užsienio valstybei?","a":"Niekada","b":"Tik Prezidento sprendimu","c":"Draudžiama, išskyrus atvejus numatytus tarptautinėse sutartyse","d":"Tik Seimo sprendimu","correct":"c"},
+      {"q":"Kaip valstybė elgiasi su užsienyje esančiais piliečiais?","a":"Neprisiima atsakomybės","b":"Juos globoja","c":"Globoja tik turistus","d":"Globoja tik diplomatus","correct":"b"},
+      {"q":"Valstybinės vėliavos ir herbo naudojimo tvarką nustato...","a":"Prezidento dekretas","b":"Vyriausybės nutarimas","c":"Įstatymas","d":"Konstitucinis įstatymas","correct":"c"},
+      {"q":"Lietuvos valstybinė kalba įtvirtinta Konstitucijos...","a":"13 straipsnyje","b":"14 straipsnyje","c":"15 straipsnyje","d":"16 straipsnyje","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 4, "lesson_type": "lesson",
+    "title_ru": "4 pamoka: Gyvybė, laisvė, orumas, nuosavybė (18–24 str.)",
+    "title_en": "Lesson 4: Art. 18–24", "description_ru": "Perskaitykite 18–24 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [18,19,20,21,22,23,24],
+    "questions": [
+      {"q":"Kaip Konstitucija apibūdina žmogaus teises ir laisves?","a":"Jos suteikiamos valstybės","b":"Jos yra prigimtinės","c":"Jos nustatomos įstatymu","d":"Jas suteikia Seimas","correct":"b"},
+      {"q":"Per kiek valandų sulaikytasis turi būti pristatytas į teismą?","a":"Per 24 valandas","b":"Per 48 valandas","c":"Per 72 valandas","d":"Per 96 valandas","correct":"b"},
+      {"q":"Ką draudžia Konstitucijos 21 straipsnis?","a":"Tik fizinį kankinimą","b":"Kankinimą, žeminimą ir žiaurų elgesį","c":"Tik psichologinį smurtą","d":"Tik kankinimą apklausų metu","correct":"b"},
+      {"q":"Kam reikalingas teismo leidimas pagal 22 straipsnį?","a":"Darbo vietos kratai","b":"Susirašinėjimo ar pokalbių sekimui","c":"Turto areštui","d":"Liudytojo apklausai","correct":"b"},
+      {"q":"Kokiomis sąlygomis gali būti nusavinamas privatus turtas?","a":"Prezidento sprendimu išimtiniais atvejais","b":"Teismo sprendimu be atlyginimo","c":"Įstatymo pagrindu, visuomenės poreikiams, su teisingu atlyginimu","d":"Savivaldybės organų sprendimu","correct":"c"},
+      {"q":"Ko reikia norint atlikti mokslinius eksperimentus su žmonėmis?","a":"Medicinos komisijos sprendimo","b":"Sąmoningo žmogaus sutikimo","c":"Sveikatos apsaugos ministerijos leidimo","d":"Teismo sprendimo","correct":"b"},
+      {"q":"Ar žmogaus būstas yra neliečiamas?","a":"Ne, turint orderį galima bet kada įeiti","b":"Taip, pažeidimas leidžiamas tik sutikus savininkui arba teismo leidimu","c":"Ne, policija gali įeiti bet kada","d":"Taip, būstas neliečiamas absoliučiai","correct":"b"},
+      {"q":"Koks yra žmogaus asmeninės laisvės statusas pagal Konstituciją?","a":"Ribota","b":"Neliečiama","c":"Sąlyginė","d":"Santykinė","correct":"b"},
+      {"q":"Teisę į gyvybę saugo...","a":"Tik Baudžiamasis kodeksas","b":"Įstatymas","c":"Prezidento dekretas","d":"Tarptautinės konvencijos","correct":"b"},
+      {"q":"Konstitucijos 22 straipsnis saugo...","a":"Teisę į darbą","b":"Žmogaus privatų gyvenimą","c":"Turtines teises","d":"Judėjimo laisvę","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 5, "lesson_type": "lesson",
+    "title_ru": "5 pamoka: Saviraiška, tikėjimas, lygybė, nekaltumo prezumpcija (25–31 str.)",
+    "title_en": "Lesson 5: Art. 25–31", "description_ru": "Perskaitykite 25–31 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [25,26,27,28,29,30,31],
+    "questions": [
+      {"q":"Ką Konstitucija sako apie žodžio laisvę?","a":"Ji yra absoliuti ir neribojama","b":"Ji garantuota, tačiau gali būti ribojama įstatymu","c":"Ji gali būti ribojama Vyriausybės nutarimu","d":"Ji ribojama tik karo metu","correct":"b"},
+      {"q":"Kuri laisvė pagal 26 straipsnį yra absoliuti?","a":"Žodžio laisvė","b":"Sąžinės ir tikėjimo laisvė","c":"Susirinkimų laisvė","d":"Judėjimo laisvė","correct":"b"},
+      {"q":"Ar religiniai įsitikinimai gali pateisinti įstatymų pažeidimą?","a":"Taip, tam tikrais atvejais","b":"Ne","c":"Taip, su teismo leidimu","d":"Taip, jei tai tradicinė religija","correct":"b"},
+      {"q":"Kas yra lygūs prieš įstatymą ir teismą?","a":"Tik Lietuvos piliečiai","b":"Tik nuolatiniai gyventojai","c":"Visi asmenys","d":"Tik suaugusieji","correct":"c"},
+      {"q":"Ką draudžia Konstitucijos 29 straipsnis?","a":"Korupciją","b":"Diskriminaciją","c":"Politinę propagandą","d":"Monopolijas","correct":"b"},
+      {"q":"Kur gali kreiptis pilietis, kai pažeidžiamos jo konstitucinės teisės?","a":"Į Prezidentą","b":"Į Seimą","c":"Į teismą","d":"Į ombudsmeną","correct":"c"},
+      {"q":"Ką reiškia nekaltumo prezumpcija?","a":"Teisiamasis visada yra nekaltas","b":"Teisiamasis laikomas nekaltu, kol jo kaltė neįrodyta","c":"Teisiamasis gali atsisakyti duoti parodymus","d":"Teisiamasis turi teisę į valstybės gynėją","correct":"b"},
+      {"q":"Ar galima bausti du kartus už tą patį nusikaltimą?","a":"Taip, jei atsirado naujų aplinkybių","b":"Taip, teismui nusprendus","c":"Ne","d":"Taip, jei nusikaltimas buvo ypač sunkus","correct":"c"},
+      {"q":"Ką sako Konstitucijos 28 straipsnis apie piliečių teises?","a":"Jos yra absoliučios ir neribojamos","b":"Jas įgyvendindami, piliečiai privalo laikytis Konstitucijos ir įstatymų","c":"Jos nustatomos referendumu","d":"Jas gina tik teismai","correct":"b"},
+      {"q":"Ar draudžiama karo ir neapykantos propaganda?","a":"Ne, ji saugoma žodžio laisve","b":"Tik tam tikrais atvejais","c":"Taip","d":"Tik žiniasklaidoje","correct":"c"}
+    ]
+  },
+  {
+    "sort_order": 6, "lesson_type": "review",
+    "title_ru": "Kartojimas 1: 1–5 pamokos (1–31 str.)",
+    "title_en": "Review 1: Lessons 1–5", "description_ru": "Pakartokite 1–31 straipsnius.",
+    "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
+    "questions": [
+      {"q":"Kokia Lietuvos valstybės santvarka?","a":"Monarchija","b":"Federacija","c":"Nepriklausoma demokratinė respublika","d":"Konfederacija","correct":"c"},
+      {"q":"Kam priklauso aukščiausioji valdžia Lietuvoje?","a":"Prezidentui","b":"Seimui","c":"Tautai","d":"Vyriausybei","correct":"c"},
+      {"q":"Per kiek valandų sulaikytasis turi būti pristatytas į teismą?","a":"24","b":"48","c":"72","d":"96","correct":"b"},
+      {"q":"Kaip vadinamas Lietuvos himnas?","a":"Lietuva brangi","b":"Tautiška giesmė","c":"Lietuva, Tėvyne mūsų","d":"Gražūs mūsų namai","correct":"b"},
+      {"q":"Kiek piliečių reikia referendumui inicijuoti?","a":"50 000","b":"100 000","c":"300 000","d":"500 000","correct":"c"},
+      {"q":"Ar žmogaus teisės yra prigimtinės?","a":"Ne, jas suteikia valstybė","b":"Taip","c":"Tik iš dalies","d":"Tai priklauso nuo pilietybės","correct":"b"},
+      {"q":"Kokios spalvos Lietuvos vėliava?","a":"Mėlyna, balta, raudona","b":"Žalia, balta, raudona","c":"Geltona, žalia, raudona","d":"Raudona, žalia, balta","correct":"c"},
+      {"q":"Kas sukūrė Lietuvos himną?","a":"Jonas Basanavičius","b":"Vincas Kudirka","c":"Maironis","d":"Simonas Daukantas","correct":"b"},
+      {"q":"Ką saugo Konstitucijos 22 straipsnis?","a":"Teisę į nuosavybę","b":"Privatų gyvenimą","c":"Susirinkimų laisvę","d":"Teisę į mokslą","correct":"b"},
+      {"q":"Ką garantuoja nekaltumo prezumpcija?","a":"Kad teisiamasis visada bus išteisintas","b":"Kad teisiamasis laikomas nekaltu, kol kaltė neįrodyta","c":"Kad teisiamasis gaus valstybinį gynėją","d":"Kad teisiamasis nebus baudžiamas","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 7, "lesson_type": "lesson",
+    "title_ru": "6 pamoka: Judėjimas, dalyvavimas, rinkimai, susirinkimai (32–37 str.)",
+    "title_en": "Lesson 6: Art. 32–37", "description_ru": "Perskaitykite 32–37 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [32,33,34,35,36,37],
+    "questions": [
+      {"q":"Nuo kokio amžiaus piliečiai turi rinkimų teisę?","a":"Nuo 16 metų","b":"Nuo 18 metų","c":"Nuo 20 metų","d":"Nuo 21 metų","correct":"b"},
+      {"q":"Ar piliečiai turi teisę dalyvauti valdant savo šalį?","a":"Ne, tik per rinkimus","b":"Taip, tiesiogiai arba per atstovus","c":"Tik referendumais","d":"Tik per politines partijas","correct":"b"},
+      {"q":"Ką garantuoja Konstitucijos 33 straipsnis?","a":"Teisę į nuosavybę","b":"Teisę kreiptis su peticija ir kritikuoti valdininkus","c":"Laisvę vykti į užsienį","d":"Teisę į socialinę apsaugą","correct":"b"},
+      {"q":"Ar galima priversti žmogų stoti į organizaciją ar partiją?","a":"Taip, teismui nusprendus","b":"Taip, ypatingomis aplinkybėmis","c":"Ne","d":"Taip, jei tai valstybės institucija","correct":"c"},
+      {"q":"Ar taikomi apribojimai taikių susirinkimų teisei?","a":"Ne, ši teisė absoliuti","b":"Taip, tačiau riboti galima tik įstatymu","c":"Taip, Vyriausybė gali bet kada drausti","d":"Ne, draudimai negalimi","correct":"b"},
+      {"q":"Ką garantuoja Konstitucijos 32 straipsnis?","a":"Teisę į darbą","b":"Judėjimo laisvę","c":"Teisę į mokslą","d":"Susirinkimų laisvę","correct":"b"},
+      {"q":"Kokias teises turi tautinių mažumų nariai?","a":"Jokių specialių teisių","b":"Teisę puoselėti savo kalbą, kultūrą ir papročius","c":"Tik teisę kalbėti savo kalba","d":"Teisę turėti savo autonomiją","correct":"b"},
+      {"q":"Ar pilietis gali būti ištremtas iš Lietuvos?","a":"Taip, teismo sprendimu","b":"Taip, Prezidento dekretu","c":"Ne","d":"Taip, išimtiniais atvejais","correct":"c"},
+      {"q":"Ar pilietis turi absoliučią teisę grįžti į Lietuvą?","a":"Ne, reikalingas leidimas","b":"Taip","c":"Tik jei turi galiojantį pasą","d":"Tik jei neturi baudžiamojo persekiojimo","correct":"b"},
+      {"q":"Susirinkimų teisę galima riboti siekiant...","a":"Valdžios interesų","b":"Gynybos, viešosios tvarkos ar visuomenės sveikatos tikslais","c":"Ekonominių tikslų","d":"Politinių tikslų","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 8, "lesson_type": "lesson",
+    "title_ru": "7 pamoka: Šeima, vaikai, švietimas (38–41 str.)",
+    "title_en": "Lesson 7: Art. 38–41", "description_ru": "Perskaitykite 38–41 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [38,39,40,41],
+    "questions": [
+      {"q":"Kuo šeima laikoma pagal Konstituciją?","a":"Ūkio vienetu","b":"Visuomenės ir valstybės pagrindu","c":"Privačia institucija","d":"Socialinės apsaugos objektu","correct":"b"},
+      {"q":"Kaip sudaroma santuoka pagal Konstituciją?","a":"Tik religinės apeigos būdu","b":"Tik civilinės metrikacijos būdu","c":"Laisvu vyro ir moters sutarimu","d":"Tėvų sutikimu","correct":"c"},
+      {"q":"Kokios yra sutuoktinių teisės?","a":"Vyras turi daugiau teisių","b":"Žmona turi daugiau teisių","c":"Lygios","d":"Priklauso nuo sutarties","correct":"c"},
+      {"q":"Iki kokio amžiaus mokymasis yra privalomas?","a":"Iki 14 metų","b":"Iki 16 metų","c":"Iki 18 metų","d":"Iki 17 metų","correct":"b"},
+      {"q":"Ar valstybinis švietimas yra mokamas?","a":"Taip, mokamas","b":"Ne, nemokamas","c":"Tik pradinis mokyklas nemokamas","d":"Nemokamas tik gabiausiems","correct":"b"},
+      {"q":"Ką Konstitucija sako apie universitetų autonomiją?","a":"Jos nėra, universitetus valdo valstybė","b":"Ji garantuota","c":"Ji galima tik privačiuose universitetuose","d":"Ji priklauso nuo Seimo","correct":"b"},
+      {"q":"Ką valstybė daro šeimoms, auginančioms vaikus?","a":"Jiems nesuteikiama jokia pagalba","b":"Jas remia","c":"Tik socialiai pažeidžiamoms šeimoms","d":"Tik atskirais atvejais","correct":"b"},
+      {"q":"Ką gauna dirbančios motinos pagal Konstituciją?","a":"Nieko papildomai","b":"Mokamas atostogas ir palankias darbo sąlygas","c":"Tik medicininę priežiūrą","d":"Tik papildomą atlyginimą","correct":"b"},
+      {"q":"Ar leidžiamos privačios mokyklos?","a":"Ne","b":"Taip","c":"Tik religinės","d":"Tik aukštojo mokslo","correct":"b"},
+      {"q":"Kokios mokyklos pagal Konstituciją yra pasaulietinės?","a":"Visos","b":"Tik privačios","c":"Valstybinės","d":"Tik aukštosios","correct":"c"}
+    ]
+  },
+  {
+    "sort_order": 9, "lesson_type": "lesson",
+    "title_ru": "8 pamoka: Kultūra, religija, žiniasklaida (42–45 str.)",
+    "title_en": "Lesson 8: Art. 42–45", "description_ru": "Perskaitykite 42–45 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [42,43,44,45],
+    "questions": [
+      {"q":"Ką draudžia Konstitucijos 44 straipsnis?","a":"Religinę veiklą","b":"Žiniasklaidos cenzūrą ir monopolizavimą","c":"Užsienio žiniasklaidą","d":"Politinę reklamą","correct":"b"},
+      {"q":"Ar Lietuva turi valstybinę religiją?","a":"Taip, katalikybę","b":"Taip, bet tik tradicinę","c":"Ne","d":"Taip, Seimui nusprendus","correct":"c"},
+      {"q":"Kokias bažnyčias valstybė pripažįsta?","a":"Tik Romos katalikų","b":"Tik protestantų","c":"Tradicines ir visuomenėje remtinas","d":"Visas be išimties","correct":"c"},
+      {"q":"Ar mokslas ir mokymas yra laisvi?","a":"Ne, kontroliuoja valstybė","b":"Taip","c":"Tik privačiame sektoriuje","d":"Tik Konstitucijos numatytose srityse","correct":"b"},
+      {"q":"Ką valstybė daro su kultūros paveldu?","a":"Privatizuoja","b":"Saugo","c":"Parduoda","d":"Reguliuoja rinka","correct":"b"},
+      {"q":"Ką tautinė bendruomenė gali daryti savarankiškai?","a":"Nieko","b":"Tvarkyti kultūros, švietimo ir labdaros reikalus","c":"Tik organizuoti renginius","d":"Tik mokytis savo kalba","correct":"b"},
+      {"q":"Ar intelektinė nuosavybė saugoma?","a":"Ne","b":"Taip, įstatymu","c":"Tik komerciniai kūriniai","d":"Tik moksliniams darbams","correct":"b"},
+      {"q":"Ar bažnyčios gali kurti savo institucijas?","a":"Ne","b":"Taip","c":"Tik su valstybės leidimu","d":"Tik socialines institucijas","correct":"b"},
+      {"q":"Ar draudžiama žiniasklaidos monopolizacija?","a":"Ne","b":"Taip, įstatymu","c":"Tik elektroninės žiniasklaidos","d":"Tik užsienio","correct":"b"},
+      {"q":"Ką Konstitucija sako apie kultūrinio gyvenimo laisvę?","a":"Ji ribojama valstybės","b":"Kultūros, mokslo ir mokymo veikla yra laisva","c":"Ji garantuojama tik piliečiams","d":"Ji priklauso nuo Seimo leidimo","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 10, "lesson_type": "lesson",
+    "title_ru": "9 pamoka: Ekonomika, nuosavybė, darbas (46–51 str.)",
+    "title_en": "Lesson 9: Art. 46–51", "description_ru": "Perskaitykite 46–51 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [46,47,48,49,50,51],
+    "questions": [
+      {"q":"Kokia ekonominė sistema įtvirtinta Lietuvos Konstitucijoje?","a":"Valstybinė ekonomika","b":"Privati nuosavybė ir ekonominė laisvė","c":"Mišri ekonomika","d":"Kooperatinė ekonomika","correct":"b"},
+      {"q":"Kam priklauso žemės gelmės, vandenys ir miškai?","a":"Savivaldybėms","b":"Valstybei","c":"Privatiems asmenims","d":"Akcinėms bendrovėms","correct":"b"},
+      {"q":"Ar draudžiamas priverstinis darbas?","a":"Ne","b":"Taip","c":"Tik kai kuriais atvejais","d":"Tik kariuomenėje","correct":"b"},
+      {"q":"Kokias teises į poilsį turi darbuotojai?","a":"Jokių","b":"Teisę į poilsį ir mokamas kasmetines atostogas","c":"Tik savaitgalius","d":"Tik nedarbingumo atostogas","correct":"b"},
+      {"q":"Ar darbuotojai turi teisę streikuoti?","a":"Ne","b":"Taip, gindami ekonominius interesus","c":"Tik su Vyriausybės leidimu","d":"Tik valstybinėse įmonėse","correct":"b"},
+      {"q":"Ką Konstitucija sako apie monopolius?","a":"Jie leidžiami valstybinėms įmonėms","b":"Jie draudžiami","c":"Jie reguliuojami","d":"Jie leidžiami teismo leidimu","correct":"b"},
+      {"q":"Ar profesinės sąjungos yra laisvos?","a":"Ne","b":"Taip","c":"Tik valstybinėse įmonėse","d":"Tik kai kuriuose sektoriuose","correct":"b"},
+      {"q":"Kam turi tarnauti ūkinė veikla?","a":"Verslininkų interesams","b":"Tautos gerovei","c":"Valstybės biudžetui","d":"Eksportui","correct":"b"},
+      {"q":"Ką valstybė daro su naudinga ūkine veikla?","a":"Apmokestina","b":"Remia","c":"Kontroliuoja","d":"Reguliuoja","correct":"b"},
+      {"q":"Ar užsieniečiai gali įsigyti nuosavybę Lietuvoje?","a":"Ne","b":"Taip, konstitucinio įstatymo nustatyta tvarka","c":"Tik žemę","d":"Tik po 10 metų gyvenimo Lietuvoje","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 11, "lesson_type": "lesson",
+    "title_ru": "10 pamoka: Socialinė apsauga, sveikata, aplinka (52–54 str.)",
+    "title_en": "Lesson 10: Art. 52–54", "description_ru": "Perskaitykite 52–54 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [52,53,54],
+    "questions": [
+      {"q":"Ką valstybė garantuoja seniems piliečiams?","a":"Nemokamą būstą","b":"Pensiją","c":"Nemokamą transportą","d":"Nemokamą maistą","correct":"b"},
+      {"q":"Kokiais atvejais valstybė teikia socialinę pagalbą?","a":"Tik senolams","b":"Nedarbo, ligos, maitintojo netekimo ir kitais atvejais","c":"Tik bedarbiams","d":"Tik neįgaliesiems","correct":"b"},
+      {"q":"Ar medicinos pagalba Lietuvoje yra nemokama?","a":"Visada mokama","b":"Nemokama įstatymo nustatytais atvejais","c":"Visada nemokama","d":"Tik vaikams","correct":"b"},
+      {"q":"Ką valstybė remia pagal 53 straipsnį?","a":"Gynybą","b":"Sveikatos apsaugą ir sportą","c":"Žemės ūkį","d":"Pramonę","correct":"b"},
+      {"q":"Kas privalo saugoti aplinką?","a":"Tik valstybė","b":"Ir valstybė, ir piliečiai","c":"Tik savivaldybės","d":"Tik įmonės","correct":"b"},
+      {"q":"Ką draudžia įstatymas pagal 54 straipsnį?","a":"Miško kirtimą","b":"Žemės niokojimą, vandens ir oro taršą","c":"Naujų pramonės įmonių statybą","d":"Žvejybą","correct":"b"},
+      {"q":"Ar saugoma gyvūnija ir augalija?","a":"Ne","b":"Taip","c":"Tik nykstančios rūšys","d":"Tik nacionaliniuose parkuose","correct":"b"},
+      {"q":"Ar aplinkos apsauga yra piliečių pareiga?","a":"Ne, tik valstybės","b":"Taip","c":"Tik visuomeninių organizacijų","d":"Tik verslo įmonių","correct":"b"},
+      {"q":"Ką Konstitucija sako apie radioaktyviąją taršą?","a":"Ji reguliuojama","b":"Ji draudžiama įstatymu","c":"Ji leidžiama tik mokslo tikslams","d":"Ji neminima","correct":"b"},
+      {"q":"Kam garantuojama socialinė apsauga netekus maitintojo?","a":"Tik sutuoktiniui","b":"Tik vaikams","c":"Šeimai","d":"Tik registruotiems partneriams","correct":"c"}
+    ]
+  },
+  {
+    "sort_order": 12, "lesson_type": "review",
+    "title_ru": "Kartojimas 2: 6–10 pamokos (32–54 str.)",
+    "title_en": "Review 2: Lessons 6–10", "description_ru": "Pakartokite 32–54 straipsnius.",
+    "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
+    "questions": [
+      {"q":"Nuo kokio amžiaus piliečiai turi teisę balsuoti?","a":"16 metų","b":"18 metų","c":"20 metų","d":"21 metų","correct":"b"},
+      {"q":"Kas yra visuomenės ir valstybės pagrindas pagal Konstituciją?","a":"Darbas","b":"Religija","c":"Šeima","d":"Švietimas","correct":"c"},
+      {"q":"Iki kokio amžiaus mokymasis yra privalomas?","a":"14 metų","b":"16 metų","c":"18 metų","d":"15 metų","correct":"b"},
+      {"q":"Ar draudžiama žiniasklaidos cenzūra?","a":"Ne","b":"Taip","c":"Tik elektroninėje žiniasklaidoje","d":"Tik prieš rinkimus","correct":"b"},
+      {"q":"Ar profesinės sąjungos yra laisvos?","a":"Ne","b":"Taip","c":"Tik kai kuriose srityse","d":"Tik su Seimo leidimu","correct":"b"},
+      {"q":"Kam priklauso Lietuvos gamtos ištekliai (žemės gelmės, vandenys, miškai)?","a":"Savivaldybėms","b":"Valstybei","c":"Privatiems asmenims","d":"Visiems piliečiams","correct":"b"},
+      {"q":"Ar darbuotojai turi teisę streikuoti?","a":"Ne","b":"Taip","c":"Tik valstybinėse įmonėse","d":"Tik su teismo leidimu","correct":"b"},
+      {"q":"Ar pilietis gali būti priverstas stoti į partiją?","a":"Taip, teismo sprendimu","b":"Ne","c":"Taip, gynybos tikslais","d":"Taip, Seimui nusprendus","correct":"b"},
+      {"q":"Ką valstybė garantuoja bedarbystės atveju?","a":"Nieko","b":"Socialinę paramą","c":"Tik medicinos priežiūrą","d":"Tik mokymą","correct":"b"},
+      {"q":"Kokiomis sąlygomis gali būti ribojama susirinkimų teisė?","a":"Bet kada","b":"Tik įstatymu, gynybos ar visuomenės sveikatos tikslais","c":"Vyriausybės sprendimu","d":"Tik karo metu","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 13, "lesson_type": "lesson",
+    "title_ru": "11 pamoka: Seimas – sudėtis, rinkimai (55–60 str.)",
+    "title_en": "Lesson 11: Art. 55–60", "description_ru": "Perskaitykite 55–60 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [55,56,57,58,59,60],
+    "questions": [
+      {"q":"Kiek narių yra Seime?","a":"100","b":"121","c":"141","d":"160","correct":"c"},
+      {"q":"Kiek metų trunka Seimo kadencija?","a":"3 metus","b":"4 metus","c":"5 metus","d":"6 metus","correct":"b"},
+      {"q":"Koks minimalus amžius Seimo nario kandidatui?","a":"18 metų","b":"21 metų","c":"25 metų","d":"30 metų","correct":"b"},
+      {"q":"Kada vyksta eiliniai Seimo rinkimai?","a":"Gegužę","b":"Birželį","c":"Spalį","d":"Gruodį","correct":"c"},
+      {"q":"Kiek narių turi būti išrinkta, kad rinkimai būtų galiojantys?","a":"Mažiausiai 1/2","b":"Mažiausiai 3/5","c":"Mažiausiai 2/3","d":"Mažiausiai 3/4","correct":"b"},
+      {"q":"Kada pradedamas Seimo narių įgaliojimų laikas?","a":"Kai paskelbiami rinkimų rezultatai","b":"Pirmajame posėdyje po priesaikos","c":"Naujų metų dieną","d":"Po oficialaus paskyrimo","correct":"b"},
+      {"q":"Ar Seimo narys gali kartu eiti ministro pareigas?","a":"Ne","b":"Taip","c":"Tik ministro pirmininko","d":"Tik tam tikrų ministerijų","correct":"b"},
+      {"q":"Iš kokių lėšų mokamas atlyginimas Seimo nariams?","a":"Iš partijų lėšų","b":"Iš valstybės biudžeto","c":"Iš rinkėjų aukų","d":"Iš Europos Sąjungos fondų","correct":"b"},
+      {"q":"Kokiu principu grindžiami Seimo rinkimai?","a":"Visuotinis, lygus ir proporcingas","b":"Visuotinis, lygus, tiesioginis","c":"Tiesioginis ir netiesioginis","d":"Tik proporcingas","correct":"b"},
+      {"q":"Kas atsitinka, jei Seimo narys nepagrįstai prisiekia?","a":"Jam skiriama bauda","b":"Jis praranda mandatą","c":"Jis baudžiamas kalėjimu","d":"Nieko neatsitinka","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 14, "lesson_type": "lesson",
+    "title_ru": "12 pamoka: Seimas – imunitetas, sesijos (61–66 str.)",
+    "title_en": "Lesson 12: Art. 61–66", "description_ru": "Perskaitykite 61–66 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [61,62,63,64,65,66],
+    "questions": [
+      {"q":"Kada vyksta Seimo pavasario sesija?","a":"Vasario 16 – gegužės 31","b":"Kovo 10 – birželio 30","c":"Balandžio 1 – liepos 1","d":"Kovo 1 – birželio 1","correct":"b"},
+      {"q":"Kada vyksta Seimo rudens sesija?","a":"Rugpjūčio 1 – lapkričio 30","b":"Rugsėjo 10 – gruodžio 23","c":"Spalio 1 – gruodžio 31","d":"Rugsėjo 1 – gruodžio 15","correct":"b"},
+      {"q":"Ar Seimo narys gali būti traukiamas baudžiamojon atsakomybėn be Seimo sutikimo?","a":"Taip, teismui nusprendus","b":"Ne","c":"Taip, jei nusikaltimas ypač sunkus","d":"Taip, prokuroro sprendimu","correct":"b"},
+      {"q":"Ką Konstitucija sako apie Seimo narių pasisakymus per posėdžius?","a":"Jie gali būti paduoti į teismą už juos","b":"Jie saugomi imunitetu","c":"Jie viešai skelbiami","d":"Jiems taikoma cenzūra","correct":"b"},
+      {"q":"Per kiek dienų turi susirinkti naujai išrinktas Seimas?","a":"Per 7 dienas","b":"Per 15 dienų","c":"Per 30 dienų","d":"Per 10 dienų","correct":"b"},
+      {"q":"Kas pirmininkauja Seimo posėdžiams?","a":"Prezidentas","b":"Ministras Pirmininkas","c":"Seimo Pirmininkas arba jo pavaduotojas","d":"Konstitucinio Teismo pirmininkas","correct":"c"},
+      {"q":"Ką reiškia interpeliacijos teisė?","a":"Teisė atsistatydinti","b":"Teisė oficialiai klausti Vyriausybės","c":"Teisė inicijuoti rinkimus","d":"Teisė kreiptis į teismą","correct":"b"},
+      {"q":"Kokia balsų dauguma galima pareikšti nepasitikėjimą valdininkui?","a":"1/3","b":"Daugiau nei 1/2","c":"2/3","d":"3/5","correct":"b"},
+      {"q":"Dėl kokių priežasčių gali pasibaigti Seimo nario įgaliojimai?","a":"Tik pasibaigus kadencijai","b":"Kadencijos pabaiga, mirtis, atsistatydinimas ir kiti įstatyme numatyti atvejai","c":"Tik Seimo sprendimu","d":"Tik teismo nuosprendžiu","correct":"b"},
+      {"q":"Kas gali inicijuoti nepaprastą Seimo sesiją?","a":"Tik Prezidentas","b":"Prezidentas arba 1/3 Seimo narių","c":"Tik Seimo Pirmininkas","d":"Vyriausybė","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 15, "lesson_type": "lesson",
+    "title_ru": "13 pamoka: Seimas – galios, įstatymų leidyba (67–72 str.)",
+    "title_en": "Lesson 13: Art. 67–72", "description_ru": "Perskaitykite 67–72 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [67,68,69,70,71,72],
+    "questions": [
+      {"q":"Kiek piliečių gali inicijuoti įstatymą Seime?","a":"10 000","b":"50 000","c":"100 000","d":"300 000","correct":"b"},
+      {"q":"Kas NETURI įstatymų leidybos iniciatyvos teisės Seime?","a":"Prezidentas","b":"Vyriausybė","c":"Konstitucinis Teismas","d":"Seimo nariai","correct":"c"},
+      {"q":"Kokia balsų dauguma priimami konstituciniai įstatymai?","a":"Paprasta posėdyje dalyvaujančių balsų dauguma","b":"Daugiau nei 1/2 visų Seimo narių","c":"2/3 visų narių","d":"3/5 visų narių","correct":"b"},
+      {"q":"Kiek dienų Prezidentas turi pasirašyti įstatymą?","a":"5 dienas","b":"10 dienų","c":"15 dienų","d":"30 dienų","correct":"b"},
+      {"q":"Kas atsitinka, jei Prezidentas nepasirašo ir negrąžina įstatymo?","a":"Įstatymas neįsigalioja","b":"Įstatymą pasirašo Seimo Pirmininkas","c":"Įstatymas automatiškai galioja","d":"Tai priklauso nuo Konstitucinio Teismo","correct":"b"},
+      {"q":"Kokia balsų dauguma priimamos Konstitucijos pataisos?","a":"1/2","b":"2/3","c":"3/5","d":"3/4","correct":"c"},
+      {"q":"Kaip įsigalioja priimti įstatymai?","a":"Iš karto po balsavimo","b":"Po Prezidento parašo ir paskelbimo","c":"Kitą dieną po priėmimo","d":"Po 10 dienų nuo priėmimo","correct":"b"},
+      {"q":"Kokie klausimai priklauso Seimo kompetencijai?","a":"Tik įstatymų leidyba","b":"Įstatymų leidyba, biudžeto tvirtinimas, sutarčių ratifikavimas","c":"Tik biudžeto tvirtinimas","d":"Tik užsienio politika","correct":"b"},
+      {"q":"Ar Prezidentas gali grąžinti įstatymą Seimui?","a":"Ne","b":"Taip","c":"Tik konstitucinius įstatymus","d":"Tik per 5 dienas","correct":"b"},
+      {"q":"Kokia balsų dauguma Seimas gali priimti įstatymą, kurį grąžino Prezidentas?","a":"Paprasta dauguma","b":"Daugiau nei 1/2 paprastiems, 3/5 konstituciniams","c":"2/3","d":"3/4","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 16, "lesson_type": "lesson",
+    "title_ru": "14 pamoka: Seimas – kontrolė, statutas (73–76 str.)",
+    "title_en": "Lesson 14: Art. 73–76", "description_ru": "Perskaitykite 73–76 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [73,74,75,76],
+    "questions": [
+      {"q":"Kas yra ombudsmenas?","a":"Seimo narys","b":"Pareigūnas, tiriantis piliečių skundus dėl valdžios veiksmų","c":"Teisėjas","d":"Ministro pavaduotojas","correct":"b"},
+      {"q":"Kokia balsų dauguma Seimas gali apkaltinti Prezidentą?","a":"1/2","b":"2/3","c":"3/5","d":"3/4","correct":"c"},
+      {"q":"Po kiek metų apkaltintas pareigūnas gali vėl eiti pareigas?","a":"Po 5 metų","b":"Po 10 metų","c":"Po 15 metų","d":"Niekada","correct":"b"},
+      {"q":"Ką reguliuoja Seimo statutas?","a":"Prezidento galias","b":"Seimo vidaus tvarką","c":"Teismų darbą","d":"Vyriausybės veiklą","correct":"b"},
+      {"q":"Kokią galią turi Seimo statutas?","a":"Rekomendacinę","b":"Įstatymo","c":"Konstitucinio įstatymo","d":"Vidaus taisyklių","correct":"b"},
+      {"q":"Ką gali apkaltinti Seimas?","a":"Tik paprastus piliečius","b":"Prezidentą, teisėjus, Seimo narius","c":"Tik ministrus","d":"Tik Prezidentą","correct":"b"},
+      {"q":"Kaip pareikšiamas nepasitikėjimas paskirtiems pareigūnams?","a":"Paprasta balsų dauguma","b":"Vienbalsiu balsavimu","c":"2/3 balsų","d":"3/5 balsų","correct":"b"},
+      {"q":"Ar Konstitucinis Teismas gali kreiptis į Seimą?","a":"Ne","b":"Taip","c":"Tik per Prezidentą","d":"Tik per Vyriausybę","correct":"b"},
+      {"q":"Ką tikrina ombudsmenas?","a":"Teismų sprendimus","b":"Piliečių skundus dėl pareigūnų","c":"Mokesčių mokėjimą","d":"Rinkimų eigą","correct":"b"},
+      {"q":"Kokios pasekmės apkaltinamajam tolesnei karjerai?","a":"Jokių","b":"Draudžiama eiti pareigas 10 metų","c":"Draudžiama eiti pareigas 5 metus","d":"Draudžiama dalyvauti rinkimuose visam gyvenimui","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 17, "lesson_type": "lesson",
+    "title_ru": "15 pamoka: Prezidentas – reikalavimai, rinkimai, priesaika (77–83 str.)",
+    "title_en": "Lesson 15: Art. 77–83", "description_ru": "Perskaitykite 77–83 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [77,78,79,80,81,82,83],
+    "questions": [
+      {"q":"Kuo yra Lietuvos Prezidentas?","a":"Vyriausybės vadovas","b":"Valstybės vadovas","c":"Seimo vadovas","d":"Teismų vadovas","correct":"b"},
+      {"q":"Kiek metų trunka Prezidento kadencija?","a":"4 metus","b":"5 metus","c":"6 metus","d":"7 metus","correct":"b"},
+      {"q":"Kiek iš eilės einamų kadencijų gali turėti Prezidentas?","a":"Vieną","b":"Dvi","c":"Tris","d":"Neribotą skaičių","correct":"b"},
+      {"q":"Koks minimalus amžius Prezidento kandidatui?","a":"35 metai","b":"40 metai","c":"45 metai","d":"50 metai","correct":"b"},
+      {"q":"Kiek parašų reikia Prezidento kandidatūrai užregistruoti?","a":"10 000","b":"20 000","c":"50 000","d":"100 000","correct":"b"},
+      {"q":"Kur Prezidentas prisiekia?","a":"Vyriausybėje","b":"Konstituciniame Teisme","c":"Seime","d":"Prezidento rūmuose","correct":"c"},
+      {"q":"Kada vyksta Prezidento rinkimai?","a":"Prieš vienerius metus iki kadencijos pabaigos","b":"Likus dviem mėnesiams iki kadencijos pabaigos","c":"Kartu su Seimo rinkimais","d":"Atsitiktinai","correct":"b"},
+      {"q":"Kiek metų privalu gyventi Lietuvoje, norint kandidatuoti į Prezidento postą?","a":"Bent vienerius metus","b":"Bent trejus metus","c":"Bent penkerius metus","d":"Bent dešimt metų","correct":"b"},
+      {"q":"Ar Prezidentas gali būti Seimo narys?","a":"Taip","b":"Ne","c":"Tik nepaprastąją sesijų metu","d":"Tik karo metu","correct":"b"},
+      {"q":"Ką turi padaryti Prezidentas dėl partinės veiklos po išrinkimo?","a":"Išstoti iš partijos","b":"Sustabdyti narystę","c":"Nieko","d":"Perduoti valdymą kitiems","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 18, "lesson_type": "review",
+    "title_ru": "Kartojimas 3: 11–15 pamokos (55–83 str.)",
+    "title_en": "Review 3: Lessons 11–15", "description_ru": "Pakartokite 55–83 straipsnius.",
+    "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
+    "questions": [
+      {"q":"Kiek narių turi Seimas?","a":"100","b":"121","c":"141","d":"160","correct":"c"},
+      {"q":"Kiek metų trunka Prezidento kadencija?","a":"4 metai","b":"5 metai","c":"6 metai","d":"7 metai","correct":"b"},
+      {"q":"Koks minimalus Seimo nario kandidato amžius?","a":"18 metų","b":"21 metų","c":"25 metų","d":"30 metų","correct":"b"},
+      {"q":"Kiek parašų reikia Prezidento kandidatūrai?","a":"10 000","b":"20 000","c":"50 000","d":"100 000","correct":"b"},
+      {"q":"Kada vyksta Seimo pavasario sesija?","a":"Vasario 16 – balandžio 30","b":"Kovo 10 – birželio 30","c":"Balandžio 1 – liepos 1","d":"Kovo 1 – birželio 1","correct":"b"},
+      {"q":"Kokia balsų dauguma Seimas apkaltina Prezidentą?","a":"1/2","b":"2/3","c":"3/5","d":"3/4","correct":"c"},
+      {"q":"Koks minimalus Prezidento kandidato amžius?","a":"35 metai","b":"40 metai","c":"45 metai","d":"50 metai","correct":"b"},
+      {"q":"Kiek dienų Prezidentas turi pasirašyti įstatymą?","a":"5 dienas","b":"10 dienų","c":"15 dienų","d":"30 dienų","correct":"b"},
+      {"q":"Per kiek dienų turi susirinkti naujai išrinktas Seimas?","a":"Per 7 dienas","b":"Per 10 dienų","c":"Per 15 dienų","d":"Per 30 dienų","correct":"c"},
+      {"q":"Ar Seimo narys gali kartu eiti ministro pareigas?","a":"Ne","b":"Taip","c":"Tik karo metu","d":"Tik laikinai","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 19, "lesson_type": "lesson",
+    "title_ru": "16 pamoka: Prezidentas – galios, vakansija (84–90 str.)",
+    "title_en": "Lesson 16: Art. 84–90", "description_ru": "Perskaitykite 84–90 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [84,85,86,87,88,89,90],
+    "questions": [
+      {"q":"Kas skiria Ministrą Pirmininką?","a":"Seimas","b":"Prezidentas","c":"Vyriausybė","d":"Konstitucinis Teismas","correct":"b"},
+      {"q":"Kaip Prezidentas dalyvauja įstatymų leidyboje?","a":"Balsuoja Seime","b":"Pasirašo arba grąžina įstatymus","c":"Veto teise be apeliacijos","d":"Pateikia savo projektus tiesiogiai","correct":"b"},
+      {"q":"Kas laikinai eina Prezidento pareigas jam nesant?","a":"Ministras Pirmininkas","b":"Seimo Pirmininkas","c":"Konstitucinio Teismo Pirmininkas","d":"Vyriausiasis teisėjas","correct":"b"},
+      {"q":"Per kiek mėnesių rengiami rinkimai Prezidento vietai užimti?","a":"Per 1 mėnesį","b":"Per 2 mėnesius","c":"Per 3 mėnesius","d":"Per 6 mėnesius","correct":"b"},
+      {"q":"Ar Prezidentas gali būti traukiamas baudžiamojon atsakomybėn kadencijos metu?","a":"Taip, teismui nusprendus","b":"Ne","c":"Tik dėl ypač sunkių nusikaltimų","d":"Taip, Seimui sutinkant","correct":"b"},
+      {"q":"Kas kontrasignuoja kai kuriuos Prezidento dekretus?","a":"Seimo Pirmininkas","b":"Ministras Pirmininkas arba atitinkamas ministras","c":"Konstitucinio Teismo Pirmininkas","d":"Generalinis prokuroras","correct":"b"},
+      {"q":"Ką Prezidentas turi teisę daryti pilietybės srityje?","a":"Atimti pilietybę","b":"Suteikti pilietybę","c":"Keisti pilietybės įstatymą","d":"Organizuoti pilietybės egzaminus","correct":"b"},
+      {"q":"Ar Prezidentas turi malonės teisę?","a":"Ne","b":"Taip","c":"Tik politiniams kaliniams","d":"Tik su Seimo pritarimu","correct":"b"},
+      {"q":"Kokiais atvejais Seimas gali inicijuoti pirmalaikius Prezidento rinkimus?","a":"Jokiais","b":"Kai Seimas renkamas pirmalaikiai","c":"Kai Prezidentas nori to","d":"Kas dvejus metus","correct":"b"},
+      {"q":"Dėl kokių priežasčių gali pasibaigti Prezidento įgaliojimai?","a":"Tik pasibaigus kadencijai","b":"Kadencijos pabaiga, atsistatydinimas, mirtis, apkaltas","c":"Tik apkaltos būdu","d":"Tik savanoriškai atsistatydinus","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 20, "lesson_type": "lesson",
+    "title_ru": "17 pamoka: Vyriausybė – sudėtis, pareigos (91–96 str.)",
+    "title_en": "Lesson 17: Art. 91–96", "description_ru": "Perskaitykite 91–96 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [91,92,93,94,95,96],
+    "questions": [
+      {"q":"Iš ko sudaryta Lietuvos Vyriausybė?","a":"Tik iš ministrų","b":"Ministro Pirmininko ir ministrų","c":"Prezidento ir ministrų","d":"Seimo narių ir ministrų","correct":"b"},
+      {"q":"Kas skiria Ministrą Pirmininką?","a":"Seimas savo iniciatyva","b":"Prezidentas, Seimui pritarus","c":"Vyriausybė savo pati","d":"Tauta referendumu","correct":"b"},
+      {"q":"Per kiek dienų Vyriausybė turi pristatyti savo programą?","a":"Per 7 dienas","b":"Per 15 dienų","c":"Per 30 dienų","d":"Per 60 dienų","correct":"b"},
+      {"q":"Kur prisiekia Vyriausybė?","a":"Prezidento rūmuose","b":"Konstituciniame Teisme","c":"Seime","d":"Aukščiausiajame Teisme","correct":"c"},
+      {"q":"Kam Vyriausybė yra kolektyviai atsakinga?","a":"Prezidentui","b":"Seimui","c":"Tautai","d":"Konstituciniame Teismui","correct":"b"},
+      {"q":"Kas priklauso Vyriausybės pareigoms?","a":"Tik biudžeto sudarymas","b":"Valstybės reikalų tvarkymas, įstatymų vykdymas, biudžeto sudarymas","c":"Tik įstatymų vykdymas","d":"Tik užsienio politika","correct":"b"},
+      {"q":"Kaip priimami sprendimai Vyriausybės posėdžiuose?","a":"Vienbalsiai","b":"Balsų dauguma","c":"Ministro Pirmininko sprendimu","d":"Prezidento sprendimu","correct":"b"},
+      {"q":"Kas gali dalyvauti Vyriausybės posėdžiuose?","a":"Visi Seimo nariai","b":"Valstybės kontrolierius","c":"Prezidentas","d":"Visi teisėjai","correct":"b"},
+      {"q":"Kas siūlo ministrų kandidatūras?","a":"Prezidentas","b":"Seimas","c":"Ministras Pirmininkas","d":"Tauta referendumu","correct":"c"},
+      {"q":"Už ką atsakingas kiekvienas ministras?","a":"Už visus Vyriausybės sprendimus","b":"Už savo valdymo sritį","c":"Tik prieš Ministrą Pirmininką","d":"Tik prieš Prezidentą","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 21, "lesson_type": "lesson",
+    "title_ru": "18 pamoka: Vyriausybė – atskaitomybė, atsistatydinimas (97–101 str.)",
+    "title_en": "Lesson 18: Art. 97–101", "description_ru": "Perskaitykite 97–101 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [97,98,99,100,101],
+    "questions": [
+      {"q":"Kas atstovauja Vyriausybei ir vadovauja jos veiklai?","a":"Prezidentas","b":"Seimo Pirmininkas","c":"Ministras Pirmininkas","d":"Vyriausybės Pirmininkas","correct":"c"},
+      {"q":"Kas gali pakeisti Ministrą Pirmininką jo nesant?","a":"Prezidento paskirtas ministras (iki 60 dienų)","b":"Seimo Pirmininkas","c":"Vyriausiasis ministras","d":"Prezidentas asmeniškai","correct":"a"},
+      {"q":"Ar Ministras Pirmininkas gali dirbti privačiame versle?","a":"Taip","b":"Ne","c":"Tik ne pelno sektoriuje","d":"Tik akademinėje veikloje","correct":"b"},
+      {"q":"Ar ministras gali būti traukiamas atsakomybėn be Seimo sutikimo?","a":"Taip","b":"Ne","c":"Tik už finansinius nusikaltimus","d":"Tik teismui nusprendus","correct":"b"},
+      {"q":"Kada Vyriausybė privalo atsistatydinti?","a":"Tik kai atmetama programa","b":"Kai atmetama programa, pareiškiamas nepasitikėjimas ar miršta/atsistatydina Ministras Pirmininkas","c":"Tik kai Prezidentas reikalauja","d":"Kiekvienais metais","correct":"b"},
+      {"q":"Kas atsitinka pasikeitus daugiau nei pusei ministrų?","a":"Nieko, Vyriausybė tęsia darbą","b":"Reikalingas naujas Seimo pritarimas","c":"Reikia organizuoti referendumą","d":"Prezidentas automatiškai skiria naują Vyriausybę","correct":"b"},
+      {"q":"Kam Vyriausybė atskaitinga?","a":"Tik Prezidentui","b":"Seimui","c":"Tautai","d":"Konstituciniame Teismui","correct":"b"},
+      {"q":"Kas priima atskiro ministro atsistatydinimą?","a":"Seimas","b":"Prezidentas","c":"Ministras Pirmininkas","d":"Konstitucinis Teismas","correct":"b"},
+      {"q":"Ar ministrai gali dirbti kitose renkamose pareigose?","a":"Taip","b":"Ne","c":"Tik savivaldybių tarybose","d":"Tik kai laikinai","correct":"b"},
+      {"q":"Kas atsitinka su Vyriausybe po Prezidento rinkimų?","a":"Nieko","b":"Privalo atsistatydinti","c":"Tęsia kadenciją","d":"Tai priklauso nuo Prezidento","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 22, "lesson_type": "lesson",
+    "title_ru": "19 pamoka: Konstitucinis Teismas (102–108 str.)",
+    "title_en": "Lesson 19: Art. 102–108", "description_ru": "Perskaitykite 102–108 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [102,103,104,105,106,107,108],
+    "questions": [
+      {"q":"Kiek teisėjų turi Konstitucinis Teismas?","a":"5","b":"7","c":"9","d":"12","correct":"c"},
+      {"q":"Kiek metų trunka Konstitucinio Teismo teisėjo kadencija?","a":"6 metai","b":"9 metai","c":"12 metų","d":"15 metų","correct":"b"},
+      {"q":"Ar Konstitucinio Teismo teisėjas gali būti paskirtas antrą kartą?","a":"Taip, vieną kartą","b":"Taip, neribotą skaičių kartų","c":"Ne, tik viena kadencija","d":"Taip, po 5 metų pertraukos","correct":"c"},
+      {"q":"Kaip atnaujinamas Konstitucinio Teismo sudėtis?","a":"Kas 9 metai visas","b":"Po trečdalį kas 3 metus","c":"Po pusę kas 4 metus","d":"Vienu metu visas kas 5 metus","correct":"b"},
+      {"q":"Kas skiria 3 Konstitucinio Teismo teisėjus?","a":"Seimas","b":"Vyriausybė","c":"Prezidentas","d":"Aukščiausiasis Teismas","correct":"c"},
+      {"q":"Kas dar siūlo kandidatūras į Konstitucinį Teismą?","a":"Generalinis prokuroras","b":"Seimo Pirmininkas ir Aukščiausiojo Teismo Pirmininkas","c":"Vyriausybė","d":"Prezidento kanceliarija","correct":"b"},
+      {"q":"Ar Konstitucinio Teismo sprendimai yra galutiniai?","a":"Ne, juos gali apskųsti Aukščiausiajame Teisme","b":"Taip","c":"Tik tam tikrais atvejais","d":"Ne, Seimas gali juos peržiūrėti","correct":"b"},
+      {"q":"Kas atsitinka su aktu, pripažintu nekonstitucingu?","a":"Jis įsigalioja po pataisymų","b":"Jis negali būti taikomas","c":"Jis taikomas 1 metus","d":"Jis perduodamas Seimui","correct":"b"},
+      {"q":"Kas gali kreiptis į Konstitucinį Teismą?","a":"Tik Prezidentas","b":"1/5 Seimo narių, Vyriausybė, teismai","c":"Tik Seimas","d":"Tik piliečiai","correct":"b"},
+      {"q":"Ar pilietis gali kreiptis į Konstitucinį Teismą?","a":"Ne","b":"Taip, išnaudojęs kitas gynybos priemones","c":"Tik su advokatu","d":"Tik kolektyviai","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 23, "lesson_type": "lesson",
+    "title_ru": "20 pamoka: Teismai – nepriklausomumas, sistema (109–114 str.)",
+    "title_en": "Lesson 20: Art. 109–114", "description_ru": "Perskaitykite 109–114 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [109,110,111,112,113,114],
+    "questions": [
+      {"q":"Kas vykdo teisingumą Lietuvoje?","a":"Prokuroras","b":"Tik teismai","c":"Seimas","d":"Prezidentas","correct":"b"},
+      {"q":"Kam teisėjai paklūsta priimdami sprendimus?","a":"Tik įstatymui","b":"Ministrui Pirmininkui","c":"Seimui","d":"Prezidentui","correct":"a"},
+      {"q":"Ką apima Lietuvos teismų sistema?","a":"Tik Aukščiausiąjį Teismą","b":"Aukščiausiąjį Teismą, Apeliacinį Teismą, apygardų ir apylinkių teismus","c":"Tik apylinkių teismus","d":"Tik administracinius teismus","correct":"b"},
+      {"q":"Kieno vardu priimami teismų sprendimai?","a":"Prezidento vardu","b":"Seimo vardu","c":"Lietuvos Respublikos vardu","d":"Tautos vardu","correct":"c"},
+      {"q":"Ką teisėjas daro, abejodamas įstatymo konstitucingumu?","a":"Priima sprendimą savo nuožiūra","b":"Sustabdo bylą ir kreipiasi į Konstitucinį Teismą","c":"Kreipiasi į Seimą","d":"Kreipiasi į Prezidentą","correct":"b"},
+      {"q":"Kas skiria Aukščiausiojo Teismo teisėjus?","a":"Prezidentas","b":"Seimas Prezidento teikimu","c":"Teisėjų taryba","d":"Vyriausybė","correct":"b"},
+      {"q":"Ar teisėjai gali dalyvauti politinėje veikloje?","a":"Taip","b":"Ne","c":"Tik vietos politikoje","d":"Tik rinkimų metu","correct":"b"},
+      {"q":"Ar teisėjai apsaugoti nuo valstybinių organų įsikišimo?","a":"Ne","b":"Taip","c":"Tik nuo vykdomosios valdžios","d":"Tik nuo Seimo","correct":"b"},
+      {"q":"Ar užsienietis gali būti teisėju Lietuvoje?","a":"Taip","b":"Ne, tik Lietuvos piliečiai","c":"Taip, su specialiu leidimu","d":"Taip, tik apylinkių teismuose","correct":"b"},
+      {"q":"Ko reikia norint patraukti teisėją baudžiamojon atsakomybėn?","a":"Teismo sprendimo","b":"Seimo arba Prezidento sutikimo","c":"Generalinio prokuroro leidimo","d":"Ministro Pirmininko pritarimo","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 24, "lesson_type": "review",
+    "title_ru": "Kartojimas 4: 16–20 pamokos (84–114 str.)",
+    "title_en": "Review 4: Lessons 16–20", "description_ru": "Pakartokite 84–114 straipsnius.",
+    "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
+    "questions": [
+      {"q":"Kas laikinai eina Prezidento pareigas jam nesant?","a":"Ministras Pirmininkas","b":"Seimo Pirmininkas","c":"Vyriausiasis teisėjas","d":"Konstitucinio Teismo Pirmininkas","correct":"b"},
+      {"q":"Kiek teisėjų turi Konstitucinis Teismas?","a":"5","b":"7","c":"9","d":"12","correct":"c"},
+      {"q":"Kas skiria Ministrą Pirmininką?","a":"Seimas","b":"Prezidentas","c":"Vyriausybė","d":"Tauta","correct":"b"},
+      {"q":"Ar Konstitucinio Teismo teisėjas gali būti paskirtas antrą kartą?","a":"Taip","b":"Ne","c":"Tik po 5 metų pertraukos","d":"Tik Seimo sprendimu","correct":"b"},
+      {"q":"Kas vykdo teisingumą Lietuvoje?","a":"Prokuroras","b":"Tik teismai","c":"Seimas","d":"Prezidentas","correct":"b"},
+      {"q":"Kam Vyriausybė atskaitinga?","a":"Prezidentui","b":"Seimui","c":"Tautai","d":"Konstituciniame Teismui","correct":"b"},
+      {"q":"Kiek metų trunka Konstitucinio Teismo teisėjo kadencija?","a":"6 metai","b":"9 metai","c":"12 metų","d":"15 metų","correct":"b"},
+      {"q":"Ar ministrai gali dirbti kitose renkamose pareigose?","a":"Taip","b":"Ne","c":"Tik savivaldybių tarybose","d":"Tik laikinai","correct":"b"},
+      {"q":"Ar Konstitucinio Teismo sprendimai yra galutiniai?","a":"Ne, Seimas gali peržiūrėti","b":"Taip","c":"Tik tam tikrais atvejais","d":"Ne, Prezidentas gali panaikinti","correct":"b"},
+      {"q":"Koks yra teisėjų santykis su politine veikla?","a":"Jiems leidžiama dalyvauti","b":"Jiems draudžiama dalyvauti","c":"Jiems leidžiama tik vietos politikoje","d":"Tik rinkimų metu","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 25, "lesson_type": "lesson",
+    "title_ru": "21 pamoka: Teismai – atšaukimas, kalba, prokuratūra (115–118 str.)",
+    "title_en": "Lesson 21: Art. 115–118", "description_ru": "Perskaitykite 115–118 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [115,116,117,118],
+    "questions": [
+      {"q":"Kokia kalba vyksta teismo procesai?","a":"Anglų","b":"Lietuvių","c":"Lenkų","d":"Bet kuria šalių kalba","correct":"b"},
+      {"q":"Kas skiria Generalinį prokurorą?","a":"Seimas","b":"Prezidentas Seimui pritarus","c":"Vyriausybė","d":"Teisėjų taryba","correct":"b"},
+      {"q":"Ar teismo posėdžiai yra vieši?","a":"Ne, visada uždari","b":"Taip paprastai, su galimybe uždaro posėdžio","c":"Tik pilietinėse bylose","d":"Visada uždari","correct":"b"},
+      {"q":"Ką organizuoja prokuroras?","a":"Teismo posėdžius","b":"Ikiteisminį tyrimą","c":"Kalėjimus","d":"Policijos veiklą","correct":"b"},
+      {"q":"Kada teismas gali vesti uždarą posėdį?","a":"Visada, kai to pageidauja šalys","b":"Privačiam gyvenimui, valstybės paslapčiai ar viešajai tvarkai apsaugoti","c":"Tik baudžiamosiose bylose","d":"Tik teisėjui nusprendus","correct":"b"},
+      {"q":"Kaip atšaukiamas Aukščiausiojo Teismo teisėjas?","a":"Vyriausybės sprendimu","b":"Tik apkaltos būdu Seime","c":"Prezidento dekretu","d":"Teisėjų tarybos sprendimu","correct":"b"},
+      {"q":"Dėl kokių priežasčių gali pasibaigti teisėjo įgaliojimai?","a":"Tik pasibaigus kadencijai","b":"Savanoriškai, dėl sveikatos, nusikaltus ir kitais atvejais","c":"Tik Seimo sprendimu","d":"Tik teismui nuteisus","correct":"b"},
+      {"q":"Ką garantuoja asmenims, nekalbantiems lietuviškai, per teismo procesą?","a":"Nieko","b":"Teisę į vertėją","c":"Teisę kreiptis į Prezidentą","d":"Teisę turėti savo teisėją","correct":"b"},
+      {"q":"Kas atstovauja valstybei baudžiamosiose bylose?","a":"Policija","b":"Prokuroras","c":"Gynybos advokatas","d":"Seimo atstovas","correct":"b"},
+      {"q":"Ar prokuroras gali ginti piliečių teises?","a":"Ne","b":"Taip","c":"Tik baudžiamosiose bylose","d":"Tik administracinėse bylose","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 26, "lesson_type": "lesson",
+    "title_ru": "22 pamoka: Savivaldybės (119–124 str.)",
+    "title_en": "Lesson 22: Art. 119–124", "description_ru": "Perskaitykite 119–124 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [119,120,121,122,123,124],
+    "questions": [
+      {"q":"Kiek metų renkami savivaldybių tarybos?","a":"3 metus","b":"4 metus","c":"5 metus","d":"6 metus","correct":"b"},
+      {"q":"Kas turi teisę dalyvauti savivaldos rinkimuose?","a":"Tik Lietuvos piliečiai","b":"Piliečiai ir nuolatiniai gyventojai","c":"Tik šios savivaldybės mokesčių mokėtojai","d":"Tik vyresni nei 21 metų","correct":"b"},
+      {"q":"Ar savivaldybės gali nustatyti vietinius mokesčius?","a":"Ne","b":"Taip, įstatymo nustatytose ribose","c":"Tik turgavietėms","d":"Tik su Seimo leidimu","correct":"b"},
+      {"q":"Kuo vadovaujasi savivaldybės savo veikloje?","a":"Tik Vyriausybės nutarimais","b":"Konstitucija ir įstatymais","c":"Tik Prezidento dekretais","d":"Tik savivaldybės tarybos sprendimais","correct":"b"},
+      {"q":"Ar savivaldybės gali kreiptis į teismą?","a":"Ne","b":"Taip","c":"Tik per Vyriausybę","d":"Tik su Seimo leidimu","correct":"b"},
+      {"q":"Kas prižiūri aukštesnių administracinių vienetų veiklą?","a":"Seimas","b":"Vyriausybė","c":"Prezidentas","d":"Konstitucinis Teismas","correct":"b"},
+      {"q":"Ar savivaldybės yra laisvos savo veikloje?","a":"Ne, visiškai kontroliuoja valstybė","b":"Taip, nustatytos kompetencijos ribose","c":"Tik fiskaliniais klausimais","d":"Tik kultūros srityje","correct":"b"},
+      {"q":"Ar pilietis gali apskųsti savivaldybės sprendimą?","a":"Ne","b":"Taip, teisme","c":"Tik per Seimą","d":"Tik per Prezidentą","correct":"b"},
+      {"q":"Ar savivaldybės turi savo biudžetus?","a":"Ne, naudojasi vienu biudžetu","b":"Taip","c":"Tik didžiausios","d":"Tik miestai","correct":"b"},
+      {"q":"Kas skiria Vyriausybės atstovus administraciniuose vienetuose?","a":"Prezidentas","b":"Vyriausybė","c":"Seimas","d":"Seimo Pirmininkas","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 27, "lesson_type": "lesson",
+    "title_ru": "23 pamoka: Finansai ir biudžetas (125–132 str.)",
+    "title_en": "Lesson 23: Art. 125–132", "description_ru": "Perskaitykite 125–132 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [125,126,127,128,129,130,131,132],
+    "questions": [
+      {"q":"Koks yra Lietuvos biudžetiniai metai?","a":"Nuo balandžio 1 iki kovo 31","b":"Nuo sausio 1 iki gruodžio 31","c":"Nuo liepos 1 iki birželio 30","d":"Nuo rugsėjo 1 iki rugpjūčio 31","correct":"b"},
+      {"q":"Likus kiek dienų iki metų pabaigos Vyriausybė pateikia biudžetą?","a":"Likus 30 dienų","b":"Likus 50 dienų","c":"Likus ne mažiau kaip 75 dienoms","d":"Likus 100 dienų","correct":"c"},
+      {"q":"Kas yra Lietuvos centrinis bankas?","a":"Komercinis bankas","b":"Lietuvos bankas","c":"Valstybės iždo departamentas","d":"Europos Centrinis Bankas","correct":"b"},
+      {"q":"Kas skiria Lietuvos banko valdybos pirmininką?","a":"Prezidentas","b":"Seimas Prezidento teikimu","c":"Vyriausybė","d":"Finansų ministerija","correct":"b"},
+      {"q":"Kiek metų trunka Lietuvos banko valdybos pirmininko kadencija?","a":"3 metai","b":"4 metai","c":"5 metai","d":"6 metai","correct":"c"},
+      {"q":"Kas atsitinka, jei biudžetas nepatvirtinamas iki metų pradžios?","a":"Išlaidos sustoja","b":"Mėnesio išlaidos apribojamos 1/12 praėjusių metų biudžeto","c":"Vyriausybė automatiškai atsistatydina","d":"Prezidentas perima biudžeto kontrolę","correct":"b"},
+      {"q":"Kas nustato valstybinius mokesčius?","a":"Vyriausybė","b":"Prezidentas","c":"Seimas","d":"Finansų ministerija","correct":"c"},
+      {"q":"Kas gali priimti sprendimus dėl valstybinių paskolų?","a":"Vyriausybė","b":"Prezidentas","c":"Seimas Vyriausybės teikimu","d":"Lietuvos bankas","correct":"c"},
+      {"q":"Ar Lietuvos bankas yra valstybės nuosavybė?","a":"Ne","b":"Taip","c":"Tik iš dalies","d":"Priklauso Europos Sąjungai","correct":"b"},
+      {"q":"Ar Seimas gali padidinti biudžeto išlaidas?","a":"Ne","b":"Taip, jei nurodyti finansavimo šaltiniai","c":"Tik biudžeto metų pabaigoje","d":"Tik Prezidentui pritarus","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 28, "lesson_type": "lesson",
+    "title_ru": "24 pamoka: Valstybės kontrolė, užsienio politika, gynyba (133–140 str.)",
+    "title_en": "Lesson 24: Art. 133–140", "description_ru": "Perskaitykite 133–140 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [133,134,135,136,137,138,139,140],
+    "questions": [
+      {"q":"Kas yra Vyriausiasis kariuomenės vadas?","a":"Seimo Pirmininkas","b":"Gynybos ministras","c":"Prezidentas","d":"Kariuomenės vadas","correct":"c"},
+      {"q":"Kiek metų trunka Valstybės kontrolieriaus kadencija?","a":"3 metai","b":"4 metai","c":"5 metai","d":"6 metai","correct":"c"},
+      {"q":"Kas skiria Valstybės kontrolierių?","a":"Vyriausybė","b":"Prezidentas","c":"Seimas Prezidento teikimu","d":"Konstitucinis Teismas","correct":"c"},
+      {"q":"Ar leidžiama dislokuoti užsienio karines bazes Lietuvoje?","a":"Taip","b":"Ne","c":"Tik su Seimo leidimu","d":"Tik gynybos tikslais","correct":"b"},
+      {"q":"Ar masinio naikinimo ginklai leidžiami Lietuvoje?","a":"Taip","b":"Ne","c":"Tik valstybei priklausantys","d":"Tik mokslo tikslais","correct":"b"},
+      {"q":"Ar ratifikuotos tarptautinės sutartys yra Lietuvos teisės sistemos dalis?","a":"Ne","b":"Taip","c":"Tik ES sutartys","d":"Tik gynybos sutartys","correct":"b"},
+      {"q":"Kas yra Valstybės gynybos taryba?","a":"Prezidento asmeninis štabas","b":"Gynybos koordinavimo organas, kuriam pirmininkauja Prezidentas","c":"Kariuomenės vadovybė","d":"Seimo gynybos komitetas","correct":"b"},
+      {"q":"Ar valstybės gynyba yra piliečių teisė ir pareiga?","a":"Ne, tik pareiga","b":"Ne, tik teisė","c":"Taip","d":"Tik profesionaliems kariams","correct":"c"},
+      {"q":"Ar numatyta alternatyvioji tarnyba?","a":"Ne","b":"Taip","c":"Tik moterims","d":"Tik religiniais motyvais","correct":"b"},
+      {"q":"Kokie principai grindžia Lietuvos užsienio politiką?","a":"Karo galios principas","b":"Tarptautinė teisė, saugumas, nepriklausomybė","c":"Ekonominiai interesai","d":"Tik dvišalės sutartys","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 29, "lesson_type": "lesson",
+    "title_ru": "25 pamoka: Gynyba, nepaprastoji padėtis, Konstitucijos keitimas (141–154 str.)",
+    "title_en": "Lesson 25: Art. 141–154", "description_ru": "Perskaitykite 141–154 straipsnius ir atsakykite į klausimus.",
+    "question_count": 10, "pass_threshold": 0.6, "article_nums": [141,142,143,144,145,146,147,148,149,150,151,152,153,154],
+    "questions": [
+      {"q":"Kas skelbia karą?","a":"Prezidentas","b":"Seimas","c":"Vyriausybė","d":"Kariuomenės vadas","correct":"b"},
+      {"q":"Koks maksimalus nepaprastosios padėties terminas?","a":"3 mėnesiai","b":"6 mėnesiai","c":"12 mėnesių","d":"Neribotai","correct":"b"},
+      {"q":"Kiek piliečių gali siūlyti Konstitucijos pataisą?","a":"100 000","b":"200 000","c":"300 000","d":"500 000","correct":"c"},
+      {"q":"Kokia balsų dauguma reikalinga Konstitucijos (ne I ir XIV skyrių) pataisai?","a":"1/2","b":"3/5","c":"2/3","d":"3/4","correct":"c"},
+      {"q":"Kaip galima pakeisti 1 straipsnį dėl valstybės formos?","a":"3/5 Seimo balsų dauguma","b":"2/3 Seimo balsų dauguma","c":"Tik referendumu, kuriame 3/4 piliečių palaiko","d":"Vienbalsiu Seimo sprendimu","correct":"c"},
+      {"q":"Ar kariuomenės tarnautojai gali būti Seimo nariai?","a":"Taip","b":"Ne","c":"Tik atsargos kariai","d":"Tik aukšto rango pareigūnai","correct":"b"},
+      {"q":"Ar galima siūlyti Konstitucijos pataisas nepaprastosios padėties metu?","a":"Taip","b":"Ne","c":"Tik Prezidentas gali","d":"Tik dėl gynybos klausimų","correct":"b"},
+      {"q":"Kas dar gali siūlyti Konstitucijos pataisas be piliečių?","a":"Vyriausybė","b":"1/4 Seimo narių","c":"Prezidentas","d":"Konstitucinis Teismas","correct":"b"},
+      {"q":"Kiek dienų Prezidentas turi pasirašyti Konstitucijos pataisą?","a":"3 dienas","b":"5 dienas","c":"10 dienų","d":"15 dienų","correct":"b"},
+      {"q":"Kas sudaro Lietuvos Konstituciją pagal 150 straipsnį?","a":"Tik pagrindinis tekstas","b":"Pagrindinis tekstas ir 1991, 1992 metų konstituciniai aktai","c":"Tik pagrindinis tekstas ir ES narystės aktas","d":"Visi ratifikuoti tarptautiniai susitarimai","correct":"b"}
+    ]
+  },
+  {
+    "sort_order": 30, "lesson_type": "review",
+    "title_ru": "Kartojimas 5: 21–25 pamokos (115–154 str.)",
+    "title_en": "Review 5: Lessons 21–25", "description_ru": "Pakartokite 115–154 straipsnius.",
+    "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
+    "questions": [
+      {"q":"Kokia kalba vyksta teismo procesai Lietuvoje?","a":"Anglų","b":"Lietuvių","c":"Bet kuria kalba","d":"Rusų","correct":"b"},
+      {"q":"Kiek metų renkami savivaldybių tarybos?","a":"3 metus","b":"4 metus","c":"5 metus","d":"6 metus","correct":"b"},
+      {"q":"Kas yra centrinis Lietuvos bankas?","a":"Komercinis bankas","b":"Lietuvos bankas","c":"Valstybės iždo departamentas","d":"Tarptautinis valiutos fondas","correct":"b"},
+      {"q":"Kiek metų trunka Valstybės kontrolieriaus kadencija?","a":"3 metai","b":"4 metai","c":"5 metai","d":"6 metai","correct":"c"},
+      {"q":"Ar masinio naikinimo ginklai leidžiami Lietuvoje?","a":"Taip","b":"Ne","c":"Tik valstybei","d":"Mokslo tikslams","correct":"b"},
+      {"q":"Kiek piliečių gali siūlyti Konstitucijos pataisą?","a":"50 000","b":"100 000","c":"300 000","d":"500 000","correct":"c"},
+      {"q":"Koks yra biudžetinių metų terminas?","a":"Balandis–kovas","b":"Liepa–birželis","c":"Sausis–gruodis","d":"Rugsėjis–rugpjūtis","correct":"c"},
+      {"q":"Ar alternatyvioji tarnyba yra numatyta?","a":"Ne","b":"Taip","c":"Tik moterims","d":"Tik religiniais pagrindais","correct":"b"},
+      {"q":"Kas skiria Generalinį prokurorą?","a":"Seimas","b":"Prezidentas Seimui pritarus","c":"Vyriausybė","d":"Teisėjų taryba","correct":"b"},
+      {"q":"Kokia balsų dauguma keičiama Konstitucija (ne I ir XIV skyriai)?","a":"1/2","b":"3/5","c":"2/3","d":"3/4","correct":"c"}
+    ]
+  },
+  {
+    "sort_order": 31, "lesson_type": "dates",
+    "title_ru": "Tik skaičiai ir datos",
+    "title_en": "Dates & Numbers Test", "description_ru": "Tik klausimai apie skaičius, terminus ir datas iš visos Konstitucijos.",
+    "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
+    "questions": [
+      {"q":"Kiek narių yra Seime?","a":"100","b":"121","c":"141","d":"160","correct":"c"},
+      {"q":"Kiek metų trunka Prezidento kadencija?","a":"4 metai","b":"5 metai","c":"6 metai","d":"7 metai","correct":"b"},
+      {"q":"Koks minimalus Seimo nario kandidato amžius?","a":"18 metų","b":"21 metų","c":"25 metų","d":"30 metų","correct":"b"},
+      {"q":"Per kiek valandų sulaikytasis turi būti pristatytas į teismą?","a":"24 valandas","b":"48 valandas","c":"72 valandas","d":"96 valandas","correct":"b"},
+      {"q":"Koks maksimalus nepaprastosios padėties laikotarpis?","a":"3 mėnesiai","b":"6 mėnesiai","c":"12 mėnesių","d":"18 mėnesių","correct":"b"},
+      {"q":"Kiek parašų reikia Prezidento kandidatui?","a":"10 000","b":"20 000","c":"50 000","d":"100 000","correct":"b"},
+      {"q":"Kiek teisėjų yra Konstituciniame Teisme?","a":"6","b":"7","c":"9","d":"12","correct":"c"},
+      {"q":"Kiek metų skiriami Konstitucinio Teismo teisėjai?","a":"6 metai","b":"9 metai","c":"12 metų","d":"15 metų","correct":"b"},
+      {"q":"Kada priimta Lietuvos Konstitucija?","a":"1990 m. kovo 11 d.","b":"1990 m. spalio 25 d.","c":"1992 m. spalio 25 d.","d":"1991 m. vasario 16 d.","correct":"c"},
+      {"q":"Kiek piliečių reikia Konstitucijos pataisai siūlyti?","a":"50 000","b":"100 000","c":"300 000","d":"500 000","correct":"c"}
+    ]
+  },
+  {
+    "sort_order": 32, "lesson_type": "exam",
+    "title_ru": "Baigiamasis egzaminas",
+    "title_en": "Final Exam", "description_ru": "Baigiamasis egzaminas pagal visą Konstitucijos turinį (30 klausimų).",
+    "question_count": 30, "pass_threshold": 0.75, "article_nums": [],
+    "questions": [
+      {"q":"Kokia Lietuvos valstybės santvarka?","a":"Monarchija","b":"Federacija","c":"Nepriklausoma demokratinė respublika","d":"Konfederacija","correct":"c"},
+      {"q":"Kam priklauso suverenumas?","a":"Prezidentui","b":"Seimui","c":"Tautai","d":"Vyriausybei","correct":"c"},
+      {"q":"Kiek narių turi Seimas?","a":"100","b":"121","c":"141","d":"160","correct":"c"},
+      {"q":"Kiek metų trunka Seimo kadencija?","a":"3 metus","b":"4 metus","c":"5 metus","d":"6 metus","correct":"b"},
+      {"q":"Kiek metų trunka Prezidento kadencija?","a":"4 metus","b":"5 metus","c":"6 metus","d":"7 metus","correct":"b"},
+      {"q":"Kas yra valstybės vadovas?","a":"Ministras Pirmininkas","b":"Seimo Pirmininkas","c":"Prezidentas","d":"Konstitucinio Teismo Pirmininkas","correct":"c"},
+      {"q":"Kiek teisėjų turi Konstitucinis Teismas?","a":"5","b":"7","c":"9","d":"12","correct":"c"},
+      {"q":"Ar žmogaus teisės yra prigimtinės?","a":"Ne, jas suteikia valstybė","b":"Taip","c":"Tik iš dalies","d":"Tik piliečiams","correct":"b"},
+      {"q":"Kas yra valstybinė kalba?","a":"Anglų","b":"Lenkų","c":"Lietuvių","d":"Latvių","correct":"c"},
+      {"q":"Kokia yra Lietuvos sostinė?","a":"Kaunas","b":"Klaipėda","c":"Panevėžys","d":"Vilnius","correct":"d"},
+      {"q":"Kas skiria Ministrą Pirmininką?","a":"Seimas","b":"Prezidentas","c":"Tauta tiesiogiai","d":"Vyriausybė","correct":"b"},
+      {"q":"Kam atsakinga Vyriausybė?","a":"Prezidentui","b":"Seimui","c":"Tautai","d":"Konstituciniame Teismui","correct":"b"},
+      {"q":"Kas yra visuomenės pagrindas?","a":"Valstybė","b":"Darbas","c":"Šeima","d":"Religija","correct":"c"},
+      {"q":"Ar leidžiama žiniasklaidos cenzūra?","a":"Taip, yra cenzūros įstatymas","b":"Ne","c":"Tik karo metu","d":"Tik Vyriausybės leidimu","correct":"b"},
+      {"q":"Ką Konstitucija sako apie dvigubą pilietybę?","a":"Ji visada leidžiama","b":"Ji visada draudžiama","c":"Paprastai ji neleidžiama","d":"Ji reglamentuojama tik tarptautinėmis sutartimis","correct":"c"},
+      {"q":"Per kiek valandų sulaikytasis turi būti pristatytas į teismą?","a":"24 valandas","b":"48 valandas","c":"72 valandas","d":"96 valandas","correct":"b"},
+      {"q":"Ką Prezidentas privalo padaryti su partine veikla po išrinkimo?","a":"Išstoti iš partijos","b":"Sustabdyti narystę","c":"Nieko nereikia keisti","d":"Perduoti partijos valdymą","correct":"b"},
+      {"q":"Kokia kalba vyksta teismo procesai?","a":"Anglų","b":"Lietuvių","c":"Bet kuria kalba","d":"Rusų","correct":"b"},
+      {"q":"Ar darbuotojai turi teisę streikuoti?","a":"Ne","b":"Taip","c":"Tik kai kuriose srityse","d":"Tik su Vyriausybės leidimu","correct":"b"},
+      {"q":"Kas yra Vyriausiasis kariuomenės vadas?","a":"Gynybos ministras","b":"Kariuomenės generolas","c":"Seimo Pirmininkas","d":"Prezidentas","correct":"d"},
+      {"q":"Kokia balsų dauguma keičiama Konstitucija (ne I ir XIV skyriai)?","a":"1/2","b":"3/5","c":"2/3","d":"3/4","correct":"c"},
+      {"q":"Kiek piliečių gali inicijuoti referendumą?","a":"50 000","b":"100 000","c":"300 000","d":"500 000","correct":"c"},
+      {"q":"Ar Lietuva turi valstybinę religiją?","a":"Taip, katalikybę","b":"Taip, bet tik tradicinę","c":"Ne","d":"Tai nusprendžia Seimas","correct":"c"},
+      {"q":"Kada priimta Konstitucija?","a":"1990 m. kovo 11 d.","b":"1990 m. spalio 25 d.","c":"1992 m. spalio 25 d.","d":"1991 m. vasario 16 d.","correct":"c"},
+      {"q":"Kas skiria Valstybės kontrolierių?","a":"Vyriausybė","b":"Prezidentas","c":"Seimas Prezidento teikimu","d":"Konstitucinis Teismas","correct":"c"},
+      {"q":"Ar gynyba yra piliečių pareiga?","a":"Ne, tik teisė","b":"Taip","c":"Tik vyrų","d":"Tik atsargos karių","correct":"b"},
+      {"q":"Ar draudžiamos užsienio karinės bazės?","a":"Taip","b":"Ne","c":"Tik kovinės","d":"Tik branduolinės","correct":"a"},
+      {"q":"Kiek metų trunka Lietuvos banko valdybos pirmininko kadencija?","a":"4 metai","b":"5 metai","c":"6 metai","d":"7 metai","correct":"b"},
+      {"q":"Kiek metų renkami savivaldybių tarybos?","a":"3 metus","b":"4 metus","c":"5 metus","d":"6 metus","correct":"b"},
+      {"q":"Kas atsitinka su aktais, kurie prieštarauja Konstitucijai?","a":"Jie pataisomi","b":"Jie negali būti taikomi","c":"Jie galioja 1 metus","d":"Juos panaikina Seimas","correct":"b"}
+    ]
+  }
+]

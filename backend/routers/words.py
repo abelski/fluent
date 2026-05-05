@@ -291,15 +291,30 @@ def get_study_words(
                 col(UserWordProgress.word_id).in_(word_ids),
             )
         ).all()
-        progress_map = {p.word_id: p.status for p in progress_records}
+        progress_map = {p.word_id: p for p in progress_records}
 
+        today = date.today()
         for w in all_words:
-            w["status"] = progress_map.get(w["id"], "new")
+            p = progress_map.get(w["id"])
+            w["status"] = p.status if p else "new"
 
         new_words = [w for w in all_words if w["status"] == "new"]
         learning_words = [w for w in all_words if w["status"] == "learning"]
         known_words = [w for w in all_words if w["status"] == "known"]
-        random.shuffle(known_words)
+
+        # Prioritize due/overdue words so list study sessions count toward "слов нужно освежить"
+        due_known = []
+        not_due_known = []
+        for w in known_words:
+            p = progress_map.get(w["id"])
+            nr = p.next_review if p else None
+            if nr is None or nr <= today:
+                due_known.append(w)
+            else:
+                not_due_known.append(w)
+        random.shuffle(not_due_known)
+        known_words = due_known + not_due_known
+
         review_words = learning_words + known_words
 
         total = user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE

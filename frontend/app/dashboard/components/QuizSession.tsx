@@ -677,7 +677,7 @@ export default function QuizSession({
           <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-10 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-4 sm:mb-6">
-                {sessionMode === 'review' ? tr.common.review : tr.common.newWord}
+                {(sessionMode === 'review' || word.status === 'known' || word.status === 'learning') ? tr.common.review : tr.common.newWord}
               </p>
               <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
               {digit && <p className="text-5xl sm:text-7xl font-bold text-emerald-600 mb-4" data-testid="number-digit">{digit}</p>}

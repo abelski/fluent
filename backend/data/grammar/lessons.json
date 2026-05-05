@@ -35,7 +35,31 @@
     [60, "practice", [12], 10, "Įnagininkas Dgs."],
     [64, "basic",    [10], 24, "Naudininkas Dgs."],
     [65, "advanced", [10], 35, "Naudininkas Dgs."],
-    [66, "practice", [10], 35, "Naudininkas Dgs."]
+    [66, "practice", [10], 35, "Naudininkas Dgs."],
+
+    [70, "basic",    [15], 24, "Skaičiai: Vardininkas (kiek yra?)"],
+    [71, "advanced", [15], 35, "Skaičiai: Vardininkas (kiek yra?)"],
+    [72, "practice", [15], 20, "Skaičiai: Vardininkas (kiek yra?)"],
+
+    [76, "basic",    [16], 24, "Skaičiai: Galininkas (turiu)"],
+    [77, "advanced", [16], 35, "Skaičiai: Galininkas (turiu)"],
+    [78, "practice", [16], 20, "Skaičiai: Galininkas (turiu)"],
+
+    [82, "basic",    [17], 24, "Kelintiniai: Įnagininkas (autobusu)"],
+    [83, "advanced", [17], 35, "Kelintiniai: Įnagininkas (autobusu)"],
+    [84, "practice", [17], 20, "Kelintiniai: Įnagininkas (autobusu)"],
+
+    [88, "basic",    [18], 24, "Kelintiniai: Vietininkas (aukšte, auditorijoje)"],
+    [89, "advanced", [18], 35, "Kelintiniai: Vietininkas (aukšte, auditorijoje)"],
+    [90, "practice", [18], 20, "Kelintiniai: Vietininkas (aukšte, auditorijoje)"],
+
+    [94, "basic",    [19], 24, "Laikas: Galininkas (kelintą valandą?)"],
+    [95, "advanced", [19], 35, "Laikas: Galininkas (kelintą valandą?)"],
+    [96, "practice", [19], 20, "Laikas: Galininkas (kelintą valandą?)"],
+
+    [100, "basic",    [20], 24, "Dauginiai skaitvardžiai: amžius"],
+    [101, "advanced", [20], 35, "Dauginiai skaitvardžiai: amžius"],
+    [102, "practice", [20], 20, "Dauginiai skaitvardžiai: amžius"]
   ],
   "cases": {
     "1":  ["Vardininkas",   "Vienaskaita"],
@@ -51,6 +75,12 @@
     "11": ["Galininkas",    "Daugiskaita"],
     "12": ["Įnagininkas",   "Daugiskaita"],
     "13": ["Vietininkas",   "Daugiskaita"],
-    "14": ["Šauksmininkas", "Daugiskaita"]
+    "14": ["Šauksmininkas", "Daugiskaita"],
+    "15": ["Kiekiniai: Vardininkas", "Skaičiai"],
+    "16": ["Kiekiniai: Galininkas",  "Skaičiai"],
+    "17": ["Kelintiniai: Įnagininkas", "Skaičiai"],
+    "18": ["Kelintiniai: Vietininkas", "Skaičiai"],
+    "19": ["Laikas: Galininkas",      "Skaičiai"],
+    "20": ["Dauginiai skaitvardžiai", "Skaičiai"]
   }
 }
