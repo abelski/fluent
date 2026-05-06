@@ -7,7 +7,6 @@ import MistakeButton from '../components/MistakeButton';
 import CookieConsent from '../components/CookieConsent';
 import LangSync from '../components/LangSync';
 import Analytics from '../components/Analytics';
-import BetaBanner from '../components/BetaBanner';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'], variable: '--font-inter' });
 const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', weight: ['600', '700', '800'] });
@@ -57,7 +56,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         <LangSync />
-        <BetaBanner />
         <Header />
         <div className="flex-1">{children}</div>
         <Footer />
