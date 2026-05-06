@@ -10,11 +10,17 @@ from sqlmodel import Session, select, func
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
 from grammar_service import get_lessons as _get_grammar_lessons
+from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
 import email_service
+
+# Valid case indices are those that appear in LESSON_CONFIG plus those defined in CASE_INFO
+_VALID_CASE_INDICES: frozenset[int] = frozenset(
+    {c for entry in LESSON_CONFIG for c in entry[2]} | set(CASE_INFO.keys())
+)
 
 router = APIRouter()
 
@@ -585,6 +591,16 @@ def reorder_words(
 # ── Grammar content management ───────────────────────────────────────────────
 
 
+@router.get("/grammar/config")
+def get_grammar_config():
+    """Return lessons and case metadata from lessons.json. Used by the admin UI to
+    build case tabs dynamically without hardcoding data in the frontend."""
+    return {
+        "lessons": LESSON_CONFIG,
+        "cases": {str(k): list(v) for k, v in CASE_INFO.items()},
+    }
+
+
 @router.get("/grammar/sentences")
 def list_grammar_sentences(
     case_index: Optional[int] = None,
@@ -640,8 +656,8 @@ def create_grammar_sentence(
 ):
     """Create a new grammar sentence."""
     _require_admin(authorization, session)
-    if not (1 <= body.case_index <= 14):
-        raise HTTPException(status_code=400, detail="case_index must be between 1 and 14")
+    if body.case_index not in _VALID_CASE_INDICES:
+        raise HTTPException(status_code=400, detail=f"case_index {body.case_index} is not defined in lessons config")
     if "___" not in body.display:
         raise HTTPException(status_code=400, detail="display must contain ___ blank placeholder")
     if not body.answer_ending.strip():
@@ -855,5 +871,117 @@ def update_grammar_rule(
     rule.transform = body.transform.strip()
     rule.article_slug = slug
     session.add(rule)
+    session.commit()
+    return {"ok": True}
+
+
+# ── Grammar program management ───────────────────────────────────────────────
+
+
+@router.get("/grammar/programs")
+def list_grammar_programs_admin(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return all grammar programs for admin management."""
+    _require_admin(authorization, session)
+    programs = session.exec(select(GrammarProgram).order_by(GrammarProgram.id)).all()
+    return [
+        {
+            "id": p.id,
+            "title": p.title,
+            "title_en": p.title_en,
+            "description": p.description,
+            "difficulty": p.difficulty,
+            "is_public": p.is_public,
+            "lesson_filter": p.lesson_filter,
+        }
+        for p in programs
+    ]
+
+
+class GrammarProgramCreate(BaseModel):
+    title: str
+    title_en: Optional[str] = None
+    description: Optional[str] = None
+    difficulty: int = 1
+    is_public: bool = True
+    lesson_filter: Optional[str] = None  # JSON array of group names
+
+
+@router.post("/grammar/programs")
+def create_grammar_program(
+    body: GrammarProgramCreate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Create a new grammar program."""
+    _require_admin(authorization, session)
+    if not body.title.strip():
+        raise HTTPException(status_code=400, detail="title is required")
+    if body.difficulty not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="difficulty must be 1, 2 or 3")
+    program = GrammarProgram(
+        title=body.title.strip(),
+        title_en=body.title_en.strip() if body.title_en else None,
+        description=body.description.strip() if body.description else None,
+        difficulty=body.difficulty,
+        is_public=body.is_public,
+        lesson_filter=body.lesson_filter,
+    )
+    session.add(program)
+    session.commit()
+    session.refresh(program)
+    return {"ok": True, "id": program.id}
+
+
+class GrammarProgramUpdate(BaseModel):
+    title: str
+    title_en: Optional[str] = None
+    description: Optional[str] = None
+    difficulty: int = 1
+    is_public: bool = True
+    lesson_filter: Optional[str] = None  # JSON array of group names
+
+
+@router.patch("/grammar/programs/{program_id}")
+def update_grammar_program(
+    program_id: int,
+    body: GrammarProgramUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Update an existing grammar program."""
+    _require_admin(authorization, session)
+    if not body.title.strip():
+        raise HTTPException(status_code=400, detail="title is required")
+    if body.difficulty not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="difficulty must be 1, 2 or 3")
+    program = session.get(GrammarProgram, program_id)
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found")
+    program.title = body.title.strip()
+    program.title_en = body.title_en.strip() if body.title_en else None
+    program.description = body.description.strip() if body.description else None
+    program.difficulty = body.difficulty
+    program.is_public = body.is_public
+    program.lesson_filter = body.lesson_filter
+    session.add(program)
+    session.commit()
+    return {"ok": True}
+
+
+@router.delete("/grammar/programs/{program_id}")
+def delete_grammar_program(
+    program_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Delete a grammar program."""
+    _require_admin(authorization, session)
+    program = session.get(GrammarProgram, program_id)
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found")
+    session.delete(program)
     session.commit()
     return {"ok": True}

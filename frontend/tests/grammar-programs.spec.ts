@@ -12,12 +12,18 @@ async function setFakeToken(page: import('@playwright/test').Page) {
   }, makeFakeJwt('Test User'));
 }
 
+const MOCK_CONFIG = {
+  lessons: [[1, 'basic', [4], 24, 'Galininkas Vns.']],
+  cases: { '4': ['Galininkas', 'Vienaskaita'] },
+};
+
 const MOCK_PROGRAM = {
   id: 1,
   title: 'Литовские падежи',
   title_en: 'Lithuanian Cases',
   description: 'Все грамматические падежи литовского языка.',
   difficulty: 1,
+  lesson_filter: '["Vienaskaita","Daugiskaita"]',
 };
 
 const MOCK_LESSON = {
@@ -32,8 +38,13 @@ const MOCK_LESSON = {
 };
 
 test.describe('Grammar programs', () => {
+  function setupCommonMocks(page: import('@playwright/test').Page) {
+    page.route('**/api/admin/grammar/config', route => route.fulfill({ json: MOCK_CONFIG }));
+  }
+
   test('shows empty state with Смотреть все программы when not enrolled', async ({ page }) => {
     await setFakeToken(page);
+    setupCommonMocks(page);
 
     await page.route('**/api/grammar-programs', (route) =>
       route.fulfill({ json: [{ ...MOCK_PROGRAM, enrolled: false }] })
@@ -48,6 +59,7 @@ test.describe('Grammar programs', () => {
 
   test('shows lesson tree when enrolled', async ({ page }) => {
     await setFakeToken(page);
+    setupCommonMocks(page);
 
     await page.route('**/api/grammar-programs', (route) =>
       route.fulfill({ json: [{ ...MOCK_PROGRAM, enrolled: true }] })
@@ -58,11 +70,12 @@ test.describe('Grammar programs', () => {
 
     await page.goto('/dashboard/grammar');
     await expect(page.getByTestId('unenroll-button')).toBeVisible();
-    await expect(page.getByTestId('category-padezhi')).toBeVisible();
+    await expect(page.getByTestId('category-program-1')).toBeVisible();
   });
 
   test('unenroll hides lesson tree and shows empty state', async ({ page }) => {
     await setFakeToken(page);
+    setupCommonMocks(page);
 
     const programs = [{ ...MOCK_PROGRAM, enrolled: true }];
 
@@ -85,6 +98,7 @@ test.describe('Grammar programs', () => {
 
   test('catalog page shows program card with Добавить button', async ({ page }) => {
     await setFakeToken(page);
+    setupCommonMocks(page);
 
     await page.route('**/api/grammar-programs', (route) =>
       route.fulfill({ json: [{ ...MOCK_PROGRAM, enrolled: false }] })
@@ -97,6 +111,7 @@ test.describe('Grammar programs', () => {
 
   test('catalog page shows enrolled badge after enrolling', async ({ page }) => {
     await setFakeToken(page);
+    setupCommonMocks(page);
 
     await page.route('**/api/grammar-programs', (route) =>
       route.fulfill({ json: [{ ...MOCK_PROGRAM, enrolled: false }] })

@@ -477,6 +477,7 @@ class GrammarProgram(SQLModel, table=True):
     difficulty: int = Field(default=1)
     is_public: bool = Field(default=True)
     created_at: datetime = Field(default_factory=_utcnow)
+    lesson_filter: Optional[str] = Field(default=None)  # JSON array of CASE_INFO group names, e.g. '["Vienaskaita","Daugiskaita"]'. NULL = show all.
 
 
 class UserGrammarProgram(SQLModel, table=True):

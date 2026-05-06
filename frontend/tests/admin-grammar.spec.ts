@@ -12,83 +12,102 @@ async function setAdminToken(page: import('@playwright/test').Page) {
   }, makeFakeJwt('Admin User', true));
 }
 
+const MOCK_CONFIG = {
+  lessons: [
+    [1, 'basic',    [4], 24, 'Galininkas Vns.'],
+    [2, 'advanced', [4], 35, 'Galininkas Vns.'],
+    [3, 'practice', [4], 20, 'Galininkas Vns.'],
+    [4, 'basic',    [6], 24, 'Vietininkas Vns.'],
+    [10, 'basic',   [2], 24, 'Kilmininkas Vns.'],
+    [70, 'basic',   [15], 24, 'Skaičiai: Vardininkas'],
+    [71, 'advanced',[15], 35, 'Skaičiai: Vardininkas'],
+  ],
+  cases: {
+    '2':  ['Kilmininkas',            'Vienaskaita'],
+    '4':  ['Galininkas',             'Vienaskaita'],
+    '6':  ['Vietininkas',            'Vienaskaita'],
+    '8':  ['Vardininkas',            'Daugiskaita'],
+    '14': ['Šauksmininkas',          'Daugiskaita'],
+    '15': ['Kiekiniai: Vardininkas', 'Skaičiai'],
+  },
+};
+
 const MOCK_SENTENCES = [
   {
-    id: 1,
-    case_index: 1,
-    display: 'Čia yra nam___.',
-    answer_ending: 'as',
-    full_word: 'namas',
-    russian: 'Здесь есть дом.',
-    archived: false,
-    use_in_basic: true,
-    use_in_advanced: true,
-    use_in_practice: true,
+    id: 1, case_index: 4,
+    display: 'Laima mato brol___.', answer_ending: 'į', full_word: 'brolį',
+    russian: 'Лайма видит брата.', archived: false,
+    use_in_basic: true, use_in_advanced: true, use_in_practice: true,
   },
   {
-    id: 2,
-    case_index: 1,
-    display: 'Tai yra knyg___.',
-    answer_ending: 'a',
-    full_word: 'knyga',
-    russian: 'Это книга.',
-    archived: false,
-    use_in_basic: true,
-    use_in_advanced: true,
-    use_in_practice: true,
+    id: 2, case_index: 4,
+    display: 'Ji skaito knyg___.', answer_ending: 'ą', full_word: 'knygą',
+    russian: 'Она читает книгу.', archived: false,
+    use_in_basic: true, use_in_advanced: false, use_in_practice: true,
   },
   {
-    id: 3,
-    case_index: 2,
-    display: 'Nėra nam___.',
-    answer_ending: 'o',
-    full_word: 'namo',
-    russian: 'Нет дома.',
-    archived: false,
-    use_in_basic: true,
-    use_in_advanced: true,
-    use_in_practice: true,
+    id: 3, case_index: 2,
+    display: 'Nėra nam___.', answer_ending: 'o', full_word: 'namo',
+    russian: 'Нет дома.', archived: false,
+    use_in_basic: true, use_in_advanced: true, use_in_practice: true,
   },
 ];
 
 const MOCK_RULES = [
   {
+    id: 4, case_index: 4,
+    name_ru: 'Винительный (Galininkas)', question: 'Кого? Что?',
+    usage: 'Прямое дополнение', endings_sg: '-ą, -į, -ų', endings_pl: '-us, -ius, -as, -es',
+    transform: 'Ед.: м. -as/-is/-us → -ą/-į/-ų', status: 'published', article_slug: null,
+  },
+  {
+    id: 8, case_index: 8,
+    name_ru: 'Именительный мн.ч.', question: 'Кто? Что?',
+    usage: '', endings_sg: '', endings_pl: '-ai, -iai, -ūs, -os, -ės',
+    transform: '', status: 'draft', article_slug: null,
+  },
+];
+
+const MOCK_PROGRAMS = [
+  {
     id: 1,
-    case_index: 1,
-    name_ru: 'Именительный (Vardininkas)',
-    question: 'Кто? Что?',
-    usage: 'Подлежащее в предложении',
-    endings_sg: '-as, -is, -us, -a, -ė',
-    endings_pl: '-ai, -iai, -ūs, -os, -ės',
-    transform: 'Базовая форма',
+    title: 'Литовские падежи',
+    title_en: 'Lithuanian Cases',
+    description: 'Все грамматические падежи.',
+    difficulty: 1,
+    is_public: true,
+    lesson_filter: '["Vienaskaita","Daugiskaita"]',
+  },
+  {
+    id: 2,
+    title: 'Числительные',
+    title_en: 'Numbers',
+    description: null,
+    difficulty: 1,
+    is_public: true,
+    lesson_filter: '["Skaičiai"]',
   },
 ];
 
 function setupMocks(page: import('@playwright/test').Page) {
+  page.route('**/api/admin/grammar/config', async (route) => {
+    await route.fulfill({ json: MOCK_CONFIG });
+  });
   page.route('**/api/admin/grammar/sentences**', async (route) => {
     await route.fulfill({ json: MOCK_SENTENCES });
   });
   page.route('**/api/admin/grammar/rules', async (route) => {
     await route.fulfill({ json: MOCK_RULES });
   });
-  page.route('**/api/admin/users', async (route) => {
-    await route.fulfill({ json: [] });
+  page.route('**/api/admin/grammar/programs', async (route) => {
+    await route.fulfill({ json: MOCK_PROGRAMS });
   });
-  page.route('**/api/me/quota', async (route) => {
-    await route.fulfill({ json: { is_superadmin: false } });
-  });
-  page.route('**/api/admin/reports', async (route) => {
-    await route.fulfill({ json: [] });
-  });
-  page.route('**/api/admin/articles', async (route) => {
-    await route.fulfill({ json: [] });
-  });
-  page.route('**/api/admin/subcategories', async (route) => {
-    await route.fulfill({ json: [] });
-  });
-  page.route('**/api/admin/content/word-lists', async (route) => {
-    await route.fulfill({ json: [] });
-  });
+  page.route('**/api/admin/users', async (route) => { await route.fulfill({ json: [] }); });
+  page.route('**/api/me/quota', async (route) => { await route.fulfill({ json: { is_superadmin: false } }); });
+  page.route('**/api/admin/reports', async (route) => { await route.fulfill({ json: [] }); });
+  page.route('**/api/admin/articles', async (route) => { await route.fulfill({ json: [] }); });
+  page.route('**/api/admin/subcategories', async (route) => { await route.fulfill({ json: [] }); });
+  page.route('**/api/admin/content/word-lists', async (route) => { await route.fulfill({ json: [] }); });
 }
 
 test.describe('Admin Grammar page — navigation', () => {
@@ -110,7 +129,7 @@ test.describe('Admin Grammar page — navigation', () => {
   });
 });
 
-test.describe('Admin Grammar page — content', () => {
+test.describe('Admin Grammar page — program view', () => {
   test('shows page title', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
@@ -118,55 +137,108 @@ test.describe('Admin Grammar page — content', () => {
     await expect(page.getByRole('heading', { name: 'Грамматика' })).toBeVisible({ timeout: 5000 });
   });
 
-  test('shows 14 case tabs', async ({ page }) => {
+  test('shows program list with program names', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    // First tab is Galininkas (first in learning order)
-    await expect(page.getByRole('button', { name: /^1\. Galininkas/ })).toBeVisible({ timeout: 5000 });
-    // Last tab is Šauksmininkas pl (position 14)
-    await expect(page.getByRole('button', { name: /^14\. Šauksmininkas/ })).toBeVisible();
+    await expect(page.getByText('Литовские падежи')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Числительные').first()).toBeVisible();
   });
 
-  test('shows sentences for the selected case (case 1 by default)', async ({ page }) => {
+  test('shows case rows within expanded program', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    await expect(page.getByText('Čia yra nam[as].')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('namas')).toBeVisible();
-    await expect(page.getByText('Здесь есть дом.')).toBeVisible();
+    await page.getByTestId('program-lessons-toggle-1').click();
+    await expect(page.getByText('Galininkas')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Kilmininkas')).toBeVisible();
   });
 
-  test('switching to case 2 shows sentences for that case', async ({ page }) => {
+  test('shows lesson count badges on case rows', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    await page.getByRole('button', { name: /^3\. Kilmininkas/ }).click();
-    await expect(page.getByText('Nėra nam[o].')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('Нет дома.')).toBeVisible();
+    await page.getByTestId('program-lessons-toggle-1').click();
+    // Galininkas has basic(24)/advanced(35)/practice(20) lessons — badges show task counts
+    await expect(page.getByText('24').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('35').first()).toBeVisible();
   });
 
-  test('shows add sentence button', async ({ page }) => {
+  test('shows status selector for cases with rules', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    await expect(page.getByRole('button', { name: '+ Добавить предложение' })).toBeVisible({ timeout: 5000 });
+    await page.getByTestId('program-lessons-toggle-1').click();
+    // Galininkas is published, so there should be a status selector
+    const selects = page.locator('select');
+    await expect(selects.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('clicking add sentence opens form', async ({ page }) => {
+  test('collapsing a program hides case rows', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    await page.getByRole('button', { name: '+ Добавить предложение' }).click();
+    await page.getByTestId('program-lessons-toggle-1').click();
+    await expect(page.getByText('Galininkas')).toBeVisible({ timeout: 5000 });
+    await page.getByTestId('program-lessons-toggle-1').click();
+    await expect(page.getByText('Galininkas')).not.toBeVisible();
+  });
+
+  test('shows sentence count per case', async ({ page }) => {
+    await setAdminToken(page);
+    setupMocks(page);
+    await page.goto('/dashboard/admin/grammar');
+    await page.getByTestId('program-lessons-toggle-1').click();
+    // Galininkas has 2 active sentences → "2 пр."
+    await expect(page.getByText('2 пр.')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('shows нет уроков for cases without lessons', async ({ page }) => {
+    await setAdminToken(page);
+    setupMocks(page);
+    await page.goto('/dashboard/admin/grammar');
+    await page.getByTestId('program-lessons-toggle-1').click();
+    // Šauksmininkas (case 14) has no lessons in mock config
+    await expect(page.getByText('нет уроков').first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test('expanding a case shows sentences inline', async ({ page }) => {
+    await setAdminToken(page);
+    setupMocks(page);
+    await page.goto('/dashboard/admin/grammar');
+    await page.getByTestId('program-lessons-toggle-1').click();
+    await page.getByText('Galininkas').click();
+    await expect(page.getByText('Laima mato brol[į].')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Лайма видит брата.')).toBeVisible();
+  });
+
+  test('expanding a case shows add sentence button', async ({ page }) => {
+    await setAdminToken(page);
+    setupMocks(page);
+    await page.goto('/dashboard/admin/grammar');
+    await page.getByTestId('program-lessons-toggle-1').click();
+    await page.getByText('Galininkas').click();
+    await expect(page.getByText('+ Добавить предложение')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('clicking add sentence opens modal', async ({ page }) => {
+    await setAdminToken(page);
+    setupMocks(page);
+    await page.goto('/dashboard/admin/grammar');
+    await page.getByTestId('program-lessons-toggle-1').click();
+    await page.getByText('Galininkas').click();
+    await page.getByText('+ Добавить предложение').click();
     await expect(page.getByText('Новое предложение')).toBeVisible();
     await expect(page.getByPlaceholder('Laima mato brol___.')).toBeVisible();
   });
 
-  test('add sentence form shows validation error if display has no ___', async ({ page }) => {
+  test('add sentence modal validates missing ___', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    await page.getByRole('button', { name: '+ Добавить предложение' }).click();
+    await page.getByTestId('program-lessons-toggle-1').click();
+    await page.getByText('Galininkas').click();
+    await page.getByText('+ Добавить предложение').click();
     await page.getByPlaceholder('Laima mato brol___.').fill('No blank here.');
     await page.getByPlaceholder('į', { exact: true }).fill('as');
     await page.getByPlaceholder('brolį', { exact: true }).fill('namas');
@@ -175,20 +247,16 @@ test.describe('Admin Grammar page — content', () => {
     await expect(page.getByText(/должно содержать ___/)).toBeVisible();
   });
 
-  test('shows case rule section for current case', async ({ page }) => {
+  test('clicking modal backdrop closes it', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    await expect(page.getByText(/Правило: Именительный/)).toBeVisible({ timeout: 5000 });
-  });
-
-  test('clicking rule section expands it', async ({ page }) => {
-    await setAdminToken(page);
-    setupMocks(page);
-    await page.goto('/dashboard/admin/grammar');
-    await page.getByText(/Правило: Именительный/).click();
-    await expect(page.getByText('Подлежащее в предложении')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('-as, -is, -us, -a, -ė')).toBeVisible();
+    await page.getByTestId('program-lessons-toggle-1').click();
+    await page.getByText('Galininkas').click();
+    await page.getByText('+ Добавить предложение').click();
+    await expect(page.getByText('Новое предложение')).toBeVisible();
+    await page.mouse.click(10, 10);
+    await expect(page.getByText('Новое предложение')).not.toBeVisible();
   });
 
   test('shows back link to admin panel', async ({ page }) => {
@@ -198,22 +266,33 @@ test.describe('Admin Grammar page — content', () => {
     await expect(page.getByRole('link', { name: '← Админ' })).toBeVisible({ timeout: 5000 });
   });
 
-  test('shows no-lessons notice for case 13 (Vardininkas has no lessons configured)', async ({ page }) => {
+  test('Числительные program shows number cases when expanded', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    // Vardininkas is selected by default (case_index 1, position 13 in learning order)
-    await expect(page.getByText(/нет уроков/)).toBeVisible({ timeout: 5000 });
+    await page.getByTestId('program-lessons-toggle-2').click();
+    await expect(page.getByText('Kiekiniai: Vardininkas')).toBeVisible({ timeout: 5000 });
   });
 
-  test('shows Basic, Advanced and Practice toggle buttons on sentence rows for Kilmininkas', async ({ page }) => {
+  test('programs section shows program row with expand toggle', async ({ page }) => {
     await setAdminToken(page);
     setupMocks(page);
     await page.goto('/dashboard/admin/grammar');
-    await page.getByRole('button', { name: /^3\. Kilmininkas/ }).click();
-    // Level toggles are buttons — one per level per sentence row
-    await expect(page.getByRole('button', { name: /^Basic$/ }).first()).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole('button', { name: /^Advanced$/ }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /^Practice$/ }).first()).toBeVisible();
+    const toggle = page.getByTestId('program-lessons-toggle-1');
+    await toggle.waitFor({ state: 'attached', timeout: 5000 });
+    await expect(toggle).toBeVisible();
+  });
+
+  test('clicking program toggle expands cases panel with case rows', async ({ page }) => {
+    await setAdminToken(page);
+    setupMocks(page);
+    await page.goto('/dashboard/admin/grammar');
+    const toggle = page.getByTestId('program-lessons-toggle-1');
+    await toggle.waitFor({ state: 'attached', timeout: 5000 });
+    await toggle.click();
+    const panel = page.getByTestId('program-lessons-panel-1');
+    await expect(panel).toBeVisible();
+    // Vienaskaita group includes case 4 (Galininkas) — should appear in panel
+    await expect(panel.getByText('Galininkas')).toBeVisible();
   });
 });

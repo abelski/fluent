@@ -1,6 +1,7 @@
 # Grammar lesson endpoints.
 # This router is intentionally thin — all content logic lives in grammar_service.py.
 
+import json
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -8,24 +9,34 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from auth import require_user as _require_user, try_get_user as _try_get_user
+from data.grammar.lessons import CASE_INFO as _CASE_INFO
 from database import get_session
 from grammar_service import get_lessons, get_lesson_tasks
 from models import GrammarLessonResult, GrammarProgram, UserGrammarProgram
 from quota import quota_check_and_increment as _quota_check_and_increment
 
-_SEED_PROGRAM = {
-    "title": "Литовские падежи",
-    "title_en": "Lithuanian Cases",
-    "description": "Все грамматические падежи литовского языка: единственное и множественное число.",
-    "difficulty": 1,
-}
+_SEED_PROGRAMS = [
+    {
+        "title": "Литовские падежи",
+        "title_en": "Lithuanian Cases",
+        "description": "Все грамматические падежи литовского языка: единственное и множественное число.",
+        "difficulty": 1,
+    },
+    {
+        "title": "Числительные",
+        "title_en": "Numbers",
+        "description": "Количественные и порядковые числительные: согласование с существительными по падежам.",
+        "difficulty": 1,
+    },
+]
 
 
 def _ensure_seed(session: Session) -> None:
-    existing = session.exec(select(GrammarProgram)).first()
-    if not existing:
-        session.add(GrammarProgram(**_SEED_PROGRAM))
-        session.commit()
+    existing_titles = {p.title for p in session.exec(select(GrammarProgram)).all()}
+    for seed in _SEED_PROGRAMS:
+        if seed["title"] not in existing_titles:
+            session.add(GrammarProgram(**seed))
+    session.commit()
 
 router = APIRouter()
 
@@ -57,9 +68,36 @@ def list_lessons(
             if r.lesson_id not in best_scores or pct > best_scores[r.lesson_id]:
                 best_scores[r.lesson_id] = pct
 
+    # Unlock the first lesson of each enrolled program so programs can be
+    # started independently without completing all preceding programs first.
+    first_program_lesson_ids: set[int] = set()
+    if user:
+        case_to_group = {k: v[1] for k, v in _CASE_INFO.items()}
+        enrollments = session.exec(
+            select(UserGrammarProgram).where(UserGrammarProgram.user_id == user.id)
+        ).all()
+        if enrollments:
+            enrolled_ids = {e.program_id for e in enrollments}
+            enrolled_programs = session.exec(
+                select(GrammarProgram).where(GrammarProgram.id.in_(enrolled_ids))
+            ).all()
+            for prog in enrolled_programs:
+                if not prog.lesson_filter:
+                    if lessons:
+                        first_program_lesson_ids.add(lessons[0]["id"])
+                else:
+                    try:
+                        allowed = set(json.loads(prog.lesson_filter))
+                        for lesson in lessons:
+                            if all(case_to_group.get(c, "") in allowed for c in lesson["cases"]):
+                                first_program_lesson_ids.add(lesson["id"])
+                                break
+                    except Exception:
+                        pass
+
     for i, lesson in enumerate(lessons):
         lesson["best_score_pct"] = best_scores.get(lesson["id"])
-        if not user_authenticated or i == 0:
+        if not user_authenticated or i == 0 or lesson["id"] in first_program_lesson_ids:
             lesson["is_locked"] = False
         else:
             prev_id = lessons[i - 1]["id"]
@@ -167,6 +205,7 @@ def list_grammar_programs(
             "description": p.description,
             "difficulty": p.difficulty,
             "enrolled": p.id in enrolled_ids,
+            "lesson_filter": p.lesson_filter,
         }
         for p in programs
     ]

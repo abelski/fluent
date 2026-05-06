@@ -57,10 +57,6 @@ const LEVEL_STYLES: Record<string, string> = {
   practice: 'bg-amber-50 border-gray-900 text-amber-600',
 };
 
-interface Category {
-  key: string;
-  label: string;
-}
 
 function normalizeLt(text: string): string {
   return text
@@ -396,14 +392,40 @@ function SubcategoryGroup({
   );
 }
 
+// Maps case index → group name using the grammar config endpoint.
+// Cached in module scope so we only fetch once per page load.
+let _caseGroupCache: Record<number, string> | null = null;
+async function getCaseGroups(): Promise<Record<number, string>> {
+  if (_caseGroupCache) return _caseGroupCache;
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/admin/grammar/config`);
+    if (!r.ok) return {};
+    const data = await r.json();
+    const map: Record<number, string> = {};
+    for (const [k, v] of Object.entries(data.cases as Record<string, [string, string]>)) {
+      map[Number(k)] = v[1]; // v[1] is the group name
+    }
+    _caseGroupCache = map;
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+function filterLessonsForProgram(lessons: Lesson[], lessonFilter: string | null, caseGroups: Record<number, string>): Lesson[] {
+  if (!lessonFilter) return lessons;
+  let groups: string[];
+  try { groups = JSON.parse(lessonFilter); } catch { return lessons; }
+  const groupSet = new Set(groups);
+  return lessons.filter(l => l.cases.every(c => groupSet.has(caseGroups[c] ?? '')));
+}
+
 export default function GrammarPage() {
   const { tr, plural } = useT();
-  const CATEGORIES: Category[] = [
-    { key: 'padezhi', label: tr.grammar.categories.padezhi },
-  ];
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [caseGroups, setCaseGroups] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
-  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['padezhi']));
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const [programs, setPrograms] = useState<GrammarProgramSummary[]>([]);
   const [programsLoading, setProgramsLoading] = useState(true);
   const [unenrolling, setUnenrolling] = useState(false);
@@ -442,9 +464,14 @@ export default function GrammarPage() {
   const fetchLessons = useCallback(() => {
     const token = getToken();
     const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-    fetch(`${BACKEND_URL}/api/grammar/lessons`, { headers })
-      .then((r) => r.json())
-      .then((data: Lesson[]) => setLessons(Array.isArray(data) ? data : []))
+    Promise.all([
+      fetch(`${BACKEND_URL}/api/grammar/lessons`, { headers }).then(r => r.json()),
+      getCaseGroups(),
+    ])
+      .then(([data, groups]) => {
+        setLessons(Array.isArray(data) ? data : []);
+        setCaseGroups(groups);
+      })
       .catch((err) => console.error('API error:', err))
       .finally(() => setLoading(false));
   }, []);
@@ -455,7 +482,14 @@ export default function GrammarPage() {
 
   useEffect(() => {
     getGrammarPrograms()
-      .then(setPrograms)
+      .then(ps => {
+        setPrograms(ps);
+        // Open all enrolled programs by default
+        const enrolled = ps.filter(p => p.enrolled);
+        if (enrolled.length > 0) {
+          setOpenCategories(new Set(enrolled.map(p => `program-${p.id}`)));
+        }
+      })
       .catch(console.error)
       .finally(() => setProgramsLoading(false));
   }, []);
@@ -581,78 +615,76 @@ export default function GrammarPage() {
             <>
               <GrammarStatsBar lessons={lessons} />
 
-              {enrolledPrograms.map((program) => (
-                <div key={program.id} className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-semibold text-gray-700 text-sm">{program.title}</h2>
-                    <button
-                      onClick={() => handleUnenroll(program.id)}
-                      disabled={unenrolling}
-                      className="text-xs text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                      data-testid="unenroll-button"
+              {enrolledPrograms.map((program) => {
+                const programLessons = filterLessonsForProgram(lessons, program.lesson_filter ?? null, caseGroups);
+                const catKey = `program-${program.id}`;
+                const isOpen = openCategories.has(catKey);
+
+                const subcategoryGroups: { title: string; lessons: Lesson[] }[] = [];
+                for (const lesson of programLessons) {
+                  const last = subcategoryGroups[subcategoryGroups.length - 1];
+                  if (last && last.title === lesson.title) {
+                    last.lessons.push(lesson);
+                  } else {
+                    subcategoryGroups.push({ title: lesson.title, lessons: [lesson] });
+                  }
+                }
+
+                return (
+                  <div key={program.id} className="mb-4">
+                    <div
+                      className="border border-gray-900 rounded-2xl overflow-hidden"
+                      data-testid={`category-${catKey}`}
                     >
-                      {tr.grammar.unenrollBtn}
-                    </button>
-                  </div>
-
-                  {loading ? (
-                    <div className="flex justify-center py-20">
-                      <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      {CATEGORIES.map((cat) => {
-                        const isOpen = openCategories.has(cat.key);
-                        const categoryLessons = cat.key === 'padezhi' ? lessons : [];
-
-                        const subcategoryGroups: { title: string; lessons: Lesson[] }[] = [];
-                        for (const lesson of categoryLessons) {
-                          const last = subcategoryGroups[subcategoryGroups.length - 1];
-                          if (last && last.title === lesson.title) {
-                            last.lessons.push(lesson);
-                          } else {
-                            subcategoryGroups.push({ title: lesson.title, lessons: [lesson] });
-                          }
-                        }
-
-                        return (
-                          <div
-                            key={cat.key}
-                            className="border border-gray-900 rounded-2xl overflow-hidden"
-                            data-testid={`category-${cat.key}`}
+                      <button
+                        onClick={() => toggleCategory(catKey)}
+                        aria-expanded={isOpen}
+                        data-testid={`category-toggle-${catKey}`}
+                        className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span role="heading" aria-level={2} className="font-semibold text-gray-900">{program.title}</span>
+                          {loading ? null : (
+                            <span className="text-gray-400 text-sm">{programLessons.length} {plural(programLessons.length, tr.grammar.lessonsCount)}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleUnenroll(program.id); }}
+                            disabled={unenrolling}
+                            className="text-xs text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                            data-testid="unenroll-button"
                           >
-                            <button
-                              onClick={() => toggleCategory(cat.key)}
-                              aria-expanded={isOpen}
-                              data-testid={`category-toggle-${cat.key}`}
-                              className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-left"
-                            >
-                              <div className="flex items-center gap-3">
-                                <span role="heading" aria-level={2} className="font-semibold text-gray-900">{cat.label}</span>
-                                <span className="text-gray-400 text-sm">{categoryLessons.length} {plural(categoryLessons.length, tr.grammar.lessonsCount)}</span>
-                              </div>
-                              <svg
-                                width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
-                                className={`text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-                              >
-                                <path d="M6 8L1 3h10L6 8z" />
-                              </svg>
-                            </button>
+                            {tr.grammar.unenrollBtn}
+                          </button>
+                          <svg
+                            width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
+                            className={`text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                          >
+                            <path d="M6 8L1 3h10L6 8z" />
+                          </svg>
+                        </div>
+                      </button>
 
-                            {isOpen && (
-                              <div className="divide-y divide-gray-900 border-t border-gray-900">
-                                {subcategoryGroups.map((group, gi) => (
-                                  <SubcategoryGroup key={`${group.title}-${gi}`} group={group} onStartLesson={startLesson} />
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {isOpen && (
+                        <div className="divide-y divide-gray-900 border-t border-gray-900">
+                          {loading ? (
+                            <div className="flex justify-center py-10">
+                              <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          ) : subcategoryGroups.length === 0 ? (
+                            <p className="text-gray-400 text-sm py-8 text-center">Нет уроков</p>
+                          ) : (
+                            subcategoryGroups.map((group, gi) => (
+                              <SubcategoryGroup key={`${group.title}-${gi}`} group={group} onStartLesson={startLesson} />
+                            ))
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
 
               <div className="mt-4 text-center">
                 <Link
