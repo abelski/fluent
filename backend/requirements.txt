@@ -7,3 +7,4 @@ sqlmodel>=0.0.22
 psycopg[binary]>=3.1
 python-multipart>=0.0.9
 alembic>=1.13
+apscheduler>=3.10

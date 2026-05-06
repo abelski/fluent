@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BACKEND_URL, getToken, sendEmailToUser } from '../../../lib/api';
+import { BACKEND_URL, getToken, sendEmailToUser, getAdminMessages, updateAdminMessage, sendAdminMessage, deleteAdminMessage, triggerMessageGeneration, AdminMessage, getMessageTemplates, saveMessageTemplates, EmailTemplates } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
 interface UserRow {
@@ -20,6 +20,8 @@ interface UserRow {
   daily_limit: number | null;
   last_login: string | null;
   email_consent: boolean;
+  inactive_flag: boolean;
+  inactive_since: string | null;
 }
 
 interface ReportRow {
@@ -183,7 +185,7 @@ const BLANK_NEWS: Omit<NewsRow, 'id'> = {
 };
 
 type Area = 'admin' | 'content';
-type AdminSubTab = 'users' | 'reports' | 'feedback';
+type AdminSubTab = 'users' | 'reports' | 'feedback' | 'messages';
 type ContentSubTab = 'articles' | 'vocabularies' | 'grammar' | 'practice' | 'news' | 'settings' | 'phrases';
 
 interface CefrThresholdRow { level: string; threshold: number; }
@@ -581,8 +583,26 @@ export default function AdminPage() {
   type ReportFilter = 'open' | 'onhold' | 'resolved' | 'all';
   const [reportFilter, setReportFilter] = useState<ReportFilter>('open');
 
-  // User search
+  // User search and activity filter
   const [userSearch, setUserSearch] = useState('');
+  type UserActivityFilter = 'all' | 'active' | 'inactive';
+  const [userActivityFilter, setUserActivityFilter] = useState<UserActivityFilter>('all');
+
+  // Email template editor state
+  const [templates, setTemplates] = useState<EmailTemplates | null>(null);
+  const [templateDraft, setTemplateDraft] = useState<EmailTemplates | null>(null);
+  const [templateEditing, setTemplateEditing] = useState(false);
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateMsg, setTemplateMsg] = useState('');
+
+  // Prepared messages state
+  const [messages, setMessages] = useState<AdminMessage[]>([]);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
+  const [msgGenerating, setMsgGenerating] = useState(false);
+  const [editingMsg, setEditingMsg] = useState<AdminMessage | null>(null);
+  const [msgDraft, setMsgDraft] = useState({ subject: '', body: '' });
+  const [msgSending, setMsgSending] = useState<number | null>(null);
+  const [msgError, setMsgError] = useState('');
 
   // User progress modal
   const [progressUserId, setProgressUserId] = useState<string | null>(null);
@@ -644,6 +664,81 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     if (res.ok) {
       setNewsList(await res.json());
       setNewsLoaded(true);
+    }
+  }
+
+  async function loadMessages() {
+    try {
+      const [msgs, tmpl] = await Promise.all([getAdminMessages(), getMessageTemplates()]);
+      setMessages(msgs);
+      setTemplates(tmpl);
+      setMessagesLoaded(true);
+    } catch {
+      setMsgError('Ошибка загрузки сообщений');
+    }
+  }
+
+  async function handleSaveTemplates() {
+    if (!templateDraft) return;
+    setTemplateSaving(true);
+    setTemplateMsg('');
+    try {
+      await saveMessageTemplates(templateDraft);
+      setTemplates(templateDraft);
+      setTemplateEditing(false);
+      setTemplateMsg('Сохранено');
+      setTimeout(() => setTemplateMsg(''), 3000);
+    } catch {
+      setTemplateMsg('Ошибка сохранения');
+    } finally {
+      setTemplateSaving(false);
+    }
+  }
+
+  async function handleGenerateMessages() {
+    setMsgGenerating(true);
+    setMsgError('');
+    try {
+      await triggerMessageGeneration();
+      await loadMessages();
+    } catch {
+      setMsgError('Ошибка генерации сообщений');
+    } finally {
+      setMsgGenerating(false);
+    }
+  }
+
+  async function handleSendMessage(msg: AdminMessage) {
+    if (!window.confirm(`Отправить письмо пользователю ${msg.user_name}?`)) return;
+    setMsgSending(msg.id);
+    setMsgError('');
+    try {
+      await sendAdminMessage(msg.id);
+      await loadMessages();
+    } catch (e: unknown) {
+      setMsgError(e instanceof Error ? e.message : 'Ошибка отправки');
+    } finally {
+      setMsgSending(null);
+    }
+  }
+
+  async function handleDeleteMessage(id: number) {
+    if (!window.confirm('Удалить сообщение?')) return;
+    try {
+      await deleteAdminMessage(id);
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+    } catch {
+      setMsgError('Ошибка удаления');
+    }
+  }
+
+  async function handleSaveMsgEdit(id: number) {
+    try {
+      await updateAdminMessage(id, msgDraft.subject, msgDraft.body);
+      setMessages((prev) => prev.map((m) => m.id === id ? { ...m, subject: msgDraft.subject, body: msgDraft.body } : m));
+      setEditingMsg(null);
+    } catch {
+      setMsgError('Ошибка сохранения');
     }
   }
 
@@ -1316,12 +1411,15 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
   // Filtered + paginated slices
   const filteredReports = reportFilter === 'all' ? reports : reports.filter((r) => r.status === reportFilter);
-  const filteredUsers = userSearch.trim()
-    ? users.filter((u) => {
-        const q = userSearch.toLowerCase();
-        return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
-      })
-    : users;
+  const filteredUsers = users.filter((u) => {
+    if (userSearch.trim()) {
+      const q = userSearch.toLowerCase();
+      if (!u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
+    }
+    if (userActivityFilter === 'inactive') return !!u.inactive_flag;
+    if (userActivityFilter === 'active') return !u.inactive_flag;
+    return true;
+  });
   const pagedUsers = filteredUsers.slice((usersPage - 1) * PAGE_SIZE, usersPage * PAGE_SIZE);
   const pagedReports = filteredReports.slice((reportsPage - 1) * PAGE_SIZE, reportsPage * PAGE_SIZE);
   const pagedArticles = articles.slice((articlesPage - 1) * PAGE_SIZE, articlesPage * PAGE_SIZE);
@@ -1409,6 +1507,17 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 text-[10px] font-bold bg-gray-500 text-white rounded-full">{feedbackList.length}</span>
               )}
             </button>
+            <button
+              onClick={() => { setAdminTab('messages'); if (!messagesLoaded) loadMessages(); }}
+              className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${adminTab === 'messages' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              Письма
+              {messages.filter((m) => m.status === 'draft').length > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                  {messages.filter((m) => m.status === 'draft').length}
+                </span>
+              )}
+            </button>
           </div>
         )}
 
@@ -1463,13 +1572,26 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         {/* ── Users ── */}
         {area === 'admin' && adminTab === 'users' && (
           <div className="flex flex-col gap-3">
-          <input
-            type="text"
-            placeholder="Поиск по имени или email..."
-            value={userSearch}
-            onChange={(e) => { setUserSearch(e.target.value); setUsersPage(1); }}
-            className="w-full max-w-sm bg-white border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:border-gray-600"
-          />
+          <div className="flex flex-wrap gap-2 items-center">
+            <input
+              type="text"
+              placeholder="Поиск по имени или email..."
+              value={userSearch}
+              onChange={(e) => { setUserSearch(e.target.value); setUsersPage(1); }}
+              className="w-full max-w-sm bg-white border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:border-gray-600"
+            />
+            <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1">
+              {(['all', 'active', 'inactive'] as UserActivityFilter[]).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => { setUserActivityFilter(f); setUsersPage(1); }}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${userActivityFilter === f ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+                >
+                  {f === 'all' ? 'Все' : f === 'active' ? 'Активные' : 'Неактивные'}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="overflow-x-auto rounded-2xl border border-gray-900">
             <table className="w-full text-sm">
               <thead>
@@ -1488,6 +1610,12 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-900 truncate max-w-[180px]">{u.name}</p>
                       <p className="text-gray-400 text-xs truncate max-w-[180px]">{u.email}</p>
+                      {u.inactive_flag && u.inactive_since && (
+                        <p className="text-red-500 text-xs mt-0.5 flex items-center gap-1">
+                          <span className="inline-block w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                          не входил с {new Date(u.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {u.is_superadmin ? (
@@ -1710,6 +1838,223 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 ))}
                 <Pagination total={feedbackList.length} page={feedbackPage} onPage={setFeedbackPage} />
               </>
+            )}
+          </div>
+        )}
+
+        {/* ── Prepared Messages ── */}
+        {area === 'admin' && adminTab === 'messages' && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <p className="text-sm text-gray-500">
+                Письма автоматически генерируются для пользователей, не входивших 30+ дней.
+              </p>
+              <button
+                onClick={handleGenerateMessages}
+                disabled={msgGenerating}
+                className="text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
+              >
+                {msgGenerating ? 'Генерация...' : '↻ Сгенерировать сейчас'}
+              </button>
+            </div>
+            {msgError && <p className="text-red-500 text-sm">{msgError}</p>}
+
+            {/* Template editor */}
+            {templates && (
+              <details className="border border-gray-200 rounded-2xl overflow-hidden" open={templateEditing}>
+                <summary
+                  className="px-4 py-3 text-sm font-semibold text-gray-700 cursor-pointer select-none hover:bg-gray-50 transition-colors list-none flex items-center justify-between"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!templateEditing) {
+                      setTemplateDraft(JSON.parse(JSON.stringify(templates)));
+                      setTemplateEditing(true);
+                    } else {
+                      setTemplateEditing(false);
+                    }
+                  }}
+                >
+                  <span>✏️ Редактировать шаблоны писем</span>
+                  <span className="text-gray-400 text-xs">{templateEditing ? '▲' : '▼'}</span>
+                </summary>
+                {templateEditing && templateDraft && (
+                  <div className="px-4 pb-4 flex flex-col gap-5 border-t border-gray-200 pt-4">
+                    <p className="text-xs text-gray-400">
+                      Используйте <code className="bg-gray-100 px-1 rounded">{'{{name}}'}</code> для имени пользователя и{' '}
+                      <code className="bg-gray-100 px-1 rounded">{'{{days}}'}</code> для количества дней неактивности.
+                    </p>
+                    {(['ru', 'en'] as const).map((lang) => (
+                      <div key={lang} className="flex flex-col gap-2">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                          {lang === 'ru' ? 'Русский шаблон' : 'English template'}
+                        </h4>
+                        <label className="text-xs text-gray-500">Тема / Subject</label>
+                        <input
+                          value={templateDraft[lang].subject}
+                          onChange={(e) => setTemplateDraft((d) => d ? { ...d, [lang]: { ...d[lang], subject: e.target.value } } : d)}
+                          className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600"
+                        />
+                        <label className="text-xs text-gray-500">Текст / Body</label>
+                        <textarea
+                          value={templateDraft[lang].body}
+                          onChange={(e) => setTemplateDraft((d) => d ? { ...d, [lang]: { ...d[lang], body: e.target.value } } : d)}
+                          rows={8}
+                          className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600 resize-y font-mono"
+                        />
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleSaveTemplates}
+                        disabled={templateSaving}
+                        className="text-sm px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
+                      >
+                        {templateSaving ? 'Сохранение...' : 'Сохранить шаблоны'}
+                      </button>
+                      <button
+                        onClick={() => setTemplateEditing(false)}
+                        className="text-sm px-3 py-2 text-gray-400 hover:text-gray-900 transition-colors"
+                      >
+                        Отмена
+                      </button>
+                      {templateMsg && <span className="text-xs text-emerald-600 font-medium">{templateMsg}</span>}
+                    </div>
+                  </div>
+                )}
+              </details>
+            )}
+
+            {/* Draft messages */}
+            {messages.filter((m) => m.status === 'draft').length === 0 && messages.filter((m) => m.status !== 'draft').length === 0 && (
+              <p className="text-gray-400 text-sm">Нет подготовленных писем.</p>
+            )}
+            {messages.filter((m) => m.status === 'draft').length > 0 && (
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold text-gray-900">Черновики ({messages.filter((m) => m.status === 'draft').length})</h3>
+                {messages.filter((m) => m.status === 'draft').map((msg) => (
+                  <div key={msg.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-3 bg-white">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">{msg.user_name}</p>
+                        <p className="text-xs text-gray-400">{msg.user_email}</p>
+                        {msg.inactive_since && (
+                          <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1">
+                            <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                            не входил с {new Date(msg.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                        {(['ru', 'en'] as const).map((l) => (
+                          <button
+                            key={l}
+                            onClick={() => {
+                              if (msg.user_lang === l) return;
+                              const tmpl = templates?.[l];
+                              const newSubject = tmpl ? tmpl.subject.replace('{{name}}', msg.user_name).replace('{{days}}', msg.inactive_since ? String(Math.floor((Date.now() - new Date(msg.inactive_since).getTime()) / 86400000)) : '30') : msg.subject;
+                              const newBody = tmpl ? tmpl.body.replace('{{name}}', msg.user_name).replace('{{days}}', msg.inactive_since ? String(Math.floor((Date.now() - new Date(msg.inactive_since).getTime()) / 86400000)) : '30') : msg.body;
+                              updateAdminMessage(msg.id, newSubject, newBody, l).then(() => {
+                                setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, user_lang: l, subject: newSubject, body: newBody } : m));
+                              });
+                            }}
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-md transition-colors ${msg.user_lang === l ? (l === 'ru' ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white') : 'text-gray-400 hover:text-gray-700'}`}
+                          >
+                            {l.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {editingMsg?.id === msg.id ? (
+                      <div className="flex flex-col gap-2">
+                        <input
+                          value={msgDraft.subject}
+                          onChange={(e) => setMsgDraft((d) => ({ ...d, subject: e.target.value }))}
+                          className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600"
+                          placeholder="Тема письма"
+                        />
+                        <textarea
+                          value={msgDraft.body}
+                          onChange={(e) => setMsgDraft((d) => ({ ...d, body: e.target.value }))}
+                          rows={6}
+                          className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600 resize-y"
+                          placeholder="Текст письма"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSaveMsgEdit(msg.id)}
+                            className="text-xs px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                          >
+                            Сохранить
+                          </button>
+                          <button
+                            onClick={() => setEditingMsg(null)}
+                            className="text-xs px-3 py-1.5 text-gray-400 hover:text-gray-900 transition-colors"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        <p className="text-xs font-semibold text-gray-500">Тема: <span className="text-gray-900 font-normal">{msg.subject}</span></p>
+                        <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans bg-gray-50 rounded-xl p-3 border border-gray-200">{msg.body}</pre>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => { setEditingMsg(msg); setMsgDraft({ subject: msg.subject, body: msg.body }); }}
+                        className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Редактировать
+                      </button>
+                      <button
+                        onClick={() => handleSendMessage(msg)}
+                        disabled={msgSending === msg.id}
+                        className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium"
+                      >
+                        {msgSending === msg.id ? 'Отправка...' : '✉ Отправить'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 rounded-lg transition-colors"
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Sent / failed messages */}
+            {messages.filter((m) => m.status !== 'draft').length > 0 && (
+              <details className="mt-2">
+                <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">
+                  Отправленные ({messages.filter((m) => m.status !== 'draft').length})
+                </summary>
+                <div className="flex flex-col gap-2 mt-3">
+                  {messages.filter((m) => m.status !== 'draft').map((msg) => (
+                    <div key={msg.id} className="border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap bg-gray-50">
+                      <div>
+                        <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
+                        <p className="text-xs text-gray-400">{msg.subject}</p>
+                        {msg.sent_at && <p className="text-xs text-gray-400">Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+                          {msg.status === 'sent' ? 'отправлено' : 'ошибка'}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </details>
             )}
           </div>
         )}

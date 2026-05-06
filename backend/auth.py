@@ -19,7 +19,7 @@ from jose import jwt, JWTError
 from sqlmodel import Session, select
 
 from database import get_session
-from models import User
+from models import PreparedMessage, User
 
 router = APIRouter()
 
@@ -173,6 +173,18 @@ async def google_callback(code: str, request: Request, session: Session = Depend
         user = User(email=email, name=name, picture=picture, last_login=now, lang=preferred_lang)
         session.add(user)
     session.commit()
+
+    # Clear any pending draft re-engagement messages so the inactive flag disappears.
+    if user.id:
+        drafts = session.exec(
+            select(PreparedMessage).where(
+                PreparedMessage.user_id == user.id,
+                PreparedMessage.status == "draft",
+            )
+        ).all()
+        for draft in drafts:
+            session.delete(draft)
+        session.commit()
 
     # Issue our own JWT and pass it to the frontend via URL fragment (#token=...).
     # Fragments are never sent to the server, so the token won't appear in

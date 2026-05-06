@@ -10,7 +10,7 @@ from sqlmodel import Session, select, func
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
 from grammar_service import get_lessons as _get_grammar_lessons
@@ -47,7 +47,9 @@ def list_users(
     """Return all users with their tier and today's session count."""
     _require_admin(authorization, session)
 
-    today = datetime.now(timezone.utc).date()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    inactivity_cutoff = now - timedelta(days=30)
+    today = now.date()
     users = session.exec(select(User)).all()
 
     session_rows = session.exec(
@@ -55,8 +57,11 @@ def list_users(
     ).all()
     counts = {r.user_id: r.session_count for r in session_rows}
 
-    return [
-        {
+    result = []
+    for u in users:
+        last_activity = u.last_login or u.created_at
+        inactive = last_activity is not None and last_activity < inactivity_cutoff
+        result.append({
             "id": u.id,
             "email": u.email,
             "name": u.name,
@@ -70,9 +75,10 @@ def list_users(
             "daily_limit": None if _is_premium_active(u) else DAILY_LIMIT,
             "last_login": u.last_login,
             "email_consent": u.email_consent,
-        }
-        for u in users
-    ]
+            "inactive_flag": inactive,
+            "inactive_since": last_activity.isoformat() if inactive and last_activity else None,
+        })
+    return result
 
 
 @router.get("/users/{user_id}/progress")
@@ -174,6 +180,184 @@ def send_email_to_user(
         raise HTTPException(status_code=500, detail=str(exc))
     return {"ok": True}
 
+
+# ── Prepared Messages ────────────────────────────────────────────────────────
+
+class MessageUpdateBody(BaseModel):
+    subject: str
+    body: str
+    lang: Optional[str] = None  # if provided, updates user_lang on the message
+
+
+@router.get("/messages")
+def list_messages(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return all prepared messages, drafts first then sent, sorted by created_at desc."""
+    _require_superadmin(authorization, session)
+    messages = session.exec(
+        select(PreparedMessage).order_by(PreparedMessage.created_at.desc())
+    ).all()
+    return [
+        {
+            "id": m.id,
+            "user_id": m.user_id,
+            "user_email": m.user_email,
+            "user_name": m.user_name,
+            "user_lang": m.user_lang,
+            "subject": m.subject,
+            "body": m.body,
+            "status": m.status,
+            "created_at": m.created_at,
+            "sent_at": m.sent_at,
+            "inactive_since": m.inactive_since,
+        }
+        for m in messages
+    ]
+
+
+@router.patch("/messages/{message_id}")
+def update_message(
+    message_id: int,
+    payload: MessageUpdateBody,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Edit subject/body of a draft prepared message. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    msg = session.get(PreparedMessage, message_id)
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+    if msg.status != "draft":
+        raise HTTPException(status_code=400, detail="Only draft messages can be edited")
+    msg.subject = payload.subject
+    msg.body = payload.body
+    if payload.lang in ("ru", "en"):
+        msg.user_lang = payload.lang
+    session.add(msg)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/messages/{message_id}/send")
+def send_prepared_message(
+    message_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Send a prepared message via SMTP. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    msg = session.get(PreparedMessage, message_id)
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+    if msg.status == "sent":
+        raise HTTPException(status_code=400, detail="Message already sent")
+
+    target = session.get(User, msg.user_id)
+    if target and not target.email_consent:
+        raise HTTPException(status_code=403, detail="User has not consented to emails")
+
+    try:
+        email_service.send_email(msg.user_email, msg.subject, msg.body)
+        msg.status = "sent"
+        msg.sent_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    except (RuntimeError, Exception) as exc:
+        msg.status = "failed"
+        session.add(msg)
+        session.commit()
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    session.add(msg)
+    session.commit()
+    return {"ok": True}
+
+
+@router.delete("/messages/{message_id}")
+def delete_message(
+    message_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Delete a prepared message. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    msg = session.get(PreparedMessage, message_id)
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+    session.delete(msg)
+    session.commit()
+    return {"ok": True}
+
+
+@router.post("/messages/generate")
+def trigger_message_generation(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Manually trigger draft message generation for inactive users. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    from scheduler import generate_inactive_messages
+    generate_inactive_messages()
+    return {"ok": True}
+
+
+# ── Email Templates ──────────────────────────────────────────────────────────
+
+_TEMPLATE_KEYS = {"ru": "email_template_ru", "en": "email_template_en"}
+
+
+@router.get("/message-templates")
+def get_message_templates(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return editable email templates for RU and EN. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    import json as _json
+    from email_templates import generate_reengagement_email
+    result = {}
+    for lang, key in _TEMPLATE_KEYS.items():
+        row = session.exec(select(AppSetting).where(AppSetting.key == key)).first()
+        if row:
+            result[lang] = _json.loads(row.value)
+        else:
+            subject, body = generate_reengagement_email("{{name}}", 30, lang)
+            result[lang] = {"subject": subject, "body": body}
+    return result
+
+
+class TemplateBody(BaseModel):
+    ru_subject: str
+    ru_body: str
+    en_subject: str
+    en_body: str
+
+
+@router.put("/message-templates")
+def save_message_templates(
+    payload: TemplateBody,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Save custom email templates for RU and EN languages. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    import json as _json
+    updates = {
+        "email_template_ru": _json.dumps({"subject": payload.ru_subject, "body": payload.ru_body}),
+        "email_template_en": _json.dumps({"subject": payload.en_subject, "body": payload.en_body}),
+    }
+    for key, value in updates.items():
+        row = session.exec(select(AppSetting).where(AppSetting.key == key)).first()
+        if row:
+            row.value = value
+            session.add(row)
+        else:
+            session.add(AppSetting(key=key, value=value))
+    session.commit()
+    return {"ok": True}
+
+
+# ── User role management ─────────────────────────────────────────────────────
 
 class AdminUpdate(BaseModel):
     is_admin: bool

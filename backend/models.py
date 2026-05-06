@@ -436,6 +436,24 @@ class UserPhraseProgramEnrollment(SQLModel, table=True):
     enrolled_at: datetime = Field(default_factory=_utcnow)
 
 
+class PreparedMessage(SQLModel, table=True):
+    """Auto-generated re-engagement email draft for an inactive user.
+    Created by the daily scheduler for users with no login for 30+ days.
+    Admins can edit subject/body and send via SMTP."""
+    __tablename__ = "prepared_message"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    user_email: str                          # denormalized for display after user deletion
+    user_name: str
+    user_lang: str = Field(default="en")    # 'en' | 'ru' — template language used
+    subject: str
+    body: str
+    status: str = Field(default="draft")    # draft | sent | failed
+    created_at: datetime = Field(default_factory=_utcnow)
+    sent_at: Optional[datetime] = None
+    inactive_since: Optional[datetime] = None  # last_login value when message was generated
+
+
 import json as _json
 
 

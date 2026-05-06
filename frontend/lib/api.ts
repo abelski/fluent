@@ -91,6 +91,111 @@ export async function sendEmailToUser(userId: string, subject: string, body: str
   }
 }
 
+/** Fetch all prepared re-engagement messages. Superadmin-only. */
+export async function getAdminMessages(): Promise<AdminMessage[]> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/messages`, {
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!r.ok) throw new Error('Failed to fetch messages');
+  return r.json();
+}
+
+/** Update subject/body (and optionally lang) of a draft prepared message. Superadmin-only. */
+export async function updateAdminMessage(id: number, subject: string, body: string, lang?: string): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/messages/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ subject, body, ...(lang ? { lang } : {}) }),
+  });
+  if (!r.ok) throw new Error('Failed to update message');
+}
+
+/** Send a prepared message via SMTP. Superadmin-only. */
+export async function sendAdminMessage(id: number): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/messages/${id}/send`, {
+    method: 'POST',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!r.ok) {
+    const data = await r.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to send message');
+  }
+}
+
+/** Delete a prepared message. Superadmin-only. */
+export async function deleteAdminMessage(id: number): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/messages/${id}`, {
+    method: 'DELETE',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!r.ok) throw new Error('Failed to delete message');
+}
+
+export interface EmailTemplates {
+  ru: { subject: string; body: string };
+  en: { subject: string; body: string };
+}
+
+/** Fetch editable email templates. Superadmin-only. */
+export async function getMessageTemplates(): Promise<EmailTemplates> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/message-templates`, {
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!r.ok) throw new Error('Failed to fetch templates');
+  return r.json();
+}
+
+/** Save custom email templates. Superadmin-only. */
+export async function saveMessageTemplates(templates: EmailTemplates): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/message-templates`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      ru_subject: templates.ru.subject,
+      ru_body: templates.ru.body,
+      en_subject: templates.en.subject,
+      en_body: templates.en.body,
+    }),
+  });
+  if (!r.ok) throw new Error('Failed to save templates');
+}
+
+/** Trigger manual generation of inactive-user draft messages. Superadmin-only. */
+export async function triggerMessageGeneration(): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/messages/generate`, {
+    method: 'POST',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!r.ok) throw new Error('Failed to trigger generation');
+}
+
+export interface AdminMessage {
+  id: number;
+  user_id: string;
+  user_email: string;
+  user_name: string;
+  user_lang: string;
+  subject: string;
+  body: string;
+  status: 'draft' | 'sent' | 'failed';
+  created_at: string;
+  sent_at: string | null;
+  inactive_since: string | null;
+}
+
 /** Return subcategory keys the current user is enrolled in. */
 export async function getEnrolledPrograms(): Promise<string[]> {
   const token = getToken();

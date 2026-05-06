@@ -27,8 +27,9 @@ from routers.news import router as news_router
 from routers.custom_programs import router as custom_programs_router
 from routers.phrases import router as phrases_router
 from database import create_db_and_tables, get_session
-from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram
+from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage  # noqa: F401 — registers table
 from data.grammar.lessons import LESSON_CONFIG
+from scheduler import start_scheduler
 
 # Resolve the static export directory relative to this file so the path works
 # regardless of where the process is started from.
@@ -66,6 +67,7 @@ def on_startup():
     # Create all SQLModel tables on startup if they don't exist yet.
     # Safe to run repeatedly — SQLModel uses CREATE TABLE IF NOT EXISTS.
     create_db_and_tables()
+    start_scheduler()
     # Seed default CEFR thresholds if not already set.
     import json
     from database import engine
