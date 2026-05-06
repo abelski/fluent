@@ -49,6 +49,7 @@ def list_users(
 
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     inactivity_cutoff = now - timedelta(days=30)
+    deletion_cutoff = now - timedelta(days=7)
     today = now.date()
     users = session.exec(select(User)).all()
 
@@ -57,10 +58,40 @@ def list_users(
     ).all()
     counts = {r.user_id: r.session_count for r in session_rows}
 
+    # Load all sent messages to build two maps:
+    #   deletion_map  — user_id -> earliest sent_at that is 7+ days old (for deletion warning)
+    #   notice_map    — user_id -> most recent sent_at for any sent message (for "notice sent" badge)
+    all_sent_msgs = session.exec(
+        select(PreparedMessage).where(PreparedMessage.status == "sent")
+    ).all()
+    deletion_map: dict[str, datetime] = {}
+    notice_map: dict[str, datetime] = {}
+    for msg in all_sent_msgs:
+        if msg.sent_at is None:
+            continue
+        # deletion_map: earliest sent_at older than 7 days
+        if msg.sent_at <= deletion_cutoff:
+            existing = deletion_map.get(msg.user_id)
+            if existing is None or msg.sent_at < existing:
+                deletion_map[msg.user_id] = msg.sent_at
+        # notice_map: most recent sent_at overall
+        existing_notice = notice_map.get(msg.user_id)
+        if existing_notice is None or msg.sent_at > existing_notice:
+            notice_map[msg.user_id] = msg.sent_at
+
     result = []
     for u in users:
         last_activity = u.last_login or u.created_at
         inactive = last_activity is not None and last_activity < inactivity_cutoff
+
+        # Deletion warning: sent 7+ days ago AND user still hasn't logged in since then
+        sent_at = deletion_map.get(u.id)
+        deletion_warning = (
+            sent_at is not None
+            and (last_activity is None or last_activity < sent_at)
+        )
+        deletion_due = (sent_at + timedelta(days=7)).isoformat() if deletion_warning and sent_at else None
+
         result.append({
             "id": u.id,
             "email": u.email,
@@ -77,6 +108,9 @@ def list_users(
             "email_consent": u.email_consent,
             "inactive_flag": inactive,
             "inactive_since": last_activity.isoformat() if inactive and last_activity else None,
+            "deletion_warning": deletion_warning,
+            "deletion_due": deletion_due,
+            "notice_sent_at": notice_map[u.id].isoformat() if u.id in notice_map else None,
         })
     return result
 

@@ -22,6 +22,9 @@ interface UserRow {
   email_consent: boolean;
   inactive_flag: boolean;
   inactive_since: string | null;
+  deletion_warning: boolean;
+  deletion_due: string | null;
+  notice_sent_at: string | null;
 }
 
 interface ReportRow {
@@ -585,7 +588,7 @@ export default function AdminPage() {
 
   // User search and activity filter
   const [userSearch, setUserSearch] = useState('');
-  type UserActivityFilter = 'all' | 'active' | 'inactive';
+  type UserActivityFilter = 'all' | 'active' | 'inactive' | 'deletion';
   const [userActivityFilter, setUserActivityFilter] = useState<UserActivityFilter>('all');
 
   // Email template editor state
@@ -1416,7 +1419,8 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       const q = userSearch.toLowerCase();
       if (!u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
     }
-    if (userActivityFilter === 'inactive') return !!u.inactive_flag;
+    if (userActivityFilter === 'deletion') return !!u.deletion_warning;
+    if (userActivityFilter === 'inactive') return !!u.inactive_flag && !u.deletion_warning;
     if (userActivityFilter === 'active') return !u.inactive_flag;
     return true;
   });
@@ -1581,13 +1585,13 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               className="w-full max-w-sm bg-white border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:border-gray-600"
             />
             <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1">
-              {(['all', 'active', 'inactive'] as UserActivityFilter[]).map((f) => (
+              {(['all', 'active', 'inactive', 'deletion'] as UserActivityFilter[]).map((f) => (
                 <button
                   key={f}
                   onClick={() => { setUserActivityFilter(f); setUsersPage(1); }}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${userActivityFilter === f ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${userActivityFilter === f ? (f === 'deletion' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-900') : 'text-gray-400 hover:text-gray-900'}`}
                 >
-                  {f === 'all' ? 'Все' : f === 'active' ? 'Активные' : 'Неактивные'}
+                  {f === 'all' ? 'Все' : f === 'active' ? 'Активные' : f === 'inactive' ? 'Неактивные' : '☠️ Удаление'}
                 </button>
               ))}
             </div>
@@ -1610,10 +1614,22 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-900 truncate max-w-[180px]">{u.name}</p>
                       <p className="text-gray-400 text-xs truncate max-w-[180px]">{u.email}</p>
-                      {u.inactive_flag && u.inactive_since && (
+                      {u.deletion_warning && u.deletion_due && (
+                        <p className="text-orange-600 text-xs mt-0.5 flex items-center gap-1 font-medium">
+                          <span className="text-base leading-none">☠️</span>
+                          удаление {new Date(u.deletion_due).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                        </p>
+                      )}
+                      {!u.deletion_warning && u.inactive_flag && u.inactive_since && (
                         <p className="text-red-500 text-xs mt-0.5 flex items-center gap-1">
                           <span className="inline-block w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
                           не входил с {new Date(u.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      )}
+                      {u.notice_sent_at && (
+                        <p className="text-blue-500 text-xs mt-0.5 flex items-center gap-1">
+                          <span>✉</span>
+                          уведомление {new Date(u.notice_sent_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}
                     </td>
@@ -2038,7 +2054,18 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       <div>
                         <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
                         <p className="text-xs text-gray-400">{msg.subject}</p>
-                        {msg.sent_at && <p className="text-xs text-gray-400">Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
+                        {msg.sent_at && (
+                          <p className="text-xs text-gray-400">
+                            Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}
+                            {(() => {
+                              const daysAgo = Math.floor((Date.now() - new Date(msg.sent_at).getTime()) / 86400000);
+                              const dueDate = new Date(new Date(msg.sent_at).getTime() + 7 * 86400000);
+                              if (daysAgo >= 7) return <span className="ml-2 text-orange-600 font-medium">☠️ срок истёк {dueDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>;
+                              if (daysAgo >= 5) return <span className="ml-2 text-orange-500 font-medium">⚠️ осталось {7 - daysAgo} дн.</span>;
+                              return null;
+                            })()}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
