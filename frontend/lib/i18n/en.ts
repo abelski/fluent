@@ -414,6 +414,11 @@ const en: Translations = {
     continueCtaNewSub: 'Choose a vocabulary list',
     leaderboardTitle: 'Leaderboard',
     leaderboardPts: 'pts',
+    leaderboardWeek: 'Week',
+    leaderboardAllTime: 'All time',
+    leaderboardWeekSub: 'points earned this week (Mon–Sun)',
+    leaderboardAllSub: 'all-time points',
+    leaderboardWeekEmpty: 'Study words to appear on this week\'s board',
   },
   news: {
     sectionTitle: 'News',

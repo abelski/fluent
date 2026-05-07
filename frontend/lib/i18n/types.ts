@@ -423,6 +423,11 @@ export interface Translations {
     continueCtaNewSub: string;
     leaderboardTitle: string;
     leaderboardPts: string;
+    leaderboardWeek: string;
+    leaderboardAllTime: string;
+    leaderboardWeekSub: string;
+    leaderboardAllSub: string;
+    leaderboardWeekEmpty: string;
   };
   news: {
     sectionTitle: string;

@@ -20,7 +20,7 @@ async function setupAuthPage(page: import('@playwright/test').Page, leaderboardD
   await page.route('**/api/me/stats', async (route) => route.fulfill({ json: MOCK_STATS }));
   await page.route('**/api/me/quota', async (route) => route.fulfill({ json: { is_admin: false } }));
   await page.route('**/api/news**', async (route) => route.fulfill({ json: [] }));
-  await page.route('**/api/leaderboard', async (route) => route.fulfill({ json: leaderboardData }));
+  await page.route('**/api/leaderboard**', async (route) => route.fulfill({ json: leaderboardData }));
 }
 
 test.describe('Leaderboard', () => {
@@ -43,9 +43,9 @@ test.describe('Leaderboard', () => {
     await setupAuthPage(page);
     await page.goto('/');
     await expect(page.getByTestId('leaderboard')).toBeVisible({ timeout: 5000 });
-    // rank-1 entry matches our JWT picture → should have emerald highlight
+    // rank-1 entry matches our JWT picture → avatar img should have emerald ring
     const firstEntry = page.getByTestId('leaderboard-entry').first();
-    await expect(firstEntry).toHaveClass(/ring-emerald/);
+    await expect(firstEntry.locator('img')).toHaveClass(/ring-emerald/);
   });
 
   test('null picture shows fallback without broken img', async ({ page }) => {
@@ -57,10 +57,11 @@ test.describe('Leaderboard', () => {
     await expect(secondEntry.locator('img')).toHaveCount(0);
   });
 
-  test('leaderboard hidden when API returns empty array', async ({ page }) => {
+  test('leaderboard shows placeholder when API returns empty array', async ({ page }) => {
     await setupAuthPage(page, []);
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    await expect(page.getByTestId('leaderboard')).not.toBeVisible();
+    await expect(page.getByTestId('leaderboard')).toBeVisible();
+    await expect(page.getByTestId('leaderboard-entry')).toHaveCount(0);
   });
 });

@@ -833,18 +833,28 @@ class LeaderboardEntry(BaseModel):
 
 @router.get("/leaderboard", response_model=list[LeaderboardEntry])
 def get_leaderboard(
+    period: str = "all",
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
     _require_user(authorization, session)
+    # Use calendar-week boundaries (ISO: Mon–Sun) so "this week" is unambiguous.
+    # A rolling 7-day window can include users who studied 7 days ago and are
+    # borderline, making it look like they have points "this week" when they don't.
+    where_clause = (
+        "AND DATE_TRUNC('week', uwp.last_seen) = DATE_TRUNC('week', NOW())" if period == "week" else ""
+    )
     rows = session.execute(
-        text("""
+        text(f"""
             SELECT u.picture,
                    SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
                    SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) AS score
             FROM   "user" u
             JOIN   user_word_progress uwp ON uwp.user_id = u.id
+            WHERE  1=1 {where_clause}
             GROUP  BY u.id, u.picture
+            HAVING SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
+                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) > 0
             ORDER  BY score DESC
             LIMIT  10
         """)

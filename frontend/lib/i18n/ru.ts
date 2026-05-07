@@ -414,6 +414,11 @@ const ru: Translations = {
     continueCtaNewSub: 'Выбрать словарь и начать учить',
     leaderboardTitle: 'Таблица лидеров',
     leaderboardPts: 'очк.',
+    leaderboardWeek: 'Неделя',
+    leaderboardAllTime: 'За всё время',
+    leaderboardWeekSub: 'очки за эту неделю',
+    leaderboardAllSub: 'очки за всё время',
+    leaderboardWeekEmpty: 'Учи слова, чтобы появиться здесь на этой неделе',
   },
   news: {
     sectionTitle: 'Новости',
