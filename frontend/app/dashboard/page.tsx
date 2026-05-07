@@ -23,7 +23,7 @@ export default function DashboardPage() {
     const token = urlToken || getToken();
 
     if (!token) {
-      router.replace('/login');
+      router.replace('/');
       return;
     }
 

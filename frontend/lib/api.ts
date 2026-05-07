@@ -8,14 +8,28 @@ export const BACKEND_URL =
 
 /**
  * Read the JWT from localStorage.
- * The token is stored by the dashboard page after a successful Google OAuth login
- * (backend redirects to /dashboard?token=<jwt> and the page picks it up).
- * Returns null during SSR (window is undefined) or when the user is logged out.
+ * Returns null during SSR, when logged out, or when the token is expired.
+ * Clears the stored token automatically if it has expired.
  */
 export function getToken(): string | null {
-  return typeof window !== 'undefined'
-    ? localStorage.getItem('fluent_token')
-    : null;
+  if (typeof window === 'undefined') return null;
+  const token = localStorage.getItem('fluent_token');
+  if (!token) return null;
+  if (isTokenExpired(token)) {
+    localStorage.removeItem('fluent_token');
+    return null;
+  }
+  return token;
+}
+
+/** Decode a JWT payload and return true if the `exp` claim is in the past. */
+export function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return typeof payload.exp === 'number' && payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
 }
 
 /**
