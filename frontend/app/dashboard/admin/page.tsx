@@ -510,6 +510,7 @@ export default function AdminPage() {
   const [cefrSaving, setCefrSaving] = useState(false);
   const [cefrMsg, setCefrMsg] = useState('');
 
+
   // Phrase programs admin
   interface AdminPhraseProgram { id: number; title: string; title_en: string | null; description: string | null; description_en: string | null; difficulty: number; is_public: boolean; phrase_count: number; enrolled_count: number; }
   interface AdminPhrase { id: number; text: string; translation: string; translation_en: string | null; position: number; chapter?: number | null; chapter_title?: string | null; }
@@ -3214,37 +3215,53 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
         {/* ── Settings: CEFR thresholds ── */}
         {area === 'content' && contentTab === 'settings' && (
-          <div>
-            <h2 className="font-semibold text-gray-900 mb-1">CEFR уровни — пороговые значения слов</h2>
-            <p className="text-sm text-gray-500 mb-4">Количество выученных слов, необходимое для достижения каждого уровня.</p>
-            {cefrLoaded && (
-              <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
-                {cefrThresholds.map((row) => (
-                  <div key={row.level} className="flex items-center gap-4 px-4 py-3">
-                    <span className="w-10 font-bold text-gray-900 text-sm">{row.level}</span>
-                    <input
-                      type="number"
-                      min={1}
-                      value={row.threshold}
-                      onChange={(e) => setCefrThresholds((prev) =>
-                        prev.map((r) => r.level === row.level ? { ...r, threshold: Number(e.target.value) } : r)
-                      )}
-                      className="w-32 border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-emerald-500"
-                    />
-                    <span className="text-xs text-gray-400">слов</span>
-                  </div>
-                ))}
+          <div className="flex flex-col gap-10">
+            <div>
+              <h2 className="font-semibold text-gray-900 mb-1">CEFR уровни — пороговые значения слов</h2>
+              <p className="text-sm text-gray-500 mb-4">Количество выученных слов, необходимое для достижения каждого уровня.</p>
+              {cefrLoaded && (
+                <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
+                  {cefrThresholds.map((row) => (
+                    <div key={row.level} className="flex items-center gap-4 px-4 py-3">
+                      <span className="w-10 font-bold text-gray-900 text-sm">{row.level}</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={row.threshold}
+                        onChange={(e) => setCefrThresholds((prev) =>
+                          prev.map((r) => r.level === row.level ? { ...r, threshold: Number(e.target.value) } : r)
+                        )}
+                        className="w-32 border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-emerald-500"
+                      />
+                      <span className="text-xs text-gray-400">слов</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={saveCefrThresholds}
+                  disabled={cefrSaving || !cefrLoaded}
+                  className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                >
+                  {cefrSaving ? 'Сохранение…' : 'Сохранить'}
+                </button>
+                {cefrMsg && <span className="text-sm text-emerald-600">{cefrMsg}</span>}
               </div>
-            )}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={saveCefrThresholds}
-                disabled={cefrSaving || !cefrLoaded}
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            </div>
+
+            {/* Welcome screen content is edited via the articles admin editor (slug: "welcome") */}
+            <div>
+              <h2 className="font-semibold text-gray-900 mb-1">Приветственный экран</h2>
+              <p className="text-sm text-gray-500 mb-2">
+                Текст, который видит пользователь при первом входе. Редактируется как статья со слагом <code className="bg-gray-100 px-1 rounded text-xs">welcome</code>.
+              </p>
+              <a
+                href="/dashboard/admin/articles"
+                className="inline-flex items-center gap-1.5 text-sm text-emerald-700 hover:underline"
               >
-                {cefrSaving ? 'Сохранение…' : 'Сохранить'}
-              </button>
-              {cefrMsg && <span className="text-sm text-emerald-600">{cefrMsg}</span>}
+                Открыть редактор статей →
+              </a>
             </div>
           </div>
         )}

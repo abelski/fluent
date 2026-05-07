@@ -8,9 +8,12 @@ import {
   unenrollProgram,
   getCustomProgramEnrollments,
   unenrollCustomProgram,
+  getWelcome,
   type CustomProgramEnrollment,
+  type WelcomeContent,
 } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
+import WelcomeModal from '../../../components/WelcomeModal';
 import { useT } from '../../../lib/useT';
 import { getStarLevel, setStarLevel } from '../../../lib/starLevel';
 
@@ -68,6 +71,7 @@ export default function ListsPage() {
   const [removingCustomIds, setRemovingCustomIds] = useState<Set<number>>(new Set());
   const [confirmCustomId, setConfirmCustomId] = useState<number | null>(null);
   const [openCustomPrograms, setOpenCustomPrograms] = useState<Set<number>>(new Set());
+  const [welcomeContent, setWelcomeContent] = useState<WelcomeContent | null>(null);
   const firstSubcategoryOpened = useRef(false);
 
   useEffect(() => {
@@ -79,6 +83,10 @@ export default function ListsPage() {
     setIsLoggedIn(true);
 
     const token = getToken()!;
+
+    getWelcome().then(({ shown, content }) => {
+      if (!shown) setWelcomeContent(content);
+    }).catch(() => {});
 
     fetch(`${BACKEND_URL}/api/me/quota`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -189,6 +197,14 @@ export default function ListsPage() {
   const limitReached = quota !== null && quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
 
   return (
+    <>
+      {welcomeContent && (
+        <WelcomeModal
+          content={welcomeContent}
+          onClose={() => setWelcomeContent(null)}
+          onDismiss={() => setWelcomeContent(null)}
+        />
+      )}
     <main className="bg-[#F5F5F7] min-h-screen text-gray-900">
       <div className="max-w-4xl mx-auto px-6 py-8">
         <StatsBar />
@@ -641,5 +657,6 @@ export default function ListsPage() {
         );
       })()}
     </main>
+    </>
   );
 }

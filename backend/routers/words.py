@@ -11,7 +11,7 @@ from sqlalchemy import text
 from sqlmodel import Session, select, col, func
 
 from database import get_session
-from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress
+from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress, Article
 from constants import DAILY_LIMIT
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
@@ -1009,5 +1009,40 @@ def unenroll_program(
     if not existing:
         raise HTTPException(status_code=404, detail="Not enrolled in this program")
     session.delete(existing)
+    session.commit()
+    return {"ok": True}
+
+
+_WELCOME_SLUG = "how-to-use-fluent"
+
+@router.get("/me/welcome")
+def get_welcome(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return whether the welcome modal has been shown and the welcome article content."""
+    user = _require_user(authorization, session)
+    article = session.exec(select(Article).where(Article.slug == _WELCOME_SLUG)).first()
+    if article:
+        content = {
+            "title_ru": article.title_ru,
+            "title_en": article.title_en,
+            "body_ru": article.body_ru,
+            "body_en": article.body_en,
+        }
+    else:
+        content = {"title_ru": "Добро пожаловать!", "title_en": "Welcome!", "body_ru": "", "body_en": ""}
+    return {"shown": user.welcome_shown, "content": content}
+
+
+@router.post("/me/welcome/dismiss")
+def dismiss_welcome(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Mark the welcome modal as dismissed for the current user."""
+    user = _require_user(authorization, session)
+    user.welcome_shown = True
+    session.add(user)
     session.commit()
     return {"ok": True}

@@ -76,6 +76,32 @@ def on_startup():
         if not existing:
             session.add(AppSetting(key="cefr_thresholds", value=json.dumps(_DEFAULT_CEFR_THRESHOLDS)))
             session.commit()
+        welcome_article = session.exec(select(Article).where(Article.slug == "welcome")).first()
+        if not welcome_article:
+            session.add(Article(
+                slug="welcome",
+                title_ru="Добро пожаловать в Fluent!",
+                title_en="Welcome to Fluent!",
+                body_ru=(
+                    "Fluent поможет вам выучить литовский язык — слово за словом, шаг за шагом.\n\n"
+                    "## С чего начать?\n\n"
+                    "**Списки слов** — учите тематическую лексику по уровням CEFR.\n\n"
+                    "**Повторение** — система интервальных повторений закрепит знания и напомнит о словах в нужный момент.\n\n"
+                    "**Грамматика** — упражнения на падежи и грамматические конструкции литовского языка.\n\n"
+                    "**Статьи** — читайте тексты на литовском языке и расширяйте словарный запас в контексте."
+                ),
+                body_en=(
+                    "Fluent will help you learn Lithuanian — word by word, step by step.\n\n"
+                    "## Where to start?\n\n"
+                    "**Vocabulary lists** — learn thematic vocabulary organised by CEFR level.\n\n"
+                    "**Spaced repetition** — our review system reinforces what you know and resurfaces words at the right moment.\n\n"
+                    "**Grammar** — exercises on Lithuanian cases and grammatical structures.\n\n"
+                    "**Articles** — read texts in Lithuanian and expand your vocabulary in context."
+                ),
+                published=False,
+                show_in_footer=False,
+            ))
+            session.commit()
 
 # Restrict CORS to the frontend origin. In production the frontend is served
 # from the same origin, so CORS only matters for local development.

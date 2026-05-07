@@ -753,3 +753,28 @@ export async function unenrollGrammarProgram(programId: number): Promise<void> {
     throw new Error((err as { detail?: string }).detail ?? 'Failed to unenroll');
   }
 }
+
+export interface WelcomeContent {
+  title_ru: string;
+  title_en: string;
+  body_ru: string;
+  body_en: string;
+}
+
+export async function getWelcome(): Promise<{ shown: boolean; content: WelcomeContent }> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/welcome`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) throw new Error('Failed to load welcome status');
+  return r.json();
+}
+
+export async function dismissWelcome(): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/welcome/dismiss`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) throw new Error('Failed to dismiss welcome');
+}
