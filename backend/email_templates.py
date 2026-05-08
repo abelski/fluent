@@ -37,3 +37,61 @@ def generate_reengagement_email(name: str, days_inactive: int, lang: str) -> tup
             f"The Fluent Team"
         )
     return subject, body
+
+
+def generate_reward_email(name: str, rank: int, lang: str) -> tuple[str, str]:
+    """Return (subject, body) for a weekly leaderboard top-3 reward email (1 week premium)."""
+    if lang == "ru":
+        subject = f"🏆 Вы #{rank} в рейтинге Fluent — вам начислен Premium!"
+        body = (
+            f"Привет, {name}!\n\n"
+            f"Поздравляем — на этой неделе вы заняли #{rank} место в рейтинге Fluent! 🎉\n\n"
+            f"В знак признания вашего прогресса мы начисляем вам 1 неделю Fluent Premium.\n"
+            f"Это уже активировано в вашем аккаунте — просто зайдите и пользуйтесь:\n"
+            f"👉 https://fluent.lt/dashboard\n\n"
+            f"Продолжайте учить литовский — вы на верном пути! 🇱🇹\n\n"
+            f"С уважением,\n"
+            f"Команда Fluent"
+        )
+    else:
+        subject = f"🏆 You're #{rank} on the Fluent leaderboard — Premium granted!"
+        body = (
+            f"Hi {name},\n\n"
+            f"Congratulations — you ranked #{rank} on the Fluent leaderboard this week! 🎉\n\n"
+            f"As a reward for your progress, we've granted you 1 week of Fluent Premium.\n"
+            f"It's already active on your account — just log in and enjoy:\n"
+            f"👉 https://fluent.lt/dashboard\n\n"
+            f"Keep learning Lithuanian — you're doing great! 🇱🇹\n\n"
+            f"Best regards,\n"
+            f"The Fluent Team"
+        )
+    return subject, body
+
+
+def generate_notice_email(name: str, rank: int, lang: str) -> tuple[str, str]:
+    """Return (subject, body) for a weekly leaderboard top-5 notice email (encourage to reach top 3)."""
+    if lang == "ru":
+        subject = f"🌟 Вы в топ-5 рейтинга Fluent этой недели!"
+        body = (
+            f"Привет, {name}!\n\n"
+            f"Отличная работа — на этой неделе вы заняли #{rank} место в рейтинге Fluent! 💪\n\n"
+            f"Хотите получить Fluent Premium бесплатно? Войдите в топ-3 в следующий раз!\n"
+            f"Три лучших пользователя каждой недели получают 1 неделю Premium в подарок.\n\n"
+            f"Продолжайте практиковаться:\n"
+            f"👉 https://fluent.lt/dashboard\n\n"
+            f"С уважением,\n"
+            f"Команда Fluent"
+        )
+    else:
+        subject = f"🌟 You're in the Fluent top 5 this week!"
+        body = (
+            f"Hi {name},\n\n"
+            f"Great work — you ranked #{rank} on the Fluent leaderboard this week! 💪\n\n"
+            f"Want to earn Fluent Premium for free? Reach the top 3 next time!\n"
+            f"Each week's top 3 users receive 1 week of Premium as a gift.\n\n"
+            f"Keep practising:\n"
+            f"👉 https://fluent.lt/dashboard\n\n"
+            f"Best regards,\n"
+            f"The Fluent Team"
+        )
+    return subject, body

@@ -450,6 +450,7 @@ class PreparedMessage(SQLModel, table=True):
     subject: str
     body: str
     status: str = Field(default="draft")    # draft | sent | failed
+    message_type: str = Field(default="reengagement")  # reengagement | reward | notice
     created_at: datetime = Field(default_factory=_utcnow)
     sent_at: Optional[datetime] = None
     inactive_since: Optional[datetime] = None  # last_login value when message was generated

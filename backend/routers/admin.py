@@ -11,6 +11,7 @@ from sqlmodel import Session, select, func
 from auth import require_user as _decode_user
 from database import get_session
 from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage
+from sqlalchemy import text
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
 from grammar_service import get_lessons as _get_grammar_lessons
@@ -225,14 +226,16 @@ class MessageUpdateBody(BaseModel):
 
 @router.get("/messages")
 def list_messages(
+    message_type: Optional[str] = None,
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return all prepared messages, drafts first then sent, sorted by created_at desc."""
+    """Return prepared messages sorted by created_at desc. Optionally filter by message_type."""
     _require_superadmin(authorization, session)
-    messages = session.exec(
-        select(PreparedMessage).order_by(PreparedMessage.created_at.desc())
-    ).all()
+    stmt = select(PreparedMessage).order_by(PreparedMessage.created_at.desc())
+    if message_type:
+        stmt = stmt.where(PreparedMessage.message_type == message_type)
+    messages = session.exec(stmt).all()
     return [
         {
             "id": m.id,
@@ -243,6 +246,7 @@ def list_messages(
             "subject": m.subject,
             "body": m.body,
             "status": m.status,
+            "message_type": m.message_type,
             "created_at": m.created_at,
             "sent_at": m.sent_at,
             "inactive_since": m.inactive_since,
@@ -302,6 +306,17 @@ def send_prepared_message(
         session.commit()
         raise HTTPException(status_code=500, detail=str(exc))
 
+    # Grant 1 week of premium when a reward email is sent
+    if msg.message_type == "reward" and target:
+        now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        from quota import is_premium_active as _check_premium
+        if _check_premium(target) and target.premium_until is not None:
+            target.premium_until = target.premium_until + timedelta(days=7)
+        else:
+            target.is_premium = True
+            target.premium_until = now_naive + timedelta(days=7)
+        session.add(target)
+
     session.add(msg)
     session.commit()
     return {"ok": True}
@@ -333,6 +348,126 @@ def trigger_message_generation(
     from scheduler import generate_inactive_messages
     generate_inactive_messages()
     return {"ok": True}
+
+
+# ── Leaderboard Rewards ──────────────────────────────────────────────────────
+
+@router.get("/leaderboard-top5")
+def get_leaderboard_top5(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return the top 5 users for the current ISO week with full info. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    rows = session.execute(
+        text("""
+            SELECT u.id,
+                   u.email,
+                   u.name,
+                   u.picture,
+                   u.is_premium,
+                   u.premium_until,
+                   u.lang,
+                   SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
+                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) AS score
+            FROM   "user" u
+            JOIN   user_word_progress uwp ON uwp.user_id = u.id
+            WHERE  DATE_TRUNC('week', uwp.last_seen) = DATE_TRUNC('week', NOW())
+            GROUP  BY u.id, u.email, u.name, u.picture, u.is_premium, u.premium_until, u.lang
+            HAVING SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
+                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) > 0
+            ORDER  BY score DESC
+            LIMIT  5
+        """)
+    ).all()
+    return [
+        {
+            "rank": i + 1,
+            "id": row.id,
+            "email": row.email,
+            "name": row.name,
+            "picture": row.picture,
+            "is_premium": row.is_premium,
+            "premium_until": row.premium_until,
+            "lang": row.lang,
+            "score": int(row.score),
+        }
+        for i, row in enumerate(rows)
+    ]
+
+
+@router.post("/leaderboard-rewards/generate")
+def generate_leaderboard_rewards(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Generate reward/notice PreparedMessage drafts for this week's top 5. Superadmin-only.
+
+    Idempotent: skips users who already have a reward or notice draft for this week.
+    Returns count of newly created messages.
+    """
+    _require_superadmin(authorization, session)
+    from email_templates import generate_reward_email, generate_notice_email
+
+    rows = session.execute(
+        text("""
+            SELECT u.id,
+                   u.email,
+                   u.name,
+                   u.lang,
+                   u.email_consent,
+                   SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
+                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) AS score
+            FROM   "user" u
+            JOIN   user_word_progress uwp ON uwp.user_id = u.id
+            WHERE  DATE_TRUNC('week', uwp.last_seen) = DATE_TRUNC('week', NOW())
+            GROUP  BY u.id, u.email, u.name, u.lang, u.email_consent
+            HAVING SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
+                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) > 0
+            ORDER  BY score DESC
+            LIMIT  5
+        """)
+    ).all()
+
+    # Find users who already have a reward/notice draft/sent this week
+    week_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0, tzinfo=None
+    )
+    # Approximate: check messages created in the past 7 days with type reward/notice
+    existing_msgs = session.exec(
+        select(PreparedMessage).where(
+            PreparedMessage.message_type.in_(["reward", "notice"]),
+            PreparedMessage.created_at >= week_start - timedelta(days=6),
+        )
+    ).all()
+    already_generated: set[str] = {m.user_id for m in existing_msgs}
+
+    created = 0
+    for i, row in enumerate(rows):
+        rank = i + 1
+        if row.id in already_generated:
+            continue
+        msg_type = "reward" if rank <= 3 else "notice"
+        lang = row.lang if row.lang in ("ru", "en") else "ru"
+        if msg_type == "reward":
+            subject, body = generate_reward_email(row.name, rank, lang)
+        else:
+            subject, body = generate_notice_email(row.name, rank, lang)
+        msg = PreparedMessage(
+            user_id=row.id,
+            user_email=row.email,
+            user_name=row.name,
+            user_lang=lang,
+            subject=subject,
+            body=body,
+            status="draft",
+            message_type=msg_type,
+        )
+        session.add(msg)
+        created += 1
+
+    session.commit()
+    return {"ok": True, "created": created}
 
 
 # ── Email Templates ──────────────────────────────────────────────────────────

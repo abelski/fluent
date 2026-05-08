@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BACKEND_URL, getToken, sendEmailToUser, getAdminMessages, updateAdminMessage, sendAdminMessage, deleteAdminMessage, triggerMessageGeneration, AdminMessage, getMessageTemplates, saveMessageTemplates, EmailTemplates } from '../../../lib/api';
+import { BACKEND_URL, getToken, sendEmailToUser, getAdminMessages, updateAdminMessage, sendAdminMessage, deleteAdminMessage, triggerMessageGeneration, AdminMessage, getMessageTemplates, saveMessageTemplates, EmailTemplates, getLeaderboardTop5, generateLeaderboardRewards, LeaderboardTop5User } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
 interface UserRow {
@@ -608,6 +608,13 @@ export default function AdminPage() {
   const [msgSending, setMsgSending] = useState<number | null>(null);
   const [msgError, setMsgError] = useState('');
 
+  // Messages sub-tabs: dismissal | rewards | notices
+  const [messagesSubTab, setMessagesSubTab] = useState<'dismissal' | 'rewards' | 'notices'>('dismissal');
+  const [top5Users, setTop5Users] = useState<LeaderboardTop5User[]>([]);
+  const [top5Loaded, setTop5Loaded] = useState(false);
+  const [rewardsGenerating, setRewardsGenerating] = useState(false);
+  const [rewardsError, setRewardsError] = useState('');
+
   // User progress modal
   const [progressUserId, setProgressUserId] = useState<string | null>(null);
   const [progressUserName, setProgressUserName] = useState('');
@@ -733,6 +740,32 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       setMessages((prev) => prev.filter((m) => m.id !== id));
     } catch {
       setMsgError('Ошибка удаления');
+    }
+  }
+
+  async function loadTop5() {
+    try {
+      const data = await getLeaderboardTop5();
+      setTop5Users(data);
+      setTop5Loaded(true);
+    } catch {
+      setRewardsError('Ошибка загрузки рейтинга');
+    }
+  }
+
+  async function handleGenerateRewards() {
+    setRewardsGenerating(true);
+    setRewardsError('');
+    try {
+      const result = await generateLeaderboardRewards();
+      await Promise.all([loadMessages(), loadTop5()]);
+      if (result.created === 0) {
+        setRewardsError('Письма уже сгенерированы для этой недели.');
+      }
+    } catch {
+      setRewardsError('Ошибка генерации наград');
+    } finally {
+      setRewardsGenerating(false);
     }
   }
 
@@ -1862,227 +1895,387 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         {/* ── Prepared Messages ── */}
         {area === 'admin' && adminTab === 'messages' && (
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <p className="text-sm text-gray-500">
-                Письма автоматически генерируются для пользователей, не входивших 30+ дней.
-              </p>
-              <button
-                onClick={handleGenerateMessages}
-                disabled={msgGenerating}
-                className="text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
-              >
-                {msgGenerating ? 'Генерация...' : '↻ Сгенерировать сейчас'}
-              </button>
-            </div>
-            {msgError && <p className="text-red-500 text-sm">{msgError}</p>}
-
-            {/* Template editor */}
-            {templates && (
-              <details className="border border-gray-200 rounded-2xl overflow-hidden" open={templateEditing}>
-                <summary
-                  className="px-4 py-3 text-sm font-semibold text-gray-700 cursor-pointer select-none hover:bg-gray-50 transition-colors list-none flex items-center justify-between"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (!templateEditing) {
-                      setTemplateDraft(JSON.parse(JSON.stringify(templates)));
-                      setTemplateEditing(true);
-                    } else {
-                      setTemplateEditing(false);
-                    }
+            {/* Sub-tab navigation */}
+            <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+              {([
+                { key: 'dismissal', label: 'Отчисление' },
+                { key: 'rewards', label: '🏆 Награды' },
+                { key: 'notices', label: '🔔 Уведомления' },
+              ] as const).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setMessagesSubTab(key);
+                    if (key === 'rewards' && !top5Loaded) loadTop5();
                   }}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${messagesSubTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                 >
-                  <span>✏️ Редактировать шаблоны писем</span>
-                  <span className="text-gray-400 text-xs">{templateEditing ? '▲' : '▼'}</span>
-                </summary>
-                {templateEditing && templateDraft && (
-                  <div className="px-4 pb-4 flex flex-col gap-5 border-t border-gray-200 pt-4">
-                    <p className="text-xs text-gray-400">
-                      Используйте <code className="bg-gray-100 px-1 rounded">{'{{name}}'}</code> для имени пользователя и{' '}
-                      <code className="bg-gray-100 px-1 rounded">{'{{days}}'}</code> для количества дней неактивности.
-                    </p>
-                    {(['ru', 'en'] as const).map((lang) => (
-                      <div key={lang} className="flex flex-col gap-2">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                          {lang === 'ru' ? 'Русский шаблон' : 'English template'}
-                        </h4>
-                        <label className="text-xs text-gray-500">Тема / Subject</label>
-                        <input
-                          value={templateDraft[lang].subject}
-                          onChange={(e) => setTemplateDraft((d) => d ? { ...d, [lang]: { ...d[lang], subject: e.target.value } } : d)}
-                          className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600"
-                        />
-                        <label className="text-xs text-gray-500">Текст / Body</label>
-                        <textarea
-                          value={templateDraft[lang].body}
-                          onChange={(e) => setTemplateDraft((d) => d ? { ...d, [lang]: { ...d[lang], body: e.target.value } } : d)}
-                          rows={8}
-                          className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600 resize-y font-mono"
-                        />
-                      </div>
-                    ))}
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={handleSaveTemplates}
-                        disabled={templateSaving}
-                        className="text-sm px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
-                      >
-                        {templateSaving ? 'Сохранение...' : 'Сохранить шаблоны'}
-                      </button>
-                      <button
-                        onClick={() => setTemplateEditing(false)}
-                        className="text-sm px-3 py-2 text-gray-400 hover:text-gray-900 transition-colors"
-                      >
-                        Отмена
-                      </button>
-                      {templateMsg && <span className="text-xs text-emerald-600 font-medium">{templateMsg}</span>}
-                    </div>
-                  </div>
-                )}
-              </details>
-            )}
+                  {label}
+                </button>
+              ))}
+            </div>
 
-            {/* Draft messages */}
-            {messages.filter((m) => m.status === 'draft').length === 0 && messages.filter((m) => m.status !== 'draft').length === 0 && (
-              <p className="text-gray-400 text-sm">Нет подготовленных писем.</p>
-            )}
-            {messages.filter((m) => m.status === 'draft').length > 0 && (
-              <div className="flex flex-col gap-3">
-                <h3 className="text-sm font-semibold text-gray-900">Черновики ({messages.filter((m) => m.status === 'draft').length})</h3>
-                {messages.filter((m) => m.status === 'draft').map((msg) => (
-                  <div key={msg.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-3 bg-white">
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <div>
-                        <p className="font-medium text-gray-900 text-sm">{msg.user_name}</p>
-                        <p className="text-xs text-gray-400">{msg.user_email}</p>
-                        {msg.inactive_since && (
-                          <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1">
-                            <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
-                            не входил с {new Date(msg.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
-                        {(['ru', 'en'] as const).map((l) => (
-                          <button
-                            key={l}
-                            onClick={() => {
-                              if (msg.user_lang === l) return;
-                              const tmpl = templates?.[l];
-                              const newSubject = tmpl ? tmpl.subject.replace('{{name}}', msg.user_name).replace('{{days}}', msg.inactive_since ? String(Math.floor((Date.now() - new Date(msg.inactive_since).getTime()) / 86400000)) : '30') : msg.subject;
-                              const newBody = tmpl ? tmpl.body.replace('{{name}}', msg.user_name).replace('{{days}}', msg.inactive_since ? String(Math.floor((Date.now() - new Date(msg.inactive_since).getTime()) / 86400000)) : '30') : msg.body;
-                              updateAdminMessage(msg.id, newSubject, newBody, l).then(() => {
-                                setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, user_lang: l, subject: newSubject, body: newBody } : m));
-                              });
-                            }}
-                            className={`text-xs font-semibold px-2 py-0.5 rounded-md transition-colors ${msg.user_lang === l ? (l === 'ru' ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white') : 'text-gray-400 hover:text-gray-700'}`}
-                          >
-                            {l.toUpperCase()}
-                          </button>
+            {/* ── Dismissal sub-tab ── */}
+            {messagesSubTab === 'dismissal' && (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <p className="text-sm text-gray-500">
+                    Письма автоматически генерируются для пользователей, не входивших 30+ дней.
+                  </p>
+                  <button
+                    onClick={handleGenerateMessages}
+                    disabled={msgGenerating}
+                    className="text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
+                  >
+                    {msgGenerating ? 'Генерация...' : '↻ Сгенерировать сейчас'}
+                  </button>
+                </div>
+                {msgError && <p className="text-red-500 text-sm">{msgError}</p>}
+
+                {/* Template editor */}
+                {templates && (
+                  <details className="border border-gray-200 rounded-2xl overflow-hidden" open={templateEditing}>
+                    <summary
+                      className="px-4 py-3 text-sm font-semibold text-gray-700 cursor-pointer select-none hover:bg-gray-50 transition-colors list-none flex items-center justify-between"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!templateEditing) {
+                          setTemplateDraft(JSON.parse(JSON.stringify(templates)));
+                          setTemplateEditing(true);
+                        } else {
+                          setTemplateEditing(false);
+                        }
+                      }}
+                    >
+                      <span>✏️ Редактировать шаблоны писем</span>
+                      <span className="text-gray-400 text-xs">{templateEditing ? '▲' : '▼'}</span>
+                    </summary>
+                    {templateEditing && templateDraft && (
+                      <div className="px-4 pb-4 flex flex-col gap-5 border-t border-gray-200 pt-4">
+                        <p className="text-xs text-gray-400">
+                          Используйте <code className="bg-gray-100 px-1 rounded">{'{{name}}'}</code> для имени пользователя и{' '}
+                          <code className="bg-gray-100 px-1 rounded">{'{{days}}'}</code> для количества дней неактивности.
+                        </p>
+                        {(['ru', 'en'] as const).map((lang) => (
+                          <div key={lang} className="flex flex-col gap-2">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                              {lang === 'ru' ? 'Русский шаблон' : 'English template'}
+                            </h4>
+                            <label className="text-xs text-gray-500">Тема / Subject</label>
+                            <input
+                              value={templateDraft[lang].subject}
+                              onChange={(e) => setTemplateDraft((d) => d ? { ...d, [lang]: { ...d[lang], subject: e.target.value } } : d)}
+                              className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600"
+                            />
+                            <label className="text-xs text-gray-500">Текст / Body</label>
+                            <textarea
+                              value={templateDraft[lang].body}
+                              onChange={(e) => setTemplateDraft((d) => d ? { ...d, [lang]: { ...d[lang], body: e.target.value } } : d)}
+                              rows={8}
+                              className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600 resize-y font-mono"
+                            />
+                          </div>
                         ))}
-                      </div>
-                    </div>
-                    {editingMsg?.id === msg.id ? (
-                      <div className="flex flex-col gap-2">
-                        <input
-                          value={msgDraft.subject}
-                          onChange={(e) => setMsgDraft((d) => ({ ...d, subject: e.target.value }))}
-                          className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600"
-                          placeholder="Тема письма"
-                        />
-                        <textarea
-                          value={msgDraft.body}
-                          onChange={(e) => setMsgDraft((d) => ({ ...d, body: e.target.value }))}
-                          rows={6}
-                          className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600 resize-y"
-                          placeholder="Текст письма"
-                        />
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-3">
                           <button
-                            onClick={() => handleSaveMsgEdit(msg.id)}
-                            className="text-xs px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                            onClick={handleSaveTemplates}
+                            disabled={templateSaving}
+                            className="text-sm px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
                           >
-                            Сохранить
+                            {templateSaving ? 'Сохранение...' : 'Сохранить шаблоны'}
                           </button>
                           <button
-                            onClick={() => setEditingMsg(null)}
-                            className="text-xs px-3 py-1.5 text-gray-400 hover:text-gray-900 transition-colors"
+                            onClick={() => setTemplateEditing(false)}
+                            className="text-sm px-3 py-2 text-gray-400 hover:text-gray-900 transition-colors"
                           >
                             Отмена
                           </button>
+                          {templateMsg && <span className="text-xs text-emerald-600 font-medium">{templateMsg}</span>}
                         </div>
                       </div>
-                    ) : (
-                      <div className="flex flex-col gap-1">
-                        <p className="text-xs font-semibold text-gray-500">Тема: <span className="text-gray-900 font-normal">{msg.subject}</span></p>
-                        <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans bg-gray-50 rounded-xl p-3 border border-gray-200">{msg.body}</pre>
-                      </div>
                     )}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={() => { setEditingMsg(msg); setMsgDraft({ subject: msg.subject, body: msg.body }); }}
-                        className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        Редактировать
-                      </button>
-                      <button
-                        onClick={() => handleSendMessage(msg)}
-                        disabled={msgSending === msg.id}
-                        className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium"
-                      >
-                        {msgSending === msg.id ? 'Отправка...' : '✉ Отправить'}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteMessage(msg.id)}
-                        className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 rounded-lg transition-colors"
-                      >
-                        Удалить
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  </details>
+                )}
+
+                {/* Dismissal draft messages */}
+                {(() => {
+                  const dismissalMsgs = messages.filter((m) => !m.message_type || m.message_type === 'reengagement');
+                  const drafts = dismissalMsgs.filter((m) => m.status === 'draft');
+                  const sent = dismissalMsgs.filter((m) => m.status !== 'draft');
+                  return (
+                    <>
+                      {drafts.length === 0 && sent.length === 0 && (
+                        <p className="text-gray-400 text-sm">Нет подготовленных писем.</p>
+                      )}
+                      {drafts.length > 0 && (
+                        <div className="flex flex-col gap-3">
+                          <h3 className="text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
+                          {drafts.map((msg) => (
+                            <div key={msg.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-3 bg-white">
+                              <div className="flex items-start justify-between gap-2 flex-wrap">
+                                <div>
+                                  <p className="font-medium text-gray-900 text-sm">{msg.user_name}</p>
+                                  <p className="text-xs text-gray-400">{msg.user_email}</p>
+                                  {msg.inactive_since && (
+                                    <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1">
+                                      <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                                      не входил с {new Date(msg.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                                  {(['ru', 'en'] as const).map((l) => (
+                                    <button
+                                      key={l}
+                                      onClick={() => {
+                                        if (msg.user_lang === l) return;
+                                        const tmpl = templates?.[l];
+                                        const newSubject = tmpl ? tmpl.subject.replace('{{name}}', msg.user_name).replace('{{days}}', msg.inactive_since ? String(Math.floor((Date.now() - new Date(msg.inactive_since).getTime()) / 86400000)) : '30') : msg.subject;
+                                        const newBody = tmpl ? tmpl.body.replace('{{name}}', msg.user_name).replace('{{days}}', msg.inactive_since ? String(Math.floor((Date.now() - new Date(msg.inactive_since).getTime()) / 86400000)) : '30') : msg.body;
+                                        updateAdminMessage(msg.id, newSubject, newBody, l).then(() => {
+                                          setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, user_lang: l, subject: newSubject, body: newBody } : m));
+                                        });
+                                      }}
+                                      className={`text-xs font-semibold px-2 py-0.5 rounded-md transition-colors ${msg.user_lang === l ? (l === 'ru' ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white') : 'text-gray-400 hover:text-gray-700'}`}
+                                    >
+                                      {l.toUpperCase()}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {editingMsg?.id === msg.id ? (
+                                <div className="flex flex-col gap-2">
+                                  <input
+                                    value={msgDraft.subject}
+                                    onChange={(e) => setMsgDraft((d) => ({ ...d, subject: e.target.value }))}
+                                    className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600"
+                                    placeholder="Тема письма"
+                                  />
+                                  <textarea
+                                    value={msgDraft.body}
+                                    onChange={(e) => setMsgDraft((d) => ({ ...d, body: e.target.value }))}
+                                    rows={6}
+                                    className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600 resize-y"
+                                    placeholder="Текст письма"
+                                  />
+                                  <div className="flex gap-2">
+                                    <button onClick={() => handleSaveMsgEdit(msg.id)} className="text-xs px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">Сохранить</button>
+                                    <button onClick={() => setEditingMsg(null)} className="text-xs px-3 py-1.5 text-gray-400 hover:text-gray-900 transition-colors">Отмена</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-1">
+                                  <p className="text-xs font-semibold text-gray-500">Тема: <span className="text-gray-900 font-normal">{msg.subject}</span></p>
+                                  <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans bg-gray-50 rounded-xl p-3 border border-gray-200">{msg.body}</pre>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <button onClick={() => { setEditingMsg(msg); setMsgDraft({ subject: msg.subject, body: msg.body }); }} className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg hover:bg-gray-50 transition-colors">Редактировать</button>
+                                <button onClick={() => handleSendMessage(msg)} disabled={msgSending === msg.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium">{msgSending === msg.id ? 'Отправка...' : '✉ Отправить'}</button>
+                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 rounded-lg transition-colors">Удалить</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {sent.length > 0 && (
+                        <details className="mt-2">
+                          <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">Отправленные ({sent.length})</summary>
+                          <div className="flex flex-col gap-2 mt-3">
+                            {sent.map((msg) => (
+                              <div key={msg.id} className="border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap bg-gray-50">
+                                <div>
+                                  <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
+                                  <p className="text-xs text-gray-400">{msg.subject}</p>
+                                  {msg.sent_at && (
+                                    <p className="text-xs text-gray-400">
+                                      Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}
+                                      {(() => {
+                                        const daysAgo = Math.floor((Date.now() - new Date(msg.sent_at).getTime()) / 86400000);
+                                        const dueDate = new Date(new Date(msg.sent_at).getTime() + 7 * 86400000);
+                                        if (daysAgo >= 7) return <span className="ml-2 text-orange-600 font-medium">☠️ срок истёк {dueDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>;
+                                        if (daysAgo >= 5) return <span className="ml-2 text-orange-500 font-medium">⚠️ осталось {7 - daysAgo} дн.</span>;
+                                        return null;
+                                      })()}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? 'отправлено' : 'ошибка'}</span>
+                                  <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">✕</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
 
-            {/* Sent / failed messages */}
-            {messages.filter((m) => m.status !== 'draft').length > 0 && (
-              <details className="mt-2">
-                <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">
-                  Отправленные ({messages.filter((m) => m.status !== 'draft').length})
-                </summary>
-                <div className="flex flex-col gap-2 mt-3">
-                  {messages.filter((m) => m.status !== 'draft').map((msg) => (
-                    <div key={msg.id} className="border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap bg-gray-50">
-                      <div>
-                        <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
-                        <p className="text-xs text-gray-400">{msg.subject}</p>
-                        {msg.sent_at && (
-                          <p className="text-xs text-gray-400">
-                            Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}
-                            {(() => {
-                              const daysAgo = Math.floor((Date.now() - new Date(msg.sent_at).getTime()) / 86400000);
-                              const dueDate = new Date(new Date(msg.sent_at).getTime() + 7 * 86400000);
-                              if (daysAgo >= 7) return <span className="ml-2 text-orange-600 font-medium">☠️ срок истёк {dueDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>;
-                              if (daysAgo >= 5) return <span className="ml-2 text-orange-500 font-medium">⚠️ осталось {7 - daysAgo} дн.</span>;
-                              return null;
-                            })()}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
-                          {msg.status === 'sent' ? 'отправлено' : 'ошибка'}
-                        </span>
-                        <button
-                          onClick={() => handleDeleteMessage(msg.id)}
-                          className="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+            {/* ── Rewards sub-tab ── */}
+            {messagesSubTab === 'rewards' && (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <p className="text-sm text-gray-500">
+                    Топ-3 пользователя этой недели получают 1 неделю Premium при отправке письма.
+                  </p>
+                  <button
+                    onClick={handleGenerateRewards}
+                    disabled={rewardsGenerating}
+                    className="text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
+                  >
+                    {rewardsGenerating ? 'Генерация...' : '↻ Сгенерировать письма'}
+                  </button>
                 </div>
-              </details>
+                {rewardsError && <p className="text-amber-600 text-sm">{rewardsError}</p>}
+
+                {/* Current week top 3 */}
+                {top5Loaded && (
+                  <div className="flex flex-col gap-2">
+                    <h3 className="text-sm font-semibold text-gray-900">Рейтинг этой недели — топ-3</h3>
+                    {top5Users.filter((u) => u.rank <= 3).length === 0 ? (
+                      <p className="text-gray-400 text-sm">Нет активных пользователей на этой неделе.</p>
+                    ) : (
+                      top5Users.filter((u) => u.rank <= 3).map((u) => (
+                        <div key={u.id} className="border border-gray-200 rounded-2xl p-3 flex items-center gap-3 bg-gray-50">
+                          <span className="text-xl">{u.rank === 1 ? '🥇' : u.rank === 2 ? '🥈' : '🥉'}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{u.name}</p>
+                            <p className="text-xs text-gray-400 truncate">{u.email}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-gray-900">{u.score} pts</p>
+                            <p className="text-xs text-gray-400">{u.is_premium ? '✓ Premium' : 'Базовый'}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {/* Reward draft/sent messages */}
+                {(() => {
+                  const rewardMsgs = messages.filter((m) => m.message_type === 'reward');
+                  const drafts = rewardMsgs.filter((m) => m.status === 'draft');
+                  const sent = rewardMsgs.filter((m) => m.status !== 'draft');
+                  if (rewardMsgs.length === 0) return <p className="text-gray-400 text-sm">Нет наградных писем. Нажмите «Сгенерировать письма».</p>;
+                  return (
+                    <>
+                      {drafts.length > 0 && (
+                        <div className="flex flex-col gap-3">
+                          <h3 className="text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
+                          {drafts.map((msg) => (
+                            <div key={msg.id} className="border border-emerald-200 rounded-2xl p-4 flex flex-col gap-3 bg-emerald-50">
+                              <div className="flex items-center justify-between gap-2">
+                                <div>
+                                  <p className="font-medium text-gray-900 text-sm">{msg.user_name}</p>
+                                  <p className="text-xs text-gray-500">{msg.user_email}</p>
+                                  <p className="text-xs text-emerald-700 font-medium mt-0.5">+7 дней Premium при отправке</p>
+                                </div>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <p className="text-xs font-semibold text-gray-500">Тема: <span className="text-gray-900 font-normal">{msg.subject}</span></p>
+                                <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans bg-white rounded-xl p-3 border border-emerald-200">{msg.body}</pre>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button onClick={() => handleSendMessage(msg)} disabled={msgSending === msg.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium">{msgSending === msg.id ? 'Отправка...' : '✉ Отправить + выдать Premium'}</button>
+                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-200 rounded-lg transition-colors">Удалить</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {sent.length > 0 && (
+                        <details className="mt-2">
+                          <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">Отправленные ({sent.length})</summary>
+                          <div className="flex flex-col gap-2 mt-3">
+                            {sent.map((msg) => (
+                              <div key={msg.id} className="border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap bg-gray-50">
+                                <div>
+                                  <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
+                                  <p className="text-xs text-gray-400">{msg.subject}</p>
+                                  {msg.sent_at && <p className="text-xs text-gray-400">Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? 'отправлено' : 'ошибка'}</span>
+                                  <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">✕</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── Notices sub-tab ── */}
+            {messagesSubTab === 'notices' && (
+              <div className="flex flex-col gap-4">
+                <p className="text-sm text-gray-500">
+                  Уведомления для пользователей на 4–5 местах — мотивация войти в топ-3.
+                </p>
+                {(() => {
+                  const noticeMsgs = messages.filter((m) => m.message_type === 'notice');
+                  const drafts = noticeMsgs.filter((m) => m.status === 'draft');
+                  const sent = noticeMsgs.filter((m) => m.status !== 'draft');
+                  if (noticeMsgs.length === 0) return (
+                    <p className="text-gray-400 text-sm">
+                      Нет уведомительных писем. Перейдите на вкладку «Награды» и нажмите «Сгенерировать письма».
+                    </p>
+                  );
+                  return (
+                    <>
+                      {drafts.length > 0 && (
+                        <div className="flex flex-col gap-3">
+                          <h3 className="text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
+                          {drafts.map((msg) => (
+                            <div key={msg.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-3 bg-white">
+                              <div>
+                                <p className="font-medium text-gray-900 text-sm">{msg.user_name}</p>
+                                <p className="text-xs text-gray-400">{msg.user_email}</p>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <p className="text-xs font-semibold text-gray-500">Тема: <span className="text-gray-900 font-normal">{msg.subject}</span></p>
+                                <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans bg-gray-50 rounded-xl p-3 border border-gray-200">{msg.body}</pre>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button onClick={() => handleSendMessage(msg)} disabled={msgSending === msg.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium">{msgSending === msg.id ? 'Отправка...' : '✉ Отправить'}</button>
+                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 rounded-lg transition-colors">Удалить</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {sent.length > 0 && (
+                        <details className="mt-2">
+                          <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">Отправленные ({sent.length})</summary>
+                          <div className="flex flex-col gap-2 mt-3">
+                            {sent.map((msg) => (
+                              <div key={msg.id} className="border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap bg-gray-50">
+                                <div>
+                                  <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
+                                  <p className="text-xs text-gray-400">{msg.subject}</p>
+                                  {msg.sent_at && <p className="text-xs text-gray-400">Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? 'отправлено' : 'ошибка'}</span>
+                                  <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">✕</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
             )}
           </div>
         )}

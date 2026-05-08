@@ -105,10 +105,13 @@ export async function sendEmailToUser(userId: string, subject: string, body: str
   }
 }
 
-/** Fetch all prepared re-engagement messages. Superadmin-only. */
-export async function getAdminMessages(): Promise<AdminMessage[]> {
+/** Fetch prepared messages, optionally filtered by message_type. Superadmin-only. */
+export async function getAdminMessages(messageType?: string): Promise<AdminMessage[]> {
   const token = getToken();
-  const r = await fetch(`${BACKEND_URL}/api/admin/messages`, {
+  const url = messageType
+    ? `${BACKEND_URL}/api/admin/messages?message_type=${encodeURIComponent(messageType)}`
+    : `${BACKEND_URL}/api/admin/messages`;
+  const r = await fetch(url, {
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   if (!r.ok) throw new Error('Failed to fetch messages');
@@ -205,9 +208,43 @@ export interface AdminMessage {
   subject: string;
   body: string;
   status: 'draft' | 'sent' | 'failed';
+  message_type: 'reengagement' | 'reward' | 'notice';
   created_at: string;
   sent_at: string | null;
   inactive_since: string | null;
+}
+
+export interface LeaderboardTop5User {
+  rank: number;
+  id: string;
+  email: string;
+  name: string;
+  picture: string | null;
+  is_premium: boolean;
+  premium_until: string | null;
+  lang: string;
+  score: number;
+}
+
+/** Fetch current week's top 5 leaderboard users with full info. Superadmin-only. */
+export async function getLeaderboardTop5(): Promise<LeaderboardTop5User[]> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/leaderboard-top5`, {
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!r.ok) throw new Error('Failed to fetch leaderboard top 5');
+  return r.json();
+}
+
+/** Generate reward/notice draft messages for this week's top 5. Superadmin-only. */
+export async function generateLeaderboardRewards(): Promise<{ created: number }> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/leaderboard-rewards/generate`, {
+    method: 'POST',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!r.ok) throw new Error('Failed to generate leaderboard rewards');
+  return r.json();
 }
 
 /** Return subcategory keys the current user is enrolled in. */
