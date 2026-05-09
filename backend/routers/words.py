@@ -841,20 +841,45 @@ def get_leaderboard(
     # Use calendar-week boundaries (ISO: Mon–Sun) so "this week" is unambiguous.
     # A rolling 7-day window can include users who studied 7 days ago and are
     # borderline, making it look like they have points "this week" when they don't.
-    where_clause = (
-        "AND DATE_TRUNC('week', uwp.last_seen) = DATE_TRUNC('week', NOW())" if period == "week" else ""
-    )
+    is_week = period == "week"
+    word_filter    = "AND DATE_TRUNC('week', uwp.last_seen)  = DATE_TRUNC('week', NOW())" if is_week else ""
+    phrase_filter  = "AND DATE_TRUNC('week', upp.last_seen)  = DATE_TRUNC('week', NOW())" if is_week else ""
+    grammar_filter = "AND DATE_TRUNC('week', glr.created_at) = DATE_TRUNC('week', NOW())" if is_week else ""
+    practice_filter= "AND DATE_TRUNC('week', per.created_at) = DATE_TRUNC('week', NOW())" if is_week else ""
     rows = session.execute(
         text(f"""
             SELECT u.picture,
-                   SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
-                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) AS score
-            FROM   "user" u
-            JOIN   user_word_progress uwp ON uwp.user_id = u.id
-            WHERE  1=1 {where_clause}
-            GROUP  BY u.id, u.picture
-            HAVING SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
-                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) > 0
+                   COALESCE(w.pts, 0) + COALESCE(p.pts, 0) + COALESCE(g.pts, 0) + COALESCE(x.pts, 0) AS score
+            FROM "user" u
+            LEFT JOIN (
+                SELECT uwp.user_id,
+                       SUM(CASE WHEN uwp.status = 'known' THEN 3 ELSE 1 END) AS pts
+                FROM   user_word_progress uwp
+                WHERE  1=1 {word_filter}
+                GROUP  BY uwp.user_id
+            ) w ON w.user_id = u.id
+            LEFT JOIN (
+                SELECT upp.user_id,
+                       SUM(CASE WHEN upp.lesson_stage >= 2 THEN 3 ELSE 1 END) AS pts
+                FROM   user_phrase_progress upp
+                WHERE  upp.lesson_stage > 0 {phrase_filter}
+                GROUP  BY upp.user_id
+            ) p ON p.user_id = u.id
+            LEFT JOIN (
+                SELECT glr.user_id,
+                       COUNT(*) * 5 AS pts
+                FROM   grammar_lesson_result glr
+                WHERE  glr.passed = true {grammar_filter}
+                GROUP  BY glr.user_id
+            ) g ON g.user_id = u.id
+            LEFT JOIN (
+                SELECT per.user_id,
+                       COUNT(*) * 5 AS pts
+                FROM   practice_exam_result per
+                WHERE  1=1 {practice_filter}
+                GROUP  BY per.user_id
+            ) x ON x.user_id = u.id
+            WHERE  COALESCE(w.pts, 0) + COALESCE(p.pts, 0) + COALESCE(g.pts, 0) + COALESCE(x.pts, 0) > 0
             ORDER  BY score DESC
             LIMIT  10
         """)

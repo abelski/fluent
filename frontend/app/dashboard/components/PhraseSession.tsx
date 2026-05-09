@@ -77,6 +77,66 @@ function checkWord(typed: string, target: string, complexity: Complexity): boole
   return false;
 }
 
+// ── Syllable helpers ──────────────────────────────────────────────────────────
+
+const LT_DIPHTHONGS = new Set(['ie', 'uo', 'ai', 'ei', 'ui', 'au', 'ia', 'ua']);
+
+function splitSyllables(word: string): string[] {
+  const isVowel = (c: string) => /[aeiouąęėįųūy]/i.test(c);
+  const vowelIdx: number[] = [];
+  for (let i = 0; i < word.length; i++) if (isVowel(word[i])) vowelIdx.push(i);
+  if (vowelIdx.length <= 1) return [word];
+  const splits: number[] = [0];
+  let i = 0;
+  while (i < vowelIdx.length - 1) {
+    const v1 = vowelIdx[i];
+    const v2 = vowelIdx[i + 1];
+    const gap = v2 - v1 - 1;
+    if (gap === 0) {
+      const pair = (word[v1] + word[v2]).toLowerCase().replace(/[ąęėįųū]/g, (c) =>
+        ({ ą: 'a', ę: 'e', ė: 'e', į: 'i', ų: 'u', ū: 'u' }[c] ?? c));
+      if (LT_DIPHTHONGS.has(pair)) { i++; continue; }
+      splits.push(v2);
+    } else if (gap === 1) {
+      splits.push(v1 + 1);
+    } else {
+      splits.push(v1 + 1 + Math.floor(gap / 2));
+    }
+    i++;
+  }
+  splits.push(word.length);
+  return splits.slice(0, -1).map((s, idx) => word.slice(s, splits[idx + 1])).filter(Boolean);
+}
+
+function findMistakeSyllable(typed: string, target: string): string {
+  let pos = target.length;
+  for (let i = 0; i < target.length; i++) {
+    if (i >= typed.length || normalizeLt(typed[i]) !== normalizeLt(target[i])) { pos = i; break; }
+  }
+  const syllables = splitSyllables(target);
+  let cur = 0;
+  for (const syl of syllables) {
+    cur += syl.length;
+    if (pos < cur) return syl;
+  }
+  return syllables[syllables.length - 1] ?? target;
+}
+
+function findMistakeWordSyllable(typed: string, target: string): { syllable: string; word: string } {
+  const strip = (s: string) => s.replace(/[.,!?;:'"()/]/g, '');
+  const targetWords = target.trim().split(/\s+/);
+  const typedWords = typed.trim().split(/\s+/);
+  for (let i = 0; i < targetWords.length; i++) {
+    const tw = strip(targetWords[i]);
+    const tt = strip(typedWords[i] ?? '');
+    if (normalizeLt(tt) !== normalizeLt(tw)) {
+      return { syllable: findMistakeSyllable(tt, tw), word: tw };
+    }
+  }
+  const lastWord = strip(targetWords[targetWords.length - 1]);
+  return { syllable: splitSyllables(lastWord)[0] ?? lastWord, word: lastWord };
+}
+
 // ── Queue helpers ─────────────────────────────────────────────────────────────
 
 interface QueueItem {
@@ -151,9 +211,15 @@ export default function PhraseSession({
   const [phrasesDone, setPhrasesDone] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  const inputRef     = useRef<HTMLInputElement>(null);
-  const textareaRef  = useRef<HTMLTextAreaElement>(null);
-  const blockUntilRef = useRef(0);
+  const [syllableChallenge, setSyllableChallenge] = useState<{ syllable: string; word: string } | null>(null);
+  const [syllableInput, setSyllableInput] = useState('');
+  const [syllableResult, setSyllableResult] = useState<'correct' | 'wrong' | null>(null);
+
+  const inputRef          = useRef<HTMLInputElement>(null);
+  const textareaRef       = useRef<HTMLTextAreaElement>(null);
+  const syllableInputRef  = useRef<HTMLInputElement>(null);
+  const blockUntilRef     = useRef(0);
+  const pendingAdvanceRef = useRef<(() => void) | null>(null);
   const donePhrasesRef     = useRef<Set<number>>(new Set());
   const mistakePhraseIdsRef = useRef<Set<number>>(new Set());
 
@@ -208,6 +274,10 @@ export default function PhraseSession({
     if (current?.phrase.lesson_stage === 2 && textareaRef.current) textareaRef.current.focus();
   }, [current]);
 
+  useEffect(() => {
+    if (syllableChallenge) setTimeout(() => syllableInputRef.current?.focus(), 50);
+  }, [syllableChallenge]);
+
   // ── Timer timeout → mark wrong ───────────────────────────────────────────────
   useEffect(() => {
     if (!useTimer || timeLeft > 0 || stage === undefined || stage === 0) return;
@@ -239,15 +309,19 @@ export default function PhraseSession({
       if (!current) return;
       const s = current.phrase.lesson_stage;
 
-      // Stage 0: Enter triggers "Got it"
-      if (s === 0 && !saving) {
-        e.preventDefault();
-        blockUntilRef.current = Date.now() + 200;
-        advanceQueue(5);
+      // Syllable challenge active: only handle dismiss-wrong, block everything else
+      if (syllableChallenge) {
+        if (syllableResult === 'wrong') {
+          e.preventDefault();
+          blockUntilRef.current = Date.now() + 200;
+          handleSyllableDismiss();
+        }
         return;
       }
 
-      // Stage 1 MCQ wrong shown → advance
+      // Stage 0: buttons only — no keyboard shortcut (prevents accidental skip on key-repeat)
+
+      // Stage 1 MCQ wrong shown → advance directly (no syllable challenge — user clicked, didn't type)
       if (s === 1 && stage1Step === 'mcq' && mcqResult === 'wrong') {
         e.preventDefault();
         blockUntilRef.current = Date.now() + 200;
@@ -259,8 +333,12 @@ export default function PhraseSession({
       if (s === 1 && stage1Step === 'type' && typeResult !== null) {
         e.preventDefault();
         blockUntilRef.current = Date.now() + 200;
-        if (typeResult === 'correct') advanceQueue(5);
-        else advanceQueue(1, current.phrase.blank_word);
+        if (typeResult === 'correct') { advanceQueue(5); return; }
+        const bw = current.phrase.blank_word;
+        pendingAdvanceRef.current = () => advanceQueue(1, bw);
+        setSyllableChallenge({ syllable: bw, word: bw });
+        setSyllableInput('');
+        setSyllableResult(null);
         return;
       }
 
@@ -268,15 +346,19 @@ export default function PhraseSession({
       if (s === 2 && typeResult !== null) {
         e.preventDefault();
         blockUntilRef.current = Date.now() + 200;
-        if (typeResult === 'correct') advanceQueue(5);
-        else advanceQueue(1);
+        if (typeResult === 'correct') { advanceQueue(5); return; }
+        const { word: mw } = findMistakeWordSyllable(typeInput, current.phrase.text);
+        pendingAdvanceRef.current = () => advanceQueue(1);
+        setSyllableChallenge({ syllable: mw, word: mw });
+        setSyllableInput('');
+        setSyllableResult(null);
         return;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, stage1Step, mcqResult, typeResult, saving]);
+  }, [current, stage1Step, mcqResult, typeResult, saving, syllableChallenge, syllableResult]);
 
   // ── Progress ──────────────────────────────────────────────────────────────────
   const progressPct = phrases.length > 0 ? (phrasesDone / phrases.length) * 100 : 0;
@@ -340,11 +422,39 @@ export default function PhraseSession({
     if (isLast && isDone) {
       setShowMatchRound(true);
     } else {
+      blockUntilRef.current = Date.now() + 600;
       setCurrentIdx((i) => i + 1);
     }
   // We intentionally list specific deps; queue/current captured at call time
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, currentIdx, queue, lessonMode, phrases.length]);
+
+  // ── Syllable challenge handlers ───────────────────────────────────────────────
+  function handleSyllableSubmit() {
+    if (!syllableChallenge || syllableResult !== null) return;
+    const isCorrect = checkWord(syllableInput.trim(), syllableChallenge.syllable, complexity);
+    setSyllableResult(isCorrect ? 'correct' : 'wrong');
+    if (isCorrect) {
+      setTimeout(() => {
+        blockUntilRef.current = Date.now() + 600;
+        // Reset answer state before unmounting challenge so the underlying card
+        // doesn't flash its previous wrong result while advanceQueue is pending
+        setTypeResult(null);
+        setTypeInput('');
+        setSyllableChallenge(null);
+        setSyllableInput('');
+        setSyllableResult(null);
+        pendingAdvanceRef.current?.();
+        pendingAdvanceRef.current = null;
+      }, 1200);
+    }
+  }
+
+  function handleSyllableDismiss() {
+    setSyllableResult(null);
+    setSyllableInput('');
+    // Loop: show the syllable challenge again before the pending retry
+  }
 
   // ── Done screen ───────────────────────────────────────────────────────────────
   if (done) {
@@ -398,6 +508,90 @@ export default function PhraseSession({
   }
 
   if (!current) return null;
+
+  // ── Syllable challenge interstitial ───────────────────────────────────────────
+  if (syllableChallenge) {
+    const { syllable, word } = syllableChallenge;
+    const phraseText = current?.phrase.text ?? word;
+
+    // Split phrase around the target word, then split word around the syllable
+    const wordStart = phraseText.toLowerCase().indexOf(word.toLowerCase());
+    const phraseBeforeWord = wordStart === -1 ? '' : phraseText.slice(0, wordStart);
+    const phraseAfterWord = wordStart === -1 ? '' : phraseText.slice(wordStart + word.length);
+
+    const sylIdx = word.toLowerCase().indexOf(syllable.toLowerCase());
+    const wordBeforeSyl = sylIdx === -1 ? word : word.slice(0, sylIdx);
+    const wordAfterSyl = sylIdx === -1 ? '' : word.slice(sylIdx + syllable.length);
+    const inputW = `${Math.max(syllable.length * 1.1, 2)}ch`;
+
+    return (
+      <main className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-10">
+        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
+          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
+        </div>
+        <div className="relative z-10 w-full max-w-sm">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-sm text-gray-400 uppercase tracking-wider">Отработайте слово</span>
+            {mistakeCount > 0 && <span className="text-amber-500 text-sm">{mistakeCount} ✗</span>}
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mb-6">
+            {/* Full phrase with syllable gap inline — use inline rendering to preserve spaces */}
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed text-center">
+              {phraseBeforeWord}
+              {wordBeforeSyl}
+              {syllableResult === 'correct' && (
+                <span className="text-emerald-600 border-b-4 border-emerald-400 px-1 rounded-sm bg-emerald-50">{syllableInput}</span>
+              )}
+              {syllableResult === 'wrong' && (
+                <span className="text-red-500 border-b-4 border-red-400 px-1 rounded-sm bg-red-50">{syllable}</span>
+              )}
+              {syllableResult === null && (
+                <input
+                  ref={syllableInputRef}
+                  value={syllableInput}
+                  onChange={(e) => setSyllableInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); handleSyllableSubmit(); } }}
+                  style={{ width: inputW, minWidth: '2.5ch', display: 'inline' }}
+                  className="border-b-4 rounded-sm bg-emerald-50 outline-none text-center font-bold text-emerald-600 px-1 border-emerald-400"
+                />
+              )}
+              {wordAfterSyl}
+              {phraseAfterWord}
+            </p>
+            <p className="text-sm text-gray-400 mt-4">{current ? getTranslation(current.phrase) : ''}</p>
+          </div>
+
+          {syllableResult === null && (
+            <button
+              onClick={handleSyllableSubmit}
+              className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+            >
+              Проверить →
+            </button>
+          )}
+
+          {syllableResult === 'correct' && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+              <p className="text-emerald-700 font-semibold">Правильно! ✓ Теперь напишите всю фразу.</p>
+            </div>
+          )}
+
+          {syllableResult === 'wrong' && (
+            <div className="flex flex-col gap-3">
+              <p className="text-red-600 text-sm text-center">Не совсем — попробуйте ещё раз</p>
+              <button
+                onClick={() => { blockUntilRef.current = Date.now() + 200; handleSyllableDismiss(); }}
+                className="w-full py-3 bg-gray-100 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                Ещё раз
+              </button>
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   const { phrase } = current;
   const s = phrase.lesson_stage;
@@ -562,7 +756,10 @@ export default function PhraseSession({
                 <p className="text-sm text-red-600 mb-1">Не совсем. Правильный ответ:</p>
                 <p className="font-semibold text-red-700">{phrase.blank_word}</p>
                 <button
-                  onClick={() => { blockUntilRef.current = Date.now() + 200; advanceQueue(1, phrase.blank_word); }}
+                  onClick={() => {
+                    blockUntilRef.current = Date.now() + 200;
+                    advanceQueue(1, phrase.blank_word);
+                  }}
                   disabled={saving}
                   className="mt-3 px-5 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
                 >
@@ -580,6 +777,10 @@ export default function PhraseSession({
       if (!typeInput.trim()) return;
       const correct = checkWord(typeInput.trim(), phrase.blank_word, complexity);
       setTypeResult(correct ? 'correct' : 'wrong');
+      if (!correct && current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
+        mistakePhraseIdsRef.current.add(current.phrase.id);
+        setMistakeCount((c) => c + 1);
+      }
     };
 
     return (
@@ -640,7 +841,12 @@ export default function PhraseSession({
               <p className="text-sm text-red-600 mb-1">Не совсем. Правильный ответ:</p>
               <p className="font-semibold text-red-700 mb-3">{phrase.blank_word}</p>
               <button
-                onClick={() => { blockUntilRef.current = Date.now() + 200; advanceQueue(1, phrase.blank_word); }}
+                onClick={() => {
+                  blockUntilRef.current = Date.now() + 200;
+                  pendingAdvanceRef.current = () => advanceQueue(1, phrase.blank_word);
+                  setSyllableChallenge({ syllable: phrase.blank_word, word: phrase.blank_word });
+                  setSyllableInput(''); setSyllableResult(null);
+                }}
                 disabled={saving}
                 className="px-5 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
               >
@@ -659,6 +865,10 @@ export default function PhraseSession({
     if (!typeInput.trim()) return;
     const correct = checkPhrase(typeInput.trim(), phrase.text, complexity);
     setTypeResult(correct ? 'correct' : 'wrong');
+    if (!correct && current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
+      mistakePhraseIdsRef.current.add(current.phrase.id);
+      setMistakeCount((c) => c + 1);
+    }
   };
 
   return (
@@ -731,7 +941,13 @@ export default function PhraseSession({
               />
             </div>
             <button
-              onClick={() => { blockUntilRef.current = Date.now() + 200; advanceQueue(1); }}
+              onClick={() => {
+                blockUntilRef.current = Date.now() + 200;
+                const { word: mw } = findMistakeWordSyllable(typeInput, phrase.text);
+                pendingAdvanceRef.current = () => advanceQueue(1);
+                setSyllableChallenge({ syllable: mw, word: mw });
+                setSyllableInput(''); setSyllableResult(null);
+              }}
               disabled={saving}
               className="px-5 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
             >
@@ -743,3 +959,5 @@ export default function PhraseSession({
     </main>
   );
 }
+
+// ── Syllable challenge overlay — rendered by caller if syllableChallenge is set

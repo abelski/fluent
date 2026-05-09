@@ -22,10 +22,11 @@ export interface Word {
 
 interface StudyCard {
   word: Word;
-  stage: 1 | 2 | '2r' | 3;
+  stage: 1 | 2 | '2r' | 3 | '3s';
   failCount: number;
   standalone?: boolean;
   easyChosen?: boolean;
+  targetSyllable?: string;
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong' | 'empty';
@@ -139,6 +140,58 @@ function insertRandom(rest: StudyCard[], newCards: StudyCard[]): StudyCard[] {
   return [...rest.slice(0, pos), ...newCards, ...rest.slice(pos)];
 }
 
+// Insert close to front (max 2 cards away) — used for syllable drill so it feels immediate
+function insertNear(rest: StudyCard[], newCards: StudyCard[]): StudyCard[] {
+  const pos = Math.min(2, rest.length);
+  return [...rest.slice(0, pos), ...newCards, ...rest.slice(pos)];
+}
+
+// ── Syllable helpers ──────────────────────────────────────────────────────────
+
+const LT_DIPHTHONGS = new Set(['ie', 'uo', 'ai', 'ei', 'ui', 'au', 'ia', 'ua']);
+
+function splitSyllables(word: string): string[] {
+  const isVowel = (c: string) => /[aeiouąęėįųūy]/i.test(c);
+  const vowelIdx: number[] = [];
+  for (let i = 0; i < word.length; i++) if (isVowel(word[i])) vowelIdx.push(i);
+  if (vowelIdx.length <= 1) return [word];
+
+  const splits: number[] = [0];
+  let i = 0;
+  while (i < vowelIdx.length - 1) {
+    const v1 = vowelIdx[i];
+    const v2 = vowelIdx[i + 1];
+    const gap = v2 - v1 - 1;
+    if (gap === 0) {
+      const pair = (word[v1] + word[v2]).toLowerCase().replace(/[ąęėįųū]/g, (c) =>
+        ({ ą: 'a', ę: 'e', ė: 'e', į: 'i', ų: 'u', ū: 'u' }[c] ?? c));
+      if (LT_DIPHTHONGS.has(pair)) { i++; continue; }
+      splits.push(v2);
+    } else if (gap === 1) {
+      splits.push(v1 + 1);
+    } else {
+      splits.push(v1 + 1 + Math.floor(gap / 2));
+    }
+    i++;
+  }
+  splits.push(word.length);
+  return splits.slice(0, -1).map((s, idx) => word.slice(s, splits[idx + 1])).filter(Boolean);
+}
+
+function findMistakeSyllable(typed: string, target: string): string {
+  let pos = target.length;
+  for (let i = 0; i < target.length; i++) {
+    if (i >= typed.length || normalizeLt(typed[i]) !== normalizeLt(target[i])) { pos = i; break; }
+  }
+  const syllables = splitSyllables(target);
+  let cur = 0;
+  for (const syl of syllables) {
+    cur += syl.length;
+    if (pos < cur) return syl;
+  }
+  return syllables[syllables.length - 1] ?? target;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function QuizSession({
@@ -181,9 +234,11 @@ export default function QuizSession({
   const [shownAnswer, setShownAnswer] = useState('');
   const [nearMiss, setNearMiss] = useState<string | null>(null);
   const [blankIndex, setBlankIndex] = useState(0);
-  const inputRef     = useRef<HTMLInputElement>(null);
-  const dismissBtnRef = useRef<HTMLButtonElement>(null);
-  const blockUntilRef = useRef(0);
+  const [syllableTyped, setSyllableTyped] = useState('');
+  const inputRef         = useRef<HTMLInputElement>(null);
+  const syllableInputRef = useRef<HTMLInputElement>(null);
+  const dismissBtnRef    = useRef<HTMLButtonElement>(null);
+  const blockUntilRef    = useRef(0);
 
   // ── saveProgress ────────────────────────────────────────────────────────────
   const saveProgress = useCallback((
@@ -251,6 +306,10 @@ export default function QuizSession({
       setBlankIndex(Math.floor(Math.random() * forms.length));
       setTimeout(() => inputRef.current?.focus(), 50);
     }
+    if (queue.length > 0 && queue[0].stage === '3s') {
+      setSyllableTyped('');
+      setTimeout(() => syllableInputRef.current?.focus(), 50);
+    }
   // words/distractors are static per session; new session always changes frontWordId.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frontWordId, frontStage, lang]);
@@ -284,6 +343,7 @@ export default function QuizSession({
         e.preventDefault();
         if (queue[0].stage === 2) handleStage2Dismiss();
         else if (queue[0].stage === '2r') handleStage2rDismiss();
+        else if (queue[0].stage === '3s') handleStage3sDismiss();
         else handleStage3Dismiss();
       }
     };
@@ -326,7 +386,7 @@ export default function QuizSession({
   }, [timeLeft, useTimer, frontCardId, frontCardStage, answerState, sessionMode, saveProgress, blankIndex]);
 
   // ── Queue helpers ────────────────────────────────────────────────────────────
-  function buildRetryCards(card: StudyCard): StudyCard[] {
+  function buildRetryCards(card: StudyCard, syllable?: string): StudyCard[] {
     // "Легко" + stage-3 fail: demote to С трудом path (MC → reverse MC → type once more)
     if (card.stage === 3 && card.easyChosen) {
       const mcStage: 2 | '2r' = Math.random() < 0.5 ? 2 : '2r';
@@ -338,10 +398,20 @@ export default function QuizSession({
       ];
     }
     if (lessonMode === 'thorough') {
-      if (card.stage === 2 || card.stage === '2r' || card.stage === 3) {
+      if (card.stage === 2 || card.stage === '2r') {
         return [
           { word: card.word, stage: card.stage, failCount: card.failCount + 1 },
           { word: card.word, stage: card.stage, failCount: card.failCount + 1 },
+        ];
+      }
+      if (card.stage === 3) {
+        if (syllable) return [
+          { word: card.word, stage: '3s', failCount: 0, targetSyllable: syllable },
+          { word: card.word, stage: 3, failCount: card.failCount + 1 },
+        ];
+        return [
+          { word: card.word, stage: 3, failCount: card.failCount + 1 },
+          { word: card.word, stage: 3, failCount: card.failCount + 1 },
         ];
       }
       return [];
@@ -363,7 +433,13 @@ export default function QuizSession({
       return [];
     }
     if (card.stage === 3) {
-      if (card.failCount === 0) return [{ word: card.word, stage: 3, failCount: 1 }];
+      if (card.failCount === 0) {
+        if (syllable) return [
+          { word: card.word, stage: '3s', failCount: 0, targetSyllable: syllable },
+          { word: card.word, stage: 3, failCount: 1 },
+        ];
+        return [{ word: card.word, stage: 3, failCount: 1 }];
+      }
       if (card.failCount === 1) return [
         { word: card.word, stage: 2, failCount: 0, standalone: true },
         { word: card.word, stage: 3, failCount: 2 },
@@ -548,7 +624,9 @@ export default function QuizSession({
 
   function handleStage3Dismiss() {
     const card = queue[0];
-    const retryCards = buildRetryCards(card);
+    const syllable = shownAnswer ? findMistakeSyllable(typedAnswer, shownAnswer) : undefined;
+    const retryCards = buildRetryCards(card, syllable);
+    const hasSyllable = retryCards.length > 0 && retryCards[0].stage === '3s';
     if (!card.standalone && retryCards.length === 0 && !doneWordIdsRef.current.has(card.word.id)) {
       doneWordIdsRef.current.add(card.word.id);
       setWordsDone((c) => c + 1);
@@ -558,8 +636,51 @@ export default function QuizSession({
     setShownAnswer('');
     setNearMiss(null);
     blockUntilRef.current = Date.now() + 200;
-    advance(card, false, retryCards);
+    // Syllable cards go near the front so the drill feels immediate
+    if (hasSyllable) {
+      setQueue((prev) => insertNear(prev.slice(1), retryCards));
+    } else {
+      advance(card, false, retryCards);
+    }
     if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
+  }
+
+  function handleStage3sSubmit() {
+    if (answerState !== 'unanswered') return;
+    const card = queue[0];
+    const syllable = card.targetSyllable ?? '';
+    if (syllableTyped.trim() === '') { setAnswerState('empty'); return; }
+    const isCorrect =
+      normalizeLt(syllableTyped.trim()) === normalizeLt(syllable) ||
+      syllableTyped.trim().toLowerCase() === syllable.toLowerCase();
+    setAnswerState(isCorrect ? 'correct' : 'wrong');
+    if (!isCorrect) {
+      blockUntilRef.current = Date.now() + 300;
+      setShownAnswer(syllable);
+    } else {
+      setTimeout(() => {
+        setAnswerState('unanswered');
+        setSyllableTyped('');
+        setShownAnswer('');
+        blockUntilRef.current = Date.now() + 200;
+        advance(card, true);
+      }, 1200);
+    }
+  }
+
+  function handleStage3sDismiss() {
+    const card = queue[0];
+    setQueue((prev) => {
+      const rest = prev.slice(1);
+      return insertNear(rest, [
+        { word: card.word, stage: '3s' as const, failCount: card.failCount + 1, targetSyllable: card.targetSyllable },
+        { word: card.word, stage: 3 as const, failCount: 0 },
+      ]);
+    });
+    setAnswerState('unanswered');
+    setSyllableTyped('');
+    setShownAnswer('');
+    blockUntilRef.current = Date.now() + 200;
   }
 
   // ── Match round ───────────────────────────────────────────────────────────────
@@ -627,7 +748,7 @@ export default function QuizSession({
   const word       = card.word;
   const stage      = card.stage;
   const progressPct = totalWords > 0 ? (wordsDone / totalWords) * 100 : 0;
-  const stageLabel  = tr.study.stages[stage === '2r' ? 2 : stage];
+  const stageLabel  = tr.study.stages[stage === '2r' || stage === '3s' ? 3 : stage];
   const cloveForms  = parseForms(word.lithuanian);
   const cloveIsCloze = cloveForms.length > 1;
   const cloveText   = cloveForms.map((f, i) => i === blankIndex ? '______' : f).join(' / ');
@@ -859,6 +980,71 @@ export default function QuizSession({
             </div>
           </div>
         )}
+
+        {/* ── Stage 3s: Syllable drill ── */}
+        {stage === '3s' && (() => {
+          const syllable = card.targetSyllable ?? '';
+          const text = word.lithuanian;
+          const idx = text.toLowerCase().indexOf(syllable.toLowerCase());
+          const before = idx === -1 ? text : text.slice(0, idx);
+          const after = idx === -1 ? '' : text.slice(idx + syllable.length);
+          const inputW = `${Math.max(syllable.length * 1.1, 1.5)}ch`;
+          return (
+            <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
+              <div className="text-center">
+                <p className="text-gray-400 text-sm mb-6 uppercase tracking-wider">Отработайте слог</p>
+                {/* Inline gap input inside the word — use <p> to preserve spacing */}
+                <p className="text-2xl sm:text-4xl font-bold tracking-tight">
+                  {before}
+                  {answerState === 'correct' && (
+                    <span className="text-emerald-600 border-b-4 border-emerald-400 px-0.5 rounded-sm bg-emerald-50">{syllableTyped}</span>
+                  )}
+                  {answerState === 'wrong' && (
+                    <span className="text-red-500 border-b-4 border-red-400 px-0.5 rounded-sm bg-red-50">{syllable}</span>
+                  )}
+                  {(answerState === 'unanswered' || answerState === 'empty') && (
+                    <input
+                      ref={syllableInputRef}
+                      type="text"
+                      value={syllableTyped}
+                      onChange={(e) => { setSyllableTyped(e.target.value); if (answerState === 'empty') setAnswerState('unanswered'); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleStage3sSubmit(); }}
+                      style={{ width: inputW, minWidth: '2.5ch', display: 'inline' }}
+                      className={`border-b-4 rounded-sm bg-emerald-50 outline-none text-center font-bold text-emerald-600 px-1
+                        ${answerState === 'empty' ? 'border-amber-400 bg-amber-50' : 'border-emerald-400'}`}
+                    />
+                  )}
+                  {after}
+                </p>
+                {word.hint && <p className="text-gray-300 text-xs uppercase tracking-wider mt-3">{word.hint}</p>}
+                <p className="text-gray-400 text-sm mt-3">{trans(word, lang)}</p>
+              </div>
+              <div className="w-full flex flex-col gap-3">
+                {answerState === 'empty' && (
+                  <p className="text-amber-600 text-sm text-center animate-in fade-in duration-150">{tr.study.typeEmptyHint}</p>
+                )}
+                {(answerState === 'unanswered' || answerState === 'empty') && (
+                  <button onClick={handleStage3sSubmit} className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors">
+                    {tr.common.check}
+                  </button>
+                )}
+                {answerState === 'correct' && (
+                  <p className="text-emerald-600 text-sm font-medium text-center animate-in fade-in duration-150">
+                    {tr.common.correct} Теперь напишите слово целиком.
+                  </p>
+                )}
+                {answerState === 'wrong' && (
+                  <div className="flex flex-col gap-3 animate-in fade-in duration-150">
+                    <p className="text-red-600 text-sm font-medium text-center">{tr.common.notQuite}</p>
+                    <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage3sDismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
+                      {tr.common.dismiss}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </main>
   );

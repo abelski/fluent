@@ -736,6 +736,12 @@ def get_phrase_review_session(
     if not due_phrases:
         raise HTTPException(status_code=404, detail="No phrases due for review")
 
+    # Sort oldest/most-overdue first: null next_review (in-progress) → date.min, then last_seen
+    due_phrases.sort(key=lambda p: (
+        progress_map[p.id].next_review or date.min,
+        progress_map[p.id].last_seen,
+    ))
+
     session_phrases = due_phrases[:total]
 
     # Build distractors from all phrases not in session
