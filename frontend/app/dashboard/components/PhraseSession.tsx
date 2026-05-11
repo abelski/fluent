@@ -267,11 +267,11 @@ export default function PhraseSession({
   }, [currentIdx]);
 
   useEffect(() => {
-    if (stage1Step === 'type' && inputRef.current) inputRef.current.focus();
+    if (stage1Step === 'type' && inputRef.current && window.innerWidth > 768) inputRef.current.focus();
   }, [stage1Step]);
 
   useEffect(() => {
-    if (current?.phrase.lesson_stage === 2 && textareaRef.current) textareaRef.current.focus();
+    if (current?.phrase.lesson_stage === 2 && textareaRef.current && window.innerWidth > 768) textareaRef.current.focus();
   }, [current]);
 
   useEffect(() => {
@@ -403,7 +403,7 @@ export default function PhraseSession({
     const newQueue = (() => {
       const next = [...queue];
       if (quality < 3 && current.retries < 2) {
-        const insertAt = Math.min(currentIdx + 2, next.length);
+        const insertAt = Math.min(currentIdx + 1, next.length);
         next.splice(insertAt, 0, { phrase, retries: current.retries + 1 });
       }
       return next;
@@ -459,7 +459,7 @@ export default function PhraseSession({
   // ── Done screen ───────────────────────────────────────────────────────────────
   if (done) {
     return (
-      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
+      <main className="min-h-dvh bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
           <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
         </div>
@@ -525,7 +525,7 @@ export default function PhraseSession({
     const inputW = `${Math.max(syllable.length * 1.1, 2)}ch`;
 
     return (
-      <main className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-10">
+      <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
           <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
         </div>
@@ -581,7 +581,7 @@ export default function PhraseSession({
             <div className="flex flex-col gap-3">
               <p className="text-red-600 text-sm text-center">Не совсем — попробуйте ещё раз</p>
               <button
-                onClick={() => { blockUntilRef.current = Date.now() + 200; handleSyllableDismiss(); }}
+                onClick={() => { blockUntilRef.current = Date.now() + 800; handleSyllableDismiss(); }}
                 className="w-full py-3 bg-gray-100 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 Ещё раз
@@ -655,7 +655,7 @@ export default function PhraseSession({
   // ── Stage 0: Intro card ───────────────────────────────────────────────────────
   if (s === 0) {
     return (
-      <main className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-10" data-testid="phrase-session-stage0">
+      <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage0">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
           <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
         </div>
@@ -709,7 +709,7 @@ export default function PhraseSession({
       };
 
       return (
-        <main className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-10" data-testid="phrase-session-stage1-mcq">
+        <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage1-mcq">
           <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
             <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
           </div>
@@ -757,7 +757,7 @@ export default function PhraseSession({
                 <p className="font-semibold text-red-700">{phrase.blank_word}</p>
                 <button
                   onClick={() => {
-                    blockUntilRef.current = Date.now() + 200;
+                    blockUntilRef.current = Date.now() + 800;
                     advanceQueue(1, phrase.blank_word);
                   }}
                   disabled={saving}
@@ -784,7 +784,7 @@ export default function PhraseSession({
     };
 
     return (
-      <main className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-10" data-testid="phrase-session-stage1-type">
+      <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage1-type">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
           <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
         </div>
@@ -792,7 +792,7 @@ export default function PhraseSession({
           <Header />
           <ProgressBars />
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
             <p className="text-xs text-amber-600 font-medium mb-4 uppercase tracking-wider">Напишите слово</p>
             <p className="text-lg text-gray-900 text-center leading-relaxed">
               {before}
@@ -812,11 +812,11 @@ export default function PhraseSession({
                 onChange={(e) => setTypeInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleWordSubmit(); }}
                 placeholder="Введите пропущенное слово..."
-                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-emerald-400"
+                className="flex-1 px-4 py-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-emerald-400"
               />
               <button
                 onClick={handleWordSubmit}
-                className="px-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+                className="px-5 py-4 rounded-xl bg-emerald-600 text-white text-base font-medium hover:bg-emerald-700 transition-colors"
               >
                 →
               </button>
@@ -827,9 +827,9 @@ export default function PhraseSession({
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
               <p className="text-emerald-700 font-semibold mb-3">Правильно! ✓</p>
               <button
-                onClick={() => { blockUntilRef.current = Date.now() + 200; advanceQueue(5); }}
+                onClick={() => { blockUntilRef.current = Date.now() + 800; advanceQueue(5); }}
                 disabled={saving}
-                className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
+                className="w-full py-4 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
               >
                 Дальше →
               </button>
@@ -842,13 +842,13 @@ export default function PhraseSession({
               <p className="font-semibold text-red-700 mb-3">{phrase.blank_word}</p>
               <button
                 onClick={() => {
-                  blockUntilRef.current = Date.now() + 200;
+                  blockUntilRef.current = Date.now() + 800;
                   pendingAdvanceRef.current = () => advanceQueue(1, phrase.blank_word);
                   setSyllableChallenge({ syllable: phrase.blank_word, word: phrase.blank_word });
                   setSyllableInput(''); setSyllableResult(null);
                 }}
                 disabled={saving}
-                className="px-5 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
+                className="w-full py-4 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Понял, дальше →
               </button>
@@ -872,7 +872,7 @@ export default function PhraseSession({
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-10" data-testid="phrase-session-stage2">
+    <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage2">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
         <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
       </div>
@@ -880,9 +880,9 @@ export default function PhraseSession({
         <Header />
         <ProgressBars />
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mb-6">
-          <p className="text-xs text-purple-600 font-medium mb-4 uppercase tracking-wider">Напишите фразу</p>
-          <p className="text-2xl text-gray-500 mb-2">{getTranslation(phrase)}</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center mb-4">
+          <p className="text-xs text-purple-600 font-medium mb-3 uppercase tracking-wider">Напишите фразу</p>
+          <p className="text-xl sm:text-2xl text-gray-500 mb-2">{getTranslation(phrase)}</p>
           {showAnswer && (
             <p className="text-base text-emerald-700 font-medium mt-3 border-t border-gray-100 pt-3">{phrase.text}</p>
           )}
@@ -896,19 +896,19 @@ export default function PhraseSession({
               onChange={(e) => setTypeInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePhraseSubmit(); } }}
               placeholder="Напишите фразу по-литовски..."
-              rows={2}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-emerald-400 resize-none mb-3"
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-emerald-400 resize-none mb-3"
             />
             <div className="flex gap-2">
               <button
                 onClick={() => setShowAnswer((s) => !s)}
-                className="flex-1 py-3 rounded-xl text-sm text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                className="flex-1 py-4 rounded-xl text-sm text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
               >
                 {showAnswer ? 'Скрыть' : 'Показать ответ'}
               </button>
               <button
                 onClick={handlePhraseSubmit}
-                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+                className="flex-1 py-4 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
               >
                 Проверить →
               </button>
@@ -921,9 +921,9 @@ export default function PhraseSession({
             <p className="text-emerald-700 font-semibold mb-1">Правильно! ✓</p>
             <p className="text-sm text-gray-500 mb-3">{phrase.text}</p>
             <button
-              onClick={() => { blockUntilRef.current = Date.now() + 200; advanceQueue(5); }}
+              onClick={() => { blockUntilRef.current = Date.now() + 800; advanceQueue(5); }}
               disabled={saving}
-              className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
+              className="w-full py-4 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
             >
               Дальше →
             </button>
@@ -942,14 +942,14 @@ export default function PhraseSession({
             </div>
             <button
               onClick={() => {
-                blockUntilRef.current = Date.now() + 200;
+                blockUntilRef.current = Date.now() + 800;
                 const { word: mw } = findMistakeWordSyllable(typeInput, phrase.text);
                 pendingAdvanceRef.current = () => advanceQueue(1);
                 setSyllableChallenge({ syllable: mw, word: mw });
                 setSyllableInput(''); setSyllableResult(null);
               }}
               disabled={saving}
-              className="px-5 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
+              className="w-full py-4 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
             >
               Понял, дальше →
             </button>
