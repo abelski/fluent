@@ -163,8 +163,65 @@ function streakMilestoneProgress(value: number): number {
   return Math.round(((value - prev) / (next - prev)) * 100);
 }
 
+function localIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function ActivityCalendar({ dates }: { dates: string[] }) {
+  const { tr } = useT();
+  const activeSet = new Set(dates);
+  const today = new Date();
+  const todayStr = localIso(today);
+
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+  const leadingEmpty = firstDow === 0 ? 6 : firstDow - 1; // Mon-first offset
+
+  const cells: { dayNum: number | null; dateStr: string | null }[] = [];
+  for (let i = 0; i < leadingEmpty; i++) cells.push({ dayNum: null, dateStr: null });
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ dayNum: d, dateStr: localIso(new Date(year, month, d)) });
+  }
+
+  return (
+    <div className="streak-calendar">
+      <div className="grid grid-cols-7 mb-2">
+        {tr.stats.calendarDayLabels.map((l) => (
+          <div key={l} className="text-center text-xs font-semibold text-gray-400 pb-1">{l}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {cells.map((cell, i) => {
+          if (!cell.dateStr) return <div key={`e${i}`} className="h-10" />;
+          const isActive = activeSet.has(cell.dateStr) && cell.dateStr <= todayStr;
+          const isToday = cell.dateStr === todayStr;
+          const isFuture = cell.dateStr > todayStr;
+          return (
+            <div key={cell.dateStr} className="flex flex-col items-center mb-1">
+              <div
+                title={cell.dateStr}
+                className={[
+                  'w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold select-none',
+                  isActive ? 'ring-2 ring-emerald-500 text-emerald-600 bg-white' : 'bg-gray-100 text-gray-500',
+                  isFuture ? 'opacity-40' : '',
+                ].join(' ')}
+              >
+                {cell.dayNum}
+              </div>
+              <div className={['w-1.5 h-1.5 rounded-full mt-0.5', isToday ? 'bg-orange-500' : 'invisible'].join(' ')} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function LandingClient() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [activityDates, setActivityDates] = useState<string[]>([]);
   // null = still determining auth state (token exists, waiting for API)
   // true = confirmed logged in, false = confirmed guest
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
@@ -181,68 +238,73 @@ export default function LandingClient() {
         else { setLoggedIn(false); }
       })
       .catch(() => { setLoggedIn(false); });
+    fetch(`${BACKEND_URL}/api/me/activity-calendar`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => { if (!r.ok) return null; return r.json(); })
+      .then((data) => { if (data?.dates) setActivityDates(data.dates); })
+      .catch(() => {});
   }, []);
 
   if (loggedIn === null) return null; // waiting for auth check — show nothing to avoid flash
-  return loggedIn ? <UserHome stats={stats} /> : <GuestLanding />;
+  return loggedIn ? <UserHome stats={stats} activityDates={activityDates} /> : <GuestLanding />;
 }
 
-function UserHome({ stats }: { stats: Stats | null }) {
+function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates: string[] }) {
   const { tr, plural } = useT();
   const t = tr.landing;
 
   const streak = stats?.streak ?? 0;
-  const known = stats?.known ?? 0;
   const streakNext = nextStreakMilestone(streak);
   const streakPct = streakMilestoneProgress(streak);
 
-  function motivation(): string {
-    const m = tr.stats.motivations;
-    if (streak >= 30) return m.streak30;
-    if (streak >= 14) return m.streak14;
-    if (streak >= 7) return m.streak7;
-    if (streak >= 3) return m.streak3;
-    if (streak === 2) return m.streak2;
-    if (known >= 100) return m.known100;
-    if (known >= 50) return m.known50;
-    if (known > 0) return m.knownSome;
-    return m.none;
-  }
 
   return (
     <main className="bg-[#F5F5F7] min-h-screen">
       <div className="max-w-2xl mx-auto px-4 py-10">
         {/* Streak card */}
-        <div className="relative rounded-2xl bg-gradient-to-br from-orange-50 to-white border border-orange-100 shadow-sm overflow-hidden p-5 mb-4">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-orange-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
-          <div className="flex items-start justify-between gap-3 relative">
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-orange-100 flex items-center justify-center text-xl">
-                🔥
-              </div>
-              <div>
-                <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{streak}</p>
-                <p className="text-gray-500 text-xs mt-1 font-medium">{plural(streak, tr.stats.streakDay)}</p>
-              </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+          <div className="flex">
+            {/* Left: month calendar */}
+            <div className="flex-1 p-5 border-r border-gray-100 min-w-0">
+              <p className="text-xl font-bold text-gray-900 mb-4">
+                {streak > 0 ? `${streak} ${plural(streak, tr.stats.streakDay)}!` : tr.stats.calendarStartStreak}
+              </p>
+              <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">
+                {tr.stats.calendarMonthNames[new Date().getMonth()]} {new Date().getFullYear()}
+              </p>
+              <ActivityCalendar dates={activityDates} />
             </div>
-            {streakNext && streak > 0 && (
-              <div className="text-right flex-shrink-0">
-                <p className="text-[10px] text-orange-600 font-semibold uppercase tracking-wide">Next</p>
-                <p className="text-sm font-bold text-orange-700">{streakNext}</p>
+            {/* Right: streak counter + flame */}
+            <div className="w-36 shrink-0 flex flex-col items-center justify-center gap-4 p-4">
+              <div className="text-center">
+                <p className="text-5xl font-extrabold text-gray-900 leading-none">{streak}</p>
+                <p className="text-xs text-gray-500 mt-1">{plural(streak, tr.stats.streakDay)}</p>
               </div>
-            )}
-          </div>
-          {streak > 0 && (
-            <div className="mt-4">
-              <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden">
-                <div className="h-full bg-orange-500 rounded-full transition-all duration-700" style={{ width: `${streakPct}%` }} />
+              {/* Circular progress ring around flame */}
+              <div className="relative w-20 h-20 flex items-center justify-center">
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="#f3f4f6" strokeWidth="5" />
+                  {streakPct > 0 && (
+                    <circle
+                      cx="40" cy="40" r="34"
+                      fill="none" stroke="#f97316" strokeWidth="5"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 34}`}
+                      strokeDashoffset={`${2 * Math.PI * 34 * (1 - streakPct / 100)}`}
+                      transform="rotate(-90 40 40)"
+                    />
+                  )}
+                </svg>
+                <span className="text-3xl relative z-10">🔥</span>
               </div>
               {streakNext && (
-                <p className="text-[10px] text-gray-400 mt-1">{streak} / {streakNext} до следующей цели</p>
+                <p className="text-[11px] text-center text-gray-400 leading-tight">
+                  {tr.stats.calendarNextGoal}<br /><span className="font-bold text-orange-500">{streakNext}</span>
+                </p>
               )}
             </div>
-          )}
-          <p className="mt-3 text-sm text-orange-700 font-medium">{motivation()}</p>
+          </div>
         </div>
 
         <Leaderboard />

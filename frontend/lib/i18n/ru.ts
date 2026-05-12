@@ -372,6 +372,10 @@ const ru: Translations = {
     memoryFading: 'Возможно забываю',
     memoryDue: 'Нужно повторить',
     streakDay: { one: 'день подряд', few: 'дня подряд', many: 'дней подряд' },
+    calendarDayLabels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+    calendarMonthNames: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+    calendarNextGoal: 'до цели:',
+    calendarStartStreak: 'Начни серию!',
     motivations: {
       streak30: 'Невероятно! Ты настоящая машина.',
       streak14: 'Две недели без остановки — это сила!',

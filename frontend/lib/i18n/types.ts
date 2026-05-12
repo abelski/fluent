@@ -381,6 +381,10 @@ export interface Translations {
     memoryFading: string;      // vocabulary status badge: probably forgetting
     memoryDue: string;         // vocabulary status badge: need to repeat
     streakDay: PluralForms;
+    calendarDayLabels: string[];
+    calendarMonthNames: string[];
+    calendarNextGoal: string;
+    calendarStartStreak: string;
     motivations: {
       streak30: string;
       streak14: string;

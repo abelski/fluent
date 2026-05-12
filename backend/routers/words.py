@@ -770,19 +770,11 @@ def get_stats(
     learning = sum(1 for p in all_progress if p.status == "learning")
     mistakes = sum(1 for p in all_progress if p.mistake_count > 0)
 
-    # Build a set of unique study dates, then count backwards from today
-    studied_dates = {p.last_seen.date() for p in all_progress}
     today = datetime.now(timezone.utc).date()
     due_review = sum(
         1 for p in all_progress
         if p.status == "known" and (p.next_review is None or p.next_review <= today)
     )
-    streak = 0
-    # Start from today; if today wasn't a study day, check yesterday before giving up
-    check = today if today in studied_dates else today - timedelta(days=1)
-    while check in studied_dates:
-        streak += 1
-        check -= timedelta(days=1)
 
     # Grammar: count distinct lessons passed (best score > 75%)
     grammar_results = session.exec(
@@ -811,6 +803,16 @@ def get_stats(
         if p.lesson_stage >= 2 and (p.next_review is None or p.next_review <= today)
     )
 
+    # Streak: count consecutive active days across words + grammar + phrases
+    studied_dates: set = {p.last_seen.date() for p in all_progress}
+    studied_dates |= {r.created_at.date() for r in grammar_results}
+    studied_dates |= {p.last_seen.date() for p in phrase_progress}
+    streak = 0
+    check = today if today in studied_dates else today - timedelta(days=1)
+    while check in studied_dates:
+        streak += 1
+        check -= timedelta(days=1)
+
     return {
         "known": known,
         "learning": learning,
@@ -823,6 +825,46 @@ def get_stats(
         "phrases_learned": phrases_learned,
         "phrases_due_review": phrases_due_review,
     }
+
+
+@router.get("/me/activity-calendar")
+def get_activity_calendar(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return ISO date strings of active days within the last 28 days.
+
+    A day is active if the user reviewed a word, completed a grammar lesson,
+    or progressed on a phrase on that day.
+    """
+    user = _require_user(authorization, session)
+    today = datetime.now(timezone.utc).date()
+    window_start = today - timedelta(days=27)
+
+    word_dates = {
+        p.last_seen.date()
+        for p in session.exec(
+            select(UserWordProgress).where(UserWordProgress.user_id == user.id)
+        ).all()
+        if p.last_seen.date() >= window_start
+    }
+    grammar_dates = {
+        r.created_at.date()
+        for r in session.exec(
+            select(GrammarLessonResult).where(GrammarLessonResult.user_id == user.id)
+        ).all()
+        if r.created_at.date() >= window_start
+    }
+    phrase_dates = {
+        p.last_seen.date()
+        for p in session.exec(
+            select(UserPhraseProgress).where(UserPhraseProgress.user_id == user.id)
+        ).all()
+        if p.last_seen.date() >= window_start
+    }
+
+    active_dates = sorted(word_dates | grammar_dates | phrase_dates)
+    return {"dates": [d.isoformat() for d in active_dates]}
 
 
 class LeaderboardEntry(BaseModel):

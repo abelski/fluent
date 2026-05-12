@@ -372,6 +372,10 @@ const en: Translations = {
     memoryFading: 'Probably forgetting',
     memoryDue: 'Need to repeat',
     streakDay: { one: 'day in a row', few: 'days in a row', many: 'days in a row' },
+    calendarDayLabels: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
+    calendarMonthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    calendarNextGoal: 'next goal:',
+    calendarStartStreak: 'Start your streak!',
     motivations: {
       streak30: 'Incredible! You are a learning machine.',
       streak14: 'Two weeks straight — that takes dedication!',
