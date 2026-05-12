@@ -219,6 +219,7 @@ export default function QuizSession({
   const [correctWords, setCorrectWords] = useState(0);
   const [done, setDone] = useState(false);
   const [showMatchRound, setShowMatchRound] = useState(false);
+  const [matchRoundWords, setMatchRoundWords] = useState<Word[]>([]);
 
   const learnedWordIdsRef   = useRef<Set<number>>(new Set());
   const mistakeWordIdsRef   = useRef<Set<number>>(new Set());
@@ -320,8 +321,12 @@ export default function QuizSession({
     if (sessionMode === 'study' && mistakeWordIdsRef.current.size / totalWords > 0.3) {
       learnedWordIdsRef.current.forEach((wordId) => saveProgress(wordId, 'learning'));
     }
+    // Only show words the user successfully typed (stage 3 correct) in the match round.
+    // Fall back to all session words if fewer than 2 were completed correctly.
+    const completed = words.filter((w) => correctWordIdsRef.current.has(w.id));
+    setMatchRoundWords(completed.length >= 2 ? completed : words);
     setShowMatchRound(true);
-  }, [sessionMode, totalWords, saveProgress]);
+  }, [sessionMode, totalWords, saveProgress, words]);
 
   useEffect(() => {
     if (totalWords > 0 && queue.length === 0 && !done && !showMatchRound) finishSession();
@@ -651,8 +656,8 @@ export default function QuizSession({
     const syllable = card.targetSyllable ?? '';
     if (syllableTyped.trim() === '') { setAnswerState('empty'); return; }
     const isCorrect =
-      normalizeLt(syllableTyped.trim()) === normalizeLt(syllable) ||
-      syllableTyped.trim().toLowerCase() === syllable.toLowerCase();
+      normalizeLt(syllableTyped.trim()) === normalizeLt(syllable.trim()) ||
+      syllableTyped.trim().toLowerCase() === syllable.trim().toLowerCase();
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     if (!isCorrect) {
       blockUntilRef.current = Date.now() + 300;
@@ -687,7 +692,7 @@ export default function QuizSession({
   if (showMatchRound && !done) {
     return (
       <MatchRound
-        words={words}
+        words={matchRoundWords}
         lang={lang}
         onDone={() => { setShowMatchRound(false); setDone(true); router.refresh(); }}
         backHref={backHref}
@@ -983,7 +988,7 @@ export default function QuizSession({
 
         {/* ── Stage 3s: Syllable drill ── */}
         {stage === '3s' && (() => {
-          const syllable = card.targetSyllable ?? '';
+          const syllable = (card.targetSyllable ?? '').trim();
           const text = word.lithuanian;
           const idx = text.toLowerCase().indexOf(syllable.toLowerCase());
           const before = idx === -1 ? text : text.slice(0, idx);
