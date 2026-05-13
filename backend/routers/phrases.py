@@ -24,6 +24,7 @@ from models import (
 router = APIRouter()
 
 DEFAULT_PHRASES_PER_SESSION = 10
+DEFAULT_NEW_PHRASES_RATIO = 0.3  # 30% new, 70% review
 
 
 # ── SM-2 spaced repetition (same algorithm as words.py) ─────────────────────
@@ -638,11 +639,14 @@ def get_phrase_study_session(
             # In-progress phrases not yet due — include as review
             due_phrases.append(phrase)
 
-    # Prioritize due, fill with new
-    session_phrases = due_phrases[:total]
-    remaining = total - len(session_phrases)
-    if remaining > 0:
-        session_phrases += new_phrases[:remaining]
+    # Apply new/review ratio (mirrors words.py session logic)
+    ratio = user.new_phrases_ratio if user.new_phrases_ratio is not None else DEFAULT_NEW_PHRASES_RATIO
+    new_count = round(total * ratio)
+    review_count = total - new_count
+    # Fill gaps: if fewer new/review available, use the other type
+    actual_new = min(new_count, len(new_phrases))
+    actual_review = min(review_count + (new_count - actual_new), len(due_phrases))
+    session_phrases = due_phrases[:actual_review] + new_phrases[:actual_new]
 
     if not session_phrases:
         raise HTTPException(status_code=404, detail="No phrases due for review")
@@ -914,13 +918,17 @@ def get_phrases_settings(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return the current user's phrases session size."""
+    """Return the current user's phrases session settings."""
     user = _require_user(authorization, session)
-    return {"phrases_per_session": user.phrases_per_session}
+    return {
+        "phrases_per_session": user.phrases_per_session,
+        "new_phrases_ratio": user.new_phrases_ratio if user.new_phrases_ratio is not None else DEFAULT_NEW_PHRASES_RATIO,
+    }
 
 
 class PhrasesSettingsUpdate(BaseModel):
     phrases_per_session: int
+    new_phrases_ratio: float
 
 
 @router.patch("/me/phrases-settings")
@@ -929,11 +937,17 @@ def update_phrases_settings(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Update the current user's phrases session size."""
+    """Update the current user's phrases session settings."""
     user = _require_user(authorization, session)
     if not (3 <= body.phrases_per_session <= 30):
         raise HTTPException(status_code=422, detail="phrases_per_session must be between 3 and 30")
+    if not (0.0 <= body.new_phrases_ratio <= 1.0):
+        raise HTTPException(status_code=422, detail="new_phrases_ratio must be between 0.0 and 1.0")
     user.phrases_per_session = body.phrases_per_session
+    user.new_phrases_ratio = body.new_phrases_ratio
     session.add(user)
     session.commit()
-    return {"phrases_per_session": user.phrases_per_session}
+    return {
+        "phrases_per_session": user.phrases_per_session,
+        "new_phrases_ratio": user.new_phrases_ratio,
+    }

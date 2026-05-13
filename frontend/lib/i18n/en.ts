@@ -490,6 +490,8 @@ const en: Translations = {
     ratioNewLabel: 'New',
     ratioReviewLabel: 'Review',
     ratioHint: 'What fraction should be new words. If fewer new words are available, the gap is filled with review words.',
+    phrasesRatioLabel: 'New vs review phrases ratio',
+    phrasesRatioHint: 'What fraction should be new phrases. If fewer new phrases are available, the gap is filled with review phrases.',
     complexityLabel: 'Answer checking strictness',
     complexityHint: 'How strictly typed answers are evaluated',
     complexityEasy: 'Easy',

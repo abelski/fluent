@@ -579,7 +579,12 @@ export async function recordPhraseProgress(
   return r.json();
 }
 
-export async function getPhrasesSettings(): Promise<{ phrases_per_session: number }> {
+export interface PhrasesSettings {
+  phrases_per_session: number;
+  new_phrases_ratio: number;
+}
+
+export async function getPhrasesSettings(): Promise<PhrasesSettings> {
   const token = getToken();
   const r = await fetch(`${BACKEND_URL}/api/me/phrases-settings`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -588,7 +593,7 @@ export async function getPhrasesSettings(): Promise<{ phrases_per_session: numbe
   return r.json();
 }
 
-export async function updatePhrasesSettings(phrasesPerSession: number): Promise<void> {
+export async function updatePhrasesSettings(settings: PhrasesSettings): Promise<void> {
   const token = getToken();
   const r = await fetch(`${BACKEND_URL}/api/me/phrases-settings`, {
     method: 'PATCH',
@@ -596,7 +601,7 @@ export async function updatePhrasesSettings(phrasesPerSession: number): Promise<
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ phrases_per_session: phrasesPerSession }),
+    body: JSON.stringify(settings),
   });
   if (!r.ok) throw new Error('Failed to save phrases settings');
 }

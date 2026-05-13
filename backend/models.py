@@ -34,6 +34,7 @@ class User(SQLModel, table=True):
     question_timer_seconds: int = Field(default=5)   # countdown duration in seconds (5–30)
     email_consent: bool = Field(default=True)         # user has consented to receive emails
     phrases_per_session: int = Field(default=10)      # total phrases per phrase study session
+    new_phrases_ratio: Optional[float] = None         # fraction of new phrases (0.0–1.0); treated as 0.3 when null
     welcome_shown: bool = Field(default=False)         # whether the welcome modal has been dismissed
 
 

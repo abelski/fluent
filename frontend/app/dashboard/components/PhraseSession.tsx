@@ -139,13 +139,16 @@ function findMistakeWordSyllable(typed: string, target: string): { syllable: str
 
 // ── Queue helpers ─────────────────────────────────────────────────────────────
 
+type QueueMode = 'normal' | 'gap_retry' | 'full_retake';
+
 interface QueueItem {
   phrase: PhraseStudyItem;
   retries: number;
+  mode: QueueMode;
 }
 
 function buildQueue(phrases: PhraseStudyItem[]): QueueItem[] {
-  return phrases.map((p) => ({ phrase: p, retries: 0 }));
+  return phrases.map((p) => ({ phrase: p, retries: 0, mode: 'normal' }));
 }
 
 // ── Sub-steps within stage 1 ──────────────────────────────────────────────────
@@ -258,12 +261,15 @@ export default function PhraseSession({
 
   // ── Reset card state on index change ────────────────────────────────────────
   useEffect(() => {
-    setStage1Step('mcq');
+    const nextItem = queue[currentIdx];
+    // gap_retry skips MCQ — go straight to typing sub-step
+    setStage1Step(nextItem?.mode === 'gap_retry' ? 'type' : 'mcq');
     setMcqSelected(null);
     setMcqResult(null);
     setTypeInput('');
     setTypeResult(null);
     setShowAnswer(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIdx]);
 
   useEffect(() => {
@@ -394,17 +400,34 @@ export default function PhraseSession({
         mistakePhraseIdsRef.current.add(phrase.id);
         setMistakeCount((c) => c + 1);
       }
-      if (current.retries >= 2 && !donePhrasesRef.current.has(phrase.id)) {
-        donePhrasesRef.current.add(phrase.id);
-        setPhrasesDone((c) => c + 1);
+      // full_retake and gap_retry always count as done regardless of quality
+      if ((current.mode === 'full_retake' || current.mode === 'gap_retry') && !donePhrasesRef.current.has(phrase.id)) {
+        // don't mark done yet — full_retake will do it
       }
     }
 
     const newQueue = (() => {
       const next = [...queue];
-      if (quality < 3 && current.retries < 2) {
+      if (current.mode === 'full_retake') {
+        // Final attempt — always mark done, no re-queue
+        if (!donePhrasesRef.current.has(phrase.id)) {
+          donePhrasesRef.current.add(phrase.id);
+          setPhrasesDone((c) => c + 1);
+        }
+      } else if (current.mode === 'gap_retry') {
+        // gap_retry failures don't add more retries — full_retake is already queued
+      } else if (quality < 3 && phrase.lesson_stage === 1) {
+        // First mistake on a gap exercise → queue 2 gap retries + 1 full retake
         const insertAt = Math.min(currentIdx + 1, next.length);
-        next.splice(insertAt, 0, { phrase, retries: current.retries + 1 });
+        next.splice(insertAt, 0,
+          { phrase, retries: 0, mode: 'gap_retry' },
+          { phrase, retries: 0, mode: 'gap_retry' },
+          { phrase, retries: 0, mode: 'full_retake' },
+        );
+      } else if (quality < 3 && current.retries < 2) {
+        // Mistakes on other stages (0, 2) keep existing retry behaviour
+        const insertAt = Math.min(currentIdx + 1, next.length);
+        next.splice(insertAt, 0, { phrase, retries: current.retries + 1, mode: 'normal' });
       }
       return next;
     })();
@@ -418,7 +441,7 @@ export default function PhraseSession({
     }
 
     const isLast = currentIdx + 1 >= newQueue.length;
-    const isDone = quality >= 3 || current.retries >= 2;
+    const isDone = quality >= 3 || current.mode === 'full_retake' || (current.mode === 'normal' && current.retries >= 2);
     if (isLast && isDone) {
       setShowMatchRound(true);
     } else {
@@ -594,7 +617,8 @@ export default function PhraseSession({
   }
 
   const { phrase } = current;
-  const s = phrase.lesson_stage;
+  // full_retake renders as stage 2 (type full phrase); gap_retry renders as stage 1 (type gap)
+  const s = current.mode === 'full_retake' ? 2 : phrase.lesson_stage;
 
   // ── Shared header ─────────────────────────────────────────────────────────────
   function Header() {
@@ -695,7 +719,8 @@ export default function PhraseSession({
   if (s === 1) {
     const { before, after } = buildBlankedPhrase(phrase.text, phrase.blank_word);
 
-    if (stage1Step === 'mcq') {
+    // gap_retry skips MCQ — go straight to typing
+    if (stage1Step === 'mcq' && current.mode !== 'gap_retry') {
       const options = mcqOptions;
 
       const handleMcqSelect = (word: string) => {

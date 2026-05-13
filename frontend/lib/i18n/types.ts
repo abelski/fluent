@@ -500,6 +500,8 @@ export interface Translations {
     ratioNewLabel: string;
     ratioReviewLabel: string;
     ratioHint: string;
+    phrasesRatioLabel: string;
+    phrasesRatioHint: string;
     complexityLabel: string;
     complexityHint: string;
     complexityEasy: string;
