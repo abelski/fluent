@@ -492,6 +492,7 @@ export interface Translations {
     tabVocabulary: string;
     tabGrammar: string;
     tabPractice: string;
+    tabPhrases: string;
     tabOther: string;
     tabEmptyPlaceholder: string;
     sessionSizeLabel: string;

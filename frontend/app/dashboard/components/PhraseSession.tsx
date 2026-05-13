@@ -69,9 +69,9 @@ function checkPhrase(typed: string, target: string, complexity: Complexity): boo
 
 function checkWord(typed: string, target: string, complexity: Complexity): boolean {
   const clean = (s: string) => normalizeLt(s.replace(/[.,!?;:'"/()]/g, '').trim());
-  if (complexity === 'hard') return typed.trim().toLowerCase() === target.trim().toLowerCase();
   const t = clean(typed);
   const r = clean(target);
+  if (complexity === 'hard') return t === r;
   if (t === r) return true;
   if (complexity === 'easy') return levenshtein(t, r) <= 1;
   return false;

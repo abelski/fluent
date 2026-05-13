@@ -88,7 +88,7 @@ export default function SettingsPage() {
     { key: 'vocabulary', label: tr.settings.tabVocabulary },
     { key: 'grammar', label: tr.settings.tabGrammar },
     { key: 'practice', label: tr.settings.tabPractice },
-    { key: 'phrases', label: 'Фразы' },
+    { key: 'phrases', label: tr.settings.tabPhrases },
     { key: 'other', label: tr.settings.tabOther },
   ];
 

@@ -482,6 +482,7 @@ const ru: Translations = {
     tabVocabulary: 'Словарь',
     tabGrammar: 'Грамматика',
     tabPractice: 'Практика',
+    tabPhrases: 'Фразы',
     tabOther: 'Другое',
     tabEmptyPlaceholder: 'Настройки появятся скоро',
     sessionSizeLabel: 'Слов за одну сессию',

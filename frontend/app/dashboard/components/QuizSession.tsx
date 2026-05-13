@@ -85,9 +85,9 @@ function levenshtein(a: string, b: string): number {
 }
 
 function checkAnswer(typed: string, target: string, complexity: Complexity): boolean {
-  if (complexity === 'hard') return typed.toLowerCase() === target.toLowerCase();
   const normTyped = normalizeLt(typed);
   const normTarget = normalizeLt(target);
+  if (complexity === 'hard') return normTyped === normTarget;
   if (complexity === 'easy') {
     const threshold = Math.max(1, Math.floor(normTarget.length * 0.15));
     return levenshtein(normTyped, normTarget) <= threshold;

@@ -482,6 +482,7 @@ const en: Translations = {
     tabVocabulary: 'Vocabulary',
     tabGrammar: 'Grammar',
     tabPractice: 'Practice',
+    tabPhrases: 'Phrases',
     tabOther: 'Other',
     tabEmptyPlaceholder: 'Settings coming soon',
     sessionSizeLabel: 'Words per session',
