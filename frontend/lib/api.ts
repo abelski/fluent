@@ -775,6 +775,7 @@ export interface GrammarProgramSummary {
   difficulty: number;
   enrolled: boolean;
   lesson_filter: string | null; // JSON array of CASE_INFO group names, e.g. '["Vienaskaita","Daugiskaita"]'
+  program_type: string;         // "cases" | "verbs" | "verb_cases"
 }
 
 export async function getGrammarPrograms(): Promise<GrammarProgramSummary[]> {

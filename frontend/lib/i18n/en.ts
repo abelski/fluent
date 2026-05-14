@@ -128,6 +128,9 @@ const en: Translations = {
     matchTitle: 'Match the word to the translation',
     matchSubtitle: 'Click a translation on the left, then its Lithuanian match on the right',
     matchCheckBtn: 'Continue',
+    levelComplete: 'Level complete!',
+    levelCompleteBody: 'You know all words at this difficulty level.',
+    advanceToLevel: 'Advance to {stars}',
   },
   grammar: {
     title: 'Grammar',

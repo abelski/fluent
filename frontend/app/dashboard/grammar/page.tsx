@@ -21,9 +21,10 @@ interface Lesson {
   id: number;
   title: string;
   level: 'basic' | 'advanced' | 'practice';
-  cases: number[];
+  cases?: number[];          // noun lessons only
+  tense_key?: string;        // verb lessons only
   task_count: number;
-  rules: GrammarRule[];
+  rules?: GrammarRule[];
   is_locked: boolean;
   best_score_pct: number | null;
   status?: string;
@@ -47,7 +48,25 @@ interface SentenceTask {
   base_lt?: string;
 }
 
-type Task = DeclensionTask | SentenceTask;
+interface VerbConjugationTask {
+  type: 'verb_conjugation';
+  verb_infinitive: string;
+  translation_ru: string;
+  tense_label: string;
+  person_label: string;
+  answer: string;
+}
+
+interface VerbCaseTask {
+  type: 'verb_case';
+  verb_infinitive: string;
+  translation_ru: string;
+  example_lt: string;
+  example_ru: string;
+  answer: string;
+}
+
+type Task = DeclensionTask | SentenceTask | VerbConjugationTask | VerbCaseTask;
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
@@ -412,12 +431,20 @@ async function getCaseGroups(): Promise<Record<number, string>> {
   }
 }
 
-function filterLessonsForProgram(lessons: Lesson[], lessonFilter: string | null, caseGroups: Record<number, string>): Lesson[] {
-  if (!lessonFilter) return lessons;
+function filterLessonsForProgram(
+  lessons: Lesson[],
+  lessonFilter: string | null,
+  caseGroups: Record<number, string>,
+  programType: string,
+): Lesson[] {
+  // Verb programs only show verb lessons (id >= 200); noun programs show noun lessons
+  const isVerbProgram = programType === 'verbs' || programType === 'verb_cases';
+  const filtered = lessons.filter(l => isVerbProgram ? l.id >= 200 : l.id < 200);
+  if (!lessonFilter || isVerbProgram) return filtered;
   let groups: string[];
-  try { groups = JSON.parse(lessonFilter); } catch { return lessons; }
+  try { groups = JSON.parse(lessonFilter); } catch { return filtered; }
   const groupSet = new Set(groups);
-  return lessons.filter(l => l.cases.every(c => groupSet.has(caseGroups[c] ?? '')));
+  return filtered.filter(l => (l.cases ?? []).every(c => groupSet.has(caseGroups[c] ?? '')));
 }
 
 export default function GrammarPage() {
@@ -467,9 +494,16 @@ export default function GrammarPage() {
     Promise.all([
       fetch(`${BACKEND_URL}/api/grammar/lessons`, { headers }).then(r => r.json()),
       getCaseGroups(),
+      fetch(`${BACKEND_URL}/api/grammar/verb-lessons?program_type=verbs`, { headers }).then(r => r.json()).catch(() => []),
+      fetch(`${BACKEND_URL}/api/grammar/verb-lessons?program_type=verb_cases`, { headers }).then(r => r.json()).catch(() => []),
     ])
-      .then(([data, groups]) => {
-        setLessons(Array.isArray(data) ? data : []);
+      .then(([data, groups, verbLessons, verbCaseLessons]) => {
+        const nounLessons: Lesson[] = Array.isArray(data) ? data : [];
+        const allVerbLessons: Lesson[] = [
+          ...(Array.isArray(verbLessons) ? verbLessons : []),
+          ...(Array.isArray(verbCaseLessons) ? verbCaseLessons : []),
+        ];
+        setLessons([...nounLessons, ...allVerbLessons]);
         setCaseGroups(groups);
       })
       .catch((err) => console.error('API error:', err))
@@ -506,15 +540,18 @@ export default function GrammarPage() {
     }
   }
 
+  function isVerbLesson(lessonId: number) { return lessonId >= 200; }
+
   function postResult(lessonId: number, score: number, total: number) {
     const token = getToken();
     if (!token) return;
-    fetch(`${BACKEND_URL}/api/grammar/lessons/${lessonId}/results`, {
+    const base = isVerbLesson(lessonId) ? 'verb-lessons' : 'lessons';
+    fetch(`${BACKEND_URL}/api/grammar/${base}/${lessonId}/results`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ score, total }),
     })
-      .then(() => fetchLessons()) // refresh locked status in background
+      .then(() => fetchLessons())
       .catch((err) => console.error('API error:', err));
   }
 
@@ -528,7 +565,8 @@ export default function GrammarPage() {
     setAnswerState('unanswered');
     setShownAnswer('');
 
-    fetch(`${BACKEND_URL}/api/grammar/lessons/${lesson.id}/tasks`)
+    const base = isVerbLesson(lesson.id) ? 'verb-lessons' : 'lessons';
+    fetch(`${BACKEND_URL}/api/grammar/${base}/${lesson.id}/tasks`)
       .then((r) => r.json())
       .then((data: Task[]) => {
         setTasks(Array.isArray(data) ? data : []);
@@ -616,7 +654,7 @@ export default function GrammarPage() {
               <GrammarStatsBar lessons={lessons} />
 
               {enrolledPrograms.map((program) => {
-                const programLessons = filterLessonsForProgram(lessons, program.lesson_filter ?? null, caseGroups);
+                const programLessons = filterLessonsForProgram(lessons, program.lesson_filter ?? null, caseGroups, program.program_type ?? 'cases');
                 const catKey = `program-${program.id}`;
                 const isOpen = openCategories.has(catKey);
 
@@ -823,13 +861,13 @@ export default function GrammarPage() {
         {/* Grammar rule — basic (always visible) or advanced (collapsible) */}
         {showRule && (
           <div className="mb-6">
-            <GrammarRuleCard rules={activeLesson.rules} collapsible={ruleCollapsible} />
+            <GrammarRuleCard rules={activeLesson.rules ?? []} collapsible={ruleCollapsible} />
           </div>
         )}
 
         {/* Task card */}
         <div className="flex flex-col items-center justify-center flex-1 gap-8">
-          {task.type === 'declension' ? (
+          {task.type === 'declension' && (
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
                 {task.case_name} · {task.number}
@@ -837,7 +875,9 @@ export default function GrammarPage() {
               <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-2">{task.prompt_lt}</p>
               <p className="text-gray-500 text-base sm:text-lg">{task.prompt_ru}</p>
             </div>
-          ) : (
+          )}
+
+          {task.type === 'sentence' && (
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
               {task.base_lt && (
                 <p className="text-gray-400 text-xs mb-4">от: <span className="font-medium text-gray-500">{task.base_lt}</span></p>
@@ -857,8 +897,29 @@ export default function GrammarPage() {
             </div>
           )}
 
+          {task.type === 'verb_conjugation' && (
+            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
+              <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
+                {task.tense_label} · {task.person_label}
+              </p>
+              <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-1">{task.verb_infinitive}</p>
+              <p className="text-gray-500 text-base sm:text-lg">{task.translation_ru}</p>
+            </div>
+          )}
+
+          {task.type === 'verb_case' && (
+            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
+              <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">
+                {task.verb_infinitive} — {task.translation_ru}
+              </p>
+              <p className="text-lg sm:text-xl font-medium text-gray-900 mb-2">{task.example_lt}</p>
+              <p className="text-gray-500 text-base">{task.example_ru}</p>
+              <p className="text-gray-400 text-sm mt-4">Каким падежом управляет этот глагол? (kuo?, ką?, ko?…)</p>
+            </div>
+          )}
+
           <div className="w-full flex flex-col gap-3">
-            {task.type === 'declension' && (
+            {(task.type === 'declension' || task.type === 'verb_conjugation' || task.type === 'verb_case') && (
               <input
                 ref={inputRef}
                 type="text"
@@ -866,7 +927,11 @@ export default function GrammarPage() {
                 onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
                 disabled={answerState !== 'unanswered'}
-                placeholder={tr.grammar.typeDeclension}
+                placeholder={
+                  task.type === 'verb_conjugation' ? 'Введите форму глагола…' :
+                  task.type === 'verb_case' ? 'Введите падежный вопрос (kuo?, ką?…)' :
+                  tr.grammar.typeDeclension
+                }
                 className={`w-full py-4 px-5 rounded-xl border bg-white text-base text-gray-900 placeholder-gray-400 outline-none transition-all duration-200
                   ${answerState === 'correct' ? 'border-gray-900 bg-emerald-50' :
                     answerState === 'wrong' ? 'border-gray-900 bg-red-50' :

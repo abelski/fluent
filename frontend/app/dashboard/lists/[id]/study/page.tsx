@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, resolveListId } from '../../../../../lib/api';
 import { useT } from '../../../../../lib/useT';
-import { getStarLevel } from '../../../../../lib/starLevel';
+import { getStarLevel, setStarLevel } from '../../../../../lib/starLevel';
 import QuizSession, { type Word } from '../../../components/QuizSession';
 
 export default function QuizPage() {
@@ -19,11 +19,13 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(true);
   const [limitReached, setLimitReached] = useState(false);
   const [empty, setEmpty] = useState(false);
+  const [allKnown, setAllKnown] = useState(false);
 
   const loadWords = useCallback(() => {
     setLoading(true);
     setLimitReached(false);
     setEmpty(false);
+    setAllKnown(false);
     const token = getToken();
     const starLevel = getStarLevel();
     fetch(`${BACKEND_URL}/api/lists/${id}/study?star_level=${starLevel}`, {
@@ -34,11 +36,16 @@ export default function QuizPage() {
         if (r.status === 404) { router.replace('/dashboard/lists'); return null; }
         return r.json();
       })
-      .then((data: { words: Word[]; distractors: Word[] } | null) => {
+      .then((data: { words: Word[]; distractors: Word[]; all_known?: boolean } | null) => {
         if (!data) return;
         const ws = Array.isArray(data) ? data : (data.words ?? []);
         const ds = Array.isArray(data) ? [] : (data.distractors ?? []);
-        if (ws.length === 0) { setEmpty(true); setLoading(false); return; }
+        if (ws.length === 0) {
+          if ((data as { all_known?: boolean }).all_known) setAllKnown(true);
+          else setEmpty(true);
+          setLoading(false);
+          return;
+        }
         setWords(ws);
         setDistractors(ds);
       })
@@ -99,6 +106,39 @@ export default function QuizPage() {
           >
             {tr.study.backToLists}
           </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (allKnown) {
+    const currentLevel = getStarLevel();
+    const nextLevel = currentLevel < 3 ? currentLevel + 1 : null;
+    return (
+      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
+        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
+          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
+        </div>
+        <div className="relative z-10 text-center max-w-sm w-full">
+          <div className="text-5xl mb-6">🏆</div>
+          <h1 className="text-2xl font-bold mb-2">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
+          <p className="text-gray-400 mb-8">{tr.study.levelCompleteBody}</p>
+          <div className="flex flex-col gap-3">
+            {nextLevel && (
+              <button
+                onClick={() => { setStarLevel(nextLevel); router.push('/dashboard/lists'); }}
+                className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
+              >
+                {tr.study.advanceToLevel.replace('{stars}', '★'.repeat(nextLevel))}
+              </button>
+            )}
+            <button
+              onClick={() => router.push('/dashboard/lists')}
+              className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
+            >
+              {tr.study.backToLists}
+            </button>
+          </div>
         </div>
       </main>
     );

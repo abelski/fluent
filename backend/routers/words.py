@@ -280,9 +280,6 @@ def get_study_words(
     # Auth is optional here — unauthenticated users still get a study session.
     user = _try_get_user(authorization, session)
 
-    if user:
-        _quota_check_and_increment(user, session)
-
     if user and all_words:
         word_ids = [w["id"] for w in all_words]
         progress_records = session.exec(
@@ -301,6 +298,13 @@ def get_study_words(
         new_words = [w for w in all_words if w["status"] == "new"]
         learning_words = [w for w in all_words if w["status"] == "learning"]
         known_words = [w for w in all_words if w["status"] == "known"]
+
+        # All words at this star_level are already known — return empty so the frontend
+        # shows the level-complete state instead of a pointless review session.
+        if not new_words and not learning_words:
+            return {"words": [], "distractors": [], "all_known": True}
+
+        _quota_check_and_increment(user, session)
 
         # Prioritize due/overdue words so list study sessions count toward "слов нужно освежить"
         due_known = []
@@ -332,6 +336,8 @@ def get_study_words(
 
         session_words = new_words[:actual_new] + review_words[:actual_review]
     else:
+        if user:
+            _quota_check_and_increment(user, session)
         for w in all_words:
             w["status"] = "new"
         session_words = all_words[:DEFAULT_SESSION_SIZE]
@@ -713,14 +719,19 @@ def get_all_lists_progress(
         custom_list_ids = {link.word_list_id for link in cp_links}
 
     # All (list_id, word_id) pairs for public lists + enrolled custom program lists
+    # Exclude archived words so the total matches what study sessions can actually serve.
     public_rows = session.exec(
         select(WordListItem.word_list_id, WordListItem.word_id)
         .join(WordList, WordList.id == WordListItem.word_list_id)
+        .join(Word, Word.id == WordListItem.word_id)
         .where(WordList.is_public == True)
+        .where(Word.archived == False)  # noqa: E712
     ).all()
     custom_rows = session.exec(
         select(WordListItem.word_list_id, WordListItem.word_id)
+        .join(Word, Word.id == WordListItem.word_id)
         .where(WordListItem.word_list_id.in_(list(custom_list_ids)))
+        .where(Word.archived == False)  # noqa: E712
     ).all() if custom_list_ids else []
     rows = list(public_rows) + list(custom_rows)
 

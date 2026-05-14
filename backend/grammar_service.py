@@ -1,12 +1,15 @@
 # Grammar lesson content service.
 #
-# Three task types are supported:
-#   "declension" — user must type the correct case form of a given word (basic level)
-#   "sentence"   — user must fill in a blank in a real Lithuanian sentence (advanced/practice)
+# Task types:
+#   "declension"       — type the correct case form of a noun
+#   "sentence"         — fill-in-the-blank in a Lithuanian sentence
+#   "verb_conjugation" — type the correct conjugated form of a verb
+#   "verb_case"        — type the case question word a verb governs
 #
-# Sentences and case rules are loaded from the DB (populated by the content loader).
-# Word declension table is loaded from data/grammar/words.txt.
+# Noun data loaded from data/grammar/words.txt and DB.
+# Verb data loaded from the `verb` DB table (seeded by seed_verbs_db.py).
 
+import json
 import re
 import random
 from pathlib import Path
@@ -14,7 +17,25 @@ from pathlib import Path
 from sqlmodel import Session, select
 
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
-from models import GrammarSentence, GrammarCaseRule, Article
+from models import GrammarSentence, GrammarCaseRule, Article, Verb
+
+# ── Verb lesson config ────────────────────────────────────────────────────────
+import json as _json
+_VERB_LESSONS_PATH = Path(__file__).parent / "data/grammar/verb_lessons.json"
+_verb_lessons_data = _json.loads(_VERB_LESSONS_PATH.read_text(encoding="utf-8"))
+VERB_LESSON_CONFIG: dict[int, tuple] = {
+    row[0]: tuple(row) for row in _verb_lessons_data["verb_lessons"]
+}
+# Tense keys that exist for each verb (subset of all possible tenses)
+_VERB_PERSONS = ["aš", "tu", "jis, ji, jie, jos", "mes", "jūs"]
+_TENSE_LABELS = {
+    "indicative_present":       "Настоящее время",
+    "indicative_past_simple":   "Прошедшее картинное",
+    "indicative_past_habitual": "Прошедшее многократное",
+    "indicative_future":        "Будущее время",
+    "conditional":              "Условное наклонение",
+    "imperative":               "Повелительное наклонение",
+}
 
 # Load noun declension table from content file.
 # Each row: [stem, sg1..sg7, pl1..pl7, ru_translation] (17 fields total)
@@ -264,3 +285,125 @@ def get_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None:
         return None
     num, level, cases, task_count, title = config
     return _generate_sentence_tasks(cases, task_count, session, level)
+
+
+# ── Verb lesson task generators ───────────────────────────────────────────────
+
+def get_verb_lessons(session: Session, program_type: str = "verbs") -> list[dict]:
+    """Return verb lesson metadata list for a given program type.
+
+    program_type='verbs'      → conjugation lessons (IDs 200-211)
+    program_type='verb_cases' → case governance lessons (IDs 300-301)
+    """
+    id_ranges = {
+        "verbs": range(200, 212),
+        "verb_cases": range(300, 302),
+    }
+    lesson_ids = id_ranges.get(program_type, range(200, 212))
+    return [
+        {
+            "id": row[0],
+            "level": row[1],
+            "tense_key": row[2],
+            "task_count": row[3],
+            "title": row[4],
+        }
+        for lid in lesson_ids
+        if (row := VERB_LESSON_CONFIG.get(lid))
+    ]
+
+
+def get_verb_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None:
+    """Generate tasks for a verb lesson.
+
+    Returns None if lesson_id is not in VERB_LESSON_CONFIG.
+    Dispatches to conjugation or case-governance generator based on tense_key.
+    """
+    config = VERB_LESSON_CONFIG.get(lesson_id)
+    if config is None:
+        return None
+    _lid, _level, tense_key, task_count, _title = config
+
+    if tense_key == "case_governance":
+        return _generate_verb_case_tasks(task_count, session)
+    return _generate_verb_conjugation_tasks(tense_key, task_count, session)
+
+
+def _generate_verb_conjugation_tasks(
+    tense_key: str, count: int, session: Session
+) -> list[dict]:
+    """Pick random verbs from DB, random person, return verb_conjugation tasks."""
+    verbs = session.exec(select(Verb)).all()
+    # Filter to verbs that have data for this tense
+    eligible = [
+        v for v in verbs
+        if json.loads(v.conjugations).get(tense_key)
+    ]
+    if not eligible:
+        return []
+
+    tense_label = _TENSE_LABELS.get(tense_key, tense_key)
+    tasks: list[dict] = []
+    attempts = 0
+
+    while len(tasks) < count and attempts < count * 10:
+        attempts += 1
+        verb = random.choice(eligible)
+        conj = json.loads(verb.conjugations).get(tense_key, {})
+        if not conj:
+            continue
+        person = random.choice(_VERB_PERSONS)
+        form = conj.get(person)
+        if not form:
+            continue
+        # Skip imperative aš (no form)
+        tasks.append({
+            "type": "verb_conjugation",
+            "verb_infinitive": verb.infinitive,
+            "translation_ru": verb.translation_ru,
+            "tense_label": tense_label,
+            "person_label": person,
+            "answer": form,
+        })
+
+    return tasks
+
+
+def _generate_verb_case_tasks(count: int, session: Session) -> list[dict]:
+    """Pick random verbs with case governance data, return verb_case tasks."""
+    verbs = session.exec(select(Verb)).all()
+    eligible = [
+        v for v in verbs
+        if json.loads(v.case_governance)
+    ]
+    if not eligible:
+        return []
+
+    tasks: list[dict] = []
+    attempts = 0
+
+    while len(tasks) < count and attempts < count * 10:
+        attempts += 1
+        verb = random.choice(eligible)
+        governance = json.loads(verb.case_governance)
+        if not governance:
+            continue
+        entry = random.choice(governance)
+        sentences = entry.get("sentences", [])
+        if not sentences:
+            continue
+        sent = random.choice(sentences)
+        lt_sent = sent.get("lt", "")
+        ru_sent = sent.get("ru", "")
+        if not lt_sent or not ru_sent:
+            continue
+        tasks.append({
+            "type": "verb_case",
+            "verb_infinitive": verb.infinitive,
+            "translation_ru": verb.translation_ru,
+            "example_lt": lt_sent,
+            "example_ru": ru_sent,
+            "answer": entry["question"],
+        })
+
+    return tasks

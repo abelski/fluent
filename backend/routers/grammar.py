@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from data.grammar.lessons import CASE_INFO as _CASE_INFO
 from database import get_session
-from grammar_service import get_lessons, get_lesson_tasks
+from grammar_service import get_lessons, get_lesson_tasks, get_verb_lessons, get_verb_lesson_tasks
 from models import GrammarLessonResult, GrammarProgram, UserGrammarProgram
 from quota import quota_check_and_increment as _quota_check_and_increment
 
@@ -206,6 +206,7 @@ def list_grammar_programs(
             "difficulty": p.difficulty,
             "enrolled": p.id in enrolled_ids,
             "lesson_filter": p.lesson_filter,
+            "program_type": p.program_type,
         }
         for p in programs
     ]
@@ -252,3 +253,84 @@ def unenroll_grammar_program(
         session.delete(enrollment)
         session.commit()
     return {"ok": True}
+
+
+# ── Verb lesson endpoints ─────────────────────────────────────────────────────
+
+@router.get("/grammar/verb-lessons")
+def list_verb_lessons(
+    program_type: str = "verbs",
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return verb lesson metadata for the given program type.
+
+    program_type: 'verbs' (conjugation) or 'verb_cases' (case governance).
+    Includes best_score_pct and is_locked per lesson when user is authenticated.
+    """
+    user = _try_get_user(authorization, session)
+    lessons = get_verb_lessons(session, program_type=program_type)
+
+    best_scores: dict[int, float] = {}
+    if user:
+        results = session.exec(
+            select(GrammarLessonResult).where(GrammarLessonResult.user_id == user.id)
+        ).all()
+        for r in results:
+            pct = r.score / r.total if r.total > 0 else 0.0
+            if r.lesson_id not in best_scores or pct > best_scores[r.lesson_id]:
+                best_scores[r.lesson_id] = pct
+
+    for i, lesson in enumerate(lessons):
+        lesson["best_score_pct"] = best_scores.get(lesson["id"])
+        if user is None or i == 0:
+            lesson["is_locked"] = False
+        else:
+            prev_id = lessons[i - 1]["id"]
+            lesson["is_locked"] = best_scores.get(prev_id, 0.0) <= 0.75
+
+    return lessons
+
+
+@router.get("/grammar/verb-lessons/{lesson_id}/tasks")
+def verb_lesson_tasks(
+    lesson_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return randomized verb tasks for the given lesson.
+
+    Counts against the daily session quota for non-premium users.
+    Returns 404 if lesson_id is not in verb_lessons.json.
+    """
+    user = _try_get_user(authorization, session)
+    if user:
+        _quota_check_and_increment(user, session)
+    tasks = get_verb_lesson_tasks(lesson_id, session)
+    if tasks is None:
+        raise HTTPException(status_code=404, detail="Verb lesson not found")
+    return tasks
+
+
+@router.post("/grammar/verb-lessons/{lesson_id}/results")
+def save_verb_lesson_result(
+    lesson_id: int,
+    body: LessonResultIn,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Save verb lesson score. Reuses GrammarLessonResult — no new model needed."""
+    user = _require_user(authorization, session)
+    if body.total <= 0 or body.score < 0 or body.score > body.total:
+        raise HTTPException(status_code=400, detail="Invalid score values")
+    passed = body.score / body.total > 0.75
+    result = GrammarLessonResult(
+        user_id=user.id,
+        lesson_id=lesson_id,
+        score=body.score,
+        total=body.total,
+        passed=passed,
+    )
+    session.add(result)
+    session.commit()
+    return {"ok": True, "passed": passed}

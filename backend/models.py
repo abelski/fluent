@@ -499,6 +499,7 @@ class GrammarProgram(SQLModel, table=True):
     is_public: bool = Field(default=True)
     created_at: datetime = Field(default_factory=_utcnow)
     lesson_filter: Optional[str] = Field(default=None)  # JSON array of CASE_INFO group names, e.g. '["Vienaskaita","Daugiskaita"]'. NULL = show all.
+    program_type: str = Field(default="cases")  # "cases" | "verbs" | "verb_cases"
 
 
 class UserGrammarProgram(SQLModel, table=True):
@@ -508,3 +509,21 @@ class UserGrammarProgram(SQLModel, table=True):
     user_id: str = Field(foreign_key="user.id", index=True)
     program_id: int = Field(foreign_key="grammar_program.id", index=True)
     enrolled_at: datetime = Field(default_factory=_utcnow)
+
+
+class Verb(SQLModel, table=True):
+    """One of 365 Lithuanian verbs from the textbook.
+    Conjugation tables and examples are stored as JSON strings for flexibility."""
+    __tablename__ = "verb"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    number: int = Field(index=True)          # 1-365 (book order)
+    infinitive: str = Field(index=True)      # e.g. "kalbėti"
+    present_3p: str                          # 3rd-person present: "kalba"
+    past_3p: str                             # 3rd-person past simple: "kalbėjo"
+    translation_ru: str                      # Russian translation
+    is_reflexive: bool = Field(default=False)
+    # JSON blobs — see extract_verbs_pdf.py for schema docs
+    conjugations: str = Field(default="{}")   # {tense_key: {person: form}}
+    case_governance: str = Field(default="[]")  # [{question, sentences:[{lt,ru}]}]
+    prefix_forms: str = Field(default="[]")    # [{prefix, infinitive, example_lt, example_ru}]
+    non_conjugated: str = Field(default="{}")  # {"1": "form", ..., "9": "form"}

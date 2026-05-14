@@ -116,6 +116,9 @@ export interface Translations {
     matchTitle: string;
     matchSubtitle: string;
     matchCheckBtn: string;
+    levelComplete: string;
+    levelCompleteBody: string;
+    advanceToLevel: string;
   };
   grammar: {
     title: string;

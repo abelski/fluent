@@ -128,6 +128,9 @@ const ru: Translations = {
     matchTitle: 'Соотнеси слово с переводом',
     matchSubtitle: 'Сначала кликните по переводу слева, затем по литовскому слову справа',
     matchCheckBtn: 'Продолжить',
+    levelComplete: 'Уровень пройден!',
+    levelCompleteBody: 'Вы знаете все слова на этом уровне сложности.',
+    advanceToLevel: 'Перейти на {stars}',
   },
   grammar: {
     title: 'Грамматика',

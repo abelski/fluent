@@ -1,0 +1,18 @@
+{
+  "verb_lessons": [
+    [200, "basic",    "indicative_present",       20, "Настоящее время — базовый"],
+    [201, "advanced", "indicative_present",       30, "Настоящее время — практика"],
+    [202, "basic",    "indicative_past_simple",   20, "Прошедшее картинное — базовый"],
+    [203, "advanced", "indicative_past_simple",   30, "Прошедшее картинное — практика"],
+    [204, "basic",    "indicative_past_habitual", 20, "Прошедшее многократное — базовый"],
+    [205, "advanced", "indicative_past_habitual", 30, "Прошедшее многократное — практика"],
+    [206, "basic",    "indicative_future",        20, "Будущее время — базовый"],
+    [207, "advanced", "indicative_future",        30, "Будущее время — практика"],
+    [208, "basic",    "conditional",              20, "Условное наклонение — базовый"],
+    [209, "advanced", "conditional",              30, "Условное наклонение — практика"],
+    [210, "basic",    "imperative",               20, "Повелительное наклонение — базовый"],
+    [211, "advanced", "imperative",               30, "Повелительное наклонение — практика"],
+    [300, "basic",    "case_governance",          20, "Управление глаголов — базовый"],
+    [301, "advanced", "case_governance",          15, "Управление глаголов — практика"]
+  ]
+}
