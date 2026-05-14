@@ -591,6 +591,7 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState('');
   type UserActivityFilter = 'all' | 'active' | 'inactive' | 'deletion';
   const [userActivityFilter, setUserActivityFilter] = useState<UserActivityFilter>('all');
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
 
   // Email template editor state
   const [templates, setTemplates] = useState<EmailTemplates | null>(null);
@@ -1016,6 +1017,22 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       headers: { Authorization: `Bearer ${token}` },
     }).catch((err) => console.error('API error:', err));
     setSaving(false);
+    loadData();
+  }
+
+  async function bulkDeleteUsers() {
+    const ids = Array.from(selectedUserIds);
+    if (ids.length === 0) return;
+    if (!confirm(`Удалить ${ids.length} пользователей и все их данные? Это действие необратимо.`)) return;
+    setSaving(true);
+    const token = getToken();
+    await fetch(`${BACKEND_URL}/api/admin/users/bulk-delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ user_ids: ids }),
+    }).catch((err) => console.error('API error:', err));
+    setSaving(false);
+    setSelectedUserIds(new Set());
     loadData();
   }
 
@@ -1622,7 +1639,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               {(['all', 'active', 'inactive', 'deletion'] as UserActivityFilter[]).map((f) => (
                 <button
                   key={f}
-                  onClick={() => { setUserActivityFilter(f); setUsersPage(1); }}
+                  onClick={() => { setUserActivityFilter(f); setUsersPage(1); setSelectedUserIds(new Set()); }}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${userActivityFilter === f ? (f === 'deletion' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-900') : 'text-gray-400 hover:text-gray-900'}`}
                 >
                   {f === 'all' ? 'Все' : f === 'active' ? 'Активные' : f === 'inactive' ? 'Неактивные' : '☠️ Удаление'}
@@ -1630,10 +1647,41 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               ))}
             </div>
           </div>
+          {userActivityFilter === 'deletion' && isSuperadmin && selectedUserIds.size > 0 && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={bulkDeleteUsers}
+                disabled={saving}
+                className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                ☠️ Удалить выбранных ({selectedUserIds.size})
+              </button>
+              <button
+                onClick={() => setSelectedUserIds(new Set())}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Снять выбор
+              </button>
+            </div>
+          )}
           <div className="overflow-x-auto rounded-2xl border border-gray-900">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-900 text-gray-400 text-left">
+                  {userActivityFilter === 'deletion' && isSuperadmin && (
+                    <th className="px-3 py-3 w-8">
+                      <input
+                        type="checkbox"
+                        checked={pagedUsers.filter(u => !u.is_superadmin).length > 0 && pagedUsers.filter(u => !u.is_superadmin).every(u => selectedUserIds.has(u.id))}
+                        onChange={(e) => {
+                          const next = new Set(selectedUserIds);
+                          pagedUsers.filter(u => !u.is_superadmin).forEach(u => e.target.checked ? next.add(u.id) : next.delete(u.id));
+                          setSelectedUserIds(next);
+                        }}
+                        className="cursor-pointer accent-red-600"
+                      />
+                    </th>
+                  )}
                   <th className="px-4 py-3 font-medium">{tr.admin.colUser}</th>
                   <th className="px-4 py-3 font-medium">{tr.admin.colPlan}</th>
                   <th className="px-4 py-3 font-medium hidden sm:table-cell">{tr.admin.colPremiumUntil}</th>
@@ -1644,7 +1692,23 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               </thead>
               <tbody>
                 {pagedUsers.map((u) => (
-                  <tr key={u.id} className="border-b border-gray-900 hover:bg-gray-50 transition-colors">
+                  <tr key={u.id} className={`border-b border-gray-900 hover:bg-gray-50 transition-colors ${selectedUserIds.has(u.id) ? 'bg-red-50' : ''}`}>
+                    {userActivityFilter === 'deletion' && isSuperadmin && (
+                      <td className="px-3 py-3 w-8">
+                        {!u.is_superadmin && (
+                          <input
+                            type="checkbox"
+                            checked={selectedUserIds.has(u.id)}
+                            onChange={(e) => {
+                              const next = new Set(selectedUserIds);
+                              e.target.checked ? next.add(u.id) : next.delete(u.id);
+                              setSelectedUserIds(next);
+                            }}
+                            className="cursor-pointer accent-red-600"
+                          />
+                        )}
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-900 truncate max-w-[180px]">{u.name}</p>
                       <p className="text-gray-400 text-xs truncate max-w-[180px]">{u.email}</p>

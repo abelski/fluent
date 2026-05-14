@@ -10,8 +10,8 @@ from sqlmodel import Session, select, func
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage
-from sqlalchemy import text
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage, UserProgram, UserPracticeCategoryEnrollment, ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment, UserPhraseProgress, UserGrammarProgram, CustomProgram
+from sqlalchemy import text, delete as sa_delete, update as sa_update
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
 from grammar_service import get_lessons as _get_grammar_lessons
@@ -595,6 +595,24 @@ def set_redactor(
     return {"ok": True}
 
 
+def _delete_user_data(user_id: str, session: Session) -> None:
+    """Delete all rows referencing user_id, then delete the user. Does not commit."""
+    _tables_with_user_id = [
+        GrammarLessonResult, UserWordProgress, DailyStudySession, MistakeReport,
+        UserProgram, PracticeExamResult, UserPracticeCategoryEnrollment,
+        ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment,
+        PreparedMessage, UserPhraseProgress, UserGrammarProgram,
+    ]
+    for model in _tables_with_user_id:
+        session.exec(sa_delete(model).where(model.user_id == user_id))
+    # Nullable created_by fields — set to NULL rather than deleting the content
+    session.exec(sa_update(WordList).where(WordList.created_by == user_id).values(created_by=None))
+    session.exec(sa_update(CustomProgram).where(CustomProgram.created_by == user_id).values(created_by=None))
+    target = session.get(User, user_id)
+    if target:
+        session.delete(target)
+
+
 @router.delete("/users/{user_id}")
 def delete_user(
     user_id: str,
@@ -605,23 +623,35 @@ def delete_user(
     requester = _require_superadmin(authorization, session)
     if requester.id == user_id:
         raise HTTPException(status_code=400, detail="Cannot delete yourself")
-    target = session.get(User, user_id)
-    if not target:
+    if not session.get(User, user_id):
         raise HTTPException(status_code=404, detail="User not found")
-
-    # Delete all related data before removing the user
-    for row in session.exec(select(GrammarLessonResult).where(GrammarLessonResult.user_id == user_id)).all():
-        session.delete(row)
-    for row in session.exec(select(UserWordProgress).where(UserWordProgress.user_id == user_id)).all():
-        session.delete(row)
-    for row in session.exec(select(DailyStudySession).where(DailyStudySession.user_id == user_id)).all():
-        session.delete(row)
-    for row in session.exec(select(MistakeReport).where(MistakeReport.user_id == user_id)).all():
-        session.delete(row)
-
-    session.delete(target)
+    _delete_user_data(user_id, session)
     session.commit()
     return {"ok": True}
+
+
+class BulkDeleteRequest(BaseModel):
+    user_ids: List[str]
+
+
+@router.post("/users/bulk-delete")
+def bulk_delete_users(
+    body: BulkDeleteRequest,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Permanently delete multiple users and all their data. Superadmin-only."""
+    requester = _require_superadmin(authorization, session)
+    deleted = 0
+    for user_id in body.user_ids:
+        if user_id == requester.id:
+            continue
+        if not session.get(User, user_id):
+            continue
+        _delete_user_data(user_id, session)
+        deleted += 1
+    session.commit()
+    return {"deleted": deleted}
 
 
 @router.get("/subcategories")
