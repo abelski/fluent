@@ -1,18 +1,84 @@
 {
   "verb_lessons": [
-    [200, "basic",    "indicative_present",       20, "Настоящее время — базовый"],
-    [201, "advanced", "indicative_present",       30, "Настоящее время — практика"],
-    [202, "basic",    "indicative_past_simple",   20, "Прошедшее картинное — базовый"],
-    [203, "advanced", "indicative_past_simple",   30, "Прошедшее картинное — практика"],
-    [204, "basic",    "indicative_past_habitual", 20, "Прошедшее многократное — базовый"],
-    [205, "advanced", "indicative_past_habitual", 30, "Прошедшее многократное — практика"],
-    [206, "basic",    "indicative_future",        20, "Будущее время — базовый"],
-    [207, "advanced", "indicative_future",        30, "Будущее время — практика"],
-    [208, "basic",    "conditional",              20, "Условное наклонение — базовый"],
-    [209, "advanced", "conditional",              30, "Условное наклонение — практика"],
-    [210, "basic",    "imperative",               20, "Повелительное наклонение — базовый"],
-    [211, "advanced", "imperative",               30, "Повелительное наклонение — практика"],
-    [300, "basic",    "case_governance",          20, "Управление глаголов — базовый"],
-    [301, "advanced", "case_governance",          15, "Управление глаголов — практика"]
-  ]
+    [200, "basic",    "indicative_present",       20, "Настоящее время"],
+    [201, "advanced", "indicative_present",       30, "Настоящее время"],
+    [220, "practice", "indicative_present",       20, "Настоящее время"],
+    [202, "basic",    "indicative_past_simple",   20, "Прошедшее картинное"],
+    [203, "advanced", "indicative_past_simple",   30, "Прошедшее картинное"],
+    [221, "practice", "indicative_past_simple",   20, "Прошедшее картинное"],
+    [204, "basic",    "indicative_past_habitual", 20, "Прошедшее многократное"],
+    [205, "advanced", "indicative_past_habitual", 30, "Прошедшее многократное"],
+    [222, "practice", "indicative_past_habitual", 20, "Прошедшее многократное"],
+    [206, "basic",    "indicative_future",        20, "Будущее время"],
+    [207, "advanced", "indicative_future",        30, "Будущее время"],
+    [223, "practice", "indicative_future",        20, "Будущее время"],
+    [208, "basic",    "conditional",              20, "Условное наклонение"],
+    [209, "advanced", "conditional",              30, "Условное наклонение"],
+    [224, "practice", "conditional",              20, "Условное наклонение"],
+    [210, "basic",    "imperative",               20, "Повелительное наклонение"],
+    [211, "advanced", "imperative",               30, "Повелительное наклонение"],
+    [225, "practice", "imperative",               20, "Повелительное наклонение"],
+    [300, "basic",    "case_governance",          20, "Управление глаголов"],
+    [301, "advanced", "case_governance",          15, "Управление глаголов"]
+  ],
+  "tense_hints": {
+    "indicative_present": {
+      "description": "Действие происходит сейчас или повторяется регулярно",
+      "rows": [
+        ["aš (я)", "-u / -iu"],
+        ["tu (ты)", "-i"],
+        ["jis / ji / jie / jos", "-a / -ia / -o / -i"],
+        ["mes (мы)", "-ame / -iame / -ome / -ime"],
+        ["jūs (вы)", "-ate / -iate / -ote / -ite"]
+      ]
+    },
+    "indicative_past_simple": {
+      "description": "Однократное завершённое действие в прошлом",
+      "rows": [
+        ["aš (я)", "-au / -iau"],
+        ["tu (ты)", "-ai / -ei"],
+        ["jis / ji / jie / jos", "-o / -ė / -jo"],
+        ["mes (мы)", "-ome / -ėme / -jome"],
+        ["jūs (вы)", "-ote / -ėte / -jote"]
+      ]
+    },
+    "indicative_past_habitual": {
+      "description": "Повторявшееся или привычное действие в прошлом",
+      "rows": [
+        ["aš (я)", "-davau"],
+        ["tu (ты)", "-davai"],
+        ["jis / ji / jie / jos", "-davo"],
+        ["mes (мы)", "-davome"],
+        ["jūs (вы)", "-davote"]
+      ]
+    },
+    "indicative_future": {
+      "description": "Действие произойдёт в будущем",
+      "rows": [
+        ["aš (я)", "-siu"],
+        ["tu (ты)", "-si"],
+        ["jis / ji / jie / jos", "-s"],
+        ["mes (мы)", "-sime"],
+        ["jūs (вы)", "-site"]
+      ]
+    },
+    "conditional": {
+      "description": "Желаемое, возможное или предполагаемое действие",
+      "rows": [
+        ["aš (я)", "-čiau"],
+        ["tu (ты)", "-tum / -tumei"],
+        ["jis / ji / jie / jos", "-tų"],
+        ["mes (мы)", "-tume / -tumėme"],
+        ["jūs (вы)", "-tute / -tumėte"]
+      ]
+    },
+    "imperative": {
+      "description": "Приказ, просьба или призыв к действию",
+      "rows": [
+        ["tu (ты)", "-k / -ki / -ik / -iki"],
+        ["mes (мы)", "-kime / -ime"],
+        ["jūs (вы)", "-kite / -ite"]
+      ]
+    }
+  }
 }

@@ -527,3 +527,4 @@ class Verb(SQLModel, table=True):
     case_governance: str = Field(default="[]")  # [{question, sentences:[{lt,ru}]}]
     prefix_forms: str = Field(default="[]")    # [{prefix, infinitive, example_lt, example_ru}]
     non_conjugated: str = Field(default="{}")  # {"1": "form", ..., "9": "form"}
+    programs: str = Field(default="[]")        # JSON list of vocab program keys e.g. ["sekmes"]

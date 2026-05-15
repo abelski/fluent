@@ -26,8 +26,22 @@ _verb_lessons_data = _json.loads(_VERB_LESSONS_PATH.read_text(encoding="utf-8"))
 VERB_LESSON_CONFIG: dict[int, tuple] = {
     row[0]: tuple(row) for row in _verb_lessons_data["verb_lessons"]
 }
+_TENSE_HINTS: dict[str, dict] = _verb_lessons_data.get("tense_hints", {})
 # Tense keys that exist for each verb (subset of all possible tenses)
-_VERB_PERSONS = ["aš", "tu", "jis, ji, jie, jos", "mes", "jūs"]
+# All possible person labels shown to the student
+_VERB_PERSONS = ["aš", "tu", "jis", "ji", "jie", "jos", "mes", "jūs"]
+
+# Map from display pronoun → conjugation table key
+_PERSON_KEY = {
+    "aš": "aš",
+    "tu": "tu",
+    "jis": "jis, ji, jie, jos",
+    "ji":  "jis, ji, jie, jos",
+    "jie": "jis, ji, jie, jos",
+    "jos": "jis, ji, jie, jos",
+    "mes": "mes",
+    "jūs": "jūs",
+}
 _TENSE_LABELS = {
     "indicative_present":       "Настоящее время",
     "indicative_past_simple":   "Прошедшее картинное",
@@ -292,14 +306,14 @@ def get_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None:
 def get_verb_lessons(session: Session, program_type: str = "verbs") -> list[dict]:
     """Return verb lesson metadata list for a given program type.
 
-    program_type='verbs'      → conjugation lessons (IDs 200-211)
-    program_type='verb_cases' → case governance lessons (IDs 300-301)
+    program_type='verbs'      → conjugation lessons (IDs 200-299)
+    program_type='verb_cases' → case governance lessons (IDs 300-399)
     """
-    id_ranges = {
-        "verbs": range(200, 212),
-        "verb_cases": range(300, 302),
+    id_filters = {
+        "verbs": lambda lid: 200 <= lid < 300,
+        "verb_cases": lambda lid: 300 <= lid < 400,
     }
-    lesson_ids = id_ranges.get(program_type, range(200, 212))
+    filter_fn = id_filters.get(program_type, lambda lid: 200 <= lid < 300)
     return [
         {
             "id": row[0],
@@ -307,9 +321,10 @@ def get_verb_lessons(session: Session, program_type: str = "verbs") -> list[dict
             "tense_key": row[2],
             "task_count": row[3],
             "title": row[4],
+            "hint": _TENSE_HINTS.get(row[2]),
         }
-        for lid in lesson_ids
-        if (row := VERB_LESSON_CONFIG.get(lid))
+        for lid, row in VERB_LESSON_CONFIG.items()
+        if filter_fn(lid)
     ]
 
 
@@ -330,15 +345,26 @@ def get_verb_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None
 
 
 def _generate_verb_conjugation_tasks(
-    tense_key: str, count: int, session: Session
+    tense_key: str, count: int, session: Session, program_key: str | None = "sekmes"
 ) -> list[dict]:
-    """Pick random verbs from DB, random person, return verb_conjugation tasks."""
-    verbs = session.exec(select(Verb)).all()
+    """Pick random verbs from DB, random person, return verb_conjugation tasks.
+
+    program_key: if set, restricts to verbs tagged with that vocabulary program.
+    Falls back to all verbs if no tagged verbs have data for this tense.
+    """
+    all_verbs = session.exec(select(Verb)).all()
+
+    if program_key:
+        pool = [v for v in all_verbs if program_key in json.loads(v.programs)]
+    else:
+        pool = list(all_verbs)
+
     # Filter to verbs that have data for this tense
-    eligible = [
-        v for v in verbs
-        if json.loads(v.conjugations).get(tense_key)
-    ]
+    eligible = [v for v in pool if json.loads(v.conjugations).get(tense_key)]
+
+    # Fall back to all verbs if program filter yields nothing
+    if not eligible and program_key:
+        eligible = [v for v in all_verbs if json.loads(v.conjugations).get(tense_key)]
     if not eligible:
         return []
 
@@ -353,7 +379,7 @@ def _generate_verb_conjugation_tasks(
         if not conj:
             continue
         person = random.choice(_VERB_PERSONS)
-        form = conj.get(person)
+        form = conj.get(_PERSON_KEY.get(person, person))
         if not form:
             continue
         # Skip imperative aš (no form)

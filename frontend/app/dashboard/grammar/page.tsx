@@ -25,6 +25,7 @@ interface Lesson {
   tense_key?: string;        // verb lessons only
   task_count: number;
   rules?: GrammarRule[];
+  hint?: VerbHint;           // verb conjugation lessons only
   is_locked: boolean;
   best_score_pct: number | null;
   status?: string;
@@ -66,6 +67,11 @@ interface VerbCaseTask {
   answer: string;
 }
 
+interface VerbHint {
+  description: string;
+  rows: [string, string][];
+}
+
 type Task = DeclensionTask | SentenceTask | VerbConjugationTask | VerbCaseTask;
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong';
@@ -79,6 +85,9 @@ const LEVEL_STYLES: Record<string, string> = {
 
 function normalizeLt(text: string): string {
   return text
+    .normalize('NFD')
+    // strip stress/tone marks (acute, grave, tilde-as-tone) but keep native LT diacritics
+    .replace(/[́̀̃]/g, '')
     .normalize('NFC')
     .toLowerCase()
     .replace(/į/g, 'i')
@@ -129,7 +138,7 @@ function InlineSentenceInput({
 
   return (
     <p className="text-2xl sm:text-3xl font-mono tracking-tight leading-relaxed text-center inline-flex flex-wrap items-baseline justify-center gap-0">
-      <span>{before}</span>
+      <span className="whitespace-pre">{before}</span>
       <span className="relative inline-block">
         {/* hidden mirror to measure text width */}
         <span
@@ -284,6 +293,50 @@ function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collaps
   );
 }
 
+function VerbHintCard({ hint, collapsible }: { hint: VerbHint; collapsible: boolean }) {
+  const { tr } = useT();
+  const [open, setOpen] = useState(!collapsible);
+
+  return (
+    <div className="w-full border border-gray-900 rounded-2xl overflow-hidden bg-teal-50">
+      {collapsible ? (
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-teal-50 transition-colors"
+        >
+          <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarHint}</span>
+          <svg
+            width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
+            className={`text-teal-500 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
+          >
+            <path d="M6 8L1 3h10L6 8z" />
+          </svg>
+        </button>
+      ) : (
+        <div className="px-5 py-3 border-b border-gray-900">
+          <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarRule}</span>
+        </div>
+      )}
+
+      {open && (
+        <div className={`px-5 py-4 ${collapsible ? 'border-t border-gray-900' : ''}`}>
+          <p className="text-gray-600 text-sm mb-3">{hint.description}</p>
+          <table className="w-full text-xs">
+            <tbody>
+              {hint.rows.map(([person, ending], i) => (
+                <tr key={i} className={i % 2 === 0 ? 'bg-white/40 rounded' : ''}>
+                  <td className="py-1.5 pr-4 text-gray-500 font-medium w-1/2">{person}</td>
+                  <td className="py-1.5 text-gray-900 font-mono">{ending}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SubcategoryGroup({
   group,
   onStartLesson,
@@ -357,7 +410,7 @@ function SubcategoryGroup({
         </div>
       </button>
       {open && (
-        <div className="px-5 pb-4 bg-white">
+        <div className="px-5 py-4 bg-white">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {group.lessons.map((lesson) => {
               const locked = lesson.is_locked ?? false;
@@ -861,19 +914,37 @@ export default function GrammarPage() {
         {/* Grammar rule — basic (always visible) or advanced (collapsible) */}
         {showRule && (
           <div className="mb-6">
-            <GrammarRuleCard rules={activeLesson.rules ?? []} collapsible={ruleCollapsible} />
+            {activeLesson.hint ? (
+              <VerbHintCard hint={activeLesson.hint} collapsible={ruleCollapsible} />
+            ) : (
+              <GrammarRuleCard rules={activeLesson.rules ?? []} collapsible={ruleCollapsible} />
+            )}
           </div>
         )}
 
         {/* Task card */}
-        <div className="flex flex-col items-center justify-center flex-1 gap-8">
+        <div className="flex flex-col items-center justify-center flex-1 gap-12">
           {task.type === 'declension' && (
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
                 {task.case_name} · {task.number}
               </p>
-              <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-2">{task.prompt_lt}</p>
-              <p className="text-gray-500 text-base sm:text-lg">{task.prompt_ru}</p>
+              <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-4">{task.prompt_lt}</p>
+              <p className="text-gray-500 text-base sm:text-lg mb-5">{task.prompt_ru}</p>
+              <input
+                ref={inputRef}
+                type="text"
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
+                disabled={answerState !== 'unanswered'}
+                autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
+                placeholder={tr.grammar.typeDeclension}
+                className={`w-full py-3 px-4 rounded-xl border text-base text-gray-900 placeholder-gray-400 focus:outline-none transition-colors duration-200
+                  ${answerState === 'correct' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
+                    answerState === 'wrong'   ? 'border-red-300 bg-red-50 text-red-600 line-through' :
+                    'border-gray-200 bg-gray-50 focus:border-emerald-400 focus:bg-white'}`}
+              />
             </div>
           )}
 
@@ -899,11 +970,19 @@ export default function GrammarPage() {
 
           {task.type === 'verb_conjugation' && (
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
-              <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
-                {task.tense_label} · {task.person_label}
-              </p>
-              <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-1">{task.verb_infinitive}</p>
-              <p className="text-gray-500 text-base sm:text-lg">{task.translation_ru}</p>
+              <p className="text-gray-400 text-xs mb-4">{task.tense_label}</p>
+              <div className="mb-4">
+                <InlineSentenceInput
+                  display={`${task.verb_infinitive} — ${task.person_label} ___`}
+                  value={typed}
+                  onChange={setTyped}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
+                  disabled={answerState !== 'unanswered'}
+                  answerState={answerState}
+                  inputRef={inputRef}
+                />
+              </div>
+              <p className="text-gray-500 text-base">{task.translation_ru}</p>
             </div>
           )}
 
@@ -913,13 +992,7 @@ export default function GrammarPage() {
                 {task.verb_infinitive} — {task.translation_ru}
               </p>
               <p className="text-lg sm:text-xl font-medium text-gray-900 mb-2">{task.example_lt}</p>
-              <p className="text-gray-500 text-base">{task.example_ru}</p>
-              <p className="text-gray-400 text-sm mt-4">Каким падежом управляет этот глагол? (kuo?, ką?, ko?…)</p>
-            </div>
-          )}
-
-          <div className="w-full flex flex-col gap-3">
-            {(task.type === 'declension' || task.type === 'verb_conjugation' || task.type === 'verb_case') && (
+              <p className="text-gray-500 text-base mb-5">{task.example_ru}</p>
               <input
                 ref={inputRef}
                 type="text"
@@ -927,18 +1000,17 @@ export default function GrammarPage() {
                 onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
                 disabled={answerState !== 'unanswered'}
-                placeholder={
-                  task.type === 'verb_conjugation' ? 'Введите форму глагола…' :
-                  task.type === 'verb_case' ? 'Введите падежный вопрос (kuo?, ką?…)' :
-                  tr.grammar.typeDeclension
-                }
-                className={`w-full py-4 px-5 rounded-xl border bg-white text-base text-gray-900 placeholder-gray-400 outline-none transition-all duration-200
-                  ${answerState === 'correct' ? 'border-gray-900 bg-emerald-50' :
-                    answerState === 'wrong' ? 'border-gray-900 bg-red-50' :
-                    'border-gray-900 focus:border-gray-900'}`}
+                autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
+                placeholder="Введите падежный вопрос (kuo?, ką?…)"
+                className={`w-full py-3 px-4 rounded-xl border text-base text-gray-900 placeholder-gray-400 focus:outline-none transition-colors duration-200
+                  ${answerState === 'correct' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
+                    answerState === 'wrong'   ? 'border-red-300 bg-red-50 text-red-600 line-through' :
+                    'border-gray-200 bg-gray-50 focus:border-emerald-400 focus:bg-white'}`}
               />
-            )}
+            </div>
+          )}
 
+          <div className="w-full flex flex-col gap-3">
             {answerState === 'unanswered' && (
               <button
                 onClick={checkAnswer}
@@ -949,23 +1021,22 @@ export default function GrammarPage() {
               </button>
             )}
 
-            {answerState === 'correct' && (
+            {answerState === 'correct' && (task.type === 'sentence' || task.type === 'verb_conjugation') && (
               <p className="text-emerald-600 text-sm font-medium text-center">{tr.common.correct}</p>
             )}
 
             {answerState === 'wrong' && (
               <div className="flex flex-col gap-3 animate-in fade-in duration-150">
                 <div className="text-center">
-                  <p className="text-red-600 text-sm font-medium">{tr.common.notQuite}</p>
-                  <p className="text-gray-500 text-sm mt-1">
-                    {tr.common.correctAnswer} <span className="text-gray-900 font-medium">{shownAnswer}</span>
+                  <p className="text-gray-500 text-sm">
+                    {tr.common.correctAnswer} <span className="text-gray-900 font-semibold">{shownAnswer}</span>
                   </p>
                 </div>
                 <button
                   ref={dismissBtnRef}
                   data-testid="dismiss-wrong"
                   onClick={dismissWrongGrammar}
-                  className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors"
+                  className="w-full py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors"
                 >
                   {tr.common.dismiss}
                 </button>

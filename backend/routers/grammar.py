@@ -36,6 +36,12 @@ def _ensure_seed(session: Session) -> None:
     for seed in _SEED_PROGRAMS:
         if seed["title"] not in existing_titles:
             session.add(GrammarProgram(**seed))
+    # verb_cases exercises are hidden — too confusing without more context
+    for prog in session.exec(
+        select(GrammarProgram).where(GrammarProgram.program_type == "verb_cases")
+    ).all():
+        if prog.is_public:
+            prog.is_public = False
     session.commit()
 
 router = APIRouter()
