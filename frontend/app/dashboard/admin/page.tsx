@@ -2281,16 +2281,26 @@ const [practiceQPage, setPracticeQPage] = useState(1);
             {/* ── Notices sub-tab ── */}
             {messagesSubTab === 'notices' && (
               <div className="flex flex-col gap-4">
-                <p className="text-sm text-gray-500">
-                  Уведомления для пользователей на 4–5 местах — мотивация войти в топ-3.
-                </p>
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <p className="text-sm text-gray-500">
+                    Уведомления для пользователей на 4–5 местах — мотивация войти в топ-3.
+                  </p>
+                  <button
+                    onClick={handleGenerateRewards}
+                    disabled={rewardsGenerating}
+                    className="text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
+                  >
+                    {rewardsGenerating ? 'Генерация...' : '↻ Сгенерировать письма'}
+                  </button>
+                </div>
+                {rewardsError && <p className="text-amber-600 text-sm">{rewardsError}</p>}
                 {(() => {
                   const noticeMsgs = messages.filter((m) => m.message_type === 'notice');
                   const drafts = noticeMsgs.filter((m) => m.status === 'draft');
                   const sent = noticeMsgs.filter((m) => m.status !== 'draft');
                   if (noticeMsgs.length === 0) return (
                     <p className="text-gray-400 text-sm">
-                      Нет уведомительных писем. Перейдите на вкладку «Награды» и нажмите «Сгенерировать письма».
+                      Нет уведомительных писем. Нажмите «Сгенерировать письма».
                     </p>
                   );
                   return (
