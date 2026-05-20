@@ -513,7 +513,7 @@ export default function AdminPage() {
 
   // Phrase programs admin
   interface AdminPhraseProgram { id: number; title: string; title_en: string | null; description: string | null; description_en: string | null; difficulty: number; is_public: boolean; phrase_count: number; enrolled_count: number; }
-  interface AdminPhrase { id: number; text: string; translation: string; translation_en: string | null; position: number; chapter?: number | null; chapter_title?: string | null; }
+  interface AdminPhrase { id: number; text: string; translation: string; translation_en: string | null; alt_texts: string | null; position: number; chapter?: number | null; chapter_title?: string | null; }
   const [phrasePrograms, setPhrasePrograms] = useState<AdminPhraseProgram[]>([]);
   const [phraseProgramsLoaded, setPhraseProgramsLoaded] = useState(false);
   const [expandedPhraseProgram, setExpandedPhraseProgram] = useState<number | null>(null);
@@ -524,7 +524,7 @@ export default function AdminPage() {
   const [phraseProgramSaving, setPhraseProgramSaving] = useState(false);
   const [addingPhrase, setAddingPhrase] = useState<number | null>(null);  // program id being added to
   const [editingPhrase, setEditingPhrase] = useState<AdminPhrase | null>(null);
-  const [phraseDraft, setPhraseDraft] = useState({ text: '', translation: '', translation_en: '', position: 0 });
+  const [phraseDraft, setPhraseDraft] = useState({ text: '', translation: '', translation_en: '', alt_texts: '', position: 0 });
   const [phraseSaving, setPhraseSaving] = useState(false);
 
   async function loadPhrasePrograms() {
@@ -3433,6 +3433,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                 <input value={phraseDraft.text} onChange={(e) => setPhraseDraft((d) => ({ ...d, text: e.target.value }))} placeholder="Литовский текст" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                                 <input value={phraseDraft.translation} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation: e.target.value }))} placeholder="Перевод (RU)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                                 <input value={phraseDraft.translation_en} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation_en: e.target.value }))} placeholder="Translation (EN)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                                <input value={phraseDraft.alt_texts} onChange={(e) => setPhraseDraft((d) => ({ ...d, alt_texts: e.target.value }))} placeholder="Альтернативные ответы (через |)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                                 <div className="flex gap-2">
                                   <button onClick={() => savePhrase(prog.id)} disabled={phraseSaving} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium disabled:opacity-50">Сохранить</button>
                                   <button onClick={() => setEditingPhrase(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">Отмена</button>
@@ -3445,7 +3446,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   <p className="text-xs text-gray-400">{phrase.translation}{phrase.translation_en ? ` · ${phrase.translation_en}` : ''}</p>
                                 </div>
                                 <div className="flex gap-1 shrink-0">
-                                  <button onClick={() => { setEditingPhrase(phrase); setPhraseDraft({ text: phrase.text, translation: phrase.translation, translation_en: phrase.translation_en ?? '', position: phrase.position }); }} className="text-xs text-blue-500 hover:text-blue-700 px-2 py-0.5 rounded hover:bg-blue-50">✏️</button>
+                                  <button onClick={() => { setEditingPhrase(phrase); setPhraseDraft({ text: phrase.text, translation: phrase.translation, translation_en: phrase.translation_en ?? '', alt_texts: phrase.alt_texts ?? '', position: phrase.position }); }} className="text-xs text-blue-500 hover:text-blue-700 px-2 py-0.5 rounded hover:bg-blue-50">✏️</button>
                                   <button onClick={() => deletePhrase(phrase.id, prog.id)} className="text-xs text-red-400 hover:text-red-600 px-2 py-0.5 rounded hover:bg-red-50">✕</button>
                                 </div>
                               </>
@@ -3459,13 +3460,14 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           <input value={phraseDraft.text} onChange={(e) => setPhraseDraft((d) => ({ ...d, text: e.target.value }))} placeholder="Литовский текст" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                           <input value={phraseDraft.translation} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation: e.target.value }))} placeholder="Перевод (RU)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                           <input value={phraseDraft.translation_en} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation_en: e.target.value }))} placeholder="Translation (EN)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                          <input value={phraseDraft.alt_texts} onChange={(e) => setPhraseDraft((d) => ({ ...d, alt_texts: e.target.value }))} placeholder="Альтернативные ответы (через |)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                           <div className="flex gap-2">
                             <button onClick={() => savePhrase(prog.id)} disabled={phraseSaving} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium disabled:opacity-50">Добавить</button>
                             <button onClick={() => setAddingPhrase(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">Отмена</button>
                           </div>
                         </div>
                       ) : (
-                        <button onClick={() => { setAddingPhrase(prog.id); setPhraseDraft({ text: '', translation: '', translation_en: '', position: (phrasesMap[prog.id]?.length ?? 0) }); }} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">
+                        <button onClick={() => { setAddingPhrase(prog.id); setPhraseDraft({ text: '', translation: '', translation_en: '', alt_texts: '', position: (phrasesMap[prog.id]?.length ?? 0) }); }} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">
                           + Добавить фразу
                         </button>
                       )}

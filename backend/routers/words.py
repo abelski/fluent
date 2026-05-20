@@ -213,6 +213,8 @@ def get_lists(
             "description": wl.description,
             "description_en": wl.description_en,
             "subcategory": wl.subcategory,
+            "difficulty": wl.difficulty,
+            "cefr_level": wl.cefr_level,
             "word_count": counts.get(wl.id, 0),
             "star_counts": star_counts_map.get(wl.id, {"1": 0, "2": 0, "3": 0}),
         }

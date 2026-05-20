@@ -38,8 +38,8 @@ function normalizeLt(text: string): string {
   return text
     .toLowerCase()
     .replace(/į/g, 'i').replace(/č/g, 'c').replace(/š/g, 's')
-    .replace(/ž/g, 'z').replace(/ę/g, 'e').replace(/ė/g, 'e').replace(/ą/g, 'a')
-    .replace(/ū/g, 'u').replace(/uo/g, 'u');
+    .replace(/ž/g, 'z').replace(/ū/g, 'u').replace(/ų/g, 'u')
+    .replace(/ę/g, 'e').replace(/ė/g, 'e').replace(/ą/g, 'a');
 }
 
 function levenshtein(a: string, b: string): number {
@@ -56,15 +56,19 @@ function levenshtein(a: string, b: string): number {
   return dp[m][n];
 }
 
-function checkPhrase(typed: string, target: string, complexity: Complexity): boolean {
+function checkPhrase(typed: string, target: string, complexity: Complexity, altTexts?: string | null): boolean {
   const clean = (s: string) =>
     normalizeLt(s.replace(/[.,!?;:'"/()]/g, '').replace(/\s+/g, ' ').trim());
   const t = clean(typed);
-  const r = clean(target);
-  if (t === r) return true;
-  if (complexity === 'hard') return false;
-  const threshold = Math.max(1, Math.floor(r.length * (complexity === 'easy' ? 0.25 : 0.15)));
-  return levenshtein(t, r) <= threshold;
+  const targets = [target, ...(altTexts ? altTexts.split('|').map(s => s.trim()).filter(Boolean) : [])];
+  for (const ans of targets) {
+    const r = clean(ans);
+    if (t === r) return true;
+    if (complexity === 'hard') continue;
+    const threshold = Math.max(1, Math.floor(r.length * (complexity === 'easy' ? 0.25 : 0.15)));
+    if (levenshtein(t, r) <= threshold) return true;
+  }
+  return false;
 }
 
 function checkWord(typed: string, target: string, complexity: Complexity): boolean {
@@ -888,7 +892,7 @@ export default function PhraseSession({
 
   const handlePhraseSubmit = () => {
     if (!typeInput.trim()) return;
-    const correct = checkPhrase(typeInput.trim(), phrase.text, complexity);
+    const correct = checkPhrase(typeInput.trim(), phrase.text, complexity, phrase.alt_texts);
     setTypeResult(correct ? 'correct' : 'wrong');
     if (!correct && current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
       mistakePhraseIdsRef.current.add(current.phrase.id);

@@ -323,6 +323,7 @@ def admin_list_phrases(
             "id": p.id, "text": p.text,
             "translation": p.translation, "translation_en": p.translation_en,
             "position": p.position, "chapter": p.chapter, "chapter_title": p.chapter_title,
+            "alt_texts": p.alt_texts,
         }
         for p in phrases
     ]
@@ -333,6 +334,7 @@ class PhraseCreate(BaseModel):
     translation: str
     translation_en: Optional[str] = None
     position: int = 0
+    alt_texts: Optional[str] = None
 
 
 @router.post("/admin/phrase-programs/{program_id}/phrases")
@@ -360,11 +362,12 @@ def admin_create_phrase(
         translation=body.translation.strip(),
         translation_en=body.translation_en.strip() if body.translation_en else None,
         position=body.position,
+        alt_texts=body.alt_texts.strip() if body.alt_texts else None,
     )
     session.add(phrase)
     session.commit()
     session.refresh(phrase)
-    return {"id": phrase.id, "text": phrase.text, "translation": phrase.translation, "translation_en": phrase.translation_en, "position": phrase.position}
+    return {"id": phrase.id, "text": phrase.text, "translation": phrase.translation, "translation_en": phrase.translation_en, "position": phrase.position, "alt_texts": phrase.alt_texts}
 
 
 @router.put("/admin/phrases/{phrase_id}")
@@ -390,9 +393,10 @@ def admin_update_phrase(
     phrase.translation = body.translation.strip()
     phrase.translation_en = body.translation_en.strip() if body.translation_en else None
     phrase.position = body.position
+    phrase.alt_texts = body.alt_texts.strip() if body.alt_texts else None
     session.add(phrase)
     session.commit()
-    return {"id": phrase.id, "text": phrase.text, "translation": phrase.translation, "translation_en": phrase.translation_en, "position": phrase.position}
+    return {"id": phrase.id, "text": phrase.text, "translation": phrase.translation, "translation_en": phrase.translation_en, "position": phrase.position, "alt_texts": phrase.alt_texts}
 
 
 @router.delete("/admin/phrases/{phrase_id}")
@@ -677,6 +681,7 @@ def get_phrase_study_session(
             "text": phrase.text,
             "translation": phrase.translation,
             "translation_en": phrase.translation_en,
+            "alt_texts": phrase.alt_texts,
             "lesson_stage": lesson_stage,
             "blank_word": blank_word,
             "mcq_distractors": mcq_distractors,
@@ -705,23 +710,35 @@ def get_phrase_review_session(
             UserPhraseProgramEnrollment.user_id == user.id
         )
     ).all()
-    if not enrollments:
-        raise HTTPException(status_code=404, detail="Not enrolled in any program")
 
-    program_ids = [e.program_id for e in enrollments]
-    all_phrases = session.exec(
-        select(Phrase)
-        .where(col(Phrase.program_id).in_(program_ids))
-        .order_by(Phrase.position)
-    ).all()
+    if enrollments:
+        program_ids = [e.program_id for e in enrollments]
+        all_phrases = session.exec(
+            select(Phrase)
+            .where(col(Phrase.program_id).in_(program_ids))
+            .order_by(Phrase.position)
+        ).all()
+        phrase_ids = [p.id for p in all_phrases]
+        progress_rows = session.exec(
+            select(UserPhraseProgress).where(
+                UserPhraseProgress.user_id == user.id,
+                col(UserPhraseProgress.phrase_id).in_(phrase_ids),
+            )
+        ).all()
+    else:
+        # User left all programs but may still have phrases due for review — serve them anyway.
+        progress_rows = session.exec(
+            select(UserPhraseProgress).where(
+                UserPhraseProgress.user_id == user.id,
+            )
+        ).all()
+        phrase_ids = [r.phrase_id for r in progress_rows]
+        all_phrases = session.exec(
+            select(Phrase)
+            .where(col(Phrase.id).in_(phrase_ids))
+            .order_by(Phrase.position)
+        ).all() if phrase_ids else []
 
-    phrase_ids = [p.id for p in all_phrases]
-    progress_rows = session.exec(
-        select(UserPhraseProgress).where(
-            UserPhraseProgress.user_id == user.id,
-            col(UserPhraseProgress.phrase_id).in_(phrase_ids),
-        )
-    ).all()
     progress_map = {r.phrase_id: r for r in progress_rows}
 
     today = date.today()
@@ -770,6 +787,7 @@ def get_phrase_review_session(
             "text": phrase.text,
             "translation": phrase.translation,
             "translation_en": phrase.translation_en,
+            "alt_texts": phrase.alt_texts,
             "lesson_stage": lesson_stage,
             "blank_word": blank_word,
             "mcq_distractors": mcq_distractors,

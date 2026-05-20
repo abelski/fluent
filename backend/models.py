@@ -426,6 +426,7 @@ class Phrase(SQLModel, table=True):
     position: int = Field(default=0)    # display order within program
     chapter: Optional[int] = None       # chapter number within the program (e.g. 1-9)
     chapter_title: Optional[str] = None  # chapter label, e.g. "Koks jūsų vardas?"
+    alt_texts: Optional[str] = None      # pipe-separated alternative accepted answers, e.g. "Reikia važiuoti..."
     created_at: datetime = Field(default_factory=_utcnow)
 
 

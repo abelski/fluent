@@ -24,6 +24,8 @@ interface WordListSummary {
   description: string | null;
   description_en: string | null;
   subcategory: string | null;
+  difficulty: string | null;
+  cefr_level: string | null;
   word_count: number;
   star_counts?: Record<string, number>;
 }
@@ -410,6 +412,11 @@ export default function ListsPage() {
                                     ✓ Done
                                   </div>
                                 )}
+                                {list.difficulty && (
+                                  <div className={`absolute top-0 left-0 text-white text-xs font-bold px-3 py-1 rounded-br-xl rounded-tl-2xl tracking-wide ${isDone ? 'bg-emerald-500' : 'bg-amber-400'}`}>
+                                    {list.difficulty.charAt(0).toUpperCase() + list.difficulty.slice(1)}
+                                  </div>
+                                )}
                                 <div>
                                   <h2 className="text-lg font-semibold">{displayTitle}</h2>
                                   {displayDesc && (
@@ -530,6 +537,11 @@ export default function ListsPage() {
                               {isDone && (
                                 <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
                                   ✓ Done
+                                </div>
+                              )}
+                              {list.difficulty && (
+                                <div className={`absolute top-0 left-0 text-white text-xs font-bold px-3 py-1 rounded-br-xl rounded-tl-2xl tracking-wide ${isDone ? 'bg-emerald-500' : 'bg-amber-400'}`}>
+                                  {list.difficulty.charAt(0).toUpperCase() + list.difficulty.slice(1)}
                                 </div>
                               )}
                               <div>

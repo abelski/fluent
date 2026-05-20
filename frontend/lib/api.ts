@@ -501,6 +501,7 @@ export interface PhraseStudyItem {
   text: string;
   translation: string;
   translation_en: string | null;
+  alt_texts: string | null;
   lesson_stage: number;      // 0=intro, 1=fill-word, 2=type-full
   blank_word: string;
   mcq_distractors: string[];
