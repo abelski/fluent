@@ -938,6 +938,7 @@ class WordUpdate(BaseModel):
     translation_ru: str
     hint: Optional[str] = None
     star: Optional[int] = None  # 1=base form, 2=inflected/multi-form, 3=phrase
+    accented: Optional[str] = None  # stressed syllable in *...*  e.g. "apsi*pir*ko"
 
 
 @router.patch("/content/words/{word_id}")
@@ -962,6 +963,7 @@ def update_word(
     word.translation_en = body.translation_en.strip()
     word.translation_ru = body.translation_ru.strip()
     word.hint = body.hint.strip() if body.hint and body.hint.strip() else None
+    word.accented = body.accented.strip() if body.accented and body.accented.strip() else None
     if body.star is not None:
         word.star = body.star
     session.add(word)

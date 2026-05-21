@@ -79,6 +79,7 @@ class Word(SQLModel, table=True):
     hint: Optional[str] = None  # e.g. "m. / f." or grammatical note
     archived: bool = Field(default=False)  # soft-delete: hide but preserve FK integrity
     star: int = Field(default=1)  # complexity: 1=base form, 2=inflected/multi-form, 3=phrase
+    accented: Optional[str] = None  # stressed syllable wrapped in *...*  e.g. "apsi*pir*ko"
 
 
 class WordListItem(SQLModel, table=True):

@@ -69,6 +69,7 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
         {
             "id": w.id,
             "lithuanian": w.lithuanian,
+            "accented": w.accented,
             "translation_en": w.translation_en,
             "translation_ru": w.translation_ru,
             "hint": w.hint,
@@ -364,6 +365,7 @@ def get_study_words(
         {
             "id": w.id,
             "lithuanian": w.lithuanian,
+            "accented": w.accented,
             "translation_en": w.translation_en,
             "translation_ru": w.translation_ru,
             "hint": w.hint,
@@ -530,6 +532,7 @@ def _word_to_dict(w: Word, status: str) -> dict:
     return {
         "id": w.id,
         "lithuanian": w.lithuanian,
+        "accented": w.accented,
         "translation_en": w.translation_en,
         "translation_ru": w.translation_ru,
         "hint": w.hint,
@@ -1004,6 +1007,7 @@ def get_known_words(
         result.append({
             "id": w.id,
             "lithuanian": w.lithuanian,
+            "accented": w.accented,
             "translation_ru": w.translation_ru,
             "translation_en": w.translation_en,
             "hint": w.hint,

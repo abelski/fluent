@@ -14,10 +14,17 @@ import CharDiff from './CharDiff';
 export interface Word {
   id: number;
   lithuanian: string;
+  accented?: string | null;
   translation_en: string;
   translation_ru: string;
   hint: string | null;
   status?: string;
+}
+
+function renderAccented(text: string): React.ReactNode {
+  const parts = text.split('*');
+  if (parts.length !== 3) return text;
+  return <>{parts[0]}<strong>{parts[1]}</strong>{parts[2]}</>;
 }
 
 interface StudyCard {
@@ -805,7 +812,7 @@ export default function QuizSession({
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-4 sm:mb-6">
                 {(sessionMode === 'review' || word.status === 'known' || word.status === 'learning') ? tr.common.review : tr.common.newWord}
               </p>
-              <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{word.lithuanian}</p>
+              <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{renderAccented(word.accented || word.lithuanian)}</p>
               {digit && <p className="text-5xl sm:text-7xl font-bold text-emerald-600 mb-4" data-testid="number-digit">{digit}</p>}
               {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mb-4">{word.hint}</p>}
               <div className="h-px bg-gray-100 mb-4" />
@@ -827,7 +834,7 @@ export default function QuizSession({
           <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.whatMeans}</p>
-              <p className="text-2xl sm:text-4xl font-bold tracking-tight">{word.lithuanian}</p>
+              <p className="text-2xl sm:text-4xl font-bold tracking-tight">{renderAccented(word.accented || word.lithuanian)}</p>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
               {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
             </div>

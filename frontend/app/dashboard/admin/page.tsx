@@ -208,6 +208,7 @@ interface ContentWord {
   id: number;
   item_id: number;
   lithuanian: string;
+  accented: string | null;
   translation_en: string;
   translation_ru: string;
   hint: string | null;
@@ -219,6 +220,7 @@ interface EditingWord {
   id: number;
   item_id: number;
   lithuanian: string;
+  accented: string;
   translation_en: string;
   translation_ru: string;
   hint: string;
@@ -941,6 +943,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       id: word.id,
       item_id: word.item_id,
       lithuanian: word.lithuanian,
+      accented: word.accented ?? '',
       translation_en: word.translation_en,
       translation_ru: word.translation_ru,
       hint: word.hint ?? '',
@@ -956,6 +959,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         lithuanian: editingWord.lithuanian,
+        accented: editingWord.accented || null,
         translation_en: editingWord.translation_en,
         translation_ru: editingWord.translation_ru,
         hint: editingWord.hint || null,
@@ -969,7 +973,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         for (const [listId, words] of Object.entries(updated)) {
           updated[Number(listId)] = words.map((w) =>
             w.id === editingWord.id
-              ? { ...w, lithuanian: editingWord.lithuanian, translation_en: editingWord.translation_en, translation_ru: editingWord.translation_ru, hint: editingWord.hint || null, star: editingWord.star }
+              ? { ...w, lithuanian: editingWord.lithuanian, accented: editingWord.accented || null, translation_en: editingWord.translation_en, translation_ru: editingWord.translation_ru, hint: editingWord.hint || null, star: editingWord.star }
               : w
           );
         }
@@ -2734,6 +2738,15 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                                   <input
                                                     value={editingWord.lithuanian}
                                                     onChange={(e) => setEditingWord((d) => d ? { ...d, lithuanian: e.target.value } : d)}
+                                                    className="bg-gray-50 border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
+                                                  />
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                  <label className="text-xs text-gray-400">Ударение (*слог*)</label>
+                                                  <input
+                                                    value={editingWord.accented}
+                                                    onChange={(e) => setEditingWord((d) => d ? { ...d, accented: e.target.value } : d)}
+                                                    placeholder="apsi*pir*ko"
                                                     className="bg-gray-50 border border-gray-900 rounded-lg px-2 py-1 text-xs text-gray-900 outline-none"
                                                   />
                                                 </div>
