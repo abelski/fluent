@@ -47,6 +47,7 @@ interface ListProgress {
   known: number;
   learning: number;
   new: number;
+  known_star_counts?: Record<string, number>;
 }
 
 interface Quota {
@@ -402,6 +403,8 @@ export default function ListsPage() {
                             const displayTitle = lang === 'en' ? (list.title_en || list.title) : list.title;
                             const displayDesc = lang === 'en' ? (list.description_en || list.description) : list.description;
                             const isDone = p && p.total > 0 && p.known >= p.total;
+                            const starTotal = list.star_counts?.[String(starLevel)] ?? 0;
+                            const isStarLevelDone = !isDone && p && starTotal > 0 && (p.known_star_counts?.[String(starLevel)] ?? 0) >= starTotal;
                             return (
                               <div
                                 key={list.id}
@@ -409,12 +412,12 @@ export default function ListsPage() {
                               >
                                 {isDone && (
                                   <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
-                                    ✓ Done
+                                    {lang === 'en' ? '✓ Done' : '✓ Готово'}
                                   </div>
                                 )}
-                                {list.difficulty && (
-                                  <div className={`absolute top-0 left-0 text-white text-xs font-bold px-3 py-1 rounded-br-xl rounded-tl-2xl tracking-wide ${isDone ? 'bg-emerald-500' : 'bg-amber-400'}`}>
-                                    {list.difficulty.charAt(0).toUpperCase() + list.difficulty.slice(1)}
+                                {isStarLevelDone && (
+                                  <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
+                                    {'★'.repeat(starLevel) + (lang === 'en' ? ' Done' : ' Готово')}
                                   </div>
                                 )}
                                 <div>
@@ -532,16 +535,18 @@ export default function ListsPage() {
                           const displayTitle = lang === 'en' ? (list.title_en || list.title) : list.title;
                           const displayDesc = lang === 'en' ? (list.description_en || list.description) : list.description;
                           const isDone = p && p.total > 0 && p.known >= p.total;
+                          const starTotal = list.star_counts?.[String(starLevel)] ?? 0;
+                          const isStarLevelDone = !isDone && p && starTotal > 0 && (p.known_star_counts?.[String(starLevel)] ?? 0) >= starTotal;
                           return (
                             <div key={list.id} className="relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4">
                               {isDone && (
                                 <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
-                                  ✓ Done
+                                  {lang === 'en' ? '✓ Done' : '✓ Готово'}
                                 </div>
                               )}
-                              {list.difficulty && (
-                                <div className={`absolute top-0 left-0 text-white text-xs font-bold px-3 py-1 rounded-br-xl rounded-tl-2xl tracking-wide ${isDone ? 'bg-emerald-500' : 'bg-amber-400'}`}>
-                                  {list.difficulty.charAt(0).toUpperCase() + list.difficulty.slice(1)}
+                              {isStarLevelDone && (
+                                <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
+                                  {'★'.repeat(starLevel) + (lang === 'en' ? ' Done' : ' Готово')}
                                 </div>
                               )}
                               <div>

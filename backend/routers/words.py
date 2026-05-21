@@ -720,28 +720,28 @@ def get_all_lists_progress(
         ).all()
         custom_list_ids = {link.word_list_id for link in cp_links}
 
-    # All (list_id, word_id) pairs for public lists + enrolled custom program lists
+    # All (list_id, word_id, star) pairs for public lists + enrolled custom program lists
     # Exclude archived words so the total matches what study sessions can actually serve.
     public_rows = session.exec(
-        select(WordListItem.word_list_id, WordListItem.word_id)
+        select(WordListItem.word_list_id, WordListItem.word_id, Word.star)
         .join(WordList, WordList.id == WordListItem.word_list_id)
         .join(Word, Word.id == WordListItem.word_id)
         .where(WordList.is_public == True)
         .where(Word.archived == False)  # noqa: E712
     ).all()
     custom_rows = session.exec(
-        select(WordListItem.word_list_id, WordListItem.word_id)
+        select(WordListItem.word_list_id, WordListItem.word_id, Word.star)
         .join(Word, Word.id == WordListItem.word_id)
         .where(WordListItem.word_list_id.in_(list(custom_list_ids)))
         .where(Word.archived == False)  # noqa: E712
     ).all() if custom_list_ids else []
     rows = list(public_rows) + list(custom_rows)
 
-    # Group word IDs by list and collect the full set for the progress query
-    list_word_ids: dict[int, list[int]] = {}
+    # Group (word_id, star) tuples by list and collect the full set for the progress query
+    list_word_stars: dict[int, list[tuple[int, int]]] = {}
     all_word_ids: set[int] = set()
-    for list_id, word_id in rows:
-        list_word_ids.setdefault(list_id, []).append(word_id)
+    for list_id, word_id, star in rows:
+        list_word_stars.setdefault(list_id, []).append((word_id, star or 1))
         all_word_ids.add(word_id)
 
     progress_records = session.exec(
@@ -753,14 +753,23 @@ def get_all_lists_progress(
     status_map = {p.word_id: p.status for p in progress_records}
 
     result = {}
-    for list_id, word_ids in list_word_ids.items():
+    for list_id, word_stars in list_word_stars.items():
+        word_ids = [wid for wid, _ in word_stars]
         known = sum(1 for wid in word_ids if status_map.get(wid) == "known")
         learning = sum(1 for wid in word_ids if status_map.get(wid) == "learning")
+        # Cumulative known count per star level: level N = words with star <= N that are known
+        known_star_counts = {
+            str(level): sum(
+                1 for wid, s in word_stars if s <= level and status_map.get(wid) == "known"
+            )
+            for level in (1, 2, 3)
+        }
         result[list_id] = {
             "total": len(word_ids),
             "known": known,
             "learning": learning,
             "new": len(word_ids) - known - learning,
+            "known_star_counts": known_star_counts,
         }
     return result
 
