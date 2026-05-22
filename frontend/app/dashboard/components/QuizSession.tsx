@@ -69,12 +69,19 @@ function getDigit(word: Word): string | null {
   return ENGLISH_TO_DIGIT[word.translation_en] ?? null;
 }
 
+function collapseWs(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 function normalizeLt(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/į/g, 'i').replace(/č/g, 'c').replace(/š/g, 's')
-    .replace(/ž/g, 'z').replace(/ū/g, 'u').replace(/ų/g, 'u')
-    .replace(/ę/g, 'e').replace(/ė/g, 'e').replace(/ą/g, 'a');
+  return collapseWs(
+    text
+      .normalize('NFC')
+      .toLowerCase()
+      .replace(/į/g, 'i').replace(/č/g, 'c').replace(/š/g, 's')
+      .replace(/ž/g, 'z').replace(/ū/g, 'u').replace(/ų/g, 'u')
+      .replace(/ę/g, 'e').replace(/ė/g, 'e').replace(/ą/g, 'a')
+  );
 }
 
 function levenshtein(a: string, b: string): number {
@@ -609,7 +616,7 @@ export default function QuizSession({
     if (isCorrect) {
       saveProgress(card.word.id, 'known', false, clearMistakeOnSuccess, initQ);
       learnedWordIdsRef.current.add(card.word.id);
-      const isExact = typedAnswer.trim().toLowerCase() === target.toLowerCase();
+      const isExact = collapseWs(typedAnswer).toLowerCase() === collapseWs(target).toLowerCase();
       if (!isExact) setNearMiss(target);
       const delay = isExact ? 1200 : 2000;
       setTimeout(() => {
