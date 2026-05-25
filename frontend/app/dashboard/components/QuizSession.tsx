@@ -23,8 +23,14 @@ export interface Word {
 
 function renderAccented(text: string): React.ReactNode {
   const parts = text.split('*');
-  if (parts.length !== 3) return text;
-  return <>{parts[0]}<strong>{parts[1]}</strong>{parts[2]}</>;
+  if (parts.length < 3 || parts.length % 2 === 0) return text;
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? <strong key={i}>{part}</strong> : <span key={i}>{part}</span>
+      )}
+    </>
+  );
 }
 
 interface StudyCard {
