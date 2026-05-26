@@ -1,5 +1,7 @@
 """Bilingual email templates for re-engagement messages sent to inactive users."""
 
+from typing import Literal
+
 
 def generate_reengagement_email(name: str, days_inactive: int, lang: str) -> tuple[str, str]:
     """Return (subject, body) for an inactive-user re-engagement email.
@@ -94,4 +96,45 @@ def generate_notice_email(name: str, rank: int, lang: str) -> tuple[str, str]:
             f"Best regards,\n"
             f"The Fluent Team"
         )
+    return subject, body
+
+
+_STATUS_COPY_RU = {
+    "resolved": "Спасибо! Мы исправили проблему, о которой вы сообщили.",
+    "onhold": "Мы получили вашу заявку и пока отложили её — она не забыта и вернётся в работу позже.",
+    "open": "Мы вернули вашу заявку в работу и ещё раз её рассмотрим.",
+}
+
+_STATUS_COPY_EN = {
+    "resolved": "Thanks! We've fixed the issue you reported.",
+    "onhold": "We've received your report and put it on hold — it's not forgotten and will return to the queue later.",
+    "open": "We've reopened your report and are taking another look.",
+}
+
+
+def generate_report_status_email(
+    name: str,
+    description: str,
+    new_status: Literal["open", "onhold", "resolved"],
+) -> tuple[str, str]:
+    """Return (subject, body) for a bilingual RU+EN notification sent to a reporter
+    when their mistake report changes status."""
+    snippet = (description or "").strip()
+    if len(snippet) > 200:
+        snippet = snippet[:200].rstrip() + "…"
+
+    subject = "Ваша заявка обновлена / Your report was updated"
+    body = (
+        f"Привет, {name}!\n\n"
+        f"{_STATUS_COPY_RU.get(new_status, _STATUS_COPY_RU['open'])}\n\n"
+        f"Ваша заявка:\n«{snippet}»\n\n"
+        f"Открыть Fluent: https://fluent.lt/dashboard\n\n"
+        f"С уважением,\nКоманда Fluent\n\n"
+        f"— — —\n\n"
+        f"Hi {name},\n\n"
+        f"{_STATUS_COPY_EN.get(new_status, _STATUS_COPY_EN['open'])}\n\n"
+        f"Your report:\n\"{snippet}\"\n\n"
+        f"Open Fluent: https://fluent.lt/dashboard\n\n"
+        f"Best regards,\nThe Fluent Team"
+    )
     return subject, body

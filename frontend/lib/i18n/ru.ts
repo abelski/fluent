@@ -261,6 +261,7 @@ const ru: Translations = {
     onholdBadge: '⏸ На паузе',
     resolve: 'Решено',
     hold: 'На паузу',
+    reopen: 'Открыть заново',
     delete: 'Удалить',
     deleteConfirm: 'Удалить жалобу навсегда?',
     contentSubcategories: 'Подкатегории',
@@ -462,6 +463,15 @@ const ru: Translations = {
     error: 'Не удалось отправить, попробуйте ещё раз.',
     cancel: 'Отмена',
     send: 'Отправить',
+  },
+  feedback: {
+    title: 'Написать нам',
+    subtitle: 'Расскажите, что думаете — мы читаем каждое сообщение.',
+    emailPlaceholder: 'Ваш email',
+    messagePlaceholder: 'Ваше сообщение',
+    send: 'Отправить',
+    sent: 'Сообщение отправлено!',
+    error: 'Ошибка отправки',
   },
   programs: {
     title: 'Все программы',

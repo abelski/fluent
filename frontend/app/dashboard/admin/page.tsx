@@ -1118,6 +1118,15 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     loadData();
   }
 
+  async function reopenReport(id: number) {
+    const token = getToken();
+    await fetch(`${BACKEND_URL}/api/admin/reports/${id}/reopen`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch((err) => console.error('API error:', err));
+    loadData();
+  }
+
   async function deleteReport(id: number) {
     if (!confirm(tr.admin.deleteConfirm)) return;
     const token = getToken();
@@ -1909,10 +1918,26 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       </>
                     )}
                     {r.status === 'onhold' && (
-                      <span className="text-xs text-amber-500">{tr.admin.onholdBadge}</span>
+                      <>
+                        <span className="text-xs text-amber-500">{tr.admin.onholdBadge}</span>
+                        <button
+                          onClick={() => reopenReport(r.id)}
+                          className="text-xs px-3 py-1.5 text-gray-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
+                        >
+                          {tr.admin.reopen}
+                        </button>
+                      </>
                     )}
                     {r.status === 'resolved' && (
-                      <span className="text-xs text-gray-300">{tr.admin.resolvedBadge}</span>
+                      <>
+                        <span className="text-xs text-gray-300">{tr.admin.resolvedBadge}</span>
+                        <button
+                          onClick={() => reopenReport(r.id)}
+                          className="text-xs px-3 py-1.5 text-gray-600 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
+                        >
+                          {tr.admin.reopen}
+                        </button>
+                      </>
                     )}
                     {isSuperadmin && (
                       <button

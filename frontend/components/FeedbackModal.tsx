@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { BACKEND_URL } from '../lib/api';
+import { useT } from '../lib/useT';
 
 interface Props {
   open: boolean;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function FeedbackModal({ open, onClose }: Props) {
+  const { tr } = useT();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -29,14 +31,14 @@ export default function FeedbackModal({ open, onClose }: Props) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error((data as { detail?: string }).detail ?? 'Ошибка отправки');
+        throw new Error((data as { detail?: string }).detail ?? tr.feedback.error);
       }
       setSent(true);
       setEmail('');
       setMessage('');
       setTimeout(() => { setSent(false); onClose(); }, 1500);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Ошибка отправки');
+      setError(e instanceof Error ? e.message : tr.feedback.error);
     } finally {
       setSending(false);
     }
@@ -48,25 +50,25 @@ export default function FeedbackModal({ open, onClose }: Props) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="bg-white border border-gray-900 rounded-2xl w-full max-w-sm p-5 shadow-xl">
-        <h3 className="text-gray-900 font-semibold mb-1">Написать нам</h3>
-        <p className="text-gray-400 text-xs mb-4">Расскажите, что думаете — мы читаем каждое сообщение.</p>
+        <h3 className="text-gray-900 font-semibold mb-1">{tr.feedback.title}</h3>
+        <p className="text-gray-400 text-xs mb-4">{tr.feedback.subtitle}</p>
 
         {sent ? (
-          <p className="text-emerald-600 text-sm text-center py-4">Сообщение отправлено!</p>
+          <p className="text-emerald-600 text-sm text-center py-4">{tr.feedback.sent}</p>
         ) : (
           <>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ваш email"
+              placeholder={tr.feedback.emailPlaceholder}
               data-testid="feedback-email"
               className="w-full bg-gray-100 border border-gray-900 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 mb-3"
             />
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ваше сообщение"
+              placeholder={tr.feedback.messagePlaceholder}
               rows={4}
               maxLength={2000}
               data-testid="feedback-message"
@@ -80,7 +82,7 @@ export default function FeedbackModal({ open, onClose }: Props) {
                 onClick={onClose}
                 className="text-xs px-3 py-2 text-gray-400 hover:text-gray-900 transition-colors"
               >
-                Отмена
+                {tr.common.cancel}
               </button>
               <button
                 onClick={submit}
@@ -88,7 +90,7 @@ export default function FeedbackModal({ open, onClose }: Props) {
                 data-testid="feedback-submit"
                 className="text-xs px-4 py-2 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
               >
-                {sending ? '...' : 'Отправить'}
+                {sending ? '...' : tr.feedback.send}
               </button>
             </div>
           </>

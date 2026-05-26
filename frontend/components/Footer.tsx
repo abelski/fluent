@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL } from '../lib/api';
+import { useT } from '../lib/useT';
 import FeedbackModal from './FeedbackModal';
 
 interface FooterArticle {
@@ -12,6 +13,7 @@ interface FooterArticle {
 }
 
 export default function Footer() {
+  const { tr, lang } = useT();
   const [links, setLinks] = useState<FooterArticle[]>([]);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -34,7 +36,7 @@ export default function Footer() {
               href={`/dashboard/articles/${a.slug}`}
               className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
             >
-              {a.title_ru}
+              {lang === 'en' ? a.title_en : a.title_ru}
             </Link>
           ))}
           <button
@@ -42,7 +44,7 @@ export default function Footer() {
             data-testid="footer-feedback-btn"
             className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
           >
-            Написать нам
+            {tr.feedback.title}
           </button>
         </nav>
       </div>

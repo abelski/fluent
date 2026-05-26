@@ -305,6 +305,7 @@ export interface Translations {
     onholdBadge: string;
     resolve: string;
     hold: string;
+    reopen: string;
     delete: string;
     deleteConfirm: string;
     // Content management
@@ -472,6 +473,15 @@ export interface Translations {
     error: string;
     cancel: string;
     send: string;
+  };
+  feedback: {
+    title: string;
+    subtitle: string;
+    emailPlaceholder: string;
+    messagePlaceholder: string;
+    send: string;
+    sent: string;
+    error: string;
   };
   programs: {
     title: string;

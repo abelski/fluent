@@ -261,6 +261,7 @@ const en: Translations = {
     onholdBadge: '⏸ On hold',
     resolve: 'Resolved',
     hold: 'Hold',
+    reopen: 'Reopen',
     delete: 'Delete',
     deleteConfirm: 'Delete this report permanently?',
     contentSubcategories: 'Subcategories',
@@ -462,6 +463,15 @@ const en: Translations = {
     error: 'Failed to send. Please try again.',
     cancel: 'Cancel',
     send: 'Send',
+  },
+  feedback: {
+    title: 'Contact us',
+    subtitle: 'Tell us what you think — we read every message.',
+    emailPlaceholder: 'Your email',
+    messagePlaceholder: 'Your message',
+    send: 'Send',
+    sent: 'Message sent!',
+    error: 'Failed to send',
   },
   programs: {
     title: 'All programs',
