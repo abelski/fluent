@@ -1240,6 +1240,53 @@ def update_cefr_thresholds(
     return {"ok": True}
 
 
+# ---------------------------------------------------------------------------
+# Auto-send scheduler toggles
+# ---------------------------------------------------------------------------
+
+_AUTO_SEND_KEYS = ("auto_send_inactive_emails", "auto_send_weekly_rewards")
+
+
+@router.get("/settings/auto-send")
+def get_auto_send_settings(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return current auto-send toggle values. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    result = {}
+    for key in _AUTO_SEND_KEYS:
+        row = session.exec(select(AppSetting).where(AppSetting.key == key)).first()
+        result[key] = _json.loads(row.value) if row else True  # default on
+    return result
+
+
+class AutoSendBody(BaseModel):
+    auto_send_inactive_emails: bool
+    auto_send_weekly_rewards: bool
+
+
+@router.patch("/settings/auto-send")
+def update_auto_send_settings(
+    body: AutoSendBody,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Update auto-send toggles. Superadmin-only."""
+    _require_superadmin(authorization, session)
+    for key, value in (
+        ("auto_send_inactive_emails", body.auto_send_inactive_emails),
+        ("auto_send_weekly_rewards", body.auto_send_weekly_rewards),
+    ):
+        row = session.exec(select(AppSetting).where(AppSetting.key == key)).first()
+        if row:
+            row.value = _json.dumps(value)
+        else:
+            session.add(AppSetting(key=key, value=_json.dumps(value)))
+    session.commit()
+    return {"ok": True}
+
+
 class GrammarRuleUpdate(BaseModel):
     name_ru: str
     question: str

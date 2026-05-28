@@ -512,6 +512,11 @@ export default function AdminPage() {
   const [cefrSaving, setCefrSaving] = useState(false);
   const [cefrMsg, setCefrMsg] = useState('');
 
+  // Auto-send scheduler toggles
+  const [autoSend, setAutoSend] = useState<{ auto_send_inactive_emails: boolean; auto_send_weekly_rewards: boolean } | null>(null);
+  const [autoSendSaving, setAutoSendSaving] = useState(false);
+  const [autoSendMsg, setAutoSendMsg] = useState('');
+
 
   // Phrase programs admin
   interface AdminPhraseProgram { id: number; title: string; title_en: string | null; description: string | null; description_en: string | null; difficulty: number; is_public: boolean; phrase_count: number; enrolled_count: number; }
@@ -787,6 +792,27 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     if (res.ok) {
       setCefrThresholds(await res.json());
       setCefrLoaded(true);
+    }
+  }
+
+  async function loadAutoSend() {
+    const res = await fetch(`${BACKEND_URL}/api/admin/settings/auto-send`, { headers: authHeaders() });
+    if (res.ok) setAutoSend(await res.json());
+  }
+
+  async function saveAutoSend() {
+    if (!autoSend) return;
+    setAutoSendSaving(true);
+    setAutoSendMsg('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/settings/auto-send`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(autoSend),
+      });
+      setAutoSendMsg(res.ok ? 'Сохранено' : 'Ошибка');
+    } finally {
+      setAutoSendSaving(false);
     }
   }
 
@@ -1623,7 +1649,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               {tr.news.adminTitle}
             </button>
             <button
-              onClick={() => { setContentTab('settings'); if (!cefrLoaded) loadCefrThresholds(); }}
+              onClick={() => { setContentTab('settings'); if (!cefrLoaded) loadCefrThresholds(); if (!autoSend) loadAutoSend(); }}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'settings' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
               Настройки
@@ -3554,6 +3580,46 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   {cefrSaving ? 'Сохранение…' : 'Сохранить'}
                 </button>
                 {cefrMsg && <span className="text-sm text-emerald-600">{cefrMsg}</span>}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="font-semibold text-gray-900 mb-1">Автоматическая рассылка</h2>
+              <p className="text-sm text-gray-500 mb-4">Управление автоматической отправкой писем по расписанию.</p>
+              {autoSend ? (
+                <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
+                  {([
+                    { key: 'auto_send_inactive_emails' as const, label: 'Письма неактивным пользователям', desc: 'Ежедневно в 09:00 UTC — пользователи без активности 30+ дней' },
+                    { key: 'auto_send_weekly_rewards' as const, label: 'Награды и уведомления лидерборда', desc: 'По понедельникам в 10:00 UTC — топ-3 получают Premium, топ 4–5 получают уведомление' },
+                  ] as const).map(({ key, label, desc }) => (
+                    <div key={key} className="flex items-center justify-between gap-4 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{label}</p>
+                        <p className="text-xs text-gray-400">{desc}</p>
+                      </div>
+                      <button
+                        onClick={() => setAutoSend(prev => prev ? { ...prev, [key]: !prev[key] } : prev)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${autoSend[key] ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                        role="switch"
+                        aria-checked={autoSend[key]}
+                      >
+                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${autoSend[key] ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 mb-4">Загрузка…</p>
+              )}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={saveAutoSend}
+                  disabled={autoSendSaving || !autoSend}
+                  className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                >
+                  {autoSendSaving ? 'Сохранение…' : 'Сохранить'}
+                </button>
+                {autoSendMsg && <span className="text-sm text-emerald-600">{autoSendMsg}</span>}
               </div>
             </div>
 
