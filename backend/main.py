@@ -30,6 +30,7 @@ from database import create_db_and_tables, get_session
 from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage  # noqa: F401 — registers table
 from data.grammar.lessons import LESSON_CONFIG
 from scheduler import start_scheduler
+import telegram_service
 
 # Resolve the static export directory relative to this file so the path works
 # regardless of where the process is started from.
@@ -68,6 +69,7 @@ def on_startup():
     # Safe to run repeatedly — SQLModel uses CREATE TABLE IF NOT EXISTS.
     create_db_and_tables()
     start_scheduler()
+    telegram_service.send_telegram("🚀 Fluent backend started")
     # Seed default CEFR thresholds if not already set.
     import json
     from database import engine

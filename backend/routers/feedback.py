@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+import telegram_service
 from auth import require_user as _decode_user
 from database import get_session
 from models import Feedback, User
@@ -41,6 +42,7 @@ def submit_feedback(
     row = Feedback(email=email, message=message)
     session.add(row)
     session.commit()
+    telegram_service.send_telegram(f"💬 New feedback from {email}:\n{message[:200]}")
     return {"ok": True}
 
 

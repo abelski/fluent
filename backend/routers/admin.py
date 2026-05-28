@@ -17,6 +17,7 @@ from quota import is_premium_active as _is_premium_active
 from grammar_service import get_lessons as _get_grammar_lessons
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
 import email_service
+import telegram_service
 
 # Valid case indices are those that appear in LESSON_CONFIG plus those defined in CASE_INFO
 _VALID_CASE_INDICES: frozenset[int] = frozenset(
@@ -319,6 +320,9 @@ def send_prepared_message(
 
     session.add(msg)
     session.commit()
+    telegram_service.send_telegram(
+        f"📧 Mail sent: #{msg.id} ({msg.message_type}) → {msg.user_email}"
+    )
     return {"ok": True}
 
 

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 import email_service
+import telegram_service
 from auth import require_user as _require_user
 from database import get_session
 from email_templates import generate_report_status_email
@@ -72,6 +73,7 @@ def create_report(
     session.add(report)
     session.commit()
     session.refresh(report)
+    telegram_service.send_telegram(f"🐛 New report from {user.email}:\n{report.description[:200]}")
     return {"ok": True, "id": report.id}
 
 
