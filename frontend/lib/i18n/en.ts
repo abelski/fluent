@@ -173,6 +173,11 @@ const en: Translations = {
     browsePrograms: 'Browse all programs',
     browseProgramsLink: 'Browse all programs →',
     unenrollBtn: 'Remove',
+    lessonStatusDraft: 'Draft',
+    lessonStatusTesting: 'In testing',
+    noLessons: 'No lessons',
+    sentenceFrom: 'from: ',
+    verbCasePlaceholder: 'Enter case question (kuo?, ką?…)',
   },
   practice: {
     title: 'Practice',

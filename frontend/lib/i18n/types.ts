@@ -157,6 +157,11 @@ export interface Translations {
     browsePrograms: string;
     browseProgramsLink: string;
     unenrollBtn: string;
+    lessonStatusDraft: string;
+    lessonStatusTesting: string;
+    noLessons: string;
+    sentenceFrom: string;
+    verbCasePlaceholder: string;
   };
   practice: {
     title: string;

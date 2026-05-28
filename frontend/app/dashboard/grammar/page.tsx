@@ -438,7 +438,7 @@ function SubcategoryGroup({
                     </span>
                     {lesson.status && lesson.status !== 'published' && (
                       <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px leading-tight">
-                        {lesson.status === 'draft' ? 'Черновик' : 'В тестировании'}
+                        {lesson.status === 'draft' ? tr.grammar.lessonStatusDraft : tr.grammar.lessonStatusTesting}
                       </span>
                     )}
                   </div>
@@ -501,7 +501,7 @@ function filterLessonsForProgram(
 }
 
 export default function GrammarPage() {
-  const { tr, plural } = useT();
+  const { tr, plural, lang } = useT();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [caseGroups, setCaseGroups] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
@@ -734,7 +734,7 @@ export default function GrammarPage() {
                         className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-left"
                       >
                         <div className="flex items-center gap-3">
-                          <span role="heading" aria-level={2} className="font-semibold text-gray-900">{program.title}</span>
+                          <span role="heading" aria-level={2} className="font-semibold text-gray-900">{(lang === 'en' && program.title_en) ? program.title_en : program.title}</span>
                           {loading ? null : (
                             <span className="text-gray-400 text-sm">{programLessons.length} {plural(programLessons.length, tr.grammar.lessonsCount)}</span>
                           )}
@@ -764,7 +764,7 @@ export default function GrammarPage() {
                               <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
                             </div>
                           ) : subcategoryGroups.length === 0 ? (
-                            <p className="text-gray-400 text-sm py-8 text-center">Нет уроков</p>
+                            <p className="text-gray-400 text-sm py-8 text-center">{tr.grammar.noLessons}</p>
                           ) : (
                             subcategoryGroups.map((group, gi) => (
                               <SubcategoryGroup key={`${group.title}-${gi}`} group={group} onStartLesson={startLesson} />
@@ -951,7 +951,7 @@ export default function GrammarPage() {
           {task.type === 'sentence' && (
             <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
               {task.base_lt && (
-                <p className="text-gray-400 text-xs mb-4">от: <span className="font-medium text-gray-500">{task.base_lt}</span></p>
+                <p className="text-gray-400 text-xs mb-4">{tr.grammar.sentenceFrom}<span className="font-medium text-gray-500">{task.base_lt}</span></p>
               )}
               <div className="mb-4">
                 <InlineSentenceInput
@@ -1001,7 +1001,7 @@ export default function GrammarPage() {
                 onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
                 disabled={answerState !== 'unanswered'}
                 autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
-                placeholder="Введите падежный вопрос (kuo?, ką?…)"
+                placeholder={tr.grammar.verbCasePlaceholder}
                 className={`w-full py-3 px-4 rounded-xl border text-base text-gray-900 placeholder-gray-400 focus:outline-none transition-colors duration-200
                   ${answerState === 'correct' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
                     answerState === 'wrong'   ? 'border-red-300 bg-red-50 text-red-600 line-through' :
