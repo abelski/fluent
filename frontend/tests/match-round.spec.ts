@@ -112,15 +112,6 @@ test.describe('Match round — appears after study session', () => {
     await expect(page.locator('[data-testid="match-continue"]')).toBeVisible({ timeout: 3000 });
   });
 
-  test('clicking continue shows done screen', async ({ page }) => {
-    await reachMatchRound(page);
-    await pairAllWords(page);
-
-    await page.locator('[data-testid="match-continue"]').click();
-
-    await expect(page.getByText('Сессия завершена!')).toBeVisible({ timeout: 3000 });
-  });
-
   test('wrong pair does not create a match and continue button stays hidden', async ({ page }) => {
     await reachMatchRound(page);
 

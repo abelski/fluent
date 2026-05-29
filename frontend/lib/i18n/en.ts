@@ -178,6 +178,8 @@ const en: Translations = {
     noLessons: 'No lessons',
     sentenceFrom: 'from: ',
     verbCasePlaceholder: 'Enter case question (kuo?, ką?…)',
+    verbConjugationPlaceholder: 'Enter verb form...',
+    verbCaseGovernancePrompt: 'What case does this verb govern?',
   },
   practice: {
     title: 'Practice',

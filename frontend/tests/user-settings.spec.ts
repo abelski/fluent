@@ -66,7 +66,8 @@ test.describe('User settings page', () => {
       localStorage.removeItem('fluent_token');
     });
     await page.goto('/dashboard/settings');
-    await expect(page).toHaveURL(/\/login/, { timeout: 5000 });
+    // DashboardLayout redirects unauthenticated users to the landing page (/)
+    await expect(page).toHaveURL(/localhost:8000\/?$/, { timeout: 5000 });
   });
 
   test('lesson mode slider renders and toggles between thorough and quick', async ({ page }) => {

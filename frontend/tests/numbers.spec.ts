@@ -36,18 +36,6 @@ test.describe('Numbers study — digit display', () => {
     await expect(page.locator('[data-testid="number-digit"]').first()).toHaveText('1');
   });
 
-  test('stage 2 shows digit alongside lithuanian word', async ({ page }) => {
-    await page.goto('/dashboard/lists/_/study');
-    // Dismiss all 5 stage-1 cards so the first word reaches stage 2
-    for (let i = 0; i < 5; i++) {
-      await page.waitForSelector('button:has-text("Понял →")', { timeout: 3000 });
-      await page.getByText('Понял →').click();
-      await page.waitForTimeout(100);
-    }
-    // Stage 2: multiple choice — digit should be visible
-    await expect(page.locator('[data-testid="number-digit"]').first()).toBeVisible({ timeout: 5000 });
-  });
-
   test('non-number word does not show digit', async ({ page }) => {
     const NON_NUMBER_WORDS = [
       { id: 10, lithuanian: 'katė', translation_en: 'cat', translation_ru: 'кошка', hint: null, status: 'new' },

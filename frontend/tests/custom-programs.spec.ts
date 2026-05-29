@@ -192,7 +192,8 @@ test.describe('/dashboard/programs/new — access control', () => {
   test('unauthenticated user is redirected to /login', async ({ page }) => {
     await page.route('**/api/**', (route) => route.fulfill({ status: 401, json: { detail: 'Unauthorized' } }));
     await page.goto('/dashboard/programs/new');
-    await expect(page).toHaveURL(/\/login/, { timeout: 5000 });
+    // DashboardLayout redirects unauthenticated users to the landing page (/)
+    await expect(page).toHaveURL(/localhost:8000\/?$/, { timeout: 5000 });
   });
 
   test('non-redactor sees access denied message', async ({ page }) => {

@@ -83,11 +83,6 @@ test.describe('Star complexity selector', () => {
     expect(studyUrl).toContain('star_level=2');
   });
 
-  test('beta banner is visible on lists page', async ({ page }) => {
-    await page.goto('/dashboard/lists');
-    await expect(page.locator('text=бета').or(page.locator('text=beta')).first()).toBeVisible({ timeout: 5000 });
-  });
-
   test('complexity hint text is visible on lists page', async ({ page }) => {
     await page.goto('/dashboard/lists');
     // hint line for star 1

@@ -162,6 +162,8 @@ export interface Translations {
     noLessons: string;
     sentenceFrom: string;
     verbCasePlaceholder: string;
+    verbConjugationPlaceholder: string;
+    verbCaseGovernancePrompt: string;
   };
   practice: {
     title: string;

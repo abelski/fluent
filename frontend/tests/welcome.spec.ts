@@ -1,5 +1,15 @@
 import { test, expect } from '@playwright/test';
 
+// Fake but structurally valid JWT — the frontend only base64-decodes the payload,
+// it does NOT verify the signature client-side, so this is enough for UI tests.
+function makeFakeJwt(name: string): string {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(
+    JSON.stringify({ email: 'test@test.com', name, exp: 9999999999 })
+  );
+  return `${header}.${payload}.fakesignature`;
+}
+
 const MOCK_CONTENT = {
   title_ru: 'Как пользоваться Fluent',
   title_en: 'How to use Fluent',
@@ -12,9 +22,9 @@ const MOCK_WELCOME_SEEN = { shown: true, content: MOCK_CONTENT };
 
 test.describe('Welcome modal', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('fluent_token', 'mock-token');
-    });
+    await page.addInitScript((token) => {
+      localStorage.setItem('fluent_token', token);
+    }, makeFakeJwt('Test User'));
     await page.route('**/api/me/quota', (r) => r.fulfill({ json: { premium_active: false, premium_until: null, sessions_today: 0, daily_limit: 5 } }));
     await page.route('**/api/subcategory-meta', (r) => r.fulfill({ json: {} }));
     await page.route('**/api/me/custom-programs', (r) => r.fulfill({ json: [] }));

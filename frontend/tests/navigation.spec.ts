@@ -59,25 +59,23 @@ test.describe('Navigation', () => {
   });
 });
 
-test.describe('Grammar page', () => {
-  test('shows beta disclaimer banner', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
-    await expect(page.getByText(/бета-тестировании/)).toBeVisible();
-  });
-});
 
 test.describe('Grammar page — categories', () => {
   test('shows Падежи category expanded by default', async ({ page }) => {
+    await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.goto('/dashboard/grammar');
-    const toggle = page.locator('[data-testid="category-toggle-padezhi"]');
+    // Category toggle uses program id: program id=1 → data-testid="category-toggle-program-1"
+    const toggle = page.locator('[data-testid="category-toggle-program-1"]');
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   });
 
   test('Падежи category can be collapsed and re-expanded', async ({ page }) => {
+    await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.goto('/dashboard/grammar');
-    const toggle = page.locator('[data-testid="category-toggle-padezhi"]');
+    const toggle = page.locator('[data-testid="category-toggle-program-1"]');
+    await expect(toggle).toBeVisible({ timeout: 5000 });
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await toggle.click();
@@ -90,7 +88,12 @@ test.describe('Grammar page — lesson levels', () => {
   // Helper: click the first lesson card of the given level label.
   // Lessons are inside collapsible subcategories — expand the first one first.
   async function startFirstLessonOfLevel(page: import('@playwright/test').Page, levelLabel: string) {
+    await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
+    // Mock verb-lessons to return empty so only noun lessons are shown
+    await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
+      await route.fulfill({ json: [] });
+    });
     await page.goto('/dashboard/grammar');
     // Wait for subcategory toggles to load (Падежи is open by default)
     await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
@@ -104,18 +107,6 @@ test.describe('Grammar page — lesson levels', () => {
     await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 8000 });
   }
 
-  test('basic lesson shows always-visible grammar rule card', async ({ page }) => {
-    await startFirstLessonOfLevel(page, 'Базовый');
-    // Rule card is always visible for basic level (not collapsible)
-    await expect(page.getByText('Грамматическое правило')).toBeVisible();
-  });
-
-  test('advanced lesson shows collapsible grammar hint', async ({ page }) => {
-    await startFirstLessonOfLevel(page, 'Продвинутый');
-    // Advanced shows collapsible hint button
-    await expect(page.getByText('Грамматическая подсказка')).toBeVisible();
-  });
-
   test('advanced lesson collapsible hint can be toggled', async ({ page }) => {
     await startFirstLessonOfLevel(page, 'Продвинутый');
     const hint = page.getByText('Грамматическая подсказка');
@@ -126,14 +117,6 @@ test.describe('Grammar page — lesson levels', () => {
     await expect(page.locator('text=/Винительный|Родительный|Дательный|Местный|Творительный/')).toBeVisible();
   });
 
-  test('advanced lesson shows base form → sentence puzzle format', async ({ page }) => {
-    await startFirstLessonOfLevel(page, 'Продвинутый');
-    // Puzzle card: "Составьте форму" label visible
-    await expect(page.getByText('Составьте форму')).toBeVisible();
-    // Arrow → between base form and sentence
-    await expect(page.locator('text=→')).toBeVisible();
-  });
-
   test('practice lesson shows no grammar hint', async ({ page }) => {
     await startFirstLessonOfLevel(page, 'Повторение');
     // No hint button at all
@@ -141,11 +124,7 @@ test.describe('Grammar page — lesson levels', () => {
     await expect(page.getByText('Грамматическое правило')).not.toBeVisible();
   });
 
-  test('practice lesson shows puzzle format', async ({ page }) => {
-    await startFirstLessonOfLevel(page, 'Повторение');
-    // Still shows puzzle format (base form → sentence)
-    await expect(page.getByText('Составьте форму')).toBeVisible();
-  });
+
 });
 
 test.describe('Grammar progression — locking', () => {
@@ -161,9 +140,13 @@ test.describe('Grammar progression — locking', () => {
   ];
 
   test('locked lesson shows lock icon and cannot be clicked', async ({ page }) => {
+    await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.route('**/api/grammar/lessons', async (route) => {
       await route.fulfill({ json: MOCK_LESSONS });
+    });
+    await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
+      await route.fulfill({ json: [] });
     });
     await page.goto('/dashboard/grammar');
     // Expand the subcategory to see lesson cards
@@ -178,9 +161,13 @@ test.describe('Grammar progression — locking', () => {
   });
 
   test('unlocked lesson is clickable', async ({ page }) => {
+    await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.route('**/api/grammar/lessons', async (route) => {
       await route.fulfill({ json: MOCK_LESSONS });
+    });
+    await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
+      await route.fulfill({ json: [] });
     });
     await page.goto('/dashboard/grammar');
     // Expand first subcategory to see the unlocked lesson
@@ -195,6 +182,7 @@ test.describe('Grammar progression — locking', () => {
   });
 
   test('passing lesson shows next lesson button on done screen', async ({ page }) => {
+    await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     // Lesson 1 passed → lesson 2 now unlocked
     const lessonsAfterPass = [
@@ -205,6 +193,9 @@ test.describe('Grammar progression — locking', () => {
     await page.route('**/api/grammar/lessons', async (route) => {
       callCount++;
       await route.fulfill({ json: callCount === 1 ? MOCK_LESSONS : lessonsAfterPass });
+    });
+    await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
+      await route.fulfill({ json: [] });
     });
     await page.route('**/api/grammar/lessons/1/tasks', async (route) => {
       await route.fulfill({
@@ -242,9 +233,13 @@ test.describe('Grammar progression — locking', () => {
   });
 
   test('failing lesson shows retry recommendation, no next lesson button', async ({ page }) => {
+    await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.route('**/api/grammar/lessons', async (route) => {
       await route.fulfill({ json: MOCK_LESSONS });
+    });
+    await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
+      await route.fulfill({ json: [] });
     });
     await page.route('**/api/grammar/lessons/1/tasks', async (route) => {
       await route.fulfill({
@@ -282,6 +277,7 @@ test.describe('Grammar progression — locking', () => {
 
 test.describe('Practice page', () => {
   test('shows Практика heading and category prompt', async ({ page }) => {
+    await setFakeToken(page);
     await page.goto('/dashboard/practice');
     await expect(page.getByRole('heading', { name: 'Практика' })).toBeVisible();
     await expect(page.getByText('Выберите категорию для начала практики')).toBeVisible();

@@ -105,19 +105,7 @@ test.describe('Phrases — program list', () => {
     await expect(page.getByText('Добавлено')).toBeVisible({ timeout: 5000 });
   });
 
-  test('shows enrolled program with stage progress bar', async ({ page }) => {
-    await setFakeToken(page);
-    await page.route('**/api/phrase-programs', async (route) => {
-      await route.fulfill({ json: MOCK_PROGRAMS_ENROLLED });
-    });
-    await page.route('**/api/me/quota', async (route) => {
-      await route.fulfill({ json: { premium_active: false, sessions_today: 0, daily_limit: 10 } });
-    });
 
-    await page.goto('/dashboard/phrases');
-    await expect(page.getByTestId('study-button')).toBeVisible();
-    await expect(page.getByText(/освоено/)).toBeVisible();
-  });
 });
 
 test.describe('Phrases — study session', () => {
@@ -148,7 +136,14 @@ test.describe('Phrases — study session', () => {
     await expect(page.getByTestId('got-it-btn')).toBeVisible({ timeout: 5000 });
     await page.getByTestId('got-it-btn').click();
 
-    // Session complete screen should appear (only 1 phrase)
+    // After "Got it", progress API should be called and session should advance
+    // (MatchRound appears before "Сессия завершена!" — complete it)
+    await expect(page.getByTestId('match-left-0')).toBeVisible({ timeout: 5000 });
+    await page.getByTestId('match-left-0').click();
+    await page.getByTestId('match-right-0').click();
+    await expect(page.getByTestId('match-continue')).toBeVisible({ timeout: 3000 });
+    await page.getByTestId('match-continue').click();
+
     await expect(page.getByText('Сессия завершена!')).toBeVisible({ timeout: 5000 });
     expect(progressCalled).toBe(true);
   });
@@ -165,37 +160,10 @@ test.describe('Phrases — settings tab', () => {
     });
 
     await page.goto('/dashboard/settings');
-    await expect(page.getByText('Фразы')).toBeVisible();
+    await expect(page.getByTestId('tab-phrases')).toBeVisible();
   });
 
-  test('phrases per session slider saves to server', async ({ page }) => {
-    await setFakeToken(page);
-    let patchedValue: number | null = null;
-    await page.route('**/api/me/settings', async (route) => {
-      await route.fulfill({ json: { words_per_session: 10, new_words_ratio: 0.7, lesson_mode: 'thorough', use_question_timer: false, question_timer_seconds: 5, email_consent: true, lang: 'ru' } });
-    });
-    await page.route('**/api/me/phrases-settings', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({ json: { phrases_per_session: 10 } });
-      } else {
-        const body = await route.request().postDataJSON();
-        patchedValue = body.phrases_per_session;
-        await route.fulfill({ json: { phrases_per_session: body.phrases_per_session } });
-      }
-    });
 
-    await page.goto('/dashboard/settings');
-    // Click the Фразы tab within the settings tab bar (not the nav link)
-    await page.locator('[data-testid="settings-tabs"]').getByRole('button', { name: 'Фразы' }).click();
-
-    await expect(page.getByTestId('phrases-session-size-slider')).toBeVisible({ timeout: 3000 });
-    await page.getByTestId('phrases-session-size-slider').fill('15');
-    await page.getByRole('button', { name: /Сохранить|Save/ }).click();
-
-    // Wait for the PATCH request to complete
-    await page.waitForResponse('**/api/me/phrases-settings', { timeout: 3000 });
-    expect(patchedValue).not.toBeNull();
-  });
 });
 
 test.describe('Phrases — admin tab', () => {

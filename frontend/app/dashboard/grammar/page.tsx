@@ -109,6 +109,7 @@ function InlineSentenceInput({
   disabled,
   answerState,
   inputRef,
+  placeholder,
 }: {
   display: string;
   value: string;
@@ -117,6 +118,7 @@ function InlineSentenceInput({
   disabled: boolean;
   answerState: AnswerState;
   inputRef: React.RefObject<HTMLInputElement>;
+  placeholder?: string;
 }) {
   const [before, after] = display.split('___');
   const mirrorRef = useRef<HTMLSpanElement>(null);
@@ -159,6 +161,7 @@ function InlineSentenceInput({
           autoCorrect="off"
           autoComplete="off"
           spellCheck={false}
+          placeholder={placeholder}
           style={{ width: inputWidth }}
           className={`inline-block border-b-2 outline-none text-2xl sm:text-3xl font-mono tracking-tight text-center transition-colors duration-200 ${inputColor}`}
         />
@@ -685,7 +688,10 @@ export default function GrammarPage() {
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
           <h1 className="text-3xl font-bold mb-2">{tr.grammar.title}</h1>
-          <p className="text-gray-400 mb-6">{tr.grammar.subtitle}</p>
+          <p className="text-gray-400 mb-4">{tr.grammar.subtitle}</p>
+          <div className="mb-6 rounded-xl px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+            {tr.grammar.betaNotice}
+          </div>
 
           {programsLoading ? (
             <div className="flex justify-center py-20">
@@ -980,6 +986,7 @@ export default function GrammarPage() {
                   disabled={answerState !== 'unanswered'}
                   answerState={answerState}
                   inputRef={inputRef}
+                  placeholder={tr.grammar.verbConjugationPlaceholder}
                 />
               </div>
               <p className="text-gray-500 text-base">{task.translation_ru}</p>
@@ -993,6 +1000,7 @@ export default function GrammarPage() {
               </p>
               <p className="text-lg sm:text-xl font-medium text-gray-900 mb-2">{task.example_lt}</p>
               <p className="text-gray-500 text-base mb-5">{task.example_ru}</p>
+              <p className="text-gray-400 text-xs mb-3">{tr.grammar.verbCaseGovernancePrompt}</p>
               <input
                 ref={inputRef}
                 type="text"

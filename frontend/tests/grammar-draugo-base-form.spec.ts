@@ -6,6 +6,12 @@
 
 import { test, expect } from '@playwright/test';
 
+function makeFakeJwt(name: string): string {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(JSON.stringify({ email: 'test@test.com', name, exp: 9999999999 }));
+  return `${header}.${payload}.fakesignature`;
+}
+
 const MOCK_LESSONS = [
   {
     id: 1,
@@ -55,11 +61,17 @@ const MOCK_GRAMMAR_PROGRAMS_ENROLLED = [
 
 test.describe('Issue #25 — grammar base form: draugas vs draugė', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript((token) => {
+      localStorage.setItem('fluent_token', token);
+    }, makeFakeJwt('Test User'));
     await page.route('**/api/grammar-programs', async (route) => {
       await route.fulfill({ json: MOCK_GRAMMAR_PROGRAMS_ENROLLED });
     });
     await page.route('**/api/grammar/lessons', async (route) => {
       await route.fulfill({ json: MOCK_LESSONS });
+    });
+    await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
+      await route.fulfill({ json: [] });
     });
     await page.route('**/api/grammar/lessons/1/tasks', async (route) => {
       await route.fulfill({ json: MOCK_TASKS_CORRECT });
