@@ -46,6 +46,7 @@ def _apply_sm2(progress: UserWordProgress, quality: int) -> None:
             interval = 6
         else:
             interval = round(interval * ef)
+        interval = min(interval, 365)
         reps += 1
         ef = ef + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
         ef = max(1.3, ef)
@@ -250,6 +251,7 @@ DEFAULT_NEW_RATIO = 0.7  # 70% new words, 30% review
 def get_study_words(
     list_id: int,
     star_level: int = Query(default=1, ge=1, le=3),
+    include_known: bool = Query(default=False),
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
@@ -304,7 +306,8 @@ def get_study_words(
 
         # All words at this star_level are already known — return empty so the frontend
         # shows the level-complete state instead of a pointless review session.
-        if not new_words and not learning_words:
+        # When include_known=True the user explicitly wants to re-study known words.
+        if not new_words and not learning_words and not include_known:
             return {"words": [], "distractors": [], "all_known": True}
 
         _quota_check_and_increment(user, session)

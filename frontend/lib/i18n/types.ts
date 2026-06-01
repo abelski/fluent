@@ -39,7 +39,6 @@ export interface Translations {
     practice: string;
     articles: string;
     programs: string;
-    beta: string;
     signIn: string;
     admin: string;
     createProgram: string;
@@ -119,6 +118,7 @@ export interface Translations {
     levelComplete: string;
     levelCompleteBody: string;
     advanceToLevel: string;
+    studyAgain: string;
   };
   grammar: {
     title: string;

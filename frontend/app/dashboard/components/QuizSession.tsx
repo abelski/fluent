@@ -268,14 +268,14 @@ export default function QuizSession({
     mistake = false,
     clearMistake = false,
     quality?: number,
-  ) => {
+  ): Promise<void> => {
     const token = getToken();
-    if (!token) return;
-    fetch(`${BACKEND_URL}/api/words/${wordId}/progress`, {
+    if (!token) return Promise.resolve();
+    return fetch(`${BACKEND_URL}/api/words/${wordId}/progress`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ status, mistake, clear_mistake: clearMistake, ...(quality !== undefined ? { quality } : {}) }),
-    }).catch((err) => console.error('Failed to save word progress:', err));
+    }).then(() => undefined).catch((err) => console.error('Failed to save word progress:', err));
   }, []);
 
   // ── Initialise queue when words change ──────────────────────────────────────
@@ -336,11 +336,7 @@ export default function QuizSession({
   }, [frontWordId, frontStage, lang]);
 
   // ── finishSession ───────────────────────────────────────────────────────────
-  const finishSession = useCallback(() => {
-    // In study mode only: if >30% mistakes, demote all learned words back to learning.
-    if (sessionMode === 'study' && mistakeWordIdsRef.current.size / totalWords > 0.3) {
-      learnedWordIdsRef.current.forEach((wordId) => saveProgress(wordId, 'learning'));
-    }
+  const finishSession = useCallback(async () => {
     // Only show words the user successfully typed (stage 3 correct) in the match round.
     // Fall back to all session words if fewer than 2 were completed correctly.
     const completed = words.filter((w) => correctWordIdsRef.current.has(w.id));

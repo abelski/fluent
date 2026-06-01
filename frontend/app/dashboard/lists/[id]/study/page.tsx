@@ -21,14 +21,15 @@ export default function QuizPage() {
   const [empty, setEmpty] = useState(false);
   const [allKnown, setAllKnown] = useState(false);
 
-  const loadWords = useCallback(() => {
+  const loadWords = useCallback((includeKnown = false) => {
     setLoading(true);
     setLimitReached(false);
     setEmpty(false);
     setAllKnown(false);
     const token = getToken();
     const starLevel = getStarLevel();
-    fetch(`${BACKEND_URL}/api/lists/${id}/study?star_level=${starLevel}`, {
+    const params = `star_level=${starLevel}${includeKnown ? '&include_known=true' : ''}`;
+    fetch(`${BACKEND_URL}/api/lists/${id}/study?${params}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then((r) => {
@@ -132,6 +133,12 @@ export default function QuizPage() {
                 {tr.study.advanceToLevel.replace('{stars}', '★'.repeat(nextLevel))}
               </button>
             )}
+            <button
+              onClick={() => loadWords(true)}
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium text-white transition-colors"
+            >
+              {tr.study.studyAgain}
+            </button>
             <button
               onClick={() => router.push('/dashboard/lists')}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"

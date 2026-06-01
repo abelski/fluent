@@ -35,7 +35,6 @@ const ru: Translations = {
     practice: 'Практика',
     articles: 'Статьи',
     programs: 'Программы',
-    beta: 'Сайт находится в бета-тестировании.',
     signIn: 'Войти',
     admin: 'Администрирование',
     createProgram: '+ Создать программу',
@@ -131,6 +130,7 @@ const ru: Translations = {
     levelComplete: 'Уровень пройден!',
     levelCompleteBody: 'Вы знаете все слова на этом уровне сложности.',
     advanceToLevel: 'Перейти на {stars}',
+    studyAgain: 'Повторить ещё раз',
   },
   grammar: {
     title: 'Грамматика',

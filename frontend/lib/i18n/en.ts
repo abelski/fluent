@@ -35,7 +35,6 @@ const en: Translations = {
     practice: 'Practice',
     articles: 'Articles',
     programs: 'Programs',
-    beta: 'This site is in beta.',
     signIn: 'Sign in',
     admin: 'Admin panel',
     createProgram: '+ Create program',
@@ -131,6 +130,7 @@ const en: Translations = {
     levelComplete: 'Level complete!',
     levelCompleteBody: 'You know all words at this difficulty level.',
     advanceToLevel: 'Advance to {stars}',
+    studyAgain: 'Study again',
   },
   grammar: {
     title: 'Grammar',
