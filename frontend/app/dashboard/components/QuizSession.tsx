@@ -526,7 +526,7 @@ export default function QuizSession({
       // Only update backend in study mode
       if (sessionMode === 'study') saveProgress(card.word.id, 'learning', true);
     } else {
-      if (sessionMode === 'study') saveProgress(card.word.id, 'known', false);
+      if (sessionMode === 'study' && !mistakeWordIdsRef.current.has(card.word.id)) saveProgress(card.word.id, 'known', false);
     }
 
     if (isCorrect) {
@@ -567,7 +567,7 @@ export default function QuizSession({
       }
       if (sessionMode === 'study') saveProgress(card.word.id, 'learning', true);
     } else {
-      if (sessionMode === 'study') saveProgress(card.word.id, 'known', false);
+      if (sessionMode === 'study' && !mistakeWordIdsRef.current.has(card.word.id)) saveProgress(card.word.id, 'known', false);
     }
 
     if (isCorrect) {
@@ -616,7 +616,7 @@ export default function QuizSession({
 
     const initQ = initialQualityRef.current[card.word.id] ?? 3;
     if (isCorrect) {
-      saveProgress(card.word.id, 'known', false, clearMistakeOnSuccess, initQ);
+      if (!mistakeWordIdsRef.current.has(card.word.id)) saveProgress(card.word.id, 'known', false, clearMistakeOnSuccess, initQ);
       learnedWordIdsRef.current.add(card.word.id);
       const isExact = collapseWs(typedAnswer).toLowerCase() === collapseWs(target).toLowerCase();
       if (!isExact) setNearMiss(target);
