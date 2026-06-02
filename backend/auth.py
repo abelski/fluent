@@ -98,7 +98,14 @@ def create_jwt(email: str, name: str, picture: Optional[str]) -> str:
 
 
 def _origin(request: Request) -> str:
-    """Reconstruct the public-facing origin (scheme + host) from the request."""
+    """Return the public-facing origin for OAuth redirects.
+
+    In production FRONTEND_URL is set explicitly and is authoritative.
+    Fall back to reconstructing from request headers only in local dev
+    where FRONTEND_URL points to localhost.
+    """
+    if FRONTEND_URL and not FRONTEND_URL.startswith("http://localhost"):
+        return FRONTEND_URL.rstrip("/")
     scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
     host = request.headers.get("host", "")
     return f"{scheme}://{host}" if host else FRONTEND_URL
