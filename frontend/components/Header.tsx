@@ -185,7 +185,7 @@ export default function Header() {
                   />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-sm font-medium">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.name?.charAt(0).toUpperCase() ?? '?'}
                   </div>
                 )}
                 <span className="text-gray-500 text-sm hidden sm:block">{user.name}</span>

@@ -13,6 +13,7 @@ interface Word {
   translation_ru: string;
   hint: string | null;
   star: number;
+  status?: 'new' | 'learning' | 'known';
 }
 
 interface WordListDetail {
@@ -42,7 +43,10 @@ export default function ListDetailPage() {
   }
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/lists/${id}`)
+    const token = getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    fetch(`${BACKEND_URL}/api/lists/${id}`, { headers })
       .then((r) => (r.ok ? r.json() : null))
       .then(setList)
       .catch(() => setList(null))
@@ -95,16 +99,17 @@ export default function ListDetailPage() {
         </div>
 
         <div className="bg-white border border-gray-900 rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_1fr_auto] sm:grid-cols-[1fr_1fr_auto_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-gray-900">
+          <div className="grid grid-cols-[1fr_1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-gray-900">
             <span>{tr.detail.columnLithuanian}</span>
             <span>{tr.detail.columnTranslation}</span>
             <span className="hidden sm:block">{tr.detail.columnNote}</span>
+            <span />
             <span />
           </div>
           {list.words.map((word, i) => (
             <div
               key={word.id}
-              className={`grid grid-cols-[1fr_1fr_auto] sm:grid-cols-[1fr_1fr_auto_auto] px-4 sm:px-6 py-3.5 gap-4 items-center ${
+              className={`grid grid-cols-[1fr_1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto_auto] px-4 sm:px-6 py-3.5 gap-4 items-center ${
                 i < list.words.length - 1 ? 'border-b border-gray-900' : ''
               }`}
             >
@@ -112,6 +117,10 @@ export default function ListDetailPage() {
               <span className="text-gray-500 text-sm">{lang === 'en' ? word.translation_en : word.translation_ru}</span>
               <span className="text-gray-300 text-xs hidden sm:block">{word.hint ?? ''}</span>
               <span className="text-gray-300 text-xs">{'★'.repeat(word.star ?? 1)}</span>
+              <span className="text-xs w-5 text-center">
+                {word.status === 'known' && <span className="text-emerald-500" title="Выучено">✓</span>}
+                {word.status === 'learning' && <span className="text-amber-400" title="В процессе">●</span>}
+              </span>
             </div>
           ))}
         </div>

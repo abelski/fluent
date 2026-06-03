@@ -710,7 +710,7 @@ export default function QuizSession({
       <MatchRound
         words={matchRoundWords}
         lang={lang}
-        onDone={() => { setShowMatchRound(false); setDone(true); router.refresh(); }}
+        onDone={() => { setShowMatchRound(false); setDone(true); }}
         backHref={backHref}
       />
     );
@@ -745,7 +745,7 @@ export default function QuizSession({
           )}
           <div className="flex flex-col gap-3">
             <button
-              onClick={onRepeat}
+              onClick={() => { router.refresh(); onRepeat(); }}
               className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
             >
               {sessionMode === 'study' ? tr.common.oneLessonMore : tr.common.repeatMore}

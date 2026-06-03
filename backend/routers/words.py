@@ -225,18 +225,36 @@ def get_lists(
 
 
 @router.get("/lists/{list_id}")
-def get_list(list_id: int, session: Session = Depends(get_session)):
-    """Return a single list with all its words. Used on the list detail page."""
+def get_list(
+    list_id: int,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return a single list with all its words. Used on the list detail page.
+    When authenticated, each word includes a 'status' field (new/learning/known)."""
     wl = session.get(WordList, list_id)
     if not wl or wl.archived:
         raise HTTPException(status_code=404, detail="List not found")
+    words = _list_words(list_id, session)
+    user = _try_get_user(authorization, session)
+    if user and words:
+        word_ids = [w["id"] for w in words]
+        progress_records = session.exec(
+            select(UserWordProgress).where(
+                UserWordProgress.user_id == user.id,
+                col(UserWordProgress.word_id).in_(word_ids),
+            )
+        ).all()
+        progress_map = {p.word_id: p.status for p in progress_records}
+        for w in words:
+            w["status"] = progress_map.get(w["id"], "new")
     return {
         "id": wl.id,
         "title": wl.title,
         "title_en": wl.title_en,
         "description": wl.description,
         "description_en": wl.description_en,
-        "words": _list_words(list_id, session),
+        "words": words,
     }
 
 
