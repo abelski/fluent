@@ -285,7 +285,7 @@ export default function ProgramDetailPage() {
                               {state!.words!.map((word) => (
                                 <tr key={word.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
                                   <td className="px-5 py-2.5 font-medium text-gray-900">{renderAccented(word.accented || word.lithuanian)}</td>
-                                  <td className="px-5 py-2.5 text-gray-600">{lang === 'en' ? word.translation_en : word.translation_ru}</td>
+                                  <td className="px-5 py-2.5 text-gray-600">{lang === 'en' ? (word.translation_en || word.translation_ru) : word.translation_ru}</td>
                                   <td className="px-5 py-2.5 text-gray-400 hidden sm:table-cell">{word.hint ?? ''}</td>
                                 </tr>
                               ))}

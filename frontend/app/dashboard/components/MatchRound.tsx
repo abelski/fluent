@@ -29,7 +29,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function translation(word: Word, lang: Lang): string {
-  return lang === 'en' ? word.translation_en : word.translation_ru;
+  return lang === 'en' ? (word.translation_en || word.translation_ru) : word.translation_ru;
 }
 
 export default function MatchRound({ words, lang, onDone, backHref }: MatchRoundProps) {

@@ -110,7 +110,7 @@ function parseForms(lithuanian: string): string[] {
 }
 
 function trans(word: Word, lang: Lang): string {
-  return lang === 'en' ? word.translation_en : word.translation_ru;
+  return lang === 'en' ? (word.translation_en || word.translation_ru) : word.translation_ru;
 }
 
 function optionText(word: Word, lang: Lang): string {

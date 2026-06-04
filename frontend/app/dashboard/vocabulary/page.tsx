@@ -183,7 +183,7 @@ export default function VocabularyPage() {
               </thead>
               <tbody>
                 {paginated.map((w, i) => {
-                  const translation = lang === 'en' ? (w.translation_en ?? w.translation_ru) : w.translation_ru;
+                  const translation = lang === 'en' ? (w.translation_en || w.translation_ru) : w.translation_ru;
                   return (
                     <tr
                       key={w.id}

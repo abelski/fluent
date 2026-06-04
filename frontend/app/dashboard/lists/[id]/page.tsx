@@ -116,7 +116,7 @@ export default function ListDetailPage() {
               }`}
             >
               <span className="font-medium text-gray-900">{renderAccented(word.accented || word.lithuanian)}</span>
-              <span className="text-gray-500 text-sm">{lang === 'en' ? word.translation_en : word.translation_ru}</span>
+              <span className="text-gray-500 text-sm">{lang === 'en' ? (word.translation_en || word.translation_ru) : word.translation_ru}</span>
               <span className="text-gray-300 text-xs hidden sm:block">{word.hint ?? ''}</span>
               <span className="text-gray-300 text-xs">{'★'.repeat(word.star ?? 1)}</span>
               <span className="text-xs w-5 text-center">
