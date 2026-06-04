@@ -8,6 +8,7 @@ import { useT } from '../../../lib/useT';
 import type { Lang } from '../../../lib/useLang';
 import MatchRound from './MatchRound';
 import CharDiff from './CharDiff';
+import { renderAccented } from '../../../lib/renderAccented';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -19,18 +20,6 @@ export interface Word {
   translation_ru: string;
   hint: string | null;
   status?: string;
-}
-
-function renderAccented(text: string): React.ReactNode {
-  const parts = text.split('*');
-  if (parts.length < 3 || parts.length % 2 === 0) return text;
-  return (
-    <>
-      {parts.map((part, i) =>
-        i % 2 === 1 ? <strong key={i}>{part}</strong> : <span key={i}>{part}</span>
-      )}
-    </>
-  );
 }
 
 interface StudyCard {

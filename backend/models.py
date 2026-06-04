@@ -530,3 +530,5 @@ class Verb(SQLModel, table=True):
     prefix_forms: str = Field(default="[]")    # [{prefix, infinitive, example_lt, example_ru}]
     non_conjugated: str = Field(default="{}")  # {"1": "form", ..., "9": "form"}
     programs: str = Field(default="[]")        # JSON list of vocab program keys e.g. ["sekmes"]
+    freq_rank: Optional[int] = Field(default=None)  # 1 = most common; used to sort within theme groups
+    theme: Optional[str] = Field(default=None)       # e.g. "essential", "communication", "motion"

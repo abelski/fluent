@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, resolveListId, getToken } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+import { renderAccented } from '../../../../lib/renderAccented';
 
 interface Word {
   id: number;
   lithuanian: string;
+  accented?: string | null;
   translation_en: string;
   translation_ru: string;
   hint: string | null;
@@ -113,7 +115,7 @@ export default function ListDetailPage() {
                 i < list.words.length - 1 ? 'border-b border-gray-900' : ''
               }`}
             >
-              <span className="font-medium text-gray-900">{word.lithuanian}</span>
+              <span className="font-medium text-gray-900">{renderAccented(word.accented || word.lithuanian)}</span>
               <span className="text-gray-500 text-sm">{lang === 'en' ? word.translation_en : word.translation_ru}</span>
               <span className="text-gray-300 text-xs hidden sm:block">{word.hint ?? ''}</span>
               <span className="text-gray-300 text-xs">{'★'.repeat(word.star ?? 1)}</span>
