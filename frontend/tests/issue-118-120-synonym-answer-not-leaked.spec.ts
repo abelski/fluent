@@ -70,7 +70,7 @@ test('issue #118/#120 — synonyms are not leaked and either form is accepted', 
   expect(result.rejectsUnrelated).toBe(true);
 });
 
-test('issue #118/#120 — MatchRound disambiguates synonyms so the puzzle stays solvable', async ({ page }) => {
+test('issue #118/#120 — MatchRound drops synonym duplicates so no answer-spelling label is needed', async ({ page }) => {
   await page.goto('/dashboard/grammar');
 
   const result = await page.evaluate(() => {
@@ -83,28 +83,31 @@ test('issue #118/#120 — MatchRound disambiguates synonyms so the puzzle stays 
       { id: 1, lithuanian: 'kolega', translation_ru: 'коллега', translation_en: 'colleague' },
       { id: 2, lithuanian: 'bendradarbis', translation_ru: 'коллега', translation_en: 'colleague' },
       { id: 3, lithuanian: 'namas', translation_ru: 'дом', translation_en: 'house' },
+      { id: 4, lithuanian: 'kalbėti', translation_ru: 'говорить', translation_en: 'to speak' },
+      { id: 5, lithuanian: 'sakyti', translation_ru: 'говорить', translation_en: 'to say' },
     ];
 
-    // Mirror of MatchRound.tsx leftLabel logic.
-    const counts = new Map<string, number>();
-    for (const w of words) counts.set(translation(w), (counts.get(translation(w)) ?? 0) + 1);
-    const ambiguous = new Set(Array.from(counts).filter(([, n]) => n > 1).map(([t]) => t));
-    const leftLabel = (w: W) =>
-      ambiguous.has(translation(w)) ? `${translation(w)} (${w.lithuanian})` : translation(w);
+    // Mirror of MatchRound.tsx dedupedWords logic.
+    const seen = new Set<string>();
+    const dedupedWords = words.filter((w) => {
+      const t = translation(w);
+      if (seen.has(t)) return false;
+      seen.add(t);
+      return true;
+    });
 
-    const labels = words.map(leftLabel);
+    const translations = dedupedWords.map(translation);
     return {
-      // Colliding synonyms get a Lithuanian disambiguator so the two tiles differ.
-      kolegaLabel: leftLabel(words[0]),
-      bendraLabel: leftLabel(words[1]),
-      labelsAreUnique: new Set(labels).size === labels.length,
-      // Non-colliding words stay clean (no parenthetical noise).
-      namasLabel: leftLabel(words[2]),
+      // Each translation appears at most once — no ambiguous duplicate tiles.
+      translationsAreUnique: new Set(translations).size === translations.length,
+      // Exactly one of each synonym pair survives (the first one encountered).
+      keptCount: dedupedWords.length,
+      // No label ever needs to spell out a Lithuanian word — labels are bare translations.
+      labelsHaveNoParen: dedupedWords.every((w) => !translation(w).includes('(')),
     };
   });
 
-  expect(result.kolegaLabel).toBe('коллега (kolega)');
-  expect(result.bendraLabel).toBe('коллега (bendradarbis)');
-  expect(result.labelsAreUnique).toBe(true);
-  expect(result.namasLabel).toBe('дом');
+  expect(result.translationsAreUnique).toBe(true);
+  expect(result.keptCount).toBe(3); // 5 words, 2 synonym collisions → 3 unique translations
+  expect(result.labelsHaveNoParen).toBe(true);
 });

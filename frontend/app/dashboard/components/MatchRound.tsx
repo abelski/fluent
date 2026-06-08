@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useLayoutEffect, useCallback } from 'react';
+import { useState, useMemo, useRef, useLayoutEffect } from 'react';
 import Link from 'next/link';
 import { useT } from '../../../lib/useT';
 import type { Word } from './QuizSession';
@@ -35,26 +35,23 @@ function translation(word: Word, lang: Lang): string {
 export default function MatchRound({ words, lang, onDone, backHref }: MatchRoundProps) {
   const { tr } = useT();
 
-  const leftItems  = useMemo(() => shuffle(words), [words]);
-  const rightItems = useMemo(() => shuffle(words), [words]);
-
-  // Translations shared by 2+ words in this round (synonyms, e.g. "kolega"/"bendradarbis"
-  // → "коллега"). Their left-column tiles would be indistinguishable, making the pairing a
-  // coin-flip — so we append the Lithuanian word as a disambiguator. This is NOT a spoiler:
-  // every Lithuanian word is already visible in the right column.
-  const ambiguousTranslations = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const w of words) {
+  // Drop synonyms (words sharing the same displayed translation, e.g. "kolega"/
+  // "bendradarbis" → "коллега") so at most one appears per round. Two identical-looking
+  // translation tiles would make the pairing an unsolvable coin-flip, and any text added
+  // to tell them apart would have to name the Lithuanian word — spelling out that pair's
+  // answer. Excluding the duplicate avoids both problems; the round simply skips it.
+  const dedupedWords = useMemo(() => {
+    const seen = new Set<string>();
+    return words.filter((w) => {
       const t = translation(w, lang);
-      counts.set(t, (counts.get(t) ?? 0) + 1);
-    }
-    return new Set(Array.from(counts).filter(([, n]) => n > 1).map(([t]) => t));
+      if (seen.has(t)) return false;
+      seen.add(t);
+      return true;
+    });
   }, [words, lang]);
 
-  const leftLabel = useCallback((word: Word): string => {
-    const t = translation(word, lang);
-    return ambiguousTranslations.has(t) ? `${t} (${word.lithuanian})` : t;
-  }, [ambiguousTranslations, lang]);
+  const leftItems  = useMemo(() => shuffle(dedupedWords), [dedupedWords]);
+  const rightItems = useMemo(() => shuffle(dedupedWords), [dedupedWords]);
 
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
   const [paired, setPaired]             = useState<Set<number>>(() => new Set());
@@ -65,7 +62,7 @@ export default function MatchRound({ words, lang, onDone, backHref }: MatchRound
   const rightRefs     = useRef<Array<HTMLButtonElement | null>>([]);
   const containerRef  = useRef<HTMLDivElement>(null);
 
-  const allDone = paired.size === words.length;
+  const allDone = paired.size === dedupedWords.length;
 
   // ── Recompute SVG lines after every relevant state change ─────────────────
   useLayoutEffect(() => {
@@ -167,7 +164,7 @@ export default function MatchRound({ words, lang, onDone, backHref }: MatchRound
             {tr.study.backToLists}
           </Link>
           <span className="text-gray-300 text-xs uppercase tracking-wider">
-            {paired.size} / {words.length}
+            {paired.size} / {dedupedWords.length}
           </span>
         </div>
 
@@ -190,7 +187,7 @@ export default function MatchRound({ words, lang, onDone, backHref }: MatchRound
                 className={leftBoxClass(i)}
                 disabled={paired.has(word.id)}
               >
-                {leftLabel(word)}
+                {translation(word, lang)}
               </button>
             ))}
           </div>
