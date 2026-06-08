@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useLayoutEffect } from 'react';
+import { useState, useMemo, useRef, useLayoutEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useT } from '../../../lib/useT';
 import type { Word } from './QuizSession';
@@ -37,6 +37,24 @@ export default function MatchRound({ words, lang, onDone, backHref }: MatchRound
 
   const leftItems  = useMemo(() => shuffle(words), [words]);
   const rightItems = useMemo(() => shuffle(words), [words]);
+
+  // Translations shared by 2+ words in this round (synonyms, e.g. "kolega"/"bendradarbis"
+  // → "коллега"). Their left-column tiles would be indistinguishable, making the pairing a
+  // coin-flip — so we append the Lithuanian word as a disambiguator. This is NOT a spoiler:
+  // every Lithuanian word is already visible in the right column.
+  const ambiguousTranslations = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const w of words) {
+      const t = translation(w, lang);
+      counts.set(t, (counts.get(t) ?? 0) + 1);
+    }
+    return new Set(Array.from(counts).filter(([, n]) => n > 1).map(([t]) => t));
+  }, [words, lang]);
+
+  const leftLabel = useCallback((word: Word): string => {
+    const t = translation(word, lang);
+    return ambiguousTranslations.has(t) ? `${t} (${word.lithuanian})` : t;
+  }, [ambiguousTranslations, lang]);
 
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
   const [paired, setPaired]             = useState<Set<number>>(() => new Set());
@@ -172,7 +190,7 @@ export default function MatchRound({ words, lang, onDone, backHref }: MatchRound
                 className={leftBoxClass(i)}
                 disabled={paired.has(word.id)}
               >
-                {translation(word, lang)}
+                {leftLabel(word)}
               </button>
             ))}
           </div>

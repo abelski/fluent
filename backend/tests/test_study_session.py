@@ -65,6 +65,38 @@ def test_due_known_words_appear_before_not_due(client):
     )
 
 
+def test_synonyms_do_not_leak_lithuanian_into_translation(client):
+    """
+    Issues #118 / #120: when two words in a list share the same translation_ru
+    (e.g. "kolega" and "bendradarbis" both → "коллега"), the study endpoint must
+    NOT append the Lithuanian word in parentheses to translation_ru. Doing so
+    revealed the answer in the produce-Lithuanian stages ("в задании сразу есть ответ").
+    """
+    import database as _db
+    from sqlmodel import Session
+    from models import WordList, Word, WordListItem
+
+    with Session(_db.engine) as s:
+        s.add(WordList(id=900, title="Synonyms", is_public=True, subcategory="test_program"))
+        s.add(Word(id=901, lithuanian="kolega", translation_en="colleague", translation_ru="коллега"))
+        s.add(Word(id=902, lithuanian="bendradarbis", translation_en="colleague", translation_ru="коллега"))
+        s.add(WordListItem(id=901, word_list_id=900, word_id=901, position=0))
+        s.add(WordListItem(id=902, word_list_id=900, word_id=902, position=1))
+        s.commit()
+
+    token = make_token("study_synonyms@example.com")
+    r = client.get("/api/lists/900/study?star_level=3", headers=auth(token))
+    assert r.status_code == 200
+    words = r.json()["words"]
+
+    by_id = {w["id"]: w for w in words}
+    assert by_id[901]["translation_ru"] == "коллега", by_id[901]["translation_ru"]
+    assert by_id[902]["translation_ru"] == "коллега", by_id[902]["translation_ru"]
+    # No word's prompt translation may contain the Lithuanian answer in parentheses.
+    for w in words:
+        assert "(" not in (w.get("translation_ru") or ""), f"translation_ru leaks answer: {w['translation_ru']}"
+
+
 def test_new_words_appear_before_review_words(client):
     """New words (status='new') must appear before known/learning words in the session."""
     token = make_token("study_new_before_review@example.com")

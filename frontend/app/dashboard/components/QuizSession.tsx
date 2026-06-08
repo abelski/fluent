@@ -128,10 +128,19 @@ function pickDistractors(word: Word, allWords: Word[], distractorPool: Word[]): 
 
 function buildOptions(word: Word, allWords: Word[], distractorPool: Word[], lang: Lang) {
   const distractors = pickDistractors(word, allWords, distractorPool);
-  return [
-    { text: optionText(word, lang), correct: true },
-    ...distractors.map((d) => ({ text: optionText(d, lang), correct: false })),
-  ].sort(() => Math.random() - 0.5);
+  const correctText = optionText(word, lang);
+  // Drop distractors whose displayed text collides with another option. Two synonyms
+  // (same translation) would otherwise render as identical buttons now that the backend
+  // no longer disambiguates them with a parenthetical.
+  const seen = new Set([correctText]);
+  const opts = [{ text: correctText, correct: true }];
+  for (const d of distractors) {
+    const t = optionText(d, lang);
+    if (seen.has(t)) continue;
+    seen.add(t);
+    opts.push({ text: t, correct: false });
+  }
+  return opts.sort(() => Math.random() - 0.5);
 }
 
 function buildOptions2r(word: Word, allWords: Word[], distractorPool: Word[]) {
@@ -590,7 +599,17 @@ export default function QuizSession({
     const card = queue[0];
     const forms = parseForms(card.word.lithuanian);
     const target = forms[blankIndex] ?? forms[0];
-    const isCorrect = checkAnswer(typedAnswer.trim(), target, complexity);
+    // Accept any session synonym (same translation_ru) as a valid answer. Since the
+    // prompt no longer reveals which Lithuanian word is expected, either synonym is
+    // fair. Cloze prompts (multi-form words) already show letters, so keep them strict.
+    const isCloze = forms.length > 1;
+    const siblingForms = isCloze
+      ? []
+      : words
+          .filter((w) => w.id !== card.word.id && trans(w, lang) === trans(card.word, lang))
+          .flatMap((w) => parseForms(w.lithuanian));
+    const matched = [target, ...siblingForms].find((t) => checkAnswer(typedAnswer.trim(), t, complexity));
+    const isCorrect = matched !== undefined;
 
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     if (!isCorrect) {
@@ -607,8 +626,9 @@ export default function QuizSession({
     if (isCorrect) {
       if (!mistakeWordIdsRef.current.has(card.word.id)) saveProgress(card.word.id, 'known', false, clearMistakeOnSuccess, initQ);
       learnedWordIdsRef.current.add(card.word.id);
-      const isExact = collapseWs(typedAnswer).toLowerCase() === collapseWs(target).toLowerCase();
-      if (!isExact) setNearMiss(target);
+      const matchedForm = matched ?? target;
+      const isExact = collapseWs(typedAnswer).toLowerCase() === collapseWs(matchedForm).toLowerCase();
+      if (!isExact) setNearMiss(matchedForm);
       const delay = isExact ? 1200 : 2000;
       setTimeout(() => {
         if (!doneWordIdsRef.current.has(card.word.id)) {

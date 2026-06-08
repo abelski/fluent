@@ -366,13 +366,11 @@ def get_study_words(
             w["status"] = "new"
         session_words = all_words[:DEFAULT_SESSION_SIZE]
 
-    # If two session words share translation_ru, append the Lithuanian word in
-    # parentheses so the learner can distinguish them (e.g. two synonyms in one list).
-    from collections import Counter
-    ru_counts = Counter(w["translation_ru"] for w in session_words if w.get("translation_ru"))
-    for w in session_words:
-        if w.get("translation_ru") and ru_counts[w["translation_ru"]] > 1:
-            w["translation_ru"] = f"{w['translation_ru']} ({w['lithuanian']})"
+    # NB: words that share the same translation_ru (synonyms in one list, e.g.
+    # "kolega"/"bendradarbis" → "коллега") are NOT disambiguated by appending the
+    # Lithuanian word here — that revealed the answer in the produce-Lithuanian
+    # stages (reverse MC / type-it). The frontend instead accepts any synonym form
+    # as correct, so no answer is leaked into the prompt.
 
     # Fetch distractors: random words from other lists for MCQ options.
     # Exclude words already in the session and semantic twins (same translation_ru).
