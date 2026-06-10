@@ -14,6 +14,7 @@ from sqlmodel import Session, select, text
 from database import engine
 from email_templates import generate_reengagement_email, generate_reward_email, generate_notice_email
 import email_service
+import telegram_service
 from models import AppSetting, PreparedMessage, User
 
 logger = logging.getLogger(__name__)
@@ -106,6 +107,10 @@ def generate_inactive_messages() -> None:
 
         session.commit()
         logger.info("Scheduler: inactive-user emails — sent=%d failed=%d", sent, failed)
+        if sent or failed:
+            telegram_service.send_telegram(
+                f"📧 Inactivity emails: sent={sent} failed={failed}"
+            )
 
 
 def _generate_weekly_reward_messages(session: Session) -> list[int]:
@@ -228,6 +233,9 @@ def send_weekly_rewards() -> None:
 
         session.commit()
         logger.info("Scheduler: weekly rewards — sent=%d failed=%d", sent, failed)
+        telegram_service.send_telegram(
+            f"📧 Weekly rewards/notices: sent={sent} failed={failed}"
+        )
 
 
 def start_scheduler() -> BackgroundScheduler:

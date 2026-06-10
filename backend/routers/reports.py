@@ -32,6 +32,9 @@ def _notify_reporter(session: Session, report: MistakeReport, new_status: str) -
     try:
         subject, body = generate_report_status_email(user.name, report.description, new_status)
         email_service.send_email(user.email, subject, body)
+        telegram_service.send_telegram(
+            f"📬 Report #{report.id} → {new_status} — email sent to {user.email}"
+        )
     except Exception:
         logger.exception("Failed to notify reporter %s of status %s", report.user_id, new_status)
 
