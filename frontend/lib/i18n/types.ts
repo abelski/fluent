@@ -548,5 +548,38 @@ export interface Translations {
     langRu: string;
     emailConsentLabel: string;
     emailConsentHint: string;
+    phrasesSessionSizeLabel: string;
+    phrasesSessionSizeHint: string;
+    loadError: string;
+    saveError: string;
+    phrasesSaveError: string;
+    timerSecondsUnit: string;
+  };
+  phraseSession: {
+    sessionDone: string;
+    correctLabel: string;
+    errorsLabel: string;
+    repeatBtn: string;
+    backToPrograms: string;
+    practiceWord: string;
+    checkBtn: string;
+    correctNowWrite: string;
+    tryAgainBtn: string;
+    notQuiteTryAgain: string;
+    newPhrase: string;
+    hardBtn: string;
+    gotItBtn: string;
+    selectWordLabel: string;
+    typeWordLabel: string;
+    typePhraseLabel: string;
+    wordPlaceholder: string;
+    phrasePlaceholder: string;
+    showAnswer: string;
+    hideAnswer: string;
+    checkPhraseBtn: string;
+    correctPhrase: string;
+    gotItNextBtn: string;
+    nextBtn: string;
+    notQuite: string;
   };
 }

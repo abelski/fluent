@@ -36,7 +36,7 @@ export default function SettingsPage() {
       getPhrasesSettings(),
     ])
       .then(([s, ps]) => { setSettings(s); setPhrasesSettings(ps); })
-      .catch(() => setError('Не удалось загрузить настройки'))
+      .catch(() => setError(tr.settings.loadError))
       .finally(() => setLoading(false));
   }, [router]);
 
@@ -52,7 +52,7 @@ export default function SettingsPage() {
       setPhrasesSaved(true);
       setTimeout(() => setPhrasesSaved(false), 3000);
     } catch {
-      setError('Не удалось сохранить настройки фраз');
+      setError(tr.settings.phrasesSaveError);
     } finally {
       setPhrasesSaving(false);
     }
@@ -73,7 +73,7 @@ export default function SettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
-      setError('Не удалось сохранить настройки');
+      setError(tr.settings.saveError);
     } finally {
       setSaving(false);
     }
@@ -274,7 +274,7 @@ export default function SettingsPage() {
               {settings.use_question_timer && (
                 <div data-testid="timer-seconds-control">
                   <label className="block text-xs text-gray-500 mb-2">
-                    {tr.settings.timerSecondsLabel}: <span className="font-semibold text-gray-900" data-testid="timer-seconds-value">{settings.question_timer_seconds}</span> с
+                    {tr.settings.timerSecondsLabel}: <span className="font-semibold text-gray-900" data-testid="timer-seconds-value">{settings.question_timer_seconds}</span> {tr.settings.timerSecondsUnit}
                   </label>
                   <input
                     type="range"
@@ -287,8 +287,8 @@ export default function SettingsPage() {
                     className="w-full accent-emerald-600"
                   />
                   <div className="flex justify-between text-xs text-gray-400 mt-1">
-                    <span>5 с</span>
-                    <span>30 с</span>
+                    <span>5 {tr.settings.timerSecondsUnit}</span>
+                    <span>30 {tr.settings.timerSecondsUnit}</span>
                   </div>
                 </div>
               )}
@@ -317,9 +317,9 @@ export default function SettingsPage() {
             {/* Phrases per session */}
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">
-                Фраз за сессию
+                {tr.settings.phrasesSessionSizeLabel}
               </label>
-              <p className="text-xs text-gray-400 mb-3">Сколько фраз показывать в одной сессии изучения</p>
+              <p className="text-xs text-gray-400 mb-3">{tr.settings.phrasesSessionSizeHint}</p>
               <div className="flex items-center gap-3">
                 <input
                   type="range"
@@ -461,7 +461,7 @@ export default function SettingsPage() {
               {settings.use_question_timer && (
                 <div>
                   <label className="block text-xs text-gray-500 mb-2">
-                    {tr.settings.timerSecondsLabel}: <span className="font-semibold text-gray-900">{settings.question_timer_seconds}</span> с
+                    {tr.settings.timerSecondsLabel}: <span className="font-semibold text-gray-900">{settings.question_timer_seconds}</span> {tr.settings.timerSecondsUnit}
                   </label>
                   <input
                     type="range"
@@ -473,8 +473,8 @@ export default function SettingsPage() {
                     className="w-full accent-emerald-600"
                   />
                   <div className="flex justify-between text-xs text-gray-400 mt-1">
-                    <span>5 с</span>
-                    <span>30 с</span>
+                    <span>5 {tr.settings.timerSecondsUnit}</span>
+                    <span>30 {tr.settings.timerSecondsUnit}</span>
                   </div>
                 </div>
               )}

@@ -492,15 +492,15 @@ export default function PhraseSession({
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-4">🎉</div>
-          <h2 className="text-2xl font-bold mb-2">Сессия завершена!</h2>
+          <h2 className="text-2xl font-bold mb-2">{tr.phraseSession.sessionDone}</h2>
           <div className="flex gap-4 justify-center mb-6">
             <div className="bg-white border border-gray-900 rounded-2xl px-6 py-5 text-center">
               <div className="text-2xl font-bold text-emerald-600">{correctCount}</div>
-              <div className="text-gray-400 text-sm mt-1">Правильно</div>
+              <div className="text-gray-400 text-sm mt-1">{tr.phraseSession.correctLabel}</div>
             </div>
             <div className="bg-white border border-gray-900 rounded-2xl px-6 py-5 text-center">
               <div className="text-2xl font-bold text-amber-600">{mistakeCount}</div>
-              <div className="text-gray-400 text-sm mt-1">Ошибки</div>
+              <div className="text-gray-400 text-sm mt-1">{tr.phraseSession.errorsLabel}</div>
             </div>
           </div>
           <div className="flex flex-col gap-3">
@@ -508,13 +508,13 @@ export default function PhraseSession({
               onClick={onRepeat}
               className="w-full py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-colors"
             >
-              Ещё раз
+              {tr.phraseSession.repeatBtn}
             </button>
             <Link
               href={backHref}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
             >
-              ← Назад к программам
+              {tr.phraseSession.backToPrograms}
             </Link>
           </div>
         </div>
@@ -558,7 +558,7 @@ export default function PhraseSession({
         </div>
         <div className="relative z-10 w-full max-w-sm">
           <div className="flex justify-between items-center mb-4">
-            <span className="text-sm text-gray-400 uppercase tracking-wider">Отработайте слово</span>
+            <span className="text-sm text-gray-400 uppercase tracking-wider">{tr.phraseSession.practiceWord}</span>
             {mistakeCount > 0 && <span className="text-amber-500 text-sm">{mistakeCount} ✗</span>}
           </div>
 
@@ -594,24 +594,24 @@ export default function PhraseSession({
               onClick={handleSyllableSubmit}
               className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
             >
-              Проверить →
+              {tr.phraseSession.checkBtn}
             </button>
           )}
 
           {syllableResult === 'correct' && (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-              <p className="text-emerald-700 font-semibold">Правильно! ✓ Теперь напишите всю фразу.</p>
+              <p className="text-emerald-700 font-semibold">{tr.phraseSession.correctNowWrite}</p>
             </div>
           )}
 
           {syllableResult === 'wrong' && (
             <div className="flex flex-col gap-3">
-              <p className="text-red-600 text-sm text-center">Не совсем — попробуйте ещё раз</p>
+              <p className="text-red-600 text-sm text-center">{tr.phraseSession.notQuiteTryAgain}</p>
               <button
                 onClick={() => { blockUntilRef.current = Date.now() + 800; handleSyllableDismiss(); }}
                 className="w-full py-3 bg-gray-100 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
               >
-                Ещё раз
+                {tr.phraseSession.tryAgainBtn}
               </button>
             </div>
           )}
@@ -629,7 +629,7 @@ export default function PhraseSession({
     return (
       <div className="flex justify-between items-center mb-4">
         <Link href={backHref} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-          ← Назад к программам
+          {tr.phraseSession.backToPrograms}
         </Link>
         <div className="flex items-center gap-3">
           <span className="text-gray-400 text-sm">{currentIdx + 1} / {queue.length}</span>
@@ -692,7 +692,7 @@ export default function PhraseSession({
           <ProgressBars />
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mb-6">
-            <p className="text-xs text-emerald-600 font-medium mb-4 uppercase tracking-wider">Новая фраза</p>
+            <p className="text-xs text-emerald-600 font-medium mb-4 uppercase tracking-wider">{tr.phraseSession.newPhrase}</p>
             <p className="text-2xl font-bold text-gray-900 mb-3">{phrase.text}</p>
             <p className="text-gray-500 text-lg">{getTranslation(phrase)}</p>
           </div>
@@ -703,7 +703,7 @@ export default function PhraseSession({
               disabled={saving}
               className="flex-1 py-3 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
             >
-              Сложно
+              {tr.phraseSession.hardBtn}
             </button>
             <button
               onClick={() => advanceQueue(5)}
@@ -711,7 +711,7 @@ export default function PhraseSession({
               data-testid="got-it-btn"
               className="flex-1 py-3 rounded-xl text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
             >
-              Запомнил →
+              {tr.phraseSession.gotItBtn}
             </button>
           </div>
         </div>
@@ -747,7 +747,7 @@ export default function PhraseSession({
             <ProgressBars />
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-              <p className="text-xs text-amber-600 font-medium mb-4 uppercase tracking-wider">Выберите слово</p>
+              <p className="text-xs text-amber-600 font-medium mb-4 uppercase tracking-wider">{tr.phraseSession.selectWordLabel}</p>
               <p className="text-lg text-gray-900 text-center leading-relaxed">
                 {before}
                 <span className="inline-block bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded mx-1 min-w-[60px] text-center">
@@ -782,7 +782,7 @@ export default function PhraseSession({
 
             {mcqResult === 'wrong' && (
               <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-                <p className="text-sm text-red-600 mb-1">Не совсем. Правильный ответ:</p>
+                <p className="text-sm text-red-600 mb-1">{tr.phraseSession.notQuite}</p>
                 <p className="font-semibold text-red-700">{phrase.blank_word}</p>
                 <button
                   onClick={() => {
@@ -792,7 +792,7 @@ export default function PhraseSession({
                   disabled={saving}
                   className="mt-3 px-5 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
                 >
-                  Понял, дальше →
+                  {tr.phraseSession.gotItNextBtn}
                 </button>
               </div>
             )}
@@ -822,7 +822,7 @@ export default function PhraseSession({
           <ProgressBars />
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-            <p className="text-xs text-amber-600 font-medium mb-4 uppercase tracking-wider">Напишите слово</p>
+            <p className="text-xs text-amber-600 font-medium mb-4 uppercase tracking-wider">{tr.phraseSession.typeWordLabel}</p>
             <p className="text-lg text-gray-900 text-center leading-relaxed">
               {before}
               <span className="inline-block bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded mx-1 min-w-[60px] text-center">
@@ -840,7 +840,7 @@ export default function PhraseSession({
                 value={typeInput}
                 onChange={(e) => setTypeInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleWordSubmit(); }}
-                placeholder="Введите пропущенное слово..."
+                placeholder={tr.phraseSession.wordPlaceholder}
                 className="flex-1 px-4 py-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-emerald-400"
               />
               <button
@@ -854,20 +854,20 @@ export default function PhraseSession({
 
           {typeResult === 'correct' && (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-              <p className="text-emerald-700 font-semibold mb-3">Правильно! ✓</p>
+              <p className="text-emerald-700 font-semibold mb-3">{tr.phraseSession.correctPhrase}</p>
               <button
                 onClick={() => { blockUntilRef.current = Date.now() + 800; advanceQueue(5); }}
                 disabled={saving}
                 className="w-full py-4 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
               >
-                Дальше →
+                {tr.phraseSession.nextBtn}
               </button>
             </div>
           )}
 
           {typeResult === 'wrong' && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-              <p className="text-sm text-red-600 mb-1">Не совсем. Правильный ответ:</p>
+              <p className="text-sm text-red-600 mb-1">{tr.phraseSession.notQuite}</p>
               <p className="font-semibold text-red-700 mb-3">{phrase.blank_word}</p>
               <button
                 onClick={() => {
@@ -879,7 +879,7 @@ export default function PhraseSession({
                 disabled={saving}
                 className="w-full py-4 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
               >
-                Понял, дальше →
+                {tr.phraseSession.gotItNextBtn}
               </button>
             </div>
           )}
@@ -910,7 +910,7 @@ export default function PhraseSession({
         <ProgressBars />
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center mb-4">
-          <p className="text-xs text-purple-600 font-medium mb-3 uppercase tracking-wider">Напишите фразу</p>
+          <p className="text-xs text-purple-600 font-medium mb-3 uppercase tracking-wider">{tr.phraseSession.typePhraseLabel}</p>
           <p className="text-xl sm:text-2xl text-gray-500 mb-2">{getTranslation(phrase)}</p>
           {showAnswer && (
             <p className="text-base text-emerald-700 font-medium mt-3 border-t border-gray-100 pt-3">{phrase.text}</p>
@@ -924,7 +924,7 @@ export default function PhraseSession({
               value={typeInput}
               onChange={(e) => setTypeInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePhraseSubmit(); } }}
-              placeholder="Напишите фразу по-литовски..."
+              placeholder={tr.phraseSession.phrasePlaceholder}
               rows={3}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-emerald-400 resize-none mb-3"
             />
@@ -933,13 +933,13 @@ export default function PhraseSession({
                 onClick={() => setShowAnswer((s) => !s)}
                 className="flex-1 py-4 rounded-xl text-sm text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
               >
-                {showAnswer ? 'Скрыть' : 'Показать ответ'}
+                {showAnswer ? tr.phraseSession.hideAnswer : tr.phraseSession.showAnswer}
               </button>
               <button
                 onClick={handlePhraseSubmit}
                 className="flex-1 py-4 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
               >
-                Проверить →
+                {tr.phraseSession.checkPhraseBtn}
               </button>
             </div>
           </>
@@ -947,14 +947,14 @@ export default function PhraseSession({
 
         {typeResult === 'correct' && (
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-            <p className="text-emerald-700 font-semibold mb-1">Правильно! ✓</p>
+            <p className="text-emerald-700 font-semibold mb-1">{tr.phraseSession.correctPhrase}</p>
             <p className="text-sm text-gray-500 mb-3">{phrase.text}</p>
             <button
               onClick={() => { blockUntilRef.current = Date.now() + 800; advanceQueue(5); }}
               disabled={saving}
               className="w-full py-4 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
             >
-              Дальше →
+              {tr.phraseSession.nextBtn}
             </button>
           </div>
         )}
@@ -980,7 +980,7 @@ export default function PhraseSession({
               disabled={saving}
               className="w-full py-4 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
             >
-              Понял, дальше →
+              {tr.phraseSession.gotItNextBtn}
             </button>
           </div>
         )}
