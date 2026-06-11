@@ -737,7 +737,15 @@ def get_all_lists_progress(
     """
     user = _require_user(authorization, session)
 
-    # Collect list IDs the user can see: public lists + their custom program word lists
+    # Collect enrolled subcategory keys so public_rows is scoped to only the lists the user
+    # has enrolled in — avoids scanning the entire catalogue on every page load.
+    enrolled_subcats = session.exec(
+        select(UserProgram.subcategory_key)
+        .where(UserProgram.user_id == user.id)
+    ).all()
+    enrolled_subcat_keys: list[str] = list(enrolled_subcats)
+
+    # Collect list IDs the user can see via custom program enrollments
     cp_enrollments = session.exec(
         select(UserCustomProgramEnrollment)
         .where(UserCustomProgramEnrollment.user_id == user.id)
@@ -750,15 +758,17 @@ def get_all_lists_progress(
         ).all()
         custom_list_ids = {link.word_list_id for link in cp_links}
 
-    # All (list_id, word_id, star) pairs for public lists + enrolled custom program lists
+    # All (list_id, word_id, star) pairs for enrolled public lists only.
+    # Scoping to enrolled subcategories avoids scanning the entire catalogue.
     # Exclude archived words so the total matches what study sessions can actually serve.
     public_rows = session.exec(
         select(WordListItem.word_list_id, WordListItem.word_id, Word.star)
         .join(WordList, WordList.id == WordListItem.word_list_id)
         .join(Word, Word.id == WordListItem.word_id)
-        .where(WordList.is_public == True)
+        .where(WordList.is_public == True)  # noqa: E712
+        .where(WordList.subcategory.in_(enrolled_subcat_keys))
         .where(Word.archived == False)  # noqa: E712
-    ).all()
+    ).all() if enrolled_subcat_keys else []
     custom_rows = session.exec(
         select(WordListItem.word_list_id, WordListItem.word_id, Word.star)
         .join(Word, Word.id == WordListItem.word_id)

@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, date, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field
+from sqlalchemy import Index
 
 
 def _utcnow() -> datetime:
@@ -107,6 +108,7 @@ class UserWordProgress(SQLModel, table=True):
       next_review  — date when the word is due again (NULL = not yet scheduled)
     """
     __tablename__ = "user_word_progress"
+    __table_args__ = (Index("ix_user_word_progress_user_word", "user_id", "word_id"),)
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="user.id", index=True)
     word_id: int = Field(foreign_key="word.id")
