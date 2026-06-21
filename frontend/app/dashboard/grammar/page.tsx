@@ -139,14 +139,14 @@ function InlineSentenceInput({
       : 'text-gray-900 border-gray-900 bg-transparent';
 
   return (
-    <p className="text-2xl sm:text-3xl font-mono tracking-tight leading-relaxed text-center inline-flex flex-wrap items-baseline justify-center gap-0">
-      <span className="whitespace-pre">{before}</span>
+    <p className="text-lg sm:text-2xl md:text-3xl font-mono tracking-tight leading-relaxed text-center break-words" style={{ overflowWrap: 'break-word' }}>
+      <span>{before}</span>
       <span className="relative inline-block">
         {/* hidden mirror to measure text width */}
         <span
           ref={mirrorRef}
           aria-hidden
-          className="absolute invisible whitespace-pre text-2xl sm:text-3xl font-mono tracking-tight"
+          className="absolute invisible whitespace-pre text-lg sm:text-2xl md:text-3xl font-mono tracking-tight"
         >
           {value || ' '}
         </span>
@@ -162,8 +162,8 @@ function InlineSentenceInput({
           autoComplete="off"
           spellCheck={false}
           placeholder={placeholder}
-          style={{ width: inputWidth }}
-          className={`inline-block border-b-2 outline-none text-2xl sm:text-3xl font-mono tracking-tight text-center transition-colors duration-200 ${inputColor}`}
+          style={{ width: inputWidth, maxWidth: '100%' }}
+          className={`inline-block border-b-2 outline-none text-lg sm:text-2xl md:text-3xl font-mono tracking-tight text-center transition-colors duration-200 ${inputColor}`}
         />
       </span>
       <span>{after}</span>
@@ -935,7 +935,7 @@ export default function GrammarPage() {
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
                 {task.case_name} · {task.number}
               </p>
-              <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-4">{task.prompt_lt}</p>
+              <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-4 break-words">{task.prompt_lt}</p>
               <p className="text-gray-500 text-base sm:text-lg mb-5">{task.prompt_ru}</p>
               <input
                 ref={inputRef}
@@ -955,7 +955,7 @@ export default function GrammarPage() {
           )}
 
           {task.type === 'sentence' && (
-            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
+            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
               {task.base_lt && (
                 <p className="text-gray-400 text-xs mb-4">{tr.grammar.sentenceFrom}<span className="font-medium text-gray-500">{task.base_lt}</span></p>
               )}
@@ -975,7 +975,7 @@ export default function GrammarPage() {
           )}
 
           {task.type === 'verb_conjugation' && (
-            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
+            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
               <p className="text-gray-400 text-xs mb-4">{task.tense_label}</p>
               <div className="mb-4">
                 <InlineSentenceInput

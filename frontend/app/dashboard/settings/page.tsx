@@ -86,8 +86,6 @@ export default function SettingsPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'vocabulary', label: tr.settings.tabVocabulary },
-    { key: 'grammar', label: tr.settings.tabGrammar },
-    { key: 'practice', label: tr.settings.tabPractice },
     { key: 'phrases', label: tr.settings.tabPhrases },
     { key: 'other', label: tr.settings.tabOther },
   ];

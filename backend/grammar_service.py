@@ -269,12 +269,16 @@ def _generate_sentence_tasks(cases: list[int], count: int, session: Session, lev
     for i in range(count):
         row = pool[i % len(pool)]
         stem = _extract_stem(row.display)
-        # Prefer full-word lookup: handles shared-stem nouns (e.g. draugas vs draugė)
-        # where stem alone is ambiguous. Fall back to stem lookup if unresolved.
         base_lt = _FORM_TO_NOMINATIVE.get(row.full_word) or _STEM_TO_NOMINATIVE.get(stem)
+        display = row.display
+        parts = display.split('___')
+        if len(parts) == 2 and row.full_word.lower() in parts[1].lower():
+            after = re.sub(re.escape(row.full_word), '', parts[1], count=1, flags=re.IGNORECASE)
+            after = re.sub(r'\s+', ' ', after).strip()
+            display = parts[0] + '___' + (' ' + after if after else '')
         tasks.append({
             "type": "sentence",
-            "display": row.display,
+            "display": display,
             "answer": row.answer_ending,
             "full_answer": row.full_word,
             "translation_ru": row.russian,

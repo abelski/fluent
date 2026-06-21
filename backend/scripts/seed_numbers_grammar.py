@@ -204,7 +204,7 @@ SENTENCES = [
     (16, "Ji turi ___ dukteris. (7, f.)",                "septynias", "septynias", "У неё семь дочерей."),
     (16, "Rūta turi ___ drauges. (8, f.)",               "aštuonias", "aštuonias", "У Руты восемь подруг."),
     (16, "Ji turi ___ kates. (9, f.)",                   "devynias",  "devynias",  "У неё девять кошек."),
-    (16, "Andrius turi ___ vieną dukterį. (1)",          "vieną",     "vieną",     "У Андрюса одна дочь."),
+    (16, "Andrius turi ___ dukterį. (1, f.)",            "vieną",     "vieną",     "У Андрюса одна дочь."),
     (16, "Laima turi ___ seseris. (2, f.)",              "dvi",       "dvi",       "У Laima две сестры."),
     (16, "Ji turi ___ vaikus. (2, m.)",                  "du",        "du",        "У неё двое детей."),
     (16, "Jis turi ___ seseris. (4, f.)",                "keturias",  "keturias",  "У него четыре сестры."),
