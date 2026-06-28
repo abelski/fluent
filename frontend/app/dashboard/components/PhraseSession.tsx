@@ -27,6 +27,7 @@ import { useT } from '../../../lib/useT';
 import CharDiff from './CharDiff';
 import MatchRound from './MatchRound';
 import type { Word } from './QuizSession';
+import { normalizeLt } from '../../../lib/normalizeLt';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -34,13 +35,6 @@ type Complexity = 'easy' | 'medium' | 'hard';
 
 // ── Text validation ───────────────────────────────────────────────────────────
 
-function normalizeLt(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/į/g, 'i').replace(/č/g, 'c').replace(/š/g, 's')
-    .replace(/ž/g, 'z').replace(/ū/g, 'u').replace(/ų/g, 'u')
-    .replace(/ę/g, 'e').replace(/ė/g, 'e').replace(/ą/g, 'a');
-}
 
 function levenshtein(a: string, b: string): number {
   const m = a.length, n = b.length;

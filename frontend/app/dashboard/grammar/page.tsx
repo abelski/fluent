@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL, getToken, getGrammarPrograms, unenrollGrammarProgram, type GrammarProgramSummary } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import { normalizeLt } from '../../../lib/normalizeLt';
 
 interface GrammarRule {
   question: string;
@@ -83,23 +84,6 @@ const LEVEL_STYLES: Record<string, string> = {
 };
 
 
-function normalizeLt(text: string): string {
-  return text
-    .normalize('NFD')
-    // strip stress/tone marks (acute, grave, tilde-as-tone) but keep native LT diacritics
-    .replace(/[́̀̃]/g, '')
-    .normalize('NFC')
-    .toLowerCase()
-    .replace(/į/g, 'i')
-    .replace(/č/g, 'c')
-    .replace(/š/g, 's')
-    .replace(/ž/g, 'z')
-    .replace(/ū/g, 'u')
-    .replace(/ų/g, 'u')
-    .replace(/ę/g, 'e')
-    .replace(/ė/g, 'e')
-    .replace(/ą/g, 'a');
-}
 
 function InlineSentenceInput({
   display,

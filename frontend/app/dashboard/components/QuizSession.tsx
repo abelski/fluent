@@ -8,6 +8,7 @@ import { useT } from '../../../lib/useT';
 import type { Lang } from '../../../lib/useLang';
 import MatchRound from './MatchRound';
 import CharDiff from './CharDiff';
+import { normalizeLt, collapseWs } from '../../../lib/normalizeLt';
 import { renderAccented } from '../../../lib/renderAccented';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -64,20 +65,6 @@ function getDigit(word: Word): string | null {
   return ENGLISH_TO_DIGIT[word.translation_en] ?? null;
 }
 
-function collapseWs(text: string): string {
-  return text.replace(/\s+/g, ' ').trim();
-}
-
-function normalizeLt(text: string): string {
-  return collapseWs(
-    text
-      .normalize('NFC')
-      .toLowerCase()
-      .replace(/į/g, 'i').replace(/č/g, 'c').replace(/š/g, 's')
-      .replace(/ž/g, 'z').replace(/ū/g, 'u').replace(/ų/g, 'u')
-      .replace(/ę/g, 'e').replace(/ė/g, 'e').replace(/ą/g, 'a')
-  );
-}
 
 function levenshtein(a: string, b: string): number {
   const m = a.length, n = b.length;
