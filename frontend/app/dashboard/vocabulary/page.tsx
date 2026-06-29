@@ -191,7 +191,7 @@ export default function VocabularyPage() {
                     >
                       <td className="px-5 py-3 font-medium text-gray-900">
                         {w.lithuanian}
-                        {w.hint && <span className="ml-2 text-gray-400 text-xs font-normal">({w.hint})</span>}
+                        {w.hint && <span className="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-normal">{w.hint}</span>}
                       </td>
                       <td className="px-5 py-3 text-gray-600">{translation ?? '—'}</td>
                       <td className="px-5 py-3 hidden sm:table-cell">
