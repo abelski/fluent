@@ -6,11 +6,11 @@ from typing import Optional, List
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, col
 
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage, UserProgram, UserPracticeCategoryEnrollment, ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment, UserPhraseProgress, UserGrammarProgram, CustomProgram
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage, UserProgram, UserPracticeCategoryEnrollment, ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment, UserPhraseProgress, UserGrammarProgram, CustomProgram, CustomPhraseList, CustomPhrase, UserCustomPhraseProgress
 from sqlalchemy import text, delete as sa_delete, update as sa_update
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
@@ -606,9 +606,17 @@ def _delete_user_data(user_id: str, session: Session) -> None:
         UserProgram, PracticeExamResult, UserPracticeCategoryEnrollment,
         ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment,
         PreparedMessage, UserPhraseProgress, UserGrammarProgram,
+        UserCustomPhraseProgress,
     ]
     for model in _tables_with_user_id:
         session.exec(sa_delete(model).where(model.user_id == user_id))
+    # User-owned custom phrase lists: delete their phrases first, then the lists
+    owned_list_ids = session.exec(
+        select(CustomPhraseList.id).where(CustomPhraseList.owner_user_id == user_id)
+    ).all()
+    if owned_list_ids:
+        session.exec(sa_delete(CustomPhrase).where(col(CustomPhrase.list_id).in_(owned_list_ids)))
+        session.exec(sa_delete(CustomPhraseList).where(CustomPhraseList.owner_user_id == user_id))
     # Nullable created_by fields — set to NULL rather than deleting the content
     session.exec(sa_update(WordList).where(WordList.created_by == user_id).values(created_by=None))
     session.exec(sa_update(CustomProgram).where(CustomProgram.created_by == user_id).values(created_by=None))

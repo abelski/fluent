@@ -2,18 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   BACKEND_URL,
   getToken,
   getPhrasePrograms,
   unenrollPhraseProgram,
+  getMyPhraseLists,
+  createMyPhraseList,
+  deleteMyPhraseList,
   type PhraseProgramSummary,
+  type PhraseListSummary,
 } from '../../../lib/api';
+import { useT } from '../../../lib/useT';
 
 interface Quota {
   premium_active: boolean;
   sessions_today: number;
   daily_limit: number | null;
+  is_admin?: boolean;
 }
 
 interface PhraseRow {
@@ -35,7 +42,6 @@ interface ProgramDetail {
   chapters: ChapterSummary[];
 }
 
-const DIFFICULTY_LABELS: Record<number, string> = { 1: 'Лёгкий', 2: 'Средний', 3: 'Сложный' };
 const DIFFICULTY_BORDER: Record<number, string> = {
   1: 'border-emerald-200',
   2: 'border-amber-200',
@@ -48,9 +54,19 @@ const DIFFICULTY_BADGE: Record<number, string> = {
 };
 
 export default function PhrasesPage() {
+  const router = useRouter();
+  const { tr, plural } = useT();
+  const t = tr.phraseLists;
+  const listDifficultyLabels: Record<number, string> = { 1: t.easy, 2: t.medium, 3: t.hard };
   const [programs, setPrograms] = useState<PhraseProgramSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [quota, setQuota] = useState<Quota | null>(null);
+  const [myLists, setMyLists] = useState<PhraseListSummary[]>([]);
+  const [openMyLists, setOpenMyLists] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newListTitle, setNewListTitle] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [confirmDeleteList, setConfirmDeleteList] = useState<number | null>(null);
   const [confirmUnenroll, setConfirmUnenroll] = useState<number | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [phrasesLearned, setPhrasesLearned] = useState(0);
@@ -88,7 +104,33 @@ export default function PhrasesPage() {
         }
       })
       .catch(console.error);
+
+    getMyPhraseLists().then(setMyLists).catch(console.error);
   }, []);
+
+  async function handleCreateList() {
+    const title = newListTitle.trim();
+    if (!title) return;
+    setCreating(true);
+    try {
+      const { id } = await createMyPhraseList({ title, difficulty: 1 });
+      router.push(`/dashboard/phrases/lists/${id}/edit`);
+    } catch (e) {
+      console.error(e);
+      setCreating(false);
+    }
+  }
+
+  async function handleDeleteList(listId: number) {
+    try {
+      await deleteMyPhraseList(listId);
+      setMyLists((prev) => prev.filter((l) => l.id !== listId));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setConfirmDeleteList(null);
+    }
+  }
 
   // Auto-open all enrolled programs once data is loaded
   useEffect(() => {
@@ -161,6 +203,7 @@ export default function PhrasesPage() {
   }
 
   const limitReached = quota && !quota.premium_active && quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
+  const eligible = !!quota && (quota.premium_active || quota.is_admin === true);
 
   if (loading) {
     return (
@@ -173,9 +216,9 @@ export default function PhrasesPage() {
   if (!isLoggedIn) {
     return (
       <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 py-12">
-        <p className="text-gray-600 mb-4">Войдите, чтобы изучать фразы.</p>
+        <p className="text-gray-600 mb-4">{t.loginPrompt}</p>
         <Link href="/login" className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors">
-          Войти
+          {t.login}
         </Link>
       </main>
     );
@@ -190,8 +233,8 @@ export default function PhrasesPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-4xl">
-        <h1 className="text-3xl font-bold mb-1">Фразы</h1>
-        <p className="text-gray-400 mb-8">Изучайте литовские фразы шаг за шагом</p>
+        <h1 className="text-3xl font-bold mb-1">{t.pageTitle}</h1>
+        <p className="text-gray-400 mb-8">{t.pageSubtitle}</p>
 
         {/* Phrases stats widget */}
         {phrasesLearned > 0 && (
@@ -203,7 +246,7 @@ export default function PhrasesPage() {
               </div>
               <div>
                 <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{phrasesLearned}</p>
-                <p className="text-gray-500 text-xs mt-1 font-medium">фраз выучено</p>
+                <p className="text-gray-500 text-xs mt-1 font-medium">{t.learnedLabel}</p>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -211,13 +254,13 @@ export default function PhrasesPage() {
                 href="/dashboard/phrases/review"
                 className="inline-block text-xs bg-purple-600 hover:bg-purple-700 text-white font-medium px-3 py-1.5 rounded-full transition-colors"
               >
-                Повторить фразы
+                {t.reviewPhrases}
               </Link>
               <Link
                 href="/dashboard/phrases/vocabulary"
                 className="inline-block text-xs border border-purple-200 hover:bg-purple-50 text-purple-700 font-medium px-3 py-1.5 rounded-full transition-colors"
               >
-                Все фразы →
+                {t.allPhrases}
               </Link>
             </div>
             <div className="mt-3">
@@ -228,23 +271,179 @@ export default function PhrasesPage() {
                 />
               </div>
               <p className="text-[10px] text-gray-400 mt-1">
-                {phrasesDueReview} из {phrasesLearned} фраз нужно освежить
+                {t.needRefresh.replace('{due}', String(phrasesDueReview)).replace('{total}', String(phrasesLearned))}
               </p>
             </div>
           </div>
         )}
+
+        {/* Мои списки — a program-style container holding the user's lists as chapter-like cards */}
+        <section className="mb-8" data-testid="my-lists-section">
+          <div className="bg-white border border-emerald-200 rounded-2xl overflow-hidden shadow-sm">
+            {/* Program header */}
+            <div className="w-full flex items-center justify-between px-5 py-4">
+              <button
+                onClick={() => setOpenMyLists((o) => !o)}
+                aria-expanded={openMyLists}
+                className="flex items-center gap-3 flex-wrap text-left cursor-pointer"
+              >
+                <span className="font-semibold text-gray-900">{t.myLists}</span>
+                {myLists.length > 0 && (
+                  <span className="text-gray-400 text-sm">
+                    {myLists.reduce((s, l) => s + l.phrase_count, 0)} {plural(myLists.reduce((s, l) => s + l.phrase_count, 0), t.phrasesPlural)}
+                  </span>
+                )}
+              </button>
+              <div className="flex items-center gap-3 shrink-0">
+                {eligible && (
+                  <button
+                    onClick={() => { setNewListTitle(''); setShowCreate(true); }}
+                    data-testid="create-list-button"
+                    className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-full transition-colors"
+                  >
+                    {t.createList}
+                  </button>
+                )}
+                <button onClick={() => setOpenMyLists((o) => !o)} aria-label="toggle" className="p-1 cursor-pointer">
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor" className={`text-gray-400 transition-transform duration-200 ${openMyLists ? 'rotate-180' : ''}`}>
+                    <path d="M6 8L1 3h10L6 8z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Program body */}
+            {openMyLists && (
+              <div className="px-5 py-4 border-t border-gray-100">
+                {myLists.length === 0 ? (
+                  !eligible ? (
+                    <div className="relative rounded-2xl bg-gradient-to-br from-amber-50 to-white border border-amber-100 overflow-hidden p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center text-xl">⭐️</div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{t.upsellTitle}</p>
+                          <p className="text-sm text-gray-500 mt-1">{t.upsellBody}</p>
+                          <Link href="/pricing" className="inline-block mt-3 text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-full transition-colors">
+                            {t.upsellCta}
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center">
+                      <p className="text-sm text-gray-500 mb-3">{t.noLists}</p>
+                      <button
+                        onClick={() => { setNewListTitle(''); setShowCreate(true); }}
+                        className="text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+                      >
+                        {t.createFirst}
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {myLists.map((lst) => {
+                      const dist = lst.stage_distribution;
+                      const total = lst.phrase_count;
+                      const mastered = dist?.stage2 ?? 0;
+                      const learning = dist?.stage1 ?? 0;
+                      const masteredPct = total > 0 ? (mastered / total) * 100 : 0;
+                      const learningPct = total > 0 ? (learning / total) * 100 : 0;
+                      const isDone = total > 0 && mastered >= total;
+                      return (
+                        <div
+                          key={lst.id}
+                          className={`relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4 ${eligible ? '' : 'opacity-70'}`}
+                          data-testid="my-list-card"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-wrap pr-2">
+                              <h3 className="text-base font-semibold">{lst.title}</h3>
+                              {listDifficultyLabels[lst.difficulty] && (
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${DIFFICULTY_BADGE[lst.difficulty]}`}>
+                                  {listDifficultyLabels[lst.difficulty]}
+                                </span>
+                              )}
+                              {isDone && (
+                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white tracking-wide">✓ Done</span>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => setConfirmDeleteList(lst.id)}
+                              title={t.deleteList}
+                              className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded shrink-0"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
+                              </svg>
+                            </button>
+                          </div>
+
+                          {total > 0 && (
+                            <div className="flex flex-col gap-1.5">
+                              <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden flex">
+                                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${masteredPct}%` }} />
+                                <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${learningPct}%` }} />
+                              </div>
+                              <p className="text-gray-400 text-xs">
+                                {mastered} / {total} {t.masteredWord}
+                                {learning > 0 && <span className="text-amber-500 ml-1">· {learning} {t.learningWord}</span>}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between mt-auto">
+                            <span className="text-gray-400 text-sm">{lst.phrase_count} {plural(lst.phrase_count, t.phrasesPlural)}</span>
+                            <div className="flex gap-2">
+                              {eligible ? (
+                                <>
+                                  <Link
+                                    href={`/dashboard/phrases/lists/${lst.id}/edit`}
+                                    className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
+                                  >
+                                    {t.edit}
+                                  </Link>
+                                  {lst.phrase_count > 0 && (
+                                    <Link
+                                      href={`/dashboard/phrases/lists/${lst.id}/study`}
+                                      className="px-4 py-2.5 text-sm rounded-full font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20 transition-colors"
+                                    >
+                                      {t.study}
+                                    </Link>
+                                  )}
+                                </>
+                              ) : (
+                                <Link
+                                  href="/pricing"
+                                  data-testid="premium-locked"
+                                  className="px-4 py-2.5 text-sm rounded-full font-semibold bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-colors"
+                                >
+                                  {t.premiumOnly}
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* Quota banner */}
         {quota && (quota.sessions_today > 0 || limitReached) && (
           <div className={`mb-6 px-4 py-3 rounded-xl text-sm flex items-center justify-between gap-3 ${limitReached ? 'bg-amber-50 border border-amber-200 text-amber-800' : 'bg-white border border-gray-100 text-gray-600'}`}>
             <span>
               {limitReached
-                ? `Дневной лимит достигнут (${quota.sessions_today}/${quota.daily_limit}). Попробуйте завтра или перейдите на Premium.`
-                : `Сессий сегодня: ${quota.sessions_today}${quota.daily_limit ? `/${quota.daily_limit}` : ''}`}
+                ? tr.lists.limitReached.replace('{count}', String(quota.sessions_today)).replace('{limit}', String(quota.daily_limit))
+                : `${tr.lists.sessionsToday} ${quota.sessions_today}${quota.daily_limit ? `/${quota.daily_limit}` : ''}`}
             </span>
             {limitReached && (
               <Link href="/pricing" className="shrink-0 text-xs font-medium text-amber-700 hover:underline">
-                Premium →
+                {tr.lists.getPremium}
               </Link>
             )}
           </div>
@@ -271,10 +470,10 @@ export default function PhrasesPage() {
                   >
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="font-semibold text-gray-900">{program.title}</span>
-                      <span className="text-gray-400 text-sm">{program.phrase_count} фраз</span>
-                      {DIFFICULTY_LABELS[program.difficulty] && (
+                      <span className="text-gray-400 text-sm">{program.phrase_count} {plural(program.phrase_count, t.phrasesPlural)}</span>
+                      {listDifficultyLabels[program.difficulty] && (
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${DIFFICULTY_BADGE[program.difficulty]}`}>
-                          {DIFFICULTY_LABELS[program.difficulty]}
+                          {listDifficultyLabels[program.difficulty]}
                         </span>
                       )}
                     </div>
@@ -282,7 +481,7 @@ export default function PhrasesPage() {
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setConfirmUnenroll(program.id); }}
-                        title="Убрать программу"
+                        title={t.removeProgram}
                         className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded cursor-pointer"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -312,7 +511,7 @@ export default function PhrasesPage() {
                             const masteredPct = ch.total > 0 ? (ch.mastered / ch.total) * 100 : 0;
                             const learningPct = ch.total > 0 ? (ch.learning / ch.total) * 100 : 0;
                             const chapterLabel = ch.num !== null
-                              ? (ch.title ?? `Глава ${ch.num}`)
+                              ? (ch.title ?? t.chapter.replace('{n}', String(ch.num)))
                               : program.title;
                             const studyHref = ch.num !== null
                               ? `/dashboard/phrases/${program.id}/study?chapter=${ch.num}`
@@ -333,18 +532,18 @@ export default function PhrasesPage() {
                                     <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${learningPct}%` }} />
                                   </div>
                                   <p className="text-gray-400 text-xs">
-                                    {ch.mastered} / {ch.total} выучено
-                                    {ch.learning > 0 && <span className="text-amber-500 ml-1">· {ch.learning} изучается</span>}
+                                    {ch.mastered} / {ch.total} {t.masteredWord}
+                                    {ch.learning > 0 && <span className="text-amber-500 ml-1">· {ch.learning} {t.learningWord}</span>}
                                   </p>
                                 </div>
                                 <div className="flex items-center justify-between mt-auto">
-                                  <span className="text-gray-400 text-sm">{ch.total} фраз</span>
+                                  <span className="text-gray-400 text-sm">{ch.total} {plural(ch.total, t.phrasesPlural)}</span>
                                   <div className="flex gap-2">
                                     <Link
                                       href={`/dashboard/phrases/${program.id}`}
                                       className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
                                     >
-                                      Browse
+                                      {t.browse}
                                     </Link>
                                     <Link
                                       href={studyHref}
@@ -355,7 +554,7 @@ export default function PhrasesPage() {
                                           : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20'
                                       }`}
                                     >
-                                      Учить
+                                      {t.study}
                                     </Link>
                                   </div>
                                 </div>
@@ -374,12 +573,12 @@ export default function PhrasesPage() {
 
         {enrolledPrograms.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-            <p className="text-gray-500 text-lg">Вы ещё не добавили ни одной программы фраз</p>
+            <p className="text-gray-500 text-lg">{t.noPrograms}</p>
             <Link
               href="/phrase-programs"
               className="px-6 py-3 bg-emerald-600 text-white text-sm font-semibold rounded-full hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-600/20"
             >
-              Смотреть все программы
+              {t.seeAllPrograms}
             </Link>
           </div>
         )}
@@ -390,30 +589,74 @@ export default function PhrasesPage() {
               href="/phrase-programs"
               className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
             >
-              Смотреть все программы →
+              {t.seeAllProgramsArrow}
             </Link>
           </div>
         )}
       </div>
 
+      {/* Create list dialog */}
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => !creating && setShowCreate(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-gray-900 mb-3">{t.newList}</h3>
+            <input
+              autoFocus
+              value={newListTitle}
+              onChange={(e) => setNewListTitle(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCreateList(); }}
+              placeholder={t.listName}
+              data-testid="new-list-title"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowCreate(false)} disabled={creating} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
+                {t.cancel}
+              </button>
+              <button onClick={handleCreateList} disabled={creating || !newListTitle.trim()} data-testid="confirm-create-list" className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors disabled:opacity-40">
+                {creating ? t.creating : t.create}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete list confirm dialog */}
+      {confirmDeleteList !== null && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => setConfirmDeleteList(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-gray-900 mb-2">{t.deleteListTitle}</h3>
+            <p className="text-sm text-gray-500 mb-5">{t.deleteListBody}</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setConfirmDeleteList(null)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
+                {t.cancel}
+              </button>
+              <button onClick={() => handleDeleteList(confirmDeleteList)} className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors">
+                {t.delete}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Unenroll confirm dialog */}
       {confirmUnenroll !== null && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => setConfirmUnenroll(null)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 mb-2">Убрать программу?</h3>
-            <p className="text-sm text-gray-500 mb-5">Программа исчезнет из списка. Ваш прогресс сохранится.</p>
+            <h3 className="font-semibold text-gray-900 mb-2">{t.removeProgramTitle}</h3>
+            <p className="text-sm text-gray-500 mb-5">{t.removeProgramBody}</p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setConfirmUnenroll(null)}
                 className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
               >
-                Отмена
+                {t.cancel}
               </button>
               <button
                 onClick={() => handleUnenroll(confirmUnenroll)}
                 className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors"
               >
-                Убрать
+                {t.remove}
               </button>
             </div>
           </div>

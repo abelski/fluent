@@ -70,8 +70,9 @@ stot	is	ies	!iai	į	imi	yje	ie	ys	!ių	ims	is	imis	yse	ys	вокзал
 šird	is	ies	!iai	į	imi	yje	ie	ys	!ių	ims	is	imis	yse	ys	сердце
 nakt	is	ies	!iai	į	imi	yje	ie	ys	ų	ims	is	imis	yse	ys	ночь
 mint	is	ies	!iai	į	imi	yje	ie	ys	!ių	ims	is	imis	yse	ys	мысль
-muziej	us	aus	ui	ų	umi	uje	au	ūs	ų	ums	us	umis	uose	ūs	музей
+muziej	us	aus	ui	ų	umi	uje	au	ai	ų	ums	us	umis	uose	ūs	музей
 turg	us	aus	ui	ų	umi	uje	au	ūs	ų	ums	us	umis	uose	ūs	рынок
 aktor	ius	iaus	iui	ių	iumi	iuje	iau	iai	ių	iams	ius	iais	iuose	iai	актер
 profesor	ius	iaus	iui	ių	iumi	iuje	iau	iai	ių	iams	ius	iais	iuose	iai	профессор
 vand	uo	ens	eniui	enį	eniu	enyje	enie	enys	enų	enims	enis	enimis	enyse	enys	вода
+krepš	ys	io	iui	į	iu	yje	y	iai	ių	iams	ius	iais	iuose	iai	сумка

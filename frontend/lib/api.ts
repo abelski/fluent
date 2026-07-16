@@ -580,6 +580,118 @@ export async function recordPhraseProgress(
   return r.json();
 }
 
+// ── User-created phrase lists ("Мои списки") ─────────────────────────────────
+
+export interface PhraseListSummary {
+  id: number;
+  title: string;
+  difficulty: number;
+  phrase_count: number;
+  created_at: string;
+  stage_distribution: { stage0: number; stage1: number; stage2: number };
+}
+
+export interface CustomPhraseItem {
+  id: number;
+  text: string;
+  translation: string;
+  translation_en: string | null;
+  position: number;
+  lesson_stage: number;
+}
+
+export interface PhraseListDetail {
+  id: number;
+  title: string;
+  difficulty: number;
+  phrases: CustomPhraseItem[];
+}
+
+async function _authJson<T>(url: string, init: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}${url}`, {
+    ...init,
+    headers: {
+      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init.headers ?? {}),
+    },
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Request failed');
+  }
+  return r.json();
+}
+
+export function getMyPhraseLists(): Promise<PhraseListSummary[]> {
+  return _authJson<PhraseListSummary[]>('/api/me/phrase-lists');
+}
+
+export function getMyPhraseList(listId: number): Promise<PhraseListDetail> {
+  return _authJson<PhraseListDetail>(`/api/me/phrase-lists/${listId}`);
+}
+
+export function createMyPhraseList(data: { title: string; difficulty: number }): Promise<{ id: number }> {
+  return _authJson<{ id: number }>('/api/me/phrase-lists', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function updateMyPhraseList(listId: number, data: { title: string; difficulty: number }): Promise<{ ok: boolean }> {
+  return _authJson<{ ok: boolean }>(`/api/me/phrase-lists/${listId}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deleteMyPhraseList(listId: number): Promise<{ ok: boolean }> {
+  return _authJson<{ ok: boolean }>(`/api/me/phrase-lists/${listId}`, { method: 'DELETE' });
+}
+
+export function addMyPhrase(
+  listId: number,
+  data: { text: string; translation: string; translation_en?: string },
+): Promise<{ id: number }> {
+  return _authJson<{ id: number }>(`/api/me/phrase-lists/${listId}/phrases`, { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function bulkAddMyPhrases(listId: number, text: string): Promise<{ added: number }> {
+  return _authJson<{ added: number }>(`/api/me/phrase-lists/${listId}/phrases/bulk`, { method: 'POST', body: JSON.stringify({ text }) });
+}
+
+export function updateMyPhrase(
+  phraseId: number,
+  data: { text: string; translation: string; translation_en?: string },
+): Promise<{ ok: boolean }> {
+  return _authJson<{ ok: boolean }>(`/api/me/phrase-lists/phrases/${phraseId}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deleteMyPhrase(phraseId: number): Promise<{ ok: boolean }> {
+  return _authJson<{ ok: boolean }>(`/api/me/phrase-lists/phrases/${phraseId}`, { method: 'DELETE' });
+}
+
+export function getMyPhraseListStudy(listId: number): Promise<PhraseStudySession> {
+  return _authJson<PhraseStudySession>(`/api/me/phrase-lists/${listId}/study`);
+}
+
+export function recordMyPhraseProgress(
+  phraseId: number,
+  payload: { quality: number; stage_completed: number; mistake_word?: string },
+): Promise<{ lesson_stage: number; next_review: string | null; interval: number }> {
+  return _authJson(`/api/me/phrase-lists/phrases/${phraseId}/progress`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+/**
+ * Resolve the real numeric custom phrase-list ID from the current browser URL.
+ * Handles Next.js static export '_' placeholder (segment after 'lists').
+ */
+export function resolvePhraseListId(_id: string): string {
+  if (typeof window !== 'undefined' && !/^\d+$/.test(_id)) {
+    return (
+      window.location.pathname
+        .split('/')
+        .find((s, i, a) => a[i - 1] === 'lists' && /^\d+$/.test(s)) ?? _id
+    );
+  }
+  return _id;
+}
+
 export interface PhrasesSettings {
   phrases_per_session: number;
   new_phrases_ratio: number;

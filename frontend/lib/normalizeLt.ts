@@ -14,3 +14,8 @@ export function normalizeLt(text: string): string {
       .replace(/ę/g, 'e').replace(/ė/g, 'e').replace(/ą/g, 'a')
   );
 }
+
+export function isAnswerMatch(typed: string, answer: string): boolean {
+  const normTyped = normalizeLt(typed);
+  return answer.split('/').some((alt) => normalizeLt(alt) === normTyped);
+}

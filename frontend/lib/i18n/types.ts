@@ -582,4 +582,72 @@ export interface Translations {
     nextBtn: string;
     notQuite: string;
   };
+  phraseLists: {
+    myLists: string;
+    createList: string;
+    createFirst: string;
+    noLists: string;
+    upsellTitle: string;
+    upsellBody: string;
+    upsellCta: string;
+    premiumOnly: string;
+    phrasesPlural: PluralForms;
+    edit: string;
+    study: string;
+    deleteList: string;
+    newList: string;
+    listName: string;
+    cancel: string;
+    create: string;
+    creating: string;
+    deleteListTitle: string;
+    deleteListBody: string;
+    delete: string;
+    backToLists: string;
+    difficulty: string;
+    easy: string;
+    medium: string;
+    hard: string;
+    save: string;
+    saving: string;
+    studyArrow: string;
+    phrasesHeading: string;
+    noPhrases: string;
+    phrasePlaceholder: string;
+    translationPlaceholder: string;
+    addPhrase: string;
+    adding: string;
+    bulkTitle: string;
+    bulkHint: string;
+    bulkExample: string;
+    bulkAddAll: string;
+    bulkAdded: string; // uses {n}
+    listNotFound: string;
+    noPhrasesToReview: string;
+    noPhrasesToday: string;
+    loadError: string;
+    // Phrases hub (page chrome + program cards)
+    pageTitle: string;
+    pageSubtitle: string;
+    learnedLabel: string;
+    reviewPhrases: string;
+    allPhrases: string;
+    needRefresh: string; // {due} {total}
+    loginPrompt: string;
+    login: string;
+    removeProgram: string;
+    removeProgramTitle: string;
+    removeProgramBody: string;
+    remove: string;
+    chapter: string; // {n}
+    masteredWord: string;
+    learningWord: string;
+    browse: string;
+    noPrograms: string;
+    seeAllPrograms: string;
+    seeAllProgramsArrow: string;
+    statusLearned: string;
+    statusInProgress: string;
+    statusNew: string;
+  };
 }

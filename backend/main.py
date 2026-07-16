@@ -26,6 +26,7 @@ from routers.feedback import router as feedback_router
 from routers.news import router as news_router
 from routers.custom_programs import router as custom_programs_router
 from routers.phrases import router as phrases_router
+from routers.phrase_lists import router as phrase_lists_router
 from database import create_db_and_tables, get_session
 from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage  # noqa: F401 — registers table
 from data.grammar.lessons import LESSON_CONFIG
@@ -131,6 +132,7 @@ app.include_router(feedback_router, prefix="/api")
 app.include_router(news_router, prefix="/api")
 app.include_router(custom_programs_router, prefix="/api")
 app.include_router(phrases_router, prefix="/api")
+app.include_router(phrase_lists_router, prefix="/api")
 
 
 @app.get("/health")

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL, getToken, getGrammarPrograms, unenrollGrammarProgram, type GrammarProgramSummary } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
-import { normalizeLt } from '../../../lib/normalizeLt';
+import { isAnswerMatch } from '../../../lib/normalizeLt';
 
 interface GrammarRule {
   question: string;
@@ -636,7 +636,7 @@ export default function GrammarPage() {
   function checkAnswer() {
     if (answerState !== 'unanswered') return;
     const task = tasks[taskIndex];
-    const isCorrect = normalizeLt(typed.trim()) === normalizeLt(task.answer);
+    const isCorrect = isAnswerMatch(typed.trim(), task.answer);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     if (!isCorrect) {
       setShownAnswer(task.type === 'sentence' ? task.full_answer : task.answer);

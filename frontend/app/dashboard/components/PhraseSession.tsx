@@ -171,10 +171,15 @@ export default function PhraseSession({
   phrases,
   backHref,
   onRepeat,
+  recordProgress = recordPhraseProgress,
 }: {
   phrases: PhraseStudyItem[];
   backHref: string;
   onRepeat: () => void;
+  recordProgress?: (
+    phraseId: number,
+    payload: { quality: number; stage_completed: number; mistake_word?: string },
+  ) => Promise<{ lesson_stage: number; next_review: string | null; interval: number }>;
 }) {
   const { tr, lang } = useT();
   const getTranslation = (p: PhraseStudyItem) =>
@@ -376,7 +381,7 @@ export default function PhraseSession({
 
     setSaving(true);
     try {
-      await recordPhraseProgress(phrase.id, {
+      await recordProgress(phrase.id, {
         quality,
         stage_completed: s,
         ...(mistakeWord ? { mistake_word: mistakeWord } : {}),

@@ -490,6 +490,51 @@ class UserPhraseProgress(SQLModel, table=True):
     next_review: Optional[date] = Field(default=None)
 
 
+# ── User-created phrase lists ("Мои списки") ─────────────────────────────────
+# Private, user-owned phrase collections created by premium users / admins.
+# Kept in separate tables from the admin-curated PhraseProgram/Phrase so they
+# never mix with public content and cascade-delete cleanly with their owner.
+
+class CustomPhraseList(SQLModel, table=True):
+    """A private phrase list created and owned by a single user."""
+    __tablename__ = "custom_phrase_list"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    owner_user_id: str = Field(foreign_key="user.id", index=True)
+    title: str                                  # user-provided name
+    difficulty: int = Field(default=1)          # 1=easy, 2=medium, 3=hard
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class CustomPhrase(SQLModel, table=True):
+    """A single phrase belonging to a user's CustomPhraseList."""
+    __tablename__ = "custom_phrase"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    list_id: int = Field(foreign_key="custom_phrase_list.id", index=True)
+    text: str                                   # Lithuanian phrase
+    translation: str                            # Russian translation
+    translation_en: Optional[str] = None        # English translation
+    alt_texts: Optional[str] = None             # pipe-separated alternative answers
+    position: int = Field(default=0)            # display order within the list
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class UserCustomPhraseProgress(SQLModel, table=True):
+    """A user's SM-2 progress on a single CustomPhrase. Mirrors UserPhraseProgress."""
+    __tablename__ = "user_custom_phrase_progress"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    custom_phrase_id: int = Field(foreign_key="custom_phrase.id", index=True)
+    lesson_stage: int = Field(default=0)        # 0=new, 1=fill-word, 2=type-full
+    mistake_count: int = Field(default=0)
+    mistake_words_json: str = Field(default="{}")  # JSON: {word: count}
+    last_seen: datetime = Field(default_factory=_utcnow)
+    # SM-2 fields
+    sm2_reps: int = Field(default=0)
+    ease_factor: float = Field(default=2.5)
+    interval: int = Field(default=0)
+    next_review: Optional[date] = Field(default=None)
+
+
 # ── Grammar programs feature ─────────────────────────────────────────────────
 
 class GrammarProgram(SQLModel, table=True):
