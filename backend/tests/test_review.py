@@ -177,3 +177,64 @@ def test_stats_includes_mistakes_field(client):
     data = r.json()
     assert "mistakes" in data
     assert isinstance(data["mistakes"], int)
+
+
+# ── Issue #142: review endpoints must respect words_per_session ─────────────
+# Previously all four review endpoints hardcoded a legacy QUIZ_SIZE=10 constant
+# instead of the user's configured words_per_session setting.
+
+def _set_words_per_session(client, headers, n: int):
+    r = client.patch("/api/me/settings", json={
+        "words_per_session": n,
+        "new_words_ratio": 0.7,
+    }, headers=headers)
+    assert r.status_code == 200
+
+
+def test_review_known_respects_words_per_session(client):
+    token = make_token("review_size_known@example.com")
+    headers = auth_headers(token)
+    _set_words_per_session(client, headers, 2)
+
+    # Mark all 3 seeded words as known — more than the configured limit of 2
+    for word_id in (1, 2, 3):
+        client.post(f"/api/words/{word_id}/progress", json={"status": "known", "mistake": False}, headers=headers)
+
+    words = client.get("/api/review/known", headers=headers).json()
+    assert len(words) == 2
+
+
+def test_review_mistakes_respects_words_per_session(client):
+    token = make_token("review_size_mistakes@example.com")
+    headers = auth_headers(token)
+    _set_words_per_session(client, headers, 2)
+
+    for word_id in (1, 2, 3):
+        client.post(f"/api/words/{word_id}/progress", json={"status": "known", "mistake": True}, headers=headers)
+
+    words = client.get("/api/review/mistakes", headers=headers).json()
+    assert len(words) == 2
+
+
+def test_review_known_random_respects_words_per_session(client):
+    token = make_token("review_size_random@example.com")
+    headers = auth_headers(token)
+    _set_words_per_session(client, headers, 2)
+
+    for word_id in (1, 2, 3):
+        client.post(f"/api/words/{word_id}/progress", json={"status": "known", "mistake": False}, headers=headers)
+
+    words = client.get("/api/review/known/random", headers=headers).json()
+    assert len(words) == 2
+
+
+def test_review_known_default_size_unaffected(client):
+    """Users who never set words_per_session still get the default size (10)."""
+    token = make_token("review_size_default@example.com")
+    headers = auth_headers(token)
+
+    for word_id in (1, 2, 3):
+        client.post(f"/api/words/{word_id}/progress", json={"status": "known", "mistake": False}, headers=headers)
+
+    words = client.get("/api/review/known", headers=headers).json()
+    assert len(words) == 3  # all 3 available words returned, well under the default of 10

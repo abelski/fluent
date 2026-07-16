@@ -11,7 +11,7 @@ from sqlalchemy import text
 from sqlmodel import Session, select, col, func
 
 from database import get_session
-from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress, Article
+from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress, UserCustomPhraseProgress, Article
 from constants import DAILY_LIMIT
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
@@ -259,7 +259,6 @@ def get_list(
 
 
 # Session sizing defaults (used both in study endpoint and settings endpoints)
-QUIZ_SIZE = 10           # legacy constant kept for review endpoints
 DEFAULT_SESSION_SIZE = 10
 DEFAULT_NEW_RATIO = 0.7  # 70% new words, 30% review
 
@@ -572,7 +571,8 @@ def get_review_known(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return up to 10 known words that are due for review today.
+    """Return up to the user's configured session size (words_per_session) of known
+    words that are due for review today.
 
     Words without a scheduled next_review (legacy rows or first-time review) are
     always included. Words with next_review are included only when next_review <= today.
@@ -581,6 +581,7 @@ def get_review_known(
     """
     user = _require_user(authorization, session)
     today = date.today()
+    limit_size = user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE
 
     progress_records = session.exec(
         select(UserWordProgress)
@@ -590,7 +591,7 @@ def get_review_known(
             (UserWordProgress.next_review == None) | (UserWordProgress.next_review <= today),  # noqa: E711
         )
         .order_by(UserWordProgress.next_review.asc().nulls_first(), UserWordProgress.last_seen)
-        .limit(QUIZ_SIZE)
+        .limit(limit_size)
     ).all()
 
     if not progress_records:
@@ -614,13 +615,15 @@ def get_review_known_upcoming(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return up to 10 known words scheduled for review in the future (next_review > today).
+    """Return up to the user's configured session size (words_per_session) of known
+    words scheduled for review in the future (next_review > today).
 
     Useful when there is nothing due today and the user wants to get ahead of schedule.
     Ordered by next_review ASC (soonest first).
     """
     user = _require_user(authorization, session)
     today = date.today()
+    limit_size = user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE
 
     progress_records = session.exec(
         select(UserWordProgress)
@@ -630,7 +633,7 @@ def get_review_known_upcoming(
             UserWordProgress.next_review > today,
         )
         .order_by(UserWordProgress.next_review.asc())
-        .limit(QUIZ_SIZE)
+        .limit(limit_size)
     ).all()
 
     if not progress_records:
@@ -654,11 +657,13 @@ def get_review_known_random(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return up to 10 random known words for unstructured practice.
+    """Return up to the user's configured session size (words_per_session) of
+    random known words for unstructured practice.
 
     Useful when the user wants to drill vocabulary without following the review schedule.
     """
     user = _require_user(authorization, session)
+    limit_size = user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE
 
     progress_records = session.exec(
         select(UserWordProgress)
@@ -667,7 +672,7 @@ def get_review_known_random(
             UserWordProgress.status == "known",
         )
         .order_by(func.random())
-        .limit(QUIZ_SIZE)
+        .limit(limit_size)
     ).all()
 
     if not progress_records:
@@ -691,11 +696,13 @@ def get_review_mistakes(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return up to 10 words the user has answered wrong, most-mistaken first.
+    """Return up to the user's configured session size (words_per_session) of
+    words the user has answered wrong, most-mistaken first.
 
     Does not count against the daily session quota.
     """
     user = _require_user(authorization, session)
+    limit_size = user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE
 
     progress_records = session.exec(
         select(UserWordProgress)
@@ -704,7 +711,7 @@ def get_review_mistakes(
             UserWordProgress.mistake_count > 0,
         )
         .order_by(col(UserWordProgress.mistake_count).desc())
-        .limit(QUIZ_SIZE)
+        .limit(limit_size)
     ).all()
 
     if not progress_records:
@@ -865,10 +872,16 @@ def get_stats(
         if p.lesson_stage >= 2 and (p.next_review is None or p.next_review <= today)
     )
 
+    # Custom phrase lists ("Мои списки") — separate progress table, also counts toward the streak
+    custom_phrase_progress = session.exec(
+        select(UserCustomPhraseProgress).where(UserCustomPhraseProgress.user_id == user.id)
+    ).all()
+
     # Streak: count consecutive active days across words + grammar + phrases
     studied_dates: set = {p.last_seen.date() for p in all_progress}
     studied_dates |= {r.created_at.date() for r in grammar_results}
     studied_dates |= {p.last_seen.date() for p in phrase_progress}
+    studied_dates |= {p.last_seen.date() for p in custom_phrase_progress}
     streak = 0
     check = today if today in studied_dates else today - timedelta(days=1)
     while check in studied_dates:
@@ -897,7 +910,7 @@ def get_activity_calendar(
     """Return ISO date strings of active days within the last 28 days.
 
     A day is active if the user reviewed a word, completed a grammar lesson,
-    or progressed on a phrase on that day.
+    or progressed on a phrase (admin-curated program or personal list) on that day.
     """
     user = _require_user(authorization, session)
     today = datetime.now(timezone.utc).date()
@@ -924,8 +937,15 @@ def get_activity_calendar(
         ).all()
         if p.last_seen.date() >= window_start
     }
+    custom_phrase_dates = {
+        p.last_seen.date()
+        for p in session.exec(
+            select(UserCustomPhraseProgress).where(UserCustomPhraseProgress.user_id == user.id)
+        ).all()
+        if p.last_seen.date() >= window_start
+    }
 
-    active_dates = sorted(word_dates | grammar_dates | phrase_dates)
+    active_dates = sorted(word_dates | grammar_dates | phrase_dates | custom_phrase_dates)
     return {"dates": [d.isoformat() for d in active_dates]}
 
 

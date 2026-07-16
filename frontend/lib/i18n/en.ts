@@ -572,6 +572,7 @@ const en: Translations = {
     gotItNextBtn: 'Got it, next →',
     nextBtn: 'Next →',
     notQuite: 'Not quite. Correct answer:',
+    hardFeedback: "OK, we'll show this phrase again soon",
   },
   articles: {
     title: 'Articles',

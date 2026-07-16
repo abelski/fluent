@@ -581,6 +581,7 @@ export interface Translations {
     gotItNextBtn: string;
     nextBtn: string;
     notQuite: string;
+    hardFeedback: string;
   };
   phraseLists: {
     myLists: string;

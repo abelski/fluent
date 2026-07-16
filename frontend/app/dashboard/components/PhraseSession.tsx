@@ -216,6 +216,7 @@ export default function PhraseSession({
   const [mistakeCount, setMistakeCount] = useState(0);
   const [phrasesDone, setPhrasesDone] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [hardFeedback, setHardFeedback] = useState(false);
 
   const [syllableChallenge, setSyllableChallenge] = useState<{ syllable: string; word: string } | null>(null);
   const [syllableInput, setSyllableInput] = useState('');
@@ -431,6 +432,13 @@ export default function PhraseSession({
         // Mistakes on other stages (0, 2) keep existing retry behaviour
         const insertAt = Math.min(currentIdx + 1, next.length);
         next.splice(insertAt, 0, { phrase, retries: current.retries + 1, mode: 'normal' });
+      } else if (quality < 3 && current.retries >= 2) {
+        // Retry cap hit — no more requeues, but still count the phrase as done
+        // so progress accounting (phrasesDone / phrases.length) stays accurate.
+        if (!donePhrasesRef.current.has(phrase.id)) {
+          donePhrasesRef.current.add(phrase.id);
+          setPhrasesDone((c) => c + 1);
+        }
       }
       return next;
     })();
@@ -646,6 +654,7 @@ export default function PhraseSession({
       <>
         <div className="w-full h-1 bg-gray-100 rounded-full mb-1">
           <div
+            data-testid="phrase-progress-fill"
             className="h-1 bg-emerald-500 rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
@@ -696,23 +705,40 @@ export default function PhraseSession({
             <p className="text-gray-500 text-lg">{getTranslation(phrase)}</p>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={() => advanceQueue(2)}
-              disabled={saving}
-              className="flex-1 py-3 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+          {hardFeedback ? (
+            <div
+              data-testid="hard-feedback"
+              className="py-3 rounded-xl text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200 text-center"
             >
-              {tr.phraseSession.hardBtn}
-            </button>
-            <button
-              onClick={() => advanceQueue(5)}
-              disabled={saving}
-              data-testid="got-it-btn"
-              className="flex-1 py-3 rounded-xl text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
-            >
-              {tr.phraseSession.gotItBtn}
-            </button>
-          </div>
+              {tr.phraseSession.hardFeedback}
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setHardFeedback(true);
+                  blockUntilRef.current = Date.now() + 900;
+                  setTimeout(() => {
+                    setHardFeedback(false);
+                    advanceQueue(2);
+                  }, 700);
+                }}
+                disabled={saving}
+                data-testid="hard-btn"
+                className="flex-1 py-3 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              >
+                {tr.phraseSession.hardBtn}
+              </button>
+              <button
+                onClick={() => advanceQueue(5)}
+                disabled={saving}
+                data-testid="got-it-btn"
+                className="flex-1 py-3 rounded-xl text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+              >
+                {tr.phraseSession.gotItBtn}
+              </button>
+            </div>
+          )}
         </div>
       </main>
     );

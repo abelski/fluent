@@ -572,6 +572,7 @@ const ru: Translations = {
     gotItNextBtn: 'Понял, дальше →',
     nextBtn: 'Дальше →',
     notQuite: 'Не совсем. Правильный ответ:',
+    hardFeedback: 'Хорошо, покажем эту фразу ещё раз',
   },
   articles: {
     title: 'Статьи',
