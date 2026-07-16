@@ -57,8 +57,9 @@ test.describe('Login flow', () => {
     await expect(page).toHaveURL(/localhost:8000\/?$/, { timeout: 5000 });
   });
 
-  test('no token: unauthenticated user on /dashboard/lists is redirected to landing', async ({ page }) => {
+  test('no token: /dashboard/lists is public (SEO page) and does NOT redirect', async ({ page }) => {
     await page.goto('/dashboard/lists');
-    await expect(page).toHaveURL(/localhost:8000\/?$/, { timeout: 5000 });
+    await page.waitForTimeout(1500);
+    await expect(page).toHaveURL(/\/dashboard\/lists/);
   });
 });

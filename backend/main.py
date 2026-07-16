@@ -144,7 +144,7 @@ def health():
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 
-@app.get("/sitemap.xml", include_in_schema=False)
+@app.api_route("/sitemap.xml", methods=["GET", "HEAD"], include_in_schema=False)
 def sitemap(session: Session = Depends(get_session)):
     """Dynamically generated sitemap. Includes static pages plus all published
     articles and public word lists fetched live from the database."""
@@ -222,7 +222,7 @@ def sitemap(session: Session = Depends(get_session)):
     return Response(content=xml, media_type="application/xml")
 
 
-@app.get("/robots.txt", include_in_schema=False)
+@app.api_route("/robots.txt", methods=["GET", "HEAD"], include_in_schema=False)
 def robots_txt():
     """robots.txt pointing crawlers at the sitemap and blocking auth-only areas."""
     base = FRONTEND_URL.rstrip("/")
@@ -313,7 +313,7 @@ def llms_txt(session: Session = Depends(get_session)):
     return Response(content=content, media_type="text/plain; charset=utf-8")
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     if DEV_MODE:
         return RedirectResponse(FRONTEND_URL)
@@ -362,7 +362,7 @@ def _resolve_static(path: str) -> Path | None:
     return None
 
 
-@app.get("/{full_path:path}")
+@app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
 async def serve_frontend(full_path: str, request: Request):
     # Catch-all route that serves the static Next.js frontend for any path
     # not matched by the /api/* routes above.
