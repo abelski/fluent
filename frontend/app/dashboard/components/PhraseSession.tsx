@@ -152,6 +152,22 @@ function buildQueue(phrases: PhraseStudyItem[]): QueueItem[] {
 // ── Sub-steps within stage 1 ──────────────────────────────────────────────────
 type Stage1Step = 'mcq' | 'type';
 
+// ── Sub-steps within stage 2 ──────────────────────────────────────────────────
+// 'assemble' — click shuffled word tiles into order (only for >3-word phrases,
+// server sends word_tiles); 'type' — the classic full typed recall.
+type Stage2Step = 'assemble' | 'type';
+
+function firstMisplacedWord(assembledWords: string[], target: string): string {
+  const strip = (s: string) => s.replace(/[.,!?;:'"()/]/g, '');
+  const targetWords = target.trim().split(/\s+/);
+  for (let i = 0; i < targetWords.length; i++) {
+    if (normalizeLt(strip(assembledWords[i] ?? '').toLowerCase()) !== normalizeLt(strip(targetWords[i]).toLowerCase())) {
+      return strip(targetWords[i]);
+    }
+  }
+  return strip(targetWords[0]);
+}
+
 // ── Phrase → Word adapter for MatchRound ─────────────────────────────────────
 function phrasesToWords(phrases: PhraseStudyItem[]): Word[] {
   const seen = new Set<number>();
@@ -205,6 +221,9 @@ export default function PhraseSession({
   const [queue, setQueue] = useState<QueueItem[]>(() => buildQueue(phrases));
   const [currentIdx, setCurrentIdx] = useState(0);
   const [stage1Step, setStage1Step] = useState<Stage1Step>('mcq');
+  const [stage2Step, setStage2Step] = useState<Stage2Step>(() => (phrases[0]?.word_tiles ? 'assemble' : 'type'));
+  const [assembled, setAssembled] = useState<number[]>([]);
+  const [assembleResult, setAssembleResult] = useState<'correct' | 'wrong' | null>(null);
   const [mcqSelected, setMcqSelected] = useState<string | null>(null);
   const [mcqResult, setMcqResult] = useState<'correct' | 'wrong' | null>(null);
   const [typeInput, setTypeInput] = useState('');
@@ -253,21 +272,25 @@ export default function PhraseSession({
     timerIntervalRef.current = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => { if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; } };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIdx, stage1Step, stage, useTimer, timerSeconds]);
+  }, [currentIdx, stage1Step, stage2Step, stage, useTimer, timerSeconds]);
 
   // Stop timer when answer is submitted
   useEffect(() => {
-    const hasResult = mcqResult !== null || typeResult !== null;
+    const hasResult = mcqResult !== null || typeResult !== null || assembleResult !== null;
     if (hasResult && timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current); timerIntervalRef.current = null;
     }
-  }, [mcqResult, typeResult]);
+  }, [mcqResult, typeResult, assembleResult]);
 
   // ── Reset card state on index change ────────────────────────────────────────
   useEffect(() => {
     const nextItem = queue[currentIdx];
     // gap_retry skips MCQ — go straight to typing sub-step
     setStage1Step(nextItem?.mode === 'gap_retry' ? 'type' : 'mcq');
+    // full_retake skips assembly — go straight to typed recall
+    setStage2Step(nextItem?.phrase.word_tiles && nextItem.mode !== 'full_retake' ? 'assemble' : 'type');
+    setAssembled([]);
+    setAssembleResult(null);
     setMcqSelected(null);
     setMcqResult(null);
     setTypeInput('');
@@ -281,8 +304,8 @@ export default function PhraseSession({
   }, [stage1Step]);
 
   useEffect(() => {
-    if (current?.phrase.lesson_stage === 2 && textareaRef.current && window.innerWidth > 768) textareaRef.current.focus();
-  }, [current]);
+    if (current?.phrase.lesson_stage === 2 && stage2Step === 'type' && textareaRef.current && window.innerWidth > 768) textareaRef.current.focus();
+  }, [current, stage2Step]);
 
   useEffect(() => {
     if (syllableChallenge) setTimeout(() => syllableInputRef.current?.focus(), 50);
@@ -291,7 +314,7 @@ export default function PhraseSession({
   // ── Timer timeout → mark wrong ───────────────────────────────────────────────
   useEffect(() => {
     if (!useTimer || timeLeft > 0 || stage === undefined || stage === 0) return;
-    const hasResult = mcqResult !== null || typeResult !== null;
+    const hasResult = mcqResult !== null || typeResult !== null || assembleResult !== null;
     if (hasResult) return;
     if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
     // Mark as wrong
@@ -301,6 +324,8 @@ export default function PhraseSession({
       } else {
         setTypeResult('wrong');
       }
+    } else if (stage2Step === 'assemble') {
+      setAssembleResult('wrong');
     } else {
       setTypeResult('wrong');
     }
@@ -309,7 +334,7 @@ export default function PhraseSession({
       setMistakeCount((c) => c + 1);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, useTimer, stage, stage1Step]);
+  }, [timeLeft, useTimer, stage, stage1Step, stage2Step]);
 
   // ── Enter key: advance past shown results ────────────────────────────────────
   useEffect(() => {
@@ -352,6 +377,15 @@ export default function PhraseSession({
         return;
       }
 
+      // Stage 2 assembly wrong shown → advance (re-queue; no typed mistake to drill)
+      if (s === 2 && stage2Step === 'assemble' && assembleResult === 'wrong') {
+        e.preventDefault();
+        blockUntilRef.current = Date.now() + 200;
+        const tiles = current.phrase.word_tiles ?? [];
+        advanceQueue(1, firstMisplacedWord(assembled.map((i) => tiles[i]), current.phrase.text));
+        return;
+      }
+
       // Stage 2 type result shown → advance
       if (s === 2 && typeResult !== null) {
         e.preventDefault();
@@ -369,7 +403,7 @@ export default function PhraseSession({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, stage1Step, mcqResult, typeResult, saving, syllableChallenge, syllableResult]);
+  }, [current, stage1Step, stage2Step, mcqResult, typeResult, assembleResult, assembled, saving, syllableChallenge, syllableResult]);
 
   // ── Progress ──────────────────────────────────────────────────────────────────
   const progressPct = phrases.length > 0 ? (phrasesDone / phrases.length) * 100 : 0;
@@ -951,6 +985,103 @@ export default function PhraseSession({
       setMistakeCount((c) => c + 1);
     }
   };
+
+  // ── Stage 2, sub-step 1: assemble the phrase from shuffled tiles ─────────────
+  const tiles = phrase.word_tiles ?? [];
+
+  const handleTileClick = (tileIdx: number) => {
+    if (assembleResult) return;
+    const next = [...assembled, tileIdx];
+    setAssembled(next);
+    if (next.length === tiles.length) {
+      const attempt = next.map((i) => tiles[i]).join(' ');
+      const correct = checkPhrase(attempt, phrase.text, 'hard', phrase.alt_texts);
+      setAssembleResult(correct ? 'correct' : 'wrong');
+      if (correct) {
+        setTimeout(() => {
+          blockUntilRef.current = Date.now() + 300;
+          setAssembleResult(null);
+          setStage2Step('type');
+        }, 900);
+      } else if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
+        mistakePhraseIdsRef.current.add(current.phrase.id);
+        setMistakeCount((c) => c + 1);
+      }
+    }
+  };
+
+  if (stage2Step === 'assemble' && tiles.length > 0) {
+    return (
+      <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage2-assemble">
+        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
+          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
+        </div>
+        <div className="relative z-10 w-full max-w-sm">
+          <Header />
+          <ProgressBars />
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center mb-4">
+            <p className="text-xs text-purple-600 font-medium mb-3 uppercase tracking-wider">{tr.phraseSession.assembleLabel}</p>
+            <p className="text-xl sm:text-2xl text-gray-500 mb-4">{getTranslation(phrase)}</p>
+            <div className="min-h-[3.5rem] border-t border-gray-100 pt-3 flex flex-wrap gap-2 justify-center" data-testid="assembled-row">
+              {assembled.map((tileIdx, pos) => (
+                <button
+                  key={pos}
+                  onClick={() => { if (!assembleResult) setAssembled((a) => a.filter((_, j) => j !== pos)); }}
+                  className="py-2 px-3 rounded-xl text-sm font-medium bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 transition-colors"
+                >
+                  {tiles[tileIdx]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 justify-center" data-testid="tile-pool">
+            {tiles.map((w, i) => {
+              const used = assembled.includes(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleTileClick(i)}
+                  disabled={used || !!assembleResult}
+                  className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${
+                    used
+                      ? 'bg-gray-50 border-gray-100 text-gray-300'
+                      : 'bg-white border-gray-200 text-gray-700 hover:border-emerald-400 hover:text-emerald-700 cursor-pointer'
+                  }`}
+                >
+                  {w}
+                </button>
+              );
+            })}
+          </div>
+
+          {assembleResult === 'correct' && (
+            <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+              <p className="text-emerald-700 font-semibold">{tr.phraseSession.correctNowWrite}</p>
+            </div>
+          )}
+
+          {assembleResult === 'wrong' && (
+            <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+              <p className="text-sm text-red-600 mb-1">{tr.phraseSession.notQuite}</p>
+              <p className="font-semibold text-red-700 mb-3">{phrase.text}</p>
+              <button
+                onClick={() => {
+                  blockUntilRef.current = Date.now() + 800;
+                  advanceQueue(1, firstMisplacedWord(assembled.map((i) => tiles[i]), phrase.text));
+                }}
+                disabled={saving}
+                className="w-full py-3 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
+              >
+                {tr.phraseSession.gotItNextBtn}
+              </button>
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage2">

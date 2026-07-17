@@ -5,26 +5,27 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   getToken,
-  getMyPhraseList,
-  updateMyPhraseList,
-  addMyPhrase,
-  bulkAddMyPhrases,
-  updateMyPhrase,
-  deleteMyPhrase,
-  resolvePhraseListId,
-  type PhraseListDetail,
-  type CustomPhraseItem,
+  getMyWordList,
+  updateMyWordList,
+  addMyWord,
+  bulkAddMyWords,
+  updateMyWord,
+  deleteMyWord,
+  resolveMyListId,
+  type WordListMineDetail,
+  type CustomWordItem,
 } from '../../../../../../lib/api';
 import { useT } from '../../../../../../lib/useT';
 
 function EditListContent() {
   const { id: _id } = useParams<{ id: string }>();
-  const id = Number(resolvePhraseListId(_id));
+  const id = Number(resolveMyListId(_id));
   const router = useRouter();
   const { tr } = useT();
-  const t = tr.phraseLists;
+  const t = tr.myWordLists;
+  const difficultyLabels: Record<number, string> = { 1: t.easy, 2: t.medium, 3: t.hard };
 
-  const [detail, setDetail] = useState<PhraseListDetail | null>(null);
+  const [detail, setDetail] = useState<WordListMineDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,14 +50,14 @@ function EditListContent() {
 
   const load = useCallback(() => {
     setLoading(true);
-    getMyPhraseList(id)
+    getMyWordList(id)
       .then((d) => {
         setDetail(d);
         setTitle(d.title);
         setDifficulty(d.difficulty);
       })
       .catch((e: Error) => {
-        if (e.message === 'List not found') router.replace('/dashboard/phrases');
+        if (e.message === 'List not found') router.replace('/dashboard/lists');
         else setError(e.message || t.loadError);
       })
       .finally(() => setLoading(false));
@@ -71,7 +72,7 @@ function EditListContent() {
     if (!title.trim()) return;
     setSavingMeta(true);
     try {
-      await updateMyPhraseList(id, { title: title.trim(), difficulty });
+      await updateMyWordList(id, { title: title.trim(), difficulty });
       setDetail((d) => (d ? { ...d, title: title.trim(), difficulty } : d));
     } catch (e) {
       console.error(e);
@@ -84,7 +85,7 @@ function EditListContent() {
     if (!newText.trim() || !newTranslation.trim()) return;
     setAdding(true);
     try {
-      await addMyPhrase(id, { text: newText.trim(), translation: newTranslation.trim() });
+      await addMyWord(id, { lithuanian: newText.trim(), translation: newTranslation.trim() });
       setNewText('');
       setNewTranslation('');
       load();
@@ -100,7 +101,7 @@ function EditListContent() {
     setBulkBusy(true);
     setBulkMsg(null);
     try {
-      const { added } = await bulkAddMyPhrases(id, bulkText);
+      const { added } = await bulkAddMyWords(id, bulkText);
       setBulkText('');
       setBulkMsg(t.bulkAdded.replace('{n}', String(added)));
       load();
@@ -111,16 +112,16 @@ function EditListContent() {
     }
   }
 
-  function startEdit(p: CustomPhraseItem) {
-    setEditId(p.id);
-    setEditText(p.text);
-    setEditTranslation(p.translation);
+  function startEdit(w: CustomWordItem) {
+    setEditId(w.id);
+    setEditText(w.lithuanian);
+    setEditTranslation(w.translation);
   }
 
-  async function saveEdit(phraseId: number) {
+  async function saveEdit(wordId: number) {
     if (!editText.trim() || !editTranslation.trim()) return;
     try {
-      await updateMyPhrase(phraseId, { text: editText.trim(), translation: editTranslation.trim() });
+      await updateMyWord(wordId, { lithuanian: editText.trim(), translation: editTranslation.trim() });
       setEditId(null);
       load();
     } catch (e) {
@@ -128,24 +129,12 @@ function EditListContent() {
     }
   }
 
-  async function handleDelete(phraseId: number) {
+  async function handleDelete(wordId: number) {
     try {
-      await deleteMyPhrase(phraseId);
-      setDetail((d) => (d ? { ...d, phrases: d.phrases.filter((p) => p.id !== phraseId) } : d));
+      await deleteMyWord(wordId);
+      setDetail((d) => (d ? { ...d, words: d.words.filter((w) => w.id !== wordId) } : d));
     } catch (e) {
       console.error(e);
-    }
-  }
-
-  async function setPhraseStar(p: CustomPhraseItem, star: number) {
-    if (star === p.star) return;
-    // Optimistic update — revert by reloading on failure
-    setDetail((d) => (d ? { ...d, phrases: d.phrases.map((x) => (x.id === p.id ? { ...x, star } : x)) } : d));
-    try {
-      await updateMyPhrase(p.id, { text: p.text, translation: p.translation, star });
-    } catch (e) {
-      console.error(e);
-      load();
     }
   }
 
@@ -161,16 +150,16 @@ function EditListContent() {
     return (
       <main className="min-h-screen bg-[#F5F5F7] flex flex-col items-center justify-center px-6 gap-4">
         <p className="text-gray-500">{error ?? t.listNotFound}</p>
-        <Link href="/dashboard/phrases" className="text-sm text-emerald-600 hover:text-emerald-700">{t.backToLists}</Link>
+        <Link href="/dashboard/lists" className="text-sm text-emerald-600 hover:text-emerald-700">{t.backToLists}</Link>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F5F7] text-gray-900 flex flex-col items-center px-4 py-10" data-testid="phrase-list-edit-page">
+    <main className="min-h-screen bg-[#F5F5F7] text-gray-900 flex flex-col items-center px-4 py-10" data-testid="word-list-edit-page">
       <div className="relative z-10 w-full max-w-2xl">
         <div className="mb-6">
-          <Link href="/dashboard/phrases" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">{t.backToLists}</Link>
+          <Link href="/dashboard/lists" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">{t.backToLists}</Link>
         </div>
 
         {/* List meta */}
@@ -182,6 +171,20 @@ function EditListContent() {
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             data-testid="list-title-input"
           />
+          <label className="block text-xs font-medium text-gray-400 mb-1">{t.difficulty}</label>
+          <div className="flex gap-2 mb-4">
+            {[1, 2, 3].map((d) => (
+              <button
+                key={d}
+                onClick={() => setDifficulty(d)}
+                className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                  difficulty === d ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {difficultyLabels[d]}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center justify-between">
             <button
               onClick={saveMeta}
@@ -190,9 +193,9 @@ function EditListContent() {
             >
               {savingMeta ? t.saving : t.save}
             </button>
-            {detail.phrases.length > 0 && (
+            {detail.words.length > 0 && (
               <Link
-                href={`/dashboard/phrases/lists/${id}/study`}
+                href={`/dashboard/lists/${id}/study`}
                 data-testid="study-button"
                 className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors shadow-sm shadow-emerald-600/20"
               >
@@ -202,59 +205,45 @@ function EditListContent() {
           </div>
         </div>
 
-        {/* Phrases */}
+        {/* Words */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-4">{t.phrasesHeading} <span className="text-gray-400 font-normal">({detail.phrases.length})</span></h2>
+          <h2 className="font-semibold text-gray-900 mb-4">{t.wordsHeading} <span className="text-gray-400 font-normal">({detail.words.length})</span></h2>
 
           <div className="flex flex-col divide-y divide-gray-100">
-            {detail.phrases.map((p) => (
-              <div key={p.id} className="py-3" data-testid="phrase-row">
-                {editId === p.id ? (
+            {detail.words.map((w) => (
+              <div key={w.id} className="py-3" data-testid="word-row">
+                {editId === w.id ? (
                   <div className="flex flex-col gap-2">
-                    <input value={editText} onChange={(e) => setEditText(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm" placeholder={t.phrasePlaceholder} />
+                    <input value={editText} onChange={(e) => setEditText(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm" placeholder={t.wordPlaceholder} />
                     <input value={editTranslation} onChange={(e) => setEditTranslation(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm" placeholder={t.translationPlaceholder} />
                     <div className="flex gap-2">
-                      <button onClick={() => saveEdit(p.id)} className="px-3 py-1 text-xs font-semibold text-white bg-emerald-600 rounded-full hover:bg-emerald-700">{t.save}</button>
+                      <button onClick={() => saveEdit(w.id)} className="px-3 py-1 text-xs font-semibold text-white bg-emerald-600 rounded-full hover:bg-emerald-700">{t.save}</button>
                       <button onClick={() => setEditId(null)} className="px-3 py-1 text-xs text-gray-500 border border-gray-200 rounded-full hover:bg-gray-50">{t.cancel}</button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm text-gray-900 truncate">{p.text}</p>
-                      <p className="text-xs text-gray-400 truncate">{p.translation}</p>
+                      <p className="text-sm text-gray-900 truncate">{w.lithuanian}</p>
+                      <p className="text-xs text-gray-400 truncate">{w.translation}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="flex" data-testid="phrase-star" title={t.starHint}>
-                        {[1, 2, 3].map((s) => (
-                          <button
-                            key={s}
-                            onClick={() => setPhraseStar(p, s)}
-                            className={`text-sm leading-none px-0.5 transition-colors ${
-                              s <= p.star ? 'text-amber-400 hover:text-amber-500' : 'text-gray-200 hover:text-amber-300'
-                            }`}
-                            aria-label={`${t.starHint}: ${s}`}
-                          >
-                            ★
-                          </button>
-                        ))}
-                      </span>
                       <span
                         className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${
-                          p.lesson_stage === 2
+                          w.status === 'known'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : p.lesson_stage === 1
+                            : w.status === 'learning'
                             ? 'bg-amber-50 text-amber-700 border-amber-200'
                             : 'bg-gray-100 text-gray-500 border-gray-200'
                         }`}
-                        data-testid="phrase-status"
+                        data-testid="word-status"
                       >
-                        {p.lesson_stage === 2 ? t.statusLearned : p.lesson_stage === 1 ? t.statusInProgress : t.statusNew}
+                        {w.status === 'known' ? t.statusLearned : w.status === 'learning' ? t.statusInProgress : t.statusNew}
                       </span>
-                      <button onClick={() => startEdit(p)} title={t.edit} className="text-gray-300 hover:text-gray-700 transition-colors p-1.5 rounded">
+                      <button onClick={() => startEdit(w)} title={t.edit} className="text-gray-300 hover:text-gray-700 transition-colors p-1.5 rounded">
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3 7.5-7.5z" /></svg>
                       </button>
-                      <button onClick={() => handleDelete(p.id)} title={t.delete} className="text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded">
+                      <button onClick={() => handleDelete(w.id)} title={t.delete} className="text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded">
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" /></svg>
                       </button>
                     </div>
@@ -262,17 +251,17 @@ function EditListContent() {
                 )}
               </div>
             ))}
-            {detail.phrases.length === 0 && (
-              <p className="text-sm text-gray-400 py-4 text-center">{t.noPhrases}</p>
+            {detail.words.length === 0 && (
+              <p className="text-sm text-gray-400 py-4 text-center">{t.noWords}</p>
             )}
           </div>
 
           {/* Single add */}
           <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-2">
-            <input value={newText} onChange={(e) => setNewText(e.target.value)} placeholder={t.phrasePlaceholder} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200" data-testid="new-phrase-text" />
-            <input value={newTranslation} onChange={(e) => setNewTranslation(e.target.value)} placeholder={t.translationPlaceholder} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200" data-testid="new-phrase-translation" />
-            <button onClick={handleAdd} disabled={adding || !newText.trim() || !newTranslation.trim()} className="self-start px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors disabled:opacity-40" data-testid="add-phrase-button">
-              {adding ? t.adding : t.addPhrase}
+            <input value={newText} onChange={(e) => setNewText(e.target.value)} placeholder={t.wordPlaceholder} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200" data-testid="new-word-text" />
+            <input value={newTranslation} onChange={(e) => setNewTranslation(e.target.value)} placeholder={t.translationPlaceholder} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200" data-testid="new-word-translation" />
+            <button onClick={handleAdd} disabled={adding || !newText.trim() || !newTranslation.trim()} className="self-start px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors disabled:opacity-40" data-testid="add-word-button">
+              {adding ? t.adding : t.addWord}
             </button>
           </div>
         </div>

@@ -515,6 +515,7 @@ class CustomPhrase(SQLModel, table=True):
     translation_en: Optional[str] = None        # English translation
     alt_texts: Optional[str] = None             # pipe-separated alternative answers
     position: int = Field(default=0)            # display order within the list
+    star: int = Field(default=1)                # complexity 1-3: auto from word count, user-overridable
     created_at: datetime = Field(default_factory=_utcnow)
 
 

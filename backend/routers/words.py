@@ -57,6 +57,36 @@ def _apply_sm2(progress: UserWordProgress, quality: int) -> None:
     progress.next_review = date.today() + timedelta(days=interval)
 
 
+def _can_access_list(wl: WordList, user: Optional[User], session: Session) -> bool:
+    """Whether `user` may browse/study `wl`.
+
+    Public lists are open to everyone. Private lists (personal lists and
+    custom-program lists) are visible only to admins, their owner, or users
+    enrolled in a custom program that includes the list.
+    """
+    if wl.is_public:
+        return True
+    if user is None:
+        return False
+    if user.is_admin or wl.created_by == user.id:
+        return True
+    # Enrolled-via-custom-program access (preserves community program behavior).
+    program_ids = session.exec(
+        select(CustomProgramList.custom_program_id).where(
+            CustomProgramList.word_list_id == wl.id
+        )
+    ).all()
+    if not program_ids:
+        return False
+    enrolled = session.exec(
+        select(UserCustomProgramEnrollment.id).where(
+            UserCustomProgramEnrollment.user_id == user.id,
+            col(UserCustomProgramEnrollment.custom_program_id).in_(program_ids),
+        )
+    ).first()
+    return enrolled is not None
+
+
 def _list_words(list_id: int, session: Session) -> list[dict]:
     """Fetch all active (non-archived) words in a list ordered by their position."""
     rows = session.exec(
@@ -235,8 +265,10 @@ def get_list(
     wl = session.get(WordList, list_id)
     if not wl or wl.archived:
         raise HTTPException(status_code=404, detail="List not found")
-    words = _list_words(list_id, session)
     user = _try_get_user(authorization, session)
+    if not _can_access_list(wl, user, session):
+        raise HTTPException(status_code=404, detail="List not found")
+    words = _list_words(list_id, session)
     if user and words:
         word_ids = [w["id"] for w in words]
         progress_records = session.exec(
@@ -293,14 +325,16 @@ def get_study_words(
     if not wl or wl.archived:
         raise HTTPException(status_code=404, detail="List not found")
 
+    # Try to get authenticated user for progress-based prioritization.
+    # Auth is optional here — unauthenticated users still get a study session.
+    user = _try_get_user(authorization, session)
+    if not _can_access_list(wl, user, session):
+        raise HTTPException(status_code=404, detail="List not found")
+
     all_words = _list_words(list_id, session)
 
     # Filter by complexity level
     all_words = [w for w in all_words if w["star"] <= star_level]
-
-    # Try to get authenticated user for progress-based prioritization.
-    # Auth is optional here — unauthenticated users still get a study session.
-    user = _try_get_user(authorization, session)
 
     if user and all_words:
         word_ids = [w["id"] for w in all_words]
@@ -378,8 +412,10 @@ def get_study_words(
     distractor_rows = session.exec(
         select(Word)
         .join(WordListItem, WordListItem.word_id == Word.id)
+        .join(WordList, WordList.id == WordListItem.word_list_id)
         .where(
             WordListItem.word_list_id != list_id,
+            WordList.is_public == True,  # noqa: E712  — never leak private/personal words
             Word.archived == False,  # noqa: E712
             col(Word.id).not_in(list(session_word_ids)) if session_word_ids else True,
             col(Word.translation_ru).not_in(list(session_translations_ru)) if session_translations_ru else True,

@@ -15,6 +15,7 @@ import {
   type PhraseListSummary,
 } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import { getPhraseStarLevel, setPhraseStarLevel } from '../../../lib/starLevel';
 import ProgressStatCard from '../components/ProgressStatCard';
 import QuotaBanner from '../components/QuotaBanner';
 
@@ -80,6 +81,17 @@ export default function PhrasesPage() {
   const [quota, setQuota] = useState<Quota | null>(null);
   const [myLists, setMyLists] = useState<PhraseListSummary[]>([]);
   const [openMyLists, setOpenMyLists] = useState(true);
+  const [phraseStarLevel, setPhraseStarLevelState] = useState<number>(1);
+
+  // Read phrase star level from cookie on mount
+  useEffect(() => {
+    setPhraseStarLevelState(getPhraseStarLevel());
+  }, []);
+
+  function handlePhraseStarLevel(level: number) {
+    setPhraseStarLevel(level);
+    setPhraseStarLevelState(level);
+  }
   const [showCreate, setShowCreate] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
   const [creating, setCreating] = useState(false);
@@ -325,6 +337,24 @@ export default function PhrasesPage() {
             {/* Program body */}
             {openMyLists && (
               <div className="px-5 py-4 border-t border-gray-100">
+                {myLists.length > 0 && (
+                  <div className="flex items-center gap-2 mb-4" data-testid="phrase-star-selector">
+                    <span className="text-sm text-gray-400">{tr.lists.starSelectorLabel}</span>
+                    {[1, 2, 3].map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => handlePhraseStarLevel(level)}
+                        className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                          phraseStarLevel === level
+                            ? 'bg-gray-900 text-white border-gray-900'
+                            : 'bg-white text-gray-500 border-gray-300 hover:border-gray-900'
+                        }`}
+                      >
+                        {'★'.repeat(level)}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {myLists.length === 0 ? (
                   !eligible ? (
                     <div className="relative rounded-2xl bg-gradient-to-br from-amber-50 to-white border border-amber-100 overflow-hidden p-5">
@@ -369,9 +399,14 @@ export default function PhrasesPage() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2 flex-wrap pr-2">
                               <h3 className="text-base font-semibold">{lst.title}</h3>
-                              {listDifficultyLabels[lst.difficulty] && (
-                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${DIFFICULTY_BADGE[lst.difficulty]}`}>
-                                  {listDifficultyLabels[lst.difficulty]}
+                              {lst.star_min != null && lst.star_max != null && (
+                                <span
+                                  className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-600 border-amber-200 whitespace-nowrap"
+                                  data-testid="list-star-badge"
+                                >
+                                  {lst.star_min === lst.star_max
+                                    ? '★'.repeat(lst.star_max)
+                                    : `${'★'.repeat(lst.star_min)}–${'★'.repeat(lst.star_max)}`}
                                 </span>
                               )}
                               {isDone && (

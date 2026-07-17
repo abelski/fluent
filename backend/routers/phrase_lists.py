@@ -9,7 +9,7 @@ import random
 from datetime import date, datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
 from sqlmodel import Session, col, func, select
 
@@ -28,6 +28,7 @@ from routers.phrases import (
     DEFAULT_PHRASES_PER_SESSION,
     _apply_sm2_phrase,
     _pick_blank_word,
+    _word_tiles,
 )
 
 router = APIRouter()
@@ -112,9 +113,11 @@ class PhraseListUpdate(BaseModel):
 
 def _list_summary(lst: CustomPhraseList, session: Session, user: User) -> dict:
     """Serialize a list with phrase count and progress stage distribution."""
-    phrase_ids = session.exec(
-        select(CustomPhrase.id).where(CustomPhrase.list_id == lst.id)
+    phrase_rows = session.exec(
+        select(CustomPhrase.id, CustomPhrase.star).where(CustomPhrase.list_id == lst.id)
     ).all()
+    phrase_ids = [r[0] for r in phrase_rows]
+    stars = [r[1] for r in phrase_rows]
     stage_dist = {"stage0": 0, "stage1": 0, "stage2": 0}
     if phrase_ids:
         rows = session.exec(
@@ -134,6 +137,8 @@ def _list_summary(lst: CustomPhraseList, session: Session, user: User) -> dict:
         "phrase_count": len(phrase_ids),
         "created_at": lst.created_at.isoformat(),
         "stage_distribution": stage_dist,
+        "star_min": min(stars) if stars else None,
+        "star_max": max(stars) if stars else None,
     }
 
 
@@ -211,6 +216,7 @@ def get_my_phrase_list(
                 "translation": p.translation,
                 "translation_en": p.translation_en,
                 "position": p.position,
+                "star": p.star,
                 "lesson_stage": progress_map.get(p.id, 0),
             }
             for p in phrases
@@ -272,6 +278,16 @@ def delete_my_phrase_list(
 
 # ── Phrase CRUD ──────────────────────────────────────────────────────────────
 
+def _phrase_star(text: str) -> int:
+    """Auto complexity from word count: <=3 words = 1, 4-6 = 2, 7+ = 3."""
+    n = len(text.split())
+    if n <= 3:
+        return 1
+    if n <= 6:
+        return 2
+    return 3
+
+
 class PhraseCreate(BaseModel):
     text: str
     translation: str
@@ -282,6 +298,7 @@ class PhraseUpdate(BaseModel):
     text: str
     translation: str
     translation_en: Optional[str] = None
+    star: Optional[int] = None  # manual complexity override (1-3)
 
 
 class BulkPhrasesCreate(BaseModel):
@@ -319,6 +336,7 @@ def add_my_phrase(
         translation=tr_ru,
         translation_en=tr_en,
         position=_next_position(list_id, session),
+        star=_phrase_star(text),
     )
     session.add(phrase)
     session.commit()
@@ -345,6 +363,7 @@ def bulk_add_my_phrases(
         tr_ru, tr_en = _translation_fields(translation, user)
         session.add(CustomPhrase(
             list_id=list_id, text=text, translation=tr_ru, translation_en=tr_en, position=pos,
+            star=_phrase_star(text),
         ))
         pos += 1
     session.commit()
@@ -372,6 +391,10 @@ def update_my_phrase(
     phrase.text = text
     phrase.translation = tr_ru
     phrase.translation_en = tr_en
+    if body.star is not None:
+        if body.star not in (1, 2, 3):
+            raise HTTPException(status_code=422, detail="star must be 1, 2, or 3")
+        phrase.star = body.star
     session.add(phrase)
     session.commit()
     return {"ok": True}
@@ -403,6 +426,7 @@ def delete_my_phrase(
 @router.get("/me/phrase-lists/{list_id}/study")
 def get_my_phrase_list_study(
     list_id: int,
+    star_level: int = Query(default=1, ge=1, le=3),
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
@@ -410,7 +434,12 @@ def get_my_phrase_list_study(
 
     Mirrors get_phrase_study_session: due-for-review phrases first, then new
     ones, limited to the user's phrases_per_session, each carrying lesson_stage,
-    blank_word, and MCQ distractors so PhraseSession can render it unchanged."""
+    blank_word, and MCQ distractors so PhraseSession can render it unchanged.
+
+    star_level filters which phrases are included (same as word lists):
+    1 = only star=1 phrases, 2 = star<=2, 3 = all. When every phrase at the
+    level is mastered, returns {"phrases": [], "all_known": true} so the
+    frontend can offer advancing to the next level."""
     user = _require_user(authorization, session)
     _require_list_creator(user)  # studying/reviewing personal lists needs active Premium
     _get_owned_list(list_id, user, session)
@@ -435,9 +464,11 @@ def get_my_phrase_list_study(
     today = date.today()
     total = user.phrases_per_session if user.phrases_per_session else DEFAULT_PHRASES_PER_SESSION
 
+    level_phrases = [p for p in all_phrases if p.star <= star_level]
+
     due_phrases = []
     new_phrases = []
-    for phrase in all_phrases:
+    for phrase in level_phrases:
         prog = progress_map.get(phrase.id)
         if prog is None:
             new_phrases.append(phrase)
@@ -454,7 +485,9 @@ def get_my_phrase_list_study(
     session_phrases = due_phrases[:actual_review] + new_phrases[:actual_new]
 
     if not session_phrases:
-        raise HTTPException(status_code=404, detail="No phrases due for review")
+        # Everything at this star level is mastered (or the level has no
+        # phrases) — let the frontend show the level-complete screen.
+        return {"phrases": [], "all_known": True}
 
     other_phrase_words: list[str] = []
     session_phrase_ids = {p.id for p in session_phrases}
@@ -481,6 +514,7 @@ def get_my_phrase_list_study(
             "lesson_stage": lesson_stage,
             "blank_word": blank_word,
             "mcq_distractors": mcq_distractors,
+            "word_tiles": _word_tiles(phrase.text),
             "next_review": prog.next_review.isoformat() if prog and prog.next_review else None,
         })
 

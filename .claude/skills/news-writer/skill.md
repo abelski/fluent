@@ -33,6 +33,11 @@ Write bilingual content (RU + EN). Guidelines:
 - Length: 2–4 sentences per language
 - Body: plain text only, no markdown, no bullet points
 - Highlight the user benefit clearly
+- Sound human, not AI-generated. Avoid the usual tells:
+  - No em-dashes or " — " dashes in the body; use plain periods and commas.
+  - Skip marketing cadence and clichés ("just like", "whether you're...", "seamless", "effortless", "take your learning to the next level", "we're excited to").
+  - Avoid rule-of-three lists and overly parallel, polished sentences.
+  - Keep it plain and concrete: say what changed and what the user can now do. Short, direct sentences read as human.
 
 Show the draft to the user in chat:
 

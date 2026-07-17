@@ -79,6 +79,25 @@ def _pick_blank_word(phrase_text: str, mistake_words_json: str) -> str:
     return random.choice(words)
 
 
+def _word_tiles(phrase_text: str) -> Optional[list[str]]:
+    """Shuffled word tiles for the stage-2 'assemble the phrase' sub-step.
+
+    Returns None for phrases of 3 words or fewer — those go straight to typed
+    recall. Punctuation stays attached to its word so joining the tiles with
+    spaces reproduces the phrase exactly."""
+    words = phrase_text.split()
+    if len(words) <= 3:
+        return None
+    tiles = words.copy()
+    # Reshuffle if the order matches the original (bounded for degenerate
+    # phrases where every word is identical)
+    for _ in range(10):
+        random.shuffle(tiles)
+        if tiles != words:
+            break
+    return tiles
+
+
 # ── Program endpoints ────────────────────────────────────────────────────────
 
 @router.get("/phrase-programs")
@@ -685,6 +704,7 @@ def get_phrase_study_session(
             "lesson_stage": lesson_stage,
             "blank_word": blank_word,
             "mcq_distractors": mcq_distractors,
+            "word_tiles": _word_tiles(phrase.text),
             "next_review": prog.next_review.isoformat() if prog and prog.next_review else None,
         })
 
@@ -791,6 +811,7 @@ def get_phrase_review_session(
             "lesson_stage": lesson_stage,
             "blank_word": blank_word,
             "mcq_distractors": mcq_distractors,
+            "word_tiles": _word_tiles(phrase.text),
             "next_review": prog.next_review.isoformat() if prog and prog.next_review else None,
         })
 

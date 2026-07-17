@@ -505,11 +505,13 @@ export interface PhraseStudyItem {
   lesson_stage: number;      // 0=intro, 1=fill-word, 2=type-full
   blank_word: string;
   mcq_distractors: string[];
+  word_tiles: string[] | null;  // shuffled words for stage-2 assembly; null for ≤3-word phrases
   next_review: string | null;
 }
 
 export interface PhraseStudySession {
   phrases: PhraseStudyItem[];
+  all_known?: boolean;  // true when every phrase at the requested star level is mastered
 }
 
 export async function getPhrasePrograms(): Promise<PhraseProgramSummary[]> {
@@ -589,6 +591,8 @@ export interface PhraseListSummary {
   phrase_count: number;
   created_at: string;
   stage_distribution: { stage0: number; stage1: number; stage2: number };
+  star_min: number | null;
+  star_max: number | null;
 }
 
 export interface CustomPhraseItem {
@@ -597,6 +601,7 @@ export interface CustomPhraseItem {
   translation: string;
   translation_en: string | null;
   position: number;
+  star: number;  // complexity 1-3, filters study sessions by level
   lesson_stage: number;
 }
 
@@ -657,7 +662,7 @@ export function bulkAddMyPhrases(listId: number, text: string): Promise<{ added:
 
 export function updateMyPhrase(
   phraseId: number,
-  data: { text: string; translation: string; translation_en?: string },
+  data: { text: string; translation: string; translation_en?: string; star?: number },
 ): Promise<{ ok: boolean }> {
   return _authJson<{ ok: boolean }>(`/api/me/phrase-lists/phrases/${phraseId}`, { method: 'PUT', body: JSON.stringify(data) });
 }
@@ -666,8 +671,8 @@ export function deleteMyPhrase(phraseId: number): Promise<{ ok: boolean }> {
   return _authJson<{ ok: boolean }>(`/api/me/phrase-lists/phrases/${phraseId}`, { method: 'DELETE' });
 }
 
-export function getMyPhraseListStudy(listId: number): Promise<PhraseStudySession> {
-  return _authJson<PhraseStudySession>(`/api/me/phrase-lists/${listId}/study`);
+export function getMyPhraseListStudy(listId: number, starLevel = 1): Promise<PhraseStudySession> {
+  return _authJson<PhraseStudySession>(`/api/me/phrase-lists/${listId}/study?star_level=${starLevel}`);
 }
 
 export function recordMyPhraseProgress(
@@ -687,6 +692,91 @@ export function resolvePhraseListId(_id: string): string {
       window.location.pathname
         .split('/')
         .find((s, i, a) => a[i - 1] === 'lists' && /^\d+$/.test(s)) ?? _id
+    );
+  }
+  return _id;
+}
+
+// ── Personal word lists ("Мои списки" for words) ─────────────────────────────
+
+export interface WordListMineSummary {
+  id: number;
+  title: string;
+  difficulty: number;
+  word_count: number;
+  created_at: string;
+  known: number;
+  learning: number;
+  new: number;
+}
+
+export interface CustomWordItem {
+  id: number;
+  lithuanian: string;
+  translation: string;
+  position: number;
+  status: string; // new | learning | known
+}
+
+export interface WordListMineDetail {
+  id: number;
+  title: string;
+  difficulty: number;
+  words: CustomWordItem[];
+}
+
+export function getMyWordLists(): Promise<WordListMineSummary[]> {
+  return _authJson<WordListMineSummary[]>('/api/me/word-lists');
+}
+
+export function getMyWordList(listId: number): Promise<WordListMineDetail> {
+  return _authJson<WordListMineDetail>(`/api/me/word-lists/${listId}`);
+}
+
+export function createMyWordList(data: { title: string; difficulty: number }): Promise<{ id: number }> {
+  return _authJson<{ id: number }>('/api/me/word-lists', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function updateMyWordList(listId: number, data: { title: string; difficulty: number }): Promise<{ ok: boolean }> {
+  return _authJson<{ ok: boolean }>(`/api/me/word-lists/${listId}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deleteMyWordList(listId: number): Promise<{ ok: boolean }> {
+  return _authJson<{ ok: boolean }>(`/api/me/word-lists/${listId}`, { method: 'DELETE' });
+}
+
+export function addMyWord(
+  listId: number,
+  data: { lithuanian: string; translation: string },
+): Promise<{ id: number }> {
+  return _authJson<{ id: number }>(`/api/me/word-lists/${listId}/words`, { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function bulkAddMyWords(listId: number, text: string): Promise<{ added: number }> {
+  return _authJson<{ added: number }>(`/api/me/word-lists/${listId}/words/bulk`, { method: 'POST', body: JSON.stringify({ text }) });
+}
+
+export function updateMyWord(
+  wordId: number,
+  data: { lithuanian: string; translation: string },
+): Promise<{ ok: boolean }> {
+  return _authJson<{ ok: boolean }>(`/api/me/word-lists/words/${wordId}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deleteMyWord(wordId: number): Promise<{ ok: boolean }> {
+  return _authJson<{ ok: boolean }>(`/api/me/word-lists/words/${wordId}`, { method: 'DELETE' });
+}
+
+/**
+ * Resolve the real numeric personal word-list ID from the current browser URL.
+ * Handles Next.js static export '_' placeholder (segment after 'my').
+ */
+export function resolveMyListId(_id: string): string {
+  if (typeof window !== 'undefined' && !/^\d+$/.test(_id)) {
+    return (
+      window.location.pathname
+        .split('/')
+        .find((s, i, a) => a[i - 1] === 'my' && /^\d+$/.test(s)) ?? _id
     );
   }
   return _id;

@@ -228,6 +228,95 @@ def test_study_and_record_progress(client):
         assert prog.lesson_stage == 1
 
 
+def test_study_word_tiles_for_long_phrases(client):
+    # Issue #145: >3-word phrases get shuffled word_tiles for the stage-2
+    # assembly step; short phrases get None and go straight to typed recall.
+    email = "prem_tiles@example.com"
+    _make_premium(client, email)
+    token = make_token(email)
+    lid = _create_list(client, token)
+    client.post(f"/api/me/phrase-lists/{lid}/phrases/bulk",
+                json={"text": "Aš noriu juodos kavos dabar = Я хочу чёрный кофе сейчас\nLabas rytas = Доброе утро"},
+                headers=auth(token))
+
+    phrases = client.get(f"/api/me/phrase-lists/{lid}/study?star_level=3", headers=auth(token)).json()["phrases"]
+    by_text = {p["text"]: p for p in phrases}
+
+    long_tiles = by_text["Aš noriu juodos kavos dabar"]["word_tiles"]
+    assert sorted(long_tiles) == sorted("Aš noriu juodos kavos dabar".split())
+    assert long_tiles != "Aš noriu juodos kavos dabar".split()
+
+    assert by_text["Labas rytas"]["word_tiles"] is None
+
+
+def test_phrase_star_auto_assign_and_override(client):
+    # Stars are auto-assigned from word count (<=3 -> 1, 4-6 -> 2, 7+ -> 3)
+    # and can be manually overridden via PUT.
+    email = "prem_star@example.com"
+    _make_premium(client, email)
+    token = make_token(email)
+    lid = _create_list(client, token)
+    client.post(f"/api/me/phrase-lists/{lid}/phrases/bulk",
+                json={"text": "Labas = Привет\n"
+                              "Aš noriu juodos kavos = Я хочу чёрный кофе\n"
+                              "Aš keliuosi, valausi dantis, pusryčiauju, geriu kavą kasdien = Я встаю каждый день"},
+                headers=auth(token))
+
+    detail = client.get(f"/api/me/phrase-lists/{lid}", headers=auth(token)).json()
+    stars = {p["text"].split()[0] + str(len(p["text"].split())): p["star"] for p in detail["phrases"]}
+    by_star = sorted(p["star"] for p in detail["phrases"])
+    assert by_star == [1, 2, 3], f"unexpected stars: {stars}"
+
+    # Manual override: bump the 1-word phrase to 3 stars
+    short = next(p for p in detail["phrases"] if p["star"] == 1)
+    r = client.put(f"/api/me/phrase-lists/phrases/{short['id']}",
+                   json={"text": short["text"], "translation": short["translation"], "star": 3},
+                   headers=auth(token))
+    assert r.status_code == 200
+    detail = client.get(f"/api/me/phrase-lists/{lid}", headers=auth(token)).json()
+    assert next(p for p in detail["phrases"] if p["id"] == short["id"])["star"] == 3
+
+    # Invalid star rejected
+    r = client.put(f"/api/me/phrase-lists/phrases/{short['id']}",
+                   json={"text": short["text"], "translation": short["translation"], "star": 5},
+                   headers=auth(token))
+    assert r.status_code == 422
+
+
+def test_study_star_level_filter_and_all_known(client):
+    email = "prem_star_study@example.com"
+    _make_premium(client, email)
+    token = make_token(email)
+    lid = _create_list(client, token)
+    client.post(f"/api/me/phrase-lists/{lid}/phrases/bulk",
+                json={"text": "Labas rytas = Доброе утро\n"
+                              "Aš noriu juodos kavos = Я хочу чёрный кофе"},
+                headers=auth(token))
+
+    # Level 1: only the 2-word phrase
+    study = client.get(f"/api/me/phrase-lists/{lid}/study?star_level=1", headers=auth(token)).json()
+    assert [p["text"] for p in study["phrases"]] == ["Labas rytas"]
+
+    # Level 2: both phrases
+    study = client.get(f"/api/me/phrase-lists/{lid}/study?star_level=2", headers=auth(token)).json()
+    assert len(study["phrases"]) == 2
+
+    # Master the level-1 phrase (stage 0 -> 1 -> 2 with quality 5)
+    pid = next(p["id"] for p in study["phrases"] if p["text"] == "Labas rytas")
+    for stage in (0, 1, 2):
+        client.post(f"/api/me/phrase-lists/phrases/{pid}/progress",
+                    json={"quality": 5, "stage_completed": stage}, headers=auth(token))
+
+    # Level 1 is now fully mastered -> all_known, offer advancing
+    study = client.get(f"/api/me/phrase-lists/{lid}/study?star_level=1", headers=auth(token)).json()
+    assert study["phrases"] == []
+    assert study.get("all_known") is True
+
+    # Level 2 still has the unlearned longer phrase
+    study = client.get(f"/api/me/phrase-lists/{lid}/study?star_level=2", headers=auth(token)).json()
+    assert [p["text"] for p in study["phrases"]] == ["Aš noriu juodos kavos"]
+
+
 # ── Cascade deletes ───────────────────────────────────────────────────────────
 
 def test_delete_list_cascades_phrases_and_progress(client):

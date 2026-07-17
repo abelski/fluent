@@ -12,6 +12,7 @@ import {
 } from '../../../../../../lib/api';
 import PhraseSession from '../../../../components/PhraseSession';
 import { useT } from '../../../../../../lib/useT';
+import { getPhraseStarLevel, setPhraseStarLevel } from '../../../../../../lib/starLevel';
 
 function MyPhraseListStudyContent() {
   const { id: _id } = useParams<{ id: string }>();
@@ -23,14 +24,17 @@ function MyPhraseListStudyContent() {
   const [phrases, setPhrases] = useState<PhraseStudyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [allKnown, setAllKnown] = useState(false);
 
   const loadPhrases = useCallback(() => {
     setLoading(true);
     setError(null);
-    getMyPhraseListStudy(Number(id))
+    setAllKnown(false);
+    getMyPhraseListStudy(Number(id), getPhraseStarLevel())
       .then((data) => {
         if (data.phrases.length === 0) {
-          setError(t.noPhrasesToReview);
+          if (data.all_known) setAllKnown(true);
+          else setError(t.noPhrasesToReview);
         } else {
           setPhrases(data.phrases);
         }
@@ -58,6 +62,40 @@ function MyPhraseListStudyContent() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  if (allKnown) {
+    const currentLevel = getPhraseStarLevel();
+    const nextLevel = currentLevel < 3 ? currentLevel + 1 : null;
+    return (
+      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6" data-testid="phrase-level-complete">
+        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
+          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
+        </div>
+        <div className="relative z-10 text-center max-w-sm w-full">
+          <div className="text-5xl mb-6">🏆</div>
+          <h1 className="text-2xl font-bold mb-2">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
+          <p className="text-gray-400 mb-8">{tr.study.levelCompleteBody}</p>
+          <div className="flex flex-col gap-3">
+            {nextLevel && (
+              <button
+                onClick={() => { setPhraseStarLevel(nextLevel); loadPhrases(); }}
+                data-testid="advance-level-btn"
+                className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
+              >
+                {tr.study.advanceToLevel.replace('{stars}', '★'.repeat(nextLevel))}
+              </button>
+            )}
+            <Link
+              href="/dashboard/phrases"
+              className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
+            >
+              {t.backToLists}
+            </Link>
+          </div>
+        </div>
+      </main>
     );
   }
 

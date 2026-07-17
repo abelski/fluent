@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   BACKEND_URL,
   getToken,
@@ -9,8 +10,12 @@ import {
   getCustomProgramEnrollments,
   unenrollCustomProgram,
   getWelcome,
+  getMyWordLists,
+  createMyWordList,
+  deleteMyWordList,
   type CustomProgramEnrollment,
   type WelcomeContent,
+  type WordListMineSummary,
 } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 import QuotaBanner from '../components/QuotaBanner';
@@ -56,11 +61,20 @@ interface Quota {
   premium_until: string | null;
   sessions_today: number;
   daily_limit: number | null;
+  is_admin?: boolean;
 }
 
 export default function ListsPage() {
   const { tr, plural, lang } = useT();
+  const router = useRouter();
+  const mt = tr.myWordLists;
   const [starLevel, setStarLevelState] = useState<number>(1);
+  const [myWordLists, setMyWordLists] = useState<WordListMineSummary[]>([]);
+  const [openMyLists, setOpenMyLists] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newListTitle, setNewListTitle] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [confirmDeleteWordList, setConfirmDeleteWordList] = useState<number | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [enrolledKeys, setEnrolledKeys] = useState<Set<string>>(new Set());
@@ -105,6 +119,8 @@ export default function ListsPage() {
       .catch((err) => console.error('Failed to fetch subcategory meta:', err));
 
     getCustomProgramEnrollments().then(setCustomEnrollments).catch(() => {});
+
+    getMyWordLists().then(setMyWordLists).catch(console.error);
 
     Promise.all([
       fetch(`${BACKEND_URL}/api/lists`, { headers: { Authorization: `Bearer ${token}` } })
@@ -159,6 +175,30 @@ export default function ListsPage() {
     }
   }
 
+  async function handleCreateWordList() {
+    const title = newListTitle.trim();
+    if (!title) return;
+    setCreating(true);
+    try {
+      const { id } = await createMyWordList({ title, difficulty: 1 });
+      router.push(`/dashboard/lists/my/${id}/edit`);
+    } catch (e) {
+      console.error(e);
+      setCreating(false);
+    }
+  }
+
+  async function handleDeleteWordList(listId: number) {
+    try {
+      await deleteMyWordList(listId);
+      setMyWordLists((prev) => prev.filter((l) => l.id !== listId));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setConfirmDeleteWordList(null);
+    }
+  }
+
   // Close confirm modal on Escape
   const handleEscape = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') setConfirmKey(null);
@@ -199,6 +239,7 @@ export default function ListsPage() {
   }, [customEnrollments]);
 
   const limitReached = quota !== null && quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
+  const eligible = !!quota && (quota.premium_active || quota.is_admin === true);
 
   return (
     <>
@@ -257,6 +298,154 @@ export default function ListsPage() {
           </div>
         </div>
         <p className="text-gray-400 mb-8">{tr.lists.subtitle}</p>
+
+        {/* Мои списки — personal word lists (Premium/admin) */}
+        {isLoggedIn && (
+          <section className="mb-8" data-testid="my-word-lists-section">
+            <div className="bg-white border border-emerald-200 rounded-2xl overflow-hidden shadow-sm">
+              <div className="w-full flex items-center justify-between px-5 py-4">
+                <button
+                  onClick={() => setOpenMyLists((o) => !o)}
+                  aria-expanded={openMyLists}
+                  className="flex items-center gap-3 flex-wrap text-left cursor-pointer"
+                >
+                  <span className="font-semibold text-gray-900">{mt.myLists}</span>
+                  {myWordLists.length > 0 && (
+                    <span className="text-gray-400 text-sm">
+                      {myWordLists.reduce((s, l) => s + l.word_count, 0)} {plural(myWordLists.reduce((s, l) => s + l.word_count, 0), mt.wordsPlural)}
+                    </span>
+                  )}
+                </button>
+                <div className="flex items-center gap-3 shrink-0">
+                  {eligible && (
+                    <button
+                      onClick={() => { setNewListTitle(''); setShowCreate(true); }}
+                      data-testid="create-word-list-button"
+                      className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-full transition-colors"
+                    >
+                      {mt.createList}
+                    </button>
+                  )}
+                  <button onClick={() => setOpenMyLists((o) => !o)} aria-label="toggle" className="p-1 cursor-pointer">
+                    <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor" className={`text-gray-400 transition-transform duration-200 ${openMyLists ? 'rotate-180' : ''}`}>
+                      <path d="M6 8L1 3h10L6 8z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {openMyLists && (
+                <div className="px-5 py-4 border-t border-gray-100">
+                  {myWordLists.length === 0 ? (
+                    !eligible ? (
+                      <div className="relative rounded-2xl bg-gradient-to-br from-amber-50 to-white border border-amber-100 overflow-hidden p-5">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center text-xl">⭐️</div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{mt.upsellTitle}</p>
+                            <p className="text-sm text-gray-500 mt-1">{mt.upsellBody}</p>
+                            <Link href="/pricing" className="inline-block mt-3 text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-full transition-colors">
+                              {mt.upsellCta}
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center">
+                        <p className="text-sm text-gray-500 mb-3">{mt.noLists}</p>
+                        <button
+                          onClick={() => { setNewListTitle(''); setShowCreate(true); }}
+                          className="text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+                        >
+                          {mt.createFirst}
+                        </button>
+                      </div>
+                    )
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {myWordLists.map((lst) => {
+                        const total = lst.word_count;
+                        const knownPct = total > 0 ? (lst.known / total) * 100 : 0;
+                        const learningPct = total > 0 ? (lst.learning / total) * 100 : 0;
+                        const isDone = total > 0 && lst.known >= total;
+                        return (
+                          <div
+                            key={lst.id}
+                            className={`relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4 ${eligible ? '' : 'opacity-70'}`}
+                            data-testid="my-word-list-card"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-2 flex-wrap pr-2">
+                                <h3 className="text-base font-semibold">{lst.title}</h3>
+                                {isDone && (
+                                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white tracking-wide">✓ Done</span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => setConfirmDeleteWordList(lst.id)}
+                                title={mt.deleteList}
+                                className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded shrink-0"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {total > 0 && (
+                              <div className="flex flex-col gap-1.5">
+                                <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden flex">
+                                  <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${knownPct}%` }} />
+                                  <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${learningPct}%` }} />
+                                </div>
+                                <p className="text-gray-400 text-xs">
+                                  {lst.known} / {total} {mt.learnedWord}
+                                  {lst.learning > 0 && <span className="text-amber-500 ml-1">· {lst.learning} {mt.learningWord}</span>}
+                                </p>
+                              </div>
+                            )}
+
+                            <div className="flex items-center justify-between mt-auto">
+                              <span className="text-gray-400 text-sm">{lst.word_count} {plural(lst.word_count, mt.wordsPlural)}</span>
+                              <div className="flex gap-2">
+                                {eligible ? (
+                                  <>
+                                    <Link
+                                      href={`/dashboard/lists/my/${lst.id}/edit`}
+                                      className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
+                                    >
+                                      {mt.edit}
+                                    </Link>
+                                    {lst.word_count > 0 && (
+                                      <Link
+                                        href={`/dashboard/lists/${lst.id}/study`}
+                                        className="px-4 py-2.5 text-sm rounded-full font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20 transition-colors"
+                                      >
+                                        {mt.study}
+                                      </Link>
+                                    )}
+                                  </>
+                                ) : (
+                                  <Link
+                                    href="/pricing"
+                                    data-testid="premium-locked"
+                                    className="px-4 py-2.5 text-sm rounded-full font-semibold bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-colors"
+                                  >
+                                    {mt.premiumOnly}
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-20">
@@ -651,6 +840,50 @@ export default function ListsPage() {
           </div>
         );
       })()}
+
+      {/* Create personal word list dialog */}
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => !creating && setShowCreate(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-gray-900 mb-3">{mt.newList}</h3>
+            <input
+              autoFocus
+              value={newListTitle}
+              onChange={(e) => setNewListTitle(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCreateWordList(); }}
+              placeholder={mt.listName}
+              data-testid="new-word-list-title"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowCreate(false)} disabled={creating} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
+                {mt.cancel}
+              </button>
+              <button onClick={handleCreateWordList} disabled={creating || !newListTitle.trim()} data-testid="confirm-create-word-list" className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors disabled:opacity-40">
+                {creating ? mt.creating : mt.create}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete personal word list confirm dialog */}
+      {confirmDeleteWordList !== null && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => setConfirmDeleteWordList(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-gray-900 mb-2">{mt.deleteListTitle}</h3>
+            <p className="text-sm text-gray-500 mb-5">{mt.deleteListBody}</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setConfirmDeleteWordList(null)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
+                {mt.cancel}
+              </button>
+              <button onClick={() => handleDeleteWordList(confirmDeleteWordList)} className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors">
+                {mt.delete}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
     </>
   );

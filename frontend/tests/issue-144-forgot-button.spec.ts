@@ -30,7 +30,7 @@ const PHRASE = {
 
 function mockRoutes(page: import('@playwright/test').Page, lessonStage: number) {
   return Promise.all([
-    page.route('**/api/me/phrase-lists/2/study', async (route) => {
+    page.route('**/api/me/phrase-lists/2/study*', async (route) => {
       await route.fulfill({ json: { phrases: [{ ...PHRASE, lesson_stage: lessonStage }] } });
     }),
     page.route('**/api/me/phrase-lists/phrases/1/progress', async (route) => {
