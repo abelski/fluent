@@ -36,7 +36,11 @@ test.describe('User settings page', () => {
     await page.goto('/dashboard/settings');
     await page.waitForSelector('[data-testid="settings-tabs"]');
 
-    for (const tab of ['grammar', 'practice', 'other']) {
+    // Empty tabs (grammar, practice) are hidden since issue #126
+    for (const tab of ['grammar', 'practice']) {
+      await expect(page.locator(`[data-testid="tab-${tab}"]`)).toHaveCount(0);
+    }
+    for (const tab of ['phrases', 'other']) {
       await page.locator(`[data-testid="tab-${tab}"]`).click();
       await expect(page.locator('[data-testid="session-size-slider"]')).not.toBeVisible();
     }

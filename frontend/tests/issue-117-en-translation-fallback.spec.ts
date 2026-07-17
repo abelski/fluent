@@ -8,7 +8,7 @@ test('issue-117: programs page falls back to RU translation when EN is missing',
   await page.waitForTimeout(300);
 
   // Expand Essential Verbs stack
-  await page.locator('button').filter({ hasText: /40 words|40 слов/ }).first().click();
+  await page.locator('button').filter({ hasText: /\d+ words|\d+ слов/ }).first().click();
   await page.waitForSelector('td');
 
   // All translation cells should be non-empty (fallback to RU)

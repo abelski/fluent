@@ -357,6 +357,7 @@ export default function PhraseSession({
         e.preventDefault();
         blockUntilRef.current = Date.now() + 200;
         if (typeResult === 'correct') { advanceQueue(5); return; }
+        if (!typeInput.trim()) { advanceQueue(1); return; }
         const { word: mw } = findMistakeWordSyllable(typeInput, current.phrase.text);
         pendingAdvanceRef.current = () => advanceQueue(1);
         setSyllableChallenge({ syllable: mw, word: mw });
@@ -837,6 +838,14 @@ export default function PhraseSession({
       }
     };
 
+    const handleForgotWord = () => {
+      setTypeResult('wrong');
+      if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
+        mistakePhraseIdsRef.current.add(current.phrase.id);
+        setMistakeCount((c) => c + 1);
+      }
+    };
+
     return (
       <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage1-type">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
@@ -859,22 +868,32 @@ export default function PhraseSession({
           </div>
 
           {!typeResult && (
-            <div className="flex gap-2">
-              <input
-                ref={inputRef}
-                value={typeInput}
-                onChange={(e) => setTypeInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleWordSubmit(); }}
-                placeholder={tr.phraseSession.wordPlaceholder}
-                className="flex-1 px-4 py-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-emerald-400"
-              />
+            <>
+              <div className="flex gap-2">
+                <input
+                  ref={inputRef}
+                  value={typeInput}
+                  onChange={(e) => setTypeInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleWordSubmit(); }}
+                  placeholder={tr.phraseSession.wordPlaceholder}
+                  className="flex-1 px-4 py-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-emerald-400"
+                />
+                <button
+                  onClick={handleWordSubmit}
+                  className="px-5 py-4 rounded-xl bg-emerald-600 text-white text-base font-medium hover:bg-emerald-700 transition-colors"
+                >
+                  →
+                </button>
+              </div>
               <button
-                onClick={handleWordSubmit}
-                className="px-5 py-4 rounded-xl bg-emerald-600 text-white text-base font-medium hover:bg-emerald-700 transition-colors"
+                onClick={handleForgotWord}
+                disabled={saving}
+                data-testid="forgot-btn"
+                className="mt-2 w-full py-2 rounded-xl text-sm text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
               >
-                →
+                {tr.phraseSession.forgotBtn}
               </button>
-            </div>
+            </>
           )}
 
           {typeResult === 'correct' && (
@@ -892,7 +911,7 @@ export default function PhraseSession({
 
           {typeResult === 'wrong' && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-              <p className="text-sm text-red-600 mb-1">{tr.phraseSession.notQuite}</p>
+              <p className="text-sm text-red-600 mb-1">{typeInput.trim() ? tr.phraseSession.notQuite : tr.phraseSession.forgotAnswer}</p>
               <p className="font-semibold text-red-700 mb-3">{phrase.blank_word}</p>
               <button
                 onClick={() => {
@@ -920,6 +939,14 @@ export default function PhraseSession({
     const correct = checkPhrase(typeInput.trim(), phrase.text, complexity, phrase.alt_texts);
     setTypeResult(correct ? 'correct' : 'wrong');
     if (!correct && current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
+      mistakePhraseIdsRef.current.add(current.phrase.id);
+      setMistakeCount((c) => c + 1);
+    }
+  };
+
+  const handleForgotPhrase = () => {
+    setTypeResult('wrong');
+    if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
       mistakePhraseIdsRef.current.add(current.phrase.id);
       setMistakeCount((c) => c + 1);
     }
@@ -967,6 +994,14 @@ export default function PhraseSession({
                 {tr.phraseSession.checkPhraseBtn}
               </button>
             </div>
+            <button
+              onClick={handleForgotPhrase}
+              disabled={saving}
+              data-testid="forgot-btn"
+              className="mt-2 w-full py-2 rounded-xl text-sm text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              {tr.phraseSession.forgotBtn}
+            </button>
           </>
         )}
 
@@ -987,16 +1022,25 @@ export default function PhraseSession({
         {typeResult === 'wrong' && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
             <div className="mb-3">
-              <CharDiff
-                typed={typeInput}
-                target={phrase.text}
-                labelTyped={tr.common.youTyped}
-                labelCorrect={tr.common.correctAnswer}
-              />
+              {typeInput.trim() ? (
+                <CharDiff
+                  typed={typeInput}
+                  target={phrase.text}
+                  labelTyped={tr.common.youTyped}
+                  labelCorrect={tr.common.correctAnswer}
+                />
+              ) : (
+                <>
+                  <p className="text-sm text-red-600 mb-1">{tr.phraseSession.forgotAnswer}</p>
+                  <p className="font-semibold text-red-700">{phrase.text}</p>
+                </>
+              )}
             </div>
             <button
               onClick={() => {
                 blockUntilRef.current = Date.now() + 800;
+                // Forgot (no attempt typed): no specific mistake word to drill — just re-queue
+                if (!typeInput.trim()) { advanceQueue(1); return; }
                 const { word: mw } = findMistakeWordSyllable(typeInput, phrase.text);
                 pendingAdvanceRef.current = () => advanceQueue(1);
                 setSyllableChallenge({ syllable: mw, word: mw });

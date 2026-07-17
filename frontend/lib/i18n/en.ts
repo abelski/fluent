@@ -583,6 +583,8 @@ const en: Translations = {
     nextBtn: 'Next →',
     notQuite: 'Not quite. Correct answer:',
     hardFeedback: "OK, we'll show this phrase again soon",
+    forgotBtn: 'I forgot',
+    forgotAnswer: 'The correct answer:',
   },
   articles: {
     title: 'Articles',

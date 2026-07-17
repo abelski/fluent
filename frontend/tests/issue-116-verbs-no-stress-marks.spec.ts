@@ -5,7 +5,7 @@ test('issue-116: verbs_365 page shows clean Lithuanian without raw stress marks'
   await page.waitForLoadState('networkidle');
 
   // Expand the first stack (Essential Verbs / Основные глаголы)
-  await page.locator('button').filter({ hasText: /40 words|40 слов/ }).first().click();
+  await page.locator('button').filter({ hasText: /\d+ words|\d+ слов/ }).first().click();
 
   // Wait for words to load
   await page.waitForSelector('td');

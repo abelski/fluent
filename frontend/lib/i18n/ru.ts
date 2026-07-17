@@ -583,6 +583,8 @@ const ru: Translations = {
     nextBtn: 'Дальше →',
     notQuite: 'Не совсем. Правильный ответ:',
     hardFeedback: 'Хорошо, покажем эту фразу ещё раз',
+    forgotBtn: 'Забыл',
+    forgotAnswer: 'Правильный ответ:',
   },
   articles: {
     title: 'Статьи',
