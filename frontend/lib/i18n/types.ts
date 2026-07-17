@@ -63,6 +63,7 @@ export interface Translations {
     premiumPrice: string;
     contactUs: string;
     contactNote: string;
+    freeNote: string;
     betaBanner: string;
     whyTitle: string;
     whyBody: string;

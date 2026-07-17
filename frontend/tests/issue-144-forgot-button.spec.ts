@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
 // and stage 2's "Show answer" silently let the user copy the answer for a
 // quality-5 score. A small "Забыл" button now reveals the answer through the
 // existing wrong-answer path (mistake counted, phrase re-queued).
-// See temp_files/triage/issue-144-forgot-button-phrase-study.md
+// See plans/triage/issue-144-forgot-button-phrase-study.md
 
 function makeFakeJwt(name: string): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));

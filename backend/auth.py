@@ -67,6 +67,8 @@ def require_user(authorization: str | None, session: Session) -> User:
         session.add(user)
         session.commit()
         session.refresh(user)
+        from onboarding import enroll_default_programs
+        enroll_default_programs(user, session)
     return user
 
 # OAuth credentials and redirect URI come from environment variables so they
@@ -168,6 +170,7 @@ async def google_callback(code: str, request: Request, session: Session = Depend
     # Update name/picture in case the user changed their Google profile.
     user = session.exec(select(User).where(User.email == email)).first()
     now = datetime.now(timezone.utc).replace(tzinfo=None)
+    is_new_user = user is None
     if user:
         user.name = name
         user.picture = picture
@@ -180,6 +183,11 @@ async def google_callback(code: str, request: Request, session: Session = Depend
         user = User(email=email, name=name, picture=picture, last_login=now, lang=preferred_lang)
         session.add(user)
     session.commit()
+
+    if is_new_user:
+        session.refresh(user)
+        from onboarding import enroll_default_programs
+        enroll_default_programs(user, session)
 
     # Clear any pending draft re-engagement messages so the inactive flag disappears.
     if user.id:

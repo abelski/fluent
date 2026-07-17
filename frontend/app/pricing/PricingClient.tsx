@@ -66,6 +66,7 @@ export default function PricingClient() {
             >
               {tr.pricing.startFree}
             </Link>
+            <p className="text-gray-400 text-xs text-center mt-3">{tr.pricing.freeNote}</p>
           </div>
 
           {/* Premium */}

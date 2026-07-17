@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 // Test for issue #145: phrases longer than 3 words get a new stage-2 sub-step —
 // assemble the phrase by clicking shuffled word tiles — before the full typed
 // recall. Short phrases (≤3 words, word_tiles: null) go straight to typing.
-// See temp_files/triage/issue-145-assemble-phrase-exercise-type.md
+// See plans/triage/issue-145-assemble-phrase-exercise-type.md
 
 function makeFakeJwt(name: string): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
