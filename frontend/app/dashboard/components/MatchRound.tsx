@@ -170,7 +170,7 @@ export default function MatchRound({ words, lang, onDone, backHref }: MatchRound
 
         {/* Title */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl font-bold mb-1">{tr.study.matchTitle}</h1>
+          <h1 className="font-headline text-xl sm:text-2xl font-bold mb-1">{tr.study.matchTitle}</h1>
           <p className="text-gray-400 text-sm">{tr.study.matchSubtitle}</p>
         </div>
 

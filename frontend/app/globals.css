@@ -21,5 +21,5 @@ body {
 }
 
 .font-headline {
-  font-family: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-headline), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }

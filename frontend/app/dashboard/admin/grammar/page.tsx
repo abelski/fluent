@@ -367,7 +367,7 @@ export default function GrammarAdminPage() {
             ← Админ
           </Link>
         </div>
-        <h1 className="text-3xl font-bold mb-1">Грамматика</h1>
+        <h1 className="font-headline text-3xl font-bold mb-1">Грамматика</h1>
         <p className="text-gray-400 mb-6 text-sm">Программы, падежи и предложения</p>
 
         {/* Programs section */}
@@ -474,7 +474,7 @@ export default function GrammarAdminPage() {
           onClick={e => { if (e.target === e.currentTarget) { setProgramModal(null); setProgramError(''); } }}
         >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h2 className="text-lg font-bold mb-4 text-gray-900">
+            <h2 className="font-headline text-lg font-bold mb-4 text-gray-900">
               {programModal === 'new' ? 'Новая программа' : 'Редактировать программу'}
             </h2>
             <div className="flex flex-col gap-3">
@@ -575,7 +575,7 @@ export default function GrammarAdminPage() {
           onClick={e => { if (e.target === e.currentTarget) { setSentenceModal(null); setFormError(''); } }}
         >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-            <h2 className="text-lg font-bold mb-4 text-gray-900">
+            <h2 className="font-headline text-lg font-bold mb-4 text-gray-900">
               {sentenceModal.id === null ? 'Новое предложение' : 'Редактировать предложение'}
             </h2>
             <div className="flex flex-col gap-3">

@@ -178,7 +178,7 @@ export default function ProgramDetailPage() {
         <div className="bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{displayName}</h1>
+              <h1 className="font-headline text-2xl font-bold text-gray-900 mb-2">{displayName}</h1>
               <div className="flex items-center gap-2 flex-wrap mb-3">
                 {meta?.cefr_level && (
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
@@ -305,7 +305,7 @@ export default function ProgramDetailPage() {
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">{tr.programs.removeConfirmTitle}</h2>
+            <h2 className="font-headline text-lg font-semibold text-gray-900 mb-2">{tr.programs.removeConfirmTitle}</h2>
             <p className="text-sm text-gray-500 mb-6">{tr.programs.removeConfirmBody}</p>
             <div className="flex gap-3 justify-end">
               <button

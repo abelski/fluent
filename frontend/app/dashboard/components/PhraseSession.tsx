@@ -534,7 +534,7 @@ export default function PhraseSession({
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-4">🎉</div>
-          <h2 className="text-2xl font-bold mb-2">{tr.phraseSession.sessionDone}</h2>
+          <h2 className="font-headline text-2xl font-bold mb-2">{tr.phraseSession.sessionDone}</h2>
           <div className="flex gap-4 justify-center mb-6">
             <div className="bg-white border border-gray-900 rounded-2xl px-6 py-5 text-center">
               <div className="text-2xl font-bold text-emerald-600">{correctCount}</div>

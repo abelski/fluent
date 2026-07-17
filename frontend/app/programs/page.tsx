@@ -298,7 +298,7 @@ export default function ProgramsPage() {
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold mb-2">{tr.programs.title}</h1>
+        <h1 className="font-headline text-3xl font-bold mb-2">{tr.programs.title}</h1>
         <p className="text-gray-500 mb-6 text-sm">{tr.programs.subtitle}</p>
 
         {/* Tabs */}
@@ -351,7 +351,7 @@ export default function ProgramsPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <h2 className="font-semibold text-gray-900 leading-tight">{displayName}</h2>
+                            <h2 className="font-headline font-semibold text-gray-900 leading-tight">{displayName}</h2>
                             {isEnrolled && (
                               <span className="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 {tr.programs.enrolledBadge}
@@ -601,7 +601,7 @@ export default function ProgramsPage() {
           onClick={(e) => e.stopPropagation()}
         >
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Удалить программу?</h2>
+            <h2 className="font-headline text-lg font-bold text-gray-900 mb-1">Удалить программу?</h2>
             <p className="text-sm text-gray-500 leading-relaxed">
               «{deleteTarget.title}» будет удалена безвозвратно. Все участники потеряют доступ.
             </p>
@@ -644,7 +644,7 @@ export default function ProgramsPage() {
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-1">Поделиться программой</h2>
+                <h2 className="font-headline text-lg font-bold text-gray-900 mb-1">Поделиться программой</h2>
                 <p className="text-sm text-gray-500">«{shareTarget.title}»</p>
               </div>
               <button

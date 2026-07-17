@@ -112,7 +112,7 @@ export default function PhrasesVocabularyPage() {
 
         <div className="mt-4 mb-8 flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold">{tr.phrasesVocabulary.title}</h1>
+            <h1 className="font-headline text-3xl font-bold">{tr.phrasesVocabulary.title}</h1>
             <p className="text-gray-400 mt-1">
               {tr.phrasesVocabulary.subtitle}
               {!loading && phrases.length > 0 && (

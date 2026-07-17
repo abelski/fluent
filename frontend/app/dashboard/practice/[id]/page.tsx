@@ -330,7 +330,7 @@ export default function PracticeCategoryPage() {
         {view === 'tests' && (
           <>
             <div className="mt-4 mb-6">
-              <h1 className="text-3xl font-bold">{categoryName}</h1>
+              <h1 className="font-headline text-3xl font-bold">{categoryName}</h1>
               {categoryDescription
                 ? <p className="text-gray-600 mt-1">{categoryDescription}</p>
                 : <p className="text-gray-400 mt-1">Выберите тест для прохождения</p>
@@ -562,7 +562,7 @@ export default function PracticeCategoryPage() {
             <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white">
               <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900">{t.constitution.resultTitle}</h2>
+                  <h2 className="font-headline text-xl font-bold text-gray-900">{t.constitution.resultTitle}</h2>
                   <p className="text-gray-500 mt-1 text-sm">
                     {t.constitution.resultScore.replace('{score}', String(score)).replace('{total}', String(activeTest.questions.length))}
                     {' '}— {Math.round((score / activeTest.questions.length) * 100)}%

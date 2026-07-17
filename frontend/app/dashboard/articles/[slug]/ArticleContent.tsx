@@ -70,7 +70,7 @@ export default function ArticleContent({ initialArticle }: { initialArticle: Art
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold leading-tight mb-3">{title}</h1>
+          <h1 className="font-headline text-3xl font-bold leading-tight mb-3">{title}</h1>
           <div className="flex flex-wrap items-center gap-3">
             {article.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">

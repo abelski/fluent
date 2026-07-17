@@ -204,7 +204,7 @@ function EditListContent() {
 
         {/* Phrases */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-4">{t.phrasesHeading} <span className="text-gray-400 font-normal">({detail.phrases.length})</span></h2>
+          <h2 className="font-headline font-semibold text-gray-900 mb-4">{t.phrasesHeading} <span className="text-gray-400 font-normal">({detail.phrases.length})</span></h2>
 
           <div className="flex flex-col divide-y divide-gray-100">
             {detail.phrases.map((p) => (
@@ -279,7 +279,7 @@ function EditListContent() {
 
         {/* Bulk paste */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5">
-          <h2 className="font-semibold text-gray-900 mb-1">{t.bulkTitle}</h2>
+          <h2 className="font-headline font-semibold text-gray-900 mb-1">{t.bulkTitle}</h2>
           <p className="text-xs text-gray-400 mb-3">{t.bulkHint}</p>
           <textarea
             value={bulkText}

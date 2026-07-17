@@ -26,7 +26,7 @@ export default function PricingClient() {
         {/* Header */}
         <div className="text-center mb-4">
           <span className="inline-block text-xs font-semibold uppercase tracking-widest text-emerald-600/70 mb-4">{tr.pricing.badge}</span>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">{tr.pricing.title}</h1>
+          <h1 className="font-headline text-4xl sm:text-5xl font-bold tracking-tight mb-4">{tr.pricing.title}</h1>
         </div>
 
         {/* Mission statement */}
@@ -101,7 +101,7 @@ export default function PricingClient() {
 
         {/* Why section */}
         <div className="mt-20 max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-4">{tr.pricing.whyTitle}</h2>
+          <h2 className="font-headline text-2xl font-bold mb-4">{tr.pricing.whyTitle}</h2>
           <p className="text-gray-400 leading-relaxed">{tr.pricing.whyBody}</p>
         </div>
 

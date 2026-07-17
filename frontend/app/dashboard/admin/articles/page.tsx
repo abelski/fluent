@@ -102,7 +102,7 @@ export default function AdminArticlesPage() {
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
-            <h1 className="text-3xl font-bold">{tr.articles.adminTitle}</h1>
+            <h1 className="font-headline text-3xl font-bold">{tr.articles.adminTitle}</h1>
             <Link href="/dashboard/admin" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
               ← {tr.admin.title}
             </Link>

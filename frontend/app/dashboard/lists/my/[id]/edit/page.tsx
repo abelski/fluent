@@ -171,19 +171,27 @@ function EditListContent() {
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             data-testid="list-title-input"
           />
-          <label className="block text-xs font-medium text-gray-400 mb-1">{t.difficulty}</label>
-          <div className="flex gap-2 mb-4">
-            {[1, 2, 3].map((d) => (
-              <button
-                key={d}
-                onClick={() => setDifficulty(d)}
-                className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                  difficulty === d ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {difficultyLabels[d]}
-              </button>
-            ))}
+          <label className="block text-xs font-medium text-gray-400 mb-1.5">{t.difficulty}</label>
+          <div className="flex items-center gap-2.5 mb-4">
+            <button
+              type="button"
+              onClick={() => setDifficulty(difficulty === 3 ? 1 : difficulty + 1)}
+              aria-label={t.difficulty}
+              className="relative w-16 h-6 rounded-full bg-gray-100 border border-gray-200 hover:bg-gray-200/70 transition-colors shrink-0"
+            >
+              <span className="absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
+                <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+              </span>
+              <span
+                className="absolute top-0.5 h-5 w-5 rounded-full bg-emerald-600 shadow-sm transition-all duration-300 ease-out"
+                style={{
+                  left: difficulty === 1 ? '2px' : difficulty === 2 ? 'calc(50% - 10px)' : 'calc(100% - 22px)',
+                }}
+              />
+            </button>
+            <span className="text-xs text-gray-500">{difficultyLabels[difficulty]}</span>
           </div>
           <div className="flex items-center justify-between">
             <button
@@ -207,7 +215,7 @@ function EditListContent() {
 
         {/* Words */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-4">{t.wordsHeading} <span className="text-gray-400 font-normal">({detail.words.length})</span></h2>
+          <h2 className="font-headline font-semibold text-gray-900 mb-4">{t.wordsHeading} <span className="text-gray-400 font-normal">({detail.words.length})</span></h2>
 
           <div className="flex flex-col divide-y divide-gray-100">
             {detail.words.map((w) => (
@@ -268,7 +276,7 @@ function EditListContent() {
 
         {/* Bulk paste */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5">
-          <h2 className="font-semibold text-gray-900 mb-1">{t.bulkTitle}</h2>
+          <h2 className="font-headline font-semibold text-gray-900 mb-1">{t.bulkTitle}</h2>
           <p className="text-xs text-gray-400 mb-3">{t.bulkHint}</p>
           <textarea
             value={bulkText}

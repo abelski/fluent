@@ -27,7 +27,7 @@ export default function ArticlesList({ initialArticles }: { initialArticles: Art
       </div>
 
       <div className="relative z-10 max-w-3xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold mb-2">{tr.articles.title}</h1>
+        <h1 className="font-headline text-3xl font-bold mb-2">{tr.articles.title}</h1>
         <p className="text-gray-400 mb-8">{tr.articles.subtitle}</p>
 
         {loading && (
@@ -51,7 +51,7 @@ export default function ArticlesList({ initialArticles }: { initialArticles: Art
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-gray-900 text-lg leading-snug group-hover:text-emerald-600 transition-colors">
+                    <h2 className="font-headline font-semibold text-gray-900 text-lg leading-snug group-hover:text-emerald-600 transition-colors">
                       {title}
                     </h2>
                     {article.tags.length > 0 && (

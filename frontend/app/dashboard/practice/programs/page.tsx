@@ -65,7 +65,7 @@ export default function PracticeProgramsPage() {
         </Link>
 
         <div className="mt-4 mb-8">
-          <h1 className="text-3xl font-bold">{t.allProgramsTitle}</h1>
+          <h1 className="font-headline text-3xl font-bold">{t.allProgramsTitle}</h1>
           <p className="text-gray-400 mt-1">{t.allProgramsSubtitle}</p>
         </div>
 

@@ -1552,7 +1552,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold mb-2">{tr.admin.title}</h1>
+        <h1 className="font-headline text-3xl font-bold mb-2">{tr.admin.title}</h1>
         <p className="text-gray-400 mb-6">{tr.admin.subtitle}</p>
 
         {/* Top-level area tabs */}
@@ -2077,7 +2077,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         </p>
                         {(['ru', 'en'] as const).map((lang) => (
                           <div key={lang} className="flex flex-col gap-2">
-                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                            <h4 className="font-headline text-xs font-bold text-gray-500 uppercase tracking-wide">
                               {lang === 'ru' ? 'Русский шаблон' : 'English template'}
                             </h4>
                             <label className="text-xs text-gray-500">Тема / Subject</label>
@@ -2128,7 +2128,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       )}
                       {drafts.length > 0 && (
                         <div className="flex flex-col gap-3">
-                          <h3 className="text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
+                          <h3 className="font-headline text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
                           {drafts.map((msg) => (
                             <div key={msg.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-3 bg-white">
                               <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -2254,7 +2254,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 {/* Current week top 3 */}
                 {top5Loaded && (
                   <div className="flex flex-col gap-2">
-                    <h3 className="text-sm font-semibold text-gray-900">Рейтинг этой недели — топ-3</h3>
+                    <h3 className="font-headline text-sm font-semibold text-gray-900">Рейтинг этой недели — топ-3</h3>
                     {top5Users.filter((u) => u.rank <= 3).length === 0 ? (
                       <p className="text-gray-400 text-sm">Нет активных пользователей на этой неделе.</p>
                     ) : (
@@ -2285,7 +2285,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                     <>
                       {drafts.length > 0 && (
                         <div className="flex flex-col gap-3">
-                          <h3 className="text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
+                          <h3 className="font-headline text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
                           {drafts.map((msg) => (
                             <div key={msg.id} className="border border-emerald-200 rounded-2xl p-4 flex flex-col gap-3 bg-emerald-50">
                               <div className="flex items-center justify-between gap-2">
@@ -2362,7 +2362,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                     <>
                       {drafts.length > 0 && (
                         <div className="flex flex-col gap-3">
-                          <h3 className="text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
+                          <h3 className="font-headline text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
                           {drafts.map((msg) => (
                             <div key={msg.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-3 bg-white">
                               <div>
@@ -2931,7 +2931,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
             {practiceView === 'categories' && (
               <>
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <h2 className="font-semibold text-gray-900">{tr.adminPractice.tabLabel}</h2>
+                  <h2 className="font-headline font-semibold text-gray-900">{tr.adminPractice.tabLabel}</h2>
                   <button
                     onClick={() => { setAddingCategory(true); setNewCategory({ name_ru: '', name_en: '', description_ru: '', sort_order: 0 }); }}
                     className="text-sm px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
@@ -3019,7 +3019,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-3">
                       <button onClick={() => { setPracticeView('categories'); setSelectedCategoryId(null); setEditingTest(null); setAddingTest(false); }} className="text-sm text-gray-400 hover:text-gray-900 transition-colors">{tr.adminPractice.backToCategories}</button>
-                      <h2 className="font-semibold text-gray-900">{category?.name_ru}</h2>
+                      <h2 className="font-headline font-semibold text-gray-900">{category?.name_ru}</h2>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => practiceImportRef.current?.click()} className="text-sm px-3 py-1.5 border border-gray-900 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">{tr.adminPractice.importTest}</button>
@@ -3167,7 +3167,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-3">
                       <button onClick={() => { setPracticeView('tests'); setSelectedTestId(null); setEditingPracticeQ(null); setAddingPracticeQ(false); }} className="text-sm text-gray-400 hover:text-gray-900 transition-colors">{tr.adminPractice.backToTests}</button>
-                      <h2 className="font-semibold text-gray-900">{test?.title_ru}</h2>
+                      <h2 className="font-headline font-semibold text-gray-900">{test?.title_ru}</h2>
                     </div>
                     <button onClick={() => { setAddingPracticeQ(true); setNewPracticeQ({ ...BLANK_PRACTICE_QUESTION }); }} className="text-sm px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors">{tr.adminPractice.addQuestion}</button>
                   </div>
@@ -3294,7 +3294,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         {area === 'content' && contentTab === 'news' && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900">{tr.news.adminTitle}</h2>
+              <h2 className="font-headline font-semibold text-gray-900">{tr.news.adminTitle}</h2>
               <button
                 onClick={() => { setAddingNews(true); setEditingNews(null); setNewsDraft({ ...BLANK_NEWS }); }}
                 className="text-xs px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
@@ -3422,7 +3422,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         {area === 'content' && contentTab === 'phrases' && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900">Программы фраз</h2>
+              <h2 className="font-headline font-semibold text-gray-900">Программы фраз</h2>
               <button
                 onClick={() => { setAddingPhraseProgram(true); setEditingPhraseProgram(null); setPhraseProgramDraft({ title: '', title_en: '', description: '', description_en: '', difficulty: 1, is_public: true }); }}
                 className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
@@ -3433,7 +3433,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
             {(addingPhraseProgram || editingPhraseProgram) && (
               <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4 space-y-3">
-                <h3 className="font-medium text-gray-900 text-sm">{editingPhraseProgram ? 'Редактировать программу' : 'Новая программа'}</h3>
+                <h3 className="font-headline font-medium text-gray-900 text-sm">{editingPhraseProgram ? 'Редактировать программу' : 'Новая программа'}</h3>
                 <input value={phraseProgramDraft.title} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, title: e.target.value }))} placeholder="Название (RU)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
                 <input value={phraseProgramDraft.title_en} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, title_en: e.target.value }))} placeholder="Название (EN)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
                 <input value={phraseProgramDraft.description} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, description: e.target.value }))} placeholder="Описание (RU)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
@@ -3550,7 +3550,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         {area === 'content' && contentTab === 'settings' && (
           <div className="flex flex-col gap-10">
             <div>
-              <h2 className="font-semibold text-gray-900 mb-1">CEFR уровни — пороговые значения слов</h2>
+              <h2 className="font-headline font-semibold text-gray-900 mb-1">CEFR уровни — пороговые значения слов</h2>
               <p className="text-sm text-gray-500 mb-4">Количество выученных слов, необходимое для достижения каждого уровня.</p>
               {cefrLoaded && (
                 <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
@@ -3584,7 +3584,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
             </div>
 
             <div>
-              <h2 className="font-semibold text-gray-900 mb-1">Автоматическая рассылка</h2>
+              <h2 className="font-headline font-semibold text-gray-900 mb-1">Автоматическая рассылка</h2>
               <p className="text-sm text-gray-500 mb-4">Управление автоматической отправкой писем по расписанию.</p>
               {autoSend ? (
                 <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
@@ -3625,7 +3625,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
             {/* Welcome screen content is edited via the articles admin editor (slug: "welcome") */}
             <div>
-              <h2 className="font-semibold text-gray-900 mb-1">Приветственный экран</h2>
+              <h2 className="font-headline font-semibold text-gray-900 mb-1">Приветственный экран</h2>
               <p className="text-sm text-gray-500 mb-2">
                 Текст, который видит пользователь при первом входе. Редактируется как статья со слагом <code className="bg-gray-100 px-1 rounded text-xs">welcome</code>.
               </p>
@@ -3653,7 +3653,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     {emailUserId && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
         <div className="bg-white border border-gray-900 rounded-2xl p-6 w-full max-w-md flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-gray-900">Письмо пользователю: {emailUserName}</h2>
+          <h2 className="font-headline text-base font-semibold text-gray-900">Письмо пользователю: {emailUserName}</h2>
           <input
             type="text"
             placeholder="Тема письма"

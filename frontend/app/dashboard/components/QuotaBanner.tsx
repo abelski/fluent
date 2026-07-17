@@ -14,15 +14,9 @@ export default function QuotaBanner({ quota }: { quota: QuotaInfo | null }) {
   const { tr } = useT();
   if (!quota) return null;
 
-  if (quota.premium_active) {
-    if (!quota.premium_until) return null;
-    return (
-      <div className="mb-6 rounded-xl px-5 py-3 border border-emerald-100 bg-emerald-50 flex items-center gap-2" data-testid="premium-banner">
-        <span className="text-emerald-600 text-sm font-medium">✦ Premium</span>
-        <span className="text-gray-400 text-sm">{tr.lists.premiumUntil} {new Date(quota.premium_until).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-      </div>
-    );
-  }
+  // Premium status now shows as a small label under the avatar in the header
+  // (see Header.tsx) instead of a banner on the page.
+  if (quota.premium_active) return null;
 
   const limitReached = quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
   return (

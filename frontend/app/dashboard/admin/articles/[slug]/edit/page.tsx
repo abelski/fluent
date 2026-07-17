@@ -133,7 +133,7 @@ export default function ArticleEditorPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="font-headline text-2xl font-bold">
               {isNew ? tr.articles.newArticle : tr.articles.editArticle}
             </h1>
             <Link

@@ -722,7 +722,7 @@ export default function QuizSession({
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">🎉</div>
-          <h1 className="text-2xl font-bold mb-2">{tr.common.sessionDone}</h1>
+          <h1 className="font-headline text-2xl font-bold mb-2">{tr.common.sessionDone}</h1>
           <p className="text-gray-400 mb-8">
             {tr.common.correctOf.replace('{correct}', String(correctWords)).replace('{total}', String(totalWords))}
           </p>

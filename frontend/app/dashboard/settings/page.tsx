@@ -105,7 +105,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-6">{tr.settings.title}</h1>
+        <h1 className="font-headline text-2xl font-bold mb-6">{tr.settings.title}</h1>
 
         {/* Tab bar */}
         <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1" data-testid="settings-tabs">

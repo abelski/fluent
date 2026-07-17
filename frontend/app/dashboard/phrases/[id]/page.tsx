@@ -120,7 +120,7 @@ export default function PhraseProgramDetailPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold">{program.title}</h1>
+            <h1 className="font-headline text-3xl font-bold">{program.title}</h1>
             {program.description && (
               <p className="text-gray-400 mt-1">{program.description}</p>
             )}

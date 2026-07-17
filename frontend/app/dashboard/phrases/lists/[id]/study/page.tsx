@@ -75,7 +75,7 @@ function MyPhraseListStudyContent() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">🏆</div>
-          <h1 className="text-2xl font-bold mb-2">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
+          <h1 className="font-headline text-2xl font-bold mb-2">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
           <p className="text-gray-400 mb-8">{tr.study.levelCompleteBody}</p>
           <div className="flex flex-col gap-3">
             {nextLevel && (

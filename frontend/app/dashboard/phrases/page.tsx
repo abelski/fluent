@@ -296,7 +296,7 @@ export default function PhrasesPage() {
 
         <QuotaBanner quota={quota} />
 
-        <h1 className="text-3xl font-bold mb-1">{t.pageTitle}</h1>
+        <h1 className="font-headline text-3xl font-bold mb-1">{t.pageTitle}</h1>
         <p className="text-gray-400 mb-8">{t.pageSubtitle}</p>
 
         {/* Мои списки — a program-style container holding the user's lists as chapter-like cards */}
@@ -340,19 +340,25 @@ export default function PhrasesPage() {
                 {myLists.length > 0 && (
                   <div className="flex items-center gap-2 mb-4" data-testid="phrase-star-selector">
                     <span className="text-sm text-gray-400">{tr.lists.starSelectorLabel}</span>
-                    {[1, 2, 3].map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => handlePhraseStarLevel(level)}
-                        className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                          phraseStarLevel === level
-                            ? 'bg-gray-900 text-white border-gray-900'
-                            : 'bg-white text-gray-500 border-gray-300 hover:border-gray-900'
-                        }`}
+                    <button
+                      onClick={() => handlePhraseStarLevel(phraseStarLevel === 3 ? 1 : phraseStarLevel + 1)}
+                      aria-label={tr.lists.starSelectorLabel}
+                      className="relative w-16 h-7 rounded-full bg-gray-100 border border-black transition-colors"
+                    >
+                      <span className="absolute inset-0 flex items-center justify-between px-2.5 pointer-events-none">
+                        <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                        <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                        <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                      </span>
+                      <span
+                        className="absolute top-0.5 h-6 w-6 rounded-full bg-gray-900 shadow-sm transition-all duration-300 ease-out flex items-center justify-center text-white text-[7px] tracking-tighter"
+                        style={{
+                          left: phraseStarLevel === 1 ? '2px' : phraseStarLevel === 2 ? 'calc(50% - 12px)' : 'calc(100% - 26px)',
+                        }}
                       >
-                        {'★'.repeat(level)}
-                      </button>
-                    ))}
+                        {'★'.repeat(phraseStarLevel)}
+                      </span>
+                    </button>
                   </div>
                 )}
                 {myLists.length === 0 ? (
@@ -398,7 +404,7 @@ export default function PhrasesPage() {
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2 flex-wrap pr-2">
-                              <h3 className="text-base font-semibold">{lst.title}</h3>
+                              <h3 className="font-headline text-base font-semibold">{lst.title}</h3>
                               {lst.star_min != null && lst.star_max != null && (
                                 <span
                                   className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-600 border-amber-200 whitespace-nowrap"
@@ -553,7 +559,7 @@ export default function PhrasesPage() {
                                   </div>
                                 )}
                                 <div>
-                                  <h2 className="text-base font-semibold pr-16">{chapterLabel}</h2>
+                                  <h2 className="font-headline text-base font-semibold pr-16">{chapterLabel}</h2>
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                   <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden flex">
@@ -628,7 +634,7 @@ export default function PhrasesPage() {
       {showCreate && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => !creating && setShowCreate(false)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 mb-3">{t.newList}</h3>
+            <h3 className="font-headline font-semibold text-gray-900 mb-3">{t.newList}</h3>
             <input
               autoFocus
               value={newListTitle}
@@ -654,7 +660,7 @@ export default function PhrasesPage() {
       {confirmDeleteList !== null && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => setConfirmDeleteList(null)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 mb-2">{t.deleteListTitle}</h3>
+            <h3 className="font-headline font-semibold text-gray-900 mb-2">{t.deleteListTitle}</h3>
             <p className="text-sm text-gray-500 mb-5">{t.deleteListBody}</p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setConfirmDeleteList(null)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
@@ -672,7 +678,7 @@ export default function PhrasesPage() {
       {confirmUnenroll !== null && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => setConfirmUnenroll(null)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 mb-2">{t.removeProgramTitle}</h3>
+            <h3 className="font-headline font-semibold text-gray-900 mb-2">{t.removeProgramTitle}</h3>
             <p className="text-sm text-gray-500 mb-5">{t.removeProgramBody}</p>
             <div className="flex gap-3 justify-end">
               <button

@@ -60,7 +60,7 @@ export default function PhraseProgramsPage() {
             ← Фразы
           </Link>
         </div>
-        <h1 className="text-3xl font-bold mb-1">Программы фраз</h1>
+        <h1 className="font-headline text-3xl font-bold mb-1">Программы фраз</h1>
         <p className="text-gray-400 mb-8">Выберите программы для изучения литовских фраз</p>
 
         {loading ? (
@@ -80,7 +80,7 @@ export default function PhraseProgramsPage() {
                 <div className="flex items-start justify-between gap-3">
                   <Link href={`/dashboard/phrases/${p.id}`} className="min-w-0 flex-1 group">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-gray-900 truncate group-hover:text-emerald-700 transition-colors">
+                      <h3 className="font-headline font-semibold text-gray-900 truncate group-hover:text-emerald-700 transition-colors">
                         {p.title}
                       </h3>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${DIFFICULTY_COLORS[p.difficulty] ?? 'bg-gray-100 text-gray-500'}`}>

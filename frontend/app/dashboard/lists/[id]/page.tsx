@@ -85,7 +85,7 @@ export default function ListDetailPage() {
               const displayDesc = lang === 'en' ? (list.description_en || list.description) : list.description;
               return (
                 <>
-                  <h1 className="text-3xl font-bold">{displayTitle}</h1>
+                  <h1 className="font-headline text-3xl font-bold">{displayTitle}</h1>
                   {displayDesc && <p className="text-gray-400 mt-1">{displayDesc}</p>}
                 </>
               );

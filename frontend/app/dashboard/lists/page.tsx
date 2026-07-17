@@ -270,31 +270,34 @@ export default function ListsPage() {
         {isLoggedIn && <QuotaBanner quota={quota} />}
 
         <div className="flex flex-wrap items-center gap-4 mb-2">
-          <h1 className="text-3xl font-bold">{tr.lists.title}</h1>
+          <h1 className="font-headline text-3xl font-bold">{tr.lists.title}</h1>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-400">{tr.lists.starSelectorLabel}</span>
-            {([
-              [1, `★ — ${tr.lists.star1Label}`],
-              [2, `★★ — ${tr.lists.star2Label}`],
-              [3, `★★★ — ${tr.lists.star3Label}`],
-            ] as [number, string][]).map(([level, tooltip]) => (
-              <div key={level} className="relative group">
-                <button
-                  onClick={() => handleStarLevel(level)}
-                  className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                    starLevel === level
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-gray-500 border-gray-300 hover:border-gray-900'
-                  }`}
+            <div className="relative group">
+              <button
+                onClick={() => handleStarLevel(starLevel === 3 ? 1 : starLevel + 1)}
+                aria-label={tr.lists.starSelectorLabel}
+                className="relative w-16 h-7 rounded-full bg-gray-100 border border-black transition-colors"
+              >
+                <span className="absolute inset-0 flex items-center justify-between px-2.5 pointer-events-none">
+                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                </span>
+                <span
+                  className="absolute top-0.5 h-6 w-6 rounded-full bg-gray-900 shadow-sm transition-all duration-300 ease-out flex items-center justify-center text-white text-[7px] tracking-tighter"
+                  style={{
+                    left: starLevel === 1 ? '2px' : starLevel === 2 ? 'calc(50% - 12px)' : 'calc(100% - 26px)',
+                  }}
                 >
-                  {'★'.repeat(level)}
-                </button>
-                <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                  {tooltip}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-                </div>
+                  {'★'.repeat(starLevel)}
+                </span>
+              </button>
+              <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                {'★'.repeat(starLevel)} — {[tr.lists.star1Label, tr.lists.star2Label, tr.lists.star3Label][starLevel - 1]}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
               </div>
-            ))}
+            </div>
           </div>
         </div>
         <p className="text-gray-400 mb-8">{tr.lists.subtitle}</p>
@@ -376,7 +379,7 @@ export default function ListsPage() {
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex items-center gap-2 flex-wrap pr-2">
-                                <h3 className="text-base font-semibold">{lst.title}</h3>
+                                <h3 className="font-headline text-base font-semibold">{lst.title}</h3>
                                 {isDone && (
                                   <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white tracking-wide">✓ Done</span>
                                 )}
@@ -588,7 +591,7 @@ export default function ListsPage() {
                                   </div>
                                 )}
                                 <div>
-                                  <h2 className="text-lg font-semibold">{displayTitle}</h2>
+                                  <h2 className="font-headline text-lg font-semibold">{displayTitle}</h2>
                                   {displayDesc && (
                                     <p className="text-gray-400 text-sm mt-1">{displayDesc}</p>
                                   )}
@@ -717,7 +720,7 @@ export default function ListsPage() {
                                 </div>
                               )}
                               <div>
-                                <h2 className="text-lg font-semibold">{displayTitle}</h2>
+                                <h2 className="font-headline text-lg font-semibold">{displayTitle}</h2>
                                 {displayDesc && <p className="text-gray-400 text-sm mt-1">{displayDesc}</p>}
                               </div>
                               <div className="flex flex-col gap-1.5">
@@ -779,7 +782,7 @@ export default function ListsPage() {
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setConfirmCustomId(null)}>
             <div className="bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-lg font-semibold text-gray-900">Убрать программу «{enrollment?.title}»?</h2>
+              <h2 className="font-headline text-lg font-semibold text-gray-900">Убрать программу «{enrollment?.title}»?</h2>
               <p className="text-sm text-gray-500">Ваш прогресс сохранится — вы сможете снова записаться в программу в любое время.</p>
               <div className="flex gap-3 justify-end">
                 <button onClick={() => setConfirmCustomId(null)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
@@ -811,7 +814,7 @@ export default function ListsPage() {
               className="bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm flex flex-col gap-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="font-headline text-lg font-semibold text-gray-900">
                 Убрать программу «{label}»?
               </h2>
               <p className="text-sm text-gray-500">
@@ -845,7 +848,7 @@ export default function ListsPage() {
       {showCreate && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => !creating && setShowCreate(false)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 mb-3">{mt.newList}</h3>
+            <h3 className="font-headline font-semibold text-gray-900 mb-3">{mt.newList}</h3>
             <input
               autoFocus
               value={newListTitle}
@@ -871,7 +874,7 @@ export default function ListsPage() {
       {confirmDeleteWordList !== null && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => setConfirmDeleteWordList(null)}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 mb-2">{mt.deleteListTitle}</h3>
+            <h3 className="font-headline font-semibold text-gray-900 mb-2">{mt.deleteListTitle}</h3>
             <p className="text-sm text-gray-500 mb-5">{mt.deleteListBody}</p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setConfirmDeleteWordList(null)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">

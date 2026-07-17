@@ -671,7 +671,7 @@ export default function GrammarPage() {
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
-          <h1 className="text-3xl font-bold mb-2">{tr.grammar.title}</h1>
+          <h1 className="font-headline text-3xl font-bold mb-2">{tr.grammar.title}</h1>
           <p className="text-gray-400 mb-4">{tr.grammar.subtitle}</p>
           <div className="mb-6 rounded-xl px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm">
             {tr.grammar.betaNotice}
@@ -800,7 +800,7 @@ export default function GrammarPage() {
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">{passed ? '🎉' : '📚'}</div>
-          <h1 className="text-2xl font-bold mb-2">{tr.grammar.lessonDone}</h1>
+          <h1 className="font-headline text-2xl font-bold mb-2">{tr.grammar.lessonDone}</h1>
 
           {/* Pass/fail banner */}
           {passed ? (

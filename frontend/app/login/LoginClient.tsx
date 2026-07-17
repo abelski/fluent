@@ -23,7 +23,7 @@ export default function LoginClient() {
 
       <div className="relative z-10 max-w-sm w-full text-center">
         <div className="text-5xl mb-6">📊</div>
-        <h1 className="text-2xl font-bold mb-3">{tr.login.title}</h1>
+        <h1 className="font-headline text-2xl font-bold mb-3">{tr.login.title}</h1>
         <p className="text-gray-400 text-sm leading-relaxed mb-8">
           {tr.login.subtitle}
         </p>

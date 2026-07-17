@@ -112,7 +112,7 @@ export default function CustomProgramPage() {
         <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-4">
           <div className="flex items-start justify-between gap-4 mb-3">
             <div>
-              <h1 className="text-2xl font-bold mb-1">{program.title}</h1>
+              <h1 className="font-headline text-2xl font-bold mb-1">{program.title}</h1>
               <p className="text-sm text-gray-400">
                 Автор: <span className="text-gray-600">{program.author_name ?? 'Участник сообщества'}</span>
               </p>

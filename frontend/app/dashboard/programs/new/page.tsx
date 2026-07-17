@@ -202,7 +202,7 @@ export default function NewProgramPage() {
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold mb-6">Создать программу</h1>
+        <h1 className="font-headline text-2xl font-bold mb-6">Создать программу</h1>
 
         {/* Program metadata */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 flex flex-col gap-5 mb-6">

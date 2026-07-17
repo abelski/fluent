@@ -37,6 +37,7 @@ export default function Header() {
   const [user, setUser] = useState<JwtUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isRedactor, setIsRedactor] = useState(false);
+  const [premiumUntil, setPremiumUntil] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -54,6 +55,7 @@ export default function Header() {
         .then((data) => {
           if (data?.is_admin || data?.is_superadmin) setIsAdmin(true);
           if (data?.is_redactor) setIsRedactor(true);
+          if (data?.premium_active && data?.premium_until) setPremiumUntil(data.premium_until);
         })
         .catch((err) => console.error('Failed to fetch admin status:', err));
     }
@@ -176,18 +178,29 @@ export default function Header() {
                 onClick={() => setMenuOpen((o) => !o)}
                 className="flex items-center gap-2.5 hover:opacity-80 transition-opacity min-h-[44px] px-1"
               >
-                {user.picture ? (
-                  <img
-                    src={user.picture}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full ring-2 ring-white ring-offset-1 ring-offset-gray-100"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-sm font-medium">
-                    {user.name?.charAt(0).toUpperCase() ?? '?'}
-                  </div>
-                )}
+                <div className="relative shrink-0">
+                  {user.picture ? (
+                    <img
+                      src={user.picture}
+                      alt={user.name}
+                      className="w-8 h-8 rounded-full ring-2 ring-white ring-offset-1 ring-offset-gray-100"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-sm font-medium">
+                      {user.name?.charAt(0).toUpperCase() ?? '?'}
+                    </div>
+                  )}
+                  {premiumUntil && (
+                    <span className="group absolute left-1/2 top-full -translate-x-1/2 mt-1 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-[1px] text-[9px] font-semibold text-emerald-700">
+                      Premium
+                      <span className="pointer-events-none absolute left-1/2 top-full mt-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-lg bg-gray-900 px-2.5 py-1.5 text-center text-[11px] text-white opacity-0 transition-opacity group-hover:opacity-100 z-50">
+                        {tr.lists.premiumUntil} {new Date(premiumUntil).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900" />
+                      </span>
+                    </span>
+                  )}
+                </div>
                 <span className="text-gray-500 text-sm hidden sm:block">{user.name}</span>
                 <svg
                   width="12" height="12" viewBox="0 0 12 12" fill="currentColor"

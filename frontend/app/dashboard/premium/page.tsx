@@ -12,7 +12,7 @@ export default function PremiumPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <h1 className="text-3xl font-bold text-gray-900">Fluent Premium</h1>
+          <h1 className="font-headline text-3xl font-bold text-gray-900">Fluent Premium</h1>
           <p className="text-gray-500 text-lg leading-relaxed">
             Этот тест доступен только для Premium-пользователей.<br />
             Получите доступ ко всем тестам, упражнениям и материалам.
