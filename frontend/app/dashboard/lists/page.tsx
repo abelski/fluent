@@ -13,6 +13,7 @@ import {
   type WelcomeContent,
 } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
+import QuotaBanner from '../components/QuotaBanner';
 import WelcomeModal from '../../../components/WelcomeModal';
 import { useT } from '../../../lib/useT';
 import { getStarLevel, setStarLevel } from '../../../lib/starLevel';
@@ -224,31 +225,8 @@ export default function ListsPage() {
           </div>
         )}
 
-        {/* Quota banner */}
-        {isLoggedIn && quota && !quota.premium_active && (
-          <div className={`mb-6 rounded-xl px-5 py-4 border flex flex-col sm:flex-row sm:items-center gap-3 ${
-            limitReached
-              ? 'bg-red-50 border-red-200'
-              : 'bg-white border-gray-100'
-          }`}>
-            <div className="flex-1">
-              {limitReached ? (
-                <p className="text-red-600 font-medium text-sm">{tr.lists.limitReached.replace('{count}', String(quota.sessions_today)).replace('{limit}', String(quota.daily_limit))}</p>
-              ) : (
-                <p className="text-gray-500 text-sm">{tr.lists.sessionsToday} <span className="text-gray-900 font-medium">{quota.sessions_today} / {quota.daily_limit}</span></p>
-              )}
-            </div>
-            <Link href="/pricing" className="shrink-0 text-xs font-medium text-emerald-600 hover:text-emerald-700 border border-emerald-200 rounded-full px-3 py-1.5 transition-colors">
-              {tr.lists.getPremium}
-            </Link>
-          </div>
-        )}
-        {quota?.premium_active && quota.premium_until && (
-          <div className="mb-6 rounded-xl px-5 py-3 border border-emerald-100 bg-emerald-50 flex items-center gap-2">
-            <span className="text-emerald-600 text-sm font-medium">✦ Premium</span>
-            <span className="text-gray-400 text-sm">{tr.lists.premiumUntil} {new Date(quota.premium_until).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-          </div>
-        )}
+        {/* Quota / premium banner */}
+        {isLoggedIn && <QuotaBanner quota={quota} />}
 
         <div className="flex flex-wrap items-center gap-4 mb-2">
           <h1 className="text-3xl font-bold">{tr.lists.title}</h1>

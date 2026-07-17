@@ -380,14 +380,24 @@ export interface Translations {
     empty: string;
     backToLists: string;
   };
+  phrasesVocabulary: {
+    title: string;
+    subtitle: string;
+    searchPlaceholder: string;
+    columnPhrase: string;
+    tooltipDue: string;
+    tooltipFading: string;
+    tooltipOk: string;
+    empty: string;
+    startCta: string;
+    back: string;
+  };
   stats: {
     wordsLearned: string;
     remindForgotten: string;
     viewVocabulary: string;
     dueReviewOf: string;           // "{due} of {total} words to refresh" — progress label
-    phrasesLearned: string;        // "phrases learned" label in phrases stats card
-    remindPhrases: string;         // CTA: remind me about phrases I may have forgotten
-    phrasesDueReviewOf: string;    // "{due} of {total} phrases to refresh"
+    progressToNext: string;        // "{count} / {target} to {level}" — milestone caption under main progress bar
     memoryOk: string;          // vocabulary status badge: remember
     memoryFading: string;      // vocabulary status badge: probably forgetting
     memoryDue: string;         // vocabulary status badge: need to repeat
@@ -634,6 +644,7 @@ export interface Translations {
     reviewPhrases: string;
     allPhrases: string;
     needRefresh: string; // {due} {total}
+    milestoneCaption: string; // "{count} / {target}" — progress toward next phrase milestone
     loginPrompt: string;
     login: string;
     removeProgram: string;

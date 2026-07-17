@@ -15,9 +15,12 @@ import {
   type PhraseListSummary,
 } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import ProgressStatCard from '../components/ProgressStatCard';
+import QuotaBanner from '../components/QuotaBanner';
 
 interface Quota {
   premium_active: boolean;
+  premium_until: string | null;
   sessions_today: number;
   daily_limit: number | null;
   is_admin?: boolean;
@@ -40,6 +43,20 @@ interface ChapterSummary {
 
 interface ProgramDetail {
   chapters: ChapterSummary[];
+}
+
+// Milestone thresholds for the phrases progress track (analogous to CEFR thresholds for words)
+const PHRASE_MILESTONES = [0, 50, 100, 250, 500, 1000];
+
+function getPhraseMilestoneProgress(learned: number) {
+  for (let i = 1; i < PHRASE_MILESTONES.length; i++) {
+    if (learned < PHRASE_MILESTONES[i]) {
+      const prev = PHRASE_MILESTONES[i - 1];
+      const next = PHRASE_MILESTONES[i];
+      return { next, pct: Math.round(((learned - prev) / (next - prev)) * 100) };
+    }
+  }
+  return { next: null as number | null, pct: 100 };
 }
 
 const DIFFICULTY_BORDER: Record<number, string> = {
@@ -69,8 +86,7 @@ export default function PhrasesPage() {
   const [confirmDeleteList, setConfirmDeleteList] = useState<number | null>(null);
   const [confirmUnenroll, setConfirmUnenroll] = useState<number | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-  const [phrasesLearned, setPhrasesLearned] = useState(0);
-  const [phrasesDueReview, setPhrasesDueReview] = useState(0);
+  const [phraseStats, setPhraseStats] = useState<{ learned: number; due: number } | null>(null);
   const [openPrograms, setOpenPrograms] = useState<Set<number>>(new Set());
   const [programDetails, setProgramDetails] = useState<Record<number, ProgramDetail>>({});
   const [loadingDetails, setLoadingDetails] = useState<Set<number>>(new Set());
@@ -99,8 +115,7 @@ export default function PhrasesPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data) {
-          setPhrasesLearned(data.phrases_learned ?? 0);
-          setPhrasesDueReview(data.phrases_due_review ?? 0);
+          setPhraseStats({ learned: data.phrases_learned ?? 0, due: data.phrases_due_review ?? 0 });
         }
       })
       .catch(console.error);
@@ -233,49 +248,44 @@ export default function PhrasesPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-4xl">
+        {/* Phrases stats card */}
+        {phraseStats && (() => {
+          const m = getPhraseMilestoneProgress(phraseStats.learned);
+          return (
+            <div className="mb-10">
+              <ProgressStatCard
+                theme="purple"
+                icon="💬"
+                count={phraseStats.learned}
+                label={t.learnedLabel}
+                nextMilestone={m.next !== null ? String(m.next) : null}
+                milestone={{
+                  pct: m.pct,
+                  caption: m.next !== null
+                    ? t.milestoneCaption
+                        .replace('{count}', String(phraseStats.learned))
+                        .replace('{target}', String(m.next))
+                    : null,
+                }}
+                primaryAction={{ href: '/dashboard/phrases/review', label: t.reviewPhrases }}
+                secondaryAction={{ href: '/dashboard/phrases/vocabulary', label: t.allPhrases }}
+                due={{
+                  count: phraseStats.due,
+                  total: phraseStats.learned,
+                  caption: t.needRefresh
+                    .replace('{due}', String(phraseStats.due))
+                    .replace('{total}', String(phraseStats.learned)),
+                }}
+                testId="stats-card-phrases"
+              />
+            </div>
+          );
+        })()}
+
+        <QuotaBanner quota={quota} />
+
         <h1 className="text-3xl font-bold mb-1">{t.pageTitle}</h1>
         <p className="text-gray-400 mb-8">{t.pageSubtitle}</p>
-
-        {/* Phrases stats widget */}
-        {phrasesLearned > 0 && (
-          <div className="relative rounded-2xl bg-gradient-to-br from-purple-50 to-white border border-purple-100 shadow-sm overflow-hidden p-5 mb-6">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
-            <div className="flex items-center gap-3 relative">
-              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center text-xl">
-                💬
-              </div>
-              <div>
-                <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{phrasesLearned}</p>
-                <p className="text-gray-500 text-xs mt-1 font-medium">{t.learnedLabel}</p>
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                href="/dashboard/phrases/review"
-                className="inline-block text-xs bg-purple-600 hover:bg-purple-700 text-white font-medium px-3 py-1.5 rounded-full transition-colors"
-              >
-                {t.reviewPhrases}
-              </Link>
-              <Link
-                href="/dashboard/phrases/vocabulary"
-                className="inline-block text-xs border border-purple-200 hover:bg-purple-50 text-purple-700 font-medium px-3 py-1.5 rounded-full transition-colors"
-              >
-                {t.allPhrases}
-              </Link>
-            </div>
-            <div className="mt-3">
-              <div className="h-1 bg-purple-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-purple-400 rounded-full transition-all duration-700"
-                  style={{ width: `${Math.min(100, (phrasesDueReview / phrasesLearned) * 100)}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-gray-400 mt-1">
-                {t.needRefresh.replace('{due}', String(phrasesDueReview)).replace('{total}', String(phrasesLearned))}
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Мои списки — a program-style container holding the user's lists as chapter-like cards */}
         <section className="mb-8" data-testid="my-lists-section">
@@ -432,22 +442,6 @@ export default function PhrasesPage() {
             )}
           </div>
         </section>
-
-        {/* Quota banner */}
-        {quota && (quota.sessions_today > 0 || limitReached) && (
-          <div className={`mb-6 px-4 py-3 rounded-xl text-sm flex items-center justify-between gap-3 ${limitReached ? 'bg-amber-50 border border-amber-200 text-amber-800' : 'bg-white border border-gray-100 text-gray-600'}`}>
-            <span>
-              {limitReached
-                ? tr.lists.limitReached.replace('{count}', String(quota.sessions_today)).replace('{limit}', String(quota.daily_limit))
-                : `${tr.lists.sessionsToday} ${quota.sessions_today}${quota.daily_limit ? `/${quota.daily_limit}` : ''}`}
-            </span>
-            {limitReached && (
-              <Link href="/pricing" className="shrink-0 text-xs font-medium text-amber-700 hover:underline">
-                {tr.lists.getPremium}
-              </Link>
-            )}
-          </div>
-        )}
 
         {/* Enrolled programs — accordion with chapter cards inside */}
         {enrolledPrograms.length > 0 && (
