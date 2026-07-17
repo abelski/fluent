@@ -1,14 +1,14 @@
 ---
 name: fix-issue-from-triage
-description: Fix a triaged issue from temp_files/triage/ — read the plan, apply the fix, run smoke tests, and leave the local server ready for user validation.
+description: Fix a triaged issue from plans/triage/ — read the plan, apply the fix, run smoke tests, and leave the local server ready for user validation.
 ---
 
-Fix a triaged issue by following its pre-written plan from `temp_files/triage/`.
+Fix a triaged issue by following its pre-written plan from `plans/triage/`.
 
 ## Step 1 — Locate the plan file
 
 If `$ARGUMENTS` is provided, treat it as an issue number (e.g. `35`) or partial filename.
-- Search `temp_files/triage/` (not `implemented/` or `hold/`) for a file matching `issue-<number>` or the given string.
+- Search `plans/triage/` (not `implemented/` or `hold/`) for a file matching `issue-<number>` or the given string.
 - If no match is found, list all open plan files and use `AskUserQuestion` to ask which one to fix.
 
 Read the matched plan file in full before proceeding.
@@ -112,7 +112,7 @@ If the user selects **Yes**:
    ```
 2. Move the plan file:
    ```bash
-   mv temp_files/triage/issue-<N>-*.md temp_files/triage/implemented/IMPLEMENTED-issue-<N>-*.md
+   mv plans/triage/issue-<N>-*.md plans/triage/implemented/IMPLEMENTED-issue-<N>-*.md
    ```
 3. Report: "Issue #<N> marked resolved. Plan moved to `implemented/`."
 
@@ -123,5 +123,5 @@ If the user selects **No**, ask a follow-up `AskUserQuestion`: "What still looks
 - DATABASE_URL is in `backend/.env` — read it fresh every time, never hard-code it.
 - Do not push to git.
 - For destructive SQL (DELETE without WHERE, DROP, TRUNCATE) ask the user to confirm first.
-- Triage plan files live in `temp_files/triage/`. Resolved files go to `temp_files/triage/implemented/` with the `IMPLEMENTED-` prefix. Blocked files live in `temp_files/triage/hold/`.
+- Triage plan files live in `plans/triage/`. Resolved files go to `plans/triage/implemented/` with the `IMPLEMENTED-` prefix. Blocked files live in `plans/triage/hold/`.
 - The plan may reference optional steps (e.g. "Option B — add a new word row"). Only do these if the plan explicitly marks them as required, or the user asks.

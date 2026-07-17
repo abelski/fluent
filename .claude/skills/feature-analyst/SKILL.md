@@ -19,7 +19,7 @@ Wait for the user to answer before proceeding. Do not guess.
 
 Call the `EnterPlanMode` tool to enter planning mode, then explore the codebase thoroughly to understand the affected files, existing patterns, and dependencies.
 
-Create the plan file at `temp_files/plan_<feature-slug>.md` (create `temp_files/` if it doesn't exist).
+Create the plan file at `plans/plan_<feature-slug>.md` (create `temp_files/` if it doesn't exist).
 
 The plan MUST contain two sections:
 
@@ -51,7 +51,7 @@ A checklist of how to verify the feature works end-to-end after implementation:
 
 After writing the file, show the user the full plan content in chat, then use the `AskUserQuestion` tool to ask:
 
-- Question: "Plan saved to `temp_files/plan_<slug>.md`. Ready to proceed?"
+- Question: "Plan saved to `plans/plan_<slug>.md`. Ready to proceed?"
 - Options: "Approve — start implementation", "Revise — I have corrections"
 
 If the user selects "Revise", ask a follow-up `AskUserQuestion` for their corrections, update the plan file, show the revised plan, and ask for approval again. Repeat until approved. Stay in planning mode throughout all revisions.
