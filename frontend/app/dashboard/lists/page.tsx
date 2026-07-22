@@ -122,6 +122,19 @@ export default function ListsPage() {
 
     getMyWordLists().then(setMyWordLists).catch(console.error);
 
+    // Fired in parallel with /api/lists — it derives everything from the user's
+    // own enrollments server-side and takes no input from the lists response.
+    fetch(`${BACKEND_URL}/api/me/lists-progress`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data: Record<string, ListProgress>) => {
+        const map: Record<number, ListProgress> = {};
+        for (const [k, v] of Object.entries(data)) map[Number(k)] = v;
+        setProgress(map);
+      })
+      .catch((err) => console.error('Failed to fetch lists progress:', err));
+
     Promise.all([
       fetch(`${BACKEND_URL}/api/lists`, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json())
@@ -134,18 +147,6 @@ export default function ListsPage() {
         const keys = new Set<string>(Array.isArray(enrolled) ? enrolled : []);
         setEnrolledKeys(keys);
         setLists(allLists);
-
-        if (allLists.length === 0) return;
-        fetch(`${BACKEND_URL}/api/me/lists-progress`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then((r) => (r.ok ? r.json() : {}))
-          .then((data: Record<string, ListProgress>) => {
-            const map: Record<number, ListProgress> = {};
-            for (const [k, v] of Object.entries(data)) map[Number(k)] = v;
-            setProgress(map);
-          })
-          .catch((err) => console.error('Failed to fetch lists progress:', err));
       })
       .catch((err) => console.error('Failed to fetch lists:', err))
       .finally(() => setLoading(false));
