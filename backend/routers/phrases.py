@@ -942,6 +942,7 @@ def get_learned_phrases(
             "chapter_title": phrase.chapter_title,
             "program_id": phrase.program_id,
             "program_title": program.title if program else None,
+            "program_title_en": program.title_en if program else None,
             "lesson_stage": prog.lesson_stage,
             "next_review": prog.next_review.isoformat() if prog.next_review else None,
         })

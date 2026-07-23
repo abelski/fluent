@@ -223,6 +223,9 @@ export default function QuizSession({
   const [wordsDone, setWordsDone] = useState(0);
   const [correctWords, setCorrectWords] = useState(0);
   const [done, setDone] = useState(false);
+  // Quick mode can abort a lesson mid-queue; without this the done screen would
+  // look identical to a lesson the user actually finished (issue #147).
+  const [endedEarly, setEndedEarly] = useState(false);
   const [showMatchRound, setShowMatchRound] = useState(false);
   const [matchRoundWords, setMatchRoundWords] = useState<Word[]>([]);
 
@@ -277,6 +280,7 @@ export default function QuizSession({
     setWordsDone(0);
     setCorrectWords(0);
     setDone(false);
+    setEndedEarly(false);
     setAnswerState('unanswered');
     setSelectedOption(null);
     setTypedAnswer('');
@@ -321,13 +325,14 @@ export default function QuizSession({
   }, [frontWordId, frontStage, lang]);
 
   // ── finishSession ───────────────────────────────────────────────────────────
-  const finishSession = useCallback(async () => {
+  const finishSession = useCallback(async (early = false) => {
+    if (early) setEndedEarly(true);
     // Only show words the user successfully typed (stage 3 correct) in the match round.
     // Fall back to all session words if fewer than 2 were completed correctly.
     const completed = words.filter((w) => correctWordIdsRef.current.has(w.id));
     setMatchRoundWords(completed.length >= 2 ? completed : words);
     setShowMatchRound(true);
-  }, [sessionMode, totalWords, saveProgress, words]);
+  }, [words]);
 
   useEffect(() => {
     if (totalWords > 0 && queue.length === 0 && !done && !showMatchRound) finishSession();
@@ -535,7 +540,7 @@ export default function QuizSession({
     setSelectedOption(null);
     blockUntilRef.current = Date.now() + 200;
     advance(card, false, retryCards);
-    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
+    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession(true);
   }
 
   function handleStage2rSelect(index: number) {
@@ -576,7 +581,7 @@ export default function QuizSession({
     setSelectedOption(null);
     blockUntilRef.current = Date.now() + 200;
     advance(card, false, retryCards);
-    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
+    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession(true);
   }
 
   function handleStage3Submit() {
@@ -659,7 +664,7 @@ export default function QuizSession({
     } else {
       advance(card, false, retryCards);
     }
-    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession();
+    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession(true);
   }
 
   function handleStage3sSubmit() {
@@ -714,37 +719,72 @@ export default function QuizSession({
 
   // ── Done screen ───────────────────────────────────────────────────────────────
   if (done) {
-    const highMistakes = sessionMode === 'study' && totalWords > 0 && mistakeWordCount / totalWords > 0.3;
+    // One outcome model, so every number on this screen reconciles (issue #147).
+    // Invariant: firstTry + stumbled + notMastered === totalWords.
+    const mastered    = correctWordIdsRef.current.size;
+    const stumbled    = Array.from(correctWordIdsRef.current).filter((id) => mistakeWordIdsRef.current.has(id)).length;
+    const firstTry    = mastered - stumbled;
+    const notMastered = Math.max(0, totalWords - mastered);
+    // Review mode has no fail state — it is a repetition drill, not a lesson to pass.
+    const isStudy     = sessionMode === 'study';
+    const passed      = notMastered === 0 && !endedEarly;
+
     return (
       <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
         <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
+          <div className={`w-[600px] h-[400px] blur-[120px] rounded-full mt-[-100px] ${passed ? 'bg-emerald-100/40' : 'bg-amber-100/40'}`} />
         </div>
         <div className="relative z-10 text-center max-w-sm w-full">
-          <div className="text-5xl mb-6">🎉</div>
+          <div className="text-5xl mb-6" data-testid="result-emoji">{passed ? '😊' : '😢'}</div>
           <h1 className="font-headline text-2xl font-bold mb-2">{tr.common.sessionDone}</h1>
-          <p className="text-gray-400 mb-8">
-            {tr.common.correctOf.replace('{correct}', String(correctWords)).replace('{total}', String(totalWords))}
+          {isStudy && (
+            <p
+              className={`text-base font-semibold mb-2 ${passed ? 'text-emerald-700' : 'text-amber-700'}`}
+              data-testid="result-verdict"
+              data-passed={passed ? 'true' : 'false'}
+            >
+              {passed ? tr.common.lessonPassed : tr.common.lessonNotPassed}
+            </p>
+          )}
+          <p className="text-gray-400 mb-8" data-testid="result-headline" data-total={totalWords}>
+            {tr.common.correctOf.replace('{correct}', String(mastered)).replace('{total}', String(totalWords))}
           </p>
           <div className="flex gap-4 justify-center mb-8">
-            <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{correctWords}</div>
-              <div className="text-gray-400 text-sm mt-1">{tr.common.correctLabel}</div>
+            <div className="bg-white border border-gray-900 rounded-2xl px-5 sm:px-6 py-5 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-600" data-testid="tile-first-try">{firstTry}</div>
+              <div className="text-gray-400 text-sm mt-1">{tr.common.firstTryLabel}</div>
             </div>
-            <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-amber-600">{mistakeWordCount}</div>
-              <div className="text-gray-400 text-sm mt-1">{tr.common.errorsLabel}</div>
+            <div className="bg-white border border-gray-900 rounded-2xl px-5 sm:px-6 py-5 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-amber-600" data-testid="tile-stumbled">{stumbled}</div>
+              <div className="text-gray-400 text-sm mt-1">{tr.common.stumbledLabel}</div>
             </div>
+            {notMastered > 0 && (
+              <div className="bg-white border border-gray-900 rounded-2xl px-5 sm:px-6 py-5 text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-rose-600" data-testid="tile-not-mastered">{notMastered}</div>
+                <div className="text-gray-400 text-sm mt-1">{tr.common.notMasteredLabel}</div>
+              </div>
+            )}
           </div>
-          {highMistakes && (
-            <p className="text-gray-500 text-sm mb-6 px-2">{tr.common.relearnSuggestion}</p>
+          {endedEarly && (
+            <p className="text-amber-700 text-sm mb-3 px-2" data-testid="result-ended-early">{tr.common.endedEarly}</p>
+          )}
+          {isStudy && (
+            <p className="text-gray-500 text-sm mb-6 px-2" data-testid="result-message">
+              {!passed
+                ? (endedEarly ? tr.common.relearnSuggestion : tr.common.lessonNotPassedHint)
+                : stumbled > 0
+                  ? tr.common.masteredWithMistakes.replace('{count}', String(stumbled))
+                  : tr.common.perfectSession}
+            </p>
           )}
           <div className="flex flex-col gap-3">
             <button
               onClick={() => { router.refresh(); onRepeat(); }}
               className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
             >
-              {sessionMode === 'study' ? tr.common.oneLessonMore : tr.common.repeatMore}
+              {!isStudy
+                ? tr.common.repeatMore
+                : passed ? tr.common.oneLessonMore : tr.common.restartLesson}
             </button>
             <button
               onClick={() => router.push(backHref)}

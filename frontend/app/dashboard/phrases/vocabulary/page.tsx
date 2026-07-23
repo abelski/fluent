@@ -15,6 +15,7 @@ interface LearnedPhrase {
   chapter_title: string | null;
   program_id: number;
   program_title: string | null;
+  program_title_en: string | null;
   lesson_stage: number;
   next_review: string | null;
 }
@@ -201,7 +202,8 @@ export default function PhrasesVocabularyPage() {
                         {p.text}
                         {p.program_title && (
                           <p className="text-xs text-gray-400 font-normal mt-0.5">
-                            {p.program_title}{p.chapter_title ? ` · ${p.chapter_title}` : ''}
+                            {lang === 'en' ? (p.program_title_en || p.program_title) : p.program_title}
+                            {p.chapter_title ? ` · ${p.chapter_title}` : ''}
                           </p>
                         )}
                       </td>

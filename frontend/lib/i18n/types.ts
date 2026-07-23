@@ -24,6 +24,17 @@ export interface Translations {
     correctOf: string; // e.g. "Correct {correct} of {total}"
     correctLabel: string;
     errorsLabel: string;
+    // ── Session result (issue #147) ──
+    lessonPassed: string;
+    lessonNotPassed: string;
+    lessonNotPassedHint: string;
+    endedEarly: string; // shown when quick mode aborted the lesson early
+    firstTryLabel: string;
+    stumbledLabel: string;
+    notMasteredLabel: string;
+    masteredWithMistakes: string; // e.g. "... {count} words ..."
+    perfectSession: string;
+    restartLesson: string;
     limitTitle: string;
     limitBody: string;
     getPremium: string;
@@ -666,6 +677,13 @@ export interface Translations {
     statusInProgress: string;
     statusNew: string;
     starHint: string;
+    // Program detail page chrome (issue #148)
+    backToPrograms: string;
+    studyAll: string;
+    newCount: string; // "новых" / "new" — third counter under the progress bar
+    colPhrase: string;
+    colTranslation: string;
+    colLevel: string;
   };
   myWordLists: {
     myLists: string;

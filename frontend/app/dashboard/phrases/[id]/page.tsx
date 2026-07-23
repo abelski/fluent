@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, resolvePhraseId } from '../../../../lib/api';
+import { useT } from '../../../../lib/useT';
 
 interface PhraseRow {
   id: number;
@@ -26,7 +27,6 @@ interface ProgramDetail {
   phrases: PhraseRow[];
 }
 
-const STAGE_LABELS: Record<number, string> = { 0: 'Новая', 1: 'Изучается', 2: 'Освоена' };
 const STAGE_COLORS: Record<number, string> = {
   0: 'text-gray-400',
   1: 'text-amber-500',
@@ -43,6 +43,17 @@ export default function PhraseProgramDetailPage() {
   const { id: _id } = useParams<{ id: string }>();
   const id = resolvePhraseId(_id);
   const router = useRouter();
+  const { tr, lang, plural } = useT();
+
+  const stageLabels: Record<number, string> = {
+    0: tr.phraseLists.statusNew,
+    1: tr.phraseLists.statusInProgress,
+    2: tr.phraseLists.statusLearned,
+  };
+  // Fall back to Russian when a phrase has no English yet — a blank cell is worse
+  // than the other language (see issue #117).
+  const phraseTranslation = (p: PhraseRow) =>
+    lang === 'en' ? (p.translation_en || p.translation) : p.translation;
 
   const [program, setProgram] = useState<ProgramDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,6 +113,10 @@ export default function PhraseProgramDetailPage() {
   const hasChapters = chapters.some((c) => c.num !== null);
   const masteredCount = program.phrases.filter((p) => p.lesson_stage === 2).length;
   const learningCount = program.phrases.filter((p) => p.lesson_stage === 1).length;
+  const programTitle = (lang === 'en' ? (program.title_en || program.title) : program.title);
+  const programDescription = lang === 'en'
+    ? (program.description_en || program.description)
+    : program.description;
 
   return (
     <main className="bg-slate-50 text-gray-900 min-h-screen">
@@ -113,24 +128,26 @@ export default function PhraseProgramDetailPage() {
         {/* Back */}
         <div className="mb-4">
           <Link href="/dashboard/phrases" className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
-            ← Назад к программам
+            {tr.phraseLists.backToPrograms}
           </Link>
         </div>
 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
-            <h1 className="font-headline text-3xl font-bold">{program.title}</h1>
-            {program.description && (
-              <p className="text-gray-400 mt-1">{program.description}</p>
+            <h1 className="font-headline text-3xl font-bold">{programTitle}</h1>
+            {programDescription && (
+              <p className="text-gray-400 mt-1">{programDescription}</p>
             )}
-            <p className="text-gray-400 text-sm mt-2">{program.phrases.length} фраз</p>
+            <p className="text-gray-400 text-sm mt-2">
+              {program.phrases.length} {plural(program.phrases.length, tr.phraseLists.phrasesPlural)}
+            </p>
           </div>
           <button
             onClick={handleStudyAll}
             className="shrink-0 px-6 py-3 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm text-white"
           >
-            Учить всё
+            {tr.phraseLists.studyAll}
           </button>
         </div>
 
@@ -143,9 +160,9 @@ export default function PhraseProgramDetailPage() {
               <div className="bg-gray-200 flex-1" />
             </div>
             <div className="flex gap-4 text-xs text-gray-400">
-              <span><span className="text-emerald-600 font-medium">{masteredCount}</span> освоено</span>
-              <span><span className="text-amber-500 font-medium">{learningCount}</span> изучается</span>
-              <span><span className="font-medium">{program.phrases.length - masteredCount - learningCount}</span> новых</span>
+              <span><span className="text-emerald-600 font-medium">{masteredCount}</span> {tr.phraseLists.masteredWord}</span>
+              <span><span className="text-amber-500 font-medium">{learningCount}</span> {tr.phraseLists.learningWord}</span>
+              <span><span className="font-medium">{program.phrases.length - masteredCount - learningCount}</span> {tr.phraseLists.newCount}</span>
             </div>
           </div>
         )}
@@ -175,10 +192,12 @@ export default function PhraseProgramDetailPage() {
                     <div className="min-w-0">
                       <span className="font-semibold text-gray-900">
                         {hasChapters && ch.num !== null
-                          ? (ch.title ?? `Глава ${ch.num}`)
-                          : program.title}
+                          ? (ch.title ?? tr.phraseLists.chapter.replace('{n}', String(ch.num)))
+                          : programTitle}
                       </span>
-                      <span className="text-gray-400 text-sm ml-2">{ch.phrases.length} фраз</span>
+                      <span className="text-gray-400 text-sm ml-2">
+                        {ch.phrases.length} {plural(ch.phrases.length, tr.phraseLists.phrasesPlural)}
+                      </span>
                       {chMastered > 0 && (
                         <span className="text-emerald-600 text-xs ml-2">{chPct}%</span>
                       )}
@@ -191,7 +210,7 @@ export default function PhraseProgramDetailPage() {
                       onClick={(e) => { e.stopPropagation(); handleStudyChapter(ch.num!); }}
                       className="shrink-0 ml-3 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors"
                     >
-                      Учить
+                      {tr.phraseLists.study}
                     </button>
                   )}
                 </div>
@@ -209,9 +228,9 @@ export default function PhraseProgramDetailPage() {
                 {!isCollapsed && (
                   <div className="border-t border-gray-900">
                     <div className="grid grid-cols-[1fr_1fr_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-2 border-b border-gray-100">
-                      <span>Фраза</span>
-                      <span>Перевод</span>
-                      <span>Уровень</span>
+                      <span>{tr.phraseLists.colPhrase}</span>
+                      <span>{tr.phraseLists.colTranslation}</span>
+                      <span>{tr.phraseLists.colLevel}</span>
                     </div>
                     {ch.phrases.map((phrase, i) => (
                       <div
@@ -221,9 +240,9 @@ export default function PhraseProgramDetailPage() {
                         }`}
                       >
                         <span className="font-medium text-gray-900 text-sm">{phrase.text}</span>
-                        <span className="text-gray-500 text-sm">{phrase.translation}</span>
+                        <span className="text-gray-500 text-sm" data-testid="phrase-translation">{phraseTranslation(phrase)}</span>
                         <span className={`text-xs font-medium ${STAGE_COLORS[phrase.lesson_stage] ?? 'text-gray-400'}`}>
-                          {STAGE_LABELS[phrase.lesson_stage] ?? ''}
+                          {stageLabels[phrase.lesson_stage] ?? ''}
                         </span>
                       </div>
                     ))}

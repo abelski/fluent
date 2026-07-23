@@ -12,6 +12,7 @@ load_dotenv()
 from sqlmodel import Session, select, delete
 from database import engine, create_db_and_tables
 from models import Phrase, PhraseProgram, UserPhraseProgramEnrollment, UserPhraseProgress
+from scripts.phrase_translations_en_a11 import TRANSLATIONS as TRANSLATIONS_EN
 
 # ---------------------------------------------------------------------------
 # Chapter phrase data — (lithuanian_text, russian_translation)
@@ -323,6 +324,9 @@ def main():
                     program_id=program.id,
                     text=text,
                     translation=translation,
+                    # Without this the program seeds with translation_en = NULL and
+                    # English users silently fall back to Russian (issue #148).
+                    translation_en=TRANSLATIONS_EN.get(text),
                     position=position,
                     chapter=chapter_num,
                     chapter_title=chapter_title,

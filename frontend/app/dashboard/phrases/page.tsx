@@ -73,7 +73,7 @@ const DIFFICULTY_BADGE: Record<number, string> = {
 
 export default function PhrasesPage() {
   const router = useRouter();
-  const { tr, plural } = useT();
+  const { tr, plural, lang } = useT();
   const t = tr.phraseLists;
   const listDifficultyLabels: Record<number, string> = { 1: t.easy, 2: t.medium, 3: t.hard };
   const [programs, setPrograms] = useState<PhraseProgramSummary[]>([]);
@@ -504,7 +504,9 @@ export default function PhrasesPage() {
                     className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="font-semibold text-gray-900">{program.title}</span>
+                      <span className="font-semibold text-gray-900">
+                        {lang === 'en' ? (program.title_en || program.title) : program.title}
+                      </span>
                       <span className="text-gray-400 text-sm">{program.phrase_count} {plural(program.phrase_count, t.phrasesPlural)}</span>
                       {listDifficultyLabels[program.difficulty] && (
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${DIFFICULTY_BADGE[program.difficulty]}`}>
@@ -547,7 +549,7 @@ export default function PhrasesPage() {
                             const learningPct = ch.total > 0 ? (ch.learning / ch.total) * 100 : 0;
                             const chapterLabel = ch.num !== null
                               ? (ch.title ?? t.chapter.replace('{n}', String(ch.num)))
-                              : program.title;
+                              : (lang === 'en' ? (program.title_en || program.title) : program.title);
                             const studyHref = ch.num !== null
                               ? `/dashboard/phrases/${program.id}/study?chapter=${ch.num}`
                               : `/dashboard/phrases/${program.id}/study`;
