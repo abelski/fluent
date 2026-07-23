@@ -15,6 +15,7 @@ import {
   type PhraseListSummary,
 } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import StarLevelToggle from '../components/StarLevelToggle';
 import { getPhraseStarLevel, setPhraseStarLevel } from '../../../lib/starLevel';
 import ProgressStatCard from '../components/ProgressStatCard';
 import QuotaBanner from '../components/QuotaBanner';
@@ -347,27 +348,14 @@ export default function PhrasesPage() {
             {openMyLists && (
               <div className="px-5 py-4 border-t border-gray-100">
                 {myLists.length > 0 && (
-                  <div className="flex items-center gap-2 mb-4" data-testid="phrase-star-selector">
-                    <span className="text-sm text-gray-400">{tr.lists.starSelectorLabel}</span>
-                    <button
-                      onClick={() => handlePhraseStarLevel(phraseStarLevel === 3 ? 1 : phraseStarLevel + 1)}
-                      aria-label={tr.lists.starSelectorLabel}
-                      className="relative w-16 h-7 rounded-full bg-gray-100 border border-black transition-colors"
-                    >
-                      <span className="absolute inset-0 flex items-center justify-between px-2.5 pointer-events-none">
-                        <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
-                        <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
-                        <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
-                      </span>
-                      <span
-                        className="absolute top-0.5 h-6 w-6 rounded-full bg-gray-900 shadow-sm transition-all duration-300 ease-out flex items-center justify-center text-white text-[7px] tracking-tighter"
-                        style={{
-                          left: phraseStarLevel === 1 ? '2px' : phraseStarLevel === 2 ? 'calc(50% - 12px)' : 'calc(100% - 26px)',
-                        }}
-                      >
-                        {'★'.repeat(phraseStarLevel)}
-                      </span>
-                    </button>
+                  <div className="mb-4">
+                    <StarLevelToggle
+                      value={phraseStarLevel as 1 | 2 | 3}
+                      onChange={handlePhraseStarLevel}
+                      label={tr.lists.starSelectorLabel}
+                      levelLabels={[tr.lists.star1Label, tr.lists.star2Label, tr.lists.star3Label]}
+                      testId="phrase-star-selector"
+                    />
                   </div>
                 )}
                 {myLists.length === 0 ? (

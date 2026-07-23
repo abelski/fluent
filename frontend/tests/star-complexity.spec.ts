@@ -33,38 +33,82 @@ test.describe('Star complexity selector', () => {
     await page.route('**/api/words/*/progress', (route) => route.fulfill({ json: { ok: true } }));
   });
 
+
+  // The selector is a single pill the user cycles through (1 → 2 → 3 → 1),
+  // not three discrete buttons as in the original design.
+  const toggle = (page: import('@playwright/test').Page) =>
+    page.getByTestId('star-toggle');
+
+  async function setLevel(page: import('@playwright/test').Page, level: 1 | 2 | 3) {
+    const t = toggle(page);
+    await expect(t).toBeVisible({ timeout: 5000 });
+    for (let i = 0; i < 3; i++) {
+      if ((await t.getAttribute('data-star-level')) === String(level)) return;
+      await t.click();
+    }
+    throw new Error(`could not reach star level ${level}`);
+  }
+
   test('star selector is visible on lists page', async ({ page }) => {
     await page.goto('/dashboard/lists');
-    await expect(page.locator('button:has-text("★")').first()).toBeVisible({ timeout: 5000 });
+    await expect(toggle(page)).toBeVisible({ timeout: 5000 });
   });
 
-  test('default star level is 1 (★ button active) when no cookie set', async ({ page }) => {
+  test('default star level is 1 when no cookie set', async ({ page }) => {
     await page.addInitScript(() => {
       document.cookie = 'fluent_star_level=; max-age=0; path=/';
     });
     await page.goto('/dashboard/lists');
-    // The ★ button should have the active (dark) style
-    const starOneBtn = page.locator('button').filter({ hasText: /^★$/ });
-    await expect(starOneBtn).toBeVisible({ timeout: 5000 });
-    await expect(starOneBtn).toHaveClass(/bg-gray-900/);
+    const t = toggle(page);
+    await expect(t).toBeVisible({ timeout: 5000 });
+    await expect(t).toHaveAttribute('data-star-level', '1');
+    await expect(t).toHaveText('★');
   });
 
-  test('clicking ★★ sets cookie fluent_star_level=2', async ({ page }) => {
+  test('the knob and its track dots share the same three stops', async ({ page }) => {
+    // Regression guard: the dots were laid out independently of the knob, so at
+    // levels 1 and 3 the knob sat 3px inside the dot it was meant to cover.
     await page.goto('/dashboard/lists');
-    const starTwoBtn = page.locator('button').filter({ hasText: /^★★$/ });
-    await starTwoBtn.click();
+    const t = toggle(page);
+    await expect(t).toBeVisible({ timeout: 5000 });
+
+    for (const level of [1, 2, 3] as const) {
+      await setLevel(page, level);
+      // The knob slides with a 300ms transition — measure only once it settles.
+      await page.waitForTimeout(450);
+      const offset = await t.evaluate((btn, lvl) => {
+        const box = btn.getBoundingClientRect();
+        const dots = Array.from(btn.querySelectorAll(':scope > span:first-child > span'));
+        const knob = btn.querySelector(':scope > span:last-child') as HTMLElement;
+        const k = knob.getBoundingClientRect();
+        const d = (dots[lvl - 1] as HTMLElement).getBoundingClientRect();
+        return Math.abs((k.left + k.width / 2) - (d.left + d.width / 2));
+      }, level);
+      expect(offset, `knob must sit on dot ${level}`).toBeLessThanOrEqual(0.5);
+    }
+  });
+
+  test('cycling to ★★ sets cookie fluent_star_level=2', async ({ page }) => {
+    await page.goto('/dashboard/lists');
+    await setLevel(page, 2);
     const cookies = await page.context().cookies();
     const starCookie = cookies.find((c) => c.name === 'fluent_star_level');
     expect(starCookie?.value).toBe('2');
   });
 
-  test('clicking ★★★ sets cookie fluent_star_level=3', async ({ page }) => {
+  test('cycling to ★★★ sets cookie fluent_star_level=3', async ({ page }) => {
     await page.goto('/dashboard/lists');
-    const starThreeBtn = page.locator('button').filter({ hasText: /^★★★$/ });
-    await starThreeBtn.click();
+    await setLevel(page, 3);
     const cookies = await page.context().cookies();
     const starCookie = cookies.find((c) => c.name === 'fluent_star_level');
     expect(starCookie?.value).toBe('3');
+  });
+
+  test('cycling past ★★★ wraps back to ★', async ({ page }) => {
+    await page.goto('/dashboard/lists');
+    await setLevel(page, 3);
+    await toggle(page).click();
+    await expect(toggle(page)).toHaveAttribute('data-star-level', '1');
   });
 
   test('study page passes star_level=2 to API when cookie is 2', async ({ page }) => {
@@ -129,7 +173,7 @@ test.describe('Star complexity selector', () => {
     // At ★ level: label shows "2 ★"
     await expect(page.locator('text=2 ★').first()).toBeVisible({ timeout: 5000 });
     // Switch to ★★ level
-    await page.locator('button').filter({ hasText: /^★★$/ }).click();
+    await setLevel(page, 2);
     // At ★★ level: star_counts["2"]=4, word_count=5 → label shows "4 ★★"
     await expect(page.locator('text=4 ★★').first()).toBeVisible({ timeout: 5000 });
   });
@@ -141,7 +185,7 @@ test.describe('Star complexity selector', () => {
       })
     );
     await page.goto('/dashboard/lists');
-    await page.locator('button').filter({ hasText: /^★★★$/ }).click();
+    await setLevel(page, 3);
     await expect(page.locator('text=5 ★★★').first()).not.toBeVisible({ timeout: 5000 });
   });
 });

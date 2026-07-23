@@ -19,6 +19,7 @@ import {
 } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 import QuotaBanner from '../components/QuotaBanner';
+import StarLevelToggle from '../components/StarLevelToggle';
 import WelcomeModal from '../../../components/WelcomeModal';
 import { useT } from '../../../lib/useT';
 import { getStarLevel, setStarLevel } from '../../../lib/starLevel';
@@ -272,34 +273,12 @@ export default function ListsPage() {
 
         <div className="flex flex-wrap items-center gap-4 mb-2">
           <h1 className="font-headline text-3xl font-bold">{tr.lists.title}</h1>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">{tr.lists.starSelectorLabel}</span>
-            <div className="relative group">
-              <button
-                onClick={() => handleStarLevel(starLevel === 3 ? 1 : starLevel + 1)}
-                aria-label={tr.lists.starSelectorLabel}
-                className="relative w-16 h-7 rounded-full bg-gray-100 border border-black transition-colors"
-              >
-                <span className="absolute inset-0 flex items-center justify-between px-2.5 pointer-events-none">
-                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
-                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
-                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
-                </span>
-                <span
-                  className="absolute top-0.5 h-6 w-6 rounded-full bg-gray-900 shadow-sm transition-all duration-300 ease-out flex items-center justify-center text-white text-[7px] tracking-tighter"
-                  style={{
-                    left: starLevel === 1 ? '2px' : starLevel === 2 ? 'calc(50% - 12px)' : 'calc(100% - 26px)',
-                  }}
-                >
-                  {'★'.repeat(starLevel)}
-                </span>
-              </button>
-              <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                {'★'.repeat(starLevel)} — {[tr.lists.star1Label, tr.lists.star2Label, tr.lists.star3Label][starLevel - 1]}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-              </div>
-            </div>
-          </div>
+          <StarLevelToggle
+            value={starLevel as 1 | 2 | 3}
+            onChange={handleStarLevel}
+            label={tr.lists.starSelectorLabel}
+            levelLabels={[tr.lists.star1Label, tr.lists.star2Label, tr.lists.star3Label]}
+          />
         </div>
         <p className="text-gray-400 mb-8">{tr.lists.subtitle}</p>
 
