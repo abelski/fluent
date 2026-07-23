@@ -13,6 +13,7 @@ interface LearnedPhrase {
   translation_en: string | null;
   chapter: number | null;
   chapter_title: string | null;
+  chapter_title_en: string | null;
   program_id: number;
   program_title: string | null;
   program_title_en: string | null;
@@ -203,7 +204,10 @@ export default function PhrasesVocabularyPage() {
                         {p.program_title && (
                           <p className="text-xs text-gray-400 font-normal mt-0.5">
                             {lang === 'en' ? (p.program_title_en || p.program_title) : p.program_title}
-                            {p.chapter_title ? ` · ${p.chapter_title}` : ''}
+                            {(() => {
+                              const ch = lang === 'en' ? (p.chapter_title_en || p.chapter_title) : p.chapter_title;
+                              return ch ? ` · ${ch}` : '';
+                            })()}
                           </p>
                         )}
                       </td>

@@ -428,7 +428,8 @@ class Phrase(SQLModel, table=True):
     translation_en: Optional[str] = None  # English translation, e.g. "Good morning!"
     position: int = Field(default=0)    # display order within program
     chapter: Optional[int] = None       # chapter number within the program (e.g. 1-9)
-    chapter_title: Optional[str] = None  # chapter label, e.g. "Koks jūsų vardas?"
+    chapter_title: Optional[str] = None  # Russian chapter label, e.g. "Глава 1: Как вас зовут?"
+    chapter_title_en: Optional[str] = None  # English chapter label, e.g. "Chapter 1: What is your name?"
     alt_texts: Optional[str] = None      # pipe-separated alternative accepted answers, e.g. "Reikia važiuoti..."
     created_at: datetime = Field(default_factory=_utcnow)
 

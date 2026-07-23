@@ -31,12 +31,16 @@ interface PhraseRow {
   id: number;
   chapter: number | null;
   chapter_title: string | null;
+  chapter_title_en: string | null;
   lesson_stage: number;
 }
 
 interface ChapterSummary {
   num: number | null;
+  // Both variants are kept so the label follows the RU/EN toggle without a
+  // refetch — this summary is cached in state (issue #149).
   title: string | null;
+  title_en: string | null;
   total: number;
   mastered: number;
   learning: number;
@@ -186,7 +190,12 @@ export default function PhrasesPage() {
         for (const p of data.phrases as PhraseRow[]) {
           const key = p.chapter !== null ? String(p.chapter) : 'null';
           if (!map.has(key)) {
-            map.set(key, { num: p.chapter, title: p.chapter_title, total: 0, mastered: 0, learning: 0 });
+            map.set(key, {
+              num: p.chapter,
+              title: p.chapter_title,
+              title_en: p.chapter_title_en,
+              total: 0, mastered: 0, learning: 0,
+            });
           }
           const ch = map.get(key)!;
           ch.total++;
@@ -547,8 +556,9 @@ export default function PhrasesPage() {
                             const isDone = ch.total > 0 && ch.mastered >= ch.total;
                             const masteredPct = ch.total > 0 ? (ch.mastered / ch.total) * 100 : 0;
                             const learningPct = ch.total > 0 ? (ch.learning / ch.total) * 100 : 0;
+                            const chapterTitle = lang === 'en' ? (ch.title_en || ch.title) : ch.title;
                             const chapterLabel = ch.num !== null
-                              ? (ch.title ?? t.chapter.replace('{n}', String(ch.num)))
+                              ? (chapterTitle ?? t.chapter.replace('{n}', String(ch.num)))
                               : (lang === 'en' ? (program.title_en || program.title) : program.title);
                             const studyHref = ch.num !== null
                               ? `/dashboard/phrases/${program.id}/study?chapter=${ch.num}`

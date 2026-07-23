@@ -337,15 +337,22 @@ def admin_list_phrases(
     phrases = session.exec(
         select(Phrase).where(Phrase.program_id == program_id).order_by(Phrase.position)
     ).all()
-    return [
-        {
-            "id": p.id, "text": p.text,
-            "translation": p.translation, "translation_en": p.translation_en,
-            "position": p.position, "chapter": p.chapter, "chapter_title": p.chapter_title,
-            "alt_texts": p.alt_texts,
-        }
-        for p in phrases
-    ]
+    return [_phrase_payload(p) for p in phrases]
+
+
+def _phrase_payload(phrase: Phrase) -> dict:
+    """Admin-facing representation of a phrase — the DB is the source of truth."""
+    return {
+        "id": phrase.id,
+        "text": phrase.text,
+        "translation": phrase.translation,
+        "translation_en": phrase.translation_en,
+        "position": phrase.position,
+        "alt_texts": phrase.alt_texts,
+        "chapter": phrase.chapter,
+        "chapter_title": phrase.chapter_title,
+        "chapter_title_en": phrase.chapter_title_en,
+    }
 
 
 class PhraseCreate(BaseModel):
@@ -354,6 +361,9 @@ class PhraseCreate(BaseModel):
     translation_en: Optional[str] = None
     position: int = 0
     alt_texts: Optional[str] = None
+    chapter: Optional[int] = None
+    chapter_title: Optional[str] = None       # Russian chapter label
+    chapter_title_en: Optional[str] = None    # English chapter label
 
 
 @router.post("/admin/phrase-programs/{program_id}/phrases")
@@ -382,11 +392,14 @@ def admin_create_phrase(
         translation_en=body.translation_en.strip() if body.translation_en else None,
         position=body.position,
         alt_texts=body.alt_texts.strip() if body.alt_texts else None,
+        chapter=body.chapter,
+        chapter_title=body.chapter_title.strip() if body.chapter_title else None,
+        chapter_title_en=body.chapter_title_en.strip() if body.chapter_title_en else None,
     )
     session.add(phrase)
     session.commit()
     session.refresh(phrase)
-    return {"id": phrase.id, "text": phrase.text, "translation": phrase.translation, "translation_en": phrase.translation_en, "position": phrase.position, "alt_texts": phrase.alt_texts}
+    return _phrase_payload(phrase)
 
 
 @router.put("/admin/phrases/{phrase_id}")
@@ -413,9 +426,22 @@ def admin_update_phrase(
     phrase.translation_en = body.translation_en.strip() if body.translation_en else None
     phrase.position = body.position
     phrase.alt_texts = body.alt_texts.strip() if body.alt_texts else None
+
+    # Chapter fields are only touched when the client actually sent them. An
+    # editor that omits them (as the phrase editor did before these fields
+    # existed) must not silently wipe a phrase's chapter grouping.
+    sent = body.model_fields_set
+    if "chapter" in sent:
+        phrase.chapter = body.chapter
+    if "chapter_title" in sent:
+        phrase.chapter_title = body.chapter_title.strip() if body.chapter_title else None
+    if "chapter_title_en" in sent:
+        phrase.chapter_title_en = body.chapter_title_en.strip() if body.chapter_title_en else None
+
     session.add(phrase)
     session.commit()
-    return {"id": phrase.id, "text": phrase.text, "translation": phrase.translation, "translation_en": phrase.translation_en, "position": phrase.position, "alt_texts": phrase.alt_texts}
+    session.refresh(phrase)
+    return _phrase_payload(phrase)
 
 
 @router.delete("/admin/phrases/{phrase_id}")
@@ -537,6 +563,7 @@ def get_phrase_program(
                 "translation_en": p.translation_en,
                 "chapter": p.chapter,
                 "chapter_title": p.chapter_title,
+                "chapter_title_en": p.chapter_title_en,
                 "position": p.position,
                 "lesson_stage": progress_map.get(p.id, 0),
             }
@@ -940,6 +967,7 @@ def get_learned_phrases(
             "translation_en": phrase.translation_en,
             "chapter": phrase.chapter,
             "chapter_title": phrase.chapter_title,
+            "chapter_title_en": phrase.chapter_title_en,
             "program_id": phrase.program_id,
             "program_title": program.title if program else None,
             "program_title_en": program.title_en if program else None,

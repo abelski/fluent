@@ -13,6 +13,7 @@ interface PhraseRow {
   translation_en: string | null;
   chapter: number | null;
   chapter_title: string | null;
+  chapter_title_en: string | null;
   position: number;
   lesson_stage: number; // 0=new, 1=fill-word, 2=mastered
 }
@@ -54,6 +55,8 @@ export default function PhraseProgramDetailPage() {
   // than the other language (see issue #117).
   const phraseTranslation = (p: PhraseRow) =>
     lang === 'en' ? (p.translation_en || p.translation) : p.translation;
+  const chapterTitle = (p: PhraseRow) =>
+    lang === 'en' ? (p.chapter_title_en || p.chapter_title) : p.chapter_title;
 
   const [program, setProgram] = useState<ProgramDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +107,7 @@ export default function PhraseProgramDetailPage() {
   for (const p of program.phrases) {
     const last = chapters[chapters.length - 1];
     if (!last || last.num !== p.chapter) {
-      chapters.push({ num: p.chapter, title: p.chapter_title, phrases: [p] });
+      chapters.push({ num: p.chapter, title: chapterTitle(p), phrases: [p] });
     } else {
       last.phrases.push(p);
     }
