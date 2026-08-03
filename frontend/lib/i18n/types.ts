@@ -607,6 +607,8 @@ export interface Translations {
     forgotBtn: string;
     forgotAnswer: string;
     assembleLabel: string;
+    assembleTranslationLabel: string;
+    assembleCorrect: string;
   };
   phraseLists: {
     myLists: string;

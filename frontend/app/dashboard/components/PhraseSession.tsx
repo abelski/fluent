@@ -4,10 +4,16 @@
  * PhraseSession — 3-stage phrase learning component.
  *
  * Stage 0 (intro):   Show full phrase + translation. User taps "Got it" or "Hard".
- * Stage 1 (fill):    Phrase with one word blanked as ___. First MCQ (4 options),
- *                    then type the blanked word. Mistake → re-queue, record mistake_word.
+ * Stage 1 (fill):    Assemble the translation from tiles (from-LT), assemble the
+ *                    Lithuanian phrase from tiles (to-LT) — each skipped when its
+ *                    text has ≤3 words — then MCQ (4 options), then type the
+ *                    blanked word. Mistake → re-queue, record mistake_word.
+ *                    A mistake's gap_retry re-queue re-runs the assembly
+ *                    sub-steps too (never MCQ), landing on typing last.
  * Stage 2 (type):    Show translation only. User types the full phrase.
  *                    Validation: complexity-aware, diacritic-tolerant.
+ *                    A mistake here (stage2_retry) also re-runs the assembly
+ *                    sub-steps first, then falls through to this typing UI.
  *
  * Parity features with QuizSession:
  *  - Enter/Space key advances past correct/wrong feedback
@@ -137,7 +143,9 @@ function findMistakeWordSyllable(typed: string, target: string): { syllable: str
 
 // ── Queue helpers ─────────────────────────────────────────────────────────────
 
-type QueueMode = 'normal' | 'gap_retry' | 'full_retake';
+// 'stage2_retry' — mistake on an already-learned (stage-2) phrase: re-drill via
+// the assembly sub-steps before returning to the full-phrase typing retry.
+type QueueMode = 'normal' | 'gap_retry' | 'full_retake' | 'stage2_retry';
 
 interface QueueItem {
   phrase: PhraseStudyItem;
@@ -149,13 +157,14 @@ function buildQueue(phrases: PhraseStudyItem[]): QueueItem[] {
   return phrases.map((p) => ({ phrase: p, retries: 0, mode: 'normal' }));
 }
 
-// ── Sub-steps within stage 1 ──────────────────────────────────────────────────
-type Stage1Step = 'mcq' | 'type';
-
-// ── Sub-steps within stage 2 ──────────────────────────────────────────────────
-// 'assemble' — click shuffled word tiles into order (only for >3-word phrases,
-// server sends word_tiles); 'type' — the classic full typed recall.
-type Stage2Step = 'assemble' | 'type';
+// ── Sub-steps within stage 1 (and the stage2_retry drill) ─────────────────────
+// 'assemble_from_lt' — LT phrase shown, click translation tiles into order;
+// 'assemble_to_lt'   — translation shown, click LT word tiles into order
+// (each only when the server sent tiles for that text, i.e. >3 words);
+// 'mcq' — pick the blanked word; 'type' — type the blanked word.
+// 'final_retype' — stage2_retry only: after the drill above, fall through to
+// the real stage-2 full-phrase retype (the exercise that was actually missed).
+type Stage1Step = 'assemble_from_lt' | 'assemble_to_lt' | 'mcq' | 'type' | 'final_retype';
 
 function firstMisplacedWord(assembledWords: string[], target: string): string {
   const strip = (s: string) => s.replace(/[.,!?;:'"()/]/g, '');
@@ -200,6 +209,19 @@ export default function PhraseSession({
   const { tr, lang } = useT();
   const getTranslation = (p: PhraseStudyItem) =>
     (lang === 'en' && p.translation_en) ? p.translation_en : p.translation;
+  // Tiles for the from-LT assembly — same language rule as getTranslation
+  const translationTiles = (p: PhraseStudyItem): string[] | null =>
+    ((lang === 'en' && p.translation_en) ? p.translation_en_tiles : p.translation_tiles) ?? null;
+  const firstStage1Step = (p: PhraseStudyItem): Stage1Step =>
+    translationTiles(p) ? 'assemble_from_lt' : p.word_tiles ? 'assemble_to_lt' : 'mcq';
+  // gap_retry always skips MCQ (it re-drills the specific missed word by typing),
+  // so its fallback when there are no tiles is 'type', not 'mcq'
+  const firstGapRetryStep = (p: PhraseStudyItem): Stage1Step =>
+    translationTiles(p) ? 'assemble_from_lt' : p.word_tiles ? 'assemble_to_lt' : 'type';
+  // stage2_retry drills the full phrase from scratch: only the to-LT assembly
+  // (never the translation), then MCQ, then type — never skipped.
+  const firstStage2RetryStep = (p: PhraseStudyItem): Stage1Step =>
+    p.word_tiles ? 'assemble_to_lt' : 'mcq';
 
   // ── Settings ────────────────────────────────────────────────────────────────
   const [complexity, setComplexity] = useState<Complexity>('medium');
@@ -220,8 +242,7 @@ export default function PhraseSession({
   // ── Core state ───────────────────────────────────────────────────────────────
   const [queue, setQueue] = useState<QueueItem[]>(() => buildQueue(phrases));
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [stage1Step, setStage1Step] = useState<Stage1Step>('mcq');
-  const [stage2Step, setStage2Step] = useState<Stage2Step>(() => (phrases[0]?.word_tiles ? 'assemble' : 'type'));
+  const [stage1Step, setStage1Step] = useState<Stage1Step>(() => (phrases[0] ? firstStage1Step(phrases[0]) : 'mcq'));
   const [assembled, setAssembled] = useState<number[]>([]);
   const [assembleResult, setAssembleResult] = useState<'correct' | 'wrong' | null>(null);
   const [mcqSelected, setMcqSelected] = useState<string | null>(null);
@@ -258,7 +279,7 @@ export default function PhraseSession({
 
   // Memoize MCQ options so they don't reshuffle on every re-render (e.g. timer ticks)
   const mcqOptions = useMemo(() => {
-    if (!current || current.phrase.lesson_stage !== 1) return [];
+    if (!current || (current.phrase.lesson_stage !== 1 && current.mode !== 'stage2_retry')) return [];
     return buildMcqOptions(current.phrase.blank_word, current.phrase.mcq_distractors);
   // Recompute only when the card changes, not on every render
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -272,7 +293,7 @@ export default function PhraseSession({
     timerIntervalRef.current = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => { if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; } };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIdx, stage1Step, stage2Step, stage, useTimer, timerSeconds]);
+  }, [currentIdx, stage1Step, stage, useTimer, timerSeconds]);
 
   // Stop timer when answer is submitted
   useEffect(() => {
@@ -285,10 +306,17 @@ export default function PhraseSession({
   // ── Reset card state on index change ────────────────────────────────────────
   useEffect(() => {
     const nextItem = queue[currentIdx];
-    // gap_retry skips MCQ — go straight to typing sub-step
-    setStage1Step(nextItem?.mode === 'gap_retry' ? 'type' : 'mcq');
-    // full_retake skips assembly — go straight to typed recall
-    setStage2Step(nextItem?.phrase.word_tiles && nextItem.mode !== 'full_retake' ? 'assemble' : 'type');
+    // gap_retry re-drills a mistake: assembly sub-steps first (if tiles exist),
+    // then straight to typing — MCQ is always skipped.
+    // stage2_retry re-drills the whole phrase from scratch: to-LT assembly (if
+    // tiles), then MCQ, then type, then the real full-phrase retype.
+    // full_retake renders as stage 2, so its stage1Step is inert ('mcq').
+    setStage1Step(
+      nextItem?.mode === 'gap_retry' ? firstGapRetryStep(nextItem.phrase)
+      : nextItem?.mode === 'stage2_retry' ? firstStage2RetryStep(nextItem.phrase)
+      : nextItem?.mode === 'full_retake' || !nextItem ? 'mcq'
+      : firstStage1Step(nextItem.phrase),
+    );
     setAssembled([]);
     setAssembleResult(null);
     setMcqSelected(null);
@@ -304,8 +332,8 @@ export default function PhraseSession({
   }, [stage1Step]);
 
   useEffect(() => {
-    if (current?.phrase.lesson_stage === 2 && stage2Step === 'type' && textareaRef.current && window.innerWidth > 768) textareaRef.current.focus();
-  }, [current, stage2Step]);
+    if (current?.phrase.lesson_stage === 2 && textareaRef.current && window.innerWidth > 768) textareaRef.current.focus();
+  }, [current]);
 
   useEffect(() => {
     if (syllableChallenge) setTimeout(() => syllableInputRef.current?.focus(), 50);
@@ -317,15 +345,13 @@ export default function PhraseSession({
     const hasResult = mcqResult !== null || typeResult !== null || assembleResult !== null;
     if (hasResult) return;
     if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
-    // Mark as wrong
-    if (stage === 1) {
-      if (stage1Step === 'mcq') {
-        setMcqResult('wrong');
-      } else {
-        setTypeResult('wrong');
-      }
-    } else if (stage2Step === 'assemble') {
+    // Mark as wrong. stage1Step alone disambiguates the sub-step — it's only
+    // ever 'mcq'/assemble_* during a genuine MCQ/assembly render, whether that's
+    // real stage 1, gap_retry, or stage2_retry (whose `stage` stays 2 throughout).
+    if (stage1Step === 'assemble_from_lt' || stage1Step === 'assemble_to_lt') {
       setAssembleResult('wrong');
+    } else if (stage1Step === 'mcq') {
+      setMcqResult('wrong');
     } else {
       setTypeResult('wrong');
     }
@@ -334,7 +360,7 @@ export default function PhraseSession({
       setMistakeCount((c) => c + 1);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, useTimer, stage, stage1Step, stage2Step]);
+  }, [timeLeft, useTimer, stage, stage1Step]);
 
   // ── Enter key: advance past shown results ────────────────────────────────────
   useEffect(() => {
@@ -356,19 +382,46 @@ export default function PhraseSession({
 
       // Stage 0: buttons only — no keyboard shortcut (prevents accidental skip on key-repeat)
 
-      // Stage 1 MCQ wrong shown → advance directly (no syllable challenge — user clicked, didn't type)
-      if (s === 1 && stage1Step === 'mcq' && mcqResult === 'wrong') {
+      // Assembly wrong shown → advance (re-queue; no typed mistake to drill).
+      // Not gated on s===1: stage2_retry also runs assembly first while s stays 2.
+      if ((stage1Step === 'assemble_from_lt' || stage1Step === 'assemble_to_lt') && assembleResult === 'wrong') {
+        e.preventDefault();
+        blockUntilRef.current = Date.now() + 200;
+        if (stage1Step === 'assemble_to_lt') {
+          const tiles = current.phrase.word_tiles ?? [];
+          advanceQueue(1, firstMisplacedWord(assembled.map((i) => tiles[i]), current.phrase.text));
+        } else {
+          // from-LT: translation words must not pollute mistake_words_json (it feeds LT blank-word choice)
+          advanceQueue(1);
+        }
+        return;
+      }
+
+      // MCQ wrong shown → advance directly (no syllable challenge — user clicked,
+      // didn't type). Covers real stage 1 and stage2_retry's fill-word intro.
+      if ((s === 1 || current.mode === 'stage2_retry') && stage1Step === 'mcq' && mcqResult === 'wrong') {
         e.preventDefault();
         blockUntilRef.current = Date.now() + 200;
         advanceQueue(1, current.phrase.blank_word);
         return;
       }
 
-      // Stage 1 type result shown → advance
-      if (s === 1 && stage1Step === 'type' && typeResult !== null) {
+      // Blank-word type result shown → advance. Covers real stage 1 and
+      // stage2_retry's fill-word drill (excluded once it reaches final_retype,
+      // where stage1Step is 'final_retype', not 'type').
+      if ((s === 1 || current.mode === 'stage2_retry') && stage1Step === 'type' && typeResult !== null) {
         e.preventDefault();
         blockUntilRef.current = Date.now() + 200;
-        if (typeResult === 'correct') { advanceQueue(5); return; }
+        if (typeResult === 'correct') {
+          if (current.mode === 'stage2_retry') {
+            setTypeResult(null);
+            setTypeInput('');
+            setStage1Step('final_retype');
+          } else {
+            advanceQueue(5);
+          }
+          return;
+        }
         const bw = current.phrase.blank_word;
         pendingAdvanceRef.current = () => advanceQueue(1, bw);
         setSyllableChallenge({ syllable: bw, word: bw });
@@ -377,17 +430,10 @@ export default function PhraseSession({
         return;
       }
 
-      // Stage 2 assembly wrong shown → advance (re-queue; no typed mistake to drill)
-      if (s === 2 && stage2Step === 'assemble' && assembleResult === 'wrong') {
-        e.preventDefault();
-        blockUntilRef.current = Date.now() + 200;
-        const tiles = current.phrase.word_tiles ?? [];
-        advanceQueue(1, firstMisplacedWord(assembled.map((i) => tiles[i]), current.phrase.text));
-        return;
-      }
-
-      // Stage 2 type result shown → advance
-      if (s === 2 && typeResult !== null) {
+      // Full-phrase type result shown → advance. This is the real stage-2 retype
+      // (first pass, full_retake, or stage2_retry's final_retype step) — excluded
+      // while stage2_retry is still in its pre-drill (mcq/type sub-steps above).
+      if (s === 2 && (current.mode !== 'stage2_retry' || stage1Step === 'final_retype') && typeResult !== null) {
         e.preventDefault();
         blockUntilRef.current = Date.now() + 200;
         if (typeResult === 'correct') { advanceQueue(5); return; }
@@ -403,7 +449,7 @@ export default function PhraseSession({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, stage1Step, stage2Step, mcqResult, typeResult, assembleResult, assembled, saving, syllableChallenge, syllableResult]);
+  }, [current, stage1Step, mcqResult, typeResult, assembleResult, assembled, saving, syllableChallenge, syllableResult]);
 
   // ── Progress ──────────────────────────────────────────────────────────────────
   const progressPct = phrases.length > 0 ? (phrasesDone / phrases.length) * 100 : 0;
@@ -463,8 +509,12 @@ export default function PhraseSession({
           { phrase, retries: 0, mode: 'gap_retry' },
           { phrase, retries: 0, mode: 'full_retake' },
         );
+      } else if (quality < 3 && phrase.lesson_stage === 2 && current.retries < 2) {
+        // Mistake on an already-learned phrase → re-drill via assembly before retyping
+        const insertAt = Math.min(currentIdx + 1, next.length);
+        next.splice(insertAt, 0, { phrase, retries: current.retries + 1, mode: 'stage2_retry' });
       } else if (quality < 3 && current.retries < 2) {
-        // Mistakes on other stages (0, 2) keep existing retry behaviour
+        // Mistakes on stage 0 keep the existing simple retry behaviour
         const insertAt = Math.min(currentIdx + 1, next.length);
         next.splice(insertAt, 0, { phrase, retries: current.retries + 1, mode: 'normal' });
       } else if (quality < 3 && current.retries >= 2) {
@@ -487,7 +537,8 @@ export default function PhraseSession({
     }
 
     const isLast = currentIdx + 1 >= newQueue.length;
-    const isDone = quality >= 3 || current.mode === 'full_retake' || (current.mode === 'normal' && current.retries >= 2);
+    const isDone = quality >= 3 || current.mode === 'full_retake'
+      || ((current.mode === 'normal' || current.mode === 'stage2_retry') && current.retries >= 2);
     if (isLast && isDone) {
       setShowMatchRound(true);
     } else {
@@ -779,12 +830,136 @@ export default function PhraseSession({
     );
   }
 
-  // ── Stage 1: Fill word ────────────────────────────────────────────────────────
-  if (s === 1) {
+  // ── Assembly sub-steps: stage 1's first pass, AND stage2_retry's pre-drill ────
+  // before re-typing an already-learned phrase. `s` stays 2 for stage2_retry
+  // (nothing is faked), so this runs ahead of both the stage-1 and stage-2
+  // blocks below and falls through to whichever one applies once it's done.
+  if ((s === 1 || current.mode === 'stage2_retry') && (stage1Step === 'assemble_from_lt' || stage1Step === 'assemble_to_lt')) {
+    const fromLt = stage1Step === 'assemble_from_lt';
+    const tiles = (fromLt ? translationTiles(phrase) : phrase.word_tiles) ?? [];
+    const target = fromLt ? getTranslation(phrase) : phrase.text;
+    const prompt = fromLt ? phrase.text : getTranslation(phrase);
+
+    const advanceWrongAssembly = () => {
+      blockUntilRef.current = Date.now() + 800;
+      if (fromLt) {
+        // translation words must not pollute mistake_words_json (it feeds LT blank-word choice)
+        advanceQueue(1);
+      } else {
+        advanceQueue(1, firstMisplacedWord(assembled.map((i) => tiles[i]), phrase.text));
+      }
+    };
+
+    const handleTileClick = (tileIdx: number) => {
+      if (assembleResult) return;
+      const next = [...assembled, tileIdx];
+      setAssembled(next);
+      if (next.length === tiles.length) {
+        const attempt = next.map((i) => tiles[i]).join(' ');
+        const correct = checkPhrase(attempt, target, 'hard', fromLt ? null : phrase.alt_texts);
+        setAssembleResult(correct ? 'correct' : 'wrong');
+        if (correct) {
+          setTimeout(() => {
+            blockUntilRef.current = Date.now() + 300;
+            setAssembled([]);
+            setAssembleResult(null);
+            // gap_retry always drills the missed word by typing next, never via MCQ.
+            // stage2_retry (like a normal first pass) goes through MCQ next.
+            const afterAssembly = current.mode === 'gap_retry' ? 'type' : 'mcq';
+            setStage1Step(fromLt && phrase.word_tiles ? 'assemble_to_lt' : afterAssembly);
+          }, 900);
+        } else if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
+          mistakePhraseIdsRef.current.add(current.phrase.id);
+          setMistakeCount((c) => c + 1);
+        }
+      }
+    };
+
+    if (tiles.length > 0) {
+      return (
+        <main
+          className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10"
+          data-testid={fromLt ? 'phrase-session-stage1-assemble-from-lt' : 'phrase-session-stage1-assemble-to-lt'}
+        >
+          <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
+            <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
+          </div>
+          <div className="relative z-10 w-full max-w-sm">
+            <Header />
+            <ProgressBars />
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center mb-4">
+              <p className="text-xs text-purple-600 font-medium mb-3 uppercase tracking-wider">
+                {fromLt ? tr.phraseSession.assembleTranslationLabel : tr.phraseSession.assembleLabel}
+              </p>
+              <p className="text-xl sm:text-2xl text-gray-500 mb-4">{prompt}</p>
+              <div className="min-h-[3.5rem] border-t border-gray-100 pt-3 flex flex-wrap gap-2 justify-center" data-testid="assembled-row">
+                {assembled.map((tileIdx, pos) => (
+                  <button
+                    key={pos}
+                    onClick={() => { if (!assembleResult) setAssembled((a) => a.filter((_, j) => j !== pos)); }}
+                    className="py-2 px-3 rounded-xl text-sm font-medium bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 transition-colors"
+                  >
+                    {tiles[tileIdx]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-center" data-testid="tile-pool">
+              {tiles.map((w, i) => {
+                const used = assembled.includes(i);
+                return (
+                  <button
+                    key={i}
+                    onClick={() => handleTileClick(i)}
+                    disabled={used || !!assembleResult}
+                    className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${
+                      used
+                        ? 'bg-gray-50 border-gray-100 text-gray-300'
+                        : 'bg-white border-gray-200 text-gray-700 hover:border-emerald-400 hover:text-emerald-700 cursor-pointer'
+                    }`}
+                  >
+                    {w}
+                  </button>
+                );
+              })}
+            </div>
+
+            {assembleResult === 'correct' && (
+              <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+                <p className="text-emerald-700 font-semibold">{tr.phraseSession.assembleCorrect}</p>
+              </div>
+            )}
+
+            {assembleResult === 'wrong' && (
+              <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+                <p className="text-sm text-red-600 mb-1">{tr.phraseSession.notQuite}</p>
+                <p className="font-semibold text-red-700 mb-3">{target}</p>
+                <button
+                  onClick={advanceWrongAssembly}
+                  disabled={saving}
+                  className="w-full py-3 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
+                >
+                  {tr.phraseSession.gotItNextBtn}
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
+      );
+    }
+    // No tiles for this direction (stale payload) — fall through to MCQ/typing below
+  }
+
+  // ── Stage 1: fill word (MCQ → type) ────────────────────────────────────────────
+  // stage2_retry also runs this (its stage1Step starts at 'mcq' post-assembly),
+  // except once it reaches 'final_retype' — that falls through to Stage 2 below.
+  if (s === 1 || (current.mode === 'stage2_retry' && stage1Step !== 'final_retype')) {
     const { before, after } = buildBlankedPhrase(phrase.text, phrase.blank_word);
 
-    // gap_retry skips MCQ — go straight to typing
-    if (stage1Step === 'mcq' && current.mode !== 'gap_retry') {
+    // Sub-step 3: MCQ. gap_retry always skips it — straight to typing
+    if (stage1Step !== 'type' && current.mode !== 'gap_retry') {
       const options = mcqOptions;
 
       const handleMcqSelect = (word: string) => {
@@ -934,7 +1109,17 @@ export default function PhraseSession({
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
               <p className="text-emerald-700 font-semibold mb-3">{tr.phraseSession.correctPhrase}</p>
               <button
-                onClick={() => { blockUntilRef.current = Date.now() + 800; advanceQueue(5); }}
+                onClick={() => {
+                  blockUntilRef.current = Date.now() + 800;
+                  if (current.mode === 'stage2_retry') {
+                    // Drill done — now retype the full phrase for real
+                    setTypeResult(null);
+                    setTypeInput('');
+                    setStage1Step('final_retype');
+                  } else {
+                    advanceQueue(5);
+                  }
+                }}
                 disabled={saving}
                 className="w-full py-4 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
               >
@@ -985,103 +1170,6 @@ export default function PhraseSession({
       setMistakeCount((c) => c + 1);
     }
   };
-
-  // ── Stage 2, sub-step 1: assemble the phrase from shuffled tiles ─────────────
-  const tiles = phrase.word_tiles ?? [];
-
-  const handleTileClick = (tileIdx: number) => {
-    if (assembleResult) return;
-    const next = [...assembled, tileIdx];
-    setAssembled(next);
-    if (next.length === tiles.length) {
-      const attempt = next.map((i) => tiles[i]).join(' ');
-      const correct = checkPhrase(attempt, phrase.text, 'hard', phrase.alt_texts);
-      setAssembleResult(correct ? 'correct' : 'wrong');
-      if (correct) {
-        setTimeout(() => {
-          blockUntilRef.current = Date.now() + 300;
-          setAssembleResult(null);
-          setStage2Step('type');
-        }, 900);
-      } else if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
-        mistakePhraseIdsRef.current.add(current.phrase.id);
-        setMistakeCount((c) => c + 1);
-      }
-    }
-  };
-
-  if (stage2Step === 'assemble' && tiles.length > 0) {
-    return (
-      <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage2-assemble">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
-        <div className="relative z-10 w-full max-w-sm">
-          <Header />
-          <ProgressBars />
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center mb-4">
-            <p className="text-xs text-purple-600 font-medium mb-3 uppercase tracking-wider">{tr.phraseSession.assembleLabel}</p>
-            <p className="text-xl sm:text-2xl text-gray-500 mb-4">{getTranslation(phrase)}</p>
-            <div className="min-h-[3.5rem] border-t border-gray-100 pt-3 flex flex-wrap gap-2 justify-center" data-testid="assembled-row">
-              {assembled.map((tileIdx, pos) => (
-                <button
-                  key={pos}
-                  onClick={() => { if (!assembleResult) setAssembled((a) => a.filter((_, j) => j !== pos)); }}
-                  className="py-2 px-3 rounded-xl text-sm font-medium bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 transition-colors"
-                >
-                  {tiles[tileIdx]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 justify-center" data-testid="tile-pool">
-            {tiles.map((w, i) => {
-              const used = assembled.includes(i);
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleTileClick(i)}
-                  disabled={used || !!assembleResult}
-                  className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${
-                    used
-                      ? 'bg-gray-50 border-gray-100 text-gray-300'
-                      : 'bg-white border-gray-200 text-gray-700 hover:border-emerald-400 hover:text-emerald-700 cursor-pointer'
-                  }`}
-                >
-                  {w}
-                </button>
-              );
-            })}
-          </div>
-
-          {assembleResult === 'correct' && (
-            <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-              <p className="text-emerald-700 font-semibold">{tr.phraseSession.correctNowWrite}</p>
-            </div>
-          )}
-
-          {assembleResult === 'wrong' && (
-            <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-              <p className="text-sm text-red-600 mb-1">{tr.phraseSession.notQuite}</p>
-              <p className="font-semibold text-red-700 mb-3">{phrase.text}</p>
-              <button
-                onClick={() => {
-                  blockUntilRef.current = Date.now() + 800;
-                  advanceQueue(1, firstMisplacedWord(assembled.map((i) => tiles[i]), phrase.text));
-                }}
-                disabled={saving}
-                className="w-full py-3 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
-              >
-                {tr.phraseSession.gotItNextBtn}
-              </button>
-            </div>
-          )}
-        </div>
-      </main>
-    );
-  }
 
   return (
     <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage2">

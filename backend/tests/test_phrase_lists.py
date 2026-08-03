@@ -228,9 +228,9 @@ def test_study_and_record_progress(client):
         assert prog.lesson_stage == 1
 
 
-def test_study_word_tiles_for_long_phrases(client):
-    # Issue #145: >3-word phrases get shuffled word_tiles for the stage-2
-    # assembly step; short phrases get None and go straight to typed recall.
+def test_study_word_tiles_for_any_length(client):
+    # Assembly tiles are generated for any non-empty text, regardless of word
+    # count — even a 2-word phrase gets a (trivial) tile arrangement.
     email = "prem_tiles@example.com"
     _make_premium(client, email)
     token = make_token(email)
@@ -242,11 +242,22 @@ def test_study_word_tiles_for_long_phrases(client):
     phrases = client.get(f"/api/me/phrase-lists/{lid}/study?star_level=3", headers=auth(token)).json()["phrases"]
     by_text = {p["text"]: p for p in phrases}
 
-    long_tiles = by_text["Aš noriu juodos kavos dabar"]["word_tiles"]
+    long_phrase = by_text["Aš noriu juodos kavos dabar"]
+    long_tiles = long_phrase["word_tiles"]
     assert sorted(long_tiles) == sorted("Aš noriu juodos kavos dabar".split())
     assert long_tiles != "Aš noriu juodos kavos dabar".split()
 
-    assert by_text["Labas rytas"]["word_tiles"] is None
+    # Translation tiles for the from-Lithuanian assembly direction
+    ru_tiles = long_phrase["translation_tiles"]
+    assert sorted(ru_tiles) == sorted("Я хочу чёрный кофе сейчас".split())
+    assert ru_tiles != "Я хочу чёрный кофе сейчас".split()
+    # No EN translation entered → no EN tiles (absence of text, not word count)
+    assert long_phrase["translation_en_tiles"] is None
+
+    # A 2-word phrase still gets tiles for both directions now
+    short_phrase = by_text["Labas rytas"]
+    assert sorted(short_phrase["word_tiles"]) == sorted("Labas rytas".split())
+    assert sorted(short_phrase["translation_tiles"]) == sorted("Доброе утро".split())
 
 
 def test_phrase_star_auto_assign_and_override(client):

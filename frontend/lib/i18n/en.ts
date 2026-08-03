@@ -598,6 +598,8 @@ const en: Translations = {
     forgotBtn: 'I forgot',
     forgotAnswer: 'The correct answer:',
     assembleLabel: 'Assemble the phrase from the words',
+    assembleTranslationLabel: 'Assemble the translation from the words',
+    assembleCorrect: 'Correct! ✓',
   },
   articles: {
     title: 'Articles',

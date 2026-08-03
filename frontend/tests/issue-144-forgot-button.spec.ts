@@ -84,10 +84,20 @@ test.describe('Issue #144 — Forgot button in phrase study', () => {
     await expect(page.getByText('Aš noriu juodos kavos')).toBeVisible();
     await expect(page.getByText('1 ✗')).toBeVisible();
 
-    // Continuing skips the syllable drill (there is no typed mistake to practice)
-    // and goes straight to the re-queued phrase — the typing step again
+    // Continuing skips the syllable drill (there is no typed mistake to practice).
+    // A stage-2 mistake now re-drills the phrase (assembly skipped — this mock has
+    // no word_tiles — straight to MCQ, then typing the blanked word) before
+    // falling through to the real full-phrase retype.
     await page.getByRole('button', { name: 'Понял, дальше →' }).click();
     await expect(page.getByText('Отработайте слово')).toHaveCount(0);
+    await expect(page.getByTestId('phrase-session-stage1-mcq')).toBeVisible({ timeout: 3000 });
+    await page.getByRole('button', { name: PHRASE.blank_word, exact: true }).click();
+    await expect(page.getByTestId('phrase-session-stage1-type')).toBeVisible({ timeout: 3000 });
+    await page.getByPlaceholder(/./).fill(PHRASE.blank_word);
+    await page.getByRole('button', { name: '→' }).click();
+    await page.getByRole('button', { name: 'Дальше →' }).click();
+
+    // Drill complete → back to the real stage-2 full-phrase retype
     await expect(page.getByTestId('phrase-session-stage2')).toBeVisible({ timeout: 3000 });
     await expect(page.getByTestId('forgot-btn')).toBeVisible();
   });

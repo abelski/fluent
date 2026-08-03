@@ -168,3 +168,71 @@ def test_public_phrase_payload_exposes_both_chapter_titles(client):
     assert phrase["translation_en"] == "Hello!"
     assert phrase["chapter_title"] == "Глава 1"
     assert phrase["chapter_title_en"] == "Chapter 1"
+
+
+def test_study_payload_includes_translation_tiles_for_both_languages(client):
+    """Stage-1 assembly (both directions) needs shuffled tiles for the LT text
+    and for each available translation, regardless of word count; only a
+    genuinely absent translation (no translation_en set at all) yields None."""
+    headers = _admin(client)
+    pid = _make_program(client, headers, "Assembly tiles")
+
+    client.post(
+        f"/api/admin/phrase-programs/{pid}/phrases",
+        json={
+            "text": "Aš noriu juodos kavos dabar",
+            "translation": "Я хочу чёрный кофе сейчас",
+            "translation_en": "I want black coffee right now",
+            "position": 0,
+        },
+        headers=headers,
+    )
+    client.post(
+        f"/api/admin/phrase-programs/{pid}/phrases",
+        json={"text": "Labas rytas!", "translation": "Доброе утро!", "position": 1},
+        headers=headers,
+    )
+
+    # Enroll a learner and open a study session
+    token = make_token("tiles_learner@example.com")
+    client.get("/api/me/quota", headers=auth(token))
+    assert client.post(f"/api/me/phrase-programs/{pid}", headers=auth(token)).status_code == 200
+
+    phrases = client.get(f"/api/phrase-programs/{pid}/study", headers=auth(token)).json()["phrases"]
+    by_text = {p["text"]: p for p in phrases}
+
+    long_phrase = by_text["Aš noriu juodos kavos dabar"]
+    for field, source in (
+        ("word_tiles", "Aš noriu juodos kavos dabar"),
+        ("translation_tiles", "Я хочу чёрный кофе сейчас"),
+        ("translation_en_tiles", "I want black coffee right now"),
+    ):
+        assert sorted(long_phrase[field]) == sorted(source.split()), field
+
+    # A 2-word phrase still gets tiles for both directions now
+    short_phrase = by_text["Labas rytas!"]
+    assert sorted(short_phrase["word_tiles"]) == sorted("Labas rytas!".split())
+    assert sorted(short_phrase["translation_tiles"]) == sorted("Доброе утро!".split())
+    assert short_phrase["translation_en_tiles"] is None  # no EN translation at all
+
+    # The cross-program review endpoint must carry the same tile fields.
+    # Record stage-0 progress so the phrase has a progress row, then force it due.
+    long_id = long_phrase["id"]
+    r = client.post(f"/api/phrases/{long_id}/progress",
+                    json={"quality": 5, "stage_completed": 0}, headers=auth(token))
+    assert r.status_code == 200
+
+    import database
+    from datetime import date
+    from sqlmodel import Session, select
+    from models import UserPhraseProgress
+    with Session(database.engine) as s:
+        prog = s.exec(select(UserPhraseProgress).where(UserPhraseProgress.phrase_id == long_id)).first()
+        prog.next_review = date.today()
+        s.add(prog)
+        s.commit()
+
+    review = client.get("/api/phrases/review", headers=auth(token)).json()["phrases"]
+    review_phrase = next(p for p in review if p["id"] == long_id)
+    assert sorted(review_phrase["translation_tiles"]) == sorted("Я хочу чёрный кофе сейчас".split())
+    assert sorted(review_phrase["translation_en_tiles"]) == sorted("I want black coffee right now".split())

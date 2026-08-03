@@ -505,7 +505,9 @@ export interface PhraseStudyItem {
   lesson_stage: number;      // 0=intro, 1=fill-word, 2=type-full
   blank_word: string;
   mcq_distractors: string[];
-  word_tiles: string[] | null;  // shuffled words for stage-2 assembly; null for ≤3-word phrases
+  word_tiles: string[] | null;  // shuffled LT words for stage-1 to-Lithuanian assembly; null for ≤3-word phrases
+  translation_tiles: string[] | null;     // shuffled RU translation words for stage-1 from-Lithuanian assembly
+  translation_en_tiles: string[] | null;  // same for the EN translation; null when absent or ≤3 words
   next_review: string | null;
 }
 

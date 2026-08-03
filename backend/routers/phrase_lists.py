@@ -515,6 +515,8 @@ def get_my_phrase_list_study(
             "blank_word": blank_word,
             "mcq_distractors": mcq_distractors,
             "word_tiles": _word_tiles(phrase.text),
+            "translation_tiles": _word_tiles(phrase.translation),
+            "translation_en_tiles": _word_tiles(phrase.translation_en) if phrase.translation_en else None,
             "next_review": prog.next_review.isoformat() if prog and prog.next_review else None,
         })
 

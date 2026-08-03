@@ -79,15 +79,16 @@ def _pick_blank_word(phrase_text: str, mistake_words_json: str) -> str:
     return random.choice(words)
 
 
-def _word_tiles(phrase_text: str) -> Optional[list[str]]:
-    """Shuffled word tiles for the stage-2 'assemble the phrase' sub-step.
+def _word_tiles(phrase_text: str) -> list[str]:
+    """Shuffled word tiles for the stage-1 assembly sub-steps (both directions:
+    Lithuanian text and its translation are tokenized with this same helper).
 
-    Returns None for phrases of 3 words or fewer — those go straight to typed
-    recall. Punctuation stays attached to its word so joining the tiles with
-    spaces reproduces the phrase exactly."""
+    Generated for any word count — a 1- or 2-word phrase still gets an
+    (admittedly trivial) tile arrangement. Punctuation stays attached to its
+    word so joining the tiles with spaces reproduces the text exactly.
+    Callers always pass validated, non-blank text (text/translation are
+    required and stripped-non-empty at every write path)."""
     words = phrase_text.split()
-    if len(words) <= 3:
-        return None
     tiles = words.copy()
     # Reshuffle if the order matches the original (bounded for degenerate
     # phrases where every word is identical)
@@ -732,6 +733,8 @@ def get_phrase_study_session(
             "blank_word": blank_word,
             "mcq_distractors": mcq_distractors,
             "word_tiles": _word_tiles(phrase.text),
+            "translation_tiles": _word_tiles(phrase.translation),
+            "translation_en_tiles": _word_tiles(phrase.translation_en) if phrase.translation_en else None,
             "next_review": prog.next_review.isoformat() if prog and prog.next_review else None,
         })
 
@@ -839,6 +842,8 @@ def get_phrase_review_session(
             "blank_word": blank_word,
             "mcq_distractors": mcq_distractors,
             "word_tiles": _word_tiles(phrase.text),
+            "translation_tiles": _word_tiles(phrase.translation),
+            "translation_en_tiles": _word_tiles(phrase.translation_en) if phrase.translation_en else None,
             "next_review": prog.next_review.isoformat() if prog and prog.next_review else None,
         })
 

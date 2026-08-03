@@ -598,6 +598,8 @@ const ru: Translations = {
     forgotBtn: 'Забыл',
     forgotAnswer: 'Правильный ответ:',
     assembleLabel: 'Соберите фразу из слов',
+    assembleTranslationLabel: 'Соберите перевод из слов',
+    assembleCorrect: 'Правильно! ✓',
   },
   articles: {
     title: 'Статьи',
