@@ -130,6 +130,7 @@ const en: Translations = {
     stages: ['', 'Reading', 'Choice', 'Writing'],
     whatMeans: 'What does it mean?',
     selectLithuanian: 'Select the Lithuanian word',
+    assembleWord: 'Assemble the word from syllables',
     fillMissing: 'Fill in the missing form',
     howInLithuanian: 'How do you say it in Lithuanian?',
     typePlaceholder: 'Type the missing word...',

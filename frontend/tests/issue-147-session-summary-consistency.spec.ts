@@ -19,6 +19,36 @@ const WORDS = [
   { id: 2, lithuanian: 'šuo',   translation_en: 'dog', translation_ru: 'собака', hint: null, status: 'new' },
 ];
 
+// Duplicated from QuizSession.tsx (private to that file) so the driver below
+// can assemble the stage-2a syllable tiles in the correct order.
+const LT_DIPHTHONGS = new Set(['ie', 'uo', 'ai', 'ei', 'ui', 'au', 'ia', 'ua']);
+function splitSyllables(word: string): string[] {
+  const isVowel = (c: string) => /[aeiouąęėįųūy]/i.test(c);
+  const vowelIdx: number[] = [];
+  for (let i = 0; i < word.length; i++) if (isVowel(word[i])) vowelIdx.push(i);
+  if (vowelIdx.length <= 1) return [word];
+  const splits: number[] = [0];
+  let i = 0;
+  while (i < vowelIdx.length - 1) {
+    const v1 = vowelIdx[i];
+    const v2 = vowelIdx[i + 1];
+    const gap = v2 - v1 - 1;
+    if (gap === 0) {
+      const pair = (word[v1] + word[v2]).toLowerCase().replace(/[ąęėįųū]/g, (c) =>
+        ({ ą: 'a', ę: 'e', ė: 'e', į: 'i', ų: 'u', ū: 'u' }[c] ?? c));
+      if (LT_DIPHTHONGS.has(pair)) { i++; continue; }
+      splits.push(v2);
+    } else if (gap === 1) {
+      splits.push(v1 + 1);
+    } else {
+      splits.push(v1 + 1 + Math.floor(gap / 2));
+    }
+    i++;
+  }
+  splits.push(word.length);
+  return splits.slice(0, -1).map((s, idx) => word.slice(s, splits[idx + 1])).filter(Boolean);
+}
+
 async function setupSession(page: Page, opts: { lessonMode?: string } = {}) {
   await page.addInitScript((token) => {
     localStorage.setItem('fluent_token', token);
@@ -83,6 +113,22 @@ async function playThrough(page: Page, wrongFirst: boolean) {
       await input.fill(word ? word.lithuanian : '');
       await page.getByRole('button', { name: 'Проверить' }).click();
       await page.waitForTimeout(1400);
+      continue;
+    }
+
+    // Stage 2a — assemble the word from shuffled syllable tiles. Both test words
+    // are single-word entries, so this stage is reached after a correct MC
+    // answer. Always assemble correctly (this scenario isn't about 2a mistakes).
+    const tilePool = page.getByTestId('syllable-tile-pool');
+    if (await tilePool.isVisible().catch(() => false)) {
+      const prompt = await page.locator('main').innerText();
+      const word = WORDS.find((w) => prompt.includes(w.translation_ru));
+      if (word) {
+        for (const syl of splitSyllables(word.lithuanian)) {
+          await tilePool.getByRole('button', { name: syl, exact: true, disabled: false }).first().click();
+        }
+        await page.waitForTimeout(1400);
+      }
       continue;
     }
 

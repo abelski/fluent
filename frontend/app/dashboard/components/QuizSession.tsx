@@ -25,7 +25,10 @@ export interface Word {
 
 interface StudyCard {
   word: Word;
-  stage: 1 | 2 | '2r' | 3 | '3s';
+  // '2a' = assemble the word from shuffled syllables, inserted between 2/2r and 3
+  // for single-word entries. Distinct from '2r' (reverse MCQ) and '3s' (mistake
+  // syllable gap-fill).
+  stage: 1 | 2 | '2r' | '2a' | 3 | '3s';
   failCount: number;
   standalone?: boolean;
   easyChosen?: boolean;
@@ -94,6 +97,12 @@ function checkAnswer(typed: string, target: string, complexity: Complexity): boo
 function parseForms(lithuanian: string): string[] {
   const parts = lithuanian.split(/[,/]/).map((s) => s.trim()).filter(Boolean);
   return parts.length > 1 ? parts : [lithuanian.trim()];
+}
+
+// Eligible for the syllable-assembly stage: a single word, not a multi-word
+// phrase and not a slash/comma multi-form entry (e.g. gender pairs).
+function isSingleWordEntry(word: Word): boolean {
+  return parseForms(word.lithuanian).length === 1 && !word.lithuanian.includes(' ');
 }
 
 function trans(word: Word, lang: Lang): string {
@@ -183,6 +192,17 @@ function splitSyllables(word: string): string[] {
   return splits.slice(0, -1).map((s, idx) => word.slice(s, splits[idx + 1])).filter(Boolean);
 }
 
+// Shuffled syllable tiles for the '2a' assembly stage. Reshuffles up to 10x if
+// the order matches the original (a 1-syllable word just stays as itself).
+function shuffleSyllables(syllables: string[]): string[] {
+  const tiles = syllables.slice();
+  for (let i = 0; i < 10; i++) {
+    tiles.sort(() => Math.random() - 0.5);
+    if (tiles.join('') !== syllables.join('') || tiles.length <= 1) break;
+  }
+  return tiles;
+}
+
 function findMistakeSyllable(typed: string, target: string): string {
   let pos = target.length;
   for (let i = 0; i < target.length; i++) {
@@ -244,6 +264,8 @@ export default function QuizSession({
   const [nearMiss, setNearMiss] = useState<string | null>(null);
   const [blankIndex, setBlankIndex] = useState(0);
   const [syllableTyped, setSyllableTyped] = useState('');
+  const [syllableTiles, setSyllableTiles] = useState<string[]>([]);
+  const [assembledSyllables, setAssembledSyllables] = useState<number[]>([]);
   const inputRef         = useRef<HTMLInputElement>(null);
   const syllableInputRef = useRef<HTMLInputElement>(null);
   const dismissBtnRef    = useRef<HTMLButtonElement>(null);
@@ -311,6 +333,10 @@ export default function QuizSession({
     if (queue.length > 0 && queue[0].stage === '2r') {
       setOptions(buildOptions2r(queue[0].word, words, distractors));
     }
+    if (queue.length > 0 && queue[0].stage === '2a') {
+      setSyllableTiles(shuffleSyllables(splitSyllables(queue[0].word.lithuanian)));
+      setAssembledSyllables([]);
+    }
     if (queue.length > 0 && queue[0].stage === 3) {
       const forms = parseForms(queue[0].word.lithuanian);
       setBlankIndex(Math.floor(Math.random() * forms.length));
@@ -354,6 +380,7 @@ export default function QuizSession({
         e.preventDefault();
         if (queue[0].stage === 2) handleStage2Dismiss();
         else if (queue[0].stage === '2r') handleStage2rDismiss();
+        else if (queue[0].stage === '2a') handleStage2aDismiss();
         else if (queue[0].stage === '3s') handleStage3sDismiss();
         else handleStage3Dismiss();
       }
@@ -407,6 +434,12 @@ export default function QuizSession({
         { word: card.word, stage: otherMc, failCount: 0, standalone: true },
         { word: card.word, stage: 3,       failCount: card.failCount + 1 },
       ];
+    }
+    // Syllable-assemble: one bounded retry regardless of lesson mode, then
+    // unconditionally fall through to stage 3 — never drops the word.
+    if (card.stage === '2a') {
+      if (card.failCount === 0) return [{ word: card.word, stage: '2a', failCount: 1 }];
+      return [{ word: card.word, stage: 3, failCount: 0 }];
     }
     if (lessonMode === 'thorough') {
       if (card.stage === 2 || card.stage === '2r') {
@@ -465,6 +498,12 @@ export default function QuizSession({
       const rest = prev.slice(1);
       if (correct && card.standalone) return rest;
       if (correct && (card.stage === 2 || card.stage === '2r')) {
+        const next: StudyCard = isSingleWordEntry(card.word)
+          ? { word: card.word, stage: '2a', failCount: 0 }
+          : { word: card.word, stage: 3, failCount: 0 };
+        return insertRandom(rest, [next]);
+      }
+      if (correct && card.stage === '2a') {
         return insertRandom(rest, [{ word: card.word, stage: 3, failCount: 0 }]);
       }
       if (retryCards.length > 0) return insertRandom(rest, retryCards);
@@ -579,6 +618,48 @@ export default function QuizSession({
     }
     setAnswerState('unanswered');
     setSelectedOption(null);
+    blockUntilRef.current = Date.now() + 200;
+    advance(card, false, retryCards);
+    if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession(true);
+  }
+
+  function handleStage2aTileClick(tileIdx: number) {
+    if (answerState !== 'unanswered') return;
+    const card = queue[0];
+    const next = [...assembledSyllables, tileIdx];
+    setAssembledSyllables(next);
+    if (next.length !== syllableTiles.length) return;
+
+    const attempt = next.map((i) => syllableTiles[i]).join('');
+    const isCorrect = normalizeLt(attempt) === normalizeLt(card.word.lithuanian.trim());
+    setAnswerState(isCorrect ? 'correct' : 'wrong');
+
+    if (!isCorrect) {
+      if (!mistakeWordIdsRef.current.has(card.word.id)) {
+        mistakeWordIdsRef.current.add(card.word.id);
+        setMistakeWordCount((c) => c + 1);
+      }
+      if (sessionMode === 'study') saveProgress(card.word.id, 'learning', true);
+    } else {
+      if (sessionMode === 'study' && !mistakeWordIdsRef.current.has(card.word.id)) saveProgress(card.word.id, 'known', false);
+      setTimeout(() => {
+        setAnswerState('unanswered');
+        setAssembledSyllables([]);
+        blockUntilRef.current = Date.now() + 200;
+        advance(card, true);
+      }, 1200);
+    }
+  }
+
+  function handleStage2aDismiss() {
+    const card = queue[0];
+    const retryCards = buildRetryCards(card);
+    if (!card.standalone && retryCards.length === 0 && !doneWordIdsRef.current.has(card.word.id)) {
+      doneWordIdsRef.current.add(card.word.id);
+      setWordsDone((c) => c + 1);
+    }
+    setAnswerState('unanswered');
+    setAssembledSyllables([]);
     blockUntilRef.current = Date.now() + 200;
     advance(card, false, retryCards);
     if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession(true);
@@ -805,7 +886,7 @@ export default function QuizSession({
   const word       = card.word;
   const stage      = card.stage;
   const progressPct = totalWords > 0 ? (wordsDone / totalWords) * 100 : 0;
-  const stageLabel  = tr.study.stages[stage === '2r' || stage === '3s' ? 3 : stage];
+  const stageLabel  = tr.study.stages[stage === '2r' || stage === '3s' || stage === '2a' ? 3 : stage];
   const cloveForms  = parseForms(word.lithuanian);
   const cloveIsCloze = cloveForms.length > 1;
   const cloveText   = cloveForms.map((f, i) => i === blankIndex ? '______' : f).join(' / ');
@@ -953,6 +1034,67 @@ export default function QuizSession({
                   </p>
                 </div>
                 <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage2rDismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
+                  {tr.common.dismiss}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Stage 2a: Assemble the word from shuffled syllables ── */}
+        {stage === '2a' && (
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
+            <div className="text-center">
+              <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.assembleWord}</p>
+              <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
+              {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
+              {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
+            </div>
+
+            <div className="w-full min-h-[3.5rem] border-b border-gray-200 pb-3 flex flex-wrap gap-2 justify-center" data-testid="assembled-row">
+              {assembledSyllables.map((tileIdx, pos) => (
+                <button
+                  key={pos}
+                  onClick={() => { if (answerState === 'unanswered') setAssembledSyllables((a) => a.filter((_, j) => j !== pos)); }}
+                  className="py-2 px-3 rounded-xl text-sm font-medium bg-emerald-100 border border-gray-900 text-emerald-700"
+                >
+                  {syllableTiles[tileIdx]}
+                </button>
+              ))}
+            </div>
+
+            <div className="w-full flex flex-wrap gap-2 justify-center" data-testid="syllable-tile-pool">
+              {syllableTiles.map((syl, i) => {
+                const used = assembledSyllables.includes(i);
+                return (
+                  <button
+                    key={i}
+                    onClick={() => handleStage2aTileClick(i)}
+                    disabled={used || answerState !== 'unanswered'}
+                    className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${
+                      used
+                        ? 'bg-gray-50 border-gray-100 text-gray-300'
+                        : 'bg-white border-gray-900 text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    {syl}
+                  </button>
+                );
+              })}
+            </div>
+
+            {answerState === 'correct' && (
+              <p className="text-emerald-600 text-sm font-medium animate-in fade-in duration-150">{tr.common.correct}</p>
+            )}
+            {answerState === 'wrong' && (
+              <div className="w-full flex flex-col gap-3 animate-in fade-in duration-150">
+                <div className="text-center">
+                  <p className="text-red-600 text-sm font-medium">{tr.common.notQuite}</p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {tr.common.correctAnswer} <span className="text-gray-900 font-medium">{word.lithuanian}</span>
+                  </p>
+                </div>
+                <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage2aDismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
                   {tr.common.dismiss}
                 </button>
               </div>

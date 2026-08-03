@@ -1,6 +1,6 @@
-# Plan: Bidirectional word-tile phrase assembly (stage-1 sub-steps)
+# IMPLEMENTED — Bidirectional word-tile phrase assembly (stage-1 sub-steps)
 
-> After approval this plan is copied to `plans/plan_phrase-assembly-both-directions.md` and checkboxes are updated live during implementation.
+**Status:** shipped and live (committed `7727380 "assemble challenge"`, news post published).
 
 ## Context
 
@@ -44,7 +44,7 @@ Grading stays client-side with server-recorded quality/SM-2 — the existing pat
 - [x] Playwright full suite: `cd frontend && npx playwright test` — 344 passed; the same 5 tests fail both before and after this change (confirmed against a stashed baseline build) — pre-existing, unrelated
 - [x] Manual smoke (real browser, disposable throwaway account, cleaned up after): from-LT assembly shown first with LT prompt + RU tiles → correct → to-LT assembly with RU prompt + LT tiles → correct → MCQ. Nav/header/footer intact.
 - [x] Edge cases: covered by Playwright spec (≤3-word direction skipped, both-null → straight to MCQ, duplicate words via index-based state)
-- [ ] News post written and published via /news-writer
+- [x] News post written and published via /news-writer
 
 ## Notes / risks checked
 

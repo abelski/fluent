@@ -130,6 +130,7 @@ const ru: Translations = {
     stages: ['', 'Читаю', 'Выбор', 'Пишу'],
     whatMeans: 'Что это означает?',
     selectLithuanian: 'Выберите литовское слово',
+    assembleWord: 'Соберите слово из слогов',
     fillMissing: 'Вставьте пропущенную форму',
     howInLithuanian: 'Как будет по-литовски?',
     typePlaceholder: 'Напишите пропущенное слово...',

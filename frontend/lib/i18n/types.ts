@@ -117,6 +117,7 @@ export interface Translations {
     stages: [string, string, string, string]; // index 0 unused
     whatMeans: string;
     selectLithuanian: string;
+    assembleWord: string;
     fillMissing: string;
     howInLithuanian: string;
     typePlaceholder: string;
