@@ -10,15 +10,39 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from sqlmodel import Session, select
 
 import database
 import routers.extension as extension
-from models import User, Word, WordList
+from models import User, Word, WordList, WordListItem
 
 from tests.test_word_lists import make_token, auth, _make_premium, _create_list, SUPERADMIN_EMAIL
 
 _EXTENSION_DIR = Path(__file__).resolve().parent.parent.parent / "extension"
+
+
+_real_simplemma_lemma = extension._simplemma_lemma
+
+
+@pytest.fixture(autouse=True)
+def _no_real_wiktionary_calls(monkeypatch):
+    """Safety net for every test in this file, including the ones written
+    before dictionary enrichment existed: without this, any test that doesn't
+    already mock these would trigger real side effects, because enrichment
+    runs unconditionally on both the DB-hit and fallback paths (see _enrich):
+    - _wiktionary_lookup would make a real network call to Wiktionary.
+    - _simplemma_lemma does real (local, no-network) fuzzy lemmatization that
+      can "recognize" throwaway test words as inflected forms of something
+      else (e.g. simplemma maps "labasrytas" -> "labas"), which would then
+      trigger an extra _mymemory_translate call old tests never accounted
+      for. Stubbing both to a no-op by default keeps every pre-existing test
+      byte-for-byte unaffected.
+    Tests that need specific enrichment behavior override either for their
+    own scope via `with patch.object(extension, "_wiktionary_lookup"/"_simplemma_lemma", ...)`.
+    """
+    monkeypatch.setattr(extension, "_wiktionary_lookup", lambda word: None)
+    monkeypatch.setattr(extension, "_simplemma_lemma", lambda word: None)
 
 
 # ── Translate ────────────────────────────────────────────────────────────────
@@ -238,6 +262,270 @@ def test_translate_cache_is_per_langpair(client):
         assert r2.status_code == 200
         assert r2.json()["translation_ru"] == "ru-val"
         assert mock_ru.call_count == 1
+
+
+# ── Dictionary enrichment (base form, grammar, senses) ────────────────────────
+# Words are unique per test — _WIKTIONARY_CACHE and _TRANSLATION_CACHE are
+# module-level and persist for the whole pytest session.
+
+def test_translate_inflected_word_full_enrichment_two_wiktionary_calls(client):
+    email = "ext_enrich_full@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    def fake_wikt(word):
+        if word == "enrichword1full":
+            return {
+                "part_of_speech": "Noun",
+                "senses": [],
+                "form_of": {"lemma": "enrichlemma1", "description": "locative plural of enrichlemma1"},
+            }
+        if word == "enrichlemma1":
+            return {"part_of_speech": "Noun", "senses": ["sense one", "sense two"], "form_of": None}
+        return None
+
+    def fake_mm(word, langpair):
+        return {("enrichword1full", "lt|en"): "inflected-en", ("enrichlemma1", "lt|en"): "lemma-en"}.get((word, langpair))
+
+    with patch.object(extension, "_wiktionary_lookup", side_effect=fake_wikt) as wikt_mock, \
+         patch.object(extension, "_mymemory_translate", side_effect=fake_mm):
+        r = client.get("/api/extension/translate", params={"word": "enrichword1full"}, headers=auth(token))
+
+    assert r.status_code == 200
+    body = r.json()
+    # Old-shape fields are untouched by enrichment.
+    assert body["word"] == "enrichword1full"
+    assert body["translation_en"] == "inflected-en"
+    assert body["source"] == "mymemory"
+    # New enrichment fields.
+    assert body["base_form"] == "enrichlemma1"
+    assert body["grammar_note"] == "locative plural of enrichlemma1"
+    assert body["part_of_speech"] == "Noun"
+    assert body["senses"] == ["sense one", "sense two"]
+    assert body["base_translation_en"] == "lemma-en"
+    assert body["base_translation_ru"] is None
+    assert wikt_mock.call_count == 2  # selected word + lemma, each fetched once
+
+
+def test_translate_lemma_word_gets_senses_no_grammar_note_one_call(client):
+    email = "ext_enrich_lemma@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    with patch.object(extension, "_wiktionary_lookup", return_value={
+        "part_of_speech": "Verb", "senses": ["to test"], "form_of": None,
+    }) as wikt_mock, patch.object(extension, "_mymemory_translate", return_value="test-en"):
+        r = client.get("/api/extension/translate", params={"word": "enrichlemma2"}, headers=auth(token))
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["translation_en"] == "test-en"
+    assert body["base_form"] == "enrichlemma2"
+    assert body["grammar_note"] is None
+    assert body["part_of_speech"] == "Verb"
+    assert body["senses"] == ["to test"]
+    assert wikt_mock.call_count == 1  # already the lemma — no second fetch
+
+
+def test_translate_db_accented_preferred_for_base_form(client):
+    email = "ext_enrich_accented@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    with Session(database.engine) as s:
+        wl = WordList(title="Accent Test List", is_public=True)
+        s.add(wl)
+        s.commit()
+        s.refresh(wl)
+        w = Word(
+            lithuanian="enrichlemma3",
+            translation_en="lemma3-en-db",
+            translation_ru="lemma3-ru-db",
+            accented="en*rich*lemma3",
+        )
+        s.add(w)
+        s.commit()
+        s.refresh(w)
+        s.add(WordListItem(word_list_id=wl.id, word_id=w.id, position=0))
+        s.commit()
+
+    def fake_wikt(word):
+        if word == "enrichword3infl":
+            return {
+                "part_of_speech": "Noun",
+                "senses": [],
+                "form_of": {"lemma": "enrichlemma3", "description": "case of enrichlemma3"},
+            }
+        return None  # the lemma's own Wiktionary lookup "fails" — DB should win regardless
+
+    with patch.object(extension, "_wiktionary_lookup", side_effect=fake_wikt), \
+         patch.object(extension, "_mymemory_translate", return_value=None):
+        r = client.get("/api/extension/translate", params={"word": "enrichword3infl"}, headers=auth(token))
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["base_form"] == "enrichlemma3"
+    assert body["base_form_accented"] == "en*rich*lemma3"
+    assert body["base_translation_en"] == "lemma3-en-db"
+    assert body["base_translation_ru"] == "lemma3-ru-db"
+
+
+def test_translate_wiktionary_and_simplemma_miss_is_exact_old_shape(client):
+    """Neither Wiktionary nor simplemma recognize the word — the response
+    must be byte-for-byte the old shape, with every new field null."""
+    email = "ext_enrich_none@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    with patch.object(extension, "_mymemory_translate", return_value="gibberish-en"):
+        r = client.get("/api/extension/translate", params={"word": "qwxzptrqnotaword"}, headers=auth(token))
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body == {
+        "word": "qwxzptrqnotaword",
+        "translation_en": "gibberish-en",
+        "translation_ru": None,
+        "source": "mymemory",
+        "base_form": None,
+        "base_form_accented": None,
+        "part_of_speech": None,
+        "grammar_note": None,
+        "senses": None,
+        "base_translation_en": None,
+        "base_translation_ru": None,
+    }
+
+
+def test_translate_simplemma_fallback_no_senses(client):
+    """When Wiktionary has nothing, simplemma's real Lithuanian lemmatizer
+    still supplies a base form + (via MyMemory) its translation — but never
+    part_of_speech/grammar_note/senses, which only Wiktionary can provide."""
+    email = "ext_enrich_simplemma@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    def fake_mm(word, langpair):
+        return {("berniukų", "lt|en"): "boys-inflected-en", ("berniukas", "lt|en"): "boy-en"}.get((word, langpair))
+
+    # Restore the real simplemma lemmatizer for this test only — the autouse
+    # fixture stubs it out by default (see its docstring).
+    with patch.object(extension, "_simplemma_lemma", _real_simplemma_lemma), \
+         patch.object(extension, "_mymemory_translate", side_effect=fake_mm):
+        r = client.get("/api/extension/translate", params={"word": "berniukų"}, headers=auth(token))
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["translation_en"] == "boys-inflected-en"  # own translation, untouched
+    assert body["base_form"] == "berniukas"                # simplemma('berniukų') == 'berniukas'
+    assert body["base_translation_en"] == "boy-en"
+    assert body["base_translation_ru"] is None
+    assert body["senses"] is None
+    assert body["part_of_speech"] is None
+    assert body["grammar_note"] is None
+
+
+def test_translate_wiktionary_cache_hit_and_failure_not_cached(client):
+    email = "ext_enrich_wcache@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    with patch.object(extension, "_mymemory_translate", return_value="cached-en"), \
+         patch.object(extension, "_wiktionary_lookup", return_value={
+             "part_of_speech": "Noun", "senses": ["a sense"], "form_of": None,
+         }) as wikt_mock:
+        r1 = client.get("/api/extension/translate", params={"word": "wiktcachehit"}, headers=auth(token))
+        assert r1.status_code == 200 and r1.json()["senses"] == ["a sense"]
+        r2 = client.get("/api/extension/translate", params={"word": "wiktcachehit"}, headers=auth(token))
+        assert r2.status_code == 200
+        assert wikt_mock.call_count == 1  # second request served from _WIKTIONARY_CACHE
+
+    with patch.object(extension, "_mymemory_translate", return_value="failnotcached-en"), \
+         patch.object(extension, "_wiktionary_lookup", return_value=None) as wikt_fail_mock:
+        r3 = client.get("/api/extension/translate", params={"word": "wiktcachefail"}, headers=auth(token))
+        assert r3.status_code == 200 and r3.json()["senses"] is None
+        r4 = client.get("/api/extension/translate", params={"word": "wiktcachefail"}, headers=auth(token))
+        assert r4.status_code == 200
+        assert wikt_fail_mock.call_count == 2  # failures are never cached, retried every time
+
+
+def test_translate_lemma_not_in_db_mymemory_respects_lang(client):
+    email = "ext_enrich_langru@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    def fake_wikt(word):
+        if word == "enrichword5infl":
+            return {
+                "part_of_speech": "Noun",
+                "senses": [],
+                "form_of": {"lemma": "enrichlemma5", "description": "case of enrichlemma5"},
+            }
+        return None
+
+    def fake_mm(word, langpair):
+        return {("enrichword5infl", "lt|ru"): "infl-ru", ("enrichlemma5", "lt|ru"): "lemma-ru"}.get((word, langpair))
+
+    with patch.object(extension, "_wiktionary_lookup", side_effect=fake_wikt), \
+         patch.object(extension, "_mymemory_translate", side_effect=fake_mm) as mm_mock:
+        r = client.get(
+            "/api/extension/translate", params={"word": "enrichword5infl", "lang": "ru"}, headers=auth(token)
+        )
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["translation_ru"] == "infl-ru"
+    assert body["translation_en"] is None
+    assert body["base_translation_ru"] == "lemma-ru"
+    assert body["base_translation_en"] is None
+    # lang=ru must never trigger an lt|en MyMemory call, for the word or its lemma.
+    assert all(call.args[1] == "lt|ru" for call in mm_mock.call_args_list)
+
+
+def test_translate_404_softening_uses_base_form_translation(client):
+    email = "ext_enrich_soften@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    def fake_wikt(word):
+        if word == "enrichword6infl":
+            return {
+                "part_of_speech": "Adjective",
+                "senses": [],
+                "form_of": {"lemma": "enrichlemma6", "description": "comparative of enrichlemma6"},
+            }
+        return None
+
+    def fake_mm(word, langpair):
+        return "lemma6-en" if (word, langpair) == ("enrichlemma6", "lt|en") else None
+
+    with patch.object(extension, "_wiktionary_lookup", side_effect=fake_wikt), \
+         patch.object(extension, "_mymemory_translate", side_effect=fake_mm):
+        r = client.get("/api/extension/translate", params={"word": "enrichword6infl"}, headers=auth(token))
+
+    assert r.status_code == 200  # softened — would have been 404 before enrichment
+    body = r.json()
+    assert body["word"] == "enrichword6infl"
+    assert body["translation_en"] == "lemma6-en"
+    assert body["translation_ru"] is None
+    assert body["source"] == "mymemory"
+    assert body["base_form"] == "enrichlemma6"
+    assert body["base_translation_en"] == "lemma6-en"
+
+
+def test_add_base_form_word_via_existing_endpoint_smoke(client):
+    """The card's default "Add "<base form>"" button just POSTs the base
+    form's own lithuanian/translation pair — no new server-side behavior."""
+    email = "ext_add_baseform_smoke@example.com"
+    _make_premium(client, email)
+    token = make_token(email)
+    r = client.post(
+        "/api/extension/words",
+        json={"lithuanian": "baseformsmoke", "translation": "smoke-en", "translation_ru": "smoke-ru"},
+        headers=auth(token),
+    )
+    assert r.status_code == 200
+    assert r.json()["already_added"] is False
 
 
 # ── Add to learn ─────────────────────────────────────────────────────────────

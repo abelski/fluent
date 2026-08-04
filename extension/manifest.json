@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Fluent — Lithuanian Word Helper",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Select a Lithuanian word on any page to see its translation and add it to your Fluent vocabulary.",
   "permissions": ["storage", "scripting", "tabs"],
   "host_permissions": [

@@ -130,7 +130,10 @@
     const sh = ensureHost();
 
     const card = document.createElement('div');
-    const { x, y } = clamp(rect.left, rect.bottom + 8, 260, 120);
+    // Height is an estimate for viewport-clamping only (the card's real
+    // height is content-driven) — kept generous since an enriched card with
+    // a grammar line + senses runs taller than the old translation-only card.
+    const { x, y } = clamp(rect.left, rect.bottom + 8, 260, 200);
     Object.assign(card.style, {
       position: 'fixed',
       left: `${x}px`,
@@ -199,9 +202,68 @@
       } else {
         body.textContent = t.translation_en || t.translation_ru || '';
       }
+
+      // Dictionary enrichment (base form / grammar / senses) — every field is
+      // nullable, so a plain old-shape response just skips this whole block
+      // and the card looks exactly like it did before this feature.
+      if (t.base_form) {
+        renderAccentedInto(title, t.base_form_accented || t.base_form);
+      }
+      if (t.part_of_speech || t.grammar_note) {
+        const grammarLine = document.createElement('div');
+        grammarLine.textContent = [t.part_of_speech, t.grammar_note].filter(Boolean).join(' · ');
+        Object.assign(grammarLine.style, {
+          fontStyle: 'italic',
+          fontSize: '11px',
+          color: '#6b7280',
+          marginTop: '2px',
+          marginBottom: '4px',
+        });
+        card.insertBefore(grammarLine, body);
+      }
+      if (Array.isArray(t.senses) && t.senses.length > 0) {
+        const sensesBox = document.createElement('div');
+        sensesBox.style.marginTop = '6px';
+        t.senses.forEach((sense, i) => {
+          const line = document.createElement('div');
+          line.textContent = `${i + 1}. ${sense}`;
+          Object.assign(line.style, { fontSize: '12px', color: '#374151', marginTop: '2px' });
+          sensesBox.appendChild(line);
+        });
+        card.insertBefore(sensesBox, footer);
+      }
     }
 
     await renderFooter(footer, status, word, translated.ok ? translated.data : null);
+  }
+
+  // Vanilla-JS port of frontend/lib/renderAccented.tsx: a "*syllable*"-marked
+  // string gets its marked segment wrapped for visual stress-accent highlight;
+  // anything else (including plain text, or malformed/odd asterisk counts)
+  // renders as-is. Always uses textContent/createElement — never innerHTML —
+  // since this text can originate from Wiktionary-derived content.
+  function renderAccentedInto(el, text) {
+    el.textContent = '';
+    if (typeof text !== 'string' || !text) return;
+    const parts = text.split('*');
+    if (parts.length < 3 || parts.length % 2 === 0) {
+      el.textContent = text;
+      return;
+    }
+    parts.forEach((part, i) => {
+      if (i % 2 === 1) {
+        const strong = document.createElement('strong');
+        strong.textContent = part;
+        Object.assign(strong.style, {
+          textDecoration: 'underline',
+          textDecorationColor: '#10b981',
+          textDecorationThickness: '2px',
+        });
+        el.appendChild(strong);
+      } else if (part) {
+        el.appendChild(document.createTextNode(part));
+      }
+    });
   }
 
   function makeButton(label, bg, color) {
@@ -296,25 +358,83 @@
       footer.appendChild(selectEl);
     }
 
-    const btn = makeButton('Add to learn', '#C1272D', '#fff');
-    if (!translated) {
+    // Base form vs. exactly-selected form: default to adding the dictionary
+    // base form when enrichment found one that differs from the selection
+    // and has its own translation; a small toggle link lets the user add the
+    // selected (inflected) form instead. With no enrichment (old-shape
+    // response, or base_form === the selection) this collapses to exactly
+    // the original "Add to learn" behavior.
+    const hasBaseForm = !!(
+      translated &&
+      translated.base_form &&
+      translated.base_form.toLowerCase() !== word.toLowerCase() &&
+      (translated.base_translation_en || translated.base_translation_ru)
+    );
+    const basePayload = hasBaseForm ? {
+      lithuanian: translated.base_form,
+      translation: translated.base_translation_en,
+      translation_ru: translated.base_translation_ru,
+    } : null;
+    const selectedPayload = translated ? {
+      lithuanian: translated.word || word,
+      translation: translated.translation_en,
+      translation_ru: translated.translation_ru,
+    } : null;
+
+    let activePayload = basePayload || selectedPayload;
+
+    const btn = makeButton(
+      basePayload ? `Add "${activePayload.lithuanian}"` : 'Add to learn',
+      '#C1272D', '#fff'
+    );
+    if (!activePayload) {
       btn.disabled = true;
     }
+
+    let toggleLink = null;
+    if (basePayload && selectedPayload) {
+      toggleLink = document.createElement('button');
+      toggleLink.type = 'button';
+      toggleLink.textContent = `add "${selectedPayload.lithuanian}" instead`;
+      Object.assign(toggleLink.style, {
+        display: 'block',
+        width: '100%',
+        marginTop: '6px',
+        padding: '2px 0',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '11px',
+        color: '#6b7280',
+        textDecoration: 'underline',
+        fontFamily: 'inherit',
+      });
+      toggleLink.addEventListener('click', () => {
+        const showingBase = activePayload === basePayload;
+        activePayload = showingBase ? selectedPayload : basePayload;
+        btn.textContent = `Add "${activePayload.lithuanian}"`;
+        toggleLink.textContent = showingBase
+          ? `add "${basePayload.lithuanian}" instead`
+          : `add "${selectedPayload.lithuanian}" instead`;
+      });
+    }
+
     btn.addEventListener('click', async () => {
-      if (!translated) return;
+      if (!activePayload) return;
       btn.disabled = true;
       btn.textContent = 'Adding…';
       const listId = selectEl ? selectEl.value : '';
       const res = await sendMessage({
         type: 'addWord',
-        lithuanian: translated.word || word,
-        translation: translated.translation_en,
-        translation_ru: translated.translation_ru || null,
+        lithuanian: activePayload.lithuanian,
+        translation: activePayload.translation,
+        translation_ru: activePayload.translation_ru || null,
         list_id: listId ? Number(listId) : null,
       });
       if (!cardEl) return;
       if (res.ok) {
         btn.textContent = res.data.already_added ? 'Already in your list' : 'Added!';
+        if (toggleLink) toggleLink.remove();
         await chrome.storage.local.set({ lastListId: listId });
       } else if (res.error === 'premium') {
         btn.textContent = 'Upgrade to add';
@@ -325,6 +445,7 @@
       }
     });
     footer.appendChild(btn);
+    if (toggleLink) footer.appendChild(toggleLink);
   }
 
   // ── Event wiring ─────────────────────────────────────────────────────────

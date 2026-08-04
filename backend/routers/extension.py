@@ -7,6 +7,7 @@
 # Translation is free for any logged-in user (funnel); "Add to learn" is
 # premium/admin only, matching _require_list_creator in word_lists.py.
 
+import html
 import io
 import json
 import os
@@ -14,6 +15,7 @@ import re
 import zipfile
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
@@ -98,23 +100,12 @@ def _mymemory_cached(word: str, word_key: str, langpair: str) -> Optional[str]:
     return result
 
 
-@router.get("/extension/translate")
-def translate_word(
-    word: str,
-    lang: str = "en",
-    authorization: Optional[str] = Header(None),
-    session: Session = Depends(get_session),
-):
-    """Translate a Lithuanian word/short phrase: DB lookup first, MyMemory fallback.
-
-    `lang` ("en" | "ru" | "both") picks which language(s) the MyMemory fallback
-    fetches; a DB hit is unaffected since Word rows already carry both."""
-    _require_user(authorization, session)
-    word = _validate_word(word)
-    if lang not in _VALID_LANGS:
-        raise HTTPException(status_code=422, detail="lang must be 'en', 'ru', or 'both'")
-
-    db_word = session.exec(
+def _db_lookup(word: str, session: Session) -> Optional[Word]:
+    """Find a public-list Word row matching `word` case-insensitively, preferring
+    star=1 (base form) when the word appears in multiple lists. The is_public
+    join means a private personal-list word (another user's) never matches —
+    same guard as the original inline query this was extracted from."""
+    return session.exec(
         select(Word)
         .join(WordListItem, WordListItem.word_id == Word.id)
         .join(WordList, WordList.id == WordListItem.word_list_id)
@@ -126,26 +117,271 @@ def translate_word(
         )
         .order_by(Word.star.asc())
     ).first()
-    if db_word:
+
+
+# ── Dictionary enrichment (base form, grammar, senses) ───────────────────────
+# Wiktionary REST is the primary source (part of speech, "form of" grammar
+# note, numbered senses); simplemma is a lightweight fallback that only
+# produces a base form (for MyMemory/DB lookup) when Wiktionary has nothing.
+# Verified against the live API (2026-08-04): Lithuanian entries are keyed
+# "lt" (with a per-entry `language` field double-checked defensively below);
+# a "form of" entry's HTML looks like:
+#   <span class="form-of-definition ..."><a>locative</a> <a>plural</a> of
+#     <span class="form-of-definition-link"><i class="Latn mention" lang="lt">
+#       <a href="/wiki/namas#Lithuanian" title="namas">namas</a></i></span></span>
+# Important correction vs. the original plan: the lemma link text/title is
+# ALWAYS the plain (unaccented) form — Wiktionary page titles can't carry the
+# stress-accent combining marks, so there is no "accented anchor text" to
+# read here. `base_form_accented` therefore comes ONLY from the local DB's
+# `Word.accented` column when the lemma happens to be a public-list word;
+# otherwise it stays null and the client just renders the plain base form.
+
+_WIKTIONARY_UA = "FluentLT-Extension/1.0 (+https://fluent.lt; contact@fluent.lt)"
+_TAG_RE = re.compile(r"<[^>]+>")
+
+# Module-level cache for parsed Wiktionary lookups, keyed by word_lower.
+# Success-only (see _wiktionary_cached) and cleared past 500 entries — smaller
+# cap than the translation cache since each entry holds more data (senses list).
+_WIKTIONARY_CACHE: dict[str, dict] = {}
+
+
+def _strip_tags(fragment: str) -> str:
+    """HTML fragment -> plain text: drop tags, unescape entities, collapse whitespace."""
+    text = _TAG_RE.sub("", fragment)
+    text = html.unescape(text)
+    return " ".join(text.split())
+
+
+def _wiktionary_lookup(word: str) -> Optional[dict]:
+    """Fetch and parse the first Lithuanian entry for `word` from the Wiktionary
+    REST API. Returns None on any error, timeout, 404, or missing Lithuanian
+    entry (module-level so tests can monkeypatch it, like _mymemory_translate).
+
+    On success: {"part_of_speech": str | None, "senses": [str, ...],
+                 "form_of": {"lemma": str, "description": str} | None}
+    """
+    try:
+        resp = httpx.get(
+            f"https://en.wiktionary.org/api/rest_v1/page/definition/{quote(word)}",
+            headers={"User-Agent": _WIKTIONARY_UA},
+            timeout=3.5,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception:
+        return None
+
+    # Lithuanian entries are filed under the "lt" key in every case observed,
+    # but every entry is also checked against its own `language` field —
+    # cheap defensive double-check in case Wiktionary ever files one elsewhere.
+    entry = None
+    for key_entries in [data.get("lt", []), *data.values()]:
+        if not isinstance(key_entries, list):
+            continue
+        entry = next((e for e in key_entries if e.get("language") == "Lithuanian"), None)
+        if entry:
+            break
+    if entry is None:
+        return None
+
+    definitions = entry.get("definitions") or []
+    if not definitions:
+        return None
+
+    part_of_speech = entry.get("part_of_speech") or entry.get("partOfSpeech")
+    first_html = definitions[0].get("definition", "")
+
+    if "form-of-definition" in first_html:
+        link_match = re.search(r'class="form-of-definition-link">(.*?)</span>', first_html, re.DOTALL)
+        if not link_match:
+            return None
+        lemma = _strip_tags(link_match.group(1))
+        if not lemma:
+            return None
         return {
+            "part_of_speech": part_of_speech,
+            "senses": [],
+            "form_of": {"lemma": lemma, "description": _strip_tags(first_html)},
+        }
+
+    senses = [text for d in definitions[:3] if (text := _strip_tags(d.get("definition", "")))]
+    if not senses:
+        return None
+    return {"part_of_speech": part_of_speech, "senses": senses, "form_of": None}
+
+
+def _wiktionary_cached(word: str) -> Optional[dict]:
+    word_key = word.lower()
+    if word_key in _WIKTIONARY_CACHE:
+        return _WIKTIONARY_CACHE[word_key]
+    result = _wiktionary_lookup(word)
+    if result is not None:
+        if len(_WIKTIONARY_CACHE) > 500:
+            _WIKTIONARY_CACHE.clear()
+        _WIKTIONARY_CACHE[word_key] = result
+    return result
+
+
+def _simplemma_lemma(word: str) -> Optional[str]:
+    """Lemmatize via simplemma's Lithuanian dictionary (lazy import — only
+    loads the small per-language data file when actually needed). Returns
+    None on any error, or when simplemma just echoes the input back (i.e. it
+    doesn't recognize the word as an inflected form of anything else)."""
+    try:
+        from simplemma import lemmatize
+        lemma = lemmatize(word, lang="lt")
+    except Exception:
+        return None
+    if not lemma or lemma.lower() == word.lower():
+        return None
+    return lemma
+
+
+def _lemma_translations(
+    lemma: str, lang: str, session: Session
+) -> tuple[Optional[str], Optional[str], Optional[str]]:
+    """(translation_en, translation_ru, accented) for a lemma: DB first (real
+    Russian translation + accent marks), MyMemory fallback (English/Russian
+    per `lang`, no accent — see the module note on why Wiktionary can't help)."""
+    db_word = _db_lookup(lemma, session)
+    if db_word:
+        return db_word.translation_en, db_word.translation_ru, db_word.accented
+    lemma_key = lemma.lower()
+    translation_en = _mymemory_cached(lemma, lemma_key, "lt|en") if lang in ("en", "both") else None
+    translation_ru = _mymemory_cached(lemma, lemma_key, "lt|ru") if lang in ("ru", "both") else None
+    return translation_en, translation_ru, None
+
+
+_EMPTY_ENRICHMENT = {
+    "base_form": None,
+    "base_form_accented": None,
+    "part_of_speech": None,
+    "grammar_note": None,
+    "senses": None,
+    "base_translation_en": None,
+    "base_translation_ru": None,
+}
+
+
+def _enrich(word: str, lang: str, session: Session, db_word: Optional[Word] = None) -> dict:
+    """Best-effort dictionary-style enrichment for the extension card: base
+    form, part of speech, a grammar note for inflected forms, up to 3 numbered
+    senses, and the base form's own translations. Every failure path returns
+    an all-None dict so callers can merge it into the response unconditionally
+    — enrichment is a bonus, never a reason to change or break the base reply.
+    Multi-token selections are skipped entirely (Wiktionary/simplemma are
+    single-word dictionaries). `db_word` is the caller's already-fetched
+    `_db_lookup(word, session)` result, reused here to avoid a second query
+    when the selected word turns out to already be the dictionary form."""
+    if len(word.split()) != 1:
+        return dict(_EMPTY_ENRICHMENT)
+
+    entry = _wiktionary_cached(word)
+
+    if entry is None:
+        lemma = _simplemma_lemma(word)
+        if not lemma:
+            return dict(_EMPTY_ENRICHMENT)
+        result = dict(_EMPTY_ENRICHMENT)
+        result["base_form"] = lemma
+        en, ru, accented = _lemma_translations(lemma, lang, session)
+        result["base_translation_en"] = en
+        result["base_translation_ru"] = ru
+        result["base_form_accented"] = accented
+        return result
+
+    result = dict(_EMPTY_ENRICHMENT)
+    result["part_of_speech"] = entry.get("part_of_speech")
+    form_of = entry.get("form_of")
+
+    if form_of is None:
+        # The selected word is already the dictionary form.
+        result["base_form"] = word
+        senses = entry.get("senses") or []
+        result["senses"] = senses[:3] if senses else None
+        if db_word:
+            result["base_form_accented"] = db_word.accented
+        return result
+
+    lemma = form_of["lemma"]
+    result["base_form"] = lemma
+    result["grammar_note"] = form_of["description"]
+
+    lemma_entry = _wiktionary_cached(lemma)
+    if lemma_entry:
+        senses = lemma_entry.get("senses") or []
+        result["senses"] = senses[:3] if senses else None
+
+    en, ru, accented = _lemma_translations(lemma, lang, session)
+    result["base_translation_en"] = en
+    result["base_translation_ru"] = ru
+    result["base_form_accented"] = accented
+    return result
+
+
+@router.get("/extension/translate")
+def translate_word(
+    word: str,
+    lang: str = "en",
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Translate a Lithuanian word/short phrase: DB lookup first, MyMemory fallback.
+    Also runs best-effort dictionary enrichment (base form / grammar / senses) —
+    see _enrich — merged into the response as additional nullable fields that
+    never change the meaning of the original word/translation_en/translation_ru/
+    source fields, so existing extension installs keep working unmodified.
+
+    `lang` ("en" | "ru" | "both") picks which language(s) the MyMemory fallback
+    fetches; a DB hit is unaffected since Word rows already carry both."""
+    _require_user(authorization, session)
+    word = _validate_word(word)
+    if lang not in _VALID_LANGS:
+        raise HTTPException(status_code=422, detail="lang must be 'en', 'ru', or 'both'")
+
+    db_word = _db_lookup(word, session)
+    enrichment = _enrich(word, lang, session, db_word=db_word)
+
+    if db_word:
+        response = {
             "word": db_word.lithuanian,
             "translation_en": db_word.translation_en,
             "translation_ru": db_word.translation_ru,
             "source": "db",
         }
+        response.update(enrichment)
+        return response
 
     word_key = word.lower()
     translation_en = _mymemory_cached(word, word_key, "lt|en") if lang in ("en", "both") else None
     translation_ru = _mymemory_cached(word, word_key, "lt|ru") if lang in ("ru", "both") else None
 
     if translation_en is None and translation_ru is None:
+        # 404-softening: the exact selected form has no translation of its own,
+        # but enrichment found a translatable dictionary form — degrade to
+        # that instead of a hard 404 (still useful; the client shows it's the
+        # base form's translation via the enrichment fields).
+        base_en = enrichment.get("base_translation_en")
+        base_ru = enrichment.get("base_translation_ru")
+        if base_en is not None or base_ru is not None:
+            response = {
+                "word": word,
+                "translation_en": base_en,
+                "translation_ru": base_ru,
+                "source": "mymemory",
+            }
+            response.update(enrichment)
+            return response
         raise HTTPException(status_code=404, detail="No translation found")
-    return {
+
+    response = {
         "word": word,
         "translation_en": translation_en,
         "translation_ru": translation_ru,
         "source": "mymemory",
     }
+    response.update(enrichment)
+    return response
 
 
 class ExtensionWordCreate(BaseModel):
