@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Fluent — Settings</title>
+<style>
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #111827;
+    max-width: 420px;
+    margin: 32px auto;
+    padding: 0 16px;
+  }
+  h1 { font-size: 18px; margin-bottom: 4px; }
+  p.hint { color: #6b7280; font-size: 13px; margin-top: 0; }
+  label {
+    display: block;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  label span.title { font-weight: 600; display: block; }
+  label span.sub { color: #6b7280; font-size: 12px; }
+  input[type="radio"] { margin-right: 8px; }
+  #note { font-size: 13px; color: #006A44; min-height: 18px; }
+  fieldset { border: none; padding: 0; margin: 0 0 24px 0; }
+  h1 { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+  <fieldset>
+    <h1>Fluent — Backend</h1>
+    <p class="hint">Choose which backend the extension talks to. Switching clears your saved connection (each environment uses a different login).</p>
+
+    <label>
+      <input type="radio" name="env" value="prod">
+      <span class="title">Production</span>
+      <span class="sub">https://fluent.lt</span>
+    </label>
+    <label>
+      <input type="radio" name="env" value="local">
+      <span class="title">Local dev</span>
+      <span class="sub">http://localhost:8000</span>
+    </label>
+
+    <p id="note"></p>
+  </fieldset>
+
+  <fieldset>
+    <h1>Translation language</h1>
+    <p class="hint">Which language(s) the translation card shows for words not already in Fluent's dictionary.</p>
+
+    <label>
+      <input type="radio" name="lang" value="en">
+      <span class="title">English</span>
+      <span class="sub">Default</span>
+    </label>
+    <label>
+      <input type="radio" name="lang" value="ru">
+      <span class="title">Russian</span>
+    </label>
+    <label>
+      <input type="radio" name="lang" value="both">
+      <span class="title">Both</span>
+    </label>
+  </fieldset>
+
+  <script src="options.js"></script>
+</body>
+</html>

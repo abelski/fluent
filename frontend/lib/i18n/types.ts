@@ -736,4 +736,19 @@ export interface Translations {
     statusInProgress: string;
     statusNew: string;
   };
+  extension: {
+    title: string;
+    subtitle: string;
+    versionLabel: string; // "{version}" interpolated by caller
+    versionLoading: string;
+    downloadBtn: string;
+    installTitle: string;
+    installSteps: string[];
+    usageTitle: string;
+    usageSteps: string[];
+    connectNote: string;
+    premiumNote: string;
+    fromInternetNote: string;
+    viewListsLink: string;
+  };
 }

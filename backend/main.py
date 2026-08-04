@@ -28,6 +28,7 @@ from routers.custom_programs import router as custom_programs_router
 from routers.phrases import router as phrases_router
 from routers.phrase_lists import router as phrase_lists_router
 from routers.word_lists import router as word_lists_router
+from routers.extension import router as extension_router
 from database import create_db_and_tables, get_session
 from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage  # noqa: F401 — registers table
 from data.grammar.lessons import LESSON_CONFIG
@@ -135,6 +136,7 @@ app.include_router(custom_programs_router, prefix="/api")
 app.include_router(phrases_router, prefix="/api")
 app.include_router(phrase_lists_router, prefix="/api")
 app.include_router(word_lists_router, prefix="/api")
+app.include_router(extension_router, prefix="/api")
 
 
 @app.get("/health")
@@ -163,6 +165,7 @@ def sitemap(session: Session = Depends(get_session)):
         (f"{base}/dashboard/articles/", "0.8", "weekly"),
         (f"{base}/programs/", "0.8", "weekly"),
         (f"{base}/dashboard/phrases/", "0.8", "weekly"),
+        (f"{base}/extension/", "0.6", "monthly"),
     ]
 
     urls = []
@@ -236,6 +239,7 @@ def robots_txt():
         "Allow: /dashboard/articles/\n"
         "Allow: /dashboard/lists/\n"
         "Allow: /programs/\n"
+        "Allow: /extension/\n"
         "Disallow: /dashboard/admin/\n"
         "Disallow: /dashboard/practice/\n"
         "Disallow: /dashboard/review/\n"

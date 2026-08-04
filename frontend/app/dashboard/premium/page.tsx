@@ -50,6 +50,13 @@ export default function PremiumPage() {
         <p className="text-xs text-gray-400">
           Для активации Premium обратитесь к администратору или напишите нам.
         </p>
+
+        <Link
+          href="/extension"
+          className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+        >
+          🧩 Расширение для Chrome →
+        </Link>
       </div>
     </main>
   );
