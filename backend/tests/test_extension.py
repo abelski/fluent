@@ -8,8 +8,9 @@ import io
 import json
 import zipfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
+import httpx
 import pytest
 from sqlmodel import Session, select
 
@@ -43,6 +44,17 @@ def _no_real_wiktionary_calls(monkeypatch):
     """
     monkeypatch.setattr(extension, "_wiktionary_lookup", lambda word: None)
     monkeypatch.setattr(extension, "_simplemma_lemma", lambda word: None)
+
+
+@pytest.fixture(autouse=True)
+def _no_real_google_fallback_calls(monkeypatch):
+    """Same rationale as _no_real_wiktionary_calls: _translate_with_fallback
+    (called via _translate_cached) reaches for _google_free_translate whenever
+    MyMemory fails or returns a wrong-script result, which pre-existing tests
+    never accounted for. Stub it to a no-op by default; tests that need the
+    fallback behavior override it via `with patch.object(extension,
+    "_google_free_translate", ...)`."""
+    monkeypatch.setattr(extension, "_google_free_translate", lambda word, langpair: None)
 
 
 # ── Translate ────────────────────────────────────────────────────────────────
@@ -189,7 +201,7 @@ def test_translate_lang_ru_fetches_ru_langpair(client):
     email = "ext_lang_ru@example.com"
     token = make_token(email)
     client.get("/api/me/quota", headers=auth(token))
-    with patch.object(extension, "_mymemory_translate", return_value="rusiskas") as mock_fn:
+    with patch.object(extension, "_mymemory_translate", return_value="русиско") as mock_fn:
         r = client.get(
             "/api/extension/translate",
             params={"word": "namasruonly", "lang": "ru"},
@@ -198,7 +210,7 @@ def test_translate_lang_ru_fetches_ru_langpair(client):
     assert r.status_code == 200
     body = r.json()
     assert body["translation_en"] is None
-    assert body["translation_ru"] == "rusiskas"
+    assert body["translation_ru"] == "русиско"
     mock_fn.assert_called_once_with("namasruonly", "lt|ru")
 
 
@@ -208,7 +220,7 @@ def test_translate_lang_both_fetches_both_langpairs(client):
     client.get("/api/me/quota", headers=auth(token))
 
     def fake_translate(word, langpair):
-        return {"lt|en": "english-val", "lt|ru": "russian-val"}[langpair]
+        return {"lt|en": "english-val", "lt|ru": "русское-значение"}[langpair]
 
     with patch.object(extension, "_mymemory_translate", side_effect=fake_translate):
         r = client.get(
@@ -219,7 +231,7 @@ def test_translate_lang_both_fetches_both_langpairs(client):
     assert r.status_code == 200
     body = r.json()
     assert body["translation_en"] == "english-val"
-    assert body["translation_ru"] == "russian-val"
+    assert body["translation_ru"] == "русское-значение"
 
 
 def test_translate_lang_both_partial_failure_still_200(client):
@@ -255,13 +267,141 @@ def test_translate_cache_is_per_langpair(client):
         assert mock_en.call_count == 1
 
     # Same word, different lang — must NOT be served from the "en" cache entry.
-    with patch.object(extension, "_mymemory_translate", return_value="ru-val") as mock_ru:
+    with patch.object(extension, "_mymemory_translate", return_value="ру-значение") as mock_ru:
         r2 = client.get(
             "/api/extension/translate", params={"word": "cachewordxyz", "lang": "ru"}, headers=auth(token)
         )
         assert r2.status_code == 200
-        assert r2.json()["translation_ru"] == "ru-val"
+        assert r2.json()["translation_ru"] == "ру-значение"
         assert mock_ru.call_count == 1
+
+
+# ── Translation quality fallback (MyMemory wrong-script bug) ──────────────────
+# Real-world bug: MyMemory's lt->ru corpus is thin enough that it sometimes
+# returns English text labeled as a Russian translation (e.g. "nepavykti" ->
+# "fail" instead of "потерпеть неудачу"). _translate_with_fallback rejects
+# any "|ru" result with no Cyrillic characters and retries via the free
+# Google endpoint before giving up.
+
+def test_translate_ru_wrong_script_falls_back_to_google(client):
+    email = "ext_fallback_wrongscript@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    with patch.object(extension, "_mymemory_translate", return_value="fail"), \
+         patch.object(extension, "_google_free_translate", return_value="неудача") as google_mock:
+        r = client.get(
+            "/api/extension/translate",
+            params={"word": "fallbackwrongscript", "lang": "ru"},
+            headers=auth(token),
+        )
+    assert r.status_code == 200
+    assert r.json()["translation_ru"] == "неудача"
+    google_mock.assert_called_once_with("fallbackwrongscript", "lt|ru")
+
+
+def test_translate_mymemory_none_uses_google_fallback(client):
+    email = "ext_fallback_none@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    with patch.object(extension, "_mymemory_translate", return_value=None), \
+         patch.object(extension, "_google_free_translate", return_value="привет") as google_mock:
+        r = client.get(
+            "/api/extension/translate",
+            params={"word": "fallbacknone", "lang": "ru"},
+            headers=auth(token),
+        )
+    assert r.status_code == 200
+    assert r.json()["translation_ru"] == "привет"
+    assert google_mock.call_count == 1
+
+
+def test_translate_both_sources_invalid_field_null_not_500(client):
+    email = "ext_fallback_bothfail@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    # EN succeeds; RU fails the script check at both MyMemory and Google ->
+    # translation_ru is null, response is still a normal 200 (not a 500).
+    def fake_mm(word, langpair):
+        return "good-en" if langpair == "lt|en" else "fail"
+
+    with patch.object(extension, "_mymemory_translate", side_effect=fake_mm), \
+         patch.object(extension, "_google_free_translate", return_value="also-not-cyrillic"):
+        r = client.get(
+            "/api/extension/translate",
+            params={"word": "fallbackbothfail", "lang": "both"},
+            headers=auth(token),
+        )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["translation_en"] == "good-en"
+    assert body["translation_ru"] is None
+
+    # Both languages end up with nothing at all -> existing 404 logic still fires.
+    with patch.object(extension, "_mymemory_translate", return_value=None), \
+         patch.object(extension, "_google_free_translate", return_value=None):
+        r2 = client.get(
+            "/api/extension/translate",
+            params={"word": "fallbacktotalfail", "lang": "both"},
+            headers=auth(token),
+        )
+    assert r2.status_code == 404
+
+
+def test_mymemory_translate_retries_once_on_request_error():
+    """A connection-level failure (httpx.RequestError) is retried once; the
+    successful second attempt's value is returned. No client/session needed —
+    this hits _mymemory_translate directly and mocks httpx.get itself."""
+    fake_response = Mock()
+    fake_response.raise_for_status = Mock()
+    fake_response.json = Mock(return_value={"responseData": {"translatedText": "house"}})
+    mock_get = Mock(side_effect=[httpx.ConnectTimeout("boom"), fake_response])
+
+    with patch.object(extension.httpx, "get", mock_get):
+        result = extension._mymemory_translate("namas", "lt|en")
+
+    assert result == "house"
+    assert mock_get.call_count == 2
+
+
+def test_mymemory_translate_does_not_retry_http_error_response():
+    """An actual HTTP error response (raise_for_status) must fail immediately,
+    not retry — only httpx.RequestError (connection/timeout) is retried."""
+    fake_response = Mock()
+    fake_response.raise_for_status = Mock(side_effect=httpx.HTTPStatusError(
+        "500", request=Mock(), response=Mock()
+    ))
+    mock_get = Mock(return_value=fake_response)
+
+    with patch.object(extension.httpx, "get", mock_get):
+        result = extension._mymemory_translate("labas", "lt|en")
+
+    assert result is None
+    assert mock_get.call_count == 1
+
+
+def test_lemma_translations_wrong_script_regression(client):
+    """Regression test for the exact original bug report: the lemma
+    'nepavykti' got 'fail' (English) as its Russian translation. This must be
+    tested via _lemma_translations specifically — that's the code path the
+    bug was actually discovered through (an inflected form, e.g. 'Nepavyko',
+    resolving to this lemma)."""
+    def fake_mm(word, langpair):
+        return "fail" if (word, langpair) == ("nepavykti", "lt|ru") else None
+
+    def fake_google(word, langpair):
+        return "потерпеть неудачу" if langpair == "lt|ru" else None
+
+    with Session(database.engine) as s:
+        with patch.object(extension, "_mymemory_translate", side_effect=fake_mm), \
+             patch.object(extension, "_google_free_translate", side_effect=fake_google) as google_mock:
+            en, ru, accented = extension._lemma_translations("nepavykti", "both", s)
+
+    assert ru == "потерпеть неудачу"
+    assert ru != "fail"
+    google_mock.assert_any_call("nepavykti", "lt|ru")
 
 
 # ── Dictionary enrichment (base form, grammar, senses) ────────────────────────
@@ -464,7 +604,10 @@ def test_translate_lemma_not_in_db_mymemory_respects_lang(client):
         return None
 
     def fake_mm(word, langpair):
-        return {("enrichword5infl", "lt|ru"): "infl-ru", ("enrichlemma5", "lt|ru"): "lemma-ru"}.get((word, langpair))
+        return {
+            ("enrichword5infl", "lt|ru"): "инфл-ру",
+            ("enrichlemma5", "lt|ru"): "лемма-ру",
+        }.get((word, langpair))
 
     with patch.object(extension, "_wiktionary_lookup", side_effect=fake_wikt), \
          patch.object(extension, "_mymemory_translate", side_effect=fake_mm) as mm_mock:
@@ -474,9 +617,9 @@ def test_translate_lemma_not_in_db_mymemory_respects_lang(client):
 
     assert r.status_code == 200
     body = r.json()
-    assert body["translation_ru"] == "infl-ru"
+    assert body["translation_ru"] == "инфл-ру"
     assert body["translation_en"] is None
-    assert body["base_translation_ru"] == "lemma-ru"
+    assert body["base_translation_ru"] == "лемма-ру"
     assert body["base_translation_en"] is None
     # lang=ru must never trigger an lt|en MyMemory call, for the word or its lemma.
     assert all(call.args[1] == "lt|ru" for call in mm_mock.call_args_list)

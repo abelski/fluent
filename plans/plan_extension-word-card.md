@@ -40,6 +40,19 @@ The extension card currently shows only the selected string and its translation.
 - [ ] Manual extension smoke (user, real Chrome): reload unpacked → select inflected word on a Lithuanian page → accented headword, italic grammar line, numbered senses, `Add "lemma"` + toggle link; verify added Word rows for both toggle states; unknown word degrades to old card — **left for the user**, requires a real Chrome profile with the unpacked extension loaded
 - [x] News post — skipped per user decision (2026-08-04)
 
+## Follow-up: MyMemory retry + free Google fallback (2026-08-04)
+
+Real-world smoke test found `nepavykti` (lt→ru) returning the English word "fail" via MyMemory instead of Russian text — a wrong-script data-quality bug, not a card-logic bug. Fixed with a user-approved "retry + free fallback" approach, no paid API keys:
+
+- [x] `_mymemory_translate` retries once on genuine `httpx.RequestError` (network/timeout); HTTP-error responses and malformed JSON still fail immediately, as before.
+- [x] New `_google_free_translate(word, langpair)` — Google Translate's free, keyless, unofficial endpoint (same one `googletrans` and similar tools use), used only as a fallback.
+- [x] New `_is_valid_translation` — requires actual Cyrillic characters for `|ru` results (no equivalent check possible for `|en`, since Lithuanian/English share Latin script).
+- [x] New `_translate_with_fallback` orchestrator: MyMemory first; Google fallback only if MyMemory's result is missing or fails the script check; returns `None` (not a wrong-script value) if both fail.
+- [x] Renamed `_mymemory_cached` → `_translate_cached`, updated all 4 call sites (2 in `translate_word`, 2 in `_lemma_translations` — the actual path the bug was found through).
+- [x] Tests: autouse fixture stubs `_google_free_translate` to `None` by default (existing 43 tests unaffected); 6 new tests including a direct regression test for the `nepavykti`/"fail" bug and a retry-vs-no-retry pair mocking `httpx.get` directly. 4 pre-existing tests had non-Cyrillic placeholder strings corrected to Cyrillic (legitimate fixture fix given the new script-validity check — verified by Fable review, no assertions weakened).
+- [x] Fable review: code matches spec exactly, no fixes needed. Independently re-verified live (separate from the implementing agent's own report): `GET /api/extension/translate?word=nepavykti&lang=both` → `translation_ru: "потерпеть неудачу"` (was `"fail"`); inflected form `Nepavyko` → same fix via `base_translation_ru`; old DB-hit word (`namas`) unchanged.
+- [x] Full suite: 183 passed (177 + 6 new), no regressions.
+
 ## Risks
 
 - Wiktionary REST shape assumptions — mitigated by step 0 and selecting by `language` field.

@@ -42,9 +42,9 @@ _LETTER_RE = re.compile(r"[^\W\d_]", re.UNICODE)
 # anonymous daily quota. See https://mymemory.translated.net/doc/spec.php
 _MYMEMORY_CONTACT_EMAIL = os.getenv("MYMEMORY_CONTACT_EMAIL")
 
-# Module-level in-memory cache for MyMemory fallback lookups, keyed by
+# Module-level in-memory cache for translation fallback lookups, keyed by
 # "{word_lower}|{langpair}" so English and Russian lookups of the same word
-# don't collide. Only successful lookups are cached (see _mymemory_cached) —
+# don't collide. Only successful lookups are cached (see _translate_cached) —
 # caching a None could make a word permanently untranslatable until restart.
 # Kept simple (single-process dict) since this is a low-volume funnel feature;
 # cleared entirely once it grows past 2000 entries to bound memory use.
@@ -53,24 +53,100 @@ _TRANSLATION_CACHE: dict[str, str] = {}
 
 def _mymemory_translate(word: str, langpair: str) -> Optional[str]:
     """Call the free MyMemory translation API. Returns None on any error, timeout,
-    or when no real translation is found (module-level so tests can monkeypatch it)."""
+    or when no real translation is found (module-level so tests can monkeypatch it).
+
+    Retries once on a genuine transient network failure (httpx.RequestError —
+    connection errors, timeouts) since those are worth a second try; an actual
+    HTTP error response (raise_for_status) or a malformed JSON body is not
+    retried — those indicate a real problem with the request/response, not a
+    blip, so failing fast (as before) is still correct."""
     params = {"q": word, "langpair": langpair}
     if _MYMEMORY_CONTACT_EMAIL:
         params["de"] = _MYMEMORY_CONTACT_EMAIL
+    attempts = 2
+    for attempt in range(attempts):
+        try:
+            resp = httpx.get("https://api.mymemory.translated.net/get", params=params, timeout=5.0)
+        except httpx.RequestError:
+            if attempt + 1 < attempts:
+                continue
+            return None
+        try:
+            resp.raise_for_status()
+            data = resp.json()
+            translated = (data.get("responseData") or {}).get("translatedText")
+            if not translated:
+                return None
+            translated = translated.strip()
+            # MyMemory echoes the query back untranslated when it has no match.
+            if not translated or translated.lower() == word.strip().lower():
+                return None
+            return translated
+        except Exception:
+            return None
+    return None
+
+
+def _google_free_translate(word: str, langpair: str) -> Optional[str]:
+    """Fallback translator using Google Translate's free, keyless, unofficial
+    endpoint (the same one the `googletrans` PyPI package and similar tools
+    scrape — NOT the paid Cloud Translation API, which needs an API key/billing).
+    This endpoint is undocumented and could break or get rate-limited without
+    notice, which is exactly why it's a fallback and not the primary path:
+    _translate_with_fallback only reaches this after MyMemory has already
+    failed or returned something invalid for the target script.
+
+    `langpair` matches the "lt|en"/"lt|ru" style used elsewhere in this file
+    and is split into Google's `sl`/`tl` params. Returns None on any error,
+    timeout, malformed response, or an untranslated echo of the input."""
     try:
-        resp = httpx.get("https://api.mymemory.translated.net/get", params=params, timeout=5.0)
+        sl, tl = langpair.split("|")
+        resp = httpx.get(
+            "https://translate.googleapis.com/translate_a/single",
+            params={"client": "gtx", "sl": sl, "tl": tl, "dt": "t", "q": word},
+            timeout=5.0,
+        )
         resp.raise_for_status()
         data = resp.json()
-        translated = (data.get("responseData") or {}).get("translatedText")
-        if not translated:
-            return None
+        # Shape: [[[seg0_translated, seg0_original, ...], [seg1...], ...], ...]
+        translated = "".join(seg[0] for seg in data[0] if seg and seg[0])
         translated = translated.strip()
-        # MyMemory echoes the query back untranslated when it has no match.
         if not translated or translated.lower() == word.strip().lower():
             return None
         return translated
     except Exception:
         return None
+
+
+# Cheap sanity check for the "wrong script entirely" failure mode (e.g.
+# MyMemory returning the English word "fail" as a Russian translation).
+# Lithuanian and English share the Latin alphabet, so there's no equivalent
+# cheap check for "|en" — a plausible-looking Latin string could still be a
+# bad translation, but that's a quality problem this check isn't meant to
+# catch, only the "obviously wrong script" one.
+_CYRILLIC_RE = re.compile(r"[Ѐ-ӿ]")
+
+
+def _is_valid_translation(text: str, langpair: str) -> bool:
+    if langpair.endswith("|ru"):
+        return bool(_CYRILLIC_RE.search(text))
+    return True
+
+
+def _translate_with_fallback(word: str, langpair: str) -> Optional[str]:
+    """MyMemory first; if it fails or returns a wrong-script result (the bug
+    that motivated this function — MyMemory's lt->ru corpus is thin enough to
+    sometimes return English text), retry via the free Google endpoint. A
+    result that fails the script check from BOTH sources is discarded — a
+    null field in the API response is strictly better than confidently
+    labeling English text as a Russian translation."""
+    primary = _mymemory_translate(word, langpair)
+    if primary and _is_valid_translation(primary, langpair):
+        return primary
+    fallback = _google_free_translate(word, langpair)
+    if fallback and _is_valid_translation(fallback, langpair):
+        return fallback
+    return None
 
 
 def _validate_word(raw: str) -> str:
@@ -87,12 +163,13 @@ def _validate_word(raw: str) -> str:
 _VALID_LANGS = {"en", "ru", "both"}
 
 
-def _mymemory_cached(word: str, word_key: str, langpair: str) -> Optional[str]:
-    """MyMemory lookup with a per-langpair cache (see _TRANSLATION_CACHE above)."""
+def _translate_cached(word: str, word_key: str, langpair: str) -> Optional[str]:
+    """Translation lookup (MyMemory + Google-free fallback, see
+    _translate_with_fallback) with a per-langpair cache (see _TRANSLATION_CACHE above)."""
     cache_key = f"{word_key}|{langpair}"
     if cache_key in _TRANSLATION_CACHE:
         return _TRANSLATION_CACHE[cache_key]
-    result = _mymemory_translate(word, langpair)
+    result = _translate_with_fallback(word, langpair)
     if result is not None:
         if len(_TRANSLATION_CACHE) > 2000:
             _TRANSLATION_CACHE.clear()
@@ -247,8 +324,8 @@ def _lemma_translations(
     if db_word:
         return db_word.translation_en, db_word.translation_ru, db_word.accented
     lemma_key = lemma.lower()
-    translation_en = _mymemory_cached(lemma, lemma_key, "lt|en") if lang in ("en", "both") else None
-    translation_ru = _mymemory_cached(lemma, lemma_key, "lt|ru") if lang in ("ru", "both") else None
+    translation_en = _translate_cached(lemma, lemma_key, "lt|en") if lang in ("en", "both") else None
+    translation_ru = _translate_cached(lemma, lemma_key, "lt|ru") if lang in ("ru", "both") else None
     return translation_en, translation_ru, None
 
 
@@ -353,8 +430,8 @@ def translate_word(
         return response
 
     word_key = word.lower()
-    translation_en = _mymemory_cached(word, word_key, "lt|en") if lang in ("en", "both") else None
-    translation_ru = _mymemory_cached(word, word_key, "lt|ru") if lang in ("ru", "both") else None
+    translation_en = _translate_cached(word, word_key, "lt|en") if lang in ("en", "both") else None
+    translation_ru = _translate_cached(word, word_key, "lt|ru") if lang in ("ru", "both") else None
 
     if translation_en is None and translation_ru is None:
         # 404-softening: the exact selected form has no translation of its own,
