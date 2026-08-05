@@ -6,6 +6,7 @@
 
 import io
 import json
+import time
 import zipfile
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -55,6 +56,30 @@ def _no_real_google_fallback_calls(monkeypatch):
     fallback behavior override it via `with patch.object(extension,
     "_google_free_translate", ...)`."""
     monkeypatch.setattr(extension, "_google_free_translate", lambda word, langpair: None)
+
+
+# ── Concurrency helper ──────────────────────────────────────────────────────
+
+def test_run_parallel_preserves_order_and_handles_single_call():
+    """Order must match the order `calls` were given (not completion order),
+    and a single callable must work as a plain passthrough (no thread pool
+    needed for exactly one call)."""
+    # Deliberately finish in REVERSE order (first call is slowest) so the
+    # assertion below can only pass if results are ordered by argument
+    # position, not by completion — and so the calls demonstrably overlap
+    # (0.15s of sleeps must take well under 0.15s wall clock).
+    def slow(value, delay):
+        time.sleep(delay)
+        return value
+
+    started = time.monotonic()
+    results = extension._run_parallel(
+        lambda: slow(1, 0.09), lambda: slow(2, 0.05), lambda: slow(3, 0.01)
+    )
+    elapsed = time.monotonic() - started
+    assert results == (1, 2, 3)
+    assert elapsed < 0.15, "calls did not run concurrently"
+    assert extension._run_parallel(lambda: "solo") == ("solo",)
 
 
 # ── Translate ────────────────────────────────────────────────────────────────
@@ -656,6 +681,81 @@ def test_translate_404_softening_uses_base_form_translation(client):
     assert body["base_translation_en"] == "lemma6-en"
 
 
+def test_enrich_skips_wiktionary_for_db_star1_exact_match(client):
+    """Performance fast path: a DB word that's already the clean dictionary
+    base form (star == 1, exact case-insensitive match) skips
+    Wiktionary/simplemma entirely — zero network calls — and gets
+    base_form/base_form_accented straight from the DB row instead."""
+    email = "ext_fastpath_star1@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    with Session(database.engine) as s:
+        wl = WordList(title="Fast Path List", is_public=True)
+        s.add(wl)
+        s.commit()
+        s.refresh(wl)
+        w = Word(
+            lithuanian="fastpathword",
+            translation_en="fp-en",
+            translation_ru="fp-ru",
+            accented="fast*path*word",
+            star=1,
+        )
+        s.add(w)
+        s.commit()
+        s.refresh(w)
+        s.add(WordListItem(word_list_id=wl.id, word_id=w.id, position=0))
+        s.commit()
+
+    with patch.object(extension, "_wiktionary_lookup") as wikt_mock:
+        r = client.get("/api/extension/translate", params={"word": "fastpathword"}, headers=auth(token))
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["base_form"] == "fastpathword"
+    assert body["base_form_accented"] == "fast*path*word"
+    assert body["senses"] is None
+    assert body["part_of_speech"] is None
+    wikt_mock.assert_not_called()
+
+
+def test_enrich_does_not_skip_wiktionary_for_star_not_1(client):
+    """A DB word with star != 1 (itself inflected/multi-form in Fluent's own
+    catalog, per models.py's star convention) must still go through full
+    Wiktionary enrichment — the fast path is exclusively for star == 1."""
+    email = "ext_fastpath_star2@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    with Session(database.engine) as s:
+        wl = WordList(title="Star2 List", is_public=True)
+        s.add(wl)
+        s.commit()
+        s.refresh(wl)
+        w = Word(
+            lithuanian="star2word",
+            translation_en="s2-en",
+            translation_ru="s2-ru",
+            star=2,
+        )
+        s.add(w)
+        s.commit()
+        s.refresh(w)
+        s.add(WordListItem(word_list_id=wl.id, word_id=w.id, position=0))
+        s.commit()
+
+    with patch.object(extension, "_wiktionary_lookup", return_value={
+        "part_of_speech": "Noun", "senses": ["a sense"], "form_of": None,
+    }) as wikt_mock:
+        r = client.get("/api/extension/translate", params={"word": "star2word"}, headers=auth(token))
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["senses"] == ["a sense"]
+    wikt_mock.assert_called_once()
+
+
 def test_add_base_form_word_via_existing_endpoint_smoke(client):
     """The card's default "Add "<base form>"" button just POSTs the base
     form's own lithuanian/translation pair — no new server-side behavior."""
@@ -854,7 +954,13 @@ def test_add_without_list_id_still_uses_from_internet(client):
         assert wl.title == "From internet"
 
 
-def test_add_dedupe_is_per_list(client):
+def test_add_dedupe_is_cross_scope_not_per_list(client):
+    """Behavior INTENTIONALLY changed by the cross-scope duplicate check
+    (this test used to assert the opposite — that a different explicit
+    list_id was NOT a duplicate; that was exactly the bug being fixed: the
+    same word ending up duplicated across a user's personal lists). Adding
+    the same word to a different personal list than where it already lives
+    must now be detected as a duplicate too, with no second Word row created."""
     email = "ext_list_dedupe@example.com"
     _make_premium(client, email)
     token = make_token(email)
@@ -868,15 +974,139 @@ def test_add_dedupe_is_per_list(client):
     assert r1.status_code == 200
     assert r1.json()["already_added"] is False
 
-    # Same word, but targeting a different explicit list — not a duplicate there.
+    # Same word, different explicit target list — now correctly detected as
+    # a cross-scope duplicate instead of silently creating a second copy.
     r2 = client.post(
         "/api/extension/words",
         json={"lithuanian": "unikalusdedupe", "translation": "unique", "list_id": lid},
         headers=auth(token),
     )
     assert r2.status_code == 200
+    body2 = r2.json()
+    assert body2["already_added"] is True
+    assert body2["location"] == "From internet"  # the list r1 actually landed in
+
+    with Session(database.engine) as s:
+        # Only ONE Word row named "unikalusdedupe" exists anywhere — the
+        # second list never got its own copy.
+        rows = s.exec(select(Word).where(Word.lithuanian == "unikalusdedupe")).all()
+        assert len(rows) == 1
+
+
+def test_add_same_list_duplicate_still_returns_id_and_location(client):
+    """Old backward-compat guarantee preserved: a duplicate landing in the
+    SAME (resolved) target list still returns id/list_id exactly as before
+    this feature, with `location` now added alongside — purely additive."""
+    email = "ext_same_list_dup@example.com"
+    _make_premium(client, email)
+    token = make_token(email)
+
+    r1 = client.post(
+        "/api/extension/words",
+        json={"lithuanian": "samelistdup", "translation": "first"},
+        headers=auth(token),
+    )
+    assert r1.status_code == 200
+
+    r2 = client.post(
+        "/api/extension/words",
+        json={"lithuanian": "SAMELISTDUP", "translation": "dup"},
+        headers=auth(token),
+    )
+    assert r2.status_code == 200
+    body2 = r2.json()
+    assert body2["already_added"] is True
+    assert body2["id"] == r1.json()["id"]
+    assert body2["list_id"] == r1.json()["list_id"]
+    assert body2["location"] == "From internet"
+
+
+def test_add_public_progress_duplicate_detected(client):
+    """Having studied a word via a public curriculum list — any
+    UserWordProgress row, regardless of status — counts as "already known"
+    even with zero matching personal lists. Seeded via the real study-session
+    endpoint (POST /api/words/{id}/progress), the same pattern
+    test_word_lists.py uses to create progress rows in tests."""
+    email = "ext_progress_dedupe@example.com"
+    _make_premium(client, email)
+    token = make_token(email)
+
+    # Word id=1 ("vienas") is the seeded public word from conftest.py.
+    r_progress = client.post("/api/words/1/progress", json={"status": "known"}, headers=auth(token))
+    assert r_progress.status_code == 200
+
+    r = client.post(
+        "/api/extension/words",
+        json={"lithuanian": "vienas", "translation": "one"},
+        headers=auth(token),
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["already_added"] is True
+    assert body["location"]  # some human-readable string (the public list's title)
+
+    with Session(database.engine) as s:
+        # No new personal-list copy of "vienas" was created for THIS user.
+        # (Not a global count: other tests/users legitimately have their own
+        # independent "vienas" personal-list copies — Words aren't shared
+        # across users' personal lists by design.)
+        user = s.exec(select(User).where(User.email == email)).first()
+        personal_ids = extension._personal_list_ids(user, s)
+        item_count = 0
+        if personal_ids:
+            item_count = len(s.exec(
+                select(WordListItem).where(WordListItem.word_list_id.in_(personal_ids))
+            ).all())
+        assert item_count == 0
+
+
+def test_add_no_match_creates_normally(client):
+    """A word absent from every personal list and with no progress row at
+    all creates a fresh Word + WordListItem exactly as before, location: null."""
+    email = "ext_no_dup@example.com"
+    _make_premium(client, email)
+    token = make_token(email)
+    r = client.post(
+        "/api/extension/words",
+        json={"lithuanian": "visiskainaujas", "translation": "brand new"},
+        headers=auth(token),
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["already_added"] is False
+    assert body["location"] is None
+    assert "id" in body and "list_id" in body
+
+
+def test_add_ignores_archived_word_in_personal_list(client):
+    """An ARCHIVED Word is hidden everywhere words are read (see _db_lookup
+    and the list view in routers/word_lists.py), so it must not block
+    re-adding — the cross-scope check filters `Word.archived` the same way."""
+    email = "ext_archived_dup@example.com"
+    _make_premium(client, email)
+    token = make_token(email)
+
+    r1 = client.post(
+        "/api/extension/words",
+        json={"lithuanian": "archyvuotas", "translation": "archived one"},
+        headers=auth(token),
+    )
+    assert r1.status_code == 200
+    assert r1.json()["already_added"] is False
+
+    with Session(database.engine) as s:
+        w = s.get(Word, r1.json()["id"])
+        w.archived = True
+        s.add(w)
+        s.commit()
+
+    r2 = client.post(
+        "/api/extension/words",
+        json={"lithuanian": "archyvuotas", "translation": "fresh copy"},
+        headers=auth(token),
+    )
+    assert r2.status_code == 200
     assert r2.json()["already_added"] is False
-    assert r2.json()["list_id"] == lid
     assert r2.json()["id"] != r1.json()["id"]
 
 

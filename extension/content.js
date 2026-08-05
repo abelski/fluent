@@ -174,9 +174,20 @@
     sh.appendChild(card);
     cardEl = card;
 
-    const [status, translated] = await Promise.all([
+    // getLists is fired here too — concurrently with getStatus/translate —
+    // rather than later inside renderFooter. Firing it after translation
+    // resolves (the old code) added the full getLists round trip (~880ms
+    // measured live) as sequential TAIL latency on every Add flow. We don't
+    // know yet whether this user is premium/connected (that's what
+    // getStatus is for), so non-premium/disconnected users now also fire a
+    // getLists call they didn't before — a deliberate, accepted cost:
+    // GET /api/me/word-lists is a cheap existing query that returns []
+    // quickly for them, and waiting to learn premium status first would
+    // just reintroduce the sequential dependency this fixes.
+    const [status, translated, listsResp] = await Promise.all([
       sendMessage({ type: 'getStatus' }),
       sendMessage({ type: 'translate', word }),
+      sendMessage({ type: 'getLists' }),
     ]);
 
     if (!cardEl) return; // card was dismissed while we were waiting
@@ -188,6 +199,11 @@
     // about which translation belongs to the form actually shown as the
     // headword (see the "saugo/saugoti" gloss-mismatch bug).
     let hasBaseForm = false;
+    // Editable translation <input>s, one per language actually shown (at
+    // most one "en" and one "ru") — same elements read by the Add-button
+    // click handler and reset by the toggle-link handler in renderFooter, so
+    // there is exactly one source of truth for "what should be saved."
+    const glossInputs = { en: null, ru: null };
 
     if (!translated.ok) {
       body.style.color = '#6b7280';
@@ -208,18 +224,24 @@
         (t.base_translation_en || t.base_translation_ru)
       );
       body.style.color = '#111827';
+      body.textContent = '';
       // The gloss must match whichever form is shown as the headword: the
       // base form's own translation when the headword was upgraded to it,
       // otherwise the exactly-selected form's translation (unchanged from
       // before enrichment existed). Either field may be null — the backend
       // only returns the language(s) requested (the "Translation language"
-      // option).
+      // option). Editable so the user can correct a wrong suggestion (e.g.
+      // "Дюбель" for "Pundelis") before saving — no automated check can
+      // catch a wrong-but-plausible translation.
       const glossEn = hasBaseForm ? t.base_translation_en : t.translation_en;
       const glossRu = hasBaseForm ? t.base_translation_ru : t.translation_ru;
-      if (glossEn && glossRu) {
-        body.textContent = `${glossEn} · ${glossRu}`;
-      } else {
-        body.textContent = glossEn || glossRu || '';
+      if (glossEn) {
+        glossInputs.en = makeGlossInput(glossEn);
+        body.appendChild(glossInputs.en);
+      }
+      if (glossRu) {
+        glossInputs.ru = makeGlossInput(glossRu);
+        body.appendChild(glossInputs.ru);
       }
 
       // Dictionary enrichment (base form / grammar / senses) — every field is
@@ -253,7 +275,32 @@
       }
     }
 
-    await renderFooter(footer, status, word, translated.ok ? translated.data : null, hasBaseForm);
+    await renderFooter(footer, status, word, translated.ok ? translated.data : null, hasBaseForm, glossInputs, listsResp);
+  }
+
+  // Small editable text input for a suggested translation. Same visual
+  // weight as the old read-only gloss text; stopPropagation isn't needed
+  // here beyond what the card already does (see card.addEventListener('mousedown', ...)
+  // above), which already shields any click inside the card from the
+  // document-level outside-click dismissal handler.
+  function makeGlossInput(value) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = value || '';
+    Object.assign(input.style, {
+      display: 'block',
+      width: '100%',
+      marginTop: '2px',
+      padding: '4px 6px',
+      border: '1px solid #d1d5db',
+      borderRadius: '4px',
+      fontSize: '13px',
+      fontFamily: 'inherit',
+      color: '#111827',
+      background: '#fff',
+      boxSizing: 'border-box',
+    });
+    return input;
   }
 
   // Vanilla-JS port of frontend/lib/renderAccented.tsx: a "*syllable*"-marked
@@ -303,7 +350,7 @@
     return btn;
   }
 
-  async function renderFooter(footer, status, word, translated, hasBaseForm) {
+  async function renderFooter(footer, status, word, translated, hasBaseForm, glossInputs, listsResp) {
     footer.innerHTML = '';
     const base = (status && status.base) || 'https://fluent.lt';
 
@@ -335,10 +382,13 @@
     }
 
     // Premium/admin: optional "which list?" picker above the Add button.
-    // Best-effort — if fetching the list fails, just skip straight to the button.
+    // Best-effort — if the getLists fetch (kicked off back in showCard,
+    // concurrently with getStatus/translate) failed or errored, listsResp
+    // just won't have the expected shape and we skip straight to the button
+    // — exactly the same graceful degradation as before, just fed from a
+    // result that's already resolved by the time we get here instead of
+    // fetched fresh on this call.
     let selectEl = null;
-    const listsResp = await sendMessage({ type: 'getLists' });
-    if (!cardEl) return; // card was dismissed while we were waiting
 
     if (listsResp && listsResp.ok && Array.isArray(listsResp.data)) {
       selectEl = document.createElement('select');
@@ -431,6 +481,12 @@
         toggleLink.textContent = showingBase
           ? `add "${basePayload.lithuanian}" instead`
           : `add "${selectedPayload.lithuanian}" instead`;
+        // Reset the (possibly user-edited) translation inputs to the newly
+        // active form's suggested defaults — same elements the Add button
+        // reads from below, so there is only ever one place holding "what
+        // will actually be saved."
+        if (glossInputs.en) glossInputs.en.value = activePayload.translation || '';
+        if (glossInputs.ru) glossInputs.ru.value = activePayload.translation_ru || '';
       });
     }
 
@@ -439,16 +495,27 @@
       btn.disabled = true;
       btn.textContent = 'Adding…';
       const listId = selectEl ? selectEl.value : '';
+      // Read the live input values at click time (the user may have
+      // corrected a wrong suggestion) rather than the static payload —
+      // falling back to the payload string only if that language has no
+      // input at all (shouldn't normally happen, since both are driven by
+      // the same "Translation language" setting, but stays safe either way).
+      const translationValue = (glossInputs.en ? glossInputs.en.value.trim() : activePayload.translation) || null;
+      const translationRuValue = (glossInputs.ru ? glossInputs.ru.value.trim() : activePayload.translation_ru) || null;
       const res = await sendMessage({
         type: 'addWord',
         lithuanian: activePayload.lithuanian,
-        translation: activePayload.translation,
-        translation_ru: activePayload.translation_ru || null,
+        translation: translationValue,
+        translation_ru: translationRuValue,
         list_id: listId ? Number(listId) : null,
       });
       if (!cardEl) return;
       if (res.ok) {
-        btn.textContent = res.data.already_added ? 'Already in your list' : 'Added!';
+        if (res.data.already_added) {
+          btn.textContent = res.data.location ? `Already in "${res.data.location}"` : 'Already in your list';
+        } else {
+          btn.textContent = 'Added!';
+        }
         if (toggleLink) toggleLink.remove();
         await chrome.storage.local.set({ lastListId: listId });
       } else if (res.error === 'premium') {

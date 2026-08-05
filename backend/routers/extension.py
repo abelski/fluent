@@ -13,6 +13,7 @@ import json
 import os
 import re
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
@@ -20,13 +21,13 @@ from urllib.parse import quote
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from pydantic import BaseModel
-from sqlmodel import Session, func, select
+from sqlmodel import Session, col, func, select
 
 from auth import require_user as _require_user
 from database import get_session
 from quota import is_premium_active
-from models import User, Word, WordList, WordListItem
-from routers.word_lists import _next_position, _get_owned_list
+from models import User, Word, WordList, WordListItem, UserWordProgress
+from routers.word_lists import _next_position, _get_owned_list, _personal_list_ids
 
 router = APIRouter()
 
@@ -177,6 +178,27 @@ def _translate_cached(word: str, word_key: str, langpair: str) -> Optional[str]:
     return result
 
 
+# ── Concurrency helper ────────────────────────────────────────────────────────
+# IMPORTANT (audited at every call site below): the SQLModel `Session` is NOT
+# thread-safe. `_run_parallel` must only ever be given callables where AT MOST
+# ONE touches `session` — getting this wrong is a silent correctness bug
+# (corrupted/interleaved query state), not a crash, so each call site has an
+# explicit comment naming which branch (if any) is the one allowed to touch it.
+# Every other call in this file (_mymemory_translate, _google_free_translate,
+# _wiktionary_lookup, the module-level dict caches) is either a pure HTTP call
+# or a simple dict check-then-set — safe to run on any thread.
+
+def _run_parallel(*calls):
+    """Run zero-arg callables concurrently (ThreadPoolExecutor); returns their
+    results as a tuple in the same order as `calls`. See the module note
+    above the constraint this must satisfy at every call site."""
+    if len(calls) == 1:
+        return (calls[0](),)
+    with ThreadPoolExecutor(max_workers=len(calls)) as executor:
+        futures = [executor.submit(call) for call in calls]
+        return tuple(f.result() for f in futures)
+
+
 def _db_lookup(word: str, session: Session) -> Optional[Word]:
     """Find a public-list Word row matching `word` case-insensitively, preferring
     star=1 (base form) when the word appears in multiple lists. The is_public
@@ -323,9 +345,21 @@ def _lemma_translations(
     db_word = _db_lookup(lemma, session)
     if db_word:
         return db_word.translation_en, db_word.translation_ru, db_word.accented
+
     lemma_key = lemma.lower()
-    translation_en = _translate_cached(lemma, lemma_key, "lt|en") if lang in ("en", "both") else None
-    translation_ru = _translate_cached(lemma, lemma_key, "lt|ru") if lang in ("ru", "both") else None
+    need_en = lang in ("en", "both")
+    need_ru = lang in ("ru", "both")
+    if need_en and need_ru:
+        # SESSION SAFETY: neither call touches `session` at all — both are
+        # pure HTTP+dict-cache lookups (_db_lookup above already returned by
+        # this point, so session access for this function is already done).
+        translation_en, translation_ru = _run_parallel(
+            lambda: _translate_cached(lemma, lemma_key, "lt|en"),
+            lambda: _translate_cached(lemma, lemma_key, "lt|ru"),
+        )
+    else:
+        translation_en = _translate_cached(lemma, lemma_key, "lt|en") if need_en else None
+        translation_ru = _translate_cached(lemma, lemma_key, "lt|ru") if need_ru else None
     return translation_en, translation_ru, None
 
 
@@ -352,6 +386,20 @@ def _enrich(word: str, lang: str, session: Session, db_word: Optional[Word] = No
     when the selected word turns out to already be the dictionary form."""
     if len(word.split()) != 1:
         return dict(_EMPTY_ENRICHMENT)
+
+    # Fast path: `db_word` is already the clean dictionary base form (exact
+    # case-insensitive match, star == 1 — Fluent's own convention for "base
+    # form, not an inflected/multi-form entry"). Skip Wiktionary/simplemma
+    # entirely and populate base_form/base_form_accented straight from the
+    # DB row — this is the common case for curriculum words and previously
+    # cost an unconditional ~800ms Wiktionary round trip for information the
+    # DB already had. Anything with star != 1 is itself inflected/multi-form
+    # and still goes through full enrichment below.
+    if db_word and db_word.lithuanian.lower() == word.lower() and db_word.star == 1:
+        result = dict(_EMPTY_ENRICHMENT)
+        result["base_form"] = db_word.lithuanian
+        result["base_form_accented"] = db_word.accented
+        return result
 
     entry = _wiktionary_cached(word)
 
@@ -384,12 +432,19 @@ def _enrich(word: str, lang: str, session: Session, db_word: Optional[Word] = No
     result["base_form"] = lemma
     result["grammar_note"] = form_of["description"]
 
-    lemma_entry = _wiktionary_cached(lemma)
+    # SESSION SAFETY: _wiktionary_cached(lemma) is a pure HTTP+dict-cache call
+    # (no session access whatsoever). _lemma_translations(lemma, lang, session)
+    # is the ONLY one of this pair that may touch `session` (via its own
+    # _db_lookup, and — when that misses — its own internal _run_parallel
+    # group, which itself never touches session either). At most one branch
+    # here touches session — safe to run concurrently.
+    lemma_entry, (en, ru, accented) = _run_parallel(
+        lambda: _wiktionary_cached(lemma),
+        lambda: _lemma_translations(lemma, lang, session),
+    )
     if lemma_entry:
         senses = lemma_entry.get("senses") or []
         result["senses"] = senses[:3] if senses else None
-
-    en, ru, accented = _lemma_translations(lemma, lang, session)
     result["base_translation_en"] = en
     result["base_translation_ru"] = ru
     result["base_form_accented"] = accented
@@ -417,9 +472,9 @@ def translate_word(
         raise HTTPException(status_code=422, detail="lang must be 'en', 'ru', or 'both'")
 
     db_word = _db_lookup(word, session)
-    enrichment = _enrich(word, lang, session, db_word=db_word)
 
     if db_word:
+        enrichment = _enrich(word, lang, session, db_word=db_word)
         response = {
             "word": db_word.lithuanian,
             "translation_en": db_word.translation_en,
@@ -429,9 +484,32 @@ def translate_word(
         response.update(enrichment)
         return response
 
+    # No DB hit: run enrichment (Wiktionary/simplemma) CONCURRENTLY with the
+    # top-level translation instead of sequentially — today _enrich runs to
+    # completion (a Wiktionary round trip) before the top-level translation
+    # (MyMemory/Google) even starts, which measured ~2.9s for an
+    # inflected/uncached word.
+    #
+    # SESSION SAFETY: _enrich(word, lang, session, db_word=None) is the ONLY
+    # one of these branches that may touch `session` (via _lemma_translations'
+    # _db_lookup on whatever lemma Wiktionary/simplemma resolves to, and that
+    # function's own internal _run_parallel group — which itself never
+    # touches session, per its own comment). The _translate_cached calls
+    # below are pure HTTP+dict-cache lookups and never touch session at all.
+    # At most one branch touches session — safe to run concurrently.
     word_key = word.lower()
-    translation_en = _translate_cached(word, word_key, "lt|en") if lang in ("en", "both") else None
-    translation_ru = _translate_cached(word, word_key, "lt|ru") if lang in ("ru", "both") else None
+    need_en = lang in ("en", "both")
+    need_ru = lang in ("ru", "both")
+    jobs = [("enrichment", lambda: _enrich(word, lang, session, db_word=db_word))]
+    if need_en:
+        jobs.append(("en", lambda: _translate_cached(word, word_key, "lt|en")))
+    if need_ru:
+        jobs.append(("ru", lambda: _translate_cached(word, word_key, "lt|ru")))
+    results = dict(zip((key for key, _ in jobs), _run_parallel(*(call for _, call in jobs))))
+
+    enrichment = results["enrichment"]
+    translation_en = results.get("en")
+    translation_ru = results.get("ru")
 
     if translation_en is None and translation_ru is None:
         # 404-softening: the exact selected form has no translation of its own,
@@ -459,6 +537,70 @@ def translate_word(
     }
     response.update(enrichment)
     return response
+
+
+def _already_known(lithuanian: str, user: User, session: Session) -> Optional[str]:
+    """Check whether the user already has this word ANYWHERE in their scope —
+    not just the requested target list. Returns a human-readable location
+    string for the "already added" response, or None if the word is
+    genuinely new to this user.
+
+    Checked in order:
+    1. Any of the user's personal lists (reusing `_personal_list_ids` from
+       routers/word_lists.py — the same helper that page uses to enumerate
+       "Мои списки"), not just the one `add_extension_word` was asked to add
+       to. Returns that list's title.
+    2. Any `UserWordProgress` row for this user on a matching Word — having
+       studied it at all (any status) via some list they had access to,
+       public curriculum included, counts as "already known" even with no
+       personal-list copy. Returns the title of a list containing that word
+       when one can be found, else a generic phrase.
+
+    Must be called BEFORE any Word/WordListItem creation in
+    add_extension_word — a hit here means no new row gets created,
+    regardless of which list_id was requested."""
+    personal_ids = _personal_list_ids(user, session)
+    if personal_ids:
+        hit_title = session.exec(
+            select(WordList.title)
+            .join(WordListItem, WordListItem.word_list_id == WordList.id)
+            .join(Word, Word.id == WordListItem.word_id)
+            .where(
+                col(WordList.id).in_(personal_ids),
+                func.lower(Word.lithuanian) == lithuanian.lower(),
+                # Archived words are hidden everywhere they're read (see
+                # _db_lookup above, word_lists.py's list view) — an invisible
+                # row must not block re-adding the word.
+                Word.archived == False,  # noqa: E712
+            )
+        ).first()
+        if hit_title:
+            return hit_title
+
+    progress_word_id = session.exec(
+        select(UserWordProgress.word_id)
+        .join(Word, Word.id == UserWordProgress.word_id)
+        .where(
+            UserWordProgress.user_id == user.id,
+            func.lower(Word.lithuanian) == lithuanian.lower(),
+            Word.archived == False,  # noqa: E712
+        )
+    ).first()
+    if progress_word_id is None:
+        return None
+    # Only name a list the user can actually see — a public (non-archived)
+    # curriculum list, or one of their own. Without this filter the title of
+    # some other user's private list could leak into the response.
+    list_title = session.exec(
+        select(WordList.title)
+        .join(WordListItem, WordListItem.word_list_id == WordList.id)
+        .where(
+            WordListItem.word_id == progress_word_id,
+            WordList.archived == False,  # noqa: E712
+            (WordList.is_public == True) | (WordList.created_by == user.id),  # noqa: E712
+        )
+    ).first()
+    return list_title or "your vocabulary"
 
 
 class ExtensionWordCreate(BaseModel):
@@ -520,16 +662,31 @@ def add_extension_word(
             session.commit()
             session.refresh(wl)
 
-    existing = session.exec(
-        select(Word)
-        .join(WordListItem, WordListItem.word_id == Word.id)
-        .where(
-            WordListItem.word_list_id == wl.id,
-            func.lower(Word.lithuanian) == lithuanian.lower(),
-        )
-    ).first()
-    if existing:
-        return {"id": existing.id, "list_id": wl.id, "already_added": True}
+    # Cross-scope duplicate check — runs (and, on a hit, returns) BEFORE any
+    # Word/WordListItem creation below, regardless of which list_id was
+    # requested. Replaces the old single-target-list-only check.
+    location = _already_known(lithuanian, user, session)
+    if location is not None:
+        response = {"already_added": True, "location": location}
+        # If the match happens to be exactly the resolved target list, also
+        # report id/list_id — old clients that dereference those fields in
+        # the (previously the ONLY possible) same-list-duplicate case keep
+        # working unmodified. There's no meaningful single "existing" row to
+        # report for a cross-list/progress-only match, so those fields are
+        # simply absent there; extension/content.js only ever branches on
+        # `already_added`, never dereferences id/list_id unconditionally.
+        existing_in_target = session.exec(
+            select(Word)
+            .join(WordListItem, WordListItem.word_id == Word.id)
+            .where(
+                WordListItem.word_list_id == wl.id,
+                func.lower(Word.lithuanian) == lithuanian.lower(),
+            )
+        ).first()
+        if existing_in_target:
+            response["id"] = existing_in_target.id
+            response["list_id"] = wl.id
+        return response
 
     word = Word(
         lithuanian=lithuanian,
@@ -544,7 +701,7 @@ def add_extension_word(
         word_list_id=wl.id, word_id=word.id, position=_next_position(wl.id, session),
     ))
     session.commit()
-    return {"id": word.id, "list_id": wl.id, "already_added": False}
+    return {"id": word.id, "list_id": wl.id, "already_added": False, "location": None}
 
 
 # ── Installation info + download ─────────────────────────────────────────────
