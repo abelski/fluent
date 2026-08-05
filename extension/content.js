@@ -181,6 +181,14 @@
 
     if (!cardEl) return; // card was dismissed while we were waiting
 
+    // Whether the headword is showing the dictionary base form (vs. exactly
+    // what the user selected). Computed once here and reused everywhere a
+    // card decides "which form is primary" — the gloss line below AND
+    // renderFooter's Add-button default — so the two can never disagree
+    // about which translation belongs to the form actually shown as the
+    // headword (see the "saugo/saugoti" gloss-mismatch bug).
+    let hasBaseForm = false;
+
     if (!translated.ok) {
       body.style.color = '#6b7280';
       if (translated.status === 401 || translated.error === 'not_connected') {
@@ -194,13 +202,24 @@
       }
     } else {
       const t = translated.data;
+      hasBaseForm = !!(
+        t.base_form &&
+        t.base_form.toLowerCase() !== word.toLowerCase() &&
+        (t.base_translation_en || t.base_translation_ru)
+      );
       body.style.color = '#111827';
-      // The backend only returns the language(s) requested (per the
-      // "Translation language" option) — either field may be null.
-      if (t.translation_en && t.translation_ru) {
-        body.textContent = `${t.translation_en} · ${t.translation_ru}`;
+      // The gloss must match whichever form is shown as the headword: the
+      // base form's own translation when the headword was upgraded to it,
+      // otherwise the exactly-selected form's translation (unchanged from
+      // before enrichment existed). Either field may be null — the backend
+      // only returns the language(s) requested (the "Translation language"
+      // option).
+      const glossEn = hasBaseForm ? t.base_translation_en : t.translation_en;
+      const glossRu = hasBaseForm ? t.base_translation_ru : t.translation_ru;
+      if (glossEn && glossRu) {
+        body.textContent = `${glossEn} · ${glossRu}`;
       } else {
-        body.textContent = t.translation_en || t.translation_ru || '';
+        body.textContent = glossEn || glossRu || '';
       }
 
       // Dictionary enrichment (base form / grammar / senses) — every field is
@@ -234,7 +253,7 @@
       }
     }
 
-    await renderFooter(footer, status, word, translated.ok ? translated.data : null);
+    await renderFooter(footer, status, word, translated.ok ? translated.data : null, hasBaseForm);
   }
 
   // Vanilla-JS port of frontend/lib/renderAccented.tsx: a "*syllable*"-marked
@@ -284,7 +303,7 @@
     return btn;
   }
 
-  async function renderFooter(footer, status, word, translated) {
+  async function renderFooter(footer, status, word, translated, hasBaseForm) {
     footer.innerHTML = '';
     const base = (status && status.base) || 'https://fluent.lt';
 
@@ -363,13 +382,9 @@
     // and has its own translation; a small toggle link lets the user add the
     // selected (inflected) form instead. With no enrichment (old-shape
     // response, or base_form === the selection) this collapses to exactly
-    // the original "Add to learn" behavior.
-    const hasBaseForm = !!(
-      translated &&
-      translated.base_form &&
-      translated.base_form.toLowerCase() !== word.toLowerCase() &&
-      (translated.base_translation_en || translated.base_translation_ru)
-    );
+    // the original "Add to learn" behavior. `hasBaseForm` is computed once
+    // in showCard (also drives the gloss line) and passed in here so the
+    // two never disagree about which form is primary for this card.
     const basePayload = hasBaseForm ? {
       lithuanian: translated.base_form,
       translation: translated.base_translation_en,

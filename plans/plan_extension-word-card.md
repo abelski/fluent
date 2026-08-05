@@ -53,6 +53,13 @@ Real-world smoke test found `nepavykti` (lt→ru) returning the English word "fa
 - [x] Fable review: code matches spec exactly, no fixes needed. Independently re-verified live (separate from the implementing agent's own report): `GET /api/extension/translate?word=nepavykti&lang=both` → `translation_ru: "потерпеть неудачу"` (was `"fail"`); inflected form `Nepavyko` → same fix via `base_translation_ru`; old DB-hit word (`namas`) unchanged.
 - [x] Full suite: 183 passed (177 + 6 new), no regressions.
 
+## Follow-up: gloss/headword grammatical mismatch fix (2026-08-05)
+
+Real-world screenshot showed selecting "saugo" (3rd-person present, "guards/protects") upgrading the headword to base form "saugoti" but leaving the gloss line as "guards / protects · охраняет" (the inflected form's own translation) — grammatically mismatched with the infinitive headword. Investigated first (not assumed): queried the production DB directly and confirmed `base_translation_ru: "охранять/защищать"` was already correct — this was a pure card display bug, not a translation-quality or data bug.
+
+- [x] `extension/content.js` — `hasBaseForm` predicate computed once in `showCard` (previously duplicated independently inside `renderFooter`), used both to pick the gloss line's source (`base_translation_*` vs `translation_*`) and passed into `renderFooter` for the Add-button default, so the two can never disagree about which form is "primary" for a card.
+- [x] Fable review: diff matches spec exactly, single source of truth confirmed via grep (no duplicate `hasBaseForm` computation left in `renderFooter`). Mechanically simulated the exact fixed logic against the real live API response for `word=saugo` (not just read the diff) — confirms `body.textContent` now computes to `"to protect · охранять/защищать"` (was `"guards / protects · охраняет"`). `node --check` clean. No backend changes, no manifest bump (judged unnecessary for a display-only fix of this size).
+
 ## Risks
 
 - Wiktionary REST shape assumptions — mitigated by step 0 and selecting by `language` field.
