@@ -11,6 +11,7 @@ import {
   type PhraseStudyItem,
 } from '../../../../../../lib/api';
 import PhraseSession from '../../../../components/PhraseSession';
+import Tak from '../../../../../../components/Tak';
 import { useT } from '../../../../../../lib/useT';
 import { getPhraseStarLevel, setPhraseStarLevel } from '../../../../../../lib/starLevel';
 
@@ -69,31 +70,37 @@ function MyPhraseListStudyContent() {
     const currentLevel = getPhraseStarLevel();
     const nextLevel = currentLevel < 3 ? currentLevel + 1 : null;
     return (
-      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6" data-testid="phrase-level-complete">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
-        <div className="relative z-10 text-center max-w-sm w-full">
-          <div className="text-5xl mb-6">🏆</div>
-          <h1 className="font-headline text-2xl font-bold mb-2">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
-          <p className="text-gray-400 mb-8">{tr.study.levelCompleteBody}</p>
-          <div className="flex flex-col gap-3">
+      <main className="flex-1 text-gray-900 flex flex-col items-center justify-center px-8 pt-5 pb-20" data-testid="phrase-level-complete">
+        <div className="relative z-10 flex flex-col items-center text-center max-w-sm w-full gap-5">
+          <Tak pose="grin" size={150} />
+          <h1 className="text-[26px] font-bold">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
+          <p className="text-[15px] text-muted mb-2">{tr.study.levelCompleteBody}</p>
+          <div className="flex flex-col gap-3 w-full">
             {nextLevel && (
               <button
                 onClick={() => { setPhraseStarLevel(nextLevel); loadPhrases(); }}
                 data-testid="advance-level-btn"
-                className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
+                className="w-full py-3.5 bg-ink hover:bg-[#25282d] rounded-[10px] text-[15px] font-semibold text-white transition-colors"
               >
                 {tr.study.advanceToLevel.replace('{stars}', '★'.repeat(nextLevel))}
               </button>
             )}
-            <Link
-              href="/dashboard/phrases"
-              className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
+            {/* Always offered — at ★★★ this was previously the only CTA and it
+                was hidden, leaving the screen with no action at all. */}
+            <button
+              onClick={() => loadPhrases()}
+              data-testid="study-again-btn"
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 rounded-[10px] text-[15px] font-semibold text-white transition-colors"
             >
-              {t.backToLists}
-            </Link>
+              {tr.study.studyAgain}
+            </button>
           </div>
+          <Link
+            href="/dashboard/phrases"
+            className="mt-2 inline-block text-[13.5px] text-muted hover:text-gray-900 transition-colors"
+          >
+            {t.backToLists}
+          </Link>
         </div>
       </main>
     );

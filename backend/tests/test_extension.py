@@ -93,12 +93,42 @@ def test_translate_db_hit(client):
     email = "ext_translate_db@example.com"
     token = make_token(email)
     client.get("/api/me/quota", headers=auth(token))
-    r = client.get("/api/extension/translate", params={"word": "vienas"}, headers=auth(token))
+    r = client.get(
+        "/api/extension/translate", params={"word": "vienas", "lang": "both"}, headers=auth(token)
+    )
     assert r.status_code == 200
     body = r.json()
     assert body["translation_en"] == "one"
     assert body["translation_ru"] == "один"
     assert body["source"] == "db"
+
+
+def test_translate_db_hit_respects_lang_even_though_row_has_both(client):
+    """Regression test: a DB row always stores both translations, but the
+    response must still honor `lang` — a real bug report showed both EN and
+    RU inputs rendering in the card even when the user's extension setting
+    requested only one language."""
+    email = "ext_translate_db_lang@example.com"
+    token = make_token(email)
+    client.get("/api/me/quota", headers=auth(token))
+
+    r_en = client.get(
+        "/api/extension/translate", params={"word": "vienas", "lang": "en"}, headers=auth(token)
+    )
+    assert r_en.status_code == 200
+    body_en = r_en.json()
+    assert body_en["translation_en"] == "one"
+    assert body_en["translation_ru"] is None
+    assert body_en["source"] == "db"
+
+    r_ru = client.get(
+        "/api/extension/translate", params={"word": "vienas", "lang": "ru"}, headers=auth(token)
+    )
+    assert r_ru.status_code == 200
+    body_ru = r_ru.json()
+    assert body_ru["translation_en"] is None
+    assert body_ru["translation_ru"] == "один"
+    assert body_ru["source"] == "db"
 
 
 def test_translate_case_insensitive(client):
@@ -492,6 +522,25 @@ def test_translate_lemma_word_gets_senses_no_grammar_note_one_call(client):
     assert wikt_mock.call_count == 1  # already the lemma — no second fetch
 
 
+def test_lemma_translations_db_hit_respects_lang(client):
+    """Regression test for the same bug as test_translate_db_hit_respects_lang_...
+    but through the enrichment path: an inflected word whose lemma is a real
+    DB word ("vienas") must still have base_translation_en/_ru gated by
+    `lang`, not both unconditionally returned just because the DB row has both."""
+    with Session(database.engine) as s:
+        en, ru, accented = extension._lemma_translations("vienas", "en", s)
+        assert en == "one"
+        assert ru is None
+
+        en, ru, accented = extension._lemma_translations("vienas", "ru", s)
+        assert en is None
+        assert ru == "один"
+
+        en, ru, accented = extension._lemma_translations("vienas", "both", s)
+        assert en == "one"
+        assert ru == "один"
+
+
 def test_translate_db_accented_preferred_for_base_form(client):
     email = "ext_enrich_accented@example.com"
     token = make_token(email)
@@ -525,7 +574,11 @@ def test_translate_db_accented_preferred_for_base_form(client):
 
     with patch.object(extension, "_wiktionary_lookup", side_effect=fake_wikt), \
          patch.object(extension, "_mymemory_translate", return_value=None):
-        r = client.get("/api/extension/translate", params={"word": "enrichword3infl"}, headers=auth(token))
+        r = client.get(
+            "/api/extension/translate",
+            params={"word": "enrichword3infl", "lang": "both"},
+            headers=auth(token),
+        )
 
     assert r.status_code == 200
     body = r.json()

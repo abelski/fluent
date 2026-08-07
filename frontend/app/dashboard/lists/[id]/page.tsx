@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, resolveListId, getToken } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import { renderAccented } from '../../../../lib/renderAccented';
+import TakGreeting from '../../../../components/TakGreeting';
 
 interface Word {
   id: number;
@@ -78,30 +79,33 @@ export default function ListDetailPage() {
           </Link>
         </div>
 
-        <div className="flex items-start justify-between gap-4 mb-10">
-          <div>
-            {(() => {
-              const displayTitle = lang === 'en' ? (list.title_en || list.title) : list.title;
-              const displayDesc = lang === 'en' ? (list.description_en || list.description) : list.description;
-              return (
-                <>
-                  <h1 className="font-headline text-3xl font-bold">{displayTitle}</h1>
-                  {displayDesc && <p className="text-gray-400 mt-1">{displayDesc}</p>}
-                </>
-              );
-            })()}
-            <p className="text-gray-400 text-sm mt-2">{list.words.length} {plural(list.words.length, tr.detail.wordsCount)}</p>
+        <div className="flex items-start justify-between gap-4 mb-7">
+          <div className="flex items-end gap-5">
+            <TakGreeting phrase="Kartokime!" size={108} className="hidden sm:block" />
+            <div>
+              {(() => {
+                const displayTitle = lang === 'en' ? (list.title_en || list.title) : list.title;
+                const displayDesc = lang === 'en' ? (list.description_en || list.description) : list.description;
+                return (
+                  <>
+                    <h1 className="font-headline text-3xl font-bold">{displayTitle}</h1>
+                    {displayDesc && <p className="text-gray-400 mt-1.5">{displayDesc}</p>}
+                  </>
+                );
+              })()}
+              <p className="text-gray-400 text-sm mt-1">{list.words.length} {plural(list.words.length, tr.detail.wordsCount)}</p>
+            </div>
           </div>
           <button
             onClick={handleStudyClick}
-            className="shrink-0 px-6 py-3 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm text-white"
+            className="shrink-0 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors font-semibold text-sm text-white shadow-sm shadow-emerald-600/20"
           >
             {tr.detail.studyBtn}
           </button>
         </div>
 
-        <div className="bg-white border border-gray-900 rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-gray-900">
+        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-[1fr_1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-gray-100">
             <span>{tr.detail.columnLithuanian}</span>
             <span>{tr.detail.columnTranslation}</span>
             <span className="hidden sm:block">{tr.detail.columnNote}</span>
@@ -112,7 +116,7 @@ export default function ListDetailPage() {
             <div
               key={word.id}
               className={`grid grid-cols-[1fr_1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto_auto] px-4 sm:px-6 py-3.5 gap-4 items-center ${
-                i < list.words.length - 1 ? 'border-b border-gray-900' : ''
+                i < list.words.length - 1 ? 'border-b border-gray-100' : ''
               }`}
             >
               <span className="font-medium text-gray-900">{renderAccented(word.accented || word.lithuanian)}</span>

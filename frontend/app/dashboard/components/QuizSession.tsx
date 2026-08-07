@@ -10,6 +10,8 @@ import MatchRound from './MatchRound';
 import CharDiff from './CharDiff';
 import { normalizeLt, collapseWs } from '../../../lib/normalizeLt';
 import { renderAccented } from '../../../lib/renderAccented';
+import TakGreeting from '../../../components/TakGreeting';
+import Tak from '../../../components/Tak';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -811,13 +813,12 @@ export default function QuizSession({
     const passed      = notMastered === 0 && !endedEarly;
 
     return (
-      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className={`w-[600px] h-[400px] blur-[120px] rounded-full mt-[-100px] ${passed ? 'bg-emerald-100/40' : 'bg-amber-100/40'}`} />
-        </div>
+      <main className="flex-1 text-gray-900 flex flex-col items-center justify-center px-8 pt-5 pb-20">
         <div className="relative z-10 text-center max-w-sm w-full">
-          <div className="text-5xl mb-6" data-testid="result-emoji">{passed ? '😊' : '😢'}</div>
-          <h1 className="font-headline text-2xl font-bold mb-2">{tr.common.sessionDone}</h1>
+          <div className="flex justify-center mb-6" data-testid="result-emoji">
+            <Tak pose={passed ? 'grin' : 'talking'} size={150} />
+          </div>
+          <h1 className="text-[26px] font-bold mb-2">{tr.common.sessionDone}</h1>
           {isStudy && (
             <p
               className={`text-base font-semibold mb-2 ${passed ? 'text-emerald-700' : 'text-amber-700'}`}
@@ -827,22 +828,22 @@ export default function QuizSession({
               {passed ? tr.common.lessonPassed : tr.common.lessonNotPassed}
             </p>
           )}
-          <p className="text-gray-400 mb-8" data-testid="result-headline" data-total={totalWords}>
+          <p className="text-[15px] text-muted mb-8" data-testid="result-headline" data-total={totalWords}>
             {tr.common.correctOf.replace('{correct}', String(mastered)).replace('{total}', String(totalWords))}
           </p>
           <div className="flex gap-4 justify-center mb-8">
-            <div className="bg-white border border-gray-900 rounded-2xl px-5 sm:px-6 py-5 text-center">
+            <div className="bg-white border border-line rounded-[14px] px-5 sm:px-6 py-5 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-emerald-600" data-testid="tile-first-try">{firstTry}</div>
-              <div className="text-gray-400 text-sm mt-1">{tr.common.firstTryLabel}</div>
+              <div className="text-muted text-[13px] mt-1">{tr.common.firstTryLabel}</div>
             </div>
-            <div className="bg-white border border-gray-900 rounded-2xl px-5 sm:px-6 py-5 text-center">
+            <div className="bg-white border border-line rounded-[14px] px-5 sm:px-6 py-5 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-amber-600" data-testid="tile-stumbled">{stumbled}</div>
-              <div className="text-gray-400 text-sm mt-1">{tr.common.stumbledLabel}</div>
+              <div className="text-muted text-[13px] mt-1">{tr.common.stumbledLabel}</div>
             </div>
             {notMastered > 0 && (
-              <div className="bg-white border border-gray-900 rounded-2xl px-5 sm:px-6 py-5 text-center">
+              <div className="bg-white border border-line rounded-[14px] px-5 sm:px-6 py-5 text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-rose-600" data-testid="tile-not-mastered">{notMastered}</div>
-                <div className="text-gray-400 text-sm mt-1">{tr.common.notMasteredLabel}</div>
+                <div className="text-muted text-[13px] mt-1">{tr.common.notMasteredLabel}</div>
               </div>
             )}
           </div>
@@ -861,7 +862,7 @@ export default function QuizSession({
           <div className="flex flex-col gap-3">
             <button
               onClick={() => { router.refresh(); onRepeat(); }}
-              className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
+              className="w-full py-3.5 bg-ink hover:bg-[#25282d] rounded-[10px] text-[15px] font-semibold text-white transition-colors"
             >
               {!isStudy
                 ? tr.common.repeatMore
@@ -869,7 +870,7 @@ export default function QuizSession({
             </button>
             <button
               onClick={() => router.push(backHref)}
-              className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
+              className="w-full py-3 text-[13.5px] text-muted hover:text-gray-900 transition-colors text-center"
             >
               {tr.study.backToLists}
             </button>
@@ -905,7 +906,7 @@ export default function QuizSession({
             {tr.study.backToLists}
           </Link>
           <div className="flex items-center gap-3">
-            <span className="text-gray-300 text-xs uppercase tracking-wider">
+            <span className="text-[#5b6067] text-xs uppercase tracking-wider">
               {headerLabel ? `${headerLabel} · ${stageLabel}` : stageLabel}
             </span>
             <span className="text-gray-400 text-sm">{wordsDone} / {totalWords}</span>
@@ -933,22 +934,23 @@ export default function QuizSession({
 
         {/* ── Stage 1: Flashcard + self-evaluation ── */}
         {stage === 1 && (
-          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
-            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-10 text-center">
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-6 pt-6 sm:pt-10">
+            <TakGreeting phrase="Prisimeni?" size={128} />
+            <div className="w-full max-w-[420px] bg-white border border-gray-100 rounded-2xl p-5 sm:py-9 sm:px-12 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-4 sm:mb-6">
                 {(sessionMode === 'review' || word.status === 'known' || word.status === 'learning') ? tr.common.review : tr.common.newWord}
               </p>
               <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{renderAccented(word.accented || word.lithuanian)}</p>
               {digit && <p className="text-5xl sm:text-7xl font-bold text-emerald-600 mb-4" data-testid="number-digit">{digit}</p>}
-              {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mb-4">{word.hint}</p>}
+              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mb-4">{word.hint}</p>}
               <div className="h-px bg-gray-100 mb-4" />
               <p className="text-xl text-gray-500">{trans(word, lang)}</p>
             </div>
-            <div className="w-full grid grid-cols-2 gap-3">
-              <button onClick={() => handleStage1Quality(3)} tabIndex={-1} className="py-4 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl font-medium text-amber-600 transition-colors">
+            <div className="w-full max-w-[420px] grid grid-cols-2 gap-4">
+              <button onClick={() => handleStage1Quality(3)} tabIndex={-1} className="p-3.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-[10px] font-semibold text-amber-600 transition-colors">
                 {tr.study.hard}
               </button>
-              <button onClick={() => handleStage1Quality(5)} tabIndex={-1} className="py-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl font-medium text-emerald-600 transition-colors">
+              <button onClick={() => handleStage1Quality(5)} tabIndex={-1} className="p-3.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-[10px] font-semibold text-emerald-600 transition-colors">
                 {tr.study.easy}
               </button>
             </div>
@@ -962,7 +964,7 @@ export default function QuizSession({
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.whatMeans}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{renderAccented(word.accented || word.lithuanian)}</p>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
-              {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
+              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
             </div>
             <div className="w-full grid grid-cols-1 gap-3">
               {options.map((opt, i) => {
@@ -1005,7 +1007,7 @@ export default function QuizSession({
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.selectLithuanian}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
-              {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
+              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
             </div>
             <div className="w-full grid grid-cols-1 gap-3">
               {options.map((opt, i) => {
@@ -1048,7 +1050,7 @@ export default function QuizSession({
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.assembleWord}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
-              {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
+              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
             </div>
 
             <div className="w-full min-h-[3.5rem] border-b border-gray-200 pb-3 flex flex-wrap gap-2 justify-center" data-testid="assembled-row">
@@ -1073,7 +1075,7 @@ export default function QuizSession({
                     disabled={used || answerState !== 'unanswered'}
                     className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${
                       used
-                        ? 'bg-gray-50 border-gray-100 text-gray-300'
+                        ? 'bg-gray-50 border-gray-100 text-[#5b6067]'
                         : 'bg-white border-gray-900 text-gray-900 hover:bg-gray-100'
                     }`}
                   >
@@ -1117,7 +1119,7 @@ export default function QuizSession({
                   {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
                 </>
               )}
-              {word.hint && !digit && <p className="text-gray-300 text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
+              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
               {cloveIsCloze && <p className="text-gray-400 text-sm mt-3">{trans(word, lang)}</p>}
             </div>
             <div className="w-full flex flex-col gap-3">
@@ -1215,7 +1217,7 @@ export default function QuizSession({
                   )}
                   {after}
                 </p>
-                {word.hint && <p className="text-gray-300 text-xs uppercase tracking-wider mt-3">{word.hint}</p>}
+                {word.hint && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-3">{word.hint}</p>}
                 <p className="text-gray-400 text-sm mt-3">{trans(word, lang)}</p>
               </div>
               <div className="w-full flex flex-col gap-3">

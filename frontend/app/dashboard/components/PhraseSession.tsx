@@ -34,6 +34,8 @@ import CharDiff from './CharDiff';
 import MatchRound from './MatchRound';
 import type { Word } from './QuizSession';
 import { normalizeLt } from '../../../lib/normalizeLt';
+import Tak from '../../../components/Tak';
+import TakGreeting from '../../../components/TakGreeting';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -579,37 +581,34 @@ export default function PhraseSession({
   // ── Done screen ───────────────────────────────────────────────────────────────
   if (done) {
     return (
-      <main className="min-h-dvh bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
-        <div className="relative z-10 text-center max-w-sm w-full">
-          <div className="text-5xl mb-4">🎉</div>
-          <h2 className="font-headline text-2xl font-bold mb-2">{tr.phraseSession.sessionDone}</h2>
-          <div className="flex gap-4 justify-center mb-6">
-            <div className="bg-white border border-gray-900 rounded-2xl px-6 py-5 text-center">
+      <main className="min-h-dvh text-gray-900 flex flex-col items-center justify-center px-6">
+        <div className="relative z-10 flex flex-col items-center text-center max-w-sm w-full gap-5">
+          <Tak pose="grin" size={150} />
+          <h2 className="font-headline text-2xl font-bold">{tr.phraseSession.sessionDone}</h2>
+          <div className="flex gap-4 justify-center">
+            <div className="bg-white border border-line rounded-2xl px-6 py-5 text-center">
               <div className="text-2xl font-bold text-emerald-600">{correctCount}</div>
               <div className="text-gray-400 text-sm mt-1">{tr.phraseSession.correctLabel}</div>
             </div>
-            <div className="bg-white border border-gray-900 rounded-2xl px-6 py-5 text-center">
+            <div className="bg-white border border-line rounded-2xl px-6 py-5 text-center">
               <div className="text-2xl font-bold text-amber-600">{mistakeCount}</div>
               <div className="text-gray-400 text-sm mt-1">{tr.phraseSession.errorsLabel}</div>
             </div>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 w-full">
             <button
               onClick={onRepeat}
-              className="w-full py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-colors"
+              className="w-full py-3.5 bg-purple-600 text-white rounded-[10px] font-semibold hover:bg-purple-700 transition-colors"
             >
               {tr.phraseSession.repeatBtn}
             </button>
-            <Link
-              href={backHref}
-              className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
-            >
-              {tr.phraseSession.backToPrograms}
-            </Link>
           </div>
+          <Link
+            href={backHref}
+            className="text-gray-400 hover:text-gray-900 text-sm transition-colors"
+          >
+            {tr.phraseSession.backToPrograms}
+          </Link>
         </div>
       </main>
     );
@@ -645,17 +644,14 @@ export default function PhraseSession({
     const inputW = `${Math.max(syllable.length * 1.1, 2)}ch`;
 
     return (
-      <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
-        <div className="relative z-10 w-full max-w-sm">
+      <main className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20">
+        <div className="relative z-10 w-full max-w-[420px]">
           <div className="flex justify-between items-center mb-4">
             <span className="text-sm text-gray-400 uppercase tracking-wider">{tr.phraseSession.practiceWord}</span>
             {mistakeCount > 0 && <span className="text-amber-500 text-sm">{mistakeCount} ✗</span>}
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mb-6">
+          <div className="bg-white rounded-2xl border border-line p-8 text-center mb-6">
             {/* Full phrase with syllable gap inline — use inline rendering to preserve spaces */}
             <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-relaxed text-center">
               {phraseBeforeWord}
@@ -685,7 +681,7 @@ export default function PhraseSession({
           {syllableResult === null && (
             <button
               onClick={handleSyllableSubmit}
-              className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+              className="w-full py-3 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
             >
               {tr.phraseSession.checkBtn}
             </button>
@@ -693,7 +689,7 @@ export default function PhraseSession({
 
           {syllableResult === 'correct' && (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-              <p className="text-emerald-700 font-semibold">{tr.phraseSession.correctNowWrite}</p>
+              <p className="text-purple-700 font-semibold">{tr.phraseSession.correctNowWrite}</p>
             </div>
           )}
 
@@ -741,7 +737,7 @@ export default function PhraseSession({
         <div className="w-full h-1 bg-gray-100 rounded-full mb-1">
           <div
             data-testid="phrase-progress-fill"
-            className="h-1 bg-emerald-500 rounded-full transition-all duration-300"
+            className="h-1 bg-purple-500 rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -777,15 +773,12 @@ export default function PhraseSession({
   // ── Stage 0: Intro card ───────────────────────────────────────────────────────
   if (s === 0) {
     return (
-      <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage0">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
-        <div className="relative z-10 w-full max-w-sm">
+      <main className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20" data-testid="phrase-session-stage0">
+        <div className="relative z-10 w-full max-w-[420px]">
           <Header />
           <ProgressBars />
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mb-6">
+          <div className="bg-white rounded-2xl border border-line p-8 text-center mb-6">
             <p className="text-xs text-emerald-600 font-medium mb-4 uppercase tracking-wider">{tr.phraseSession.newPhrase}</p>
             <p className="text-2xl font-bold text-gray-900 mb-3">{phrase.text}</p>
             <p className="text-gray-500 text-lg">{getTranslation(phrase)}</p>
@@ -819,7 +812,7 @@ export default function PhraseSession({
                 onClick={() => advanceQueue(5)}
                 disabled={saving}
                 data-testid="got-it-btn"
-                className="flex-1 py-3 rounded-xl text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                className="flex-1 py-3 rounded-xl text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
               >
                 {tr.phraseSession.gotItBtn}
               </button>
@@ -878,18 +871,15 @@ export default function PhraseSession({
     if (tiles.length > 0) {
       return (
         <main
-          className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10"
+          className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20"
           data-testid={fromLt ? 'phrase-session-stage1-assemble-from-lt' : 'phrase-session-stage1-assemble-to-lt'}
         >
-          <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-            <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-          </div>
-          <div className="relative z-10 w-full max-w-sm">
+          <div className="relative z-10 w-full max-w-[420px]">
             <Header />
             <ProgressBars />
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center mb-4">
-              <p className="text-xs text-purple-600 font-medium mb-3 uppercase tracking-wider">
+            <div className="bg-white rounded-2xl border border-line p-6 sm:p-8 text-center mb-4">
+              <p className="text-xs font-semibold text-purple-600 uppercase tracking-[0.06em]">
                 {fromLt ? tr.phraseSession.assembleTranslationLabel : tr.phraseSession.assembleLabel}
               </p>
               <p className="text-xl sm:text-2xl text-gray-500 mb-4">{prompt}</p>
@@ -916,8 +906,8 @@ export default function PhraseSession({
                     disabled={used || !!assembleResult}
                     className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${
                       used
-                        ? 'bg-gray-50 border-gray-100 text-gray-300'
-                        : 'bg-white border-gray-200 text-gray-700 hover:border-emerald-400 hover:text-emerald-700 cursor-pointer'
+                        ? 'bg-gray-50 border-gray-100 text-[#5b6067]'
+                        : 'bg-white border-gray-200 text-gray-700 hover:border-purple-400 hover:text-purple-700 cursor-pointer'
                     }`}
                   >
                     {w}
@@ -928,7 +918,7 @@ export default function PhraseSession({
 
             {assembleResult === 'correct' && (
               <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-                <p className="text-emerald-700 font-semibold">{tr.phraseSession.assembleCorrect}</p>
+                <p className="text-purple-700 font-semibold">{tr.phraseSession.assembleCorrect}</p>
               </div>
             )}
 
@@ -973,15 +963,12 @@ export default function PhraseSession({
       };
 
       return (
-        <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage1-mcq">
-          <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-            <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-          </div>
-          <div className="relative z-10 w-full max-w-sm">
+        <main className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20" data-testid="phrase-session-stage1-mcq">
+          <div className="relative z-10 w-full max-w-[420px]">
             <Header />
             <ProgressBars />
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div className="bg-white rounded-2xl border border-line p-6 mb-6">
               <p className="text-xs text-amber-600 font-medium mb-4 uppercase tracking-wider">{tr.phraseSession.selectWordLabel}</p>
               <p className="text-lg text-gray-900 text-center leading-relaxed">
                 {before}
@@ -999,7 +986,7 @@ export default function PhraseSession({
                 const isCorrectWord = opt.toLowerCase() === phrase.blank_word.toLowerCase();
                 let cls = 'py-3 px-4 rounded-xl text-sm font-medium border transition-colors text-center ';
                 if (!mcqResult) {
-                  cls += 'bg-white border-gray-200 text-gray-700 hover:border-emerald-400 hover:text-emerald-700 cursor-pointer';
+                  cls += 'bg-white border-gray-200 text-gray-700 hover:border-purple-400 hover:text-purple-700 cursor-pointer';
                 } else if (isCorrectWord) {
                   cls += 'bg-emerald-50 border-emerald-400 text-emerald-700';
                 } else if (isSelected && !isCorrectWord) {
@@ -1056,15 +1043,12 @@ export default function PhraseSession({
     };
 
     return (
-      <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage1-type">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
-        <div className="relative z-10 w-full max-w-sm">
+      <main className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20" data-testid="phrase-session-stage1-type">
+        <div className="relative z-10 w-full max-w-[420px]">
           <Header />
           <ProgressBars />
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
+          <div className="bg-white rounded-2xl border border-line p-6 mb-4">
             <p className="text-xs text-amber-600 font-medium mb-4 uppercase tracking-wider">{tr.phraseSession.typeWordLabel}</p>
             <p className="text-lg text-gray-900 text-center leading-relaxed">
               {before}
@@ -1085,11 +1069,11 @@ export default function PhraseSession({
                   onChange={(e) => setTypeInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleWordSubmit(); }}
                   placeholder={tr.phraseSession.wordPlaceholder}
-                  className="flex-1 px-4 py-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-emerald-400"
+                  className="flex-1 px-4 py-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-purple-500"
                 />
                 <button
                   onClick={handleWordSubmit}
-                  className="px-5 py-4 rounded-xl bg-emerald-600 text-white text-base font-medium hover:bg-emerald-700 transition-colors"
+                  className="px-5 py-4 rounded-xl bg-purple-600 text-white text-base font-medium hover:bg-purple-700 transition-colors"
                 >
                   →
                 </button>
@@ -1107,7 +1091,7 @@ export default function PhraseSession({
 
           {typeResult === 'correct' && (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-              <p className="text-emerald-700 font-semibold mb-3">{tr.phraseSession.correctPhrase}</p>
+              <p className="text-purple-700 font-semibold mb-3">{tr.phraseSession.correctPhrase}</p>
               <button
                 onClick={() => {
                   blockUntilRef.current = Date.now() + 800;
@@ -1121,7 +1105,7 @@ export default function PhraseSession({
                   }
                 }}
                 disabled={saving}
-                className="w-full py-4 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
+                className="w-full py-4 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors"
               >
                 {tr.phraseSession.nextBtn}
               </button>
@@ -1172,19 +1156,20 @@ export default function PhraseSession({
   };
 
   return (
-    <main className="min-h-dvh bg-slate-50 flex flex-col items-center px-4 pt-4 pb-6 sm:py-10" data-testid="phrase-session-stage2">
-      <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-        <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-      </div>
-      <div className="relative z-10 w-full max-w-sm">
+    <main className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20" data-testid="phrase-session-stage2">
+      <div className="relative z-10 w-full max-w-[420px]">
         <Header />
         <ProgressBars />
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 text-center mb-4">
-          <p className="text-xs text-purple-600 font-medium mb-3 uppercase tracking-wider">{tr.phraseSession.typePhraseLabel}</p>
-          <p className="text-xl sm:text-2xl text-gray-500 mb-2">{getTranslation(phrase)}</p>
+        <div className="flex justify-center mb-2">
+          <TakGreeting phrase="Pabandyk!" size={128} />
+        </div>
+
+        <div className="bg-white rounded-2xl border border-line p-6 sm:p-8 text-center mb-4">
+          <p className="text-xs font-semibold text-purple-600 uppercase tracking-[0.06em]">{tr.phraseSession.typePhraseLabel}</p>
+          <p className="text-[22px] font-semibold text-gray-900 mt-3.5">{getTranslation(phrase)}</p>
           {showAnswer && (
-            <p className="text-base text-emerald-700 font-medium mt-3 border-t border-gray-100 pt-3">{phrase.text}</p>
+            <p className="text-base text-purple-700 font-medium mt-3 border-t border-gray-100 pt-3">{phrase.text}</p>
           )}
         </div>
 
@@ -1197,7 +1182,7 @@ export default function PhraseSession({
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePhraseSubmit(); } }}
               placeholder={tr.phraseSession.phrasePlaceholder}
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-emerald-400 resize-none mb-3"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-base focus:outline-none focus:border-purple-500 resize-none mb-3"
             />
             <div className="flex gap-2">
               <button
@@ -1208,7 +1193,7 @@ export default function PhraseSession({
               </button>
               <button
                 onClick={handlePhraseSubmit}
-                className="flex-1 py-4 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+                className="flex-1 py-4 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
               >
                 {tr.phraseSession.checkPhraseBtn}
               </button>
@@ -1226,12 +1211,12 @@ export default function PhraseSession({
 
         {typeResult === 'correct' && (
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-            <p className="text-emerald-700 font-semibold mb-1">{tr.phraseSession.correctPhrase}</p>
+            <p className="text-purple-700 font-semibold mb-1">{tr.phraseSession.correctPhrase}</p>
             <p className="text-sm text-gray-500 mb-3">{phrase.text}</p>
             <button
               onClick={() => { blockUntilRef.current = Date.now() + 800; advanceQueue(5); }}
               disabled={saving}
-              className="w-full py-4 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
+              className="w-full py-4 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors"
             >
               {tr.phraseSession.nextBtn}
             </button>

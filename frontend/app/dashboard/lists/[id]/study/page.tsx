@@ -7,6 +7,7 @@ import { BACKEND_URL, getToken, resolveListId } from '../../../../../lib/api';
 import { useT } from '../../../../../lib/useT';
 import { getStarLevel, setStarLevel } from '../../../../../lib/starLevel';
 import QuizSession, { type Word } from '../../../components/QuizSession';
+import Tak from '../../../../../components/Tak';
 
 export default function QuizPage() {
   const { id: _id } = useParams<{ id: string }>();
@@ -68,10 +69,7 @@ export default function QuizPage() {
 
   if (limitReached) {
     return (
-      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
+      <main className="flex-1 text-gray-900 flex flex-col items-center justify-center px-8 pt-5 pb-20">
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">⏳</div>
           <h1 className="font-headline text-2xl font-bold mb-2">{tr.common.limitTitle}</h1>
@@ -94,10 +92,7 @@ export default function QuizPage() {
 
   if (empty) {
     return (
-      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
+      <main className="flex-1 text-gray-900 flex flex-col items-center justify-center px-8 pt-5 pb-20">
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="text-5xl mb-6">★</div>
           <p className="text-gray-400 mb-8">{tr.lists.noWordsAtLevel}</p>
@@ -116,36 +111,33 @@ export default function QuizPage() {
     const currentLevel = getStarLevel();
     const nextLevel = currentLevel < 3 ? currentLevel + 1 : null;
     return (
-      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
-        <div className="relative z-10 text-center max-w-sm w-full">
-          <div className="text-5xl mb-6">🏆</div>
-          <h1 className="font-headline text-2xl font-bold mb-2">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
-          <p className="text-gray-400 mb-8">{tr.study.levelCompleteBody}</p>
-          <div className="flex flex-col gap-3">
+      <main className="flex-1 text-gray-900 flex flex-col items-center justify-center px-8 pt-5 pb-20">
+        <div className="relative z-10 flex flex-col items-center text-center max-w-sm w-full gap-5">
+          <Tak pose="grin" size={150} />
+          <h1 className="text-[26px] font-bold">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
+          <p className="text-[15px] text-muted mb-2">{tr.study.levelCompleteBody}</p>
+          <div className="flex flex-col gap-3 w-full">
             {nextLevel && (
               <button
                 onClick={() => { setStarLevel(nextLevel); router.push('/dashboard/lists'); }}
-                className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
+                className="w-full py-3.5 bg-ink hover:bg-[#25282d] rounded-[10px] text-[15px] font-semibold text-white transition-colors"
               >
                 {tr.study.advanceToLevel.replace('{stars}', '★'.repeat(nextLevel))}
               </button>
             )}
             <button
               onClick={() => loadWords(true)}
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium text-white transition-colors"
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 rounded-[10px] text-[15px] font-semibold text-white transition-colors"
             >
               {tr.study.studyAgain}
             </button>
-            <button
-              onClick={() => router.push('/dashboard/lists')}
-              className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
-            >
-              {tr.study.backToLists}
-            </button>
           </div>
+          <button
+            onClick={() => router.push('/dashboard/lists')}
+            className="text-[13.5px] text-muted hover:text-gray-900 transition-colors mt-2"
+          >
+            {tr.study.backToLists}
+          </button>
         </div>
       </main>
     );

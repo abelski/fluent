@@ -25,16 +25,16 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="relative z-10 border-t border-gray-100 bg-white">
-      <div className="max-w-4xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-gray-400 text-sm">© 2026 Fluent Team. All rights reserved.</p>
+    <footer className="relative z-10 border-t border-line">
+      <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-7 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-[13px] text-muted-nav">
+        <p className="text-[13px] text-muted-nav">© 2026 Fluent Team. All rights reserved.</p>
 
-        <nav className="flex items-center gap-4 flex-wrap justify-center sm:justify-end">
+        <nav className="flex items-center gap-6 flex-wrap justify-center sm:justify-end">
           {links.map((a) => (
             <Link
               key={a.slug}
               href={`/dashboard/articles/${a.slug}`}
-              className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+              className="text-[13px] text-muted-nav hover:text-gray-700 transition-colors whitespace-nowrap"
             >
               {lang === 'en' ? a.title_en : a.title_ru}
             </Link>
@@ -42,7 +42,7 @@ export default function Footer() {
           <button
             onClick={() => setFeedbackOpen(true)}
             data-testid="footer-feedback-btn"
-            className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+            className="text-[13px] text-muted-nav hover:text-gray-700 transition-colors whitespace-nowrap"
           >
             {tr.feedback.title}
           </button>

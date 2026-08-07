@@ -65,9 +65,10 @@ test.describe('Star complexity selector', () => {
     await expect(t).toHaveText('★');
   });
 
-  test('the knob and its track dots share the same three stops', async ({ page }) => {
-    // Regression guard: the dots were laid out independently of the knob, so at
-    // levels 1 and 3 the knob sat 3px inside the dot it was meant to cover.
+  test('the knob stays inside the track at every stop', async ({ page }) => {
+    // The design-system toggle is a borderless 44x24 track with 3px padding and
+    // an 18px knob — no track dots. Guard the knob against overflowing the
+    // track at either end, which is how the old geometry drifted.
     await page.goto('/dashboard/lists');
     const t = toggle(page);
     await expect(t).toBeVisible({ timeout: 5000 });
@@ -76,15 +77,16 @@ test.describe('Star complexity selector', () => {
       await setLevel(page, level);
       // The knob slides with a 300ms transition — measure only once it settles.
       await page.waitForTimeout(450);
-      const offset = await t.evaluate((btn, lvl) => {
-        const box = btn.getBoundingClientRect();
-        const dots = Array.from(btn.querySelectorAll(':scope > span:first-child > span'));
-        const knob = btn.querySelector(':scope > span:last-child') as HTMLElement;
-        const k = knob.getBoundingClientRect();
-        const d = (dots[lvl - 1] as HTMLElement).getBoundingClientRect();
-        return Math.abs((k.left + k.width / 2) - (d.left + d.width / 2));
-      }, level);
-      expect(offset, `knob must sit on dot ${level}`).toBeLessThanOrEqual(0.5);
+      const { trackLeft, trackRight, knobLeft, knobRight } = await t.evaluate((btn) => {
+        const track = btn.getBoundingClientRect();
+        const knob = (btn.querySelector(':scope > span:last-child') as HTMLElement).getBoundingClientRect();
+        return {
+          trackLeft: track.left, trackRight: track.right,
+          knobLeft: knob.left, knobRight: knob.right,
+        };
+      });
+      expect(knobLeft, `knob must not overflow left at level ${level}`).toBeGreaterThanOrEqual(trackLeft - 0.5);
+      expect(knobRight, `knob must not overflow right at level ${level}`).toBeLessThanOrEqual(trackRight + 0.5);
     }
   });
 

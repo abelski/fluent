@@ -10,13 +10,13 @@ export type StarLevel = 1 | 2 | 3;
  * `justify-between px-2.5` while the knob was positioned from its own set of
  * offsets, leaving the knob 3px inside the first and last dot.
  *
- * Geometry: 64x28 track with a 1px border → 62px padding box; 24px knob inset
- * 2px, so its centres land at 14px / 50% / (100% - 14px).
+ * Geometry follows the design-system prototype: a borderless 44x24 track with
+ * 3px padding and an 18px knob, so the knob sits flush in the track at each end.
  */
-const STOPS: { knobLeft: string; dotLeft: string }[] = [
-  { knobLeft: '2px', dotLeft: '14px' },
-  { knobLeft: 'calc(50% - 12px)', dotLeft: '50%' },
-  { knobLeft: 'calc(100% - 26px)', dotLeft: 'calc(100% - 14px)' },
+const STOPS: { knobLeft: string }[] = [
+  { knobLeft: '3px' },
+  { knobLeft: 'calc(50% - 9px)' },
+  { knobLeft: 'calc(100% - 21px)' },
 ];
 
 interface Props {
@@ -36,7 +36,7 @@ export default function StarLevelToggle({ value, onChange, label, levelLabels, t
     // items-center keeps the label and pill on a shared centre line; the whole
     // group is aligned against neighbouring text by the parent.
     <div className="flex items-center gap-2" data-testid={testId}>
-      <span className="text-sm text-gray-400 leading-none">{label}</span>
+      <span className="text-[13px] text-muted leading-none">{label}</span>
       <div className="relative group flex items-center">
         <button
           onClick={() => onChange((value === 3 ? 1 : value + 1) as StarLevel)}
@@ -47,19 +47,10 @@ export default function StarLevelToggle({ value, onChange, label, levelLabels, t
           role="slider"
           data-testid="star-toggle"
           data-star-level={value}
-          className="relative block w-16 h-7 rounded-full bg-gray-100 border border-black transition-colors"
+          className="relative block w-11 h-6 p-[3px] rounded-full bg-[#f2f3f3] transition-colors"
         >
-          <span className="absolute inset-0 pointer-events-none">
-            {STOPS.map((s, i) => (
-              <span
-                key={i}
-                className="absolute top-1/2 w-0.5 h-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gray-300"
-                style={{ left: s.dotLeft }}
-              />
-            ))}
-          </span>
           <span
-            className="absolute top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-gray-900 shadow-sm transition-all duration-300 ease-out flex items-center justify-center text-white text-[7px] leading-none tracking-tighter"
+            className="absolute top-1/2 -translate-y-1/2 h-[18px] w-[18px] rounded-full bg-ink transition-all duration-300 ease-out flex items-center justify-center text-white text-[6px] leading-none tracking-tighter"
             style={{ left: stop.knobLeft }}
           >
             {'★'.repeat(value)}

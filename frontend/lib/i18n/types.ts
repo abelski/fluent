@@ -162,6 +162,9 @@ export interface Translations {
     statsLessonsUnit: string;
     statsCompletion: string;
     statsAttempted: string;
+    tipTitle: string;
+    tipBody: string;
+    tipBodyDone: string;
     programsTitle: string;
     programsSubtitle: string;
     programsEmpty: string;
@@ -411,6 +414,7 @@ export interface Translations {
     viewVocabulary: string;
     dueReviewOf: string;           // "{due} of {total} words to refresh" — progress label
     progressToNext: string;        // "{count} / {target} to {level}" — milestone caption under main progress bar
+    nextLabel: string;             // "Next" — small corner label above the next-milestone value on stat cards
     memoryOk: string;          // vocabulary status badge: remember
     memoryFading: string;      // vocabulary status badge: probably forgetting
     memoryDue: string;         // vocabulary status badge: need to repeat

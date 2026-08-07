@@ -19,6 +19,7 @@ import StarLevelToggle from '../components/StarLevelToggle';
 import { getPhraseStarLevel, setPhraseStarLevel } from '../../../lib/starLevel';
 import ProgressStatCard from '../components/ProgressStatCard';
 import QuotaBanner from '../components/QuotaBanner';
+import Tak from '../../../components/Tak';
 
 interface Quota {
   premium_active: boolean;
@@ -277,7 +278,7 @@ export default function PhrasesPage() {
             <div className="mb-10">
               <ProgressStatCard
                 theme="purple"
-                icon="💬"
+                icon={<Tak pose="idle" size={64} className="shrink-0 sm:w-[70px] sm:h-[84px]" />}
                 count={phraseStats.learned}
                 label={t.learnedLabel}
                 nextMilestone={m.next !== null ? String(m.next) : null}
@@ -311,7 +312,7 @@ export default function PhrasesPage() {
 
         {/* Мои списки — a program-style container holding the user's lists as chapter-like cards */}
         <section className="mb-8" data-testid="my-lists-section">
-          <div className="bg-white border border-emerald-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white border border-emerald-200 rounded-[14px] overflow-hidden shadow-sm">
             {/* Program header */}
             <div className="w-full flex items-center justify-between px-5 py-4">
               <button
@@ -331,7 +332,7 @@ export default function PhrasesPage() {
                   <button
                     onClick={() => { setNewListTitle(''); setShowCreate(true); }}
                     data-testid="create-list-button"
-                    className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-full transition-colors"
+                    className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 rounded-lg transition-colors"
                   >
                     {t.createList}
                   </button>
@@ -396,7 +397,7 @@ export default function PhrasesPage() {
                       return (
                         <div
                           key={lst.id}
-                          className={`relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4 ${eligible ? '' : 'opacity-70'}`}
+                          className={`relative bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-4 ${eligible ? '' : 'opacity-70'}`}
                           data-testid="my-list-card"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -447,14 +448,14 @@ export default function PhrasesPage() {
                                 <>
                                   <Link
                                     href={`/dashboard/phrases/lists/${lst.id}/edit`}
-                                    className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
+                                    className="px-3.5 py-1.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg transition-colors"
                                   >
                                     {t.edit}
                                   </Link>
                                   {lst.phrase_count > 0 && (
                                     <Link
                                       href={`/dashboard/phrases/lists/${lst.id}/study`}
-                                      className="px-4 py-2.5 text-sm rounded-full font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20 transition-colors"
+                                      className="px-3.5 py-1.5 text-sm rounded-lg font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20 transition-colors"
                                     >
                                       {t.study}
                                     </Link>
@@ -492,7 +493,7 @@ export default function PhrasesPage() {
               return (
                 <div
                   key={program.id}
-                  className={`bg-white border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow ${DIFFICULTY_BORDER[program.difficulty] ?? 'border-gray-100'}`}
+                  className={`bg-white border rounded-[14px] overflow-hidden shadow-sm hover:shadow-md transition-shadow ${DIFFICULTY_BORDER[program.difficulty] ?? 'border-gray-100'}`}
                 >
                   {/* Accordion header */}
                   <button
@@ -552,9 +553,9 @@ export default function PhrasesPage() {
                               ? `/dashboard/phrases/${program.id}/study?chapter=${ch.num}`
                               : `/dashboard/phrases/${program.id}/study`;
                             return (
-                              <div key={i} className="relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4">
+                              <div key={i} className="relative bg-white border border-gray-100 rounded-xl p-4 flex flex-col gap-4">
                                 {isDone && (
-                                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
+                                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                     ✓ Done
                                   </div>
                                 )}
@@ -576,14 +577,14 @@ export default function PhrasesPage() {
                                   <div className="flex gap-2">
                                     <Link
                                       href={`/dashboard/phrases/${program.id}`}
-                                      className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
+                                      className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg transition-colors"
                                     >
                                       {t.browse}
                                     </Link>
                                     <Link
                                       href={studyHref}
                                       data-testid="study-button"
-                                      className={`px-4 py-2.5 text-sm rounded-full font-semibold transition-colors ${
+                                      className={`px-3 py-1.5 text-sm rounded-lg font-semibold transition-colors ${
                                         limitReached
                                           ? 'bg-emerald-600/30 cursor-not-allowed opacity-40 text-white'
                                           : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20'

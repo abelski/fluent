@@ -50,14 +50,14 @@ const websiteJsonLd = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body className={`${inter.variable} ${manrope.variable} font-sans bg-white text-gray-900 min-h-screen flex flex-col`}>
+      <body className={`${inter.variable} ${manrope.variable} font-sans text-gray-900 min-h-screen flex flex-col`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         <LangSync />
         <Header />
-        <div className="flex-1">{children}</div>
+        <div className="flex-1 flex flex-col">{children}</div>
         <Footer />
         <MistakeButton />
         <CookieConsent />

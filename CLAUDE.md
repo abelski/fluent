@@ -60,6 +60,34 @@
 - After adding a new feature, add an autotest for it and run autotests to confirm everything works
 - Do not push to git without an explicit directive from the user
 - never use ANTHROPIC_API_KEY (we dont have it in our subscription)
+- Keep `design system/` updated whenever new UI components or patterns are introduced; treat it as the source of truth for visual/component decisions during development
+
+# Design System — ALWAYS consult before writing UI
+
+**Any** change that touches markup, styling, colour, spacing or a component — new or existing —
+starts by reading the design system. Do not invent a pattern, pick a colour, or reach for a stock
+Tailwind palette step without checking these first:
+
+| File | What it is |
+| --- | --- |
+| `design system/Component Library (as-built).html` | **Read this first.** Principles, colour tokens, logo rules, card/button/shell specs, TAK, deliberate deviations. Documents what actually shipped. |
+| `design system/prototypes/*.html` | The approved visual source of truth (layout, spacing, colour). Self-unpacking bundles — extract the `__bundler/template` script to read the real markup. |
+| `design system/IMPLEMENTATION.md` | Prototype value → Tailwind token/file mapping. |
+| `frontend/tailwind.config.js` | The tokens themselves. |
+
+Rules:
+
+- Use the **named tokens** (`emerald-600`, `ink`, `muted`, `line`, `faint`, `destructive`, …), never a
+  raw stock step like `gray-100` or `emerald-500` when a token exists.
+- Cards are flat: `border border-line rounded-[14px]`, no shadow. Buttons carry no shadow.
+- Inter only — do not add `font-headline` to redesigned pages.
+- Green `#0f9d68` = words/global accent; purple `#9333ea` = phrases surface.
+- Page content goes in `.page` (1180px); the navbar stays full-bleed.
+- If a change must deviate from the prototypes, that is allowed — but record it in the
+  "Deliberate deviations" table of the component library, with the reason.
+- After changing shared shell or tokens, run `frontend/tests/design-system-parity.spec.ts`.
+- When you introduce or change a shared component/pattern, **update the component library in the
+  same change** — it is not a follow-up task.
 
 # Required Post-Implementation Steps
 
@@ -70,3 +98,6 @@
    - Login works
 3. Run autotests
 4. make sure that feature or change correctly working localy
+5. For UI changes: verify against `design system/Component Library (as-built).html` and the relevant
+   prototype, run `design-system-parity.spec.ts`, and update the component library if a shared
+   component or pattern changed

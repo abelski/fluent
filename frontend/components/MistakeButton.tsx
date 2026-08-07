@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../lib/api';
 import { useT } from '../lib/useT';
+import Tak from './Tak';
 
 interface Props {
   context?: string; // e.g. 'word:42', 'grammar:3'
@@ -56,12 +57,11 @@ export default function MistakeButton({ context }: Props) {
       <button
         onClick={() => setOpen(true)}
         data-testid="mistake-button"
-        className="fixed bottom-6 right-4 sm:right-6 z-40 flex items-center gap-1.5 text-xs text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-900 rounded-full px-2 py-2 sm:px-3 transition-colors shadow-sm"
+        className="fixed bottom-3 right-3 sm:bottom-10 sm:right-6 z-[60] flex items-center gap-0 sm:gap-2 whitespace-nowrap text-sm font-medium text-[#3a3d42] hover:text-gray-900 bg-white hover:bg-gray-50 border border-[#e2e4e3] rounded-full p-1 sm:pl-1 sm:pr-5 sm:py-1 transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
       >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="8" cy="8" r="7" />
-          <path d="M8 5v4M8 11v.5" strokeLinecap="round" />
-        </svg>
+        {/* One instance, scaled by CSS — rendering a second copy for the mobile
+            size would show both if anything overrode the `hidden` class. */}
+        <Tak bare size={44} className="shrink-0 w-8 h-[38px] sm:w-11 sm:h-[53px]" />
         <span className="hidden sm:inline">{tr.mistake.trigger}</span>
       </button>
 
@@ -71,7 +71,7 @@ export default function MistakeButton({ context }: Props) {
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
         >
-          <div className="bg-white border border-gray-900 rounded-2xl w-full max-w-sm p-5 shadow-xl">
+          <div className="bg-white border border-gray-100 rounded-2xl w-full max-w-sm p-5 shadow-xl">
             <h3 className="text-gray-900 font-semibold mb-1">{tr.mistake.title}</h3>
             <p className="text-gray-400 text-xs mb-4">{tr.mistake.subtitle}</p>
 
@@ -85,7 +85,7 @@ export default function MistakeButton({ context }: Props) {
                   placeholder={tr.mistake.placeholder}
                   rows={3}
                   maxLength={500}
-                  className="w-full bg-gray-100 border border-gray-900 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 resize-none mb-3"
+                  className="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-emerald-400 resize-none mb-3"
                 />
                 {error && (
                   <p className="text-red-600 text-xs mb-2">{tr.mistake.error}</p>

@@ -344,7 +344,13 @@ def _lemma_translations(
     per `lang`, no accent — see the module note on why Wiktionary can't help)."""
     db_word = _db_lookup(lemma, session)
     if db_word:
-        return db_word.translation_en, db_word.translation_ru, db_word.accented
+        # A DB row always has both translations stored, but the response must
+        # still honor `lang` — the extension only shows an input for a
+        # non-null field, so an unrequested language must come back as None
+        # here too (same gating the MyMemory/Google fallback below applies).
+        en = db_word.translation_en if lang in ("en", "both") else None
+        ru = db_word.translation_ru if lang in ("ru", "both") else None
+        return en, ru, db_word.accented
 
     lemma_key = lemma.lower()
     need_en = lang in ("en", "both")
@@ -464,8 +470,10 @@ def translate_word(
     never change the meaning of the original word/translation_en/translation_ru/
     source fields, so existing extension installs keep working unmodified.
 
-    `lang` ("en" | "ru" | "both") picks which language(s) the MyMemory fallback
-    fetches; a DB hit is unaffected since Word rows already carry both."""
+    `lang` ("en" | "ru" | "both") picks which language(s) come back — for the
+    MyMemory/Google fallback it's which language(s) get fetched at all; for a
+    DB hit the row always has both stored, but the unrequested one is still
+    nulled out here so the client only ever sees what the user asked for."""
     _require_user(authorization, session)
     word = _validate_word(word)
     if lang not in _VALID_LANGS:
@@ -477,8 +485,8 @@ def translate_word(
         enrichment = _enrich(word, lang, session, db_word=db_word)
         response = {
             "word": db_word.lithuanian,
-            "translation_en": db_word.translation_en,
-            "translation_ru": db_word.translation_ru,
+            "translation_en": db_word.translation_en if lang in ("en", "both") else None,
+            "translation_ru": db_word.translation_ru if lang in ("ru", "both") else None,
             "source": "db",
         }
         response.update(enrichment)

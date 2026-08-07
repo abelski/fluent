@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BACKEND_URL, getToken, getGrammarPrograms, unenrollGrammarProgram, type GrammarProgramSummary } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import { isAnswerMatch } from '../../../lib/normalizeLt';
+import Tak from '../../../components/Tak';
 
 interface GrammarRule {
   question: string;
@@ -78,9 +79,9 @@ type Task = DeclensionTask | SentenceTask | VerbConjugationTask | VerbCaseTask;
 type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
 const LEVEL_STYLES: Record<string, string> = {
-  basic: 'bg-teal-50 border-gray-900 text-teal-600',
-  advanced: 'bg-emerald-50 border-gray-900 text-emerald-600',
-  practice: 'bg-amber-50 border-gray-900 text-amber-600',
+  basic: 'bg-teal-50 border-line text-teal-600',
+  advanced: 'bg-emerald-50 border-line text-emerald-600',
+  practice: 'bg-amber-50 border-line text-amber-600',
 };
 
 
@@ -120,7 +121,7 @@ function InlineSentenceInput({
       ? 'text-emerald-700 border-emerald-500 bg-emerald-50'
       : answerState === 'wrong'
       ? 'text-red-700 border-red-400 bg-red-50'
-      : 'text-gray-900 border-gray-900 bg-transparent';
+      : 'text-gray-900 border-line bg-transparent';
 
   return (
     <p className="text-lg sm:text-2xl md:text-3xl font-mono tracking-tight leading-relaxed text-center break-words" style={{ overflowWrap: 'break-word' }}>
@@ -164,52 +165,54 @@ function GrammarStatsBar({ lessons }: { lessons: Lesson[] }) {
 
   if (total === 0) return null;
 
+  const remaining = total - passed;
+
   return (
     <div className="mb-10">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Lessons passed card */}
-        <div className="relative rounded-2xl bg-gradient-to-br from-teal-50 to-white border border-teal-100 shadow-sm overflow-hidden p-5">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-teal-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
-          <div className="flex items-start justify-between gap-3 relative">
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-teal-100 flex items-center justify-center text-xl">
-                🎓
-              </div>
-              <div>
-                <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{passed}</p>
-                <p className="text-gray-500 text-xs mt-1 font-medium">{tr.grammar.statsPassed}</p>
-              </div>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <p className="text-[10px] text-teal-600 font-semibold uppercase tracking-wide">{tr.grammar.statsOf}</p>
-              <p className="text-sm font-bold text-teal-700">{total}</p>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="h-1.5 bg-teal-100 rounded-full overflow-hidden">
-              <div className="h-full bg-teal-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
-            </div>
-            <p className="text-[10px] text-gray-400 mt-1">{passed} / {total} {tr.grammar.statsLessonsUnit}</p>
+      <div className="grid grid-cols-1 min-[860px]:grid-cols-2 min-[1000px]:grid-cols-[1.1fr_1fr_1fr] gap-5 items-stretch">
+        {/* Tip card */}
+        <div className="rounded-[14px] bg-white border border-line py-5 px-6 flex items-center gap-4">
+          <Tak pose="stonks" size={72} className="shrink-0" />
+          <div>
+            <p className="font-bold text-[14.5px] mb-1">{tr.grammar.tipTitle}</p>
+            <p className="text-muted text-[13px] leading-[1.4]">
+              {remaining > 0 ? tr.grammar.tipBody.replace('{count}', String(remaining)) : tr.grammar.tipBodyDone}
+            </p>
           </div>
         </div>
 
-        {/* Progress card */}
-        <div className="relative rounded-2xl bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 shadow-sm overflow-hidden p-5">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-100/40 rounded-full -translate-y-8 translate-x-8 pointer-events-none" />
-          <div className="flex items-center gap-3 relative">
-            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center text-xl">
-              📊
+        {/* Lessons passed card */}
+        <div className="relative rounded-[14px] bg-white border border-line overflow-hidden p-6 flex items-center gap-4">
+          <div className="flex-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[28px] font-bold text-gray-900">{passed}</span>
+              <span className="text-[13px] text-muted">{tr.grammar.statsPassed}</span>
             </div>
-            <div>
-              <p className="text-3xl font-extrabold text-gray-900 leading-none tracking-tight">{pct}%</p>
-              <p className="text-gray-500 text-xs mt-1 font-medium">{tr.grammar.statsCompletion}</p>
+            <div className="mt-2.5">
+              <div className="h-1.5 bg-[#eef1ef] rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-600 transition-all duration-700" style={{ width: `${pct}%` }} />
+              </div>
+              <p className="text-xs text-faint mt-1.5">{passed} / {total} {tr.grammar.statsLessonsUnit}</p>
             </div>
           </div>
-          <div className="mt-4">
-            <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+          <span className="absolute top-4 right-5 text-[11px] text-emerald-600 bg-[#e9f6ee] px-2 py-[3px] rounded-full">
+            {tr.grammar.statsOf} {total}
+          </span>
+        </div>
+
+        {/* Progress card */}
+        <div className="relative rounded-[14px] bg-white border border-line overflow-hidden p-6 flex items-center gap-4">
+          <div className="flex-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[28px] font-bold text-gray-900">{pct}%</span>
+              <span className="text-[13px] text-muted">{tr.grammar.statsCompletion}</span>
             </div>
-            <p className="text-[10px] text-gray-400 mt-1">{attempted} {tr.grammar.statsAttempted}</p>
+            <div className="mt-2.5">
+              <div className="h-1.5 bg-[#eef1ef] rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-600 transition-all duration-700" style={{ width: `${pct}%` }} />
+              </div>
+              <p className="text-xs text-faint mt-1.5">{attempted} {tr.grammar.statsAttempted}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -224,7 +227,7 @@ function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collaps
   if (rules.length === 0) return null;
 
   return (
-    <div className="w-full border border-gray-900 rounded-2xl overflow-hidden bg-teal-50">
+    <div className="w-full border border-line rounded-2xl overflow-hidden bg-teal-50">
       {collapsible ? (
         <button
           onClick={() => setOpen((v) => !v)}
@@ -239,15 +242,15 @@ function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collaps
           </svg>
         </button>
       ) : (
-        <div className="px-5 py-3 border-b border-gray-900">
+        <div className="px-5 py-3 border-b border-line">
           <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarRule}</span>
         </div>
       )}
 
       {open && (
-        <div className={`px-5 py-4 flex flex-col gap-4 ${collapsible ? 'border-t border-gray-900' : ''}`}>
+        <div className={`px-5 py-4 flex flex-col gap-4 ${collapsible ? 'border-t border-line' : ''}`}>
           {rules.map((rule, i) => (
-            <div key={i} className={rules.length > 1 ? 'pb-4 border-b border-gray-900 last:border-0 last:pb-0' : ''}>
+            <div key={i} className={rules.length > 1 ? 'pb-4 border-b border-line last:border-0 last:pb-0' : ''}>
               <p className="text-teal-700 text-sm font-semibold mb-1">{rule.name_ru}</p>
               <p className="text-gray-500 text-xs mb-2">{rule.question}</p>
               <p className="text-gray-600 text-sm mb-2 leading-relaxed">{rule.usage}</p>
@@ -285,7 +288,7 @@ function VerbHintCard({ hint, collapsible }: { hint: VerbHint; collapsible: bool
   const [open, setOpen] = useState(!collapsible);
 
   return (
-    <div className="w-full border border-gray-900 rounded-2xl overflow-hidden bg-teal-50">
+    <div className="w-full border border-line rounded-2xl overflow-hidden bg-teal-50">
       {collapsible ? (
         <button
           onClick={() => setOpen((v) => !v)}
@@ -300,13 +303,13 @@ function VerbHintCard({ hint, collapsible }: { hint: VerbHint; collapsible: bool
           </svg>
         </button>
       ) : (
-        <div className="px-5 py-3 border-b border-gray-900">
+        <div className="px-5 py-3 border-b border-line">
           <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarRule}</span>
         </div>
       )}
 
       {open && (
-        <div className={`px-5 py-4 ${collapsible ? 'border-t border-gray-900' : ''}`}>
+        <div className={`px-5 py-4 ${collapsible ? 'border-t border-line' : ''}`}>
           <p className="text-gray-600 text-sm mb-3">{hint.description}</p>
           <table className="w-full text-xs">
             <tbody>
@@ -338,7 +341,7 @@ function SubcategoryGroup({
     (l) => l.best_score_pct !== null && l.best_score_pct !== undefined && l.best_score_pct > 0.75
   ).length;
   const total = group.lessons.length;
-  const progressPct = total > 0 ? (passedCount / total) * 100 : 0;
+  const complete = total > 0 && passedCount === total;
 
   return (
     <div>
@@ -346,10 +349,12 @@ function SubcategoryGroup({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         data-testid="subcategory-toggle"
-        className="w-full flex items-center justify-between px-5 py-3 bg-white hover:bg-gray-50 transition-colors text-left relative"
+        className={`w-full flex items-center justify-between px-6 py-4 bg-white hover:bg-[#fafbfa] transition-colors text-left relative border-l-[3px] ${
+          complete ? 'border-l-emerald-600' : 'border-l-transparent'
+        }`}
       >
         <div className="flex items-center gap-2 flex-wrap">
-          <span role="heading" aria-level={3} className="text-sm font-medium text-gray-700">{group.title}</span>
+          <span role="heading" aria-level={3} className="text-[14.5px] font-semibold text-ink">{group.title}</span>
           {(() => {
             const rule = group.lessons[0]?.rules?.find((r) => r.article_slug);
             if (!rule?.article_slug) return null;
@@ -358,42 +363,25 @@ function SubcategoryGroup({
               <a
                 href={`/dashboard/articles/${rule.article_slug}`}
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
+                className="inline-flex items-center gap-1 text-[13px] text-emerald-600 hover:text-emerald-700 ml-2"
               >
-                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M7 1h4v4M11 1L5.5 6.5M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <span aria-hidden="true">↗</span>
                 {title}
               </a>
             );
           })()}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-gray-400 text-xs">
-            {passedCount > 0 ? (
-              <span className={passedCount === total ? 'text-emerald-600' : 'text-amber-500'}>
-                {passedCount}/{total}
-              </span>
-            ) : (
-              total
-            )}{' '}
+          <span className={`text-[13.5px] ${complete ? 'text-emerald-600' : 'text-faint'}`}>
+            {passedCount > 0 ? `${passedCount}/${total}` : total}{' '}
             {plural(total, tr.grammar.levelsCount)}
+            <span
+              aria-hidden="true"
+              className={`ml-1 inline-block transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            >
+              ▾
+            </span>
           </span>
-          <svg
-            width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
-            className={`text-gray-400 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
-          >
-            <path d="M6 8L1 3h10L6 8z" />
-          </svg>
-        </div>
-        {/* Progress bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100">
-          {progressPct > 0 && (
-            <div
-              className={`h-full transition-all duration-500 ${passedCount === total ? 'bg-emerald-500' : 'bg-amber-400'}`}
-              style={{ width: `${progressPct}%` }}
-            />
-          )}
         </div>
       </button>
       {open && (
@@ -410,8 +398,8 @@ function SubcategoryGroup({
                   data-testid={locked ? 'lesson-locked' : undefined}
                   className={`bg-gray-50 border rounded-2xl p-5 text-left flex flex-col gap-3 transition-colors ${
                     locked
-                      ? 'border-gray-900 opacity-40 cursor-not-allowed'
-                      : 'border-gray-900 hover:bg-white cursor-pointer'
+                      ? 'border-line opacity-40 cursor-not-allowed'
+                      : 'border-line hover:bg-white cursor-pointer'
                   }`}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
@@ -665,15 +653,11 @@ export default function GrammarPage() {
     const isEnrolled = enrolledPrograms.length > 0;
 
     return (
-      <main className="bg-slate-50 text-gray-900">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
-
-        <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
-          <h1 className="font-headline text-3xl font-bold mb-2">{tr.grammar.title}</h1>
-          <p className="text-gray-400 mb-4">{tr.grammar.subtitle}</p>
-          <div className="mb-6 rounded-xl px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+      <main className="text-gray-900">
+        <div className="page relative z-10 px-4 sm:px-8 pt-7">
+          <h1 className="text-[32px] font-bold mb-1.5">{tr.grammar.title}</h1>
+          <p className="text-[15px] text-muted mb-4">{tr.grammar.subtitle}</p>
+          <div className="mb-6 rounded-xl px-5 py-4 bg-[#fdf6e3] border border-[#f0e0a8] text-[#8a6d1d] text-[13.5px] leading-[1.5]">
             {tr.grammar.betaNotice}
           </div>
 
@@ -714,26 +698,26 @@ export default function GrammarPage() {
                 return (
                   <div key={program.id} className="mb-4">
                     <div
-                      className="border border-gray-900 rounded-2xl overflow-hidden"
+                      className="border border-line rounded-[14px] overflow-hidden bg-white"
                       data-testid={`category-${catKey}`}
                     >
                       <button
                         onClick={() => toggleCategory(catKey)}
                         aria-expanded={isOpen}
                         data-testid={`category-toggle-${catKey}`}
-                        className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-left"
+                        className="w-full flex items-center justify-between px-6 py-[18px] bg-white cursor-pointer transition-colors text-left border-b border-line-strong"
                       >
-                        <div className="flex items-center gap-3">
-                          <span role="heading" aria-level={2} className="font-semibold text-gray-900">{(lang === 'en' && program.title_en) ? program.title_en : program.title}</span>
+                        <div className="flex items-baseline gap-2.5">
+                          <span role="heading" aria-level={2} className="font-bold text-base text-gray-900">{(lang === 'en' && program.title_en) ? program.title_en : program.title}</span>
                           {loading ? null : (
-                            <span className="text-gray-400 text-sm">{programLessons.length} {plural(programLessons.length, tr.grammar.lessonsCount)}</span>
+                            <span className="text-faint text-[13px]">{programLessons.length} {plural(programLessons.length, tr.grammar.lessonsCount)}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleUnenroll(program.id); }}
                             disabled={unenrolling}
-                            className="text-xs text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                            className="text-[13px] text-destructive hover:opacity-70 transition-opacity disabled:opacity-50"
                             data-testid="unenroll-button"
                           >
                             {tr.grammar.unenrollBtn}
@@ -748,7 +732,7 @@ export default function GrammarPage() {
                       </button>
 
                       {isOpen && (
-                        <div className="divide-y divide-gray-900 border-t border-gray-900">
+                        <div className="divide-y divide-line border-t border-line">
                           {loading ? (
                             <div className="flex justify-center py-10">
                               <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
@@ -794,21 +778,20 @@ export default function GrammarPage() {
       currentIdx >= 0 && currentIdx + 1 < lessons.length ? lessons[currentIdx + 1] : null;
 
     return (
-      <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center justify-center px-6">
-        <div className="pointer-events-none fixed inset-0 flex items-start justify-center">
-          <div className="w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-        </div>
+      <main className="min-h-screen text-gray-900 flex flex-col items-center justify-center px-6">
         <div className="relative z-10 text-center max-w-sm w-full">
-          <div className="text-5xl mb-6">{passed ? '🎉' : '📚'}</div>
+          <div className="flex justify-center mb-6">
+            <Tak pose={passed ? 'grin' : 'talking'} size={72} />
+          </div>
           <h1 className="font-headline text-2xl font-bold mb-2">{tr.grammar.lessonDone}</h1>
 
           {/* Pass/fail banner */}
           {passed ? (
-            <div className="flex items-center justify-center gap-2 mb-4 bg-emerald-50 border border-gray-900 rounded-xl px-4 py-2">
+            <div className="flex items-center justify-center gap-2 mb-4 bg-emerald-50 border border-line rounded-xl px-4 py-2">
               <span className="text-emerald-600 text-sm font-semibold">{tr.grammar.passed}</span>
             </div>
           ) : (
-            <div className="flex flex-col gap-1 mb-4 bg-amber-50 border border-gray-900 rounded-xl px-4 py-3">
+            <div className="flex flex-col gap-1 mb-4 bg-amber-50 border border-line rounded-xl px-4 py-3">
               <span className="text-amber-600 text-sm font-semibold">{tr.grammar.failedScore}</span>
               <span className="text-gray-500 text-xs">{tr.grammar.failedHint}</span>
             </div>
@@ -819,11 +802,11 @@ export default function GrammarPage() {
           </p>
 
           <div className="flex gap-4 justify-center mb-10">
-            <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
+            <div className="bg-white border border-line rounded-2xl px-6 sm:px-8 py-5 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{correct}</div>
               <div className="text-gray-400 text-sm mt-1">{tr.common.correctLabel}</div>
             </div>
-            <div className="bg-white border border-gray-900 rounded-2xl px-6 sm:px-8 py-5 text-center">
+            <div className="bg-white border border-line rounded-2xl px-6 sm:px-8 py-5 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-amber-600">{errors}</div>
               <div className="text-gray-400 text-sm mt-1">{tr.common.errorsLabel}</div>
             </div>
@@ -863,7 +846,7 @@ export default function GrammarPage() {
   // ── Exercise screen ────────────────────────────────────────────────────────
   if (exerciseLoading || tasks.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -876,10 +859,7 @@ export default function GrammarPage() {
   const ruleCollapsible = level === 'advanced';
 
   return (
-    <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col px-6 py-8">
-      <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-      </div>
+    <main className="min-h-screen text-gray-900 flex flex-col px-6 py-8">
 
       <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col flex-1">
         {/* Header */}
@@ -915,7 +895,7 @@ export default function GrammarPage() {
         {/* Task card */}
         <div className="flex flex-col items-center justify-center flex-1 gap-12">
           {task.type === 'declension' && (
-            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
+            <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
                 {task.case_name} · {task.number}
               </p>
@@ -939,7 +919,7 @@ export default function GrammarPage() {
           )}
 
           {task.type === 'sentence' && (
-            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
+            <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
               {task.base_lt && (
                 <p className="text-gray-400 text-xs mb-4">{tr.grammar.sentenceFrom}<span className="font-medium text-gray-500">{task.base_lt}</span></p>
               )}
@@ -959,7 +939,7 @@ export default function GrammarPage() {
           )}
 
           {task.type === 'verb_conjugation' && (
-            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
+            <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
               <p className="text-gray-400 text-xs mb-4">{task.tense_label}</p>
               <div className="mb-4">
                 <InlineSentenceInput
@@ -978,7 +958,7 @@ export default function GrammarPage() {
           )}
 
           {task.type === 'verb_case' && (
-            <div className="w-full bg-white border border-gray-900 rounded-2xl p-5 sm:p-8 text-center">
+            <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">
                 {task.verb_infinitive} — {task.translation_ru}
               </p>

@@ -21,8 +21,8 @@ export default function QuotaBanner({ quota }: { quota: QuotaInfo | null }) {
   const limitReached = quota.daily_limit !== null && quota.sessions_today >= quota.daily_limit;
   return (
     <div
-      className={`mb-6 rounded-xl px-5 py-4 border flex flex-col sm:flex-row sm:items-center gap-3 ${
-        limitReached ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100'
+      className={`mb-7 rounded-[14px] px-6 py-4 border flex flex-col sm:flex-row sm:items-center gap-3 ${
+        limitReached ? 'bg-red-50 border-red-200' : 'bg-white border-line'
       }`}
       data-testid="quota-banner"
     >
@@ -33,7 +33,7 @@ export default function QuotaBanner({ quota }: { quota: QuotaInfo | null }) {
           <p className="text-gray-500 text-sm">{tr.lists.sessionsToday} <span className="text-gray-900 font-medium">{quota.sessions_today}{quota.daily_limit !== null ? ` / ${quota.daily_limit}` : ''}</span></p>
         )}
       </div>
-      <Link href="/pricing" className="shrink-0 text-xs font-medium text-emerald-600 hover:text-emerald-700 border border-emerald-200 rounded-full px-3 py-1.5 transition-colors">
+      <Link href="/pricing" className="shrink-0 text-[13px] font-semibold text-emerald-600 hover:text-emerald-700 bg-[#e9f6ee] rounded-full px-3.5 py-2 transition-colors">
         {tr.lists.getPremium}
       </Link>
     </div>

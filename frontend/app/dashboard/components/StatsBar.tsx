@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import ProgressStatCard from './ProgressStatCard';
+import Tak from '../../../components/Tak';
 
 interface Stats {
   known: number;
@@ -81,10 +82,10 @@ export default function StatsBar() {
   const { currentLevel, nextLevel, next: cefrNext, pct: vocabPct } = getCefrProgress(stats.known, cefrLevels);
 
   return (
-    <div className="mb-10">
+    <div className="mb-5">
       <ProgressStatCard
         theme="emerald"
-        icon="📚"
+        icon={<Tak pose="idle" size={70} className="shrink-0 h-[82px]" />}
         count={stats.known}
         countBadge={`≈ ${currentLevel === '0' ? 'A0' : currentLevel}`}
         label={tr.stats.wordsLearned}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+import TakGreeting from '../../../../components/TakGreeting';
 
 interface LearnedPhrase {
   id: number;
@@ -90,11 +91,11 @@ export default function PhrasesVocabularyPage() {
   }, [phrases, tr]);
 
   function memoryState(nextReview: string | null): { key: 'ok' | 'fading' | 'due'; label: string; cls: string } {
-    if (!nextReview) return { key: 'due', label: tr.stats.memoryDue, cls: 'bg-red-50 text-red-600 border-red-200' };
+    if (!nextReview) return { key: 'due', label: tr.stats.memoryDue, cls: 'bg-[#fdeceb] text-[#c2504a]' };
     const diff = Math.floor((new Date(nextReview).getTime() - Date.now()) / 86_400_000);
-    if (diff > 3) return { key: 'ok', label: tr.stats.memoryOk, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-    if (diff >= 0) return { key: 'fading', label: tr.stats.memoryFading, cls: 'bg-amber-50 text-amber-700 border-amber-200' };
-    return { key: 'due', label: tr.stats.memoryDue, cls: 'bg-red-50 text-red-600 border-red-200' };
+    if (diff > 3) return { key: 'ok', label: tr.stats.memoryOk, cls: 'bg-[#e9f6ee] text-[#0f9d68]' };
+    if (diff >= 0) return { key: 'fading', label: tr.stats.memoryFading, cls: 'bg-[#fdf6e3] text-[#8a6d1f]' };
+    return { key: 'due', label: tr.stats.memoryDue, cls: 'bg-[#fdeceb] text-[#c2504a]' };
   }
 
   function formatDate(iso: string | null): string {
@@ -106,21 +107,24 @@ export default function PhrasesVocabularyPage() {
   }
 
   return (
-    <main className="bg-slate-50 text-gray-900">
-      <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
+    <main className="text-gray-900">
+      <div className="page relative z-10 px-4 sm:px-8 pt-6">
         <Link href="/dashboard/phrases" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
           {tr.phrasesVocabulary.back}
         </Link>
 
-        <div className="mt-4 mb-8 flex flex-col sm:flex-row sm:items-end gap-4">
-          <div className="flex-1">
-            <h1 className="font-headline text-3xl font-bold">{tr.phrasesVocabulary.title}</h1>
-            <p className="text-gray-400 mt-1">
-              {tr.phrasesVocabulary.subtitle}
-              {!loading && phrases.length > 0 && (
-                <span className="ml-2 text-gray-500 font-medium">— {phrases.length}</span>
-              )}
-            </p>
+        <div className="mt-4 mb-8 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+          <div className="flex items-end gap-4 sm:gap-5 flex-1">
+            <TakGreeting phrase="Kartokime!" size={108} className="hidden sm:block" />
+            <div className="flex-1">
+              <h1 className="text-[28px] font-bold leading-tight">{tr.phrasesVocabulary.title}</h1>
+              <p className="text-gray-400 text-sm mt-1.5">
+                {tr.phrasesVocabulary.subtitle}
+                {!loading && phrases.length > 0 && (
+                  <span className="ml-2 text-gray-500 font-medium">— {phrases.length}</span>
+                )}
+              </p>
+            </div>
           </div>
           {!loading && phrases.length > 0 && (
             <input
@@ -128,13 +132,13 @@ export default function PhrasesVocabularyPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={tr.phrasesVocabulary.searchPlaceholder}
-              className="w-full sm:w-72 px-4 py-2.5 text-sm border border-gray-900 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full sm:w-64 px-4 py-2.5 text-sm border border-gray-200 rounded-[10px] bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           )}
         </div>
 
         {!loading && phrases.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-5">
             {([
               ['all',    tr.vocabulary.filterAll, phrases.length,      null],
               ['due',    tr.stats.memoryDue,      memoryCounts.due,    tr.phrasesVocabulary.tooltipDue],
@@ -144,13 +148,16 @@ export default function PhrasesVocabularyPage() {
               <div key={key} className="relative group">
                 <button
                   onClick={() => setMemoryFilter(key)}
-                  className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${
+                  className={`text-[13px] font-semibold px-3.5 py-2 rounded-full transition-colors ${
                     memoryFilter === key
-                      ? key === 'all'    ? 'bg-gray-900 text-white border-gray-900'
-                      : key === 'ok'     ? 'bg-emerald-600 text-white border-emerald-600'
-                      : key === 'fading' ? 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-red-500 text-white border-red-500'
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                      ? key === 'all'    ? 'bg-ink text-white'
+                      : key === 'ok'     ? 'bg-[#e9f6ee] text-[#0f9d68]'
+                      : key === 'fading' ? 'bg-[#fdf6e3] text-[#8a6d1f]'
+                      : 'bg-destructive text-white'
+                      // The "needs review" chip stays red-tinted even when
+                      // unselected, as in the prototype.
+                      : key === 'due'    ? 'bg-[#fdeceb] text-[#c2504a]'
+                      : 'bg-[#f2f3f3] text-[#5b6067]'
                   }`}
                 >
                   {label}{count > 0 && <span className="ml-1 opacity-70">({count})</span>}
@@ -181,48 +188,39 @@ export default function PhrasesVocabularyPage() {
             </Link>
           </div>
         ) : (
-          <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white">
-            <table className="w-full text-sm">
+          <div className="border border-line rounded-[14px] overflow-hidden bg-white">
+            <table className="w-full text-sm table-fixed">
               <thead>
-                <tr className="border-b border-gray-900 bg-gray-50">
-                  <th className="text-left px-5 py-3 font-semibold text-gray-700">{tr.phrasesVocabulary.columnPhrase}</th>
-                  <th className="text-left px-5 py-3 font-semibold text-gray-700">{tr.vocabulary.columnTranslation}</th>
-                  <th className="text-left px-5 py-3 font-semibold text-gray-700 hidden sm:table-cell">{tr.vocabulary.columnMemory}</th>
-                  <th className="text-left px-5 py-3 font-semibold text-gray-700 hidden md:table-cell">{tr.vocabulary.columnNextReview}</th>
+                <tr className="border-b border-line-strong">
+                  <th className="text-left px-6 py-3.5 font-semibold text-gray-400 text-xs uppercase tracking-wider w-[37.5%]">{tr.phrasesVocabulary.columnPhrase}</th>
+                  <th className="text-left px-6 py-3.5 font-semibold text-gray-400 text-xs uppercase tracking-wider w-[31.25%]">{tr.vocabulary.columnTranslation}</th>
+                  <th className="text-left px-6 py-3.5 font-semibold text-gray-400 text-xs uppercase tracking-wider hidden sm:table-cell w-[15.625%]">{tr.vocabulary.columnMemory}</th>
+                  <th className="text-left px-6 py-3.5 font-semibold text-gray-400 text-xs uppercase tracking-wider hidden md:table-cell w-[15.625%]">{tr.vocabulary.columnNextReview}</th>
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((p, i) => {
+                {paginated.map((p) => {
                   const translation = lang === 'en' ? (p.translation_en || p.translation) : p.translation;
                   return (
                     <tr
                       key={p.id}
-                      className={`border-b border-gray-100 last:border-0 ${i % 2 === 0 ? '' : 'bg-gray-50/50'}`}
+                      className="border-b border-line-soft last:border-0 hover:bg-[#fafbfa] transition-colors"
                     >
-                      <td className="px-5 py-3 font-medium text-gray-900">
+                      <td className="px-6 py-3.5 text-[14px] font-semibold text-ink">
                         {p.text}
-                        {p.program_title && (
-                          <p className="text-xs text-gray-400 font-normal mt-0.5">
-                            {lang === 'en' ? (p.program_title_en || p.program_title) : p.program_title}
-                            {(() => {
-                              const ch = lang === 'en' ? (p.chapter_title_en || p.chapter_title) : p.chapter_title;
-                              return ch ? ` · ${ch}` : '';
-                            })()}
-                          </p>
-                        )}
                       </td>
-                      <td className="px-5 py-3 text-gray-600">{translation || '—'}</td>
-                      <td className="px-5 py-3 hidden sm:table-cell">
+                      <td className="px-6 py-3.5 text-[13.5px] text-[#3a3d42]">{translation || '—'}</td>
+                      <td className="px-6 py-3.5 hidden sm:table-cell">
                         {(() => {
                           const ms = memoryState(p.next_review);
                           return (
-                            <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full border ${ms.cls}`}>
+                            <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${ms.cls}`}>
                               {ms.label}
                             </span>
                           );
                         })()}
                       </td>
-                      <td className="px-5 py-3 text-gray-400 hidden md:table-cell whitespace-nowrap">
+                      <td className="px-6 py-3.5 text-[13px] text-muted hidden md:table-cell whitespace-nowrap">
                         {p.next_review ? formatDate(p.next_review) : '—'}
                       </td>
                     </tr>

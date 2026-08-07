@@ -16,10 +16,42 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Page wash from the design system. The second stop is a fixed 320px, so it
+   lives on body and is pinned so short pages don't clip the ramp. */
+body {
+  background: linear-gradient(180deg, #eef4f1 0%, #f6f8f7 320px, #f7f8f8 100%);
+  background-attachment: fixed;
+}
+
+a {
+  color: #0f9d68;
+}
+
+a:hover {
+  color: #0c7d54;
+}
+
+/* Shared content container — prototypes constrain page content to 1180px
+   while the navbar stays full-bleed. */
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-bottom: 80px;
+}
+
+.row-hover:hover {
+  background: #fafbfa;
+}
+
 .font-sans {
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 .font-headline {
   font-family: var(--font-headline), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@keyframes tak-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-2deg); }
 }

@@ -221,7 +221,9 @@ test.describe('Issue #147 — session summary is internally consistent', () => {
     // Every word was eventually mastered → passed, regardless of stumbles
     await expect(verdict).toHaveAttribute('data-passed', 'true');
     await expect(verdict).toHaveText('Урок пройден');
-    await expect(page.getByTestId('result-emoji')).toHaveText('😊');
+    // Celebration mascot, not an emoji — the design system retires decorative
+    // emoji in favour of TAK ("big grin for celebration/completion").
+    await expect(page.getByTestId('result-emoji').locator('svg')).toBeVisible();
 
     // The "not mastered" tile must not render when nothing was left unlearned
     await expect(page.getByTestId('tile-not-mastered')).toHaveCount(0);

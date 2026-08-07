@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../lib/api';
 import { useT } from '../lib/useT';
 import Leaderboard from '../components/Leaderboard';
+import Tak from '../components/Tak';
 
 interface Stats {
   known: number;
@@ -296,7 +297,9 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
                     />
                   )}
                 </svg>
-                <span className="text-3xl relative z-10">🔥</span>
+                <span className="relative z-10">
+                  <Tak pose="stonks" size={32} />
+                </span>
               </div>
               {streakNext && (
                 <p className="text-[11px] text-center text-gray-400 leading-tight">

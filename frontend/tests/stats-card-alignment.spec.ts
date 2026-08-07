@@ -71,7 +71,7 @@ test.describe('Stats card alignment — words page', () => {
     await expect(card).toBeVisible();
     await expect(card.getByText('723', { exact: true })).toBeVisible();
     await expect(card.getByText('≈ A1')).toBeVisible();
-    await expect(card.getByText('Next', { exact: true })).toBeVisible();
+    await expect(card.getByText('Далее', { exact: true })).toBeVisible();
     await expect(card.getByText('723 / 1000 до A2')).toBeVisible();
     await expect(card.getByRole('link', { name: 'Напомни что я мог забыть' })).toBeVisible();
     await expect(card.getByText('69 из 723 слов нужно освежить')).toBeVisible();
@@ -99,7 +99,7 @@ test.describe('Stats card alignment — phrases page', () => {
     await expect(card).toBeVisible();
     await expect(card.getByText('189', { exact: true })).toBeVisible();
     // Milestone track: 189 learned → next goal is 250
-    await expect(card.getByText('Next', { exact: true })).toBeVisible();
+    await expect(card.getByText('Далее', { exact: true })).toBeVisible();
     await expect(card.getByText('250', { exact: true })).toBeVisible();
     await expect(card.getByText('189 / 250 до следующей цели')).toBeVisible();
     await expect(card.getByRole('link', { name: 'Повторить фразы' })).toBeVisible();
@@ -164,7 +164,6 @@ test.describe('Stats card alignment — phrases page', () => {
       await expect(page.getByRole('columnheader', { name: col, exact: true })).toBeVisible();
     }
     await expect(page.getByText('Labas rytas!')).toBeVisible();
-    await expect(page.getByText('Туристические фразы · Приветствия')).toBeVisible();
 
     // Memory filter works on the phrases page
     await page.getByRole('button', { name: /Помню/ }).click();

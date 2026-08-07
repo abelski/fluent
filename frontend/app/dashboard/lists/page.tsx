@@ -252,8 +252,8 @@ export default function ListsPage() {
           onDismiss={() => setWelcomeContent(null)}
         />
       )}
-    <main className="bg-[#F5F5F7] min-h-screen text-gray-900">
-      <div className="max-w-4xl mx-auto px-6 py-8">
+    <main className="min-h-screen text-gray-900">
+      <div className="page px-4 sm:px-8 pt-7">
         <StatsBar />
 
         {isLoggedIn === false && (
@@ -261,7 +261,7 @@ export default function ListsPage() {
             <p className="text-gray-500 text-lg">Войдите, чтобы получить доступ к словарям</p>
             <a
               href={`${BACKEND_URL}/api/auth/google`}
-              className="px-6 py-3 bg-emerald-600 text-white text-sm font-semibold rounded-full hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-600/20"
+              className="px-6 py-3 bg-emerald-600 text-white text-sm font-semibold rounded-full hover:bg-emerald-700 transition-colors"
             >
               Войти с Google
             </a>
@@ -272,7 +272,7 @@ export default function ListsPage() {
         {isLoggedIn && <QuotaBanner quota={quota} />}
 
         <div className="flex flex-wrap items-center gap-4 mb-2">
-          <h1 className="font-headline text-3xl font-bold">{tr.lists.title}</h1>
+          <h1 className="text-[28px] font-bold">{tr.lists.title}</h1>
           <StarLevelToggle
             value={starLevel as 1 | 2 | 3}
             onChange={handleStarLevel}
@@ -285,8 +285,8 @@ export default function ListsPage() {
         {/* Мои списки — personal word lists (Premium/admin) */}
         {isLoggedIn && (
           <section className="mb-8" data-testid="my-word-lists-section">
-            <div className="bg-white border border-emerald-200 rounded-2xl overflow-hidden shadow-sm">
-              <div className="w-full flex items-center justify-between px-5 py-4">
+            <div className="bg-white border border-line rounded-[14px] overflow-hidden">
+              <div className="w-full flex items-center justify-between px-6 py-[18px]">
                 <button
                   onClick={() => setOpenMyLists((o) => !o)}
                   aria-expanded={openMyLists}
@@ -304,7 +304,7 @@ export default function ListsPage() {
                     <button
                       onClick={() => { setNewListTitle(''); setShowCreate(true); }}
                       data-testid="create-word-list-button"
-                      className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-full transition-colors"
+                      className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 rounded-lg transition-colors"
                     >
                       {mt.createList}
                     </button>
@@ -345,7 +345,7 @@ export default function ListsPage() {
                       </div>
                     )
                   ) : (
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-4 grid-cols-2 max-[860px]:grid-cols-1">
                       {myWordLists.map((lst) => {
                         const total = lst.word_count;
                         const knownPct = total > 0 ? (lst.known / total) * 100 : 0;
@@ -354,12 +354,12 @@ export default function ListsPage() {
                         return (
                           <div
                             key={lst.id}
-                            className={`relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4 ${eligible ? '' : 'opacity-70'}`}
+                            className={`relative bg-white border border-line rounded-xl p-5 flex flex-col gap-4 ${eligible ? '' : 'opacity-70'}`}
                             data-testid="my-word-list-card"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex items-center gap-2 flex-wrap pr-2">
-                                <h3 className="font-headline text-base font-semibold">{lst.title}</h3>
+                                <h3 className="text-[14.5px] font-semibold">{lst.title}</h3>
                                 {isDone && (
                                   <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white tracking-wide">✓ Done</span>
                                 )}
@@ -395,14 +395,14 @@ export default function ListsPage() {
                                   <>
                                     <Link
                                       href={`/dashboard/lists/my/${lst.id}/edit`}
-                                      className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
+                                      className="px-3.5 py-1.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg transition-colors"
                                     >
                                       {mt.edit}
                                     </Link>
                                     {lst.word_count > 0 && (
                                       <Link
                                         href={`/dashboard/lists/${lst.id}/study`}
-                                        className="px-4 py-2.5 text-sm rounded-full font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20 transition-colors"
+                                        className="px-3.5 py-1.5 text-sm rounded-lg font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
                                       >
                                         {mt.study}
                                       </Link>
@@ -439,7 +439,7 @@ export default function ListsPage() {
             <p className="text-gray-500 text-lg">{tr.programs.emptyState}</p>
             <Link
               href="/programs"
-              className="px-6 py-3 bg-emerald-600 text-white text-sm font-semibold rounded-full hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-600/20"
+              className="px-6 py-3 bg-emerald-600 text-white text-sm font-semibold rounded-full hover:bg-emerald-700 transition-colors"
             >
               {tr.programs.emptyStateCta}
             </Link>
@@ -468,7 +468,7 @@ export default function ListsPage() {
                 const isOpen = openSubcategories.has(group.key);
                 const meta = subcategoryMeta[group.key];
                 return (
-                  <div key={group.key} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div key={group.key} className="bg-white border border-line rounded-[14px] overflow-hidden">
                     <button
                       onClick={() => setOpenSubcategories((prev) => {
                         const next = new Set(prev);
@@ -476,7 +476,7 @@ export default function ListsPage() {
                         return next;
                       })}
                       aria-expanded={isOpen}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left cursor-pointer"
+                      className="w-full flex items-center justify-between px-6 py-[18px] hover:bg-gray-50 transition-colors text-left cursor-pointer"
                     >
                       <div className="flex items-center gap-3 flex-wrap">
                         <span role="heading" aria-level={2} className="font-semibold text-gray-900">{group.label}</span>
@@ -545,7 +545,7 @@ export default function ListsPage() {
 
                     {isOpen && (
                       <div className="px-5 py-4 border-t border-gray-100">
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-4 grid-cols-2 max-[860px]:grid-cols-1">
                           {group.lists.map((list) => {
                             const p = progress[list.id];
                             const knownPct = p ? (p.known / p.total) * 100 : 0;
@@ -558,22 +558,22 @@ export default function ListsPage() {
                             return (
                               <div
                                 key={list.id}
-                                className="relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4"
+                                className="relative bg-white border border-line rounded-xl p-5 flex flex-col gap-4"
                               >
                                 {isDone && (
-                                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
+                                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                     {lang === 'en' ? '✓ Done' : '✓ Готово'}
                                   </div>
                                 )}
                                 {isStarLevelDone && (
-                                  <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
+                                  <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                     {'★'.repeat(starLevel) + (lang === 'en' ? ' Done' : ' Готово')}
                                   </div>
                                 )}
                                 <div>
-                                  <h2 className="font-headline text-lg font-semibold">{displayTitle}</h2>
+                                  <h2 className="text-[14.5px] font-semibold">{displayTitle}</h2>
                                   {displayDesc && (
-                                    <p className="text-gray-400 text-sm mt-1">{displayDesc}</p>
+                                    <p className="text-faint text-xs mt-1">{displayDesc}</p>
                                   )}
                                 </div>
 
@@ -600,7 +600,7 @@ export default function ListsPage() {
                                   <div className="flex gap-2">
                                     <Link
                                       href={`/dashboard/lists/${list.id}`}
-                                      className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
+                                      className="px-3.5 py-1.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg transition-colors"
                                     >
                                       {tr.lists.browse}
                                     </Link>
@@ -608,14 +608,14 @@ export default function ListsPage() {
                                       <button
                                         disabled
                                         title={tr.lists.studyDisabledTitle}
-                                        className="px-4 py-2.5 text-sm bg-emerald-600/30 rounded-full font-semibold cursor-not-allowed opacity-40"
+                                        className="px-3.5 py-1.5 text-sm bg-emerald-600/30 rounded-lg font-semibold cursor-not-allowed opacity-40"
                                       >
                                         {tr.lists.study}
                                       </button>
                                     ) : (
                                       <Link
                                         href={`/dashboard/lists/${list.id}/study`}
-                                        className="px-4 py-2.5 text-sm bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors font-semibold text-white shadow-sm shadow-emerald-600/20"
+                                        className="px-3.5 py-1.5 text-sm bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors font-semibold text-white"
                                       >
                                         {tr.lists.study}
                                       </Link>
@@ -637,7 +637,7 @@ export default function ListsPage() {
               if (programLists.length === 0) return null;
               const isOpen = openCustomPrograms.has(enrollment.id);
               return (
-                <div key={`custom-${enrollment.id}`} className="bg-white border border-purple-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div key={`custom-${enrollment.id}`} className="bg-white border border-line rounded-[14px] overflow-hidden">
                   <button
                     onClick={() => setOpenCustomPrograms((prev) => {
                       const next = new Set(prev);
@@ -645,7 +645,7 @@ export default function ListsPage() {
                       return next;
                     })}
                     aria-expanded={isOpen}
-                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left cursor-pointer"
+                    className="w-full flex items-center justify-between px-6 py-[18px] hover:bg-gray-50 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-3 flex-wrap">
                       <span role="heading" aria-level={2} className="font-semibold text-gray-900">{enrollment.title}</span>
@@ -677,7 +677,7 @@ export default function ListsPage() {
 
                   {isOpen && (
                     <div className="px-5 py-4 border-t border-gray-100">
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-4 grid-cols-2 max-[860px]:grid-cols-1">
                         {programLists.map((list) => {
                           const p = progress[list.id];
                           const knownPct = p ? (p.known / p.total) * 100 : 0;
@@ -688,20 +688,20 @@ export default function ListsPage() {
                           const starTotal = list.star_counts?.[String(starLevel)] ?? 0;
                           const isStarLevelDone = !isDone && p && starTotal > 0 && (p.known_star_counts?.[String(starLevel)] ?? 0) >= starTotal;
                           return (
-                            <div key={list.id} className="relative bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-4">
+                            <div key={list.id} className="relative bg-white border border-line rounded-xl p-5 flex flex-col gap-4">
                               {isDone && (
-                                <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
+                                <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                   {lang === 'en' ? '✓ Done' : '✓ Готово'}
                                 </div>
                               )}
                               {isStarLevelDone && (
-                                <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl tracking-wide">
+                                <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                   {'★'.repeat(starLevel) + (lang === 'en' ? ' Done' : ' Готово')}
                                 </div>
                               )}
                               <div>
-                                <h2 className="font-headline text-lg font-semibold">{displayTitle}</h2>
-                                {displayDesc && <p className="text-gray-400 text-sm mt-1">{displayDesc}</p>}
+                                <h2 className="text-[14.5px] font-semibold">{displayTitle}</h2>
+                                {displayDesc && <p className="text-faint text-xs mt-1">{displayDesc}</p>}
                               </div>
                               <div className="flex flex-col gap-1.5">
                                 <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden flex">
@@ -718,15 +718,15 @@ export default function ListsPage() {
                               <div className="flex items-center justify-between mt-auto">
                                 <span className="text-gray-400 text-sm">{list.word_count} {plural(list.word_count, tr.lists.wordsCount)}</span>
                                 <div className="flex gap-2">
-                                  <Link href={`/dashboard/lists/${list.id}`} className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
+                                  <Link href={`/dashboard/lists/${list.id}`} className="px-3.5 py-1.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg transition-colors">
                                     {tr.lists.browse}
                                   </Link>
                                   {limitReached ? (
-                                    <button disabled title={tr.lists.studyDisabledTitle} className="px-4 py-2.5 text-sm bg-emerald-600/30 rounded-full font-semibold cursor-not-allowed opacity-40">
+                                    <button disabled title={tr.lists.studyDisabledTitle} className="px-3.5 py-1.5 text-sm bg-emerald-600/30 rounded-lg font-semibold cursor-not-allowed opacity-40">
                                       {tr.lists.study}
                                     </button>
                                   ) : (
-                                    <Link href={`/dashboard/lists/${list.id}/study`} className="px-4 py-2.5 text-sm bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors font-semibold text-white shadow-sm shadow-emerald-600/20">
+                                    <Link href={`/dashboard/lists/${list.id}/study`} className="px-3.5 py-1.5 text-sm bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors font-semibold text-white">
                                       {tr.lists.study}
                                     </Link>
                                   )}
@@ -762,7 +762,7 @@ export default function ListsPage() {
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setConfirmCustomId(null)}>
             <div className="bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-              <h2 className="font-headline text-lg font-semibold text-gray-900">Убрать программу «{enrollment?.title}»?</h2>
+              <h2 className="text-[14.5px] font-semibold text-gray-900">Убрать программу «{enrollment?.title}»?</h2>
               <p className="text-sm text-gray-500">Ваш прогресс сохранится — вы сможете снова записаться в программу в любое время.</p>
               <div className="flex gap-3 justify-end">
                 <button onClick={() => setConfirmCustomId(null)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
@@ -794,7 +794,7 @@ export default function ListsPage() {
               className="bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm flex flex-col gap-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="font-headline text-lg font-semibold text-gray-900">
+              <h2 className="text-[14.5px] font-semibold text-gray-900">
                 Убрать программу «{label}»?
               </h2>
               <p className="text-sm text-gray-500">

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fluent — Component Library (as-built)</title>
+<style>
+  :root {
+    --emerald-600: #0f9d68; --emerald-700: #0c7d54; --emerald-50: #e9f6ee;
+    --purple-600: #9333ea; --purple-100: #f3e8ff; --purple-50: #faf5ff;
+    --ink: #16181c; --muted: #8a8f98; --muted-nav: #9a9fa6; --faint: #b0b4ba;
+    --line: #ececec; --line-strong: #f1f1f1; --line-soft: #f4f4f4;
+    --destructive: #c2504a; --chip: #f2f3f3; --track: #eef1ef;
+    --gray-900: #16181c; --gray-500: #8a8f98; --gray-400: #b0b4ba; --gray-100: #ececec;
+    --tak-body: #ec3013; --tak-limb: #201e1d; --tak-eye: #f3f2f2;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: linear-gradient(180deg,#eef4f1 0%,#f6f8f7 320px,#f7f8f8 100%); background-attachment: fixed; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; color: var(--gray-900); }
+  main { max-width: 1040px; margin: 0 auto; padding: 56px 32px 96px; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--emerald-600); }
+  h1 { font-size: 34px; font-weight: 700; margin: 8px 0 8px; letter-spacing: -0.02em; }
+  .lede { font-size: 15px; color: var(--gray-500); max-width: 640px; line-height: 1.6; margin: 0 0 16px; }
+  .note { font-size: 13px; color: var(--gray-500); background: #fdf6e3; border: 1px solid #f0e0a8; border-radius: 10px; padding: 12px 16px; max-width: 720px; margin-bottom: 48px; }
+  h2 { font-size: 20px; font-weight: 700; margin: 48px 0 16px; }
+  h3 { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+  .card { background: #fff; border: 1px solid #ececec; border-radius: 14px; padding: 24px; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .swatch-block { }
+  .swatch { height: 52px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px; }
+  .swatch-label { font-size: 12px; color: var(--gray-500); }
+  .swatch-label b { color: var(--gray-900); }
+  .poses { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0; border-top: 1px solid #ececec; border-left: 1px solid #ececec; }
+  .pose-cell { padding: 22px 16px; border-right: 1px solid #ececec; border-bottom: 1px solid #ececec; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .pose-name { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .pose-usage { font-size: 12px; color: var(--gray-500); line-height: 1.4; }
+  .size-row { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
+  .size-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .size-label { font-size: 12px; color: var(--gray-500); text-align: center; }
+  code { background: #f2f3f3; border-radius: 4px; padding: 1px 6px; font-size: 12.5px; }
+  pre { background: #16181c; color: #e5e7eb; border-radius: 10px; padding: 16px 18px; overflow-x: auto; font-size: 12.5px; line-height: 1.6; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; color: var(--gray-500); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; padding: 8px 12px; border-bottom: 1px solid #ececec; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f4f4f4; vertical-align: top; }
+  .hero-demo { display: flex; align-items: flex-start; gap: 24px; }
+  .hero-stats { flex: 1; min-width: 0; }
+  .baseline { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; }
+  .count { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+  .badge { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--emerald-50); color: var(--emerald-600); }
+  .label-muted { color: var(--gray-500); font-size: 13px; }
+  .track { height: 6px; background: var(--gray-100); border-radius: 999px; margin-top: 12px; overflow: hidden; }
+  .track .fill { height: 100%; background: var(--emerald-600); }
+  .caption { font-size: 12px; color: var(--gray-400); margin-top: 6px; }
+  .actions { display: flex; gap: 10px; margin-top: 14px; }
+  .btn-primary { font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 8px; background: var(--emerald-50); color: var(--emerald-600); }
+  .btn-secondary { font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid #d1d5db; }
+  .next-corner { text-align: right; flex-shrink: 0; }
+  .next-corner .lbl { font-size: 11px; color: var(--gray-500); font-weight: 600; text-transform: uppercase; }
+  .next-corner .val { font-size: 14px; font-weight: 700; }
+  .bubble-demo { display: flex; align-items: center; gap: 40px; flex-wrap: wrap; }
+  .bubble-wrap { text-align: center; }
+  .bubble { position: relative; background: #fff; border: 1px solid #ececec; border-radius: 12px; padding: 8px 16px; font-weight: 700; font-size: 15px; width: fit-content; margin: 0 auto; }
+  .bubble::after { content: ''; position: absolute; left: 36px; bottom: -8px; transform: rotate(45deg); width: 14px; height: 14px; background: #fff; border-right: 1px solid #ececec; border-bottom: 1px solid #ececec; }
+  @keyframes tak-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(-2deg); } }
+  .tak-svg g.float { animation: tak-float 2.6s ease-in-out infinite; transform-origin: 100px 130px; }
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid #ececec; font-size: 13px; color: var(--gray-400); }
+</style>
+</head>
+<body>
+<main>
+  <span class="eyebrow">FLUENT.LT</span>
+  <h1>Component library — as-built</h1>
+  <p class="lede">
+    What's actually implemented in <code>frontend/</code> after the TAK mascot redesign, kept in sync with the code.
+    The original mockups (<code>Fluent Redesign - Design System.html</code>, <code>prototypes/</code>) are the design
+    intent this was built from — this page documents what shipped, including the places implementation
+    deliberately diverged (mobile sizing, a11y, existing i18n/data constraints).
+  </p>
+  <p class="note">Per CLAUDE.md: update this file whenever a new shared component or pattern is introduced. This is the source of truth for visual/component decisions during development — check it before inventing a new pattern.</p>
+
+  <h2>Principles</h2>
+  <div class="card">
+    <ol style="font-size:13.5px;line-height:1.9;margin:0;padding-left:20px;">
+      <li><b>The prototypes are the visual source of truth.</b> <code>prototypes/*.html</code> define layout,
+        spacing and colour. This page records what shipped. When they disagree, the prototype wins unless the
+        divergence is listed under "Deliberate deviations" below.</li>
+      <li><b>Flat, not decorated.</b> Cards are white with a 1px <code>#ececec</code> border and no drop shadow.
+        Buttons carry no shadow or glow. No decorative blur blobs, no gradient fills on components — the only
+        gradient in the product is the page wash on <code>body</code>.</li>
+      <li><b>Tokens, not raw palette steps.</b> Use the named colours above. Never reach for a stock Tailwind step
+        (<code>gray-100</code>, <code>emerald-500</code>) when a token exists — that drift is what made the app
+        diverge from the mockups in the first place.</li>
+      <li><b>One typeface.</b> Inter everywhere. The prototypes use no second display face, so
+        <code>font-headline</code> (Manrope) is not applied on redesigned pages.</li>
+      <li><b>Green is words, purple is phrases.</b> <code>#0f9d68</code> is the words/global accent;
+        <code>#9333ea</code> is the phrases surface. Correct/incorrect feedback stays green/red regardless of
+        surface — that is semantic, not brand.</li>
+      <li><b>Hover goes darker, never lighter.</b> <code>emerald-600</code> → <code>emerald-700</code>.</li>
+      <li><b>Layout: full-bleed navbar, 1180px content.</b> The header spans the viewport; page content sits in
+        <code>.page</code> (max 1180px, 32px gutters, 16px below 860px).</li>
+      <li><b>Breakpoints follow the prototypes,</b> not Tailwind defaults: 3→2 columns at 1000px, →1 column at 860px.</li>
+      <li><b>Readability outranks fidelity.</b> If a prototype value is genuinely hard to read, darken it and record
+        it as a deliberate deviation. Small-caps secondary labels use <code>#5b6067</code>.</li>
+      <li><b>TAK is the only mascot, and replaces decorative emoji</b> — never functional glyphs. See Emoji policy.</li>
+    </ol>
+  </div>
+
+  <h2>Logo / wordmark</h2>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:40px;flex-wrap:wrap;margin-bottom:20px;">
+      <span style="font-weight:700;font-size:22px;letter-spacing:-0.02em;color:#16181c;">fluent<span style="color:#0f9d68;">.</span></span>
+      <span class="label-muted">22px / 700 / letter-spacing −0.02em</span>
+    </div>
+    <table>
+      <tr><th>Rule</th><th>Value</th></tr>
+      <tr><td>Size</td><td><code>22px</code> in the navbar — <b>not</b> 28px. Matches every prototype.</td></tr>
+      <tr><td>Weight / tracking</td><td><code>700</code> / <code>-0.02em</code></td></tr>
+      <tr><td>Wordmark colour</td><td><code>#16181c</code> (ink) — the letters are never green</td></tr>
+      <tr><td>Dot colour</td><td><code>#0f9d68</code> — only the trailing dot carries the accent</td></tr>
+      <tr><td>Typeface</td><td>Inter, same as everything else</td></tr>
+    </table>
+    <p style="font-size:12.5px;color:var(--muted);margin-top:16px;line-height:1.7;">
+      <b>Trap:</b> <code>globals.css</code> sets a global <code>a { color: #0f9d68 }</code> (the prototypes do the
+      same). The prototypes' wordmark is a <code>&lt;span&gt;</code> so it never inherited that, but ours is a
+      <code>&lt;Link&gt;</code> — without an explicit <code>text-ink</code> the whole wordmark turns green. Any link
+      that should not be green needs its own colour class.
+    </p>
+  </div>
+
+  <h2>Color tokens</h2>
+  <div class="card">
+    <div class="swatches">
+      <div class="swatch-block"><div class="swatch" style="background:#0f9d68"></div><div class="swatch-label"><b>emerald-600</b> #0f9d68<br>accent green — words surface, primary CTA, links</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#0c7d54"></div><div class="swatch-label"><b>emerald-700</b> #0c7d54<br>accent green hover (darker, never lighter)</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#9333ea"></div><div class="swatch-label"><b>purple-600</b> #9333ea<br>phrases accent — phrase practice surface</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#16181c"></div><div class="swatch-label"><b>ink</b> #16181c<br>primary text, dark CTAs</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#8a8f98"></div><div class="swatch-label"><b>muted</b> #8a8f98<br>secondary text</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#9a9fa6"></div><div class="swatch-label"><b>muted-nav</b> #9a9fa6<br>inactive nav / footer text</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#b0b4ba"></div><div class="swatch-label"><b>faint</b> #b0b4ba<br>captions, counts</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#5b6067"></div><div class="swatch-label"><b>#5b6067</b><br>readable secondary — small caps labels (a11y, see Principles)</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#ececec"></div><div class="swatch-label"><b>line</b> #ececec<br>card borders, header rule</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#f1f1f1"></div><div class="swatch-label"><b>line-strong</b> #f1f1f1<br>panel header separator</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#f4f4f4"></div><div class="swatch-label"><b>line-soft</b> #f4f4f4<br>table row separator</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#f2f3f3"></div><div class="swatch-label"><b>chip</b> #f2f3f3<br>pill track, nav strip, chip fill</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#eef1ef"></div><div class="swatch-label"><b>track</b> #eef1ef<br>progress-bar track</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#e9f6ee"></div><div class="swatch-label"><b>green tint</b> #e9f6ee<br>success badge fill</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#fdf6e3;border:1px solid #f0e0a8"></div><div class="swatch-label"><b>warning</b> #fdf6e3 / #f0e0a8<br>notice bg / border, text #8a6d1d</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#fdeceb"></div><div class="swatch-label"><b>red tint</b> #fdeceb<br>"needs review" fill, text #c2504a</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#c2504a"></div><div class="swatch-label"><b>destructive</b> #c2504a<br>delete / unenroll actions</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:linear-gradient(180deg,#eef4f1,#f7f8f8)"></div><div class="swatch-label"><b>page wash</b><br>body gradient #eef4f1 → #f6f8f7 320px → #f7f8f8</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#ec3013"></div><div class="swatch-label"><b>#ec3013</b><br>TAK body — never used elsewhere</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#201e1d"></div><div class="swatch-label"><b>#201e1d</b><br>TAK limbs/eyes — never used elsewhere</div></div>
+    </div>
+  </div>
+
+  <h2>Card &amp; shape tokens</h2>
+  <div class="card">
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      Outer cards: <code>rounded-[14px]</code>, <code>border border-line</code> (#ececec), no drop shadow, no gradient fill.<br>
+      Inner/nested cards: <code>rounded-xl</code> (12px), same border.<br>
+      Pills / badges: <code>rounded-full</code>, borderless filled — never outlined.<br>
+      Buttons: <code>rounded-[10px]</code>, <code>px-5 py-2.5</code>, <code>text-sm font-semibold</code>, no shadow.
+      Primary <code>bg-emerald-600 hover:bg-emerald-700</code>; dark <code>bg-ink</code>; secondary white with <code>border-[#ddd]</code>.<br>
+      <b>Scope note:</b> this light-border convention was applied only to the pages actually covered by the mascot redesign
+      (words/phrases dashboards, list/phrase detail, study flows, grammar, practice). ~18 other files (admin, pricing,
+      premium, settings, articles, extension) still use the older <code>border-gray-900</code> heavy-border style and were
+      intentionally left untouched — they were never given a design pass.
+    </p>
+  </div>
+
+  <h2>TAK — the mascot</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/components/Tak.tsx</code>. One polygon (torso) + 4 rects (limbs) + swappable eyes/mouth, pure inline SVG,
+      no image assets. Colors are hardcoded constants, <b>never</b> themed or re-tinted. Always animated (gentle float).
+      Props: <code>pose: 'idle' | 'stonks' | 'grin' | 'talking'</code>, <code>size?: number</code> (px, height auto-scales ×1.2),
+      <code>bare?: boolean</code>.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b><code>bare</code></b> renders the badge treatment — body + eye rects only, no limbs, no mouth, no float —
+      for use <i>inside a control</i>, where TAK is an icon rather than a character. The bug-report FAB is the one
+      place this applies; the prototypes draw it exactly this way. Everywhere else uses the full mascot.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>Timing:</b> resting float <code>2.6s</code> / arm swing <code>1.8s</code>. The <code>grin</code> pose speeds up
+      for celebration — <code>2s</code> / <code>0.7s</code> — via <code>floatDur</code>/<code>swingDur</code> on the pose spec.
+    </p>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0;">
+      <b>Trap:</b> <code>Tak</code> must not set inline <code>display</code> or <code>flex-shrink</code> — inline styles
+      outrank utility classes, so a <code>hidden sm:block</code> sibling still renders and you get two mascots. Scale a
+      single instance with <code>w-*</code>/<code>h-*</code> classes rather than rendering one per breakpoint.
+    </p>
+    <div class="poses">
+      <div class="pose-cell">
+        <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <g transform="rotate(-8 55 100)"><rect x="25" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <g transform="rotate(8 148 100)"><rect x="138" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d"/>
+          <rect x="95" y="160" width="12" height="45" fill="#201e1d"/>
+          <rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/>
+          <rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/>
+          <path d="M72,132 h36 v5 h-36 z" fill="#201e1d"/>
+        </g></svg>
+        <span class="pose-name">idle</span>
+        <span class="pose-usage">Default. Hero-card icon, FAB, empty states.</span>
+      </div>
+      <div class="pose-cell">
+        <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <g transform="rotate(-8 55 100)"><rect x="25" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <g transform="rotate(8 148 100)"><rect x="138" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d"/>
+          <rect x="95" y="160" width="12" height="45" fill="#201e1d"/>
+          <path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/>
+        </g></svg>
+        <span class="pose-name">talking</span>
+        <span class="pose-usage">TakGreeting companion. Prompts, speech-bubble pairing.</span>
+      </div>
+      <div class="pose-cell">
+        <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <g transform="rotate(-45 55 100)"><rect x="25" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <g transform="rotate(-60 148 100)"><rect x="138" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d"/>
+          <rect x="95" y="160" width="12" height="45" fill="#201e1d"/>
+          <path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/>
+        </g></svg>
+        <span class="pose-name">stonks</span>
+        <span class="pose-usage">Confident squint, raised arm. Progress/streak moments.</span>
+      </div>
+      <div class="pose-cell">
+        <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <g transform="rotate(-150 55 100)"><rect x="25" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <g transform="rotate(150 148 100)"><rect x="138" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d" transform="rotate(15 69 160)"/>
+          <rect x="95" y="160" width="12" height="45" fill="#201e1d" transform="rotate(-15 101 160)"/>
+          <path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M78,126 Q100,150 122,126 Z" fill="#201e1d"/>
+        </g></svg>
+        <span class="pose-name">grin</span>
+        <span class="pose-usage">Big grin. Celebration/completion — trophy &amp; done screens.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px;">Size conventions actually used in the app</h3>
+    <div class="size-row">
+      <div class="size-item">
+        <svg width="20" height="24" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/></g></svg>
+        <span class="size-label">32 / 44px <code>bare</code><br>bug-report FAB (mobile / desktop)</span>
+      </div>
+      <div class="size-item">
+        <svg width="30" height="36" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/></g></svg>
+        <span class="size-label">30px<br>grammar stat-card icon</span>
+      </div>
+      <div class="size-item">
+        <svg width="64" height="77" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/></g></svg>
+        <span class="size-label">64–70px<br>words/phrases hero card (unboxed)</span>
+      </div>
+      <div class="size-item">
+        <svg width="72" height="86" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/></g></svg>
+        <span class="size-label">72px<br>grammar tip card</span>
+      </div>
+      <div class="size-item">
+        <svg width="108" height="130" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/></g></svg>
+        <span class="size-label">108px<br>TakGreeting on detail-page headers</span>
+      </div>
+      <div class="size-item">
+        <svg width="128" height="154" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/></g></svg>
+        <span class="size-label">128px<br>TakGreeting on focused study cards</span>
+      </div>
+      <div class="size-item">
+        <svg width="150" height="180" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M78,126 Q100,150 122,126 Z" fill="#201e1d"/></g></svg>
+        <span class="size-label">150px<br>trophy / level-complete screens</span>
+      </div>
+    </div>
+    <p style="font-size:12.5px;color:var(--gray-400);margin-top:20px;">
+      The prototypes spec'd the flashcard/phrase-practice greeting even larger (176px). Built at 128px instead —
+      <code>TakGreeting</code> doesn't expose a responsive size prop, and a literal 176px risked crowding the 375px
+      mobile viewport. Revisit if <code>TakGreeting</code> ever gains per-breakpoint sizing.
+    </p>
+  </div>
+
+  <h2>TakGreeting</h2>
+  <div class="card">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/components/TakGreeting.tsx</code>. TAK (<code>talking</code> pose) + a comic speech bubble, used as a header
+      accent on detail/study pages. Props: <code>phrase: string</code>, <code>size?: number</code>.
+      Reused by <b>interaction type</b>, not per-page copy — 3 fixed phrases, not a custom pun per list/topic:
+    </p>
+    <table>
+      <tr><th>Phrase</th><th>Meaning</th><th>Used on</th></tr>
+      <tr><td><code>Kartokime!</code></td><td>"Let's repeat!"</td><td>Word list detail, phrases vocabulary list</td></tr>
+      <tr><td><code>Prisimeni?</code></td><td>"Remember?"</td><td>Flashcard study (stage 1)</td></tr>
+      <tr><td><code>Pabandyk!</code></td><td>"Try it!"</td><td>Phrase practice card</td></tr>
+    </table>
+    <div class="bubble-demo" style="margin-top:20px;">
+      <div class="bubble-wrap">
+        <div class="bubble">Kartokime!</div>
+        <svg class="tak-svg" width="108" height="130" viewBox="0 0 200 240" style="display:block;margin:-24px auto 0;"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <rect x="25" y="92" width="40" height="12" fill="#201e1d" transform="rotate(-8 55 100)"/>
+          <rect x="138" y="92" width="40" height="12" fill="#201e1d" transform="rotate(8 148 100)"/>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d"/><rect x="95" y="160" width="12" height="45" fill="#201e1d"/>
+          <path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/>
+        </g></svg>
+      </div>
+    </div>
+    <p style="font-size:12.5px;color:var(--gray-400);margin-top:16px;">
+      Hidden below the <code>sm</code> breakpoint on pages where it sits beside a title (list detail, phrases vocabulary) —
+      not enough width for a 108px mascot next to page-title text on a 375px screen. Kept visible on focused
+      single-task screens (flashcard, phrase practice) where it's the primary content, not a side accent.
+    </p>
+  </div>
+
+  <h2>ProgressStatCard (hero card)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/app/dashboard/components/ProgressStatCard.tsx</code>. Shared by the words dashboard (<code>emerald</code> theme,
+      via <code>StatsBar.tsx</code>) and phrases dashboard (<code>purple</code> theme). Plain white card, <code>border-line</code>,
+      no gradient, no decorative blur — TAK sits unboxed to the left of the stats, matching the mockup exactly
+      (earlier draft boxed it into a small 44px colored square — corrected after review).
+    </p>
+    <div class="hero-demo">
+      <svg class="tak-svg" width="70" height="84" viewBox="0 0 200 240" style="flex-shrink:0;"><g class="float">
+        <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+        <rect x="25" y="92" width="40" height="12" fill="#201e1d" transform="rotate(-8 55 100)"/>
+        <rect x="138" y="92" width="40" height="12" fill="#201e1d" transform="rotate(8 148 100)"/>
+        <rect x="63" y="160" width="12" height="45" fill="#201e1d"/><rect x="95" y="160" width="12" height="45" fill="#201e1d"/>
+        <rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/>
+        <rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/>
+        <path d="M72,132 h36 v5 h-36 z" fill="#201e1d"/>
+      </g></svg>
+      <div class="hero-stats">
+        <div class="baseline">
+          <span class="count">723</span>
+          <span class="badge">≈ A1</span>
+          <span class="label-muted">слов выучено</span>
+        </div>
+        <div class="track"><div class="fill" style="width:75%"></div></div>
+        <div class="caption">723 / 1000 до A2</div>
+        <div class="actions">
+          <span class="btn-primary">Напомни что я мог забыть</span>
+          <span class="btn-secondary">Весь словарь →</span>
+        </div>
+      </div>
+      <div class="next-corner">
+        <div class="lbl">Далее</div>
+        <div class="val">A2</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Emoji policy</h2>
+  <div class="card">
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      TAK replaces <b>decorative</b> emoji (🎓📊📚🏆⭐🎉🔥) in stat icons, empty states, and celebration screens.
+      It does not replace <b>functional</b> glyphs — lock icons, checkmarks, chevrons, or the ⭐ difficulty-rating
+      glyphs on word/phrase rows (those are data, not decoration). Admin-only UI (e.g. the admin rewards tab label)
+      was never in scope — this is a user-facing product decision, not an internal-tooling one.
+    </p>
+  </div>
+
+  <h2>Shell &amp; layout</h2>
+  <div class="card">
+    <table>
+      <tr><th>Element</th><th>Spec</th><th>File</th></tr>
+      <tr><td>Navbar</td><td>Full-bleed, <code>padding:18px 32px</code>, <code>border-bottom:1px solid #ececec</code>, solid white. <b>Not</b> sticky, no backdrop blur, no shadow.</td><td><code>components/Header.tsx</code></td></tr>
+      <tr><td>Nav tab pills</td><td>Track <code>bg-[#f2f3f3] rounded-full p-1 gap-1</code>; item <code>px-4 py-2 text-sm</code>; active <code>bg-white font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.06)]</code>; inactive <code>#9a9fa6</code>.</td><td><code>components/Header.tsx</code></td></tr>
+      <tr><td>RU/EN switch</td><td>Segmented pill — <code>bg-[#f2f3f3] rounded-full p-[3px] text-[12.5px] font-semibold</code>, active half white + shadow. No border, no <code>/</code> separator.</td><td><code>components/Header.tsx</code></td></tr>
+      <tr><td>Avatar cluster</td><td>28px circle <code>bg-emerald-600</code>, name 14px ink, caret <code>▾</code> 11px <code>#c2c5ca</code>, group gap 18px.</td><td><code>components/Header.tsx</code></td></tr>
+      <tr><td>Content container</td><td><code>.page</code> — <code>max-width:1180px; margin:0 auto; padding-bottom:80px</code>, 32px gutters (16px below 860px).</td><td><code>app/globals.css</code></td></tr>
+      <tr><td>Footer</td><td>Transparent on the page wash (no white band), <code>border-top:1px solid #ececec</code>, 1180px, 13px <code>#9a9fa6</code>, link gap 24px.</td><td><code>components/Footer.tsx</code></td></tr>
+      <tr><td>Bug-report FAB</td><td><code>right:24px bottom:40px</code>, white pill, <code>border #e2e4e3</code>, <code>shadow 0 2px 8px rgba(0,0,0,0.06)</code>, <code>z-60</code>, <code>bare</code> TAK. Label hidden below <code>sm</code>.</td><td><code>components/MistakeButton.tsx</code></td></tr>
+    </table>
+  </div>
+
+  <h2>Deliberate deviations from the prototypes</h2>
+  <div class="card">
+    <table>
+      <tr><th>Deviation</th><th>Why</th></tr>
+      <tr><td>Mobile hamburger menu kept</td><td>The prototypes have no hamburger, but they were only ever drawn at desktop width — their silence isn't a decision about mobile.</td></tr>
+      <tr><td>FAB label hidden below <code>sm</code></td><td>Prototype keeps it at 13px; hiding it protects the tap target on narrow screens, leaving a round icon button.</td></tr>
+      <tr><td>Small-caps secondary labels at <code>#5b6067</code></td><td>Prototypes use <code>#b0b4ba</code> and the app had drifted lighter still to <code>#d1d5db</code>. Both were reported unreadable; <code>#5b6067</code> clears WCAG AA at these sizes.</td></tr>
+      <tr><td><code>TakGreeting</code> at 128px, not 176px</td><td>No responsive size prop; a literal 176px crowds a 375px viewport.</td></tr>
+      <tr><td>Heavy-border pages left alone</td><td>Admin, pricing, premium, settings, articles and extension still use the older <code>border-gray-900</code> style — never given a design pass.</td></tr>
+    </table>
+  </div>
+
+  <h2>Parity guard</h2>
+  <div class="card">
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      <code>frontend/tests/design-system-parity.spec.ts</code> asserts the page wash, the brand green, the full-bleed
+      navbar, the 1180px container, the segmented language pill, the ink wordmark with a green dot, that no other bare
+      link is accidentally green, that the FAB renders exactly one <code>bare</code> mascot and hides its label on
+      mobile, that the hamburger opens the nav, and that no text uses <code>#d1d5db</code>.
+      Run it after any change to shared shell or tokens.
+    </p>
+  </div>
+
+  <footer>
+    Built for the TAK mascot redesign. Historical design intent: <code>Fluent Redesign - Design System.html</code>,
+    <code>Tak Mascot Standalone.html</code>, <code>prototypes/*.html</code> (exported Artifact HTML — not directly viewable,
+    kept for reference only). This file is the one to keep updated going forward.
+  </footer>
+</main>
+</body>
+</html>

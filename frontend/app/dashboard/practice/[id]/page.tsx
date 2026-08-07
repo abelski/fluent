@@ -339,20 +339,17 @@ export default function PracticeCategoryPage() {
 
             {/* Source URL callout (e.g. constitution link) */}
             {sourceUrl && (
-              <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                <span className="text-amber-600 text-base mt-0.5">📖</span>
-                <p className="text-sm text-amber-800">
-                  Перед прохождением тестов рекомендуем прочитать{' '}
-                  <a
-                    href={sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline font-semibold hover:text-amber-900"
-                  >
-                    Конституцию Литвы
-                  </a>
-                  .
-                </p>
+              <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+                Перед прохождением тестов рекомендуем прочитать{' '}
+                <a
+                  href={sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline font-semibold hover:text-amber-900"
+                >
+                  Конституцию Литвы
+                </a>
+                .
               </div>
             )}
 
@@ -374,13 +371,14 @@ export default function PracticeCategoryPage() {
                   return (
                     <div
                       key={test.id}
-                      className={`px-6 py-4 flex items-center justify-between gap-4 transition-colors ${locked ? 'opacity-40 bg-gray-50' : 'hover:bg-gray-50'}`}
+                      className={`px-6 py-4 flex items-center justify-between gap-4 transition-colors ${locked ? 'opacity-50' : 'hover:bg-gray-50'}`}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           {locked && (
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 shrink-0">
-                              <path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 shrink-0">
+                              <rect x="4" y="10" width="16" height="10" rx="2" />
+                              <path d="M7 10V7a5 5 0 0 1 10 0v3" />
                             </svg>
                           )}
                           <p className="font-semibold text-gray-900">{title}</p>
@@ -390,17 +388,8 @@ export default function PracticeCategoryPage() {
                             </span>
                           )}
                           {test.lesson_text_lt && (
-                            <span className="text-[10px] px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full font-semibold">
+                            <span className="text-[11px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-semibold">
                               📄 Текст
-                            </span>
-                          )}
-                          {scorePct !== null && scorePct !== undefined && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
-                              scorePct >= test.pass_threshold
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                                : 'bg-amber-50 border-amber-200 text-amber-700'
-                            }`}>
-                              {Math.round(scorePct * 100)}%
                             </span>
                           )}
                         </div>
@@ -410,13 +399,36 @@ export default function PracticeCategoryPage() {
                         </p>
                         {examError && <p className="text-red-500 text-xs mt-1">{examError}</p>}
                       </div>
-                      <button
-                        onClick={() => startTest(test)}
-                        disabled={examLoading || locked}
-                        className="shrink-0 px-5 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {examLoading && !locked ? '...' : locked ? '🔒' : test.is_premium && !isPremiumUser ? t.premiumLocked : t.startBtn}
-                      </button>
+                      {locked ? (
+                        <button
+                          disabled
+                          className="shrink-0 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center cursor-not-allowed"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+                            <rect x="4" y="10" width="16" height="10" rx="2" />
+                            <path d="M7 10V7a5 5 0 0 1 10 0v3" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <div className="shrink-0 flex items-center gap-2.5">
+                          {scorePct !== null && scorePct !== undefined && (
+                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                              scorePct >= test.pass_threshold
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-amber-50 text-amber-600'
+                            }`}>
+                              {Math.round(scorePct * 100)}%
+                            </span>
+                          )}
+                          <button
+                            onClick={() => startTest(test)}
+                            disabled={examLoading}
+                            className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {examLoading ? '...' : test.is_premium && !isPremiumUser ? t.premiumLocked : t.startBtn}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
