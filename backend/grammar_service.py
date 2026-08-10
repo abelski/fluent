@@ -348,6 +348,26 @@ def get_verb_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None
     return _generate_verb_conjugation_tasks(tense_key, task_count, session)
 
 
+# A comma at the very end of a form, allowing for combining accents after it —
+# the PDF extractor sometimes emitted the comma before the accent ("esi̇,̀").
+_TRAILING_COMMA_RE = re.compile("[,](?=[̀-ͯ]*\\Z)")
+# Stray combining dot above that the extractor left after "i" (should be plain "i").
+_STRAY_DOT_ABOVE = "i̇"
+
+
+def _clean_form(text: str | None) -> str:
+    """Strip PDF-extraction artifacts from verb data.
+
+    Removes a trailing comma — including the case where it sits before a
+    trailing combining accent, e.g. "esi,̀" — and the stray combining dot
+    above that the extractor left after "i". Inner commas are preserved, so
+    "быть, являться," becomes "быть, являться".
+    """
+    if not text:
+        return ""
+    return _TRAILING_COMMA_RE.sub("", text.strip()).replace(_STRAY_DOT_ABOVE, "i")
+
+
 def _generate_verb_conjugation_tasks(
     tense_key: str, count: int, session: Session, program_key: str | None = "sekmes"
 ) -> list[dict]:
@@ -383,14 +403,14 @@ def _generate_verb_conjugation_tasks(
         if not conj:
             continue
         person = random.choice(_VERB_PERSONS)
-        form = conj.get(_PERSON_KEY.get(person, person))
+        form = _clean_form(conj.get(_PERSON_KEY.get(person, person)))
         if not form:
             continue
         # Skip imperative aš (no form)
         tasks.append({
             "type": "verb_conjugation",
             "verb_infinitive": verb.infinitive,
-            "translation_ru": verb.translation_ru,
+            "translation_ru": _clean_form(verb.translation_ru),
             "tense_label": tense_label,
             "person_label": person,
             "answer": form,
@@ -430,7 +450,7 @@ def _generate_verb_case_tasks(count: int, session: Session) -> list[dict]:
         tasks.append({
             "type": "verb_case",
             "verb_infinitive": verb.infinitive,
-            "translation_ru": verb.translation_ru,
+            "translation_ru": _clean_form(verb.translation_ru),
             "example_lt": lt_sent,
             "example_ru": ru_sent,
             "answer": entry["question"],
