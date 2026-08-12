@@ -11,6 +11,7 @@ import {
 } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import PageMascot from '../../../../components/PageMascot';
+import TakChevron from '../../../../components/TakChevron';
 import PageShell from '../../components/PageShell';
 
 const DIFFICULTY_COLORS: Record<number, string> = {
@@ -64,7 +65,7 @@ export default function GrammarProgramsPage() {
             href="/dashboard/grammar"
             className="text-gray-400 hover:text-gray-700 transition-colors text-sm"
           >
-            {tr.grammar.programsBack}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.grammar.programsBack}
           </Link>
         </div>
         <div className="flex items-start justify-between gap-4">

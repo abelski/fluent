@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import PageMascot from '../../../components/PageMascot';
+import TakChevron from '../../../components/TakChevron';
 import PageShell from '../components/PageShell';
 import ProgressStatCard from '../components/ProgressStatCard';
 
@@ -113,7 +114,7 @@ export default function PracticePage() {
                           <p className="text-sm text-gray-400 mt-0.5">{cat.description_ru}</p>
                         )}
                       </div>
-                      <span className="text-gray-300 text-lg shrink-0">→</span>
+                      <TakChevron size={12} className="shrink-0" />
                     </div>
 
                     {cat.tests_total > 0 ? (
@@ -143,7 +144,7 @@ export default function PracticePage() {
             href="/dashboard/practice/programs"
             className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
           >
-            {t.browseProgramsLink}
+            {t.browseProgramsLink} <TakChevron size={10} className="inline-block align-[-1px]" />
           </Link>
         </div>
     </PageShell>

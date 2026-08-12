@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { BACKEND_URL, getToken, createCustomProgram, type WordPair, type WordSet } from '../../../../lib/api';
 import { translateText } from '../../../../lib/translate';
 import PageMascot from '../../../../components/PageMascot';
+import TakChevron from '../../../../components/TakChevron';
 
 function emptyWordSet(index: number): WordSet {
   return { title: `Набор ${index + 1}`, words: [{ front: '', back_ru: '', back_en: '' }] };
@@ -186,7 +187,7 @@ export default function NewProgramPage() {
       <main className="bg-[#F5F5F7] min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 mb-4">Доступ только для редакторов</p>
-          <Link href="/programs" className="text-emerald-600 hover:underline text-sm">← Назад</Link>
+          <Link href="/programs" className="text-emerald-600 hover:underline text-sm"><TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Назад</Link>
         </div>
       </main>
     );
@@ -199,7 +200,7 @@ export default function NewProgramPage() {
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-6">
           <Link href="/programs?tab=community" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            ← Назад к программам
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Назад к программам
           </Link>
         </div>
 

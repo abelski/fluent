@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../lib/api';
 import { useT } from '../lib/useT';
+import { BODY } from './Tak';
+import TakMark from './TakMark';
 
 function GoogleIcon() {
   return (
@@ -140,9 +142,16 @@ export default function Header() {
       <div className="flex items-center gap-3 sm:gap-7 px-4 py-3 sm:px-8 sm:py-[18px] flex-wrap">
 
         {/* text-ink is required: the global `a` rule would otherwise tint the
-            whole wordmark green. Only the dot is the accent. */}
-        <Link href="/" className="font-bold text-[22px] tracking-[-0.02em] shrink-0 leading-none text-ink hover:text-ink">
-          fluent<span className="text-emerald-600">.</span>
+            whole wordmark green. Mark, weight/tracking and the round dot follow
+            the primary lockup in `design system/Fluent Logo.html` (scaled from
+            its 96px reference down to navbar size); the dot uses TAK's fixed
+            orange (BODY) instead of the site's green accent so the mark and the
+            wordmark read as one accent — see "Logo / wordmark" in the component
+            library. */}
+        <Link href="/" className="flex items-end gap-1 font-black text-[22px] tracking-[-0.055em] shrink-0 leading-none text-ink hover:text-ink">
+          <TakMark size={19} />
+          fluent
+          <span className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: BODY }} />
         </Link>
 
         {/* Desktop tab strip; below sm the hamburger dropdown takes over. */}

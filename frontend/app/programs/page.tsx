@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import TakChevron from '../../components/TakChevron';
 import {
   BACKEND_URL,
   getToken,
@@ -294,7 +295,7 @@ export default function ProgramsPage() {
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="mb-6">
           <Link href="/dashboard/lists" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            ← {tr.common.backToLists}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.common.backToLists}
           </Link>
         </div>
 
@@ -405,7 +406,7 @@ export default function ProgramsPage() {
                           href={`/programs/${prog.key}`}
                           className="text-sm text-gray-400 hover:text-emerald-600 transition-colors font-medium"
                         >
-                          {tr.programs.details} →
+                          {tr.programs.details} <TakChevron size={10} className="inline-block align-[-1px]" />
                         </Link>
                         <button
                           onClick={() => {
@@ -528,7 +529,7 @@ export default function ProgramsPage() {
                             href={`/programs/custom/${prog.share_token}`}
                             className="text-sm text-gray-400 hover:text-emerald-600 transition-colors font-medium"
                           >
-                            Посмотреть →
+                            Посмотреть <TakChevron size={10} className="inline-block align-[-1px]" />
                           </Link>
                           {/* Share link button */}
                           <button

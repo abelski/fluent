@@ -6,6 +6,7 @@ import { BACKEND_URL, getToken, getGrammarPrograms, unenrollGrammarProgram, type
 import { useT } from '../../../lib/useT';
 import { isAnswerMatch } from '../../../lib/normalizeLt';
 import PageMascot from '../../../components/PageMascot';
+import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
 import ProgressStatCard from '../components/ProgressStatCard';
 import PageShell from '../components/PageShell';
@@ -737,7 +738,7 @@ export default function GrammarPage() {
                   href="/dashboard/grammar/programs"
                   className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
                 >
-                  {tr.grammar.browseProgramsLink}
+                  {tr.grammar.browseProgramsLink} <TakChevron size={10} className="inline-block align-[-1px]" />
                 </Link>
               </div>
             </>
@@ -798,7 +799,7 @@ export default function GrammarPage() {
                 onClick={() => startLesson(nextLesson)}
                 className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
               >
-                {tr.grammar.nextLesson}
+                {tr.grammar.nextLesson} <TakChevron size={10} className="inline-block align-[-1px]" />
               </button>
             )}
             <button
@@ -815,7 +816,7 @@ export default function GrammarPage() {
               onClick={resetToLessons}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors"
             >
-              {tr.grammar.backToLessons}
+              <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.grammar.backToLessons}
             </button>
           </div>
         </div>
@@ -848,7 +849,7 @@ export default function GrammarPage() {
             onClick={resetToLessons}
             className="text-gray-400 hover:text-gray-900 text-sm transition-colors"
           >
-            {tr.grammar.backToLessons}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.grammar.backToLessons}
           </button>
           <span className="text-gray-400 text-sm">{taskIndex + 1} / {tasks.length}</span>
         </div>
@@ -991,7 +992,7 @@ export default function GrammarPage() {
                   onClick={dismissWrongGrammar}
                   className="w-full py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors"
                 >
-                  {tr.common.dismiss}
+                  {tr.common.dismiss} <TakChevron size={10} className="inline-block align-[-1px]" />
                 </button>
               </div>
             )}

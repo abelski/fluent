@@ -7,6 +7,7 @@ import { BACKEND_URL, resolveListId, getToken } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import { renderAccented } from '../../../../lib/renderAccented';
 import PageMascot from '../../../../components/PageMascot';
+import TakChevron from '../../../../components/TakChevron';
 
 interface Word {
   id: number;
@@ -75,7 +76,7 @@ export default function ListDetailPage() {
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <div className="mb-4">
           <Link href="/dashboard/lists" className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
-            {tr.detail.backToLists}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.detail.backToLists}
           </Link>
         </div>
 
@@ -100,7 +101,7 @@ export default function ListDetailPage() {
             onClick={handleStudyClick}
             className="shrink-0 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors font-semibold text-sm text-white shadow-sm shadow-emerald-600/20"
           >
-            {tr.detail.studyBtn}
+            {tr.detail.studyBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
           </button>
         </div>
 

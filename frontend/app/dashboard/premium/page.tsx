@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import TakChevron from '../../../components/TakChevron';
 
 export default function PremiumPage() {
   return (
@@ -37,7 +38,7 @@ export default function PremiumPage() {
             href="/dashboard/practice"
             className="px-6 py-2.5 border border-gray-900 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors text-center"
           >
-            ← Назад к практике
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Назад к практике
           </Link>
           <a
             href="mailto:support@fluent.lt?subject=Premium"
@@ -55,7 +56,7 @@ export default function PremiumPage() {
           href="/extension"
           className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
         >
-          🧩 Расширение для Chrome →
+          🧩 Расширение для Chrome <TakChevron size={10} className="inline-block align-[-1px]" />
         </Link>
       </div>
     </main>

@@ -1,25 +1,24 @@
 # Design system → code mapping
 
 > **Start with `Component Library (as-built).html`** — principles, colour tokens, logo rules and
-> component specs live there. This file is the companion lookup: prototype value → Tailwind token →
-> file. The prototypes in `prototypes/` remain the source of truth for *visual* decisions; this
-> records *where* each decision lives in code so the two do not drift.
+> component specs live there, and it is the source of truth for *visual* decisions. This file is
+> the companion lookup: value → Tailwind token → file, so the two do not drift.
 
 ## Files
 
 | File | Use it for |
 |---|---|
 | `Component Library (as-built).html` | Principles, tokens, logo, components, deliberate deviations |
-| `prototypes/*.html` | Approved visual intent (extract the `__bundler/template` script to read) |
 | `IMPLEMENTATION.md` (this file) | Value → token → file mapping |
 | `frontend/tailwind.config.js` | Token definitions |
 | `frontend/tests/design-system-parity.spec.ts` | Automated guard |
 
 ## Tokens — `frontend/tailwind.config.js`
 
-The prototypes use raw hex in inline styles. In code they are Tailwind theme colors:
+The original redesign mockups used raw hex in inline styles (now retired — see the component
+library). In code they are Tailwind theme colors:
 
-| Prototype value | Tailwind class | Role |
+| Mockup value | Tailwind class | Role |
 |---|---|---|
 | `#0f9d68` | `emerald-600` (re-pointed) | accent green — words surface, primary CTAs, links |
 | `#0c7d54` | `emerald-700` (re-pointed) | accent green hover |
@@ -47,36 +46,49 @@ tint), `#eef1ef` (progress track).
   The middle stop is a fixed `320px`, so it must stay on `body` with `background-attachment: fixed`;
   putting it on a wrapper clips the ramp on short pages.
 - `a` / `a:hover` — accent green. **Any link that should not be green needs an explicit text color.**
-  The prototypes' wordmark is a `<span>` so it never inherited this; ours is a `<Link>`, so
+  The original mockup's wordmark was a `<span>` so it never inherited this; ours is a `<Link>`, so
   `Header.tsx` sets `text-ink` on it and greens only the trailing dot.
 - `.page` — the shared content container: `max-width:1180px; margin:0 auto; padding-bottom:80px`.
   The navbar deliberately sits **outside** it and is full-bleed.
 - `.row-hover:hover` — `#fafbfa`.
-- `@keyframes tak-float` — the prototypes name it `takFloat`; the app uses kebab-case. When copying
-  prototype markup, translate `animation:takFloat …` → `animation: tak-float …`.
+- `@keyframes tak-float` — the original mockup named it `takFloat`; the app uses kebab-case
+  (`animation:takFloat …` → `animation: tak-float …`).
 
 ## Logo
 
-`22px / 700 / -0.02em`, wordmark `#16181c`, trailing dot `#0f9d68`, Inter. Never 28px, and the
-letters are never green — see the component library's Logo section for the `<a>`-inheritance trap.
+`22px / 900 / -0.055em`, wordmark `#16181c`, Inter. Never 28px, and the letters are never green —
+see the component library's Logo section for the `<a>`-inheritance trap. Weight/tracking follow
+the primary lockup in `Fluent Logo.html`, scaled down from its 96px reference.
+
+`TakMark` (`frontend/components/TakMark.tsx`) — TAK's torso + face cropped tight to the polygon's
+bounding box, not `Tak`'s padded canvas — sits before the text (`gap-1`), followed by a round
+`5px` dot. Both the mark and the dot are TAK's fixed orange `#ec3013` (`BODY`, exported from
+`Tak.tsx`), not the site's green accent — the one deliberate exception, see the component
+library's "Deliberate deviations" table.
+
+`frontend/public/favicon.svg` uses the same bare-mark coordinates as `Tak.tsx`, on a rounded
+`#f3f2f2` tile — previously an unrelated flag-colored "f." mark.
 
 ## Shell components
 
-| Prototype element | File |
+| Component | File |
 |---|---|
 | navbar (full-bleed, `18px 32px`, no sticky/blur/shadow) | `frontend/components/Header.tsx` |
 | nav tab pills + segmented RU/EN | `frontend/components/Header.tsx` |
 | footer (transparent on the gradient, 1180px, 13px) | `frontend/components/Footer.tsx` |
 | "Нашёл ошибку?" FAB | `frontend/components/MistakeButton.tsx` |
 | TAK mascot (SVG poses) | `frontend/components/Tak.tsx` |
+| TAK chevron (decorative arrow mark) | `frontend/components/TakChevron.tsx` |
+| TAK mark (tight-cropped logo icon) | `frontend/components/TakMark.tsx` |
 | Page mascot (bubble + standard size + mood) | `frontend/components/PageMascot.tsx` |
 | Mascot mood scale | `frontend/lib/mascotMood.ts` |
 | Top-nav page shell (`.page` container, no blur/shadow) | `frontend/app/dashboard/components/PageShell.tsx` |
 | Hero stat card | `frontend/app/dashboard/components/ProgressStatCard.tsx` |
+| Complexity selector (chevron-clipped knob) | `frontend/app/dashboard/components/StarLevelToggle.tsx` |
 
-The tab strip scrolls horizontally (prototype `.navtabs`) but stays desktop-only; below `sm` the
-hamburger dropdown takes over. The prototypes have no hamburger, but they were only drawn at desktop
-width — the mobile menu is a deliberate app-only affordance.
+The tab strip scrolls horizontally (mockup `.navtabs`) but stays desktop-only; below `sm` the
+hamburger dropdown takes over. The original mockups had no hamburger, but they were only drawn at
+desktop width — the mobile menu is a deliberate app-only affordance.
 
 ## TAK
 
@@ -95,12 +107,15 @@ python3 -c "import re,json;s=open('design system/Tak Mascot Standalone.html').re
 
 **Render `PageMascot`, not `Tak`.** `PageMascot.tsx` owns the standard 128px size, the speech bubble
 and the mood→pose mapping, and every page uses exactly one. Raw `Tak` is only for the two `bare`
-icon call sites.
+icon call sites; the navbar logo uses `TakMark` instead (see Logo above), not `Tak bare`.
 
 `Tak` also takes a `bare` prop — body and eyes only, no limbs, mouth or float. That is the
-treatment the prototypes use for a mascot sitting *inside a control*: the bug-report FAB
+treatment used for a mascot sitting *inside a control*: the bug-report FAB
 (`MistakeButton.tsx`) and the landing streak ring (`LandingClient.tsx`). Both are exempt from the
 size rule and the one-mascot-per-page rule. Do not use the full mascot there.
+
+`TakChevron.tsx` reuses TAK's torso polygon (the "chevron-torso skeleton") cropped tight to just
+that shape, as a small standalone arrow mark — see the component library's TakChevron section.
 
 `Tak` must not set inline `display`/`flex-shrink` — inline styles outrank utility classes, so a
 `hidden sm:block` sibling would still render. Scale a single instance with `w-*`/`h-*` classes
@@ -120,8 +135,9 @@ Wired into `QuizSession.tsx` (five answer handlers + the timeout effect), `Phras
 never shows a sad TAK.
 
 Decorative emoji are **retired** in favour of TAK. The session-summary screen previously rendered
-😊/😢; it now renders `<PageMascot phrase="Valio!" mood={…} />`. Functional icons (locks,
-checkmarks, arrows) are *not* replaced.
+😊/😢; it now renders `<PageMascot phrase="Valio!" mood={…} />`. Decorative link/pagination arrows
+are retired in favour of `TakChevron` the same way. Functional icons (locks, checkmarks, dropdown
+carets) are *not* replaced — see the component library's Emoji & arrow policy.
 
 ## PageShell — the 5 top-nav dashboard pages
 
@@ -148,25 +164,30 @@ hero at all, so its mascot always sits beside the title.
 - Cards are flat: `border border-line rounded-[14px]`, **no drop shadow**, no accent-colored border.
 - Buttons carry no shadow. Primary `bg-emerald-600 hover:bg-emerald-700`; dark `bg-ink`.
 - Chips/badges are borderless filled pills, not outlined.
-- Type is Inter throughout — the prototypes use no second display face, so `font-headline` (Manrope)
-  is not applied on the redesigned pages.
-- Breakpoints follow the prototype media queries: 3→2 columns at `1000px`, →1 column at `860px`
-  (`min-[860px]:` / `min-[1000px]:` / `max-[860px]:`), not Tailwind's default `sm`/`md`.
+- Type is Inter throughout — the original mockups used no second display face, so `font-headline`
+  (Manrope) is not applied on the redesigned pages.
+- Breakpoints: 3→2 columns at `1000px`, →1 column at `860px` (`min-[860px]:` / `min-[1000px]:` /
+  `max-[860px]:`), not Tailwind's default `sm`/`md`.
 
-## Deliberate deviations from the prototypes
+## Deliberate deviations from the original mockups
 
 - **Mobile hamburger** — kept (see above).
 - **FAB label on mobile** — hidden below `sm`, leaving the mascot as a round icon button. The
-  prototype keeps the label at 13px; the app hides it to protect the tap target on narrow screens.
+  mockup kept the label at 13px; the app hides it to protect the tap target on narrow screens.
 - **Mood 0 renders `talking`, not `IDLE`** — every page mascot now carries a bubble, so the neutral
   state should look like he is speaking. `idle` is kept for the bubble-less `bare` call sites.
 - **Grammar's 3-card stat grid collapsed into one `ProgressStatCard`** — matches the hero-card
   pattern Слова/Фразы already used. The standalone "tip" card's encouragement copy moved into the
   hero's milestone caption rather than being dropped.
-- **Secondary label contrast** — the prototypes set the stage label / part-of-speech hint at
+- **Secondary label contrast** — the original mockup set the stage label / part-of-speech hint at
   `#b0b4ba`, and the app had drifted lighter still to `gray-300` `#d1d5db`. Both were reported
   unreadable, so these labels use `#5b6067` (the design system's own darker secondary, from its
   chips), which clears WCAG AA at small caps sizes.
+- **Logo gains a `bare` TAK badge** — previously text-only. A fourth `bare` icon exemption.
+- **TAK's chevron shape reused outside the mascot (`TakChevron`)** — decorative link/pagination
+  arrows now use it; functional carets stay plain glyphs, deliberately out of scope.
+- **`StarLevelToggle` knob clipped to TAK's chevron, kept `bg-ink`** — shape motif only, not TAK's
+  red, which stays a mascot-exclusive brand constant.
 
 ## Parity guard
 

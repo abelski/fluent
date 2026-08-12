@@ -9,6 +9,7 @@ import { test, expect } from '@playwright/test';
  */
 
 const BRAND_GREEN = 'rgb(15, 157, 104)'; // #0f9d68 — design-system accent
+const TAK_ORANGE = 'rgb(236, 48, 19)';   // #ec3013 — TAK's fixed body color, also the logo dot
 const LINE = 'rgb(236, 236, 236)';       // #ececec — card/rule border
 
 function makeFakeJwt(name: string): string {
@@ -33,10 +34,10 @@ test.describe('Design-system parity', () => {
     expect(bg).toContain('rgb(247, 248, 248)'); // #f7f8f8
   });
 
-  test('brand green resolves to #0f9d68, not stock emerald-600', async ({ page }) => {
+  test('logo dot resolves to TAK orange #ec3013, matching the icon beside it', async ({ page }) => {
     await page.goto('/dashboard/grammar');
     const dot = page.locator('header a[href="/"] span').first();
-    await expect(dot).toHaveCSS('color', BRAND_GREEN);
+    await expect(dot).toHaveCSS('background-color', TAK_ORANGE);
   });
 
   test('navbar is full-bleed and free of sticky/blur chrome', async ({ page }) => {
@@ -112,12 +113,12 @@ test.describe('Design-system parity', () => {
     expect(shape).toEqual({ pose: 'bare', children: 5, hasFloat: false, hasArmSwing: false });
   });
 
-  test('wordmark stays ink — only the dot is green', async ({ page }) => {
+  test('wordmark stays ink — only the dot carries TAK orange', async ({ page }) => {
     await page.goto('/dashboard/lists');
     const logo = page.locator('header a[href="/"]');
     // The global `a` rule must not tint the whole wordmark.
     await expect(logo).toHaveCSS('color', 'rgb(22, 24, 28)');
-    await expect(logo.locator('span')).toHaveCSS('color', BRAND_GREEN);
+    await expect(logo.locator('span')).toHaveCSS('background-color', TAK_ORANGE);
   });
 
   test('the global link rule does not green any other bare link', async ({ page }) => {

@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, resolvePhraseId } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import PageMascot from '../../../../components/PageMascot';
+import TakChevron from '../../../../components/TakChevron';
 
 interface PhraseRow {
   id: number;
@@ -132,7 +133,7 @@ export default function PhraseProgramDetailPage() {
         {/* Back */}
         <div className="mb-4">
           <Link href="/dashboard/phrases" className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
-            {tr.phraseLists.backToPrograms}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.phraseLists.backToPrograms}
           </Link>
         </div>
 

@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { BACKEND_URL } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+import TakChevron from '../../../../components/TakChevron';
 import type { Article } from './types';
 
 function resolveSlug(): string {
@@ -46,7 +47,7 @@ export default function ArticleContent({ initialArticle }: { initialArticle: Art
       <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
         <p className="text-gray-400">Article not found.</p>
         <Link href="/dashboard/articles" className="text-sm text-emerald-600 hover:underline">
-          {tr.articles.backToArticles}
+          <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.articles.backToArticles}
         </Link>
       </main>
     );
@@ -66,7 +67,7 @@ export default function ArticleContent({ initialArticle }: { initialArticle: Art
           href="/dashboard/articles"
           className="text-sm text-gray-400 hover:text-gray-900 transition-colors mb-6 block"
         >
-          {tr.articles.backToArticles}
+          <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.articles.backToArticles}
         </Link>
 
         <div className="mb-6">

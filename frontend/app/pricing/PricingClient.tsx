@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useT } from '../../lib/useT';
+import TakChevron from '../../components/TakChevron';
 
 function CheckIcon() {
   return (
@@ -107,7 +108,7 @@ export default function PricingClient() {
 
         <div className="mt-10 text-center">
           <Link href="/dashboard/lists" className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
-            {tr.pricing.backToLists}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.pricing.backToLists}
           </Link>
         </div>
       </div>

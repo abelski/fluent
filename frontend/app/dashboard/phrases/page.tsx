@@ -16,6 +16,7 @@ import {
 } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import StarLevelToggle from '../components/StarLevelToggle';
+import TakChevron from '../../../components/TakChevron';
 import { getPhraseStarLevel, setPhraseStarLevel } from '../../../lib/starLevel';
 import ProgressStatCard from '../components/ProgressStatCard';
 import QuotaBanner from '../components/QuotaBanner';
@@ -360,7 +361,7 @@ export default function PhrasesPage() {
                           <p className="font-semibold text-gray-900">{t.upsellTitle}</p>
                           <p className="text-sm text-gray-500 mt-1">{t.upsellBody}</p>
                           <Link href="/pricing" className="inline-block mt-3 text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-full transition-colors">
-                            {t.upsellCta}
+                            {t.upsellCta} <TakChevron size={10} className="inline-block align-[-1px]" />
                           </Link>
                         </div>
                       </div>
@@ -617,7 +618,7 @@ export default function PhrasesPage() {
               href="/phrase-programs"
               className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
             >
-              {t.seeAllProgramsArrow}
+              {t.seeAllProgramsArrow} <TakChevron size={10} className="inline-block align-[-1px]" />
             </Link>
           </div>
         )}

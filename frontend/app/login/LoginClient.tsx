@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../lib/api';
 import { useT } from '../../lib/useT';
 import PageMascot from '../../components/PageMascot';
+import TakChevron from '../../components/TakChevron';
 
 export default function LoginClient() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function LoginClient() {
           onClick={() => router.back()}
           className="mt-4 w-full py-2.5 text-gray-400 hover:text-gray-900 text-sm transition-colors"
         >
-          {tr.login.back}
+          <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.login.back}
         </button>
       </div>
     </main>

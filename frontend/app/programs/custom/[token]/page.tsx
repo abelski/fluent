@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import TakChevron from '../../../../components/TakChevron';
 import {
   BACKEND_URL,
   getToken,
@@ -90,7 +91,7 @@ export default function CustomProgramPage() {
         <div className="text-center">
           <p className="text-gray-500 mb-4">{error || 'Программа не найдена'}</p>
           <Link href="/programs?tab=community" className="text-emerald-600 hover:underline text-sm">
-            ← Все программы
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Все программы
           </Link>
         </div>
       </main>
@@ -104,7 +105,7 @@ export default function CustomProgramPage() {
       <div className="max-w-2xl mx-auto px-6 py-8">
         <div className="mb-6">
           <Link href="/programs?tab=community" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            ← Сообщество
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Сообщество
           </Link>
         </div>
 

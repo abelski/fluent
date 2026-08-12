@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import QuizSession, { type Word } from '../components/QuizSession';
+import TakChevron from '../../../components/TakChevron';
 
 function ReviewContent() {
   const router = useRouter();
@@ -69,13 +70,13 @@ function ReviewContent() {
           <p className="text-gray-400 mb-8">{tr.common.limitBody}</p>
           <div className="flex flex-col gap-3">
             <Link href="/pricing" className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-center">
-              {tr.common.getPremium}
+              {tr.common.getPremium} <TakChevron size={10} className="inline-block align-[-1px]" />
             </Link>
             <button
               onClick={() => router.push('/dashboard/lists')}
               className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
             >
-              {tr.common.backToLists}
+              <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.common.backToLists}
             </button>
           </div>
         </div>
@@ -133,7 +134,7 @@ function ReviewContent() {
               </>
             )}
             <Link href="/dashboard/lists" className="w-full block py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center">
-              {tr.common.backToLists}
+              <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.common.backToLists}
             </Link>
           </div>
         </div>

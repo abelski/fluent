@@ -18,6 +18,7 @@ import {
   type WordListMineSummary,
 } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
+import TakChevron from '../../../components/TakChevron';
 import QuotaBanner from '../components/QuotaBanner';
 import PageShell from '../components/PageShell';
 import StarLevelToggle from '../components/StarLevelToggle';
@@ -328,7 +329,7 @@ export default function ListsPage() {
                             <p className="font-semibold text-gray-900">{mt.upsellTitle}</p>
                             <p className="text-sm text-gray-500 mt-1">{mt.upsellBody}</p>
                             <Link href="/pricing" className="inline-block mt-3 text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-full transition-colors">
-                              {mt.upsellCta}
+                              {mt.upsellCta} <TakChevron size={10} className="inline-block align-[-1px]" />
                             </Link>
                           </div>
                         </div>
@@ -748,7 +749,7 @@ export default function ListsPage() {
                 href="/programs"
                 className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
               >
-                {tr.programs.emptyStateCta} →
+                {tr.programs.emptyStateCta} <TakChevron size={10} className="inline-block align-[-1px]" />
               </Link>
             </div>
             </>

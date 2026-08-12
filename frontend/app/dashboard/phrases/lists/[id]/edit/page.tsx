@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import TakChevron from '../../../../../../components/TakChevron';
 import {
   getToken,
   getMyPhraseList,
@@ -161,7 +162,7 @@ function EditListContent() {
     return (
       <main className="min-h-screen bg-[#F5F5F7] flex flex-col items-center justify-center px-6 gap-4">
         <p className="text-gray-500">{error ?? t.listNotFound}</p>
-        <Link href="/dashboard/phrases" className="text-sm text-emerald-600 hover:text-emerald-700">{t.backToLists}</Link>
+        <Link href="/dashboard/phrases" className="text-sm text-emerald-600 hover:text-emerald-700"><TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{t.backToLists}</Link>
       </main>
     );
   }
@@ -170,7 +171,7 @@ function EditListContent() {
     <main className="min-h-screen bg-[#F5F5F7] text-gray-900 flex flex-col items-center px-4 py-10" data-testid="phrase-list-edit-page">
       <div className="relative z-10 w-full max-w-2xl">
         <div className="mb-6">
-          <Link href="/dashboard/phrases" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">{t.backToLists}</Link>
+          <Link href="/dashboard/phrases" className="text-sm text-gray-400 hover:text-gray-900 transition-colors"><TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{t.backToLists}</Link>
         </div>
 
         {/* List meta */}
@@ -196,7 +197,7 @@ function EditListContent() {
                 data-testid="study-button"
                 className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors shadow-sm shadow-emerald-600/20"
               >
-                {t.studyArrow}
+                {t.studyArrow} <TakChevron size={10} className="inline-block align-[-1px]" />
               </Link>
             )}
           </div>

@@ -23,9 +23,9 @@ interface TakProps {
 }
 
 // TAK's colors are fixed brand constants — never themed to the surrounding page.
-const BODY = '#ec3013';
-const LIMB = '#201e1d';
-const EYE_BG = '#f3f2f2';
+export const BODY = '#ec3013';
+export const LIMB = '#201e1d';
+export const EYE_BG = '#f3f2f2';
 
 type EyeVariant = 'flat' | 'squint' | 'wide' | 'spark' | 'x';
 

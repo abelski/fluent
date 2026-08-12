@@ -7,6 +7,7 @@ import { BACKEND_URL, getToken, resolveListId } from '../../../../../lib/api';
 import { useT } from '../../../../../lib/useT';
 import { getStarLevel, setStarLevel } from '../../../../../lib/starLevel';
 import QuizSession, { type Word } from '../../../components/QuizSession';
+import TakChevron from '../../../../../components/TakChevron';
 import PageMascot from '../../../../../components/PageMascot';
 
 export default function QuizPage() {
@@ -76,7 +77,7 @@ export default function QuizPage() {
           <p className="text-gray-400 mb-8">{tr.common.limitBody}</p>
           <div className="flex flex-col gap-3">
             <Link href="/pricing" className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors text-center">
-              {tr.common.getPremium}
+              {tr.common.getPremium} <TakChevron size={10} className="inline-block align-[-1px]" />
             </Link>
             <button
               onClick={() => router.push('/dashboard/lists')}
@@ -100,7 +101,7 @@ export default function QuizPage() {
             onClick={() => router.push('/dashboard/lists')}
             className="w-full py-3 text-gray-400 hover:text-gray-900 text-sm transition-colors text-center"
           >
-            {tr.study.backToLists}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.study.backToLists}
           </button>
         </div>
       </main>
@@ -136,7 +137,7 @@ export default function QuizPage() {
             onClick={() => router.push('/dashboard/lists')}
             className="text-[13.5px] text-muted hover:text-gray-900 transition-colors mt-2"
           >
-            {tr.study.backToLists}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.study.backToLists}
           </button>
         </div>
       </main>

@@ -76,10 +76,13 @@ Tailwind palette step without checking these first:
 
 | File | What it is |
 | --- | --- |
-| `design system/Component Library (as-built).html` | **Read this first.** Principles, colour tokens, logo rules, card/button/shell specs, TAK, deliberate deviations. Documents what actually shipped. |
-| `design system/prototypes/*.html` | The approved visual source of truth (layout, spacing, colour). Self-unpacking bundles — extract the `__bundler/template` script to read the real markup. |
-| `design system/IMPLEMENTATION.md` | Prototype value → Tailwind token/file mapping. |
+| `design system/Component Library (as-built).html` | **Read this first.** The visual source of truth: principles, colour tokens, logo rules, card/button/shell specs, TAK, deliberate deviations. Documents what shipped. |
+| `design system/IMPLEMENTATION.md` | Token/pattern → file mapping, so the component library and the code don't drift. |
 | `frontend/tailwind.config.js` | The tokens themselves. |
+
+The original prototype mockups that drove the redesign have been retired now that it shipped — the
+component library above is the sole source of truth going forward, not a record of a separate
+"approved" original.
 
 Rules:
 
@@ -87,9 +90,11 @@ Rules:
   raw stock step like `gray-100` or `emerald-500` when a token exists.
 - Cards are flat: `border border-line rounded-[14px]`, no shadow. Buttons carry no shadow.
 - Inter only — do not add `font-headline` to redesigned pages.
-- Green `#0f9d68` = words/global accent; purple `#9333ea` = phrases surface.
+- Green `#0f9d68` = words/global accent; purple `#9333ea` = phrases surface. Exception: the header
+  logo's dot and the TAK icon beside it both use TAK's fixed orange `#ec3013`, so the mark reads as
+  one accent color — see "Logo / wordmark" in the component library.
 - Page content goes in `.page` (1180px); the navbar stays full-bleed.
-- If a change must deviate from the prototypes, that is allowed — but record it in the
+- If a change must deviate from an established pattern, that is allowed — but record it in the
   "Deliberate deviations" table of the component library, with the reason.
 - After changing shared shell or tokens, run `frontend/tests/design-system-parity.spec.ts`.
 - When you introduce or change a shared component/pattern, **update the component library in the
@@ -108,6 +113,6 @@ Rules:
    - Login works
 3. Run autotests
 4. make sure that feature or change correctly working localy
-5. For UI changes: verify against `design system/Component Library (as-built).html` and the relevant
-   prototype, run `design-system-parity.spec.ts`, and update the component library if a shared
-   component or pattern changed
+5. For UI changes: verify against `design system/Component Library (as-built).html`, run
+   `design-system-parity.spec.ts`, and update the component library if a shared component or
+   pattern changed

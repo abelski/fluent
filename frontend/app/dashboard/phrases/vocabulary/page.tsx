@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import PageMascot from '../../../../components/PageMascot';
+import TakChevron from '../../../../components/TakChevron';
 
 interface LearnedPhrase {
   id: number;
@@ -110,7 +111,7 @@ export default function PhrasesVocabularyPage() {
     <main className="text-gray-900">
       <div className="page relative z-10 px-4 sm:px-8 pt-6">
         <Link href="/dashboard/phrases" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-          {tr.phrasesVocabulary.back}
+          <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.phrasesVocabulary.back}
         </Link>
 
         <div className="mt-4 mb-8 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
@@ -246,7 +247,7 @@ export default function PhrasesVocabularyPage() {
                 disabled={page === 1}
                 className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                ←
+                <TakChevron direction="left" size={11} className="inline-block" />
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
@@ -275,7 +276,7 @@ export default function PhrasesVocabularyPage() {
                 disabled={page === totalPages}
                 className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                →
+                <TakChevron size={11} className="inline-block" />
               </button>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useT } from '../../../lib/useT';
+import TakChevron from '../../../components/TakChevron';
 
 export interface QuotaInfo {
   premium_active: boolean;
@@ -34,7 +35,7 @@ export default function QuotaBanner({ quota }: { quota: QuotaInfo | null }) {
         )}
       </div>
       <Link href="/pricing" className="shrink-0 text-[13px] font-semibold text-emerald-600 hover:text-emerald-700 bg-[#e9f6ee] rounded-full px-3.5 py-2 transition-colors">
-        {tr.lists.getPremium}
+        {tr.lists.getPremium} <TakChevron size={10} className="inline-block align-[-1px]" />
       </Link>
     </div>
   );

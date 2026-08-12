@@ -6,6 +6,7 @@ import { BACKEND_URL } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import type { ArticleSummary } from './types';
 import PageMascot from '../../../components/PageMascot';
+import TakChevron from '../../../components/TakChevron';
 import PageShell from '../components/PageShell';
 
 export default function ArticlesList({ initialArticles }: { initialArticles: ArticleSummary[] }) {
@@ -76,7 +77,7 @@ export default function ArticlesList({ initialArticles }: { initialArticles: Art
                     </p>
                   </div>
                   <span className="text-sm text-emerald-600 font-medium shrink-0 mt-0.5">
-                    {tr.articles.readMore}
+                    {tr.articles.readMore} <TakChevron size={10} className="inline-block align-[-1px]" />
                   </span>
                 </div>
               </Link>

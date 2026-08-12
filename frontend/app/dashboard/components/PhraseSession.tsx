@@ -35,6 +35,7 @@ import MatchRound from './MatchRound';
 import type { Word } from './QuizSession';
 import { normalizeLt } from '../../../lib/normalizeLt';
 import PageMascot from '../../../components/PageMascot';
+import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -627,7 +628,7 @@ export default function PhraseSession({
             href={backHref}
             className="text-gray-400 hover:text-gray-900 text-sm transition-colors"
           >
-            {tr.phraseSession.backToPrograms}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.phraseSession.backToPrograms}
           </Link>
         </div>
       </main>
@@ -703,7 +704,7 @@ export default function PhraseSession({
               onClick={handleSyllableSubmit}
               className="w-full py-3 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
             >
-              {tr.phraseSession.checkBtn}
+              {tr.phraseSession.checkBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
             </button>
           )}
 
@@ -738,7 +739,7 @@ export default function PhraseSession({
     return (
       <div className="flex justify-between items-center mb-4">
         <Link href={backHref} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-          {tr.phraseSession.backToPrograms}
+          <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.phraseSession.backToPrograms}
         </Link>
         <div className="flex items-center gap-3">
           <span className="text-gray-400 text-sm">{currentIdx + 1} / {queue.length}</span>
@@ -834,7 +835,7 @@ export default function PhraseSession({
                 data-testid="got-it-btn"
                 className="flex-1 py-3 rounded-xl text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
               >
-                {tr.phraseSession.gotItBtn}
+                {tr.phraseSession.gotItBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
               </button>
             </div>
           )}
@@ -952,7 +953,7 @@ export default function PhraseSession({
                   disabled={saving}
                   className="w-full py-3 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
                 >
-                  {tr.phraseSession.gotItNextBtn}
+                  {tr.phraseSession.gotItNextBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
                 </button>
               </div>
             )}
@@ -1036,7 +1037,7 @@ export default function PhraseSession({
                   disabled={saving}
                   className="mt-3 px-5 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
                 >
-                  {tr.phraseSession.gotItNextBtn}
+                  {tr.phraseSession.gotItNextBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
                 </button>
               </div>
             )}
@@ -1099,7 +1100,7 @@ export default function PhraseSession({
                   onClick={handleWordSubmit}
                   className="px-5 py-4 rounded-xl bg-purple-600 text-white text-base font-medium hover:bg-purple-700 transition-colors"
                 >
-                  →
+                  <TakChevron size={14} />
                 </button>
               </div>
               <button
@@ -1131,7 +1132,7 @@ export default function PhraseSession({
                 disabled={saving}
                 className="w-full py-4 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors"
               >
-                {tr.phraseSession.nextBtn}
+                {tr.phraseSession.nextBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
               </button>
             </div>
           )}
@@ -1150,7 +1151,7 @@ export default function PhraseSession({
                 disabled={saving}
                 className="w-full py-4 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
               >
-                {tr.phraseSession.gotItNextBtn}
+                {tr.phraseSession.gotItNextBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
               </button>
             </div>
           )}
@@ -1221,7 +1222,7 @@ export default function PhraseSession({
                 onClick={handlePhraseSubmit}
                 className="flex-1 py-4 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
               >
-                {tr.phraseSession.checkPhraseBtn}
+                {tr.phraseSession.checkPhraseBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
               </button>
             </div>
             <button
@@ -1244,7 +1245,7 @@ export default function PhraseSession({
               disabled={saving}
               className="w-full py-4 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors"
             >
-              {tr.phraseSession.nextBtn}
+              {tr.phraseSession.nextBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
             </button>
           </div>
         )}
@@ -1279,7 +1280,7 @@ export default function PhraseSession({
               disabled={saving}
               className="w-full py-4 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
             >
-              {tr.phraseSession.gotItNextBtn}
+              {tr.phraseSession.gotItNextBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
             </button>
           </div>
         )}

@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useLayoutEffect } from 'react';
 import Link from 'next/link';
 import { useT } from '../../../lib/useT';
+import TakChevron from '../../../components/TakChevron';
 import type { Word } from './QuizSession';
 import type { Lang } from '../../../lib/useLang';
 
@@ -161,7 +162,7 @@ export default function MatchRound({ words, lang, onDone, backHref }: MatchRound
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <Link href={backHref} className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
-            {tr.study.backToLists}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.study.backToLists}
           </Link>
           <span className="text-gray-300 text-xs uppercase tracking-wider">
             {paired.size} / {dedupedWords.length}

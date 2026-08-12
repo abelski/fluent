@@ -11,6 +11,7 @@ import CharDiff from './CharDiff';
 import { normalizeLt, collapseWs } from '../../../lib/normalizeLt';
 import { renderAccented } from '../../../lib/renderAccented';
 import PageMascot from '../../../components/PageMascot';
+import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -892,7 +893,7 @@ export default function QuizSession({
               onClick={() => router.push(backHref)}
               className="w-full py-3 text-[13.5px] text-muted hover:text-gray-900 transition-colors text-center"
             >
-              {tr.study.backToLists}
+              <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.study.backToLists}
             </button>
           </div>
         </div>
@@ -923,7 +924,7 @@ export default function QuizSession({
         {/* Header */}
         <div className="flex justify-between items-center mb-4 sm:mb-8">
           <Link href={backHref} className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
-            {tr.study.backToLists}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.study.backToLists}
           </Link>
           <div className="flex items-center gap-3">
             <span className="text-[#5b6067] text-xs uppercase tracking-wider">
@@ -1018,7 +1019,7 @@ export default function QuizSession({
                   </p>
                 </div>
                 <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage2Dismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
-                  {tr.common.dismiss}
+                  {tr.common.dismiss} <TakChevron size={10} className="inline-block align-[-1px]" />
                 </button>
               </div>
             )}
@@ -1061,7 +1062,7 @@ export default function QuizSession({
                   </p>
                 </div>
                 <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage2rDismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
-                  {tr.common.dismiss}
+                  {tr.common.dismiss} <TakChevron size={10} className="inline-block align-[-1px]" />
                 </button>
               </div>
             )}
@@ -1122,7 +1123,7 @@ export default function QuizSession({
                   </p>
                 </div>
                 <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage2aDismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
-                  {tr.common.dismiss}
+                  {tr.common.dismiss} <TakChevron size={10} className="inline-block align-[-1px]" />
                 </button>
               </div>
             )}
@@ -1199,7 +1200,7 @@ export default function QuizSession({
                     </div>
                   </div>
                   <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage3Dismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
-                    {tr.common.dismiss}
+                    {tr.common.dismiss} <TakChevron size={10} className="inline-block align-[-1px]" />
                   </button>
                 </div>
               )}
@@ -1263,7 +1264,7 @@ export default function QuizSession({
                   <div className="flex flex-col gap-3 animate-in fade-in duration-150">
                     <p className="text-red-600 text-sm font-medium text-center">{tr.common.notQuite}</p>
                     <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage3sDismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
-                      {tr.common.dismiss}
+                      {tr.common.dismiss} <TakChevron size={10} className="inline-block align-[-1px]" />
                     </button>
                   </div>
                 )}

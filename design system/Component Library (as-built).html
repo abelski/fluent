@@ -71,8 +71,8 @@
   <h1>Component library — as-built</h1>
   <p class="lede">
     What's actually implemented in <code>frontend/</code> after the TAK mascot redesign, kept in sync with the code.
-    The original mockups (<code>Fluent Redesign - Design System.html</code>, <code>prototypes/</code>) are the design
-    intent this was built from — this page documents what shipped, including the places implementation
+    This page is the visual source of truth going forward — the original design mockups that the redesign was
+    built from have been retired now that the redesign shipped, including the places implementation
     deliberately diverged (mobile sizing, a11y, existing i18n/data constraints).
   </p>
   <p class="note">Per CLAUDE.md: update this file whenever a new shared component or pattern is introduced. This is the source of truth for visual/component decisions during development — check it before inventing a new pattern.</p>
@@ -80,16 +80,16 @@
   <h2>Principles</h2>
   <div class="card">
     <ol style="font-size:13.5px;line-height:1.9;margin:0;padding-left:20px;">
-      <li><b>The prototypes are the visual source of truth.</b> <code>prototypes/*.html</code> define layout,
-        spacing and colour. This page records what shipped. When they disagree, the prototype wins unless the
-        divergence is listed under "Deliberate deviations" below.</li>
+      <li><b>This page is the visual source of truth.</b> It defines layout, spacing and colour for what shipped.
+        Any new pattern should match what's documented here, or be added here alongside the "Deliberate
+        deviations" table below.</li>
       <li><b>Flat, not decorated.</b> Cards are white with a 1px <code>#ececec</code> border and no drop shadow.
         Buttons carry no shadow or glow. No decorative blur blobs, no gradient fills on components — the only
         gradient in the product is the page wash on <code>body</code>.</li>
       <li><b>Tokens, not raw palette steps.</b> Use the named colours above. Never reach for a stock Tailwind step
-        (<code>gray-100</code>, <code>emerald-500</code>) when a token exists — that drift is what made the app
-        diverge from the mockups in the first place.</li>
-      <li><b>One typeface.</b> Inter everywhere. The prototypes use no second display face, so
+        (<code>gray-100</code>, <code>emerald-500</code>) when a token exists — that drift is what caused
+        inconsistency in the app before.</li>
+      <li><b>One typeface.</b> Inter everywhere. The original mockups used no second display face, so
         <code>font-headline</code> (Manrope) is not applied on redesigned pages.</li>
       <li><b>Green is words, purple is phrases.</b> <code>#0f9d68</code> is the words/global accent;
         <code>#9333ea</code> is the phrases surface. Correct/incorrect feedback stays green/red regardless of
@@ -97,33 +97,49 @@
       <li><b>Hover goes darker, never lighter.</b> <code>emerald-600</code> → <code>emerald-700</code>.</li>
       <li><b>Layout: full-bleed navbar, 1180px content.</b> The header spans the viewport; page content sits in
         <code>.page</code> (max 1180px, 32px gutters, 16px below 860px).</li>
-      <li><b>Breakpoints follow the prototypes,</b> not Tailwind defaults: 3→2 columns at 1000px, →1 column at 860px.</li>
-      <li><b>Readability outranks fidelity.</b> If a prototype value is genuinely hard to read, darken it and record
-        it as a deliberate deviation. Small-caps secondary labels use <code>#5b6067</code>.</li>
-      <li><b>TAK is the only mascot, and replaces decorative emoji</b> — never functional glyphs. See Emoji policy.</li>
+      <li><b>Breakpoints:</b> not Tailwind defaults — 3→2 columns at 1000px, →1 column at 860px.</li>
+      <li><b>Readability outranks fidelity.</b> If a documented value is genuinely hard to read, darken it and
+        record it as a deliberate deviation. Small-caps secondary labels use <code>#5b6067</code>.</li>
+      <li><b>TAK is the only mascot, and replaces decorative emoji</b> plus decorative navigational arrows —
+        never small functional glyphs (dropdown/accordion carets, the ⭐ difficulty rating). See Emoji policy.</li>
       <li><b>One mascot per screen, at 128px, via <code>PageMascot</code>.</b> Every page outside
         <code>/dashboard/admin/**</code> shows exactly one, and his emotion tracks the session mood. The two
-        <code>bare</code> icon call sites are the only exemptions.</li>
+        <code>bare</code> icon call sites (bug-report FAB, landing streak ring) and the navbar's <code>TakMark</code>
+        logo icon are the only exemptions.</li>
     </ol>
   </div>
 
   <h2>Logo / wordmark</h2>
   <div class="card">
     <div style="display:flex;align-items:center;gap:40px;flex-wrap:wrap;margin-bottom:20px;">
-      <span style="font-weight:700;font-size:22px;letter-spacing:-0.02em;color:#16181c;">fluent<span style="color:#0f9d68;">.</span></span>
-      <span class="label-muted">22px / 700 / letter-spacing −0.02em</span>
+      <span style="display:inline-flex;align-items:flex-end;gap:4px;font-weight:900;font-size:22px;letter-spacing:-0.055em;color:#16181c;">
+        <svg width="19" height="18.4" viewBox="55 70 93 90" aria-hidden="true" style="margin-bottom:2px;"><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/></svg>
+        fluent<span style="display:inline-block;width:5px;height:5px;border-radius:999px;background:#ec3013;margin-bottom:5px;"></span>
+      </span>
+      <span class="label-muted">22px / 900 / letter-spacing −0.055em, TakMark 19px</span>
     </div>
     <table>
       <tr><th>Rule</th><th>Value</th></tr>
-      <tr><td>Size</td><td><code>22px</code> in the navbar — <b>not</b> 28px. Matches every prototype.</td></tr>
-      <tr><td>Weight / tracking</td><td><code>700</code> / <code>-0.02em</code></td></tr>
+      <tr><td>Size</td><td><code>22px</code> in the navbar — <b>not</b> 28px.</td></tr>
+      <tr><td>Weight / tracking</td><td><code>900</code> (<code>font-black</code>) / <code>-0.055em</code> — follows
+        the primary lockup in <code>Fluent Logo.html</code>, scaled down from its 96px reference.</td></tr>
       <tr><td>Wordmark colour</td><td><code>#16181c</code> (ink) — the letters are never green</td></tr>
-      <tr><td>Dot colour</td><td><code>#0f9d68</code> — only the trailing dot carries the accent</td></tr>
+      <tr><td>Dot colour</td><td><code>#ec3013</code> (<code>BODY</code> from <code>Tak.tsx</code>) — a solid
+        <code>5px</code> circle (<code>background</code>, not text colour) matching the <code>TakMark</code> beside
+        it, not the site's green accent. See "Deliberate deviations".</td></tr>
       <tr><td>Typeface</td><td>Inter, same as everything else</td></tr>
+      <tr><td><code>TakMark</code></td><td><code>&lt;TakMark size={19} /&gt;</code> before the text,
+        <code>items-end gap-1</code>. TAK's torso + face cropped tight to the polygon's bounding box — <b>not</b>
+        <code>Tak bare</code>'s padded 0-240 canvas. Own component, <code>frontend/components/TakMark.tsx</code>,
+        used only here. Exempt from the one-mascot-per-page rule, same reason the two <code>bare</code> call sites
+        are.</td></tr>
+      <tr><td>Favicon</td><td><code>frontend/public/favicon.svg</code> — TAK's bare-mark coordinates (full
+        torso+eyes, same as <code>Tak.tsx</code>'s <code>bare</code> render) on a rounded <code>#f3f2f2</code> tile.
+        Previously an unrelated Lithuanian-flag-striped "f." mark.</td></tr>
     </table>
     <p style="font-size:12.5px;color:var(--muted);margin-top:16px;line-height:1.7;">
-      <b>Trap:</b> <code>globals.css</code> sets a global <code>a { color: #0f9d68 }</code> (the prototypes do the
-      same). The prototypes' wordmark is a <code>&lt;span&gt;</code> so it never inherited that, but ours is a
+      <b>Trap:</b> <code>globals.css</code> sets a global <code>a { color: #0f9d68 }</code>. The original mockup's
+      wordmark was a <code>&lt;span&gt;</code> so it never inherited that, but ours is a
       <code>&lt;Link&gt;</code> — without an explicit <code>text-ink</code> the whole wordmark turns green. Any link
       that should not be green needs its own colour class.
     </p>
@@ -150,7 +166,7 @@
       <div class="swatch-block"><div class="swatch" style="background:#fdeceb"></div><div class="swatch-label"><b>red tint</b> #fdeceb<br>"needs review" fill, text #c2504a</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#c2504a"></div><div class="swatch-label"><b>destructive</b> #c2504a<br>delete / unenroll actions</div></div>
       <div class="swatch-block"><div class="swatch" style="background:linear-gradient(180deg,#eef4f1,#f7f8f8)"></div><div class="swatch-label"><b>page wash</b><br>body gradient #eef4f1 → #f6f8f7 320px → #f7f8f8</div></div>
-      <div class="swatch-block"><div class="swatch" style="background:#ec3013"></div><div class="swatch-label"><b>#ec3013</b><br>TAK body — never used elsewhere</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#ec3013"></div><div class="swatch-label"><b>#ec3013</b><br>TAK body, and the header logo's dot (see Logo / wordmark) — not used elsewhere</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#201e1d"></div><div class="swatch-label"><b>#201e1d</b><br>TAK limbs/eyes — never used elsewhere</div></div>
     </div>
   </div>
@@ -178,12 +194,13 @@
       Props: <code>pose</code> (nine values, below), <code>size?: number</code> (px, height auto-scales ×1.2),
       <code>bare?: boolean</code>. <b>Prefer <code>PageMascot</code> over rendering <code>Tak</code> directly</b> — it
       owns the standard size, the speech bubble and the mood→pose mapping. Reach for raw <code>Tak</code> only for the
-      two <code>bare</code> icon call sites.
+      two <code>bare</code> icon call sites; the navbar logo uses the separate <code>TakMark</code> component instead
+      (see below).
     </p>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
       <b><code>bare</code></b> renders the badge treatment — body + eye rects only, no limbs, no mouth, no float —
-      for use <i>inside a control</i>, where TAK is an icon rather than a character. The bug-report FAB is the one
-      place this applies; the prototypes draw it exactly this way. Everywhere else uses the full mascot.
+      for use <i>inside a control</i>, where TAK is an icon rather than a character. The bug-report FAB and the
+      landing streak ring are where this applies. Everywhere else uses the full mascot or <code>TakMark</code>.
     </p>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
       <b>Timing:</b> resting float <code>2.6s</code> / arm swing <code>1.8s</code>. Each pose can override the whole-figure
@@ -332,8 +349,65 @@
     </div>
     <p style="font-size:12.5px;color:var(--gray-400);margin-top:20px;">
       <b>Exempt from both the size rule and the one-per-page rule:</b> the <code>bare</code> TAK in the bug-report FAB
-      (<code>components/MistakeButton.tsx</code>) and in the landing streak ring
-      (<code>app/LandingClient.tsx</code>). Both are icons inside a control, not the mascot standing on his own.
+      (<code>components/MistakeButton.tsx</code>, 44px) and the landing streak ring
+      (<code>app/LandingClient.tsx</code>, 32px) — both are icons inside a control, not the mascot standing on his
+      own. The navbar's <code>TakMark</code> (19px) is a separate, tightly-cropped component — see Logo / wordmark.
+    </p>
+  </div>
+
+  <h2>TakChevron — the arrow mark</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:16px;">
+      <span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;">
+        Back <svg width="10" height="9.7" viewBox="55 70 93 90" style="transform:scaleX(-1);"><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/></svg>
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;">
+        Next <svg width="10" height="9.7" viewBox="55 70 93 90"><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/></svg>
+      </span>
+      <span class="label-muted">10px inline mark, both directions</span>
+    </div>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/components/TakChevron.tsx</code>. Reuses TAK's own torso polygon — the same shape <code>Tak.tsx</code>
+      calls a "chevron-torso skeleton" — but cropped tight to just that polygon's bounding box
+      (<code>viewBox="55 70 93 90"</code>) instead of the full 200×240 character canvas, so it reads as a small arrow
+      glyph rather than a mostly-empty icon at inline text sizes. Fill colour comes from <code>BODY</code>, exported
+      from <code>Tak.tsx</code> so the two files share one color constant instead of duplicating the hex.
+    </p>
+    <table>
+      <tr><th>Prop</th><th>Value</th></tr>
+      <tr><td><code>size?: number</code></td><td>Width in px, default <code>11</code>. Height follows the polygon's
+        aspect ratio (<code>90/93</code>).</td></tr>
+      <tr><td><code>direction?: 'right' | 'left'</code></td><td>Default <code>'right'</code>. <code>'left'</code>
+        mirrors via CSS <code>transform: scaleX(-1)</code> — one geometry, no second path.</td></tr>
+    </table>
+    <p style="font-size:12.5px;color:var(--muted);margin-top:16px;line-height:1.7;">
+      Used for decorative navigational arrows only — trailing/leading <code>→</code>/<code>←</code> on links like
+      "Study →" or "← Back to lists", and prev/next pagination buttons. <b>Not</b> used for dropdown/accordion
+      carets, the small triangle expand/collapse glyphs, or the ⭐ difficulty-rating glyphs — see Emoji &amp; arrow policy.
+      <code>/dashboard/admin/**</code> is out of scope, same as <code>PageMascot</code>.
+    </p>
+  </div>
+
+  <h2>StarLevelToggle — complexity selector</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/app/dashboard/components/StarLevelToggle.tsx</code>. A three-stop pill (<code>44×24</code>,
+      borderless, <code>bg-[#f2f3f3]</code> track) the user clicks to cycle complexity 1→2→3→1. Used on Слова and
+      Фразы list rows.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      The <code>18px</code> knob is clipped with the same polygon as <code>TakChevron</code>, renormalized to
+      percentages of its own box (<code>clip-path: polygon(0% 0%, 64.5% 0%, 100% 50%, 64.5% 100%, 0% 100%, 35.5% 50%)</code>),
+      so it reads as TAK's chevron silhouette instead of a circle. It stays <code>bg-ink</code>, not TAK's red —
+      TAK's red (<code>#ec3013</code>) is a brand constant reserved for TAK himself, so this borrows the shape
+      motif only, never the colour.
+    </p>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0;">
+      <b>Trap:</b> the chevron's concave notch leaves only the right ~64.5% of the knob unclipped, and that band is
+      too small to hold 2-3 <code>★</code> glyphs (or even a <code>•</code> glyph) legibly at 18px — both blur into
+      each other or into the clip edge. The knob shows level count as small explicit <code>2.5px</code> circle
+      <code>&lt;span&gt;</code> elements instead of a text glyph. The fuller <code>★</code>×level rendering is kept
+      for the hover tooltip, where there's room for it.
     </p>
   </div>
 
@@ -472,13 +546,21 @@
     </p>
   </div>
 
-  <h2>Emoji policy</h2>
+  <h2>Emoji &amp; arrow policy</h2>
   <div class="card">
-    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 12px;">
       TAK replaces <b>decorative</b> emoji (🎓📊📚🏆⭐🎉🔥) in stat icons, empty states, and celebration screens.
-      It does not replace <b>functional</b> glyphs — lock icons, checkmarks, chevrons, or the ⭐ difficulty-rating
-      glyphs on word/phrase rows (those are data, not decoration). Admin-only UI (e.g. the admin rewards tab label)
-      was never in scope — this is a user-facing product decision, not an internal-tooling one.
+      It does not replace <b>functional</b> glyphs — lock icons, checkmarks, or the ⭐ difficulty-rating
+      glyphs on word/phrase rows (those are data, not decoration).
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      The same split applies to arrows, via <code>TakChevron</code>: <b>decorative</b> navigational arrows —
+      trailing/leading <code>→</code>/<code>←</code> on links ("Study →", "← Back to lists") and prev/next pagination —
+      now render TAK's chevron mark. Small <b>functional</b> carets — dropdown/accordion expand-collapse triangles,
+      the avatar-menu <code>▾</code> — stay plain glyphs; at ~12px a mascot-derived shape reads as illegible and makes
+      the open/closed state ambiguous, so those were deliberately left alone. Admin-only UI
+      (<code>/dashboard/admin/**</code> — e.g. the admin rewards tab label, admin practice back-links, admin
+      pagination) was never in scope for either — this is a user-facing product decision, not an internal-tooling one.
     </p>
   </div>
 
@@ -496,19 +578,35 @@
     </table>
   </div>
 
-  <h2>Deliberate deviations from the prototypes</h2>
+  <h2>Deliberate deviations from the original mockups</h2>
   <div class="card">
     <table>
       <tr><th>Deviation</th><th>Why</th></tr>
-      <tr><td>Mobile hamburger menu kept</td><td>The prototypes have no hamburger, but they were only ever drawn at desktop width — their silence isn't a decision about mobile.</td></tr>
-      <tr><td>FAB label hidden below <code>sm</code></td><td>Prototype keeps it at 13px; hiding it protects the tap target on narrow screens, leaving a round icon button.</td></tr>
-      <tr><td>Small-caps secondary labels at <code>#5b6067</code></td><td>Prototypes use <code>#b0b4ba</code> and the app had drifted lighter still to <code>#d1d5db</code>. Both were reported unreadable; <code>#5b6067</code> clears WCAG AA at these sizes.</td></tr>
+      <tr><td>Mobile hamburger menu kept</td><td>The original mockups had no hamburger, but they were only ever drawn at desktop width — their silence isn't a decision about mobile.</td></tr>
+      <tr><td>FAB label hidden below <code>sm</code></td><td>The mockup kept it at 13px; hiding it protects the tap target on narrow screens, leaving a round icon button.</td></tr>
+      <tr><td>Small-caps secondary labels at <code>#5b6067</code></td><td>The mockup used <code>#b0b4ba</code> and the app had drifted lighter still to <code>#d1d5db</code>. Both were reported unreadable; <code>#5b6067</code> clears WCAG AA at these sizes.</td></tr>
       <tr><td><code>PageMascot</code> at 128px, not 176px</td><td>No responsive size prop; a literal 176px crowds a 375px viewport.</td></tr>
       <tr><td>Mood 0 renders <code>talking</code>, not the standalone file's <code>IDLE</code></td><td>Every page mascot now carries a speech bubble, so the neutral state should look like he is speaking. <code>idle</code> is kept for the bubble-less <code>bare</code>/icon call sites.</td></tr>
       <tr><td>Landing streak ring switched to <code>bare</code></td><td>A 32px full mascot inside a progress ring is an icon, not the character — same case as the bug-report FAB, now treated the same way.</td></tr>
       <tr><td>Heavy-border pages left alone</td><td>Admin, pricing, premium, settings and extension still use the older <code>border-gray-900</code> style — never given a design pass. Практика and Статьи were on this style too and are now migrated (see PageShell below).</td></tr>
       <tr><td>Grammar's 3-card stat grid collapsed into one <code>ProgressStatCard</code></td><td>Грамматика, Практика and Фразы now all show a single hero card (count + progress bar + mascot inside), matching the pattern Слова/Фразы already used. The standalone "tip" card's copy moved into the hero's milestone caption instead of being dropped.</td></tr>
       <tr><td>Фразы' difficulty-colored card borders removed</td><td>The difficulty badge chip already carries that color; a colored border duplicated it and broke from the flat <code>border-line</code> convention every other accordion card on the site uses.</td></tr>
+      <tr><td>Navbar logo now carries a <code>TakMark</code> icon</td><td>Previously text-only ("fluent."). Product
+        decision to extend TAK into the logo, per <code>Fluent Logo.html</code>. Uses a dedicated tightly-cropped
+        component rather than <code>Tak bare</code> — the padded 0-240 canvas reads too small at this size.</td></tr>
+      <tr><td>Logo dot recolored from the green accent (<code>#0f9d68</code>) to TAK orange (<code>#ec3013</code>)</td>
+        <td>Follows from the <code>TakMark</code> addition above: once the icon sits directly beside the wordmark, a
+        green dot next to an orange icon reads as two unrelated accents. Recoloring the dot to match <code>BODY</code>
+        makes the mark + dot read as one lockup. Green stays the site's global accent everywhere else — this is
+        scoped to the logo only, per <code>Fluent Logo.html</code>.</td></tr>
+      <tr><td>TAK's chevron silhouette reused as a standalone arrow glyph (<code>TakChevron</code>)</td><td>Previously
+        the mascot shape appeared nowhere outside <code>Tak.tsx</code>/<code>PageMascot</code>. Product decision to
+        replace decorative link/pagination arrows (→ ←) with it; functional carets (dropdowns, accordions) were
+        deliberately kept out of scope — see Emoji &amp; arrow policy.</td></tr>
+      <tr><td><code>StarLevelToggle</code> knob reshaped to TAK's chevron via <code>clip-path</code>, kept <code>bg-ink</code></td><td>
+        Same shape motif as <code>TakChevron</code>, but intentionally <b>not</b> recolored to TAK's red — that red
+        is documented as a brand constant used nowhere else, and this change borrows the silhouette only, not the
+        color.</td></tr>
     </table>
   </div>
 
@@ -527,9 +625,10 @@
   </div>
 
   <footer>
-    Built for the TAK mascot redesign. Historical design intent: <code>Fluent Redesign - Design System.html</code>,
-    <code>Tak Mascot Standalone.html</code>, <code>prototypes/*.html</code> (exported Artifact HTML — not directly viewable,
-    kept for reference only). This file is the one to keep updated going forward.
+    Built for the TAK mascot redesign. The original mockup files (<code>Fluent Redesign - Design
+    System.html</code>, <code>prototypes/*.html</code>) have been retired now that the redesign shipped —
+    this page is the design system of record. <code>Tak Mascot Standalone.html</code> is still kept as the
+    live source for TAK's pose data.
   </footer>
 </main>
 </body>

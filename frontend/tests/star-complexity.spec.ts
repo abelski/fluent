@@ -62,7 +62,10 @@ test.describe('Star complexity selector', () => {
     const t = toggle(page);
     await expect(t).toBeVisible({ timeout: 5000 });
     await expect(t).toHaveAttribute('data-star-level', '1');
-    await expect(t).toHaveText('★');
+    // The knob renders one dot <span> per level, not the ★ glyph — the chevron
+    // clip-path leaves no room for star glyphs to render without clipping into
+    // each other at levels 2-3. See StarLevelToggle.tsx.
+    await expect(t.locator(':scope > span > span')).toHaveCount(1);
   });
 
   test('the knob stays inside the track at every stop', async ({ page }) => {

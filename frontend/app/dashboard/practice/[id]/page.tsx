@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import { BACKEND_URL, getToken, resolvePracticeId } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import PageMascot from '../../../../components/PageMascot';
+import TakChevron from '../../../../components/TakChevron';
 
 // --- Dialogue rendering helpers ---
 
@@ -318,12 +319,12 @@ export default function PracticeCategoryPage() {
         {/* Back navigation */}
         {view === 'tests' && (
           <Link href="/dashboard/practice" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            {t.backToCategories}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{t.backToCategories}
           </Link>
         )}
         {(view === 'reading' || view === 'question' || view === 'result') && (
           <button onClick={backToTests} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            {t.backToTests}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{t.backToTests}
           </button>
         )}
 
@@ -463,7 +464,7 @@ export default function PracticeCategoryPage() {
                 disabled={examLoading}
                 className="px-6 py-2.5 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-40"
               >
-                {examLoading ? '...' : 'Перейти к тесту →'}
+                {examLoading ? '...' : <>Перейти к тесту <TakChevron size={10} className="inline-block align-[-1px]" /></>}
               </button>
             </div>
           </div>
@@ -558,7 +559,7 @@ export default function PracticeCategoryPage() {
                     onClick={handleNext}
                     className="px-6 py-2.5 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-700 transition-colors"
                   >
-                    {current + 1 >= activeTest.questions.length ? 'Завершить' : t.constitution.nextBtn}
+                    {current + 1 >= activeTest.questions.length ? 'Завершить' : <>{t.constitution.nextBtn} <TakChevron size={10} className="inline-block align-[-1px]" /></>}
                   </button>
                 )}
               </div>
@@ -595,7 +596,7 @@ export default function PracticeCategoryPage() {
                       onClick={() => startTest(nextTest)}
                       className="px-4 py-1.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-500 transition-colors"
                     >
-                      Следующий тест →
+                      Следующий тест <TakChevron size={10} className="inline-block align-[-1px]" />
                     </button>
                   )}
                   <button

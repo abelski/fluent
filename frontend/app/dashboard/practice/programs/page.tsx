@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { BACKEND_URL, getToken, enrollPracticeCategory, unenrollPracticeCategory } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import PageMascot from '../../../../components/PageMascot';
+import TakChevron from '../../../../components/TakChevron';
 import PageShell from '../../components/PageShell';
 
 interface Category {
@@ -62,7 +63,7 @@ export default function PracticeProgramsPage() {
   return (
     <PageShell>
         <Link href="/dashboard/practice" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-          ← {t.backToCategories.replace('← ', '')}
+          <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{t.backToCategories}
         </Link>
 
         <div className="mt-4 mb-8 flex items-start justify-between gap-4">

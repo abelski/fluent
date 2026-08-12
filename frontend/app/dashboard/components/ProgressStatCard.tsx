@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useT } from '../../../lib/useT';
+import TakChevron from '../../../components/TakChevron';
 
 type Theme = 'emerald' | 'purple';
 
@@ -107,7 +108,7 @@ export default function ProgressStatCard({
                   href={secondaryAction.href}
                   className={`inline-block text-xs border ${SECONDARY_BTN} font-semibold px-3.5 py-2 rounded-lg transition-colors`}
                 >
-                  {secondaryAction.label}
+                  {secondaryAction.label} <TakChevron size={10} className="inline-block align-[-1px]" />
                 </Link>
               )}
             </div>

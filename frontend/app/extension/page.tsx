@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL } from '../../lib/api';
 import { useT } from '../../lib/useT';
+import TakChevron from '../../components/TakChevron';
 
 export default function ExtensionPage() {
   const { tr } = useT();
@@ -89,7 +90,7 @@ export default function ExtensionPage() {
             href="/dashboard/lists"
             className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors shrink-0"
           >
-            {tr.extension.viewListsLink}
+            {tr.extension.viewListsLink} <TakChevron size={10} className="inline-block align-[-1px]" />
           </Link>
         </div>
 

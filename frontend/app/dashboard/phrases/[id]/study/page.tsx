@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getToken, getPhrasesStudy, resolvePhraseId, type PhraseStudyItem } from '../../../../../lib/api';
 import PhraseSession from '../../../components/PhraseSession';
+import TakChevron from '../../../../../components/TakChevron';
 
 function PhrasesStudyContent() {
   const { id: _id } = useParams<{ id: string }>();
@@ -65,7 +66,7 @@ function PhrasesStudyContent() {
           <div className="text-5xl mb-6">💬</div>
           <p className="text-gray-500 mb-8">{error}</p>
           <Link href="/dashboard/phrases" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
-            ← Назад к программам
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Назад к программам
           </Link>
         </div>
       </main>

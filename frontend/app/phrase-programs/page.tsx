@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import TakChevron from '../../components/TakChevron';
 import {
   getToken,
   getPhrasePrograms,
@@ -57,7 +58,7 @@ export default function PhraseProgramsPage() {
             href="/dashboard/phrases"
             className="text-gray-400 hover:text-gray-700 transition-colors text-sm"
           >
-            ← Фразы
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Фразы
           </Link>
         </div>
         <h1 className="font-headline text-3xl font-bold mb-1">Программы фраз</h1>

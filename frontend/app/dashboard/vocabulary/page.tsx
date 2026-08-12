@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import PageMascot from '../../../components/PageMascot';
+import TakChevron from '../../../components/TakChevron';
 
 interface KnownWord {
   id: number;
@@ -108,7 +109,7 @@ export default function VocabularyPage() {
     <main className="bg-slate-50 text-gray-900">
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <Link href="/dashboard/lists" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-          {tr.vocabulary.backToLists}
+          <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.vocabulary.backToLists}
         </Link>
 
         <div className="mt-4 mb-8 flex flex-col sm:flex-row sm:items-end gap-4">
@@ -232,7 +233,7 @@ export default function VocabularyPage() {
                 disabled={page === 1}
                 className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                ←
+                <TakChevron direction="left" size={11} className="inline-block" />
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
@@ -261,7 +262,7 @@ export default function VocabularyPage() {
                 disabled={page === totalPages}
                 className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                →
+                <TakChevron size={11} className="inline-block" />
               </button>
             </div>
           </div>

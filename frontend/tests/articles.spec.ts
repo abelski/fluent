@@ -177,6 +177,6 @@ test.describe('Article detail page', () => {
       await route.fulfill({ json: MOCK_ARTICLE_DETAIL });
     });
     await page.goto(`/dashboard/articles/${TEST_SLUG}`);
-    await expect(page.getByText('← К статьям')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('К статьям')).toBeVisible({ timeout: 5000 });
   });
 });

@@ -15,6 +15,7 @@ import {
 } from '../../../../../lib/api';
 import { translateText } from '../../../../../lib/translate';
 import PageMascot from '../../../../../components/PageMascot';
+import TakChevron from '../../../../../components/TakChevron';
 
 function resolveProgramId(): number | null {
   if (typeof window === 'undefined') return null;
@@ -224,7 +225,7 @@ export default function EditProgramPage() {
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-6">
           <Link href="/programs?tab=community" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            ← Назад к программам
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Назад к программам
           </Link>
         </div>
 

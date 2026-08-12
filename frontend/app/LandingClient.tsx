@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../lib/api';
 import { useT } from '../lib/useT';
 import Leaderboard from '../components/Leaderboard';
+import TakChevron from '../components/TakChevron';
 import Tak from '../components/Tak';
 
 interface Stats {
@@ -342,7 +343,7 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
             <p className="text-xs text-gray-500 leading-relaxed">{t.premiumBody}</p>
           </div>
           <Link href="/pricing" className="shrink-0 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors whitespace-nowrap">
-            {t.premiumCta}
+            {t.premiumCta} <TakChevron size={10} className="inline-block align-[-1px]" />
           </Link>
         </div>
       </div>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import { BACKEND_URL, getToken, enrollProgram, unenrollProgram } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import TakChevron from '../../../components/TakChevron';
 import { renderAccented } from '../../../lib/renderAccented';
 
 interface SubcategoryMeta {
@@ -170,7 +171,7 @@ export default function ProgramDetailPage() {
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="mb-6">
           <Link href="/programs" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            ← {tr.programs.title}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.programs.title}
           </Link>
         </div>
 
