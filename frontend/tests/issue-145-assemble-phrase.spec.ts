@@ -136,7 +136,7 @@ test.describe('Stage-1 assemble-phrase exercise (both directions)', () => {
     await expect(page.getByText('1 ✗')).toBeVisible();
 
     // Continue → progress POST carries quality 1 + the first misplaced LT word
-    await page.getByRole('button', { name: 'Понял, дальше →' }).click();
+    await page.getByRole('button', { name: 'Понял, дальше' }).click();
     await expect.poll(() => bodies.length).toBeGreaterThan(0);
     expect(bodies[0]).toMatchObject({ quality: 1, stage_completed: 1, mistake_word: 'Aš' });
 
@@ -165,7 +165,7 @@ test.describe('Stage-1 assemble-phrase exercise (both directions)', () => {
     // Wrong feedback shows the direction's target — the translation, not the LT text
     await expect(page.locator('.text-red-700', { hasText: RU_TEXT })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Понял, дальше →' }).click();
+    await page.getByRole('button', { name: 'Понял, дальше' }).click();
     await expect.poll(() => bodies.length).toBeGreaterThan(0);
     expect(bodies[0]).toMatchObject({ quality: 1, stage_completed: 1 });
     expect(bodies[0]).not.toHaveProperty('mistake_word');
@@ -229,7 +229,7 @@ test.describe('Stage-1 assemble-phrase exercise (both directions)', () => {
     // Select a wrong MCQ option to trigger the mistake re-queue
     const wrongOption = page.getByRole('button', { name: SHORT_PHRASE.mcq_distractors[0], exact: true });
     await wrongOption.click();
-    await page.getByRole('button', { name: 'Понял, дальше →' }).click();
+    await page.getByRole('button', { name: 'Понял, дальше' }).click();
 
     // No tiles in either direction — gap_retry falls back to typing, not assembly
     await expect(page.getByTestId('phrase-session-stage1-type')).toBeVisible({ timeout: 3000 });
@@ -255,7 +255,7 @@ test.describe('Stage-1 assemble-phrase exercise (both directions)', () => {
 
     // "Forgot" the full phrase → wrong result with no typed attempt, then continue
     await page.getByTestId('forgot-btn').click();
-    await page.getByRole('button', { name: 'Понял, дальше →' }).click();
+    await page.getByRole('button', { name: 'Понял, дальше' }).click();
 
     // Re-queued as a stage2_retry: only the to-LT assembly (never from-LT/translation)
     await expect(page.getByTestId('phrase-session-stage1-assemble-to-lt')).toBeVisible({ timeout: 3000 });
@@ -269,8 +269,8 @@ test.describe('Stage-1 assemble-phrase exercise (both directions)', () => {
     // Then type the blanked word
     await expect(page.getByTestId('phrase-session-stage1-type')).toBeVisible({ timeout: 3000 });
     await page.getByPlaceholder(/./).fill(STAGE2_PHRASE.blank_word);
-    await page.getByRole('button', { name: '→' }).click();
-    await page.getByRole('button', { name: 'Дальше →' }).click();
+    await page.getByRole('button', { name: 'Отправить' }).click();
+    await page.getByRole('button', { name: 'Дальше' }).click();
 
     // Drill complete → falls through to the real stage-2 full-phrase retype
     await expect(page.getByTestId('phrase-session-stage2')).toBeVisible({ timeout: 3000 });

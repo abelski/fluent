@@ -1098,6 +1098,7 @@ export default function PhraseSession({
                 />
                 <button
                   onClick={handleWordSubmit}
+                  aria-label="Отправить"
                   className="px-5 py-4 rounded-xl bg-purple-600 text-white text-base font-medium hover:bg-purple-700 transition-colors"
                 >
                   <TakChevron size={14} />

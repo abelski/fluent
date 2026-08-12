@@ -103,8 +103,8 @@ test.describe('Grammar page — lesson levels', () => {
     await page.waitForSelector('.grid button', { timeout: 5000 });
     const card = page.locator('.grid button').filter({ hasText: levelLabel }).first();
     await card.click();
-    // Wait for exercise screen: "← К урокам" back button is unique to exercise view
-    await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 8000 });
+    // Wait for exercise screen: "К урокам" back button is unique to exercise view
+    await expect(page.getByText('К урокам')).toBeVisible({ timeout: 8000 });
   }
 
   test('advanced lesson collapsible hint can be toggled', async ({ page }) => {
@@ -217,7 +217,7 @@ test.describe('Grammar progression — locking', () => {
 
     // Start lesson 1
     await page.locator('.grid button').first().click();
-    await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('К урокам')).toBeVisible({ timeout: 5000 });
 
     // Answer both tasks correctly
     for (const answer of ['namą', 'knygą']) {
@@ -229,7 +229,7 @@ test.describe('Grammar progression — locking', () => {
 
     // Done screen should show pass banner and next lesson button
     await expect(page.getByText(/Пройдено/)).toBeVisible({ timeout: 3000 });
-    await expect(page.getByText('Следующий урок →')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Следующий урок' })).toBeVisible();
   });
 
   test('failing lesson shows retry recommendation, no next lesson button', async ({ page }) => {
@@ -259,7 +259,7 @@ test.describe('Grammar progression — locking', () => {
     await page.locator('[data-testid="subcategory-toggle"]').first().click();
     await page.waitForSelector('.grid button', { timeout: 5000 });
     await page.locator('.grid button').first().click();
-    await expect(page.getByText('← К урокам')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('К урокам')).toBeVisible({ timeout: 5000 });
 
     // Answer both tasks wrong, then dismiss each (wrong answers no longer auto-advance)
     for (let i = 0; i < 2; i++) {
@@ -271,7 +271,7 @@ test.describe('Grammar progression — locking', () => {
 
     // Done screen should show fail banner, no "Следующий урок" button
     await expect(page.getByText(/Результат ниже 75%/)).toBeVisible({ timeout: 3000 });
-    await expect(page.getByText('Следующий урок →')).not.toBeVisible();
+    await expect(page.getByText('Следующий урок')).not.toBeVisible();
   });
 });
 
