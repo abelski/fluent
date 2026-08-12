@@ -14,6 +14,7 @@ import {
   type WordSetWithId,
 } from '../../../../../lib/api';
 import { translateText } from '../../../../../lib/translate';
+import PageMascot from '../../../../../components/PageMascot';
 
 function resolveProgramId(): number | null {
   if (typeof window === 'undefined') return null;
@@ -227,7 +228,10 @@ export default function EditProgramPage() {
           </Link>
         </div>
 
-        <h1 className="font-headline text-2xl font-bold mb-6">Редактировать программу</h1>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <h1 className="font-headline text-2xl font-bold">Редактировать программу</h1>
+          <PageMascot phrase="Kuriame!" className="hidden sm:block shrink-0" />
+        </div>
 
         {/* Program metadata */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 flex flex-col gap-5 mb-6">

@@ -10,6 +10,8 @@ import {
   type GrammarProgramSummary,
 } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+import PageMascot from '../../../../components/PageMascot';
+import PageShell from '../../components/PageShell';
 
 const DIFFICULTY_COLORS: Record<number, string> = {
   1: 'bg-emerald-100 text-emerald-700',
@@ -56,8 +58,7 @@ export default function GrammarProgramsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F5F7] text-gray-900">
-      <div className="max-w-4xl mx-auto px-6 py-8">
+    <PageShell>
         <div className="flex items-center gap-3 mb-1">
           <Link
             href="/dashboard/grammar"
@@ -66,12 +67,17 @@ export default function GrammarProgramsPage() {
             {tr.grammar.programsBack}
           </Link>
         </div>
-        <h1 className="font-headline text-3xl font-bold mb-1">{tr.grammar.programsTitle}</h1>
-        <p className="text-gray-400 mb-8">{tr.grammar.programsSubtitle}</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[32px] font-bold mb-1.5">{tr.grammar.programsTitle}</h1>
+            <p className="text-[15px] text-muted mb-4">{tr.grammar.programsSubtitle}</p>
+          </div>
+          <PageMascot phrase="Pasirinkime!" className="hidden sm:block shrink-0" />
+        </div>
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : programs.length === 0 ? (
           <p className="text-gray-400 text-center py-12">{tr.grammar.programsEmpty}</p>
@@ -80,7 +86,7 @@ export default function GrammarProgramsPage() {
             {programs.map((p) => (
               <div
                 key={p.id}
-                className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"
+                className="bg-white border border-line rounded-[14px] p-4"
                 data-testid="grammar-program-card"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -119,7 +125,6 @@ export default function GrammarProgramsPage() {
             ))}
           </div>
         )}
-      </div>
-    </main>
+    </PageShell>
   );
 }

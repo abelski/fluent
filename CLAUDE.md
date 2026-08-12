@@ -53,7 +53,13 @@
 # Way of Working
 
 - Plan before making changes
-- All pages must be visually consistent
+- All pages must be visually consistent. In particular, the 5 top-nav dashboard pages — Слова
+  (`/dashboard/lists`), Фразы (`/dashboard/phrases`), Грамматика (`/dashboard/grammar`), Практика
+  (`/dashboard/practice`), Статьи (`/dashboard/articles`) — are one product surface, not five
+  independent features. Before adding or restyling UI on any one of them, check how the other four
+  already do it (shell, hero card, card borders/shadows, title/subtitle, "browse all" link color)
+  and match that, rather than inventing a new pattern locally. See "PageShell" in the component
+  library for the current shared shell.
 - All validation must be server-side
 - Keep solutions as simple as possible; avoid over-engineering
 - Think about performance
@@ -88,6 +94,10 @@ Rules:
 - After changing shared shell or tokens, run `frontend/tests/design-system-parity.spec.ts`.
 - When you introduce or change a shared component/pattern, **update the component library in the
   same change** — it is not a follow-up task.
+- `design-system-parity.spec.ts` is the **executable** source of truth for the shared shell across
+  the 5 top-nav pages, not just documentation to read — its `NAV_PAGES` list is what actually
+  guards them from drifting apart again. Add a page's URL there when it joins that shell, and treat
+  a failure in it as a real regression, not a test to relax.
 
 # Required Post-Implementation Steps
 

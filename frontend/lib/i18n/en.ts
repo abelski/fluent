@@ -217,6 +217,9 @@ const en: Translations = {
     enrolledBadge: 'Enrolled',
     emptyTitle: "You haven't enrolled in any programs yet",
     emptyLink: 'Browse programs',
+    statsPassed: 'tests passed',
+    statsOf: 'of',
+    categoriesPlural: { one: 'category', few: 'categories', many: 'categories' },
     constitution: {
       title: 'Lithuanian Constitution',
       subtitle: 'Permanent residency exam preparation — 20 multiple-choice questions',

@@ -217,6 +217,9 @@ const ru: Translations = {
     enrolledBadge: 'Записан',
     emptyTitle: 'Вы ещё не выбрали ни одной программы',
     emptyLink: 'Перейти к программам',
+    statsPassed: 'тестов пройдено',
+    statsOf: 'из',
+    categoriesPlural: { one: 'категория', few: 'категории', many: 'категорий' },
     constitution: {
       title: 'Конституция Литвы',
       subtitle: 'Подготовка к экзамену на ПМЖ — 20 вопросов с выбором ответа',

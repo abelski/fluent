@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { BACKEND_URL } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import type { ArticleSummary } from './types';
+import PageMascot from '../../../components/PageMascot';
+import PageShell from '../components/PageShell';
 
 export default function ArticlesList({ initialArticles }: { initialArticles: ArticleSummary[] }) {
   const { tr, lang } = useT();
@@ -21,14 +23,14 @@ export default function ArticlesList({ initialArticles }: { initialArticles: Art
   }, []);
 
   return (
-    <main className="bg-slate-50 text-gray-900 min-h-screen">
-      <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-      </div>
-
-      <div className="relative z-10 max-w-3xl mx-auto px-6 py-8">
-        <h1 className="font-headline text-3xl font-bold mb-2">{tr.articles.title}</h1>
-        <p className="text-gray-400 mb-8">{tr.articles.subtitle}</p>
+    <PageShell>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[32px] font-bold mb-1.5">{tr.articles.title}</h1>
+            <p className="text-[15px] text-muted mb-4">{tr.articles.subtitle}</p>
+          </div>
+          <PageMascot phrase="Paskaitykime!" className="hidden sm:block shrink-0" />
+        </div>
 
         {loading && (
           <div className="flex justify-center py-16">
@@ -47,7 +49,7 @@ export default function ArticlesList({ initialArticles }: { initialArticles: Art
               <Link
                 key={article.slug}
                 href={`/dashboard/articles/${article.slug}`}
-                className="group block rounded-2xl border border-gray-900 bg-white p-5 hover:bg-gray-50 transition-colors"
+                className="group block rounded-[14px] border border-line bg-white p-5 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -59,7 +61,7 @@ export default function ArticlesList({ initialArticles }: { initialArticles: Art
                         {article.tags.map((tag) => (
                           <span
                             key={tag}
-                            className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-gray-900 rounded-full"
+                            className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full"
                           >
                             {tag}
                           </span>
@@ -81,7 +83,6 @@ export default function ArticlesList({ initialArticles }: { initialArticles: Art
             );
           })}
         </div>
-      </div>
-    </main>
+    </PageShell>
   );
 }

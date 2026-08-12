@@ -68,7 +68,11 @@ letters are never green — see the component library's Logo section for the `<a
 | nav tab pills + segmented RU/EN | `frontend/components/Header.tsx` |
 | footer (transparent on the gradient, 1180px, 13px) | `frontend/components/Footer.tsx` |
 | "Нашёл ошибку?" FAB | `frontend/components/MistakeButton.tsx` |
-| TAK mascot | `frontend/components/Tak.tsx` |
+| TAK mascot (SVG poses) | `frontend/components/Tak.tsx` |
+| Page mascot (bubble + standard size + mood) | `frontend/components/PageMascot.tsx` |
+| Mascot mood scale | `frontend/lib/mascotMood.ts` |
+| Top-nav page shell (`.page` container, no blur/shadow) | `frontend/app/dashboard/components/PageShell.tsx` |
+| Hero stat card | `frontend/app/dashboard/components/ProgressStatCard.tsx` |
 
 The tab strip scrolls horizontally (prototype `.navtabs`) but stays desktop-only; below `sm` the
 hamburger dropdown takes over. The prototypes have no hamburger, but they were only drawn at desktop
@@ -76,21 +80,68 @@ width — the mobile menu is a deliberate app-only affordance.
 
 ## TAK
 
-`Tak.tsx` implements the four poses named in the design system: `idle`, `talking`, `stonks`
-(progress), `grin` (celebration/completion). Celebration poses animate faster — `grin` carries
-`floatDur: '2s'` / `swingDur: '0.7s'` against the resting `2.6s` / `1.8s`.
+`Tak.tsx` implements nine poses. Four are the originals (`idle`, `talking`, `stonks`, `grin`); the
+five mood poses — `hype`, `galaxy`, `sus`, `fine`, `lost` — are ported verbatim (limb rotations, eye
+shapes, mouth paths, animation timings) from the `emotions` array in
+`design system/Tak Mascot Standalone.html`. Each pose can override the whole-figure animation via
+`anim` and the limb swing via `swingDur`; keyframes (`tak-float`, `tak-bounce`, `tak-shake`,
+`tak-pulse`, `tak-wobble`) live in `frontend/app/globals.css`. `sus` is deliberately motionless.
+
+Extract the source poses with:
+
+```
+python3 -c "import re,json;s=open('design system/Tak Mascot Standalone.html').read();print(json.loads(re.search(r'__bundler/template\"[^>]*>(.*?)</script>',s,re.S).group(1)))"
+```
+
+**Render `PageMascot`, not `Tak`.** `PageMascot.tsx` owns the standard 128px size, the speech bubble
+and the mood→pose mapping, and every page uses exactly one. Raw `Tak` is only for the two `bare`
+icon call sites.
 
 `Tak` also takes a `bare` prop — body and eyes only, no limbs, mouth or float. That is the
-treatment the prototypes use for the bug-report FAB, where TAK sits inside a control rather than
-standing on his own. Do not use the full mascot there.
+treatment the prototypes use for a mascot sitting *inside a control*: the bug-report FAB
+(`MistakeButton.tsx`) and the landing streak ring (`LandingClient.tsx`). Both are exempt from the
+size rule and the one-mascot-per-page rule. Do not use the full mascot there.
 
 `Tak` must not set inline `display`/`flex-shrink` — inline styles outrank utility classes, so a
 `hidden sm:block` sibling would still render. Scale a single instance with `w-*`/`h-*` classes
 instead of rendering one mascot per breakpoint.
 
+### Mood
+
+`lib/mascotMood.ts` is a plain hook, not a context — mood is per session and every consumer already
+owns the mascot's render, so a provider would be over-engineering. `useMascotMood()` returns
+`{ mood, recordAnswer(correct), reset() }`; `mood` starts at 0, moves ±1 per answer and clamps to
+±3. A question timeout counts as wrong. Nothing is persisted: leaving the session or reloading
+returns TAK to neutral, and pages outside a session pass no `mood` at all.
+
+Wired into `QuizSession.tsx` (five answer handlers + the timeout effect), `PhraseSession.tsx`
+(assemble / MCQ / type / syllable / forgot / timeout) and `app/dashboard/grammar/page.tsx`
+(`checkAnswer`, reset in `startLesson`). Done screens pass `Math.max(mood, 1)` so a passed lesson
+never shows a sad TAK.
+
 Decorative emoji are **retired** in favour of TAK. The session-summary screen previously rendered
-😊/😢; it now renders `<Tak pose="grin|talking" size={150} />`. Functional icons (locks,
+😊/😢; it now renders `<PageMascot phrase="Valio!" mood={…} />`. Functional icons (locks,
 checkmarks, arrows) are *not* replaced.
+
+## PageShell — the 5 top-nav dashboard pages
+
+`PageShell.tsx` wraps Слова, Фразы, Грамматика, Практика and Статьи in the same shell: `.page`
+(1180px), no decorative blur, no drop shadow. Historically only `/dashboard/grammar` and
+`/dashboard/lists` used this — `design-system-parity.spec.ts` protected it there first, with tests
+named "page content is constrained to the 1180px container" and "decorative blur blobs are gone".
+Фразы/Практика/Статьи were on an older 896px/blur/shadow shell and have been migrated onto
+`PageShell`; that older shell is retired, don't reintroduce it.
+
+Two orderings, not one: Слова/Фразы/Практика put the hero `ProgressStatCard` *above* the title
+(card → banner → title+subtitle → content) — guarded by `tests/stats-card-alignment.spec.ts`
+("stats card is rendered above the page title"). Грамматика keeps title+subtitle → banner → hero →
+content instead, because its beta-notice banner reads better directly under the title. Both are
+intentional; don't introduce a third ordering. Every page ends the same way: main content → the
+"browse all" link (`text-emerald-600 hover:text-emerald-700`). The mascot renders inside the hero's
+`icon` prop; on
+pages where the hero can be absent in a common state (Грамматика/Практика with no enrolled
+content), the mascot falls back to beside the title so exactly one is always visible. Статьи has no
+hero at all, so its mascot always sits beside the title.
 
 ## Conventions worth keeping
 
@@ -107,6 +158,11 @@ checkmarks, arrows) are *not* replaced.
 - **Mobile hamburger** — kept (see above).
 - **FAB label on mobile** — hidden below `sm`, leaving the mascot as a round icon button. The
   prototype keeps the label at 13px; the app hides it to protect the tap target on narrow screens.
+- **Mood 0 renders `talking`, not `IDLE`** — every page mascot now carries a bubble, so the neutral
+  state should look like he is speaking. `idle` is kept for the bubble-less `bare` call sites.
+- **Grammar's 3-card stat grid collapsed into one `ProgressStatCard`** — matches the hero-card
+  pattern Слова/Фразы already used. The standalone "tip" card's encouragement copy moved into the
+  hero's milestone caption rather than being dropped.
 - **Secondary label contrast** — the prototypes set the stage label / part-of-speech hint at
   `#b0b4ba`, and the app had drifted lighter still to `gray-300` `#d1d5db`. Both were reported
   unreadable, so these labels use `#5b6067` (the design system's own darker secondary, from its
@@ -116,3 +172,5 @@ checkmarks, arrows) are *not* replaced.
 
 `frontend/tests/design-system-parity.spec.ts` asserts the gradient, the brand green, the full-bleed
 navbar, the 1180px container, the segmented language pill, and the absence of decorative blur blobs.
+The container and blur-blob checks run across all 5 top-nav pages (`NAV_PAGES` in that spec) — add a
+new top-nav page's URL there when one is added, so the shell can't silently drift again.

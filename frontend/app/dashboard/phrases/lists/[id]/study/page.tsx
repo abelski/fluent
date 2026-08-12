@@ -11,7 +11,7 @@ import {
   type PhraseStudyItem,
 } from '../../../../../../lib/api';
 import PhraseSession from '../../../../components/PhraseSession';
-import Tak from '../../../../../../components/Tak';
+import PageMascot from '../../../../../../components/PageMascot';
 import { useT } from '../../../../../../lib/useT';
 import { getPhraseStarLevel, setPhraseStarLevel } from '../../../../../../lib/starLevel';
 
@@ -72,7 +72,7 @@ function MyPhraseListStudyContent() {
     return (
       <main className="flex-1 text-gray-900 flex flex-col items-center justify-center px-8 pt-5 pb-20" data-testid="phrase-level-complete">
         <div className="relative z-10 flex flex-col items-center text-center max-w-sm w-full gap-5">
-          <Tak pose="grin" size={150} />
+          <PageMascot phrase="Valio!" mood={1} />
           <h1 className="text-[26px] font-bold">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
           <p className="text-[15px] text-muted mb-2">{tr.study.levelCompleteBody}</p>
           <div className="flex flex-col gap-3 w-full">

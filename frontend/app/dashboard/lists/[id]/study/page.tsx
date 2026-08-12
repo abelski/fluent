@@ -7,7 +7,7 @@ import { BACKEND_URL, getToken, resolveListId } from '../../../../../lib/api';
 import { useT } from '../../../../../lib/useT';
 import { getStarLevel, setStarLevel } from '../../../../../lib/starLevel';
 import QuizSession, { type Word } from '../../../components/QuizSession';
-import Tak from '../../../../../components/Tak';
+import PageMascot from '../../../../../components/PageMascot';
 
 export default function QuizPage() {
   const { id: _id } = useParams<{ id: string }>();
@@ -113,7 +113,7 @@ export default function QuizPage() {
     return (
       <main className="flex-1 text-gray-900 flex flex-col items-center justify-center px-8 pt-5 pb-20">
         <div className="relative z-10 flex flex-col items-center text-center max-w-sm w-full gap-5">
-          <Tak pose="grin" size={150} />
+          <PageMascot phrase="Valio!" mood={1} />
           <h1 className="text-[26px] font-bold">{'★'.repeat(currentLevel)} {tr.study.levelComplete}</h1>
           <p className="text-[15px] text-muted mb-2">{tr.study.levelCompleteBody}</p>
           <div className="flex flex-col gap-3 w-full">

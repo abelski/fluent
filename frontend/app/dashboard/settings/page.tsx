@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, getSettings, updateSettings, getPhrasesSettings, updatePhrasesSettings, type UserSettings, type PhrasesSettings } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import PageMascot from '../../../components/PageMascot';
 
 type Complexity = 'easy' | 'medium' | 'hard';
 type Tab = 'vocabulary' | 'grammar' | 'practice' | 'phrases' | 'other';
@@ -105,7 +106,10 @@ export default function SettingsPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-sm">
-        <h1 className="font-headline text-2xl font-bold mb-6">{tr.settings.title}</h1>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <h1 className="font-headline text-2xl font-bold">{tr.settings.title}</h1>
+          <PageMascot phrase="Sveikas!" className="hidden sm:block shrink-0" />
+        </div>
 
         {/* Tab bar */}
         <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1" data-testid="settings-tabs">

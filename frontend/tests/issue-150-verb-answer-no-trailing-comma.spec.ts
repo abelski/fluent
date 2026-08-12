@@ -35,8 +35,20 @@ test.describe('Issue #150 — verb answers carry no extraction artifacts', () =>
         for (const task of tasks) {
           const where = `lesson ${lessonId}, ${task.verb_infinitive} (${task.person_label})`;
 
-          // The reported defect: a comma inside the expected answer makes it ungradeable.
-          expect(task.answer, `${where}: answer contains a comma`).not.toContain(',');
+          // The reported defect: a TRAILING comma ("yrà,") makes the answer ungradeable,
+          // because normalizeLt strips stress accents but not punctuation.
+          //
+          // Narrowed from "contains no comma at all" when issue #151 re-read the PDF: the
+          // book prints two present paradigms for bū́ti in one cell ("esù, būnù"), and the
+          // old whitespace-based extraction had been truncating that to "esù,". The comma
+          // there separates alternates, and isAnswerMatch now splits on it, so an interior
+          // comma is legitimate and gradeable — a trailing one still is not.
+          expect(task.answer, `${where}: answer has a trailing comma`).not.toMatch(/,\s*$/);
+
+          // Every comma must be a real alternate separator, i.e. have a form on both sides.
+          for (const part of task.answer.split(',')) {
+            expect(part.trim(), `${where}: empty alternate around a comma`).not.toBe('');
+          }
 
           // A comma-only fix would leave this behind, and it fails grading the same way.
           expect(task.answer, `${where}: answer contains stray U+0307`)

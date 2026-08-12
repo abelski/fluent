@@ -12,6 +12,7 @@
 import json
 import re
 import random
+import unicodedata
 from pathlib import Path
 
 from sqlmodel import Session, select
@@ -368,6 +369,91 @@ def _clean_form(text: str | None) -> str:
     return _TRAILING_COMMA_RE.sub("", text.strip()).replace(_STRAY_DOT_ABOVE, "i")
 
 
+# ── Corrupt-form guard (issues #151/#153) ─────────────────────────────────────
+# The verb PDF extractor mis-segments rows whose stress marks are zero-width: the
+# mark splits into its own token, shifting every later column right. The result is
+# forms that are only a combining accent ("̃"), truncated stems ("kalb̃"), bare
+# endings ("ame"), or a form belonging to a different tense. Those must never be
+# served as a question. The guard hides bad data; #151 repairs it at the source.
+
+_TONE_MARKS = frozenset("̀́̃")  # grave, acute, tilde
+# Letters a Lithuanian tone mark can legally sit on. After NFD, ė→e, ų→u, ū→u,
+# so only base letters appear here; l/m/n/r carry the mark in mixed diphthongs.
+_TONE_CARRIERS = frozenset("aeiouy" + "lmnr")
+# Conditional endings, folded to base letters (see _base_letters). Reflexive
+# variants included; the mood is fully regular off the infinitive stem.
+_COND_ENDINGS = (
+    "ciau", "ciausi", "tu", "tusi", "tum", "tumei", "tumeis", "tumeisi",
+    "tume", "tumes", "tumeme", "tumemes", "tute", "tutes", "tumete", "tumetes",
+)
+
+
+def _base_letters(text: str) -> str:
+    """Letters only — combining marks and whitespace removed."""
+    return "".join(
+        c for c in unicodedata.normalize("NFD", text)
+        if not unicodedata.combining(c) and not c.isspace()
+    )
+
+
+def _verb_stem(infinitive: str) -> str:
+    """Infinitive minus its -ti/-tis ending, folded to base letters."""
+    base = _base_letters(infinitive).lower()
+    for suffix in ("tis", "ti"):
+        if base.endswith(suffix):
+            return base[: -len(suffix)]
+    return base
+
+
+def _has_misplaced_tone_mark(form: str) -> bool:
+    """True if a tone mark sits on a letter that cannot carry one.
+
+    Catches the displaced-tilde class ("kalbės̃" for "kalbė̃s"), where every
+    letter survived extraction but the mark landed one position too far right.
+    """
+    last_base = ""
+    for char in unicodedata.normalize("NFD", form):
+        if unicodedata.combining(char):
+            if char in _TONE_MARKS and last_base and last_base not in _TONE_CARRIERS:
+                return True
+        else:
+            last_base = char.lower()
+    return False
+
+
+def _is_usable_form(form: str, infinitive: str, tense_key: str, conj: dict) -> bool:
+    """Reject a conjugated form that extraction corrupted.
+
+    conj is the *whole* conjugations dict for the verb, so a form can be checked
+    against the other tenses it may have been shifted in from.
+    """
+    letters = _base_letters(form)
+    # A. Nothing but combining marks — the lone-accent cells.
+    if not letters:
+        return False
+    # B. Shorter than the verb's own stem — truncation ("kalb̃") or a bare ending.
+    if len(letters) < len(_verb_stem(infinitive)):
+        return False
+    # C. A tone mark on a letter that cannot carry one.
+    if _has_misplaced_tone_mark(form):
+        return False
+    # D. The identical value also appears under a different tense of this verb.
+    for other_key, persons in conj.items():
+        if other_key == tense_key or not isinstance(persons, dict):
+            continue
+        if form in persons.values():
+            return False
+    # E. A conditional that does not end like a conditional — a past-tense form
+    #    parked in the conditional column, which A–D cannot see.
+    if tense_key == "conditional":
+        alternates = [a.strip() for a in form.split("/") if a.strip()]
+        if not any(
+            _base_letters(alt).lower().endswith(_COND_ENDINGS) for alt in alternates
+        ):
+            return False
+    return True
+
+
 def _generate_verb_conjugation_tasks(
     tense_key: str, count: int, session: Session, program_key: str | None = "sekmes"
 ) -> list[dict]:
@@ -407,9 +493,12 @@ def _generate_verb_conjugation_tasks(
         if not form:
             continue
         # Skip imperative aš (no form)
+        all_conj = json.loads(verb.conjugations)
+        if not _is_usable_form(form, verb.infinitive, tense_key, all_conj):
+            continue  # #151/#153 — corrupt extraction, never present it as a question
         tasks.append({
             "type": "verb_conjugation",
-            "verb_infinitive": verb.infinitive,
+            "verb_infinitive": _clean_form(verb.infinitive),
             "translation_ru": _clean_form(verb.translation_ru),
             "tense_label": tense_label,
             "person_label": person,

@@ -199,6 +199,9 @@ export interface Translations {
     enrolledBadge: string;
     emptyTitle: string;
     emptyLink: string;
+    statsPassed: string;
+    statsOf: string;
+    categoriesPlural: PluralForms;
     constitution: {
       title: string;
       subtitle: string;

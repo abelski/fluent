@@ -12,6 +12,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 import pdfplumber
@@ -24,6 +25,239 @@ FIRST_VERB_PAGE = 34   # 0-indexed
 LAST_VERB_PAGE = 398   # 0-indexed (365 verbs = pages 34-398)
 
 PERSONS_ORDER = ["aš", "tu", "jis", "mes", "jūs"]
+
+
+# ── Char-level page reader ────────────────────────────────────────────────────
+#
+# The book sets Lithuanian stress marks as ZERO-WIDTH glyphs positioned by
+# absolute x rather than by advance width. page.extract_text() sorts by x and
+# inserts a space wherever the gap exceeds x_tolerance, so a stressed "i"
+# ("i" + U+0307 + U+0303) breaks into three tokens. Splitting such a line on
+# whitespace yields spurious tokens, and since _build_conjugations maps token
+# POSITION to tense, every later column shifts one to the right — the accent
+# lands in the "tu" cell and the neighbouring tense's form lands in the next
+# column (issue #151). A second variant has a real U+0020 between a letter and
+# its mark, splitting the word itself ("kabi̇ǹ a" → issue #153).
+#
+# Both are segmentation failures, not data loss: the glyphs are all present.
+# So instead of splitting text, read the chars, attach every mark to the letter
+# cluster it sits on, and cut the row into cells at the page's real whitespace
+# corridors.
+
+NOMINAL_CUTS = [95.0, 210.0, 315.0]
+
+
+def _is_mark(ch: dict) -> bool:
+    """A combining mark, or any zero-width non-space glyph (the stress marks)."""
+    text = ch["text"]
+    if len(text) == 1 and unicodedata.combining(text):
+        return True
+    return (ch["x1"] - ch["x0"]) <= 0.01 and text.strip() != ""
+
+
+def _group_lines(chars: list[dict], ytol: float = 4.0) -> list[list[dict]]:
+    """Agglomerative clustering on `top`.
+
+    A person label sits ~0.8pt above its forms and marks up to ~1pt off, while
+    consecutive rows are ~13pt apart. Bucketing by round(top/tol) would split a
+    row whenever it straddled a bucket boundary; merging by distance does not.
+    """
+    if not chars:
+        return []
+    ordered = sorted(chars, key=lambda c: c["top"])
+    lines = [[ordered[0]]]
+    for ch in ordered[1:]:
+        if ch["top"] - lines[-1][-1]["top"] <= ytol:
+            lines[-1].append(ch)
+        else:
+            lines.append([ch])
+    return lines
+
+
+# Letters a Lithuanian tone mark can sit on: any vowel, plus l/m/n/r in mixed
+# diphthongs. Compared after stripping diacritics, so ė/ų/ū fold to e/u/u.
+_TONE_CARRIERS = frozenset("aeiouy" + "lmnr")
+
+
+def _mark_position(letters: list[dict], mark: dict) -> int:
+    """Index at which to insert a mark among a cluster's letters.
+
+    The mark glyph is zero-width and drawn near the right of its letter, but
+    how near depends on the glyph's width: for a wide "ė" (4.88pt) it lands
+    ~1pt INSIDE the box, while for a narrow "i" (3.06pt) it lands ~0.03pt PAST
+    it, inside the following letter. So neither "the box containing it" nor
+    "the last box ending before it" works for both — the first yields "lij̀o"
+    for "lìjo", the second yields "kaĺbėti" for "kalbė́ti".
+
+    What holds in every observed case is that the anchor STARTS at least ~1pt
+    before the mark, and no later carrier does. That reproduces the book for
+    both widths: "kalbė́ti", "atsìliepiau", "kal̃ba", "lañko", "atsãko".
+
+    Lithuanian tone marks only sit on a vowel or on l/m/n/r (mixed diphthongs),
+    so consonants are skipped as anchors.
+    """
+    def is_carrier(ch: dict) -> bool:
+        base = "".join(
+            c for c in unicodedata.normalize("NFD", ch["text"])
+            if not unicodedata.combining(c)
+        ).lower()
+        return bool(base) and base[0] in _TONE_CARRIERS
+
+    carriers = [(i, ch) for i, ch in enumerate(letters) if is_carrier(ch)]
+    if carriers:
+        preceding = [pair for pair in carriers if pair[1]["x0"] <= mark["x0"] - 1.0]
+        if preceding:
+            return max(preceding, key=lambda pair: pair[1]["x0"])[0] + 1
+        return carriers[0][0] + 1
+    idx = 0
+    for i, ch in enumerate(letters):
+        if ch["x0"] <= mark["x0"] + 0.6:
+            idx = i + 1
+    return idx
+
+
+def _cluster_line(chars: list[dict], gap: float = 1.2) -> list[dict]:
+    """Group one line's chars into whitespace-delimited clusters, marks attached."""
+    letters, marks = [], []
+    for ch in chars:
+        if ch["text"].strip() == "":
+            continue  # literal space: a separator, never a mark anchor
+        if ch["text"] == "̇":
+            # The book draws the tittle of a stressed "i" as its own glyph, but
+            # "i" already carries one in Unicode. Drop it here rather than after
+            # composing, where it could otherwise attach to a neighbouring
+            # vowel and compose into a real character (a + U+0307 → "ȧ").
+            continue
+        (marks if _is_mark(ch) else letters).append(ch)
+
+    clusters: list[dict] = []
+    for ch in sorted(letters, key=lambda c: c["x0"]):
+        if clusters and ch["x0"] - clusters[-1]["x1"] <= gap:
+            clusters[-1]["chars"].append(ch)
+            clusters[-1]["x1"] = max(clusters[-1]["x1"], ch["x1"])
+        else:
+            clusters.append({"chars": [ch], "x0": ch["x0"], "x1": ch["x1"]})
+
+    for mark in marks:
+        if not clusters:
+            continue
+        best, best_dist = None, None
+        for cl in clusters:
+            if cl["x0"] - 1.0 <= mark["x0"] <= cl["x1"] + 1.5:
+                dist = 0.0
+            else:
+                dist = min(abs(mark["x0"] - cl["x0"]), abs(mark["x0"] - cl["x1"]))
+            if best_dist is None or dist < best_dist:
+                best, best_dist = cl, dist
+        best["chars"].insert(_mark_position(best["chars"], mark), mark)
+
+    for cl in clusters:
+        cl["text"] = "".join(c["text"] for c in cl["chars"])
+    return clusters
+
+
+def _normalize_form(text: str) -> str:
+    """Repair extraction artifacts and settle on NFC."""
+    # Compose first, so a decomposed "ė" becomes U+0117 and keeps its dot…
+    text = unicodedata.normalize("NFC", text)
+    # …then drop every remaining U+0307. The book draws the tittle of a stressed
+    # "i" as its own glyph, but "i" already carries one in Unicode, so what is
+    # left after composing is always the duplicate — in either mark order
+    # ("i" + U+0307 + U+0303 or "i" + U+0303 + U+0307).
+    text = text.replace("̇", "")
+    text = re.sub(r"\s*/\s*", " / ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return unicodedata.normalize("NFC", text)
+
+
+# Errata: cells the book itself prints wrong. Verified against the source PDF —
+# in each case the printed page repeats the neighbouring column's form, so no
+# re-reading of the page can recover the intended value.
+#   #118 lankýti — present "tu" printed as the past form "lankeĩ"
+#   #213 rašýti  — present "mes"/"jūs" printed as the past forms
+ERRATA: dict[int, dict[str, dict[str, str]]] = {
+    118: {"indicative_present": {"tu": "lankaĩ"}},
+    213: {"indicative_present": {"mes": "rãšome", "jūs": "rãšote"}},
+}
+
+
+def _apply_errata(verb: dict) -> None:
+    fixes = ERRATA.get(verb.get("number"))
+    if not fixes:
+        return
+    for tense, persons in fixes.items():
+        for person, form in persons.items():
+            verb["conjugations"].setdefault(tense, {})[person] = \
+                unicodedata.normalize("NFC", form)
+
+
+def _column_cuts(person_lines: list[list[dict]], min_gap: float = 3.0) -> list[float]:
+    """Column boundaries from the page's vertical whitespace corridors.
+
+    Spans are merged across all ten person rows first, so a gap present in only
+    one row (around the " / " of an alternate form) is filled in by the others
+    and never mistaken for a corridor. Take the three widest surviving gaps
+    rather than every gap above a fixed threshold: pages carrying a long verb
+    (atostogáuti) squeeze the real corridors below any threshold that would
+    still exclude intra-cell gaps on other pages.
+    """
+    spans = sorted((cl["x0"], cl["x1"]) for line in person_lines for cl in line)
+    if not spans:
+        return []
+    merged = [list(spans[0])]
+    for start, end in spans[1:]:
+        if start <= merged[-1][1] + 0.5:
+            merged[-1][1] = max(merged[-1][1], end)
+        else:
+            merged.append([start, end])
+    gaps = [
+        (merged[i + 1][0] - merged[i][1], (merged[i][1] + merged[i + 1][0]) / 2)
+        for i in range(len(merged) - 1)
+        if merged[i + 1][0] - merged[i][1] >= min_gap
+    ]
+    gaps.sort(key=lambda g: -g[0])
+    return sorted(centre for _, centre in gaps[:3])
+
+
+def _looks_like_person(clusters: list[dict]) -> bool:
+    head = clusters[0]["text"] if clusters else ""
+    return head in ("aš", "tu", "mes", "jūs") or head.startswith("jis")
+
+
+def read_page(page) -> tuple[list[tuple[str, list[str]]], list[str]]:
+    """Read one page into (person_rows, line_texts).
+
+    person_rows is [(person_label, [col1, col2, col3]), ...] in page order —
+    five rows for the first conjugation block, five for the second.
+    """
+    lines = [_cluster_line(chars) for chars in _group_lines(page.chars)]
+    lines = [cl for cl in lines if cl]
+    line_texts = [_normalize_form(" ".join(c["text"] for c in cl)) for cl in lines]
+
+    person_lines = [cl for cl in lines if _looks_like_person(cl)]
+    cuts = _column_cuts(person_lines)
+    if len(cuts) < 3:
+        cuts = NOMINAL_CUTS
+    cuts = cuts[:3]
+
+    rows: list[tuple[str, list[str]]] = []
+    for clusters in person_lines:
+        cells: list[list[str]] = [[] for _ in range(len(cuts) + 1)]
+        for cl in clusters:
+            col = sum(1 for cut in cuts if cl["x0"] > cut)
+            cells[col].append(cl["text"])
+        joined = [_normalize_form(" ".join(c)) for c in cells]
+        label = joined[0]
+        # On narrow pages the "jis, ji, jie, jos" label bleeds into column 1.
+        if label.startswith("jis"):
+            m = re.match(r"^jis,?\s*ji,?\s*jie,?\s*jos,?\s*(.*)$", label)
+            if m:
+                leftover = m.group(1).strip()
+                label = "jis, ji, jie, jos"
+                if leftover:
+                    joined[1] = _normalize_form(leftover + " " + joined[1])
+        rows.append((label, joined[1:]))
+    return rows, line_texts
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -51,38 +285,6 @@ def _parse_header(line: str):
     if len(parts) < 3:
         return None
     return parts[0], parts[1], parts[2], ru
-
-
-def _parse_person_row(line: str):
-    """
-    Parse a conjugation row line → (person_label, [form1, form2, ...]).
-    Handles 'jis, ji, jie, jos' multi-token person and 'X / Y' alternate forms.
-    """
-    tokens = line.split()
-    if not tokens:
-        return None
-
-    # Detect jis-row: first token ends with comma and second looks like "ji,"
-    if tokens[0] in ("jis,", "jie,") or (len(tokens) > 1 and tokens[1] == "ji,"):
-        person = "jis, ji, jie, jos"
-        form_tokens = tokens[4:]  # skip "jis, ji, jie, jos"
-    elif tokens[0] in ("aš", "tu", "mes", "jūs"):
-        person = tokens[0]
-        form_tokens = tokens[1:]
-    else:
-        return None
-
-    # Merge "X / Y" alternate form sequences into a single string
-    forms: list[str] = []
-    i = 0
-    while i < len(form_tokens):
-        if i + 2 < len(form_tokens) and form_tokens[i + 1] == "/":
-            forms.append(f"{form_tokens[i]} / {form_tokens[i + 2]}")
-            i += 3
-        else:
-            forms.append(form_tokens[i])
-            i += 1
-    return person, forms
 
 
 def _is_person_line(line: str) -> bool:
@@ -119,8 +321,14 @@ def _is_prefix_form_line(line: str) -> bool:
 
 # ── Main per-page parser ──────────────────────────────────────────────────────
 
-def parse_verb_page(text: str, page_num: int) -> dict | None:
-    lines = [ln.rstrip() for ln in text.splitlines() if ln.strip()]
+def parse_verb_page(line_texts: list[str], person_rows: list, page_num: int) -> dict | None:
+    """Assemble one verb from a page's reconstructed lines and its person rows.
+
+    Conjugations come from person_rows (column-accurate cells); everything else
+    — header, case governance, prefix forms, non-conjugated — is still read off
+    the reconstructed line texts by the state machine below.
+    """
+    lines = [ln.rstrip() for ln in line_texts if ln.strip()]
     if not lines:
         return None
 
@@ -139,11 +347,10 @@ def parse_verb_page(text: str, page_num: int) -> dict | None:
 
     # ── State machine ────────────────────────────────────────────────────────
     # Sections:
-    #   INIT → NUMBER → HEADER → BLOCK1 → BLOCK2 → BODY → NON_CONJ → DONE
+    #   INIT → NUMBER → HEADER → PERSONS → BODY → NON_CONJ → DONE
     state = "INIT"
 
-    block1_rows: list = []  # 5 rows: [person, pres, past_simple, conditional]
-    block2_rows: list = []  # 5 rows: [person, hab_past, future, (imperative)]
+    persons_seen = 0  # 10 person lines: 5 for block 1, then 5 for block 2
 
     current_case_q: str | None = None
     current_case_sentences: list = []
@@ -176,32 +383,19 @@ def parse_verb_page(text: str, page_num: int) -> dict | None:
             if parsed:
                 verb["infinitive"], verb["present_3p"], verb["past_3p"], verb["translation_ru"] = parsed
                 verb["is_reflexive"] = verb["infinitive"].endswith("tis") or verb["infinitive"].endswith("tisi")
-                state = "BLOCK1"
+                state = "PERSONS"
             i += 1
             continue
 
-        if state == "BLOCK1":
+        if state == "PERSONS":
             if _is_header_skip(stripped):
                 i += 1
                 continue
-            row = _parse_person_row(stripped)
-            if row:
-                block1_rows.append(row)
-                if len(block1_rows) == 5:
-                    state = "BLOCK2"
-            i += 1
-            continue
-
-        if state == "BLOCK2":
-            if _is_header_skip(stripped):
-                i += 1
-                continue
-            row = _parse_person_row(stripped)
-            if row:
-                block2_rows.append(row)
-                if len(block2_rows) == 5:
-                    # Build conjugations dict from both blocks
-                    _build_conjugations(verb, block1_rows, block2_rows)
+            if _is_person_line(stripped):
+                persons_seen += 1
+                if persons_seen == 10:
+                    _build_conjugations(verb, person_rows)
+                    _apply_errata(verb)
                     state = "BODY"
             i += 1
             continue
@@ -273,12 +467,17 @@ def parse_verb_page(text: str, page_num: int) -> dict | None:
     return verb if verb["infinitive"] else None
 
 
-def _build_conjugations(verb: dict, block1: list, block2: list):
+def _build_conjugations(verb: dict, person_rows: list):
+    """Map the ten person rows onto tenses.
+
+    Rows 0-4  (block 1): [present, past_simple, conditional]
+    Rows 5-9  (block 2): [habitual_past, future, imperative]
+
+    Cells come from the page's column corridors, so a cell is the whole form —
+    including "tegu X" imperatives and "X / Y" alternates — and column position
+    is authoritative rather than inferred from token order.
     """
-    Block 1 rows: person, [present, past_simple, conditional]
-    Block 2 rows: person, [habitual_past, future, (imperative)]
-    """
-    tense_map = {
+    tense_map: dict[str, dict] = {
         "indicative_present": {},
         "indicative_past_simple": {},
         "indicative_past_habitual": {},
@@ -287,28 +486,23 @@ def _build_conjugations(verb: dict, block1: list, block2: list):
         "imperative": {},
     }
     persons_label = ["aš", "tu", "jis, ji, jie, jos", "mes", "jūs"]
+    block1, block2 = person_rows[:5], person_rows[5:10]
 
-    for i, (person, forms) in enumerate(block1):
+    for i, (_person, cells) in enumerate(block1):
         p = persons_label[i]
-        if len(forms) >= 1:
-            tense_map["indicative_present"][p] = forms[0]
-        if len(forms) >= 2:
-            tense_map["indicative_past_simple"][p] = forms[1]
-        if len(forms) >= 3:
-            tense_map["conditional"][p] = forms[2]
+        for tense, col in (("indicative_present", 0),
+                           ("indicative_past_simple", 1),
+                           ("conditional", 2)):
+            if col < len(cells) and cells[col]:
+                tense_map[tense][p] = cells[col]
 
-    for i, (person, forms) in enumerate(block2):
+    for i, (_person, cells) in enumerate(block2):
         p = persons_label[i]
-        if len(forms) >= 1:
-            tense_map["indicative_past_habitual"][p] = forms[0]
-        if len(forms) >= 2:
-            tense_map["indicative_future"][p] = forms[1]
-        # Imperative: aš has none; jis row uses "tegu" + next token
-        if len(forms) >= 3:
-            imp = forms[2]
-            if imp == "tegu" and len(forms) >= 4:
-                imp = f"tegu {forms[3]}"
-            tense_map["imperative"][p] = imp
+        for tense, col in (("indicative_past_habitual", 0),
+                           ("indicative_future", 1),
+                           ("imperative", 2)):
+            if col < len(cells) and cells[col]:
+                tense_map[tense][p] = cells[col]
 
     verb["conjugations"] = tense_map
 
@@ -383,8 +577,8 @@ def main():
             if page_idx >= total_pages:
                 break
             page = pdf.pages[page_idx]
-            text = page.extract_text(x_tolerance=2, y_tolerance=2) or ""
-            verb = parse_verb_page(text, page_idx)
+            person_rows, line_texts = read_page(page)
+            verb = parse_verb_page(line_texts, person_rows, page_idx)
             expected_num = page_idx - FIRST_VERB_PAGE + 1
             if verb and verb["infinitive"]:
                 verbs.append(verb)

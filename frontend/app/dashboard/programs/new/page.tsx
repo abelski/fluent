@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BACKEND_URL, getToken, createCustomProgram, type WordPair, type WordSet } from '../../../../lib/api';
 import { translateText } from '../../../../lib/translate';
+import PageMascot from '../../../../components/PageMascot';
 
 function emptyWordSet(index: number): WordSet {
   return { title: `Набор ${index + 1}`, words: [{ front: '', back_ru: '', back_en: '' }] };
@@ -202,7 +203,10 @@ export default function NewProgramPage() {
           </Link>
         </div>
 
-        <h1 className="font-headline text-2xl font-bold mb-6">Создать программу</h1>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <h1 className="font-headline text-2xl font-bold">Создать программу</h1>
+          <PageMascot phrase="Kuriame!" className="hidden sm:block shrink-0" />
+        </div>
 
         {/* Program metadata */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 flex flex-col gap-5 mb-6">

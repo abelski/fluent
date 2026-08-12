@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { BACKEND_URL, getToken, getGrammarPrograms, unenrollGrammarProgram, type GrammarProgramSummary } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import { isAnswerMatch } from '../../../lib/normalizeLt';
-import Tak from '../../../components/Tak';
+import PageMascot from '../../../components/PageMascot';
+import { useMascotMood } from '../../../lib/mascotMood';
+import ProgressStatCard from '../components/ProgressStatCard';
+import PageShell from '../components/PageShell';
 
 interface GrammarRule {
   question: string;
@@ -160,7 +163,6 @@ function GrammarStatsBar({ lessons }: { lessons: Lesson[] }) {
   const { tr } = useT();
   const total = lessons.length;
   const passed = lessons.filter((l) => l.best_score_pct !== null && l.best_score_pct !== undefined && l.best_score_pct > 0.75).length;
-  const attempted = lessons.filter((l) => l.best_score_pct !== null && l.best_score_pct !== undefined).length;
   const pct = total > 0 ? Math.round((passed / total) * 100) : 0;
 
   if (total === 0) return null;
@@ -169,53 +171,18 @@ function GrammarStatsBar({ lessons }: { lessons: Lesson[] }) {
 
   return (
     <div className="mb-10">
-      <div className="grid grid-cols-1 min-[860px]:grid-cols-2 min-[1000px]:grid-cols-[1.1fr_1fr_1fr] gap-5 items-stretch">
-        {/* Tip card */}
-        <div className="rounded-[14px] bg-white border border-line py-5 px-6 flex items-center gap-4">
-          <Tak pose="stonks" size={72} className="shrink-0" />
-          <div>
-            <p className="font-bold text-[14.5px] mb-1">{tr.grammar.tipTitle}</p>
-            <p className="text-muted text-[13px] leading-[1.4]">
-              {remaining > 0 ? tr.grammar.tipBody.replace('{count}', String(remaining)) : tr.grammar.tipBodyDone}
-            </p>
-          </div>
-        </div>
-
-        {/* Lessons passed card */}
-        <div className="relative rounded-[14px] bg-white border border-line overflow-hidden p-6 flex items-center gap-4">
-          <div className="flex-1">
-            <div className="flex items-baseline gap-2">
-              <span className="text-[28px] font-bold text-gray-900">{passed}</span>
-              <span className="text-[13px] text-muted">{tr.grammar.statsPassed}</span>
-            </div>
-            <div className="mt-2.5">
-              <div className="h-1.5 bg-[#eef1ef] rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-600 transition-all duration-700" style={{ width: `${pct}%` }} />
-              </div>
-              <p className="text-xs text-faint mt-1.5">{passed} / {total} {tr.grammar.statsLessonsUnit}</p>
-            </div>
-          </div>
-          <span className="absolute top-4 right-5 text-[11px] text-emerald-600 bg-[#e9f6ee] px-2 py-[3px] rounded-full">
-            {tr.grammar.statsOf} {total}
-          </span>
-        </div>
-
-        {/* Progress card */}
-        <div className="relative rounded-[14px] bg-white border border-line overflow-hidden p-6 flex items-center gap-4">
-          <div className="flex-1">
-            <div className="flex items-baseline gap-2">
-              <span className="text-[28px] font-bold text-gray-900">{pct}%</span>
-              <span className="text-[13px] text-muted">{tr.grammar.statsCompletion}</span>
-            </div>
-            <div className="mt-2.5">
-              <div className="h-1.5 bg-[#eef1ef] rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-600 transition-all duration-700" style={{ width: `${pct}%` }} />
-              </div>
-              <p className="text-xs text-faint mt-1.5">{attempted} {tr.grammar.statsAttempted}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ProgressStatCard
+        theme="emerald"
+        icon={<PageMascot phrase="Sveikas!" className="shrink-0" />}
+        count={passed}
+        label={tr.grammar.statsPassed}
+        countBadge={`${tr.grammar.statsOf} ${total}`}
+        milestone={{
+          pct,
+          caption: remaining > 0 ? tr.grammar.tipBody.replace('{count}', String(remaining)) : tr.grammar.tipBodyDone,
+        }}
+        testId="stats-card-grammar"
+      />
     </div>
   );
 }
@@ -493,6 +460,9 @@ export default function GrammarPage() {
     });
   }
 
+  // TAK's mood for the active lesson — neutral at the start, one step per answer.
+  const { mood, recordAnswer, reset: resetMood } = useMascotMood();
+
   // Exercise state
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -589,6 +559,7 @@ export default function GrammarPage() {
     setTaskIndex(0);
     setCorrect(0);
     setDone(false);
+    resetMood();
     setTyped('');
     setAnswerState('unanswered');
     setShownAnswer('');
@@ -626,6 +597,7 @@ export default function GrammarPage() {
     const task = tasks[taskIndex];
     const isCorrect = isAnswerMatch(typed.trim(), task.answer);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
+    recordAnswer(isCorrect);
     if (!isCorrect) {
       setShownAnswer(task.type === 'sentence' ? task.full_answer : task.answer);
     }
@@ -653,17 +625,26 @@ export default function GrammarPage() {
     const isEnrolled = enrolledPrograms.length > 0;
 
     return (
-      <main className="text-gray-900">
-        <div className="page relative z-10 px-4 sm:px-8 pt-7">
-          <h1 className="text-[32px] font-bold mb-1.5">{tr.grammar.title}</h1>
-          <p className="text-[15px] text-muted mb-4">{tr.grammar.subtitle}</p>
+      <PageShell>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-[32px] font-bold mb-1.5">{tr.grammar.title}</h1>
+              <p className="text-[15px] text-muted mb-4">{tr.grammar.subtitle}</p>
+            </div>
+            {/* The mascot lives in the hero card once it renders (enrolled state);
+                loading/empty states have no hero, so it stays beside the title
+                to keep exactly one mascot on screen at all times. */}
+            {(programsLoading || !isEnrolled) && (
+              <PageMascot phrase="Mokomės!" className="hidden sm:block shrink-0" />
+            )}
+          </div>
           <div className="mb-6 rounded-xl px-5 py-4 bg-[#fdf6e3] border border-[#f0e0a8] text-[#8a6d1d] text-[13.5px] leading-[1.5]">
             {tr.grammar.betaNotice}
           </div>
 
           {programsLoading ? (
             <div className="flex justify-center py-20">
-              <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : !isEnrolled ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
@@ -735,7 +716,7 @@ export default function GrammarPage() {
                         <div className="divide-y divide-line border-t border-line">
                           {loading ? (
                             <div className="flex justify-center py-10">
-                              <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                              <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                             </div>
                           ) : subcategoryGroups.length === 0 ? (
                             <p className="text-gray-400 text-sm py-8 text-center">{tr.grammar.noLessons}</p>
@@ -754,15 +735,14 @@ export default function GrammarPage() {
               <div className="mt-4 text-center">
                 <Link
                   href="/dashboard/grammar/programs"
-                  className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
+                  className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
                 >
                   {tr.grammar.browseProgramsLink}
                 </Link>
               </div>
             </>
           )}
-        </div>
-      </main>
+      </PageShell>
     );
   }
 
@@ -781,7 +761,7 @@ export default function GrammarPage() {
       <main className="min-h-screen text-gray-900 flex flex-col items-center justify-center px-6">
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="flex justify-center mb-6">
-            <Tak pose={passed ? 'grin' : 'talking'} size={72} />
+            <PageMascot phrase="Valio!" mood={passed ? Math.max(mood, 1) : mood} />
           </div>
           <h1 className="font-headline text-2xl font-bold mb-2">{tr.grammar.lessonDone}</h1>
 
@@ -894,6 +874,7 @@ export default function GrammarPage() {
 
         {/* Task card */}
         <div className="flex flex-col items-center justify-center flex-1 gap-12">
+          <PageMascot phrase="Pagalvok!" mood={mood} />
           {task.type === 'declension' && (
             <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">

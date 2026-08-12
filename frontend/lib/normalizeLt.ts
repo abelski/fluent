@@ -17,5 +17,13 @@ export function normalizeLt(text: string): string {
 
 export function isAnswerMatch(typed: string, answer: string): boolean {
   const normTyped = normalizeLt(typed);
-  return answer.split('/').some((alt) => normalizeLt(alt) === normTyped);
+  // The book separates alternate forms two ways: with a slash for the long/short
+  // conditional ("atsakýtume / atsakýtumėme", issue #138) and with a comma where a
+  // verb has two paradigms — bū́ti prints "esù, būnù" and "yrà, bū̃na". Either
+  // alternate is a correct answer, so accept both separators.
+  return answer
+    .split(/[/,]/)
+    .map((alt) => alt.trim())
+    .filter(Boolean)
+    .some((alt) => normalizeLt(alt) === normTyped);
 }

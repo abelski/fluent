@@ -19,7 +19,8 @@ import StarLevelToggle from '../components/StarLevelToggle';
 import { getPhraseStarLevel, setPhraseStarLevel } from '../../../lib/starLevel';
 import ProgressStatCard from '../components/ProgressStatCard';
 import QuotaBanner from '../components/QuotaBanner';
-import Tak from '../../../components/Tak';
+import PageMascot from '../../../components/PageMascot';
+import PageShell from '../components/PageShell';
 
 interface Quota {
   premium_active: boolean;
@@ -66,11 +67,6 @@ function getPhraseMilestoneProgress(learned: number) {
   return { next: null as number | null, pct: 100 };
 }
 
-const DIFFICULTY_BORDER: Record<number, string> = {
-  1: 'border-emerald-200',
-  2: 'border-amber-200',
-  3: 'border-red-200',
-};
 const DIFFICULTY_BADGE: Record<number, string> = {
   1: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   2: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -265,20 +261,16 @@ export default function PhrasesPage() {
   const enrolledPrograms = programs.filter((p) => p.enrolled);
 
   return (
-    <main className="min-h-screen bg-[#F5F5F7] text-gray-900 flex flex-col items-center px-4 py-10" data-testid="phrases-page">
-      <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-4xl">
-        {/* Phrases stats card */}
+    <PageShell testId="phrases-page">
+        {/* Phrases stats card — rendered above the title, matching /dashboard/lists
+            (see tests/stats-card-alignment.spec.ts, which asserts this order for parity). */}
         {phraseStats && (() => {
           const m = getPhraseMilestoneProgress(phraseStats.learned);
           return (
             <div className="mb-10">
               <ProgressStatCard
                 theme="purple"
-                icon={<Tak pose="idle" size={64} className="shrink-0 sm:w-[70px] sm:h-[84px]" />}
+                icon={<PageMascot phrase="Sveikas!" className="shrink-0" />}
                 count={phraseStats.learned}
                 label={t.learnedLabel}
                 nextMilestone={m.next !== null ? String(m.next) : null}
@@ -307,14 +299,14 @@ export default function PhrasesPage() {
 
         <QuotaBanner quota={quota} />
 
-        <h1 className="font-headline text-3xl font-bold mb-1">{t.pageTitle}</h1>
-        <p className="text-gray-400 mb-8">{t.pageSubtitle}</p>
+        <h1 className="text-[32px] font-bold mb-1.5">{t.pageTitle}</h1>
+        <p className="text-[15px] text-muted mb-4">{t.pageSubtitle}</p>
 
         {/* Мои списки — a program-style container holding the user's lists as chapter-like cards */}
         <section className="mb-8" data-testid="my-lists-section">
-          <div className="bg-white border border-emerald-200 rounded-[14px] overflow-hidden shadow-sm">
+          <div className="bg-white border border-line rounded-[14px] overflow-hidden">
             {/* Program header */}
-            <div className="w-full flex items-center justify-between px-5 py-4">
+            <div className="w-full flex items-center justify-between px-6 py-[18px]">
               <button
                 onClick={() => setOpenMyLists((o) => !o)}
                 aria-expanded={openMyLists}
@@ -397,7 +389,7 @@ export default function PhrasesPage() {
                       return (
                         <div
                           key={lst.id}
-                          className={`relative bg-white border border-gray-100 rounded-xl p-5 flex flex-col gap-4 ${eligible ? '' : 'opacity-70'}`}
+                          className={`relative bg-white border border-line rounded-xl p-5 flex flex-col gap-4 ${eligible ? '' : 'opacity-70'}`}
                           data-testid="my-list-card"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -493,7 +485,7 @@ export default function PhrasesPage() {
               return (
                 <div
                   key={program.id}
-                  className={`bg-white border rounded-[14px] overflow-hidden shadow-sm hover:shadow-md transition-shadow ${DIFFICULTY_BORDER[program.difficulty] ?? 'border-gray-100'}`}
+                  className="bg-white border border-line rounded-[14px] overflow-hidden"
                 >
                   {/* Accordion header */}
                   <button
@@ -553,7 +545,7 @@ export default function PhrasesPage() {
                               ? `/dashboard/phrases/${program.id}/study?chapter=${ch.num}`
                               : `/dashboard/phrases/${program.id}/study`;
                             return (
-                              <div key={i} className="relative bg-white border border-gray-100 rounded-xl p-4 flex flex-col gap-4">
+                              <div key={i} className="relative bg-white border border-line rounded-xl p-4 flex flex-col gap-4">
                                 {isDone && (
                                   <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                     ✓ Done
@@ -629,7 +621,6 @@ export default function PhrasesPage() {
             </Link>
           </div>
         )}
-      </div>
 
       {/* Create list dialog */}
       {showCreate && (
@@ -698,6 +689,6 @@ export default function PhrasesPage() {
           </div>
         </div>
       )}
-    </main>
+    </PageShell>
   );
 }

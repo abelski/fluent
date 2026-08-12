@@ -101,6 +101,9 @@
       <li><b>Readability outranks fidelity.</b> If a prototype value is genuinely hard to read, darken it and record
         it as a deliberate deviation. Small-caps secondary labels use <code>#5b6067</code>.</li>
       <li><b>TAK is the only mascot, and replaces decorative emoji</b> — never functional glyphs. See Emoji policy.</li>
+      <li><b>One mascot per screen, at 128px, via <code>PageMascot</code>.</b> Every page outside
+        <code>/dashboard/admin/**</code> shows exactly one, and his emotion tracks the session mood. The two
+        <code>bare</code> icon call sites are the only exemptions.</li>
     </ol>
   </div>
 
@@ -172,8 +175,10 @@
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
       <code>frontend/components/Tak.tsx</code>. One polygon (torso) + 4 rects (limbs) + swappable eyes/mouth, pure inline SVG,
       no image assets. Colors are hardcoded constants, <b>never</b> themed or re-tinted. Always animated (gentle float).
-      Props: <code>pose: 'idle' | 'stonks' | 'grin' | 'talking'</code>, <code>size?: number</code> (px, height auto-scales ×1.2),
-      <code>bare?: boolean</code>.
+      Props: <code>pose</code> (nine values, below), <code>size?: number</code> (px, height auto-scales ×1.2),
+      <code>bare?: boolean</code>. <b>Prefer <code>PageMascot</code> over rendering <code>Tak</code> directly</b> — it
+      owns the standard size, the speech bubble and the mood→pose mapping. Reach for raw <code>Tak</code> only for the
+      two <code>bare</code> icon call sites.
     </p>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
       <b><code>bare</code></b> renders the badge treatment — body + eye rects only, no limbs, no mouth, no float —
@@ -181,8 +186,11 @@
       place this applies; the prototypes draw it exactly this way. Everywhere else uses the full mascot.
     </p>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
-      <b>Timing:</b> resting float <code>2.6s</code> / arm swing <code>1.8s</code>. The <code>grin</code> pose speeds up
-      for celebration — <code>2s</code> / <code>0.7s</code> — via <code>floatDur</code>/<code>swingDur</code> on the pose spec.
+      <b>Timing:</b> resting float <code>2.6s</code> / arm swing <code>1.8s</code>. Each pose can override the whole-figure
+      animation via <code>anim</code> and the limb swing via <code>swingDur</code>; the happier and sadder tiers run faster.
+      Keyframes live in <code>frontend/app/globals.css</code>: <code>tak-float</code>, <code>tak-bounce</code>,
+      <code>tak-shake</code>, <code>tak-pulse</code>, <code>tak-wobble</code> — mirroring
+      <code>Tak Mascot Standalone.html</code>. <code>sus</code> is deliberately motionless.
     </p>
     <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0;">
       <b>Trap:</b> <code>Tak</code> must not set inline <code>display</code> or <code>flex-shrink</code> — inline styles
@@ -202,7 +210,7 @@
           <path d="M72,132 h36 v5 h-36 z" fill="#201e1d"/>
         </g></svg>
         <span class="pose-name">idle</span>
-        <span class="pose-usage">Default. Hero-card icon, FAB, empty states.</span>
+        <span class="pose-usage">The <code>bare</code>/icon neutral. Not used by <code>PageMascot</code> — see deviations.</span>
       </div>
       <div class="pose-cell">
         <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
@@ -216,7 +224,7 @@
           <path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/>
         </g></svg>
         <span class="pose-name">talking</span>
-        <span class="pose-usage">TakGreeting companion. Prompts, speech-bubble pairing.</span>
+        <span class="pose-usage">Mood 0 — the neutral every <code>PageMascot</code> starts from.</span>
       </div>
       <div class="pose-cell">
         <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
@@ -230,7 +238,7 @@
           <path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/>
         </g></svg>
         <span class="pose-name">stonks</span>
-        <span class="pose-usage">Confident squint, raised arm. Progress/streak moments.</span>
+        <span class="pose-usage">Legacy pose, not on the mood scale. No current call sites.</span>
       </div>
       <div class="pose-cell">
         <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
@@ -244,81 +252,147 @@
           <path d="M78,126 Q100,150 122,126 Z" fill="#201e1d"/>
         </g></svg>
         <span class="pose-name">grin</span>
-        <span class="pose-usage">Big grin. Celebration/completion — trophy &amp; done screens.</span>
+        <span class="pose-usage">Mood +1. Celebration/completion — trophy &amp; done screens.</span>
+      </div>
+      <div class="pose-cell">
+        <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <g transform="rotate(160 55 100)"><rect x="25" y="92" width="40" height="12" fill="#201e1d"/></g><g transform="rotate(-160 148 100)"><rect x="138" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d" transform="rotate(-10 69 160)"/><rect x="95" y="160" width="12" height="45" fill="#201e1d" transform="rotate(10 101 160)"/>
+          <circle cx="77" cy="97" r="15" fill="#f3f2f2" stroke="#201e1d" stroke-width="2.5"/><circle cx="79" cy="94" r="7" fill="#ec3013"/><circle cx="103" cy="97" r="15" fill="#f3f2f2" stroke="#201e1d" stroke-width="2.5"/><circle cx="105" cy="94" r="7" fill="#ec3013"/>
+          <path d="M78,126 Q100,148 122,126 Z" fill="#201e1d"/>
+        </g></svg>
+        <span class="pose-name">hype</span>
+        <span class="pose-usage">Mood +3. Arms overhead, 0.6s bounce.</span>
+      </div>
+      <div class="pose-cell">
+        <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <g transform="rotate(120 55 100)"><rect x="25" y="92" width="40" height="12" fill="#201e1d"/></g><g transform="rotate(-120 148 100)"><rect x="138" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d"/><rect x="95" y="160" width="12" height="45" fill="#201e1d"/>
+          <circle cx="77" cy="97" r="15" fill="#f3f2f2" stroke="#201e1d" stroke-width="2.5"/><circle cx="79" cy="94" r="7" fill="#ec3013"/><circle cx="103" cy="97" r="15" fill="#f3f2f2" stroke="#201e1d" stroke-width="2.5"/><circle cx="105" cy="94" r="7" fill="#ec3013"/>
+          <path d="M82,130 Q100,148 118,130" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/>
+        </g></svg>
+        <span class="pose-name">galaxy</span>
+        <span class="pose-usage">Mood +2. Spark eyes, scale pulse.</span>
+      </div>
+      <div class="pose-cell">
+        <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <g transform="rotate(-8 55 100)"><rect x="25" y="92" width="40" height="12" fill="#201e1d"/></g><g transform="rotate(8 148 100)"><rect x="138" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d"/><rect x="95" y="160" width="12" height="45" fill="#201e1d"/>
+          <path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M88,133 h24 v4 h-24 z" fill="#201e1d"/>
+        </g></svg>
+        <span class="pose-name">sus</span>
+        <span class="pose-usage">Mood −1. Frozen — the one motionless pose.</span>
+      </div>
+      <div class="pose-cell">
+        <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <g transform="rotate(-4 55 100)"><rect x="25" y="92" width="40" height="12" fill="#201e1d"/></g><g transform="rotate(4 148 100)"><rect x="138" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d"/><rect x="95" y="160" width="12" height="45" fill="#201e1d"/>
+          <rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/>
+          <path d="M85,133 Q100,131 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/><path d="M135,80 Q142,90 135,98 Q128,90 135,80 Z" fill="#f3f2f2" stroke="#201e1d" stroke-width="1.5"/>
+        </g></svg>
+        <span class="pose-name">fine</span>
+        <span class="pose-usage">Mood −2. Sweat bead, 0.6s shake.</span>
+      </div>
+      <div class="pose-cell">
+        <svg class="tak-svg" width="88" height="105" viewBox="0 0 200 240"><g class="float">
+          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
+          <g transform="rotate(75 55 100)"><rect x="25" y="92" width="40" height="12" fill="#201e1d"/></g><g transform="rotate(-75 148 100)"><rect x="138" y="92" width="40" height="12" fill="#201e1d"/></g>
+          <rect x="63" y="160" width="12" height="45" fill="#201e1d" transform="rotate(5 69 160)"/><rect x="95" y="160" width="12" height="45" fill="#201e1d" transform="rotate(-5 101 160)"/>
+          <line x1="70" y1="90" x2="86" y2="106" stroke="#201e1d" stroke-width="4"/><line x1="86" y1="90" x2="70" y2="106" stroke="#201e1d" stroke-width="4"/><line x1="96" y1="90" x2="112" y2="106" stroke="#201e1d" stroke-width="4"/><line x1="112" y1="90" x2="96" y2="106" stroke="#201e1d" stroke-width="4"/>
+          <path d="M85,134 h30 v3 h-30 z" fill="#201e1d"/>
+        </g></svg>
+        <span class="pose-name">lost</span>
+        <span class="pose-usage">Mood −3. X eyes, rotation wobble.</span>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <h3 style="margin-bottom:12px;">Size conventions actually used in the app</h3>
+    <h3 style="margin-bottom:12px;">One size: 128px</h3>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      The full mascot renders at <b>128&times;154px</b> everywhere — exported as <code>MASCOT_SIZE</code> from
+      <code>PageMascot.tsx</code>. Call sites should not pass <code>size</code>. This replaced the previous drift
+      (32/44/64/70/72/108/128/150px across twelve files); the reference the size was standardised on is the
+      flashcard greeting on <code>/dashboard/review?mode=known</code>.
+    </p>
     <div class="size-row">
       <div class="size-item">
-        <svg width="20" height="24" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/></g></svg>
-        <span class="size-label">32 / 44px <code>bare</code><br>bug-report FAB (mobile / desktop)</span>
+        <svg width="128" height="154" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="25" y="92" width="40" height="12" fill="#201e1d" transform="rotate(-8 55 100)"/><rect x="138" y="92" width="40" height="12" fill="#201e1d" transform="rotate(8 148 100)"/><rect x="63" y="160" width="12" height="45" fill="#201e1d"/><rect x="95" y="160" width="12" height="45" fill="#201e1d"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/></g></svg>
+        <span class="size-label">128px<br>every full mascot, every page</span>
       </div>
       <div class="size-item">
-        <svg width="30" height="36" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/></g></svg>
-        <span class="size-label">30px<br>grammar stat-card icon</span>
-      </div>
-      <div class="size-item">
-        <svg width="64" height="77" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/></g></svg>
-        <span class="size-label">64–70px<br>words/phrases hero card (unboxed)</span>
-      </div>
-      <div class="size-item">
-        <svg width="72" height="86" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/></g></svg>
-        <span class="size-label">72px<br>grammar tip card</span>
-      </div>
-      <div class="size-item">
-        <svg width="108" height="130" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/></g></svg>
-        <span class="size-label">108px<br>TakGreeting on detail-page headers</span>
-      </div>
-      <div class="size-item">
-        <svg width="128" height="154" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/></g></svg>
-        <span class="size-label">128px<br>TakGreeting on focused study cards</span>
-      </div>
-      <div class="size-item">
-        <svg width="150" height="180" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M78,126 Q100,150 122,126 Z" fill="#201e1d"/></g></svg>
-        <span class="size-label">150px<br>trophy / level-complete screens</span>
+        <svg width="32" height="38" viewBox="0 0 200 240"><g><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="68" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="94" y="95" width="18" height="18" fill="#f3f2f2"/><rect x="74" y="101" width="8" height="8" fill="#201e1d"/><rect x="100" y="101" width="8" height="8" fill="#201e1d"/></g></svg>
+        <span class="size-label">32 / 44px <code>bare</code><br>the two icon exemptions</span>
       </div>
     </div>
     <p style="font-size:12.5px;color:var(--gray-400);margin-top:20px;">
-      The prototypes spec'd the flashcard/phrase-practice greeting even larger (176px). Built at 128px instead —
-      <code>TakGreeting</code> doesn't expose a responsive size prop, and a literal 176px risked crowding the 375px
-      mobile viewport. Revisit if <code>TakGreeting</code> ever gains per-breakpoint sizing.
+      <b>Exempt from both the size rule and the one-per-page rule:</b> the <code>bare</code> TAK in the bug-report FAB
+      (<code>components/MistakeButton.tsx</code>) and in the landing streak ring
+      (<code>app/LandingClient.tsx</code>). Both are icons inside a control, not the mascot standing on his own.
     </p>
   </div>
 
-  <h2>TakGreeting</h2>
-  <div class="card">
+  <h2>PageMascot — the one reusable mascot</h2>
+  <div class="card" style="margin-bottom:20px;">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
-      <code>frontend/components/TakGreeting.tsx</code>. TAK (<code>talking</code> pose) + a comic speech bubble, used as a header
-      accent on detail/study pages. Props: <code>phrase: string</code>, <code>size?: number</code>.
-      Reused by <b>interaction type</b>, not per-page copy — 3 fixed phrases, not a custom pun per list/topic:
+      <code>frontend/components/PageMascot.tsx</code>. TAK plus a comic speech bubble, at the standard 128px.
+      <b>Exactly one per rendered screen</b>, on every page except <code>/dashboard/admin/**</code>.
+      Props: <code>phrase: string</code> (the page's own phrase, shown at neutral mood),
+      <code>mood?: number</code> (&minus;3&hellip;+3, default 0), <code>size?</code>, <code>className?</code>.
+      Replaced <code>TakGreeting</code>, which no longer exists.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>Mood</b> lives in <code>frontend/lib/mascotMood.ts</code> (<code>useMascotMood()</code>,
+      <code>moodPose()</code>, <code>moodPhrase()</code>). It is <b>per study/practice session</b>: neutral at the
+      start, +1 per correct answer, &minus;1 per wrong one (a timeout counts as wrong), clamped to &plusmn;3.
+      Nothing is persisted — leaving the session or reloading returns TAK to neutral. Pages outside a session pass no
+      <code>mood</code> and stay neutral. Wired into <code>QuizSession.tsx</code>, <code>PhraseSession.tsx</code> and
+      <code>app/dashboard/grammar/page.tsx</code>; the done screens force at least +1 so a passed lesson never shows a
+      sad TAK.
+    </p>
+    <table>
+      <tr><th>Mood</th><th>Pose</th><th>Bubble phrase</th></tr>
+      <tr><td>+3</td><td><code>hype</code></td><td><code>Nerealu!</code></td></tr>
+      <tr><td>+2</td><td><code>galaxy</code></td><td><code>Puiku!</code></td></tr>
+      <tr><td>+1</td><td><code>grin</code></td><td><code>&Scaron;aunu!</code></td></tr>
+      <tr><td>0</td><td><code>talking</code></td><td>the page's own phrase</td></tr>
+      <tr><td>&minus;1</td><td><code>sus</code></td><td><code>Hmm&hellip;</code></td></tr>
+      <tr><td>&minus;2</td><td><code>fine</code></td><td><code>Nieko tokio</code></td></tr>
+      <tr><td>&minus;3</td><td><code>lost</code></td><td><code>Bandom dar kart&#261;</code></td></tr>
+    </table>
+    <p style="font-size:13.5px;line-height:1.8;margin:16px 0 0;">
+      Neutral phrases stay untranslated Lithuanian and are reused <b>by interaction type</b>, never invented per page:
     </p>
     <table>
       <tr><th>Phrase</th><th>Meaning</th><th>Used on</th></tr>
-      <tr><td><code>Kartokime!</code></td><td>"Let's repeat!"</td><td>Word list detail, phrases vocabulary list</td></tr>
+      <tr><td><code>Sveikas!</code></td><td>"Hello!"</td><td>Dashboard &amp; phrases hero cards, login, settings</td></tr>
+      <tr><td><code>Kartokime!</code></td><td>"Let's repeat!"</td><td>Word list detail, vocabulary, phrases vocabulary, phrase program</td></tr>
       <tr><td><code>Prisimeni?</code></td><td>"Remember?"</td><td>Flashcard study (stage 1)</td></tr>
+      <tr><td><code>Pagalvok!</code></td><td>"Think!"</td><td>Study stages 2&ndash;3, grammar exercise</td></tr>
       <tr><td><code>Pabandyk!</code></td><td>"Try it!"</td><td>Phrase practice card</td></tr>
+      <tr><td><code>Pasirinkime!</code></td><td>"Let's choose!"</td><td>Practice, grammar &amp; practice program pickers</td></tr>
+      <tr><td><code>Paskaitykime!</code></td><td>"Let's read!"</td><td>Articles</td></tr>
+      <tr><td><code>Kuriame!</code></td><td>"We're building!"</td><td>Program create / edit</td></tr>
+      <tr><td><code>Mokom&#279;s!</code></td><td>"We're learning!"</td><td>Grammar lesson list</td></tr>
+      <tr><td><code>Valio!</code></td><td>"Hooray!"</td><td>All session-done / trophy screens</td></tr>
     </table>
     <div class="bubble-demo" style="margin-top:20px;">
       <div class="bubble-wrap">
         <div class="bubble">Kartokime!</div>
-        <svg class="tak-svg" width="108" height="130" viewBox="0 0 200 240" style="display:block;margin:-24px auto 0;"><g class="float">
-          <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
-          <rect x="25" y="92" width="40" height="12" fill="#201e1d" transform="rotate(-8 55 100)"/>
-          <rect x="138" y="92" width="40" height="12" fill="#201e1d" transform="rotate(8 148 100)"/>
-          <rect x="63" y="160" width="12" height="45" fill="#201e1d"/><rect x="95" y="160" width="12" height="45" fill="#201e1d"/>
-          <path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
-          <path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/>
-          <path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/>
-        </g></svg>
+        <svg class="tak-svg" width="128" height="154" viewBox="0 0 200 240" style="display:block;margin:-28px auto 0;"><g class="float"><polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/><rect x="25" y="92" width="40" height="12" fill="#201e1d" transform="rotate(-8 55 100)"/><rect x="138" y="92" width="40" height="12" fill="#201e1d" transform="rotate(8 148 100)"/><rect x="63" y="160" width="12" height="45" fill="#201e1d"/><rect x="95" y="160" width="12" height="45" fill="#201e1d"/><path d="M68,100 Q77,92 86,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M94,100 Q103,92 112,100" fill="none" stroke="#201e1d" stroke-width="4" stroke-linecap="round"/><path d="M85,133 Q100,140 115,133" fill="none" stroke="#201e1d" stroke-width="2.5" stroke-linecap="round"/></g></svg>
       </div>
     </div>
     <p style="font-size:12.5px;color:var(--gray-400);margin-top:16px;">
-      Hidden below the <code>sm</code> breakpoint on pages where it sits beside a title (list detail, phrases vocabulary) —
-      not enough width for a 108px mascot next to page-title text on a 375px screen. Kept visible on focused
-      single-task screens (flashcard, phrase practice) where it's the primary content, not a side accent.
+      Hidden below the <code>sm</code> breakpoint wherever it sits beside a page title — not enough width for a 128px
+      mascot next to title text on a 375px screen. Kept visible on focused single-task screens (flashcard, phrase
+      practice, grammar exercise, done screens) where it is the primary content rather than a side accent.
+      Bubble tail offset and head overlap are computed from <code>size</code>, so the bubble keeps pointing at TAK's
+      head if a call site ever scales him.
     </p>
   </div>
 
@@ -326,9 +400,12 @@
   <div class="card" style="margin-bottom:20px;">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
       <code>frontend/app/dashboard/components/ProgressStatCard.tsx</code>. Shared by the words dashboard (<code>emerald</code> theme,
-      via <code>StatsBar.tsx</code>) and phrases dashboard (<code>purple</code> theme). Plain white card, <code>border-line</code>,
-      no gradient, no decorative blur — TAK sits unboxed to the left of the stats, matching the mockup exactly
-      (earlier draft boxed it into a small 44px colored square — corrected after review).
+      via <code>StatsBar.tsx</code>), phrases dashboard (<code>purple</code> theme), Грамматика (<code>emerald</code>,
+      count = lessons passed) and Практика (<code>emerald</code>, count = tests passed, summed client-side across
+      enrolled categories). Plain white card, <code>border-line</code>, no gradient, no decorative blur — TAK sits
+      unboxed to the left of the stats, matching the mockup exactly (earlier draft boxed it into a small 44px colored
+      square — corrected after review). One per page, rendered only once real data justifies it — see PageShell below
+      for what each page shows instead while loading or empty.
     </p>
     <div class="hero-demo">
       <svg class="tak-svg" width="70" height="84" viewBox="0 0 200 240" style="flex-shrink:0;"><g class="float">
@@ -358,6 +435,41 @@
         <div class="val">A2</div>
       </div>
     </div>
+  </div>
+
+  <h2>PageShell — the shared top-nav page shell</h2>
+  <div class="card">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/app/dashboard/components/PageShell.tsx</code>. The outer wrapper for all 5 top-nav dashboard
+      pages — Слова (<code>/dashboard/lists</code>), Фразы, Грамматика, Практика, Статьи. One <code>&lt;main
+      className="min-h-screen text-gray-900"&gt;</code> + one <code>&lt;div className="page px-4 sm:px-8
+      pt-7"&gt;</code>: the tested 1180px <code>.page</code> container, <b>no decorative blur blob, no drop
+      shadow</b>. Historical origin — <code>/dashboard/grammar</code> and <code>/dashboard/lists</code>
+      already used this before <code>PageShell</code> existed as a component;
+      <code>design-system-parity.spec.ts</code> guarded it there first and now checks all 5 pages.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>Фразы, Практика and Статьи were migrated onto it</b> — they previously used an older generation of this
+      shell (896px container, <code>bg-[#F5F5F7]</code>, a decorative blur blob, and <code>shadow-sm
+      hover:shadow-md</code> on cards). That generation is retired; do not reintroduce it on a new page.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>Page order inside the shell — two sub-patterns, not one:</b> Слова, Фразы and Практика put the hero
+      <code>ProgressStatCard</code> <i>above</i> the title (card → banner → title+subtitle → content), guarded by
+      <code>tests/stats-card-alignment.spec.ts</code> ("stats card is rendered above the page title"). Грамматика
+      is the one exception — its beta-notice banner reads better directly under the title, so it keeps
+      title+subtitle → banner → hero → content. Both are fine; what must not happen is a <i>third</i> ordering.
+      Every page ends the same way: main content (accordion / grid) → "browse all" link
+      (<code>text-emerald-600 hover:text-emerald-700</code>).
+    </p>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0;">
+      <b>Mascot placement:</b> lives inside the hero card's <code>icon</code> prop when a hero renders. On the
+      states where a hero can't render yet — loading, or no enrolled content (Грамматика, Практика) — it falls back
+      to beside the title, so exactly one mascot is always on screen. Статьи has no hero at all (no progress concept
+      for reading), so its mascot always sits beside the title. This is <i>not</i> a settled bug: Фразы' hero is
+      gated on a stats-fetch that rarely fails, so its title carries no such fallback — a known, accepted gap, not a
+      pattern to copy for a page whose hero is normally absent.
+    </p>
   </div>
 
   <h2>Emoji policy</h2>
@@ -391,8 +503,12 @@
       <tr><td>Mobile hamburger menu kept</td><td>The prototypes have no hamburger, but they were only ever drawn at desktop width — their silence isn't a decision about mobile.</td></tr>
       <tr><td>FAB label hidden below <code>sm</code></td><td>Prototype keeps it at 13px; hiding it protects the tap target on narrow screens, leaving a round icon button.</td></tr>
       <tr><td>Small-caps secondary labels at <code>#5b6067</code></td><td>Prototypes use <code>#b0b4ba</code> and the app had drifted lighter still to <code>#d1d5db</code>. Both were reported unreadable; <code>#5b6067</code> clears WCAG AA at these sizes.</td></tr>
-      <tr><td><code>TakGreeting</code> at 128px, not 176px</td><td>No responsive size prop; a literal 176px crowds a 375px viewport.</td></tr>
-      <tr><td>Heavy-border pages left alone</td><td>Admin, pricing, premium, settings, articles and extension still use the older <code>border-gray-900</code> style — never given a design pass.</td></tr>
+      <tr><td><code>PageMascot</code> at 128px, not 176px</td><td>No responsive size prop; a literal 176px crowds a 375px viewport.</td></tr>
+      <tr><td>Mood 0 renders <code>talking</code>, not the standalone file's <code>IDLE</code></td><td>Every page mascot now carries a speech bubble, so the neutral state should look like he is speaking. <code>idle</code> is kept for the bubble-less <code>bare</code>/icon call sites.</td></tr>
+      <tr><td>Landing streak ring switched to <code>bare</code></td><td>A 32px full mascot inside a progress ring is an icon, not the character — same case as the bug-report FAB, now treated the same way.</td></tr>
+      <tr><td>Heavy-border pages left alone</td><td>Admin, pricing, premium, settings and extension still use the older <code>border-gray-900</code> style — never given a design pass. Практика and Статьи were on this style too and are now migrated (see PageShell below).</td></tr>
+      <tr><td>Grammar's 3-card stat grid collapsed into one <code>ProgressStatCard</code></td><td>Грамматика, Практика and Фразы now all show a single hero card (count + progress bar + mascot inside), matching the pattern Слова/Фразы already used. The standalone "tip" card's copy moved into the hero's milestone caption instead of being dropped.</td></tr>
+      <tr><td>Фразы' difficulty-colored card borders removed</td><td>The difficulty badge chip already carries that color; a colored border duplicated it and broke from the flat <code>border-line</code> convention every other accordion card on the site uses.</td></tr>
     </table>
   </div>
 
@@ -403,7 +519,10 @@
       navbar, the 1180px container, the segmented language pill, the ink wordmark with a green dot, that no other bare
       link is accidentally green, that the FAB renders exactly one <code>bare</code> mascot and hides its label on
       mobile, that the hamburger opens the nav, and that no text uses <code>#d1d5db</code>.
-      Run it after any change to shared shell or tokens.
+      The 1180px-container and no-blur-blob checks run across <b>all 5 top-nav pages</b> (Слова, Фразы, Грамматика,
+      Практика, Статьи), not just Грамматика — this is the executable guard against exactly the drift that made
+      those pages diverge in the first place. Run it after any change to shared shell or tokens, and add a new
+      top-nav page's URL to the <code>NAV_PAGES</code> list in that spec when one is added.
     </p>
   </div>
 

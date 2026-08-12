@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
-import TakGreeting from '../../../../components/TakGreeting';
+import PageMascot from '../../../../components/PageMascot';
 
 interface LearnedPhrase {
   id: number;
@@ -115,7 +115,7 @@ export default function PhrasesVocabularyPage() {
 
         <div className="mt-4 mb-8 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
           <div className="flex items-end gap-4 sm:gap-5 flex-1">
-            <TakGreeting phrase="Kartokime!" size={108} className="hidden sm:block" />
+            <PageMascot phrase="Kartokime!" className="hidden sm:block" />
             <div className="flex-1">
               <h1 className="text-[28px] font-bold leading-tight">{tr.phrasesVocabulary.title}</h1>
               <p className="text-gray-400 text-sm mt-1.5">

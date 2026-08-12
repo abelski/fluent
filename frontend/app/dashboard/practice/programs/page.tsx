@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BACKEND_URL, getToken, enrollPracticeCategory, unenrollPracticeCategory } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+import PageMascot from '../../../../components/PageMascot';
+import PageShell from '../../components/PageShell';
 
 interface Category {
   id: number;
@@ -58,15 +60,17 @@ export default function PracticeProgramsPage() {
   }
 
   return (
-    <main className="bg-slate-50 text-gray-900 min-h-screen">
-      <div className="max-w-4xl mx-auto px-6 py-8">
+    <PageShell>
         <Link href="/dashboard/practice" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
           ← {t.backToCategories.replace('← ', '')}
         </Link>
 
-        <div className="mt-4 mb-8">
-          <h1 className="font-headline text-3xl font-bold">{t.allProgramsTitle}</h1>
-          <p className="text-gray-400 mt-1">{t.allProgramsSubtitle}</p>
+        <div className="mt-4 mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[32px] font-bold mb-1.5">{t.allProgramsTitle}</h1>
+            <p className="text-[15px] text-muted">{t.allProgramsSubtitle}</p>
+          </div>
+          <PageMascot phrase="Pasirinkime!" className="hidden sm:block shrink-0" />
         </div>
 
         {loading ? (
@@ -74,7 +78,7 @@ export default function PracticeProgramsPage() {
             <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : categories.length === 0 ? (
-          <div className="border border-gray-900 rounded-2xl bg-white px-6 py-12 text-center text-gray-400">
+          <div className="border border-line rounded-[14px] bg-white px-6 py-12 text-center text-gray-400">
             {t.noTests}
           </div>
         ) : (
@@ -85,7 +89,7 @@ export default function PracticeProgramsPage() {
               return (
                 <div
                   key={cat.id}
-                  className="border border-gray-900 rounded-2xl bg-white px-6 py-5"
+                  className="border border-line rounded-[14px] bg-white px-6 py-5"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -123,7 +127,6 @@ export default function PracticeProgramsPage() {
             })}
           </div>
         )}
-      </div>
-    </main>
+    </PageShell>
   );
 }

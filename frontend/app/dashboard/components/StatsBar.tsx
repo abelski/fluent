@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import ProgressStatCard from './ProgressStatCard';
-import Tak from '../../../components/Tak';
+import PageMascot from '../../../components/PageMascot';
 
 interface Stats {
   known: number;
@@ -85,7 +85,7 @@ export default function StatsBar() {
     <div className="mb-5">
       <ProgressStatCard
         theme="emerald"
-        icon={<Tak pose="idle" size={70} className="shrink-0 h-[82px]" />}
+        icon={<PageMascot phrase="Sveikas!" className="shrink-0" />}
         count={stats.known}
         countBadge={`≈ ${currentLevel === '0' ? 'A0' : currentLevel}`}
         label={tr.stats.wordsLearned}

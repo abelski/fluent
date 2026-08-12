@@ -10,8 +10,8 @@ import MatchRound from './MatchRound';
 import CharDiff from './CharDiff';
 import { normalizeLt, collapseWs } from '../../../lib/normalizeLt';
 import { renderAccented } from '../../../lib/renderAccented';
-import TakGreeting from '../../../components/TakGreeting';
-import Tak from '../../../components/Tak';
+import PageMascot from '../../../components/PageMascot';
+import { useMascotMood } from '../../../lib/mascotMood';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -143,10 +143,19 @@ function buildOptions(word: Word, allWords: Word[], distractorPool: Word[], lang
 
 function buildOptions2r(word: Word, allWords: Word[], distractorPool: Word[]) {
   const distractors = pickDistractors(word, allWords, distractorPool);
-  return [
-    { text: word.lithuanian, correct: true },
-    ...distractors.map((d) => ({ text: d.lithuanian, correct: false })),
-  ].sort(() => Math.random() - 0.5);
+  // Drop distractors whose Lithuanian text collides with another option — the same
+  // dedup buildOptions does for translations. Duplicate word rows share a lemma but
+  // may carry different translations, so pickDistractors' same-translation filter
+  // does not catch them and two identical buttons would render, one scored wrong.
+  const seen = new Set([normalizeLt(word.lithuanian)]);
+  const opts = [{ text: word.lithuanian, correct: true }];
+  for (const d of distractors) {
+    const key = normalizeLt(d.lithuanian);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    opts.push({ text: d.lithuanian, correct: false });
+  }
+  return opts.sort(() => Math.random() - 0.5);
 }
 
 function insertRandom(rest: StudyCard[], newCards: StudyCard[]): StudyCard[] {
@@ -258,6 +267,9 @@ export default function QuizSession({
   const initialQualityRef   = useRef<Record<number, number>>({});
   const [mistakeWordCount, setMistakeWordCount] = useState(0);
 
+  // TAK's mood for this session — neutral at the start, one step per answer.
+  const { mood, recordAnswer, reset: resetMood } = useMascotMood();
+
   const [answerState, setAnswerState] = useState<AnswerState>('unanswered');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [options, setOptions] = useState<{ text: string; correct: boolean }[]>([]);
@@ -298,6 +310,7 @@ export default function QuizSession({
     doneWordIdsRef.current      = new Set();
     correctWordIdsRef.current   = new Set();
     initialQualityRef.current   = {};
+    resetMood();
     setMistakeWordCount(0);
     setQueue(words.map((w) => ({ word: w, stage: 1, failCount: 0 })));
     setTotalWords(words.length);
@@ -309,7 +322,7 @@ export default function QuizSession({
     setSelectedOption(null);
     setTypedAnswer('');
     setShownAnswer('');
-  }, [words]);
+  }, [words, resetMood]);
 
   // ── Load settings once ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -422,8 +435,9 @@ export default function QuizSession({
     // Only update backend on timeout in study mode
     if (frontCardId !== undefined && sessionMode === 'study') saveProgress(frontCardId, 'learning', true);
     setAnswerState('wrong');
+    recordAnswer(false);
     if (frontCard) setShownAnswer(parseForms(frontCard.word.lithuanian)[blankIndex] ?? frontCard.word.lithuanian);
-  }, [timeLeft, useTimer, frontCardId, frontCardStage, answerState, sessionMode, saveProgress, blankIndex]);
+  }, [timeLeft, useTimer, frontCardId, frontCardStage, answerState, sessionMode, saveProgress, blankIndex, recordAnswer]);
 
   // ── Queue helpers ────────────────────────────────────────────────────────────
   function buildRetryCards(card: StudyCard, syllable?: string): StudyCard[] {
@@ -548,6 +562,7 @@ export default function QuizSession({
     const isCorrect = options[index].correct;
     setSelectedOption(index);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
+    recordAnswer(isCorrect);
 
     if (!isCorrect) {
       if (!mistakeWordIdsRef.current.has(card.word.id)) {
@@ -590,6 +605,7 @@ export default function QuizSession({
     const isCorrect = options[index].correct;
     setSelectedOption(index);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
+    recordAnswer(isCorrect);
 
     if (!isCorrect) {
       if (!mistakeWordIdsRef.current.has(card.word.id)) {
@@ -635,6 +651,7 @@ export default function QuizSession({
     const attempt = next.map((i) => syllableTiles[i]).join('');
     const isCorrect = normalizeLt(attempt) === normalizeLt(card.word.lithuanian.trim());
     setAnswerState(isCorrect ? 'correct' : 'wrong');
+    recordAnswer(isCorrect);
 
     if (!isCorrect) {
       if (!mistakeWordIdsRef.current.has(card.word.id)) {
@@ -687,6 +704,7 @@ export default function QuizSession({
     const isCorrect = matched !== undefined;
 
     setAnswerState(isCorrect ? 'correct' : 'wrong');
+    recordAnswer(isCorrect);
     if (!isCorrect) {
       // Block the window keydown dismiss listener from firing on the same Enter event
       blockUntilRef.current = Date.now() + 300;
@@ -759,6 +777,7 @@ export default function QuizSession({
       normalizeLt(syllableTyped.trim()) === normalizeLt(syllable.trim()) ||
       syllableTyped.trim().toLowerCase() === syllable.trim().toLowerCase();
     setAnswerState(isCorrect ? 'correct' : 'wrong');
+    recordAnswer(isCorrect);
     if (!isCorrect) {
       blockUntilRef.current = Date.now() + 300;
       setShownAnswer(syllable);
@@ -816,7 +835,8 @@ export default function QuizSession({
       <main className="flex-1 text-gray-900 flex flex-col items-center justify-center px-8 pt-5 pb-20">
         <div className="relative z-10 text-center max-w-sm w-full">
           <div className="flex justify-center mb-6" data-testid="result-emoji">
-            <Tak pose={passed ? 'grin' : 'talking'} size={150} />
+            {/* A passed lesson never shows a sad TAK, even if the mood dipped mid-session. */}
+            <PageMascot phrase="Valio!" mood={passed ? Math.max(mood, 1) : mood} />
           </div>
           <h1 className="text-[26px] font-bold mb-2">{tr.common.sessionDone}</h1>
           {isStudy && (
@@ -932,10 +952,15 @@ export default function QuizSession({
           )}
         </div>
 
+        {/* One mascot for the whole session — sits above every stage so his mood
+            stays visible while answering, not just on the stage-1 flashcard. */}
+        <div className="flex justify-center pt-6 sm:pt-10">
+          <PageMascot phrase={stage === 1 ? 'Prisimeni?' : 'Pagalvok!'} mood={mood} />
+        </div>
+
         {/* ── Stage 1: Flashcard + self-evaluation ── */}
         {stage === 1 && (
-          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-6 pt-6 sm:pt-10">
-            <TakGreeting phrase="Prisimeni?" size={128} />
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-6 pt-4 sm:pt-6">
             <div className="w-full max-w-[420px] bg-white border border-gray-100 rounded-2xl p-5 sm:py-9 sm:px-12 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-4 sm:mb-6">
                 {(sessionMode === 'review' || word.status === 'known' || word.status === 'learning') ? tr.common.review : tr.common.newWord}
@@ -959,7 +984,7 @@ export default function QuizSession({
 
         {/* ── Stage 2: Multiple choice ── */}
         {stage === 2 && (
-          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-4 sm:pt-6">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.whatMeans}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{renderAccented(word.accented || word.lithuanian)}</p>
@@ -1002,7 +1027,7 @@ export default function QuizSession({
 
         {/* ── Stage 2r: Reverse multiple choice (show translation, select Lithuanian) ── */}
         {stage === '2r' && (
-          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-4 sm:pt-6">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.selectLithuanian}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
@@ -1045,7 +1070,7 @@ export default function QuizSession({
 
         {/* ── Stage 2a: Assemble the word from shuffled syllables ── */}
         {stage === '2a' && (
-          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-4 sm:pt-6">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.assembleWord}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
@@ -1106,7 +1131,7 @@ export default function QuizSession({
 
         {/* ── Stage 3: Type it ── */}
         {stage === 3 && (
-          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
+          <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-4 sm:pt-6">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">
                 {cloveIsCloze ? tr.study.fillMissing : tr.study.howInLithuanian}
@@ -1191,7 +1216,7 @@ export default function QuizSession({
           const after = idx === -1 ? '' : text.slice(idx + syllable.length);
           const inputW = `${Math.max(syllable.length * 1.1, 1.5)}ch`;
           return (
-            <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-6 sm:pt-10">
+            <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-4 sm:pt-6">
               <div className="text-center">
                 <p className="text-gray-400 text-sm mb-6 uppercase tracking-wider">Отработайте слог</p>
                 {/* Inline gap input inside the word — use <p> to preserve spacing */}

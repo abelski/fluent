@@ -51,12 +51,27 @@ test.describe('Design-system parity', () => {
     expect(width).toBeGreaterThan(viewport - 2);
   });
 
+  // All 5 top-nav dashboard pages (Слова, Фразы, Грамматика, Практика, Статьи) share this
+  // shell (`PageShell.tsx`) — see "PageShell" in the component library. Practice and phrases
+  // require a token: practice isn't in the public-prefix allowlist (redirects to `/` without
+  // one), and phrases shows a separate login-prompt screen instead of the `.page` shell.
+  const NAV_PAGES = [
+    { url: '/dashboard/lists', needsAuth: false },
+    { url: '/dashboard/phrases', needsAuth: true },
+    { url: '/dashboard/grammar', needsAuth: false },
+    { url: '/dashboard/practice', needsAuth: true },
+    { url: '/dashboard/articles', needsAuth: false },
+  ];
+
   test('page content is constrained to the 1180px container', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/dashboard/grammar');
-    const page1180 = page.locator('.page').first();
-    await expect(page1180).toBeVisible();
-    await expect(page1180).toHaveCSS('max-width', '1180px');
+    for (const { url, needsAuth } of NAV_PAGES) {
+      if (needsAuth) await setFakeToken(page);
+      await page.goto(url);
+      const page1180 = page.locator('.page').first();
+      await expect(page1180, url).toBeVisible();
+      await expect(page1180, url).toHaveCSS('max-width', '1180px');
+    }
   });
 
   test('language switch is a segmented pill with no slash separator', async ({ page }) => {
@@ -68,9 +83,12 @@ test.describe('Design-system parity', () => {
     await expect(toggle.locator('span')).toHaveCount(2);
   });
 
-  test('decorative blur blobs are gone from the grammar page', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
-    await expect(page.locator('.blur-\\[120px\\]')).toHaveCount(0);
+  test('decorative blur blobs are gone from the top-nav dashboard pages', async ({ page }) => {
+    for (const { url, needsAuth } of NAV_PAGES) {
+      if (needsAuth) await setFakeToken(page);
+      await page.goto(url);
+      await expect(page.locator('.blur-\\[120px\\]'), url).toHaveCount(0);
+    }
   });
 
   test('bug-report FAB mascot is the bare badge: body + eyes, no limbs, no float', async ({ page }) => {

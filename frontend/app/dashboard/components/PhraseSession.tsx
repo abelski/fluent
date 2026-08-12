@@ -34,8 +34,8 @@ import CharDiff from './CharDiff';
 import MatchRound from './MatchRound';
 import type { Word } from './QuizSession';
 import { normalizeLt } from '../../../lib/normalizeLt';
-import Tak from '../../../components/Tak';
-import TakGreeting from '../../../components/TakGreeting';
+import PageMascot from '../../../components/PageMascot';
+import { useMascotMood } from '../../../lib/mascotMood';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -224,6 +224,13 @@ export default function PhraseSession({
   // (never the translation), then MCQ, then type — never skipped.
   const firstStage2RetryStep = (p: PhraseStudyItem): Stage1Step =>
     p.word_tiles ? 'assemble_to_lt' : 'mcq';
+  // The opening sub-step for a queue item. Used both when advancing (so the step
+  // lands in the same commit as the index) and by the card-reset effect.
+  const firstStepFor = (item: QueueItem | undefined): Stage1Step =>
+    item?.mode === 'gap_retry' ? firstGapRetryStep(item.phrase)
+    : item?.mode === 'stage2_retry' ? firstStage2RetryStep(item.phrase)
+    : item?.mode === 'full_retake' || !item ? 'mcq'
+    : firstStage1Step(item.phrase);
 
   // ── Settings ────────────────────────────────────────────────────────────────
   const [complexity, setComplexity] = useState<Complexity>('medium');
@@ -259,6 +266,9 @@ export default function PhraseSession({
   const [phrasesDone, setPhrasesDone] = useState(0);
   const [saving, setSaving] = useState(false);
   const [hardFeedback, setHardFeedback] = useState(false);
+
+  // TAK's mood for this session — the component remounts per session, so it starts neutral.
+  const { mood, recordAnswer } = useMascotMood();
 
   const [syllableChallenge, setSyllableChallenge] = useState<{ syllable: string; word: string } | null>(null);
   const [syllableInput, setSyllableInput] = useState('');
@@ -307,18 +317,15 @@ export default function PhraseSession({
 
   // ── Reset card state on index change ────────────────────────────────────────
   useEffect(() => {
-    const nextItem = queue[currentIdx];
     // gap_retry re-drills a mistake: assembly sub-steps first (if tiles exist),
     // then straight to typing — MCQ is always skipped.
     // stage2_retry re-drills the whole phrase from scratch: to-LT assembly (if
     // tiles), then MCQ, then type, then the real full-phrase retype.
     // full_retake renders as stage 2, so its stage1Step is inert ('mcq').
-    setStage1Step(
-      nextItem?.mode === 'gap_retry' ? firstGapRetryStep(nextItem.phrase)
-      : nextItem?.mode === 'stage2_retry' ? firstStage2RetryStep(nextItem.phrase)
-      : nextItem?.mode === 'full_retake' || !nextItem ? 'mcq'
-      : firstStage1Step(nextItem.phrase),
-    );
+    //
+    // advanceQueue already sets this in the same commit as the index; this is the
+    // fallback for any other path that moves the card, and is idempotent.
+    setStage1Step(firstStepFor(queue[currentIdx]));
     setAssembled([]);
     setAssembleResult(null);
     setMcqSelected(null);
@@ -357,6 +364,7 @@ export default function PhraseSession({
     } else {
       setTypeResult('wrong');
     }
+    recordAnswer(false);
     if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
       mistakePhraseIdsRef.current.add(current.phrase.id);
       setMistakeCount((c) => c + 1);
@@ -545,6 +553,11 @@ export default function PhraseSession({
       setShowMatchRound(true);
     } else {
       blockUntilRef.current = Date.now() + 600;
+      // Set the sub-step alongside the index so both land in one commit. Leaving it
+      // to the card-reset effect paints one frame of the *previous* card's step
+      // against the new card: after failing a gap fill, the re-queued gap_retry
+      // rendered as another gap fill and then visibly flipped to the assembly.
+      setStage1Step(firstStepFor(newQueue[currentIdx + 1]));
       setCurrentIdx((i) => i + 1);
     }
   // We intentionally list specific deps; queue/current captured at call time
@@ -556,18 +569,25 @@ export default function PhraseSession({
     if (!syllableChallenge || syllableResult !== null) return;
     const isCorrect = checkWord(syllableInput.trim(), syllableChallenge.syllable, complexity);
     setSyllableResult(isCorrect ? 'correct' : 'wrong');
+    recordAnswer(isCorrect);
     if (isCorrect) {
-      setTimeout(() => {
+      setTimeout(async () => {
         blockUntilRef.current = Date.now() + 600;
         // Reset answer state before unmounting challenge so the underlying card
         // doesn't flash its previous wrong result while advanceQueue is pending
         setTypeResult(null);
         setTypeInput('');
+        // Keep the challenge mounted until the queue has actually advanced.
+        // advanceQueue awaits a recordProgress round-trip before it moves the index,
+        // so unmounting first re-revealed the *old* card for the whole request — a
+        // failed gap fill visibly sat on the gap fill again before switching to the
+        // retry's assembly. Await the advance, then reveal the card it landed on.
+        const advance = pendingAdvanceRef.current;
+        pendingAdvanceRef.current = null;
+        await advance?.();
         setSyllableChallenge(null);
         setSyllableInput('');
         setSyllableResult(null);
-        pendingAdvanceRef.current?.();
-        pendingAdvanceRef.current = null;
       }, 1200);
     }
   }
@@ -583,7 +603,7 @@ export default function PhraseSession({
     return (
       <main className="min-h-dvh text-gray-900 flex flex-col items-center justify-center px-6">
         <div className="relative z-10 flex flex-col items-center text-center max-w-sm w-full gap-5">
-          <Tak pose="grin" size={150} />
+          <PageMascot phrase="Valio!" mood={Math.max(mood, 1)} />
           <h2 className="font-headline text-2xl font-bold">{tr.phraseSession.sessionDone}</h2>
           <div className="flex gap-4 justify-center">
             <div className="bg-white border border-line rounded-2xl px-6 py-5 text-center">
@@ -851,6 +871,7 @@ export default function PhraseSession({
         const attempt = next.map((i) => tiles[i]).join(' ');
         const correct = checkPhrase(attempt, target, 'hard', fromLt ? null : phrase.alt_texts);
         setAssembleResult(correct ? 'correct' : 'wrong');
+        recordAnswer(correct);
         if (correct) {
           setTimeout(() => {
             blockUntilRef.current = Date.now() + 300;
@@ -957,6 +978,7 @@ export default function PhraseSession({
         setMcqSelected(word);
         const correct = word.toLowerCase() === phrase.blank_word.toLowerCase();
         setMcqResult(correct ? 'correct' : 'wrong');
+        recordAnswer(correct);
         if (correct) {
           setTimeout(() => setStage1Step('type'), 700);
         }
@@ -1028,6 +1050,7 @@ export default function PhraseSession({
       if (!typeInput.trim()) return;
       const correct = checkWord(typeInput.trim(), phrase.blank_word, complexity);
       setTypeResult(correct ? 'correct' : 'wrong');
+      recordAnswer(correct);
       if (!correct && current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
         mistakePhraseIdsRef.current.add(current.phrase.id);
         setMistakeCount((c) => c + 1);
@@ -1036,6 +1059,7 @@ export default function PhraseSession({
 
     const handleForgotWord = () => {
       setTypeResult('wrong');
+      recordAnswer(false);
       if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
         mistakePhraseIdsRef.current.add(current.phrase.id);
         setMistakeCount((c) => c + 1);
@@ -1141,6 +1165,7 @@ export default function PhraseSession({
     if (!typeInput.trim()) return;
     const correct = checkPhrase(typeInput.trim(), phrase.text, complexity, phrase.alt_texts);
     setTypeResult(correct ? 'correct' : 'wrong');
+    recordAnswer(correct);
     if (!correct && current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
       mistakePhraseIdsRef.current.add(current.phrase.id);
       setMistakeCount((c) => c + 1);
@@ -1149,6 +1174,7 @@ export default function PhraseSession({
 
   const handleForgotPhrase = () => {
     setTypeResult('wrong');
+    recordAnswer(false);
     if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
       mistakePhraseIdsRef.current.add(current.phrase.id);
       setMistakeCount((c) => c + 1);
@@ -1162,7 +1188,7 @@ export default function PhraseSession({
         <ProgressBars />
 
         <div className="flex justify-center mb-2">
-          <TakGreeting phrase="Pabandyk!" size={128} />
+          <PageMascot phrase="Pabandyk!" mood={mood} />
         </div>
 
         <div className="bg-white rounded-2xl border border-line p-6 sm:p-8 text-center mb-4">

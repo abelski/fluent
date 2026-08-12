@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { BACKEND_URL, getToken, resolvePracticeId } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+import PageMascot from '../../../../components/PageMascot';
 
 // --- Dialogue rendering helpers ---
 
@@ -329,12 +330,15 @@ export default function PracticeCategoryPage() {
         {/* ── Tests view ──────────────────────────────────────────────────── */}
         {view === 'tests' && (
           <>
-            <div className="mt-4 mb-6">
-              <h1 className="font-headline text-3xl font-bold">{categoryName}</h1>
-              {categoryDescription
-                ? <p className="text-gray-600 mt-1">{categoryDescription}</p>
-                : <p className="text-gray-400 mt-1">Выберите тест для прохождения</p>
-              }
+            <div className="mt-4 mb-6 flex items-start justify-between gap-4">
+              <PageMascot phrase="Pasirinkime!" className="hidden sm:block shrink-0 order-last" />
+              <div>
+                <h1 className="font-headline text-3xl font-bold">{categoryName}</h1>
+                {categoryDescription
+                  ? <p className="text-gray-600 mt-1">{categoryDescription}</p>
+                  : <p className="text-gray-400 mt-1">Выберите тест для прохождения</p>
+                }
+              </div>
             </div>
 
             {/* Source URL callout (e.g. constitution link) */}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import PageMascot from '../../../components/PageMascot';
 
 interface KnownWord {
   id: number;
@@ -111,6 +112,7 @@ export default function VocabularyPage() {
         </Link>
 
         <div className="mt-4 mb-8 flex flex-col sm:flex-row sm:items-end gap-4">
+          <PageMascot phrase="Kartokime!" className="hidden sm:block shrink-0 order-last" />
           <div className="flex-1">
             <h1 className="font-headline text-3xl font-bold">{tr.vocabulary.title}</h1>
             <p className="text-gray-400 mt-1">

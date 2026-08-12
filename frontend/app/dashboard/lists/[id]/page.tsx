@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, resolveListId, getToken } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import { renderAccented } from '../../../../lib/renderAccented';
-import TakGreeting from '../../../../components/TakGreeting';
+import PageMascot from '../../../../components/PageMascot';
 
 interface Word {
   id: number;
@@ -81,7 +81,7 @@ export default function ListDetailPage() {
 
         <div className="flex items-start justify-between gap-4 mb-7">
           <div className="flex items-end gap-5">
-            <TakGreeting phrase="Kartokime!" size={108} className="hidden sm:block" />
+            <PageMascot phrase="Kartokime!" className="hidden sm:block" />
             <div>
               {(() => {
                 const displayTitle = lang === 'en' ? (list.title_en || list.title) : list.title;

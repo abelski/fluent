@@ -51,7 +51,30 @@ a:hover {
   font-family: var(--font-headline), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* TAK pose animations — mirrors the keyframes in
+   `design system/Tak Mascot Standalone.html`. One per mood tier. */
 @keyframes tak-float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-8px) rotate(-2deg); }
+}
+
+@keyframes tak-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes tak-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes tak-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes tak-wobble {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
 }

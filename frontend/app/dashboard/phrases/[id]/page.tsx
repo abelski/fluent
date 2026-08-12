@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, resolvePhraseId } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+import PageMascot from '../../../../components/PageMascot';
 
 interface PhraseRow {
   id: number;
@@ -137,6 +138,7 @@ export default function PhraseProgramDetailPage() {
 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-6">
+          <PageMascot phrase="Kartokime!" className="hidden sm:block shrink-0 order-last" />
           <div>
             <h1 className="font-headline text-3xl font-bold">{programTitle}</h1>
             {programDescription && (

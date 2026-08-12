@@ -19,6 +19,7 @@ import {
 } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 import QuotaBanner from '../components/QuotaBanner';
+import PageShell from '../components/PageShell';
 import StarLevelToggle from '../components/StarLevelToggle';
 import WelcomeModal from '../../../components/WelcomeModal';
 import { useT } from '../../../lib/useT';
@@ -252,8 +253,7 @@ export default function ListsPage() {
           onDismiss={() => setWelcomeContent(null)}
         />
       )}
-    <main className="min-h-screen text-gray-900">
-      <div className="page px-4 sm:px-8 pt-7">
+    <PageShell>
         <StatsBar />
 
         {isLoggedIn === false && (
@@ -754,7 +754,6 @@ export default function ListsPage() {
             </>
           );
         })()}
-      </div>
 
       {/* Confirm remove custom program modal */}
       {confirmCustomId !== null && (() => {
@@ -867,7 +866,7 @@ export default function ListsPage() {
           </div>
         </div>
       )}
-    </main>
+    </PageShell>
     </>
   );
 }

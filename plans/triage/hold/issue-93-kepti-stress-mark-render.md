@@ -13,6 +13,53 @@ Two distinct problems in the `verb.conjugations` JSON (verb id 100, `kèpti`):
 
 The frontend grader (`normalizeLt` in `frontend/app/dashboard/grammar/page.tsx`) already strips grave/acute/tilde, so grading is fine — but the rendered "correct answer" span (line ~1032) displays the raw JSON value with the broken combining sequence, hence "Что-то с шрифтом".
 
+## Status update — 2026-08-10 (findings from issue #150, no action taken)
+
+Part of this issue was fixed as a side effect of #150. **Recorded for reference only — nothing below
+was applied, and #93 remains on hold by the user's decision.**
+
+**Already fixed by #150:** the bulk `i` + U+0307 cleanup in step 2 ran across 250 verbs.
+Verb 100's `indicative_present.tu` is now `kepì` and `indicative_past_simple.tu` is now `kepei`.
+The estimate of "~1880 occurrences" in the root cause was measured on the raw extract; in the DB it
+was 250 rows.
+
+**Still outstanding — 1: the forms are decomposed, not precomposed.** This is the actual font
+complaint and the reason this issue is not closed. `kepì` is stored as `k e p` + `i` (U+0069) +
+U+0300, **not** the precomposed `ì` (U+00EC) that step 1 of this plan called for. A bare `i` keeps its
+tittle, so a renderer that does not apply the Unicode Soft_Dotted rule stacks the grave on top of the
+dot — exactly "Что-то с шрифтом".
+
+Measured across the DB on 2026-08-10:
+
+| Column | Non-NFC values |
+| --- | --- |
+| `word.lithuanian` | 0 / 3779 |
+| `word.accented` | 0 / 2913 |
+| `grammar_sentence.full_word` | 0 / 425 |
+| **`verb.conjugations`** | **828** |
+
+So `verb` is the only Lithuanian text in the app that is not NFC — which is why the complaint appeared
+on the verb page and nowhere else. Most frequent decomposed pairs: `e`+tilde ×277, `n`+grave ×258,
+`y`+tilde ×129, `i`+grave ×120 (the `kepì` case), `e`+dot-above ×86.
+
+The one-line fix, **not applied**:
+
+```sql
+-- NFC-normalise verb conjugations so they match every other Lithuanian column.
+-- Lossless; grading is unaffected because normalizeLt runs NFD first.
+UPDATE verb SET conjugations = normalize(conjugations, NFC)
+WHERE conjugations <> normalize(conjugations, NFC);
+```
+
+Step 3 of the plan below (frontend `nfc()` wrapping) becomes unnecessary if the data is normalised at
+rest. Do **not** add U+0307 to `normalizeLt`'s strip set as step 3 suggests — that would mask data
+defects rather than surface them, and `ė`/`ų` etc. are precomposed so it is not needed for grading.
+
+**Still outstanding — 2: `conditional.tu` is still `"̃"`.** A lone combining tilde; the real form
+(`kèptum`) was lost in extraction. This is not a normalisation problem — it is the column-shift
+corruption now tracked as **issue #151**, which covers ~169 verbs and needs a re-extraction pass.
+Resolve #151 before closing this one, or close this issue on the rendering half alone.
+
 ## Fix plan
 
 1. **Data fix for verb 100** (the user-visible row) via the `sql` skill. In a single transaction:

@@ -298,7 +298,7 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
                   )}
                 </svg>
                 <span className="relative z-10">
-                  <Tak pose="stonks" size={32} />
+                  <Tak bare size={32} />
                 </span>
               </div>
               {streakNext && (

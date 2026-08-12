@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../lib/api';
 import { useT } from '../../lib/useT';
-import Tak from '../../components/Tak';
+import PageMascot from '../../components/PageMascot';
 
 export default function LoginClient() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function LoginClient() {
 
       <div className="relative z-10 max-w-sm w-full text-center">
         <div className="flex justify-center mb-6">
-          <Tak pose="idle" size={72} />
+          <PageMascot phrase="Sveikas!" />
         </div>
         <h1 className="font-headline text-2xl font-bold mb-3">{tr.login.title}</h1>
         <p className="text-gray-400 text-sm leading-relaxed mb-8">
