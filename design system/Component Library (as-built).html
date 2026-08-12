@@ -97,7 +97,8 @@
       <li><b>Hover goes darker, never lighter.</b> <code>emerald-600</code> → <code>emerald-700</code>.</li>
       <li><b>Layout: full-bleed navbar, 1180px content.</b> The header spans the viewport; page content sits in
         <code>.page</code> (max 1180px, 32px gutters, 16px below 860px).</li>
-      <li><b>Breakpoints:</b> not Tailwind defaults — 3→2 columns at 1000px, →1 column at 860px.</li>
+      <li><b>Breakpoints:</b> not Tailwind defaults — 3→2 columns at 1200px, →1 column at 860px (see
+        "Deliberate deviations" for why 1200px, not the originally planned 1000px).</li>
       <li><b>Readability outranks fidelity.</b> If a documented value is genuinely hard to read, darken it and
         record it as a deliberate deviation. Small-caps secondary labels use <code>#5b6067</code>.</li>
       <li><b>TAK is the only mascot, and replaces decorative emoji</b> plus decorative navigational arrows —
@@ -583,6 +584,12 @@
     <table>
       <tr><th>Deviation</th><th>Why</th></tr>
       <tr><td>Mobile hamburger menu kept</td><td>The original mockups had no hamburger, but they were only ever drawn at desktop width — their silence isn't a decision about mobile.</td></tr>
+      <tr><td>Hamburger breakpoint moved from Tailwind's <code>sm</code> (640px) to <code>1000px</code></td><td>
+        <code>Header.tsx</code> switched between the hamburger and the full tab strip at 640px, but from
+        640-999px the logo, 5 Russian nav pills, language toggle and avatar/name don't fit on one line —
+        the row's own <code>flex-wrap</code> let the language toggle + avatar silently drop onto an orphaned
+        second row instead of the hamburger taking over. Measured live: wrapping started below ~915px, so
+        1000px was chosen for margin.</td></tr>
       <tr><td>FAB label hidden below <code>sm</code></td><td>The mockup kept it at 13px; hiding it protects the tap target on narrow screens, leaving a round icon button.</td></tr>
       <tr><td>Small-caps secondary labels at <code>#5b6067</code></td><td>The mockup used <code>#b0b4ba</code> and the app had drifted lighter still to <code>#d1d5db</code>. Both were reported unreadable; <code>#5b6067</code> clears WCAG AA at these sizes.</td></tr>
       <tr><td><code>PageMascot</code> at 128px, not 176px</td><td>No responsive size prop; a literal 176px crowds a 375px viewport.</td></tr>
@@ -607,6 +614,28 @@
         Same shape motif as <code>TakChevron</code>, but intentionally <b>not</b> recolored to TAK's red — that red
         is documented as a brand constant used nowhere else, and this change borrows the silhouette only, not the
         color.</td></tr>
+      <tr><td>3-column card grids switch at 1200px, not the originally planned 1000px</td><td>
+        Слова's and Фразы' "my list" cards carry an edit button (<code>Редактировать</code>) alongside
+        <code>Учить</code>; at 1000px (container ≈936px, ~300px/card) the extra button wrapped the word-count label
+        onto two lines. 1200px keeps every card ≥~350px wide. Applies to <code>app/dashboard/lists/page.tsx</code>
+        (all three list grids) and <code>app/dashboard/phrases/page.tsx</code> (both list/chapter grids).</td></tr>
+      <tr><td>Статьи moved from a single-column list to a card grid (<code>sm:grid-cols-2 lg:grid-cols-3</code>)</td><td>
+        27+ articles as full-width rows left most of each row empty and made the page mostly a long scroll. Cards
+        stack title → tags → date/"Читать →" footer (<code>mt-auto</code>) instead of the old left-text/right-link
+        row, so uneven title lengths still align at the bottom across a row. Uses Tailwind's default
+        <code>sm</code>/<code>lg</code> breakpoints rather than the 1200px card-grid convention above, since these
+        cards carry only one action and stay comfortable narrower.</td></tr>
+      <tr><td>Logged-in home (<code>app/LandingClient.tsx</code>'s <code>UserHome</code>, the <code>/</code> route)
+        widened from <code>max-w-2xl</code> (672px) to <code>max-w-[1180px]</code>, streak card and leaderboard now
+        side by side above 1024px instead of stacked</td><td>
+        Not one of the 5 top-nav pages and still on the pre-redesign shell (<code>bg-[#F5F5F7]</code>,
+        <code>shadow-sm</code> cards) — intentionally not migrated to <code>PageShell</code>/flat cards here, this
+        change only fixes the width. At 672px centered on a wide monitor the page was mostly empty gutter. The
+        calendar and leaderboard avatars are fixed-size grids, not fluid, so simply stretching one narrow column
+        would have left the calendar sparse; placing the two widgets side by side (leaderboard capped at 420px so
+        7 entries fit without scrolling) uses the extra width without stretching either. The CTA/news/premium
+        cards below stay at <code>max-w-2xl</code>, left-aligned (not centered) to match the row above, since
+        news body text at full width hurts readability.</td></tr>
     </table>
   </div>
 

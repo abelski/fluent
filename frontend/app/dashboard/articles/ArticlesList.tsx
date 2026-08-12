@@ -43,40 +43,38 @@ export default function ArticlesList({ initialArticles }: { initialArticles: Art
           <p className="text-gray-400 text-sm text-center py-16">{tr.articles.noArticles}</p>
         )}
 
-        <div className="flex flex-col gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {articles.map((article) => {
             const title = lang === 'ru' ? article.title_ru : article.title_en;
             return (
               <Link
                 key={article.slug}
                 href={`/dashboard/articles/${article.slug}`}
-                className="group block rounded-[14px] border border-line bg-white p-5 hover:bg-gray-50 transition-colors"
+                className="group flex flex-col gap-3 rounded-[14px] border border-line bg-white p-5 hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h2 className="font-headline font-semibold text-gray-900 text-lg leading-snug group-hover:text-emerald-600 transition-colors">
-                      {title}
-                    </h2>
-                    {article.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {article.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <p className="text-gray-400 text-xs mt-2">
-                      {new Date(article.created_at).toLocaleDateString(
-                        lang === 'ru' ? 'ru-RU' : 'en-GB',
-                        { day: 'numeric', month: 'long', year: 'numeric' }
-                      )}
-                    </p>
+                <h2 className="font-headline font-semibold text-gray-900 text-base leading-snug line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                  {title}
+                </h2>
+                {article.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {article.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
-                  <span className="text-sm text-emerald-600 font-medium shrink-0 mt-0.5">
+                )}
+                <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+                  <p className="text-gray-400 text-xs">
+                    {new Date(article.created_at).toLocaleDateString(
+                      lang === 'ru' ? 'ru-RU' : 'en-GB',
+                      { day: 'numeric', month: 'long', year: 'numeric' }
+                    )}
+                  </p>
+                  <span className="text-sm text-emerald-600 font-medium shrink-0">
                     {tr.articles.readMore} <TakChevron size={10} className="inline-block align-[-1px]" />
                   </span>
                 </div>

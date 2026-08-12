@@ -263,88 +263,96 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
 
   return (
     <main className="bg-[#F5F5F7] min-h-screen">
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        {/* Streak card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
-          <div className="flex">
-            {/* Left: month calendar */}
-            <div className="flex-1 p-5 border-r border-gray-100 min-w-0">
-              <p className="text-xl font-bold text-gray-900 mb-4">
-                {streak > 0 ? `${streak} ${plural(streak, tr.stats.streakDay)}!` : tr.stats.calendarStartStreak}
-              </p>
-              <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">
-                {tr.stats.calendarMonthNames[new Date().getMonth()]} {new Date().getFullYear()}
-              </p>
-              <ActivityCalendar dates={activityDates} />
-            </div>
-            {/* Right: streak counter + flame */}
-            <div className="w-36 shrink-0 flex flex-col items-center justify-center gap-4 p-4">
-              <div className="text-center">
-                <p className="text-5xl font-extrabold text-gray-900 leading-none">{streak}</p>
-                <p className="text-xs text-gray-500 mt-1">{plural(streak, tr.stats.streakDay)}</p>
-              </div>
-              {/* Circular progress ring around flame */}
-              <div className="relative w-20 h-20 flex items-center justify-center">
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="34" fill="none" stroke="#f3f4f6" strokeWidth="5" />
-                  {streakPct > 0 && (
-                    <circle
-                      cx="40" cy="40" r="34"
-                      fill="none" stroke="#f97316" strokeWidth="5"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 34}`}
-                      strokeDashoffset={`${2 * Math.PI * 34 * (1 - streakPct / 100)}`}
-                      transform="rotate(-90 40 40)"
-                    />
-                  )}
-                </svg>
-                <span className="relative z-10">
-                  <Tak bare size={32} />
-                </span>
-              </div>
-              {streakNext && (
-                <p className="text-[11px] text-center text-gray-400 leading-tight">
-                  {tr.stats.calendarNextGoal}<br /><span className="font-bold text-orange-500">{streakNext}</span>
+      <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-10">
+        {/* Streak card + leaderboard: side by side once there's room for both at their
+            natural width, instead of stacking in a narrow column and leaving the rest
+            of the viewport empty on wide screens. */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-4 items-start">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full lg:flex-1">
+            <div className="flex">
+              {/* Left: month calendar */}
+              <div className="flex-1 p-5 border-r border-gray-100 min-w-0">
+                <p className="text-xl font-bold text-gray-900 mb-4">
+                  {streak > 0 ? `${streak} ${plural(streak, tr.stats.streakDay)}!` : tr.stats.calendarStartStreak}
                 </p>
-              )}
+                <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">
+                  {tr.stats.calendarMonthNames[new Date().getMonth()]} {new Date().getFullYear()}
+                </p>
+                <ActivityCalendar dates={activityDates} />
+              </div>
+              {/* Right: streak counter + flame */}
+              <div className="w-36 shrink-0 flex flex-col items-center justify-center gap-4 p-4">
+                <div className="text-center">
+                  <p className="text-5xl font-extrabold text-gray-900 leading-none">{streak}</p>
+                  <p className="text-xs text-gray-500 mt-1">{plural(streak, tr.stats.streakDay)}</p>
+                </div>
+                {/* Circular progress ring around flame */}
+                <div className="relative w-20 h-20 flex items-center justify-center">
+                  <svg className="absolute inset-0 w-full h-full" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="#f3f4f6" strokeWidth="5" />
+                    {streakPct > 0 && (
+                      <circle
+                        cx="40" cy="40" r="34"
+                        fill="none" stroke="#f97316" strokeWidth="5"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 34}`}
+                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - streakPct / 100)}`}
+                        transform="rotate(-90 40 40)"
+                      />
+                    )}
+                  </svg>
+                  <span className="relative z-10">
+                    <Tak bare size={32} />
+                  </span>
+                </div>
+                {streakNext && (
+                  <p className="text-[11px] text-center text-gray-400 leading-tight">
+                    {tr.stats.calendarNextGoal}<br /><span className="font-bold text-orange-500">{streakNext}</span>
+                  </p>
+                )}
+              </div>
             </div>
+          </div>
+
+          <div className="w-full lg:w-[420px] lg:shrink-0">
+            <Leaderboard />
           </div>
         </div>
 
-        <Leaderboard />
+        <div className="max-w-2xl">
+          {(() => {
+            const hasStudied = (stats?.total_studied ?? 0) > 0;
+            return (
+              <Link
+                href={hasStudied ? '/dashboard/review' : '/dashboard/lists'}
+                className="bg-emerald-600 rounded-2xl p-4 flex items-center gap-3 hover:bg-emerald-700 transition-colors active:scale-[0.98] mb-4"
+              >
+                <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
+                  <PlayIcon />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-white leading-tight">
+                    {hasStudied ? t.continueCta : t.continueCtaNew}
+                  </p>
+                  <p className="text-xs text-emerald-200">
+                    {hasStudied ? t.continueCtaSub : t.continueCtaNewSub}
+                  </p>
+                </div>
+              </Link>
+            );
+          })()}
 
-        {(() => {
-          const hasStudied = (stats?.total_studied ?? 0) > 0;
-          return (
-            <Link
-              href={hasStudied ? '/dashboard/review' : '/dashboard/lists'}
-              className="bg-emerald-600 rounded-2xl p-4 flex items-center gap-3 hover:bg-emerald-700 transition-colors active:scale-[0.98] mb-4"
-            >
-              <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
-                <PlayIcon />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-white leading-tight">
-                  {hasStudied ? t.continueCta : t.continueCtaNew}
-                </p>
-                <p className="text-xs text-emerald-200">
-                  {hasStudied ? t.continueCtaSub : t.continueCtaNewSub}
-                </p>
-              </div>
+          <NewsSection inline />
+
+          <div className="bg-white rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-sm mb-0.5">{t.premiumTitle}</p>
+              <p className="text-xs text-gray-500 leading-relaxed">{t.premiumBody}</p>
+            </div>
+            <Link href="/pricing" className="shrink-0 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors whitespace-nowrap">
+              {t.premiumCta} <TakChevron size={10} className="inline-block align-[-1px]" />
             </Link>
-          );
-        })()}
-
-        <NewsSection inline />
-
-        <div className="bg-white rounded-2xl p-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="font-semibold text-sm mb-0.5">{t.premiumTitle}</p>
-            <p className="text-xs text-gray-500 leading-relaxed">{t.premiumBody}</p>
           </div>
-          <Link href="/pricing" className="shrink-0 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors whitespace-nowrap">
-            {t.premiumCta} <TakChevron size={10} className="inline-block align-[-1px]" />
-          </Link>
         </div>
       </div>
     </main>

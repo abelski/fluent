@@ -346,7 +346,7 @@ export default function ListsPage() {
                       </div>
                     )
                   ) : (
-                    <div className="grid gap-4 grid-cols-2 max-[860px]:grid-cols-1">
+                    <div className="grid gap-4 grid-cols-3 max-[1200px]:grid-cols-2 max-[860px]:grid-cols-1">
                       {myWordLists.map((lst) => {
                         const total = lst.word_count;
                         const knownPct = total > 0 ? (lst.known / total) * 100 : 0;
@@ -546,7 +546,7 @@ export default function ListsPage() {
 
                     {isOpen && (
                       <div className="px-5 py-4 border-t border-gray-100">
-                        <div className="grid gap-4 grid-cols-2 max-[860px]:grid-cols-1">
+                        <div className="grid gap-4 grid-cols-3 max-[1200px]:grid-cols-2 max-[860px]:grid-cols-1">
                           {group.lists.map((list) => {
                             const p = progress[list.id];
                             const knownPct = p ? (p.known / p.total) * 100 : 0;
@@ -678,7 +678,7 @@ export default function ListsPage() {
 
                   {isOpen && (
                     <div className="px-5 py-4 border-t border-gray-100">
-                      <div className="grid gap-4 grid-cols-2 max-[860px]:grid-cols-1">
+                      <div className="grid gap-4 grid-cols-3 max-[1200px]:grid-cols-2 max-[860px]:grid-cols-1">
                         {programLists.map((list) => {
                           const p = progress[list.id];
                           const knownPct = p ? (p.known / p.total) * 100 : 0;

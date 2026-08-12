@@ -139,7 +139,7 @@ export default function Header() {
 
   return (
     <header className="relative z-20 border-b border-line bg-white">
-      <div className="flex items-center gap-3 sm:gap-7 px-4 py-3 sm:px-8 sm:py-[18px] flex-wrap">
+      <div className="flex items-center gap-3 min-[1000px]:gap-7 px-4 py-3 min-[1000px]:px-8 min-[1000px]:py-[18px] flex-wrap">
 
         {/* text-ink is required: the global `a` rule would otherwise tint the
             whole wordmark green. Mark, weight/tracking and the round dot follow
@@ -154,12 +154,16 @@ export default function Header() {
           <span className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: BODY }} />
         </Link>
 
-        {/* Desktop tab strip; below sm the hamburger dropdown takes over. */}
-        <nav className="hidden sm:flex gap-1 bg-[#f2f3f3] rounded-full p-1 shrink-0 overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Desktop tab strip; below 1000px the hamburger dropdown takes over.
+            (Not Tailwind's `sm` — at 640-900px the 5 Russian nav labels plus the
+            language toggle and avatar/name don't fit on one line and wrap into a
+            broken second row, so the switch to the compact hamburger has to happen
+            earlier than content-hidden breakpoints elsewhere in the app.) */}
+        <nav className="hidden min-[1000px]:flex gap-1 bg-[#f2f3f3] rounded-full p-1 shrink-0 overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {navLinks}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 sm:gap-[18px] shrink-0">
+        <div className="ml-auto flex items-center gap-2 min-[1000px]:gap-[18px] shrink-0">
           {/* Language toggle */}
           <button
             onClick={() => { setLang(lang === 'ru' ? 'en' : 'ru'); window.location.reload(); }}
@@ -263,7 +267,7 @@ export default function Header() {
 
           {/* Mobile hamburger */}
           <button
-            className="sm:hidden flex flex-col justify-center items-center w-11 h-11 gap-1.5"
+            className="min-[1000px]:hidden flex flex-col justify-center items-center w-11 h-11 gap-1.5"
             onClick={() => setMobileNavOpen((o) => !o)}
             aria-label={tr.nav.menu}
           >
@@ -276,7 +280,7 @@ export default function Header() {
 
       {/* Mobile nav dropdown */}
       {mobileNavOpen && (
-        <div className="sm:hidden border-t border-line bg-white px-4 py-3 flex flex-col gap-1">
+        <div className="min-[1000px]:hidden border-t border-line bg-white px-4 py-3 flex flex-col gap-1">
           {navLinks}
         </div>
       )}

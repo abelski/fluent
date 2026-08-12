@@ -86,9 +86,12 @@ library's "Deliberate deviations" table.
 | Hero stat card | `frontend/app/dashboard/components/ProgressStatCard.tsx` |
 | Complexity selector (chevron-clipped knob) | `frontend/app/dashboard/components/StarLevelToggle.tsx` |
 
-The tab strip scrolls horizontally (mockup `.navtabs`) but stays desktop-only; below `sm` the
-hamburger dropdown takes over. The original mockups had no hamburger, but they were only drawn at
-desktop width — the mobile menu is a deliberate app-only affordance.
+The tab strip scrolls horizontally (mockup `.navtabs`) but stays desktop-only; below `1000px` the
+hamburger dropdown takes over — not Tailwind's `sm` (640px). At 640-999px the 5 Russian nav labels
+plus the language toggle and avatar/name don't fit on one line and wrapped into a broken second
+row before this was widened; see "Deliberate deviations" below. The original mockups had no
+hamburger, but they were only drawn at desktop width — the mobile menu is a deliberate app-only
+affordance.
 
 ## TAK
 
@@ -166,12 +169,21 @@ hero at all, so its mascot always sits beside the title.
 - Chips/badges are borderless filled pills, not outlined.
 - Type is Inter throughout — the original mockups used no second display face, so `font-headline`
   (Manrope) is not applied on the redesigned pages.
-- Breakpoints: 3→2 columns at `1000px`, →1 column at `860px` (`min-[860px]:` / `min-[1000px]:` /
-  `max-[860px]:`), not Tailwind's default `sm`/`md`.
+- Breakpoints: 3→2 columns at `1200px`, →1 column at `860px` (`min-[860px]:` / `min-[1200px]:` /
+  `max-[860px]:`), not Tailwind's default `sm`/`md`. (Card-grid columns specifically — see "3-column
+  card grids" below for why 1200px, not the originally planned 1000px.)
 
 ## Deliberate deviations from the original mockups
 
 - **Mobile hamburger** — kept (see above).
+- **Hamburger breakpoint moved from `sm` (640px) to `1000px`** — `frontend/components/Header.tsx`
+  used Tailwind's default `sm:hidden`/`hidden sm:flex` to switch between the hamburger and the
+  full desktop tab strip. From 640-999px the logo, 5 nav pills, language toggle and avatar/name
+  don't fit on one line, and the container's `flex-wrap` let the language toggle + avatar silently
+  wrap onto an orphaned second row instead of the hamburger taking over. Moved every `sm:`
+  variant tied to that toggle (`nav`, the hamburger button, the mobile dropdown, and the row's own
+  gap/padding) to `min-[1000px]:`/`max-[1000px]:` — measured live, wrapping started below ~915px,
+  1000px leaves margin for longer names.
 - **FAB label on mobile** — hidden below `sm`, leaving the mascot as a round icon button. The
   mockup kept the label at 13px; the app hides it to protect the tap target on narrow screens.
 - **Mood 0 renders `talking`, not `IDLE`** — every page mascot now carries a bubble, so the neutral
@@ -188,6 +200,14 @@ hero at all, so its mascot always sits beside the title.
   arrows now use it; functional carets stay plain glyphs, deliberately out of scope.
 - **`StarLevelToggle` knob clipped to TAK's chevron, kept `bg-ink`** — shape motif only, not TAK's
   red, which stays a mascot-exclusive brand constant.
+- **3-column card grids switch at `1200px`, not the originally planned `1000px`** — Слова's "my
+  list" cards and Фразы' "my list" cards carry an `Редактировать`/edit button alongside `Учить`; at
+  a 1000px viewport (container ≈936px, ~300px per card) that second button pushed the word-count
+  label onto two lines. 1200px keeps each card ≥~350px wide, wide enough for both buttons on one
+  line. Applies to `app/dashboard/lists/page.tsx` (all three list grids), `app/dashboard/phrases/page.tsx`
+  (both list/chapter grids) and `app/dashboard/articles/ArticlesList.tsx` (which uses Tailwind's
+  `sm`/`lg` defaults instead, since its cards carry no edit button and only need a title + tags +
+  one action).
 
 ## Parity guard
 

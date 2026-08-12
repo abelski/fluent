@@ -378,7 +378,7 @@ export default function PhrasesPage() {
                     </div>
                   )
                 ) : (
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2 min-[1200px]:grid-cols-3">
                     {myLists.map((lst) => {
                       const dist = lst.stage_distribution;
                       const total = lst.phrase_count;
@@ -533,7 +533,7 @@ export default function PhrasesPage() {
                           <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                         </div>
                       ) : detail ? (
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-4 sm:grid-cols-2 min-[1200px]:grid-cols-3">
                           {detail.chapters.map((ch, i) => {
                             const isDone = ch.total > 0 && ch.mastered >= ch.total;
                             const masteredPct = ch.total > 0 ? (ch.mastered / ch.total) * 100 : 0;
