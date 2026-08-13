@@ -119,35 +119,31 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col items-center px-6 py-12">
-      <div className="pointer-events-none fixed inset-0 flex items-start justify-center overflow-hidden">
-        <div className="w-full max-w-[600px] h-[400px] bg-emerald-100/40 blur-[120px] rounded-full mt-[-100px]" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-sm">
+    <main className="min-h-screen text-gray-900 flex flex-col items-center px-6 py-12">
+      <div className="w-full max-w-sm">
         <div className="flex items-start justify-between gap-4 mb-6">
-          <h1 className="font-headline text-2xl font-bold">{tr.settings.title}</h1>
+          <h1 className="text-2xl font-bold">{tr.settings.title}</h1>
           <PageMascot phrase="Sveikas!" className="hidden sm:block shrink-0" />
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1" data-testid="settings-tabs">
+        <div className="flex gap-1 mb-6 bg-[#f2f3f3] rounded-full p-1" data-testid="settings-tabs">
           {tabs.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
               data-testid={`tab-${key}`}
-              className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${
+              className={`flex-1 px-4 py-2 text-xs font-medium rounded-full transition-colors ${
                 activeTab === key
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white font-semibold text-ink shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                  : 'text-muted hover:text-gray-700'
               }`}
             >
               {label}
@@ -156,7 +152,7 @@ export default function SettingsPage() {
         </div>
 
         {activeTab === 'vocabulary' ? (
-          <div className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-8">
+          <div className="bg-white border border-line rounded-2xl p-6 flex flex-col gap-8">
 
             {/* Total words per session */}
             <div>
@@ -189,7 +185,7 @@ export default function SettingsPage() {
               <p className="text-xs text-gray-400 mb-3">{tr.settings.ratioHint}</p>
 
               {/* Visual ratio bar */}
-              <div className="flex rounded-lg overflow-hidden h-8 mb-3 border border-gray-900">
+              <div className="flex rounded-lg overflow-hidden h-8 mb-3 border border-line">
                 <div
                   className="flex items-center justify-center text-xs font-medium text-white bg-emerald-600 transition-all duration-150"
                   style={{ width: `${newRatioPct}%` }}
@@ -334,13 +330,13 @@ export default function SettingsPage() {
               onClick={handleSave}
               disabled={saving}
               data-testid="save-settings-btn"
-              className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
+              className="w-full py-3 bg-ink hover:bg-[#25282d] disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
             >
               {saving ? '...' : tr.settings.saveButton}
             </button>
           </div>
         ) : activeTab === 'phrases' ? (
-          <div className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-8">
+          <div className="bg-white border border-line rounded-2xl p-6 flex flex-col gap-8">
 
             {/* Phrases per session */}
             <div>
@@ -517,13 +513,13 @@ export default function SettingsPage() {
             <button
               onClick={handlePhrasesSave}
               disabled={phrasesSaving}
-              className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
+              className="w-full py-3 bg-ink hover:bg-[#25282d] disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
             >
               {phrasesSaving ? '...' : tr.settings.saveButton}
             </button>
           </div>
         ) : activeTab === 'combined' ? (
-          <div className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-8">
+          <div className="bg-white border border-line rounded-2xl p-6 flex flex-col gap-8">
 
             {/* Words count */}
             <div>
@@ -619,13 +615,13 @@ export default function SettingsPage() {
               onClick={handleContinueSave}
               disabled={continueSaving}
               data-testid="save-continue-settings-btn"
-              className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
+              className="w-full py-3 bg-ink hover:bg-[#25282d] disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
             >
               {continueSaving ? '...' : tr.settings.saveButton}
             </button>
           </div>
         ) : activeTab === 'other' ? (
-          <div className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-8">
+          <div className="bg-white border border-line rounded-2xl p-6 flex flex-col gap-8">
 
             {/* Language preference */}
             <div>
@@ -636,7 +632,7 @@ export default function SettingsPage() {
                 value={settings.lang}
                 onChange={(e) => setSettings((prev) => ({ ...prev, lang: e.target.value as 'en' | 'ru' }))}
                 data-testid="lang-select"
-                className="w-full border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white outline-none focus:border-gray-600 cursor-pointer"
+                className="w-full border border-line rounded-xl px-4 py-2 text-sm text-gray-900 bg-white outline-none focus:border-gray-600 cursor-pointer"
               >
                 <option value="en">{tr.settings.langEn}</option>
                 <option value="ru">{tr.settings.langRu}</option>
@@ -672,7 +668,7 @@ export default function SettingsPage() {
               onClick={handleSave}
               disabled={saving}
               data-testid="save-settings-btn"
-              className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
+              className="w-full py-3 bg-ink hover:bg-[#25282d] disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
             >
               {saving ? '...' : tr.settings.saveButton}
             </button>

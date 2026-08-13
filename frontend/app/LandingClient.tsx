@@ -89,7 +89,7 @@ function NewsSection({ inline = false }: { inline?: boolean }) {
 
   const content = (
     <>
-      <h2 className="font-headline text-xl font-bold text-gray-900 mb-4">{t.sectionTitle}</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-4">{t.sectionTitle}</h2>
       <div className="flex flex-col gap-3">
         {visible.map((post) => {
           const title = lang === 'ru' ? post.title_ru : post.title_en;
@@ -99,7 +99,7 @@ function NewsSection({ inline = false }: { inline?: boolean }) {
           const displayBody = isLong && !expanded ? body.slice(0, 120).trimEnd() + '…' : body;
           const date = new Date(post.published_at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
           return (
-            <div key={post.id} className="bg-white rounded-2xl p-5">
+            <div key={post.id} className="bg-white rounded-[14px] border border-line p-5">
               <p className="font-semibold text-sm text-gray-900 mb-1">{title}</p>
               {displayBody && <p className="text-xs text-gray-500 leading-relaxed mb-2">{displayBody}</p>}
               {isLong && (
@@ -253,16 +253,16 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
 
 
   return (
-    <main className="bg-[#F5F5F7] min-h-screen">
+    <main className="min-h-screen text-gray-900">
       <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-10">
         {/* Streak card + leaderboard: side by side once there's room for both at their
             natural width, instead of stacking in a narrow column and leaving the rest
             of the viewport empty on wide screens. */}
         <div className="flex flex-col lg:flex-row gap-4 mb-4 items-start">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full lg:flex-1">
+          <div className="bg-white rounded-[14px] border border-line overflow-hidden w-full lg:flex-1">
             <div className="flex">
               {/* Left: month calendar */}
-              <div className="flex-1 p-5 border-r border-gray-100 min-w-0">
+              <div className="flex-1 p-5 border-r border-line-strong min-w-0">
                 <p className="text-xl font-bold text-gray-900 mb-4">
                   {streak > 0 ? `${streak} ${plural(streak, tr.stats.streakDay)}!` : tr.stats.calendarStartStreak}
                 </p>
@@ -337,7 +337,7 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
 
           <NewsSection inline />
 
-          <div className="bg-white rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div className="bg-white rounded-[14px] border border-line p-5 flex items-center justify-between gap-4">
             <div>
               <p className="font-semibold text-sm mb-0.5">{t.premiumTitle}</p>
               <p className="text-xs text-gray-500 leading-relaxed">{t.premiumBody}</p>

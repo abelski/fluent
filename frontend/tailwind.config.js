@@ -14,7 +14,7 @@ module.exports = {
         // stock so existing emerald-50/500 usages keep working.
         emerald: { ...colors.emerald, 600: '#0f9d68', 700: '#0c7d54' },
         // Neutral lines: card borders, header rules, row separators.
-        line: '#ececec',
+        line: '#d9d9d9',
         'line-strong': '#f1f1f1',
         'line-soft': '#f4f4f4',
         ink: '#16181c',

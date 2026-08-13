@@ -9,9 +9,9 @@
     --emerald-600: #0f9d68; --emerald-700: #0c7d54; --emerald-50: #e9f6ee;
     --purple-600: #9333ea; --purple-100: #f3e8ff; --purple-50: #faf5ff;
     --ink: #16181c; --muted: #8a8f98; --muted-nav: #9a9fa6; --faint: #b0b4ba;
-    --line: #ececec; --line-strong: #f1f1f1; --line-soft: #f4f4f4;
+    --line: #d9d9d9; --line-strong: #f1f1f1; --line-soft: #f4f4f4;
     --destructive: #c2504a; --chip: #f2f3f3; --track: #eef1ef;
-    --gray-900: #16181c; --gray-500: #8a8f98; --gray-400: #b0b4ba; --gray-100: #ececec;
+    --gray-900: #16181c; --gray-500: #8a8f98; --gray-400: #b0b4ba; --gray-100: #d9d9d9;
     --tak-body: #ec3013; --tak-limb: #201e1d; --tak-eye: #f3f2f2;
   }
   * { box-sizing: border-box; }
@@ -23,14 +23,14 @@
   .note { font-size: 13px; color: var(--gray-500); background: #fdf6e3; border: 1px solid #f0e0a8; border-radius: 10px; padding: 12px 16px; max-width: 720px; margin-bottom: 48px; }
   h2 { font-size: 20px; font-weight: 700; margin: 48px 0 16px; }
   h3 { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
-  .card { background: #fff; border: 1px solid #ececec; border-radius: 14px; padding: 24px; }
+  .card { background: #fff; border: 1px solid #d9d9d9; border-radius: 14px; padding: 24px; }
   .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
   .swatch-block { }
   .swatch { height: 52px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px; }
   .swatch-label { font-size: 12px; color: var(--gray-500); }
   .swatch-label b { color: var(--gray-900); }
-  .poses { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0; border-top: 1px solid #ececec; border-left: 1px solid #ececec; }
-  .pose-cell { padding: 22px 16px; border-right: 1px solid #ececec; border-bottom: 1px solid #ececec; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .poses { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0; border-top: 1px solid #d9d9d9; border-left: 1px solid #d9d9d9; }
+  .pose-cell { padding: 22px 16px; border-right: 1px solid #d9d9d9; border-bottom: 1px solid #d9d9d9; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
   .pose-name { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
   .pose-usage { font-size: 12px; color: var(--gray-500); line-height: 1.4; }
   .size-row { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
@@ -39,7 +39,7 @@
   code { background: #f2f3f3; border-radius: 4px; padding: 1px 6px; font-size: 12.5px; }
   pre { background: #16181c; color: #e5e7eb; border-radius: 10px; padding: 16px 18px; overflow-x: auto; font-size: 12.5px; line-height: 1.6; }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th { text-align: left; color: var(--gray-500); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; padding: 8px 12px; border-bottom: 1px solid #ececec; }
+  th { text-align: left; color: var(--gray-500); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; padding: 8px 12px; border-bottom: 1px solid #d9d9d9; }
   td { padding: 10px 12px; border-bottom: 1px solid #f4f4f4; vertical-align: top; }
   .hero-demo { display: flex; align-items: flex-start; gap: 24px; }
   .hero-stats { flex: 1; min-width: 0; }
@@ -58,11 +58,11 @@
   .next-corner .val { font-size: 14px; font-weight: 700; }
   .bubble-demo { display: flex; align-items: center; gap: 40px; flex-wrap: wrap; }
   .bubble-wrap { text-align: center; }
-  .bubble { position: relative; background: #fff; border: 1px solid #ececec; border-radius: 12px; padding: 8px 16px; font-weight: 700; font-size: 15px; width: fit-content; margin: 0 auto; }
-  .bubble::after { content: ''; position: absolute; left: 36px; bottom: -8px; transform: rotate(45deg); width: 14px; height: 14px; background: #fff; border-right: 1px solid #ececec; border-bottom: 1px solid #ececec; }
+  .bubble { position: relative; background: #fff; border: 1px solid #d9d9d9; border-radius: 12px; padding: 8px 16px; font-weight: 700; font-size: 15px; width: fit-content; margin: 0 auto; }
+  .bubble::after { content: ''; position: absolute; left: 36px; bottom: -8px; transform: rotate(45deg); width: 14px; height: 14px; background: #fff; border-right: 1px solid #d9d9d9; border-bottom: 1px solid #d9d9d9; }
   @keyframes tak-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(-2deg); } }
   .tak-svg g.float { animation: tak-float 2.6s ease-in-out infinite; transform-origin: 100px 130px; }
-  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid #ececec; font-size: 13px; color: var(--gray-400); }
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid #d9d9d9; font-size: 13px; color: var(--gray-400); }
 </style>
 </head>
 <body>
@@ -83,7 +83,7 @@
       <li><b>This page is the visual source of truth.</b> It defines layout, spacing and colour for what shipped.
         Any new pattern should match what's documented here, or be added here alongside the "Deliberate
         deviations" table below.</li>
-      <li><b>Flat, not decorated.</b> Cards are white with a 1px <code>#ececec</code> border and no drop shadow.
+      <li><b>Flat, not decorated.</b> Cards are white with a 1px <code>#d9d9d9</code> border and no drop shadow.
         Buttons carry no shadow or glow. No decorative blur blobs, no gradient fills on components — the only
         gradient in the product is the page wash on <code>body</code>.</li>
       <li><b>Tokens, not raw palette steps.</b> Use the named colours above. Never reach for a stock Tailwind step
@@ -157,7 +157,7 @@
       <div class="swatch-block"><div class="swatch" style="background:#9a9fa6"></div><div class="swatch-label"><b>muted-nav</b> #9a9fa6<br>inactive nav / footer text</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#b0b4ba"></div><div class="swatch-label"><b>faint</b> #b0b4ba<br>captions, counts</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#5b6067"></div><div class="swatch-label"><b>#5b6067</b><br>readable secondary — small caps labels (a11y, see Principles)</div></div>
-      <div class="swatch-block"><div class="swatch" style="background:#ececec"></div><div class="swatch-label"><b>line</b> #ececec<br>card borders, header rule</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#d9d9d9"></div><div class="swatch-label"><b>line</b> #d9d9d9<br>card borders, header rule</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#f1f1f1"></div><div class="swatch-label"><b>line-strong</b> #f1f1f1<br>panel header separator</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#f4f4f4"></div><div class="swatch-label"><b>line-soft</b> #f4f4f4<br>table row separator</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#f2f3f3"></div><div class="swatch-label"><b>chip</b> #f2f3f3<br>pill track, nav strip, chip fill</div></div>
@@ -175,7 +175,7 @@
   <h2>Card &amp; shape tokens</h2>
   <div class="card">
     <p style="font-size:13.5px;line-height:1.8;margin:0;">
-      Outer cards: <code>rounded-[14px]</code>, <code>border border-line</code> (#ececec), no drop shadow, no gradient fill.<br>
+      Outer cards: <code>rounded-[14px]</code>, <code>border border-line</code> (#d9d9d9), no drop shadow, no gradient fill.<br>
       Inner/nested cards: <code>rounded-xl</code> (12px), same border.<br>
       Pills / badges: <code>rounded-full</code>, borderless filled — never outlined.<br>
       Buttons: <code>rounded-[10px]</code>, <code>px-5 py-2.5</code>, <code>text-sm font-semibold</code>, no shadow.
@@ -652,12 +652,12 @@
   <div class="card">
     <table>
       <tr><th>Element</th><th>Spec</th><th>File</th></tr>
-      <tr><td>Navbar</td><td>Full-bleed, <code>padding:18px 32px</code>, <code>border-bottom:1px solid #ececec</code>, solid white. <b>Not</b> sticky, no backdrop blur, no shadow.</td><td><code>components/Header.tsx</code></td></tr>
+      <tr><td>Navbar</td><td>Full-bleed, <code>padding:18px 32px</code>, <code>border-bottom:1px solid #d9d9d9</code>, solid white. <b>Not</b> sticky, no backdrop blur, no shadow.</td><td><code>components/Header.tsx</code></td></tr>
       <tr><td>Nav tab pills</td><td>Track <code>bg-[#f2f3f3] rounded-full p-1 gap-1</code>; item <code>px-4 py-2 text-sm</code>; active <code>bg-white font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.06)]</code>; inactive <code>#9a9fa6</code>.</td><td><code>components/Header.tsx</code></td></tr>
       <tr><td>RU/EN switch</td><td>Segmented pill — <code>bg-[#f2f3f3] rounded-full p-[3px] text-[12.5px] font-semibold</code>, active half white + shadow. No border, no <code>/</code> separator.</td><td><code>components/Header.tsx</code></td></tr>
       <tr><td>Avatar cluster</td><td>28px circle <code>bg-emerald-600</code>, name 14px ink, caret <code>▾</code> 11px <code>#c2c5ca</code>, group gap 18px.</td><td><code>components/Header.tsx</code></td></tr>
       <tr><td>Content container</td><td><code>.page</code> — <code>max-width:1180px; margin:0 auto; padding-bottom:80px</code>, 32px gutters (16px below 860px).</td><td><code>app/globals.css</code></td></tr>
-      <tr><td>Footer</td><td>Transparent on the page wash (no white band), <code>border-top:1px solid #ececec</code>, 1180px, 13px <code>#9a9fa6</code>, link gap 24px.</td><td><code>components/Footer.tsx</code></td></tr>
+      <tr><td>Footer</td><td>Transparent on the page wash (no white band), <code>border-top:1px solid #d9d9d9</code>, 1180px, 13px <code>#9a9fa6</code>, link gap 24px.</td><td><code>components/Footer.tsx</code></td></tr>
       <tr><td>Bug-report FAB</td><td><code>right:24px bottom:40px</code>, white pill, <code>border #e2e4e3</code>, <code>shadow 0 2px 8px rgba(0,0,0,0.06)</code>, <code>z-60</code>, <code>bare</code> TAK. Label hidden below <code>sm</code>.</td><td><code>components/MistakeButton.tsx</code></td></tr>
     </table>
   </div>
@@ -678,7 +678,7 @@
       <tr><td><code>PageMascot</code> at 128px, not 176px</td><td>No responsive size prop; a literal 176px crowds a 375px viewport.</td></tr>
       <tr><td>Mood 0 renders <code>talking</code>, not the standalone file's <code>IDLE</code></td><td>Every page mascot now carries a speech bubble, so the neutral state should look like he is speaking. <code>idle</code> is kept for the bubble-less <code>bare</code>/icon call sites.</td></tr>
       <tr><td>Landing streak ring switched to <code>bare</code></td><td>A 32px full mascot inside a progress ring is an icon, not the character — same case as the bug-report FAB, now treated the same way.</td></tr>
-      <tr><td>Heavy-border pages left alone</td><td>Admin, pricing, premium, settings and extension still use the older <code>border-gray-900</code> style — never given a design pass. Практика and Статьи were on this style too and are now migrated (see PageShell below).</td></tr>
+      <tr><td>Heavy-border pages left alone</td><td>Admin, pricing, premium and extension still use the older <code>border-gray-900</code> style — never given a design pass. Практика and Статьи were on this style too and are now migrated (see PageShell below); Settings (<code>/dashboard/settings</code>) was migrated too — flat <code>border-line</code> cards, dark CTA switched to <code>bg-ink</code>, tab switcher now uses the same pill recipe as Статьи' category tabs, decorative blur/own background dropped in favor of the shared page wash. It does not use <code>PageShell</code> itself (not a top-nav page, keeps its own narrower <code>max-w-sm</code> form layout) but follows the same token and flatness rules.</td></tr>
       <tr><td>Grammar's 3-card stat grid collapsed into one <code>ProgressStatCard</code></td><td>Грамматика, Практика and Фразы now all show a single hero card (count + progress bar + mascot inside), matching the pattern Слова/Фразы already used. The standalone "tip" card's copy moved into the hero's milestone caption instead of being dropped.</td></tr>
       <tr><td>Фразы' difficulty-colored card borders removed</td><td>The difficulty badge chip already carries that color; a colored border duplicated it and broke from the flat <code>border-line</code> convention every other accordion card on the site uses.</td></tr>
       <tr><td>Navbar logo now carries a <code>TakMark</code> icon</td><td>Previously text-only ("fluent."). Product
@@ -711,14 +711,20 @@
       <tr><td>Logged-in home (<code>app/LandingClient.tsx</code>'s <code>UserHome</code>, the <code>/</code> route)
         widened from <code>max-w-2xl</code> (672px) to <code>max-w-[1180px]</code>, streak card and leaderboard now
         side by side above 1024px instead of stacked</td><td>
-        Not one of the 5 top-nav pages and still on the pre-redesign shell (<code>bg-[#F5F5F7]</code>,
-        <code>shadow-sm</code> cards) — intentionally not migrated to <code>PageShell</code>/flat cards here, this
-        change only fixes the width. At 672px centered on a wide monitor the page was mostly empty gutter. The
-        calendar and leaderboard avatars are fixed-size grids, not fluid, so simply stretching one narrow column
-        would have left the calendar sparse; placing the two widgets side by side (leaderboard capped at 420px so
-        7 entries fit without scrolling) uses the extra width without stretching either. The CTA/news/premium
-        cards below stay at <code>max-w-2xl</code>, left-aligned (not centered) to match the row above, since
-        news body text at full width hurts readability.</td></tr>
+        Not one of the 5 top-nav pages, so it does not use <code>PageShell</code> and is not in
+        <code>NAV_PAGES</code> — but it was brought onto the same token/flatness rules as everything else: the
+        streak card, <code>Leaderboard.tsx</code>, the news cards (<code>NewsSection</code>, shared with the guest
+        landing page) and the premium teaser card all carry <code>rounded-[14px] border border-line</code>, no
+        <code>shadow-sm</code>; the internal calendar/streak-counter divider inside the streak card uses
+        <code>border-line-strong</code>, same as an inner divider anywhere else. The page's own
+        <code>bg-[#F5F5F7]</code> fill was dropped in favor of the shared body page wash. At 672px centered on a
+        wide monitor the page was mostly empty gutter. The calendar and leaderboard avatars are fixed-size grids,
+        not fluid, so simply stretching one narrow column would have left the calendar sparse; placing the two
+        widgets side by side (leaderboard capped at 420px so 7 entries fit without scrolling) uses the extra width
+        without stretching either. The CTA/news/premium cards below stay at <code>max-w-2xl</code>, left-aligned
+        (not centered) to match the row above, since news body text at full width hurts readability. The
+        logged-out marketing hero/features sections in the same file (<code>GuestLanding</code>) were left alone —
+        that is a distinct marketing surface, not part of this pass.</td></tr>
       <tr><td><code>/dashboard/continue</code> (the combined session) does not use <code>PageShell</code></td><td>
         Same reason as the logged-in home above: it is not one of the 5 top-nav pages, and it is a full-screen
         session surface, not a browse page. It follows the conventions already used by

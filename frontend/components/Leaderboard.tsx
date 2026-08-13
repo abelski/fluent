@@ -58,7 +58,7 @@ export default function Leaderboard() {
   if (!token) return null;
 
   return (
-    <div data-testid="leaderboard" className="bg-white rounded-2xl p-5 mb-4">
+    <div data-testid="leaderboard" className="bg-white rounded-[14px] border border-line p-5 mb-4">
       <div className="flex items-center justify-between mb-1">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t.leaderboardTitle}</p>
         <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">

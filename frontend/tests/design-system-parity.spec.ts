@@ -10,7 +10,7 @@ import { test, expect } from '@playwright/test';
 
 const BRAND_GREEN = 'rgb(15, 157, 104)'; // #0f9d68 — design-system accent
 const TAK_ORANGE = 'rgb(236, 48, 19)';   // #ec3013 — TAK's fixed body color, also the logo dot
-const LINE = 'rgb(236, 236, 236)';       // #ececec — card/rule border
+const LINE = 'rgb(217, 217, 217)';       // #d9d9d9 — card/rule border
 
 function makeFakeJwt(name: string): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));

@@ -27,7 +27,7 @@ library). In code they are Tailwind theme colors:
 | `#8a8f98` | `muted` | secondary text |
 | `#9a9fa6` | `muted-nav` | inactive nav/footer text |
 | `#b0b4ba` | `faint` | captions, counts |
-| `#ececec` | `line` | card borders, header rule |
+| `#d9d9d9` | `line` | card borders, header rule |
 | `#f1f1f1` | `line-strong` | panel header separator |
 | `#f4f4f4` | `line-soft` | table row separator |
 | `#c2504a` | `destructive` | destructive actions |
