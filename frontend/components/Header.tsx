@@ -143,7 +143,7 @@ export default function Header() {
 
         {/* text-ink is required: the global `a` rule would otherwise tint the
             whole wordmark green. Mark, weight/tracking and the round dot follow
-            the primary lockup in `design system/Fluent Logo.html` (scaled from
+            the primary lockup in `documentation/design system/Fluent Logo.html` (scaled from
             its 96px reference down to navbar size); the dot uses TAK's fixed
             orange (BODY) instead of the site's green accent so the mark and the
             wordmark read as one accent — see "Logo / wordmark" in the component

@@ -1,6 +1,6 @@
 # Plan: Chrome Extension — Translate & "Add to Learn" (list: "From internet")
 
-> After approval this plan will be copied to `plans/plan_chrome-extension.md` for live checkbox tracking during implementation (feature-analyst workflow).
+> After approval this plan will be copied to `plans/improvements/implemented/IMPLEMENTED-plan_chrome-extension.md` for live checkbox tracking during implementation (feature-analyst workflow).
 
 ## Context
 
@@ -43,14 +43,14 @@ The extension lives in a new top-level `extension/` folder (next to `backend/`, 
 - [x] 7. `extension/popup.html` + `extension/popup.js` — action popup: Disconnected (Connect button) / Connected (email, premium badge, "Open my lists" → `{base}/dashboard/lists`, Disconnect). Reacts to `chrome.storage.onChanged`.
 - [x] 8. `extension/options.html` + `extension/options.js` — Production (`https://fluent.lt`, default) vs Local dev (`http://localhost:8000`) radio; switching clears stored token (different JWT secrets per env).
 - [x] 9. `extension/icons/icon{16,32,48,128}.png` — generated from `frontend/public/favicon.svg` (sips/rsvg one-off; commit only PNGs).
-- [x] 10. `extension/README.md` — load-unpacked instructions, dev toggle, manual smoke checklist.
+- [x] 10. `documentation/extension-README.md` — load-unpacked instructions, dev toggle, manual smoke checklist.
 
 ## Validation
 
 - [x] Backend unit: `cd backend && python -m pytest tests/test_extension.py -q`
 - [x] Full backend suite: `python -m pytest -q` (no regressions)
 - [x] Restart local server; verify basic flow + UI intact (nav, header/footer, login) per CLAUDE.md — verified 2026-08-04: landing/lists/grammar/practice all intact, authenticated header shown, footer present
-- [ ] Manual extension smoke (documented in extension/README.md): load unpacked → options=Local dev → Connect → login → select word → icon → translation (one DB word, one MyMemory word) → ctrl+dbl-click works → premium add creates "From internet" visible at `/dashboard/lists` → duplicate shows "Already in your list" → non-premium sees "Upgrade to add" → Disconnect shows "Connect Fluent" — **left for the user: requires loading the unpacked extension in a real Chrome profile.** API side already verified end-to-end via logged-in browser: translate DB hit (namas→house/дом), live MyMemory fallback (nesuprantamiausias→"most incomprehensible"), non-premium add → 403
+- [ ] Manual extension smoke (documented in documentation/extension-README.md): load unpacked → options=Local dev → Connect → login → select word → icon → translation (one DB word, one MyMemory word) → ctrl+dbl-click works → premium add creates "From internet" visible at `/dashboard/lists` → duplicate shows "Already in your list" → non-premium sees "Upgrade to add" → Disconnect shows "Connect Fluent" — **left for the user: requires loading the unpacked extension in a real Chrome profile.** API side already verified end-to-end via logged-in browser: translate DB hit (namas→house/дом), live MyMemory fallback (nesuprantamiausias→"most incomprehensible"), non-premium add → 403
 - [x] Auth gates: anon translate → 401; non-premium add → 403 (pytest + live curl/browser checks)
 - [x] Playwright: 351 passed, 6 failed — the same failures reproduce on unmodified main (verified by stashing the change and re-running), i.e. pre-existing and unrelated (premium-banner/quota/phrase-list specs). Real-extension Playwright config deferred as optional follow-up
 - [x] News post — skipped per user decision (2026-08-04): no news needed for this feature
@@ -65,7 +65,7 @@ Adds a "Translation language" option (English / Russian / Both, default English)
 - [x] `extension/options.html` + `extension/options.js` — added a second fieldset "Translation language" with English (default) / Russian / Both radios, persisted as `chrome.storage.local.translationLang`. Changing it does **not** touch the stored token (only switching backend env does that).
 - [x] `extension/background.js` — `translate()` now reads `translationLang` from `chrome.storage.local` (default `"en"`) and passes it as the `lang` query param.
 - [x] `extension/content.js` — `showCard()`'s translation display now handles either field being `null`: shows `"EN · RU"` when both are present, otherwise whichever single language came back.
-- [x] `extension/README.md` — documented the new Options setting.
+- [x] `documentation/extension-README.md` — documented the new Options setting.
 
 Validation: `pytest tests/test_extension.py -q` → 20 passed; full `pytest -q` → 160 passed (no regressions); `node --check` clean on `background.js`, `content.js`, `options.js`, `popup.js`.
 
@@ -77,7 +77,7 @@ Lets the user pick which personal list a word is added to, instead of always the
 - [x] `backend/tests/test_extension.py` — added: `test_add_with_owned_list_id`, `test_add_with_other_users_list_id_404`, `test_add_with_public_list_id_404` (seeded public list id=1), `test_add_without_list_id_still_uses_from_internet`, `test_add_dedupe_is_per_list`.
 - [x] `extension/background.js` — implemented (`getLists` message wrapping `GET /api/me/word-lists`; `addWord` forwards `list_id`).
 - [x] `extension/content.js` — implemented (`<select>` in `renderFooter`'s premium/admin branch, populated via `getLists`; preselects/persists `chrome.storage.local.lastListId`; degrades to just the button if `getLists` fails).
-- [x] `extension/README.md` — documented the list picker.
+- [x] `documentation/extension-README.md` — documented the list picker.
 
 Validation: `pytest tests/test_extension.py -q` → 25 passed; full `pytest -q` → 165 passed (no regressions); `node --check` clean on all four extension JS files.
 
@@ -91,7 +91,7 @@ Adds a public, in-app "Chrome extension" page (installation + usage instructions
 - [x] `frontend/app/extension/layout.tsx` (metadata) + `page.tsx` (`'use client'`) — new page following the `layout.tsx`-has-metadata / `page.tsx`-is-client convention used by `settings/`, `lists/`, `vocabulary/`. Fetches `${BACKEND_URL}/api/extension/info` client-side for the version line (silently stays on the loading label on error), download button links to `${BACKEND_URL}/api/extension/download`, numbered install/usage steps, and a "From internet" note linking to `/dashboard/lists`. All copy via `useT()`.
 - [x] `frontend/app/dashboard/premium/page.tsx` — added a small `🧩 Расширение для Chrome →` link to `/extension` at the bottom of the existing centered column (this page predates the `useT()` i18n convention and is hardcoded Russian, so the new link matches that in plain Russian rather than introducing i18n to an otherwise non-i18n page).
 - [x] `frontend/tests/extension-page.spec.ts` (new) — fake-JWT pattern from `personal-word-lists.spec.ts`; mocks `/api/me/quota` and `/api/extension/info` (→ `{"version":"9.9.9"}`); asserts the page loads, an `<h1>` is visible, "9.9.9" is visible, the download link's `href` ends in `/api/extension/download`, and `header` (nav) still renders. A second test visits `/pricing` (no auth) and asserts the new RU feature line is visible (RU is the default `useLang()` state).
-- [x] `plans/plan_chrome-extension.md` — this section.
+- [x] `plans/improvements/implemented/IMPLEMENTED-plan_chrome-extension.md` — this section.
 
 Validation: `pytest tests/test_extension.py -q` → 28 passed; full `pytest -q` → 168 passed (no regressions); `npm run build` → succeeded (static export unaffected); `npx playwright test tests/extension-page.spec.ts` → see run notes below.
 

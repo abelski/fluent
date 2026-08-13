@@ -46,7 +46,7 @@ interface PoseSpec {
 }
 
 // Poses are ported from the `emotions` array in
-// `design system/Tak Mascot Standalone.html` — same chevron-torso skeleton,
+// `documentation/design system/Tak Mascot Standalone.html` — same chevron-torso skeleton,
 // pushed into recognizable reaction poses.
 const POSES: Record<TakPose, PoseSpec> = {
   idle: {

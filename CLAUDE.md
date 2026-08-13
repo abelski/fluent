@@ -66,7 +66,8 @@
 - After adding a new feature, add an autotest for it and run autotests to confirm everything works
 - Do not push to git without an explicit directive from the user
 - never use ANTHROPIC_API_KEY (we dont have it in our subscription)
-- Keep `design system/` updated whenever new UI components or patterns are introduced; treat it as the source of truth for visual/component decisions during development
+- Keep `documentation/design system/` updated whenever new UI components or patterns are introduced; treat it as the source of truth for visual/component decisions during development
+- When you hit a non-obvious gotcha, constraint, or piece of investigative context (a broken/missing tool, an undocumented quirk, a workaround, "why this isn't just X") — write it down in `documentation/` instead of letting it live only in conversation. Re-deriving the same finding by re-exploring the codebase in a future session burns tokens for nothing; a short note prevents that.
 
 # Design System — ALWAYS consult before writing UI
 
@@ -76,8 +77,8 @@ Tailwind palette step without checking these first:
 
 | File | What it is |
 | --- | --- |
-| `design system/Component Library (as-built).html` | **Read this first.** The visual source of truth: principles, colour tokens, logo rules, card/button/shell specs, TAK, deliberate deviations. Documents what shipped. |
-| `design system/IMPLEMENTATION.md` | Token/pattern → file mapping, so the component library and the code don't drift. |
+| `documentation/design system/Component Library (as-built).html` | **Read this first.** The visual source of truth: principles, colour tokens, logo rules, card/button/shell specs, TAK, deliberate deviations. Documents what shipped. |
+| `documentation/IMPLEMENTATION.md` | Token/pattern → file mapping, so the component library and the code don't drift. |
 | `frontend/tailwind.config.js` | The tokens themselves. |
 
 The original prototype mockups that drove the redesign have been retired now that it shipped — the
@@ -113,6 +114,6 @@ Rules:
    - Login works
 3. Run autotests
 4. make sure that feature or change correctly working localy
-5. For UI changes: verify against `design system/Component Library (as-built).html`, run
+5. For UI changes: verify against `documentation/design system/Component Library (as-built).html`, run
    `design-system-parity.spec.ts`, and update the component library if a shared component or
    pattern changed

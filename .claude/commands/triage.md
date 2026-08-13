@@ -7,7 +7,7 @@ Load environment from `backend/.env` and connect to the production PostgreSQL da
 
 ### 2. Ensure triage folders exist
 Create the following folders in the project root if they do not already exist:
-- `plans/triage/` — active issue plans
+- `plans/triage/active/` — active issue plans
 - `plans/triage/hold/` — plans for issues that are on hold in the DB
 - `plans/triage/implemented/` — plans for resolved issues
 
@@ -33,9 +33,9 @@ Each agent prompt must include:
 Wait for **all** agents to return before proceeding. Collect each agent's output and use it to populate the corresponding plan file in step 6.
 
 ### 6. Save individual plans
-For each issue, derive a short slug from the description (3-5 words, lowercase, hyphen-separated). The filename format is `plans/triage/issue-<id>-<slug>.md` (e.g. `issue-12-wrong-verb-form.md`).
+For each issue, derive a short slug from the description (3-5 words, lowercase, hyphen-separated). The filename format is `plans/triage/active/issue-<id>-<slug>.md` (e.g. `issue-12-wrong-verb-form.md`).
 
-Check if a file matching `plans/triage/issue-<id>-*.md` or `plans/triage/hold/issue-<id>-*.md` already exists. If it does, skip that issue entirely. Otherwise, write a new file using the slug-based name.
+Check if a file matching `plans/triage/active/issue-<id>-*.md` or `plans/triage/hold/issue-<id>-*.md` already exists. If it does, skip that issue entirely. Otherwise, write a new file using the slug-based name.
 
 Format each file as:
 
@@ -70,12 +70,12 @@ After saving all files, print the list of created file paths.
 ### 7. Clean up stale plan files
 After processing new issues, audit the existing plan files for staleness:
 
-**Move IMPLEMENTED- files** — any file with an `IMPLEMENTED-` prefix found in `plans/triage/` or `plans/triage/hold/` should be moved to `plans/triage/implemented/`.
+**Move IMPLEMENTED- files** — any file with an `IMPLEMENTED-` prefix found in `plans/triage/active/` or `plans/triage/hold/` should be moved to `plans/triage/implemented/`.
 
 **Move or delete plan files whose DB status has changed:**
-- If a plan file exists in `plans/triage/` (not hold/ or implemented/) but the DB status is now `onhold` → move it to `plans/triage/hold/`.
-- If a plan file exists in `plans/triage/hold/` but the DB status is now `open` → move it back to `plans/triage/`.
-- If a plan file exists in `plans/triage/` or `hold/` but the DB status is now `resolved` → add the `IMPLEMENTED-` prefix and move it to `plans/triage/implemented/`.
+- If a plan file exists in `plans/triage/active/` but the DB status is now `onhold` → move it to `plans/triage/hold/`.
+- If a plan file exists in `plans/triage/hold/` but the DB status is now `open` → move it back to `plans/triage/active/`.
+- If a plan file exists in `plans/triage/active/` or `hold/` but the DB status is now `resolved` → add the `IMPLEMENTED-` prefix and move it to `plans/triage/implemented/`.
 - If the DB row no longer exists → delete the plan file.
 
 **Verify implemented fixes in code:** For plan files that describe a code change, check whether the change is already present in the codebase (e.g. grep for the relevant function/pattern). If the fix is confirmed implemented but the DB is still `onhold`, note it to the user — it may need to be formally resolved.

@@ -9,7 +9,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Design-system accent green (`design system/` prototypes) re-points the
+        // Design-system accent green (`documentation/design system/` prototypes) re-points the
         // two emerald steps the product actually uses; the rest of the scale is
         // stock so existing emerald-50/500 usages keep working.
         emerald: { ...colors.emerald, 600: '#0f9d68', 700: '#0c7d54' },

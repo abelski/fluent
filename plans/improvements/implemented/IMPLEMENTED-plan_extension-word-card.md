@@ -2,10 +2,10 @@
 
 ## Execution model (user directive)
 
-**Implementation: Sonnet subagent** (works through the checklist, flips checkboxes in `plans/plan_extension-word-card.md`).
+**Implementation: Sonnet subagent** (works through the checklist, flips checkboxes in `plans/improvements/implemented/IMPLEMENTED-plan_extension-word-card.md`).
 **Code review: Fable** (this session) — reviews the full diff for correctness, parsing robustness, backward compatibility, and simplicity; applies fixes; runs validation.
 
-> On approval this plan is copied to `plans/plan_extension-word-card.md` for live checkbox tracking.
+> On approval this plan is copied to `plans/improvements/implemented/IMPLEMENTED-plan_extension-word-card.md` for live checkbox tracking.
 
 ## Context
 
@@ -71,7 +71,7 @@ Real-world screenshot showed selecting "saugo" (3rd-person present, "guards/prot
 
 ## Execution model (user directive)
 
-**Implementation: Sonnet subagent** (works through the checklist, flips checkboxes in `plans/plan_extension-word-card.md` under a new follow-up section).
+**Implementation: Sonnet subagent** (works through the checklist, flips checkboxes in `plans/improvements/implemented/IMPLEMENTED-plan_extension-word-card.md` under a new follow-up section).
 **Code review: Opus subagent** — reviews the diff, independently re-measures performance and re-verifies duplicate detection live, applies fixes.
 
 ## Context

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Guards the visual contract taken from `design system/prototypes/*.html`.
+ * Guards the visual contract taken from `documentation/design system/prototypes/*.html`.
  *
  * These assert tokens and structure that the prototypes fix explicitly, so a
  * future refactor cannot silently drift the app back onto stock Tailwind

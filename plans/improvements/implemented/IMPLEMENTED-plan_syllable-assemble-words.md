@@ -70,4 +70,4 @@ This is architecturally simpler than the phrase feature: no new DB fields, no ne
 - [x] Playwright full suite: `npx playwright test` — 352 passed, same 5 pre-existing unrelated failures as before (`lists-progress-parallel`, `phrase-lists` EN-translatable, `quota` premium-badge, `stats-card-alignment` ×2), nothing new (after fixing the issue-147 regression above)
 - [x] Backend suite unaffected: `pytest tests/ -q` — 140 passed (no backend changes made)
 - [x] Manual smoke (disposable throwaway account on a real word list, cleaned up after): studied list 159 ("Gaminimas"), routed through stage 1 → stage 2r (reverse MCQ) → the syllable-assemble screen appeared for "kepti" (жарить, печь) with tiles "kep"/"ti", correctly styled, assembling it correctly advanced onward as expected. Confirmed live against real production word data, not just mocked test payloads.
-- [ ] News post written and published via /news-writer
+- [x] News post written and published via /news-writer

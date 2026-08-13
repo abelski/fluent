@@ -7,7 +7,7 @@ interface TakMarkProps {
 
 // TAK's torso + face, cropped tight to the polygon's bounding box (same crop
 // as TakChevron) rather than Tak's padded 0-240 canvas — this is the "TAK
-// mark" from the primary lockup in `design system/Fluent Logo.html`, which
+// mark" from the primary lockup in `documentation/design system/Fluent Logo.html`, which
 // sizes to the shape's own silhouette, not the mascot's full standing frame.
 // Used for the header logo only; every other icon call site uses `Tak bare`.
 export default function TakMark({ size = 19, className }: TakMarkProps) {

@@ -98,14 +98,14 @@ affordance.
 `Tak.tsx` implements nine poses. Four are the originals (`idle`, `talking`, `stonks`, `grin`); the
 five mood poses — `hype`, `galaxy`, `sus`, `fine`, `lost` — are ported verbatim (limb rotations, eye
 shapes, mouth paths, animation timings) from the `emotions` array in
-`design system/Tak Mascot Standalone.html`. Each pose can override the whole-figure animation via
+`documentation/design system/Tak Mascot Standalone.html`. Each pose can override the whole-figure animation via
 `anim` and the limb swing via `swingDur`; keyframes (`tak-float`, `tak-bounce`, `tak-shake`,
 `tak-pulse`, `tak-wobble`) live in `frontend/app/globals.css`. `sus` is deliberately motionless.
 
 Extract the source poses with:
 
 ```
-python3 -c "import re,json;s=open('design system/Tak Mascot Standalone.html').read();print(json.loads(re.search(r'__bundler/template\"[^>]*>(.*?)</script>',s,re.S).group(1)))"
+python3 -c "import re,json;s=open('documentation/design system/Tak Mascot Standalone.html').read();print(json.loads(re.search(r'__bundler/template\"[^>]*>(.*?)</script>',s,re.S).group(1)))"
 ```
 
 **Render `PageMascot`, not `Tak`.** `PageMascot.tsx` owns the standard 128px size, the speech bubble
