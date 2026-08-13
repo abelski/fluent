@@ -20,6 +20,8 @@ from models import Article, User
 
 router = APIRouter()
 
+_VALID_CATEGORIES = {"learning_materials", "adaptation", "blog"}
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
@@ -39,20 +41,28 @@ def _tags_list(tags_str: str) -> list[str]:
 # ── Public endpoints ──────────────────────────────────────────────────────────
 
 @router.get("/articles")
-def list_articles(session: Session = Depends(get_session)):
-    """Return all published articles that are not pinned to the footer (summary only, no body)."""
-    articles = session.exec(
+def list_articles(category: Optional[str] = None, session: Session = Depends(get_session)):
+    """Return all published articles that are not pinned to the footer (summary only, no body).
+
+    Optional `?category=` filters to one of `_VALID_CATEGORIES`; omitted returns all (default).
+    """
+    if category is not None and category not in _VALID_CATEGORIES:
+        raise HTTPException(status_code=400, detail="Invalid category")
+    query = (
         select(Article)
         .where(Article.published == True)  # noqa: E712
         .where(Article.show_in_footer == False)  # noqa: E712
-        .order_by(Article.created_at.desc())
-    ).all()
+    )
+    if category is not None:
+        query = query.where(Article.category == category)
+    articles = session.exec(query.order_by(Article.created_at.desc())).all()
     return [
         {
             "slug": a.slug,
             "title_ru": a.title_ru,
             "title_en": a.title_en,
             "tags": _tags_list(a.tags),
+            "category": a.category,
             "created_at": a.created_at,
         }
         for a in articles
@@ -91,6 +101,7 @@ def get_article(slug: str, session: Session = Depends(get_session)):
         "body_ru": article.body_ru,
         "body_en": article.body_en,
         "tags": _tags_list(article.tags),
+        "category": article.category,
         "created_at": article.created_at,
         "updated_at": article.updated_at,
     }
@@ -113,6 +124,7 @@ def admin_list_articles(
             "title_ru": a.title_ru,
             "title_en": a.title_en,
             "tags": _tags_list(a.tags),
+            "category": a.category,
             "published": a.published,
             "show_in_footer": a.show_in_footer,
             "created_at": a.created_at,
@@ -141,6 +153,7 @@ def admin_get_article(
         "body_ru": article.body_ru,
         "body_en": article.body_en,
         "tags": article.tags,
+        "category": article.category,
         "published": article.published,
         "show_in_footer": article.show_in_footer,
         "created_at": article.created_at,
@@ -155,6 +168,7 @@ class ArticleBody(BaseModel):
     body_ru: str = ""
     body_en: str = ""
     tags: str = ""
+    category: str
     published: bool = True
     show_in_footer: bool = False
 
@@ -169,6 +183,8 @@ def create_article(
     _require_admin(authorization, session)
     if not body.slug or not body.title_ru or not body.title_en:
         raise HTTPException(status_code=400, detail="slug, title_ru and title_en are required")
+    if body.category not in _VALID_CATEGORIES:
+        raise HTTPException(status_code=422, detail="Invalid category")
     existing = session.exec(select(Article).where(Article.slug == body.slug)).first()
     if existing:
         raise HTTPException(status_code=409, detail="Slug already exists")
@@ -179,6 +195,7 @@ def create_article(
         body_ru=body.body_ru,
         body_en=body.body_en,
         tags=body.tags,
+        category=body.category,
         published=body.published,
         show_in_footer=body.show_in_footer,
     )
@@ -197,6 +214,8 @@ def update_article(
 ):
     """Admin: update an existing article."""
     _require_admin(authorization, session)
+    if body.category not in _VALID_CATEGORIES:
+        raise HTTPException(status_code=422, detail="Invalid category")
     article = session.exec(select(Article).where(Article.slug == slug)).first()
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -211,6 +230,7 @@ def update_article(
     article.body_ru = body.body_ru
     article.body_en = body.body_en
     article.tags = body.tags
+    article.category = body.category
     article.published = body.published
     article.show_in_footer = body.show_in_footer
     article.updated_at = _utcnow()
@@ -246,6 +266,7 @@ def _article_to_markdown(article: Article) -> str:
         f"title_ru: {article.title_ru}",
         f"title_en: {article.title_en}",
         f"tags: {article.tags or ''}",
+        f"category: {article.category or 'blog'}",
         f"published: {published_str}",
         "---",
         "",
@@ -291,6 +312,7 @@ def _parse_markdown_article(content: str) -> dict:
     title_ru = _get("title_ru")
     title_en = _get("title_en")
     tags = _get("tags")
+    category = _get("category") or "blog"
     published = _get("published").lower() != "false"
 
     if not slug:
@@ -299,6 +321,8 @@ def _parse_markdown_article(content: str) -> dict:
         raise ValueError("frontmatter missing required field: title_ru")
     if not title_en:
         raise ValueError("frontmatter missing required field: title_en")
+    if category not in _VALID_CATEGORIES:
+        category = "blog"
 
     if "---EN---" in body_part:
         parts = body_part.split("---EN---", 1)
@@ -313,6 +337,7 @@ def _parse_markdown_article(content: str) -> dict:
         "title_ru": title_ru,
         "title_en": title_en,
         "tags": tags,
+        "category": category,
         "published": published,
         "body_ru": body_ru,
         "body_en": body_en,
@@ -363,6 +388,7 @@ async def import_article(
         existing.body_ru = data["body_ru"]
         existing.body_en = data["body_en"]
         existing.tags = data["tags"]
+        existing.category = data["category"]
         existing.published = data["published"]
         existing.updated_at = _utcnow()
         session.add(existing)

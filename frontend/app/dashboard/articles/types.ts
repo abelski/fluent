@@ -3,5 +3,6 @@ export interface ArticleSummary {
   title_ru: string;
   title_en: string;
   tags: string[];
+  category: string;
   created_at: string;
 }

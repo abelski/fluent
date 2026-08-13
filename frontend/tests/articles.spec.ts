@@ -19,6 +19,7 @@ const MOCK_ARTICLES = [
     title_ru: 'Как подготовиться к экзамену A2',
     title_en: 'How to prepare for the Lithuanian A2 exam',
     tags: ['exam', 'a2'],
+    category: 'adaptation',
     created_at: '2026-03-16T00:00:00',
   },
 ];
@@ -30,9 +31,37 @@ const MOCK_ARTICLE_DETAIL = {
   body_ru: '# Подготовка\n\nТекст статьи на русском.',
   body_en: '# Preparation\n\nArticle text in English.',
   tags: ['exam', 'a2'],
+  category: 'adaptation',
   created_at: '2026-03-16T00:00:00',
   updated_at: '2026-03-16T00:00:00',
 };
+
+const MOCK_CATEGORY_ARTICLES = [
+  {
+    slug: 'verb-intro',
+    title_ru: 'Введение в глаголы',
+    title_en: 'Introduction to verbs',
+    tags: ['grammar'],
+    category: 'learning_materials',
+    created_at: '2026-01-10T00:00:00',
+  },
+  {
+    slug: 'prepare-for-lithuanian-a2',
+    title_ru: 'Как подготовиться к экзамену A2',
+    title_en: 'How to prepare for the Lithuanian A2 exam',
+    tags: ['exam', 'a2'],
+    category: 'adaptation',
+    created_at: '2026-03-16T00:00:00',
+  },
+  {
+    slug: 'welcome',
+    title_ru: 'Добро пожаловать',
+    title_en: 'Welcome',
+    tags: [],
+    category: 'blog',
+    created_at: '2026-02-01T00:00:00',
+  },
+];
 
 test.describe('Nav — Articles link', () => {
   test('shows Статьи in navigation', async ({ page }) => {
@@ -178,5 +207,63 @@ test.describe('Article detail page', () => {
     });
     await page.goto(`/dashboard/articles/${TEST_SLUG}`);
     await expect(page.getByText('К статьям')).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe('Article category tabs', () => {
+  test('shows all 4 category tabs', async ({ page }) => {
+    await setFakeToken(page);
+    await page.route('**/api/articles', async (route) => {
+      await route.fulfill({ json: MOCK_CATEGORY_ARTICLES });
+    });
+    await page.goto('/dashboard/articles');
+    await expect(page.getByRole('button', { name: 'Все' })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: 'Учебные материалы' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Адаптация в Литве' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Блог' })).toBeVisible();
+  });
+
+  test('clicking a category tab filters the grid and updates the URL', async ({ page }) => {
+    await setFakeToken(page);
+    await page.route('**/api/articles', async (route) => {
+      await route.fulfill({ json: MOCK_CATEGORY_ARTICLES });
+    });
+    await page.goto('/dashboard/articles');
+
+    // All 3 articles visible by default.
+    await expect(page.getByText('Введение в глаголы')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Как подготовиться к экзамену A2')).toBeVisible();
+    await expect(page.getByText('Добро пожаловать')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Учебные материалы' }).click();
+    await expect(page).toHaveURL(/category=learning_materials/);
+    await expect(page.getByText('Введение в глаголы')).toBeVisible();
+    await expect(page.getByText('Как подготовиться к экзамену A2')).not.toBeVisible();
+    await expect(page.getByText('Добро пожаловать')).not.toBeVisible();
+
+    await page.getByRole('button', { name: 'Адаптация в Литве' }).click();
+    await expect(page).toHaveURL(/category=adaptation/);
+    await expect(page.getByText('Как подготовиться к экзамену A2')).toBeVisible();
+    await expect(page.getByText('Введение в глаголы')).not.toBeVisible();
+
+    await page.getByRole('button', { name: 'Все' }).click();
+    await expect(page).not.toHaveURL(/category=/);
+    await expect(page.getByText('Введение в глаголы')).toBeVisible();
+    await expect(page.getByText('Как подготовиться к экзамену A2')).toBeVisible();
+    await expect(page.getByText('Добро пожаловать')).toBeVisible();
+  });
+
+  test('existing slug URL /dashboard/articles/verb-intro still loads unchanged', async ({ page, baseURL }) => {
+    // This slug has a pre-built static/SSR page, so it's served directly by Next
+    // (not through the '_' placeholder + client-side API fetch), meaning browser-side
+    // route mocking doesn't intercept it — assert against the real backend content
+    // instead, confirming the category feature didn't break this indexed URL.
+    await setFakeToken(page);
+    const res = await page.request.get(`${baseURL}/api/articles/verb-intro`);
+    const real = await res.json();
+
+    await page.goto('/dashboard/articles/verb-intro');
+    await expect(page.getByRole('heading', { name: real.title_ru }).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('К статьям')).toBeVisible();
   });
 });

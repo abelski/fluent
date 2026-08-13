@@ -545,6 +545,17 @@
       gated on a stats-fetch that rarely fails, so its title carries no such fallback — a known, accepted gap, not a
       pattern to copy for a page whose hero is normally absent.
     </p>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:12px 0 0;">
+      <b>Category tab bar (Статьи):</b> <code>frontend/app/dashboard/articles/ArticlesList.tsx</code> — sits
+      directly under the title/subtitle+mascot row and above the article card grid. Reuses the same visual
+      recipe as the header's "Nav tab pills" (<code>bg-[#f2f3f3] rounded-full p-1 gap-1</code> track;
+      <code>px-4 py-2 text-sm rounded-full</code> items; active <code>bg-white font-semibold text-ink
+      shadow-[0_1px_2px_rgba(0,0,0,0.06)]</code>; inactive <code>text-muted</code>) rather than inventing a new
+      chip style. Driven by <code>useSearchParams</code>/<code>router.push</code> on <code>?category=</code>
+      (values: <code>learning_materials</code> | <code>adaptation</code> | <code>blog</code>, omitted = all);
+      filters the already-fetched article list client-side, no extra request. Wrapped in <code>&lt;Suspense&gt;</code>
+      since <code>useSearchParams</code> requires it under static export.
+    </p>
   </div>
 
   <h2>Emoji &amp; arrow policy</h2>

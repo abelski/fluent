@@ -53,6 +53,10 @@
 # Way of Working
 
 - Plan before making changes
+- Whenever plan mode (`EnterPlanMode`) is used in this repo, always persist the resulting plan into
+  this project's `plans/` folder (e.g. `plans/improvements/active/plan_<slug>.md`), not just the
+  harness's own scratch plan file — that scratch copy lives outside the repo and isn't visible to
+  future sessions or other tools (like `ralph-implement`) that read plans from `plans/`.
 - All pages must be visually consistent. In particular, the 5 top-nav dashboard pages — Слова
   (`/dashboard/lists`), Фразы (`/dashboard/phrases`), Грамматика (`/dashboard/grammar`), Практика
   (`/dashboard/practice`), Статьи (`/dashboard/articles`) — are one product surface, not five

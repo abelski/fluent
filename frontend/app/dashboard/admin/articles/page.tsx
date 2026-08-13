@@ -12,6 +12,7 @@ interface ArticleRow {
   title_ru: string;
   title_en: string;
   tags: string[];
+  category: string;
   published: boolean;
   show_in_footer: boolean;
   created_at: string;
@@ -85,6 +86,12 @@ export default function AdminArticlesPage() {
     if (res.ok) loadArticles();
   }
 
+  const categoryLabels: Record<string, string> = {
+    learning_materials: tr.articles.categoryLearning,
+    adaptation: tr.articles.categoryAdaptation,
+    blog: tr.articles.categoryBlog,
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -145,6 +152,9 @@ export default function AdminArticlesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-gray-900 truncate">{title}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full border border-gray-900 bg-gray-50 text-gray-600 font-medium">
+                      {categoryLabels[a.category] ?? a.category}
+                    </span>
                     <span className={`text-xs px-2 py-0.5 rounded-full border border-gray-900 font-medium ${
                       a.published
                         ? 'bg-emerald-50 text-emerald-700'

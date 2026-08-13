@@ -638,6 +638,11 @@ const ru: Translations = {
     importError: 'Ошибка импорта.',
     published: 'Опубликована',
     draft: 'Черновик',
+    categoryLabel: 'Категория',
+    categoryAll: 'Все',
+    categoryLearning: 'Учебные материалы',
+    categoryAdaptation: 'Адаптация в Литве',
+    categoryBlog: 'Блог',
   },
   phraseLists: {
     myLists: 'Мои списки',

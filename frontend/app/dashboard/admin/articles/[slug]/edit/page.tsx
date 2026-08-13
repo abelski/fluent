@@ -19,6 +19,7 @@ interface ArticleForm {
   body_ru: string;
   body_en: string;
   tags: string;
+  category: string;
   published: boolean;
   show_in_footer: boolean;
 }
@@ -30,6 +31,7 @@ const EMPTY: ArticleForm = {
   body_ru: '',
   body_en: '',
   tags: '',
+  category: 'blog',
   published: true,
   show_in_footer: false,
 };
@@ -76,6 +78,7 @@ export default function ArticleEditorPage() {
             body_ru: data.body_ru,
             body_en: data.body_en,
             tags: data.tags,
+            category: data.category ?? 'blog',
             published: data.published,
             show_in_footer: data.show_in_footer ?? false,
           });
@@ -171,18 +174,33 @@ export default function ArticleEditorPage() {
               className="w-full bg-white border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
             />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              {tr.articles.tagsLabel}
+            </label>
+            <input
+              type="text"
+              value={form.tags}
+              onChange={(e) => set('tags', e.target.value)}
+              placeholder="exam,a2,tips"
+              className="w-full bg-white border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+          </div>
           <div className="flex items-end gap-4">
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-500 mb-1">
-                {tr.articles.tagsLabel}
+                {tr.articles.categoryLabel}
               </label>
-              <input
-                type="text"
-                value={form.tags}
-                onChange={(e) => set('tags', e.target.value)}
-                placeholder="exam,a2,tips"
+              <select
+                value={form.category}
+                onChange={(e) => set('category', e.target.value)}
+                required
                 className="w-full bg-white border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-emerald-500"
-              />
+              >
+                <option value="learning_materials">{tr.articles.categoryLearning}</option>
+                <option value="adaptation">{tr.articles.categoryAdaptation}</option>
+                <option value="blog">{tr.articles.categoryBlog}</option>
+              </select>
             </div>
             <div className="flex flex-col gap-2 mb-2">
               <label className="flex items-center gap-2 cursor-pointer">

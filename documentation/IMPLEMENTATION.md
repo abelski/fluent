@@ -162,6 +162,15 @@ pages where the hero can be absent in a common state (Грамматика/Пр�
 content), the mascot falls back to beside the title so exactly one is always visible. Статьи has no
 hero at all, so its mascot always sits beside the title.
 
+**Статьи category tab bar** — `Article.category` (backend: `learning_materials` | `adaptation` |
+`blog`, `backend/models.py`) drives a tab bar in `frontend/app/dashboard/articles/ArticlesList.tsx`
+between the title/mascot row and the card grid. Reuses the header's "nav tab pills" recipe
+(`bg-[#f2f3f3] rounded-full p-1` track, active `bg-white font-semibold text-ink
+shadow-[0_1px_2px_rgba(0,0,0,0.06)]`, inactive `text-muted`) rather than a new pattern. State lives
+in `?category=` (`useSearchParams`/`router.push`, wrapped in `<Suspense>`); filtering happens
+client-side against the already build-time-fetched article list. `GET /api/articles?category=` is
+the matching server-side filter/validation in `backend/routers/articles.py`.
+
 ## Conventions worth keeping
 
 - Cards are flat: `border border-line rounded-[14px]`, **no drop shadow**, no accent-colored border.

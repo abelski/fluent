@@ -638,6 +638,11 @@ const en: Translations = {
     importError: 'Import failed.',
     published: 'Published',
     draft: 'Draft',
+    categoryLabel: 'Category',
+    categoryAll: 'All',
+    categoryLearning: 'Learning Materials',
+    categoryAdaptation: 'Adaptation in Lithuania',
+    categoryBlog: 'Blog',
   },
   phraseLists: {
     myLists: 'My lists',

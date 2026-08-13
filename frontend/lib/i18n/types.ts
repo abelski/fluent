@@ -382,6 +382,11 @@ export interface Translations {
     importError: string;
     published: string;
     draft: string;
+    categoryAll: string;
+    categoryLearning: string;
+    categoryAdaptation: string;
+    categoryBlog: string;
+    categoryLabel: string;
   };
   vocabulary: {
     title: string;
