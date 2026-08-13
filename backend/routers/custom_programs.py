@@ -33,52 +33,140 @@ def _require_author(user: User) -> None:
         raise HTTPException(status_code=403, detail="Redactor role required")
 
 
-def _word_count_for_list(list_id: int, session: Session) -> int:
-    """Count active word items in a word list."""
-    result = session.exec(
-        select(func.count(WordListItem.id)).where(WordListItem.word_list_id == list_id)
-    ).one()
-    return result or 0
+def _program_details_batch(
+    programs: list[CustomProgram], session: Session, known_author: Optional[User] = None
+) -> dict[int, dict]:
+    """Serialise many CustomPrograms — list IDs, word counts, enrollment counts,
+    and author names — in a constant number of queries regardless of how many
+    programs or word lists are involved.
+
+    `known_author` skips the author lookup query entirely when every program in
+    the batch was created by the same, already-loaded user (e.g. "my programs")."""
+    if not programs:
+        return {}
+    program_ids = [p.id for p in programs]
+
+    # 1. All CustomProgramList rows for these programs in one query, ordered so
+    #    each program's list_ids preserve position (same order as before).
+    cp_rows = session.exec(
+        select(CustomProgramList)
+        .where(col(CustomProgramList.custom_program_id).in_(program_ids))
+        .order_by(CustomProgramList.custom_program_id, CustomProgramList.position)
+    ).all()
+    list_ids_by_program: dict[int, list[int]] = {pid: [] for pid in program_ids}
+    all_list_ids: list[int] = []
+    for row in cp_rows:
+        list_ids_by_program[row.custom_program_id].append(row.word_list_id)
+        all_list_ids.append(row.word_list_id)
+
+    # 2. Word counts per list, grouped in one query; summed per program in Python.
+    word_count_by_list: dict[int, int] = {}
+    if all_list_ids:
+        word_count_by_list = dict(
+            session.exec(
+                select(WordListItem.word_list_id, func.count(WordListItem.id))
+                .where(col(WordListItem.word_list_id).in_(all_list_ids))
+                .group_by(WordListItem.word_list_id)
+            ).all()
+        )
+
+    # 3. Enrollment counts per program in one grouped query.
+    enroll_count_by_program: dict[int, int] = dict(
+        session.exec(
+            select(UserCustomProgramEnrollment.custom_program_id, func.count(UserCustomProgramEnrollment.id))
+            .where(col(UserCustomProgramEnrollment.custom_program_id).in_(program_ids))
+            .group_by(UserCustomProgramEnrollment.custom_program_id)
+        ).all()
+    )
+
+    # 4. Authors — one query for every distinct created_by, unless the caller
+    #    already knows every program shares the same author.
+    if known_author is not None:
+        authors_by_id: dict[str, User] = {known_author.id: known_author}
+    else:
+        author_ids = {p.created_by for p in programs if p.created_by}
+        authors_by_id = {}
+        if author_ids:
+            authors = session.exec(select(User).where(col(User.id).in_(author_ids))).all()
+            authors_by_id = {u.id: u for u in authors}
+
+    result: dict[int, dict] = {}
+    for program in programs:
+        list_ids = list_ids_by_program.get(program.id, [])
+        word_count = sum(word_count_by_list.get(lid, 0) for lid in list_ids)
+        author = authors_by_id.get(program.created_by)
+        result[program.id] = {
+            "id": program.id,
+            "title": program.title,
+            "title_en": program.title_en,
+            "description": program.description,
+            "description_en": program.description_en,
+            "lang_ru": program.lang_ru,
+            "lang_en": program.lang_en,
+            "created_by": program.created_by,
+            "author_name": author.name if author else None,
+            "share_token": program.share_token,
+            "is_published": program.is_published,
+            "created_at": program.created_at.isoformat(),
+            "list_ids": list_ids,
+            "word_count": word_count,
+            "enrollment_count": enroll_count_by_program.get(program.id, 0),
+        }
+    return result
 
 
 def _program_detail(program: CustomProgram, session: Session, author: Optional[User] = None) -> dict:
-    """Serialise a CustomProgram with its list IDs, word count, and author name."""
-    rows = session.exec(
+    """Serialise a single CustomProgram. Delegates to the batch helper with a
+    one-element list so there is one code path for both call shapes."""
+    return _program_details_batch([program], session, known_author=author)[program.id]
+
+
+def _word_sets_for_program(program_id: int, session: Session) -> list[dict]:
+    """Return word sets + word pairs for a program in a constant number of
+    queries regardless of set/word count. Read path only — shared by the
+    community and creator-owned word-sets endpoints. Do NOT reuse this for
+    `_delete_owned_word_sets`, which needs the ownership filter and phased
+    flush order that ties it to the delete path specifically."""
+    links = session.exec(
         select(CustomProgramList)
-        .where(CustomProgramList.custom_program_id == program.id)
+        .where(CustomProgramList.custom_program_id == program_id)
         .order_by(CustomProgramList.position)
     ).all()
-    list_ids = [r.word_list_id for r in rows]
+    list_ids = [link.word_list_id for link in links]
+    if not list_ids:
+        return []
 
-    # Sum word counts across all word lists
-    word_count = sum(_word_count_for_list(wl_id, session) for wl_id in list_ids)
-
-    # enrollment count
-    enroll_count = session.exec(
-        select(UserCustomProgramEnrollment)
-        .where(UserCustomProgramEnrollment.custom_program_id == program.id)
-    ).all()
-
-    if author is None:
-        author = session.get(User, program.created_by)
-
-    return {
-        "id": program.id,
-        "title": program.title,
-        "title_en": program.title_en,
-        "description": program.description,
-        "description_en": program.description_en,
-        "lang_ru": program.lang_ru,
-        "lang_en": program.lang_en,
-        "created_by": program.created_by,
-        "author_name": author.name if author else None,
-        "share_token": program.share_token,
-        "is_published": program.is_published,
-        "created_at": program.created_at.isoformat(),
-        "list_ids": list_ids,
-        "word_count": word_count,
-        "enrollment_count": len(enroll_count),
+    lists_by_id = {
+        wl.id: wl for wl in session.exec(select(WordList).where(col(WordList.id).in_(list_ids))).all()
     }
+
+    items = session.exec(
+        select(WordListItem)
+        .where(col(WordListItem.word_list_id).in_(list_ids))
+        .order_by(WordListItem.word_list_id, WordListItem.position)
+    ).all()
+    items_by_list: dict[int, list[WordListItem]] = {}
+    all_word_ids: list[int] = []
+    for item in items:
+        items_by_list.setdefault(item.word_list_id, []).append(item)
+        all_word_ids.append(item.word_id)
+
+    words_by_id: dict[int, Word] = {}
+    if all_word_ids:
+        words_by_id = {w.id: w for w in session.exec(select(Word).where(col(Word.id).in_(all_word_ids))).all()}
+
+    result = []
+    for link in links:
+        wl = lists_by_id.get(link.word_list_id)
+        if not wl:
+            continue
+        words = []
+        for item in items_by_list.get(wl.id, []):
+            word = words_by_id.get(item.word_id)
+            if word:
+                words.append({"front": word.lithuanian, "back_ru": word.translation_ru, "back_en": word.translation_en})
+        result.append({"id": wl.id, "title": wl.title, "words": words})
+    return result
 
 
 # ── Word set helpers ──────────────────────────────────────────────────────────
@@ -176,7 +264,8 @@ def list_community_programs(
         select(CustomProgram).where(CustomProgram.is_published == True)  # noqa: E712
         .order_by(CustomProgram.created_at.desc())
     ).all()
-    return [_program_detail(p, session) for p in programs]
+    details = _program_details_batch(programs, session)
+    return [details[p.id] for p in programs]
 
 
 @router.get("/programs/community/{share_token}")
@@ -209,27 +298,7 @@ def get_community_program_word_sets(
     if not program or not program.is_published:
         raise HTTPException(status_code=404, detail="Program not found")
 
-    links = session.exec(
-        select(CustomProgramList)
-        .where(CustomProgramList.custom_program_id == program.id)
-        .order_by(CustomProgramList.position)
-    ).all()
-
-    result = []
-    for link in links:
-        wl = session.get(WordList, link.word_list_id)
-        if not wl:
-            continue
-        items = session.exec(
-            select(WordListItem).where(WordListItem.word_list_id == wl.id).order_by(WordListItem.position)
-        ).all()
-        words = []
-        for item in items:
-            word = session.get(Word, item.word_id)
-            if word:
-                words.append({"front": word.lithuanian, "back_ru": word.translation_ru, "back_en": word.translation_en})
-        result.append({"id": wl.id, "title": wl.title, "words": words})
-    return result
+    return _word_sets_for_program(program.id, session)
 
 
 # ── Redactor — own programs ───────────────────────────────────────────────────
@@ -266,7 +335,8 @@ def list_my_programs(
         .where(CustomProgram.created_by == user.id)
         .order_by(CustomProgram.created_at.desc())
     ).all()
-    return [_program_detail(p, session, author=user) for p in programs]
+    details = _program_details_batch(programs, session, known_author=user)
+    return [details[p.id] for p in programs]
 
 
 @router.get("/me/custom-programs/{program_id}/word-sets")
@@ -283,31 +353,7 @@ def get_program_word_sets(
     if program.created_by != user.id and not (user.is_admin or user.is_superadmin):
         raise HTTPException(status_code=403, detail="Not your program")
 
-    links = session.exec(
-        select(CustomProgramList)
-        .where(CustomProgramList.custom_program_id == program.id)
-        .order_by(CustomProgramList.position)
-    ).all()
-
-    result = []
-    for link in links:
-        wl = session.get(WordList, link.word_list_id)
-        if not wl:
-            continue
-        items = session.exec(
-            select(WordListItem).where(WordListItem.word_list_id == wl.id).order_by(WordListItem.position)
-        ).all()
-        words = []
-        for item in items:
-            word = session.get(Word, item.word_id)
-            if word:
-                words.append({
-                    "front": word.lithuanian,
-                    "back_ru": word.translation_ru,
-                    "back_en": word.translation_en,
-                })
-        result.append({"id": wl.id, "title": wl.title, "words": words})
-    return result
+    return _word_sets_for_program(program.id, session)
 
 
 @router.post("/me/custom-programs", status_code=201)

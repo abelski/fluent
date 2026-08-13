@@ -129,31 +129,39 @@ def list_phrase_programs(
         ).all()
         enrolled_ids = {e.program_id for e in enrollments}
 
-    # Progress stage distribution per enrolled program
+    # Progress stage distribution per enrolled program — 2 queries total
+    # regardless of how many programs the user is enrolled in.
     stage_dist: dict[int, dict[str, int]] = {}
     if user and enrolled_ids:
+        target_program_ids = [p.id for p in programs if p.id in enrolled_ids]
         phrase_ids_by_program: dict[int, list[int]] = {}
-        for p in programs:
-            if p.id in enrolled_ids:
-                pids = session.exec(
-                    select(Phrase.id).where(Phrase.program_id == p.id)
-                ).all()
-                phrase_ids_by_program[p.id] = list(pids)
+        all_phrase_ids: list[int] = []
+        if target_program_ids:
+            phrase_rows = session.exec(
+                select(Phrase.id, Phrase.program_id).where(col(Phrase.program_id).in_(target_program_ids))
+            ).all()
+            for phrase_id, program_id in phrase_rows:
+                phrase_ids_by_program.setdefault(program_id, []).append(phrase_id)
+                all_phrase_ids.append(phrase_id)
 
-        for pid, phrase_ids in phrase_ids_by_program.items():
-            if not phrase_ids:
-                stage_dist[pid] = {"stage0": 0, "stage1": 0, "stage2": 0}
-                continue
+        stage_by_phrase: dict[int, int] = {}
+        if all_phrase_ids:
             progress_rows = session.exec(
                 select(UserPhraseProgress).where(
                     UserPhraseProgress.user_id == user.id,
-                    col(UserPhraseProgress.phrase_id).in_(phrase_ids),
+                    col(UserPhraseProgress.phrase_id).in_(all_phrase_ids),
                 )
             ).all()
-            prog_map = {r.phrase_id: r.lesson_stage for r in progress_rows}
+            stage_by_phrase = {r.phrase_id: r.lesson_stage for r in progress_rows}
+
+        for pid in target_program_ids:
+            phrase_ids = phrase_ids_by_program.get(pid, [])
+            if not phrase_ids:
+                stage_dist[pid] = {"stage0": 0, "stage1": 0, "stage2": 0}
+                continue
             s = {0: 0, 1: 0, 2: 0}
             for phrase_id in phrase_ids:
-                stage = prog_map.get(phrase_id, 0)
+                stage = stage_by_phrase.get(phrase_id, 0)
                 s[stage] = s.get(stage, 0) + 1
             stage_dist[pid] = {"stage0": s[0], "stage1": s[1], "stage2": s[2]}
 

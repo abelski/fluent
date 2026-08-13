@@ -477,6 +477,7 @@ class UserPhraseProgress(SQLModel, table=True):
     mistake_words_json stores a JSON dict mapping word → mistake count,
     used to select the 'hardest' word to blank in stage 1."""
     __tablename__ = "user_phrase_progress"
+    __table_args__ = (Index("ix_user_phrase_progress_user_phrase", "user_id", "phrase_id"),)
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="user.id", index=True)
     phrase_id: int = Field(foreign_key="phrase.id", index=True)

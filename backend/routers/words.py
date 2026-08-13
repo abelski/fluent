@@ -183,32 +183,6 @@ def get_lists(
                         WordList.archived == False,  # noqa: E712
                     )
                 ).all()
-    # Single aggregation query to get word counts for all lists at once
-    counts = dict(
-        session.exec(
-            select(WordListItem.word_list_id, func.count(WordListItem.id))
-            .group_by(WordListItem.word_list_id)
-        ).all()
-    )
-    # Per-star counts: group by (word_list_id, star) to compute cumulative star_counts
-    _star_rows = session.exec(
-        select(WordListItem.word_list_id, Word.star, func.count(WordListItem.id))
-        .join(Word, WordListItem.word_id == Word.id)
-        .where(Word.archived == False)  # noqa: E712
-        .group_by(WordListItem.word_list_id, Word.star)
-    ).all()
-    # Build cumulative counts: star_counts[list_id][N] = # words with star <= N
-    _star_by_list: dict[int, dict[int, int]] = {}
-    for list_id, star, cnt in _star_rows:
-        _star_by_list.setdefault(list_id, {})
-        _star_by_list[list_id][star] = _star_by_list[list_id].get(star, 0) + cnt
-    star_counts_map: dict[int, dict[str, int]] = {}
-    for list_id, by_star in _star_by_list.items():
-        cumulative = 0
-        star_counts_map[list_id] = {}
-        for level in (1, 2, 3):
-            cumulative += by_star.get(level, 0)
-            star_counts_map[list_id][str(level)] = cumulative
     # Load subcategory metadata for ordering and status filtering
     meta_rows = session.exec(select(SubcategoryMeta)).all()
     subcat_order = {r.key: (r.sort_order or 0) for r in meta_rows}
@@ -232,6 +206,41 @@ def get_lists(
     lists = [wl for wl in lists if _subcat_visible(wl.subcategory)]
     # Append custom program lists after visibility filter (they bypass subcategory visibility)
     lists = lists + custom_program_lists
+
+    # Scope the aggregations below to just the lists actually returned, instead of the
+    # whole catalogue — cost now tracks the response size, not total DB content.
+    visible_ids = [wl.id for wl in lists]
+
+    # Single aggregation query to get word counts for all visible lists at once
+    counts = dict(
+        session.exec(
+            select(WordListItem.word_list_id, func.count(WordListItem.id))
+            .where(col(WordListItem.word_list_id).in_(visible_ids))
+            .group_by(WordListItem.word_list_id)
+        ).all()
+    ) if visible_ids else {}
+    # Per-star counts: group by (word_list_id, star) to compute cumulative star_counts
+    _star_rows = session.exec(
+        select(WordListItem.word_list_id, Word.star, func.count(WordListItem.id))
+        .join(Word, WordListItem.word_id == Word.id)
+        .where(
+            Word.archived == False,  # noqa: E712
+            col(WordListItem.word_list_id).in_(visible_ids),
+        )
+        .group_by(WordListItem.word_list_id, Word.star)
+    ).all() if visible_ids else []
+    # Build cumulative counts: star_counts[list_id][N] = # words with star <= N
+    _star_by_list: dict[int, dict[int, int]] = {}
+    for list_id, star, cnt in _star_rows:
+        _star_by_list.setdefault(list_id, {})
+        _star_by_list[list_id][star] = _star_by_list[list_id].get(star, 0) + cnt
+    star_counts_map: dict[int, dict[str, int]] = {}
+    for list_id, by_star in _star_by_list.items():
+        cumulative = 0
+        star_counts_map[list_id] = {}
+        for level in (1, 2, 3):
+            cumulative += by_star.get(level, 0)
+            star_counts_map[list_id][str(level)] = cumulative
 
     sorted_lists = sorted(
         lists,

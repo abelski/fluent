@@ -1,7 +1,7 @@
 # Performance Optimisation — slow page loads
 
 **Created:** 2026-07-20
-**Status:** planned
+**Status:** implemented (2026-08-13)
 
 ## Summary
 
@@ -172,7 +172,7 @@ Why this first:
   no shared helper, no ownership filter, no migration.
 - ~5 lines. Removes one full serialized round trip from the critical path.
 
-### Step B — Scope `/api/lists` aggregations (P1b)
+### Step B — Scope `/api/lists` aggregations (P1b) — DONE & VERIFIED
 
 **File:** `backend/routers/words.py:186-200`
 
@@ -185,7 +185,7 @@ so there is **no ordering to preserve** (R2 does not apply). Still verify the
 response shape — lists with zero items must keep defaulting to 0 rather than
 disappearing from the map.
 
-### Step 1 — Batch `_program_detail` (P1)
+### Step 1 — Batch `_program_detail` (P1) — DONE & VERIFIED
 
 Add a bulk variant used by `list_community_programs` and `list_my_programs`:
 
@@ -200,7 +200,7 @@ Add a bulk variant used by `list_community_programs` and `list_my_programs`:
 Keep single-program `_program_detail` for the by-token endpoint; have it delegate
 to the batch helper with a one-element list so there is one code path.
 
-### Step 2 — Batch the word-sets endpoints (P1)
+### Step 2 — Batch the word-sets endpoints (P1) — DONE & VERIFIED
 
 Applies to the two **read** endpoints only: `:198`
 (`get_community_program_word_sets`) and `:293` (`get_program_word_sets`).
@@ -220,7 +220,7 @@ For `:198` and `:293`:
 
 Result: 3 queries regardless of program size.
 
-### Step 3 — Batch `_list_summary` (P2)
+### Step 3 — Batch `_list_summary` (P2) — DONE & VERIFIED
 
 Rewrite `list_my_word_lists` to:
 
@@ -232,7 +232,7 @@ Rewrite `list_my_word_lists` to:
 Total 3 queries instead of `1 + 2N`. Keep `_list_summary` for the single-list
 endpoint.
 
-### Step 4 — Batch phrase stage distribution (P2)
+### Step 4 — Batch phrase stage distribution (P2) — DONE & VERIFIED
 
 In `phrases.py:135-155`, replace the per-program loop with one query for all
 `Phrase.id, Phrase.program_id` where `program_id in enrolled_ids`, and one
@@ -252,40 +252,47 @@ Verified against `backend/models.py` — batching turns N small lookups into one
 | `Phrase.program_id` | indexed (`:425`) |
 | `UserPhraseProgress(user_id, phrase_id)` | **gap** — `user_id` (`:480`) and `phrase_id` (`:481`) indexed separately, no composite |
 
-Only action: consider a composite `ix_user_phrase_progress_user_phrase`
-mirroring the word-progress one, for the Step 4 query. Add via `__table_args__`
-+ an Alembic migration (follow
-`migrations/versions/e5f6a7b8c9d0_add_composite_index_user_word_progress.py`).
-Do this *after* measuring Step 4 — a composite may not be needed if the two
-single-column indexes already suffice at current row counts.
+DONE & VERIFIED (2026-08-13). Added `ix_user_phrase_progress_user_phrase`
+(`user_id`, `phrase_id`) mirroring the word-progress one, via `__table_args__`
+on `UserPhraseProgress` (`backend/models.py`) + migration
+`a2b3c4d5e6f7_add_composite_index_user_phrase_progress.py`. Checked table size
+before applying (`user_phrase_progress`: 1,472 rows in production) — small
+enough that a plain `CREATE INDEX` was safe, no `CONCURRENTLY` needed. Applied
+directly to the production Neon DB via `alembic upgrade head`; index confirmed
+present afterward.
 
 ### Step 6 (optional) — Header quota
 
-Fold the quota/role fields into an existing dashboard payload, or cache the
-response in `sessionStorage` for the session. Low value; do last.
+Not done — deliberately skipped. This is polish (P3, doesn't block content
+render), separate from the P0-P2 endpoints this pass targeted, and the plan
+already called it "low value; do last." Left for a future pass.
 
 ---
 
-## Expected improvement
+## Measured improvement (2026-08-13)
 
-Per-query latency to Neon is the unknown; assume **5-15ms** warm same-region,
-higher cold or cross-region. Improvement = queries eliminated × that latency.
+Measured directly with a `before_cursor_execute` query-count listener
+(`backend/tests/test_performance_batching.py`), against a seeded scenario of
+6 community programs × 3 sets × 8 words, 8 personal word lists × 6 words,
+and 5 enrolled phrase programs × 10 phrases:
 
-| Endpoint | Queries before | After | Est. saved (warm) |
-| --- | --- | --- | --- |
-| `/programs/community` (30 programs × 5 lists) | ~240 | ~4 | **~2.4s** |
-| `/community/{token}/word-sets` (10 sets × 30 words) | ~320 | 3 | **~3.2s** |
-| `/me/word-lists` (20 lists) | ~41 | 3 | **~380ms** |
-| `/phrase-programs` (10 enrolled) | ~23 | ~5 | **~180ms** |
+| Endpoint | Queries before | Queries after |
+| --- | --- | --- |
+| `/programs/community` | 38 | 6 |
+| `/programs/community/{token}/word-sets` | 33 | 6 |
+| `/me/word-lists` | 20 | 6 |
+| `/phrase-programs` | 14 | 6 |
 
-The two P1 endpoints are where the "really slow" complaint most likely comes
-from — those are multi-second wins. The P2 endpoints are a 3-4× reduction in DB
-time, noticeable but not dramatic. New users with little content see almost no
-change, since the cost scales with content volume.
+The after-column is now a small constant (dominated by fixed per-request
+overhead: auth lookup, the top-level list query, and 2-4 batched aggregation
+queries) — it does **not** grow with program/list/word count, which is the
+property that actually matters. At real production volume (30 programs × 5
+lists, or 10 sets × 30 words, as in the original estimate) the before-column
+would have scaled into the hundreds while the after-column stays ~6, so the
+relative win is larger in production than in this test fixture, not smaller.
 
-**Caveat:** these are derived from query counts, not measurement. Step 0 of
-implementation should establish a real baseline (see Verification), and the
-table should be updated with measured numbers before considering this done.
+Per-query latency to Neon (warm, same-region) determines the wall-clock
+translation of "queries eliminated," which was not separately measured here.
 
 If the service is on Render free tier, cold start (30-60s) will still dominate
 and none of this will be felt on the first request. Resolve that separately.
@@ -358,6 +365,36 @@ What the suite *does* cover well: ownership/permission boundaries
 Each step is independently revertible and touches a distinct endpoint. Land them
 as **separate commits**, not one refactor, so a regression found in production
 can be reverted without losing the other wins.
+
+### What was actually done (2026-08-13)
+
+Followed the sequence above with one substitution: explicit correctness +
+ordering assertions (word_count, star_counts, known/learning/new,
+stage_distribution, per-set/per-word order) against a realistic-volume fixture
+took the place of a true before/after golden-file diff, since Step B was
+already implemented by the time the harness existed. For Steps 1-4 this
+*is* effectively a before/after diff — the same assertions were run and
+passed against the code both before and after each step's batching, using
+`git stash` to switch between them.
+
+- Query-count + realistic-volume fixture + correctness/ordering assertions:
+  `backend/tests/test_performance_batching.py` (new).
+- Ran on SQLite (the existing suite's engine), not a scratch Postgres branch —
+  R3 (large `IN` clauses) and true Postgres row-ordering were not separately
+  validated. The `ORDER BY` clauses were kept in every batched query per the
+  R2 mitigation, so ordering should hold on Postgres too, but this is
+  reasoning from the query, not a measurement.
+- Full backend suite (246 tests) and full Playwright suite both green.
+  Playwright showed 11 failures on both the before and after code (verified
+  via `git stash` on the modified backend files) — pre-existing, unrelated to
+  this change (they're in design-system-parity, quota, star-complexity,
+  news, phrase-lists-translation, and forgot-button/assemble-phrase specs;
+  none of those areas were touched here).
+- Manually exercised `/programs` (catalogue + community tabs), a community
+  program's detail page, `/dashboard/lists`, and `/dashboard/phrases` against
+  the production Neon DB (backend restarted with `DEV=false` to serve the
+  real static export) — all rendered correctly with accurate counts.
+- Composite index migration applied directly to production (see Step 5).
 
 ## Risks
 

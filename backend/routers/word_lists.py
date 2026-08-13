@@ -140,30 +140,50 @@ def _word_ids_in_list(list_id: int, session: Session) -> list[int]:
     ).all()
 
 
-def _list_summary(wl: WordList, session: Session, user: User) -> dict:
-    """Serialize a personal list with word count and known/learning/new counts."""
-    word_ids = _word_ids_in_list(wl.id, session)
-    known = learning = 0
-    if word_ids:
+def _list_summaries_batch(lists: list[WordList], session: Session, user: User) -> list[dict]:
+    """Serialise many personal word lists — word count and known/learning/new
+    counts — in 3 queries total regardless of list or word count."""
+    if not lists:
+        return []
+    list_ids = [wl.id for wl in lists]
+
+    items = session.exec(
+        select(WordListItem.word_list_id, WordListItem.word_id).where(
+            col(WordListItem.word_list_id).in_(list_ids)
+        )
+    ).all()
+    word_ids_by_list: dict[int, list[int]] = {}
+    all_word_ids: list[int] = []
+    for wl_id, word_id in items:
+        word_ids_by_list.setdefault(wl_id, []).append(word_id)
+        all_word_ids.append(word_id)
+
+    status_by_word: dict[int, str] = {}
+    if all_word_ids:
         rows = session.exec(
             select(UserWordProgress).where(
                 UserWordProgress.user_id == user.id,
-                col(UserWordProgress.word_id).in_(word_ids),
+                col(UserWordProgress.word_id).in_(all_word_ids),
             )
         ).all()
-        status_map = {r.word_id: r.status for r in rows}
-        known = sum(1 for wid in word_ids if status_map.get(wid) == "known")
-        learning = sum(1 for wid in word_ids if status_map.get(wid) == "learning")
-    return {
-        "id": wl.id,
-        "title": wl.title,
-        "difficulty": _INT_BY_DIFFICULTY.get(wl.difficulty or "easy", 1),
-        "word_count": len(word_ids),
-        "created_at": wl.created_at.isoformat(),
-        "known": known,
-        "learning": learning,
-        "new": len(word_ids) - known - learning,
-    }
+        status_by_word = {r.word_id: r.status for r in rows}
+
+    result = []
+    for wl in lists:
+        word_ids = word_ids_by_list.get(wl.id, [])
+        known = sum(1 for wid in word_ids if status_by_word.get(wid) == "known")
+        learning = sum(1 for wid in word_ids if status_by_word.get(wid) == "learning")
+        result.append({
+            "id": wl.id,
+            "title": wl.title,
+            "difficulty": _INT_BY_DIFFICULTY.get(wl.difficulty or "easy", 1),
+            "word_count": len(word_ids),
+            "created_at": wl.created_at.isoformat(),
+            "known": known,
+            "learning": learning,
+            "new": len(word_ids) - known - learning,
+        })
+    return result
 
 
 @router.get("/me/word-lists")
@@ -181,7 +201,7 @@ def list_my_word_lists(
         .where(col(WordList.id).in_(ids))
         .order_by(col(WordList.created_at).desc())
     ).all()
-    return [_list_summary(wl, session, user) for wl in lists]
+    return _list_summaries_batch(lists, session, user)
 
 
 @router.post("/me/word-lists")
