@@ -37,6 +37,13 @@ class User(SQLModel, table=True):
     phrases_per_session: int = Field(default=10)      # total phrases per phrase study session
     new_phrases_ratio: Optional[float] = None         # fraction of new phrases (0.0–1.0); treated as 0.3 when null
     welcome_shown: bool = Field(default=False)         # whether the welcome modal has been dismissed
+    # Combined "Продолжить занятие" session (GET /api/me/continue-session). Each phase's
+    # item count is set directly here — no longer derived from words_per_session — and is
+    # treated as DEFAULT_CONTINUE_COUNT (3) when null.
+    continue_words_count: Optional[int] = None        # items in the words phase; treated as 3 when null
+    continue_grammar_count: Optional[int] = None      # tasks in the grammar phase; treated as 3 when null
+    continue_phrases_count: Optional[int] = None      # items in the phrases phase; treated as 3 when null
+    continue_include_new: bool = Field(default=True)  # mix new/unseen content in, not review only
 
 
 class WordList(SQLModel, table=True):

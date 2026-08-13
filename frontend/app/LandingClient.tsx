@@ -58,15 +58,6 @@ function TargetIcon() {
 }
 
 
-function PlayIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M6 4l14 8-14 8V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-
 interface NewsItem {
   id: number;
   title_ru: string;
@@ -324,11 +315,13 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
             const hasStudied = (stats?.total_studied ?? 0) > 0;
             return (
               <Link
-                href={hasStudied ? '/dashboard/review' : '/dashboard/lists'}
+                href={hasStudied ? '/dashboard/continue' : '/dashboard/lists'}
                 className="bg-emerald-600 rounded-2xl p-4 flex items-center gap-3 hover:bg-emerald-700 transition-colors active:scale-[0.98] mb-4"
+                data-testid="continue-cta"
               >
                 <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
-                  <PlayIcon />
+                  {/* TakChevron's fill is TAK's fixed orange — see the component library. */}
+                  <TakChevron direction="right" size={16} />
                 </div>
                 <div>
                   <p className="font-semibold text-sm text-white leading-tight">

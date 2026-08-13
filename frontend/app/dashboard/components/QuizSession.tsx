@@ -52,6 +52,13 @@ export interface QuizSessionProps {
   clearMistakeOnSuccess?: boolean;
   /** Called when the user clicks the "repeat / another lesson" button on the done screen */
   onRepeat: () => void;
+  /**
+   * When set, this phase belongs to a multi-phase session (see /dashboard/continue)
+   * and is not the last one: the match round hands off straight to the next phase
+   * instead of showing this phase's own done screen. Callers that omit it keep the
+   * plain single-session behaviour (match round → done screen → onRepeat/backHref).
+   */
+  onAdvance?: () => void;
 }
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
@@ -239,6 +246,7 @@ export default function QuizSession({
   headerLabel,
   clearMistakeOnSuccess = false,
   onRepeat,
+  onAdvance,
 }: QuizSessionProps) {
   const router = useRouter();
   const { tr, lang } = useT();
@@ -814,7 +822,14 @@ export default function QuizSession({
       <MatchRound
         words={matchRoundWords}
         lang={lang}
-        onDone={() => { setShowMatchRound(false); setDone(true); }}
+        onDone={() => {
+          setShowMatchRound(false);
+          // Mid-flow phase (continue-session): skip this phase's own done screen
+          // entirely and hand off straight to the next one — only the last phase
+          // in the sequence should show "session complete".
+          if (onAdvance) { onAdvance(); return; }
+          setDone(true);
+        }}
         backHref={backHref}
       />
     );
@@ -884,6 +899,7 @@ export default function QuizSession({
             <button
               onClick={() => { router.refresh(); onRepeat(); }}
               className="w-full py-3.5 bg-ink hover:bg-[#25282d] rounded-[10px] text-[15px] font-semibold text-white transition-colors"
+              data-testid="done-primary"
             >
               {!isStudy
                 ? tr.common.repeatMore

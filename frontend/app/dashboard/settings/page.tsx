@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken, getSettings, updateSettings, getPhrasesSettings, updatePhrasesSettings, type UserSettings, type PhrasesSettings } from '../../../lib/api';
+import { getToken, getSettings, updateSettings, getPhrasesSettings, updatePhrasesSettings, getContinueSettings, updateContinueSettings, type UserSettings, type PhrasesSettings, type ContinueSettings } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import PageMascot from '../../../components/PageMascot';
 
 type Complexity = 'easy' | 'medium' | 'hard';
-type Tab = 'vocabulary' | 'grammar' | 'practice' | 'phrases' | 'other';
+type Tab = 'vocabulary' | 'grammar' | 'practice' | 'phrases' | 'combined' | 'other';
+
+const CONTINUE_COUNT_MIN = 1;
+const CONTINUE_COUNT_MAX = 20;
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -22,6 +25,11 @@ export default function SettingsPage() {
   const [phrasesSettings, setPhrasesSettings] = useState<PhrasesSettings>({ phrases_per_session: 10, new_phrases_ratio: 0.3 });
   const [phrasesSaving, setPhrasesSaving] = useState(false);
   const [phrasesSaved, setPhrasesSaved] = useState(false);
+  const [continueSettings, setContinueSettings] = useState<ContinueSettings>({
+    continue_words_count: 3, continue_grammar_count: 3, continue_phrases_count: 3, continue_include_new: true,
+  });
+  const [continueSaving, setContinueSaving] = useState(false);
+  const [continueSaved, setContinueSaved] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -35,8 +43,9 @@ export default function SettingsPage() {
     Promise.all([
       getSettings(),
       getPhrasesSettings(),
+      getContinueSettings(),
     ])
-      .then(([s, ps]) => { setSettings(s); setPhrasesSettings(ps); })
+      .then(([s, ps, cs]) => { setSettings(s); setPhrasesSettings(ps); setContinueSettings(cs); })
       .catch(() => setError(tr.settings.loadError))
       .finally(() => setLoading(false));
   }, [router]);
@@ -56,6 +65,22 @@ export default function SettingsPage() {
       setError(tr.settings.phrasesSaveError);
     } finally {
       setPhrasesSaving(false);
+    }
+  }
+
+  async function handleContinueSave() {
+    setContinueSaving(true);
+    setContinueSaved(false);
+    setError('');
+    try {
+      const updated = await updateContinueSettings(continueSettings);
+      setContinueSettings(updated);
+      setContinueSaved(true);
+      setTimeout(() => setContinueSaved(false), 3000);
+    } catch {
+      setError(tr.settings.continueSaveError);
+    } finally {
+      setContinueSaving(false);
     }
   }
 
@@ -88,6 +113,7 @@ export default function SettingsPage() {
   const tabs: { key: Tab; label: string }[] = [
     { key: 'vocabulary', label: tr.settings.tabVocabulary },
     { key: 'phrases', label: tr.settings.tabPhrases },
+    { key: 'combined', label: tr.settings.tabCombined },
     { key: 'other', label: tr.settings.tabOther },
   ];
 
@@ -494,6 +520,108 @@ export default function SettingsPage() {
               className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
             >
               {phrasesSaving ? '...' : tr.settings.saveButton}
+            </button>
+          </div>
+        ) : activeTab === 'combined' ? (
+          <div className="bg-white border border-gray-900 rounded-2xl p-6 flex flex-col gap-8">
+
+            {/* Words count */}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                {tr.settings.continueWordsCountLabel}
+              </label>
+              <p className="text-xs text-gray-400 mb-3">{tr.settings.continueCountHint}</p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={CONTINUE_COUNT_MIN}
+                  max={CONTINUE_COUNT_MAX}
+                  step={1}
+                  value={continueSettings.continue_words_count}
+                  onChange={(e) => setContinueSettings((prev) => ({ ...prev, continue_words_count: parseInt(e.target.value, 10) }))}
+                  data-testid="continue-words-count-slider"
+                  className="flex-1 accent-emerald-600"
+                />
+                <span className="w-8 text-center font-semibold text-gray-900 tabular-nums" data-testid="continue-words-count-value">
+                  {continueSettings.continue_words_count}
+                </span>
+              </div>
+            </div>
+
+            {/* Grammar count */}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                {tr.settings.continueGrammarCountLabel}
+              </label>
+              <p className="text-xs text-gray-400 mb-3">{tr.settings.continueCountHint}</p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={CONTINUE_COUNT_MIN}
+                  max={CONTINUE_COUNT_MAX}
+                  step={1}
+                  value={continueSettings.continue_grammar_count}
+                  onChange={(e) => setContinueSettings((prev) => ({ ...prev, continue_grammar_count: parseInt(e.target.value, 10) }))}
+                  data-testid="continue-grammar-count-slider"
+                  className="flex-1 accent-emerald-600"
+                />
+                <span className="w-8 text-center font-semibold text-gray-900 tabular-nums" data-testid="continue-grammar-count-value">
+                  {continueSettings.continue_grammar_count}
+                </span>
+              </div>
+            </div>
+
+            {/* Phrases count */}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">
+                {tr.settings.continuePhrasesCountLabel}
+              </label>
+              <p className="text-xs text-gray-400 mb-3">{tr.settings.continueCountHint}</p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={CONTINUE_COUNT_MIN}
+                  max={CONTINUE_COUNT_MAX}
+                  step={1}
+                  value={continueSettings.continue_phrases_count}
+                  onChange={(e) => setContinueSettings((prev) => ({ ...prev, continue_phrases_count: parseInt(e.target.value, 10) }))}
+                  data-testid="continue-phrases-count-slider"
+                  className="flex-1 accent-emerald-600"
+                />
+                <span className="w-8 text-center font-semibold text-gray-900 tabular-nums" data-testid="continue-phrases-count-value">
+                  {continueSettings.continue_phrases_count}
+                </span>
+              </div>
+            </div>
+
+            {/* Include new content */}
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={continueSettings.continue_include_new}
+                  onChange={(e) => setContinueSettings((prev) => ({ ...prev, continue_include_new: e.target.checked }))}
+                  data-testid="continue-include-new-checkbox"
+                  className="w-4 h-4 accent-emerald-600"
+                />
+                <span className="text-sm font-medium text-gray-900">{tr.settings.continueIncludeNewLabel}</span>
+              </label>
+              <p className="text-xs text-gray-400 mt-1 ml-7">{tr.settings.continueIncludeNewHint}</p>
+            </div>
+
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+
+            {continueSaved && (
+              <p className="text-emerald-600 text-sm font-medium" data-testid="continue-saved-message">{tr.settings.savedMessage}</p>
+            )}
+
+            <button
+              onClick={handleContinueSave}
+              disabled={continueSaving}
+              data-testid="save-continue-settings-btn"
+              className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl font-medium text-white transition-colors"
+            >
+              {continueSaving ? '...' : tr.settings.saveButton}
             </button>
           </div>
         ) : activeTab === 'other' ? (

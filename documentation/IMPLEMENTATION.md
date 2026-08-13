@@ -119,6 +119,10 @@ size rule and the one-mascot-per-page rule. Do not use the full mascot there.
 
 `TakChevron.tsx` reuses TAK's torso polygon (the "chevron-torso skeleton") cropped tight to just
 that shape, as a small standalone arrow mark — see the component library's TakChevron section.
+Inline in text it renders at `size={10}`/`11`; inside an icon badge it renders at `size={16}` — the
+one such call site is the "Продолжить занятие" CTA badge (`w-9 h-9 rounded-xl bg-emerald-500`) in
+`app/LandingClient.tsx`. Its polygon is filled with `BODY` (`#ec3013`), **not** `currentColor`, so a
+`text-*` class on the wrapper does nothing.
 
 `Tak` must not set inline `display`/`flex-shrink` — inline styles outrank utility classes, so a
 `hidden sm:block` sibling would still render. Scale a single instance with `w-*`/`h-*` classes
@@ -133,9 +137,12 @@ owns the mascot's render, so a provider would be over-engineering. `useMascotMoo
 returns TAK to neutral, and pages outside a session pass no `mood` at all.
 
 Wired into `QuizSession.tsx` (five answer handlers + the timeout effect), `PhraseSession.tsx`
-(assemble / MCQ / type / syllable / forgot / timeout) and `app/dashboard/grammar/page.tsx`
-(`checkAnswer`, reset in `startLesson`). Done screens pass `Math.max(mood, 1)` so a passed lesson
-never shows a sad TAK.
+(assemble / MCQ / type / syllable / forgot / timeout) and
+`app/dashboard/components/GrammarTaskRunner.tsx` (`checkAnswer`). Done screens pass
+`Math.max(mood, 1)` so a passed lesson never shows a sad TAK. The grammar done screen lives on
+`app/dashboard/grammar/page.tsx` while the mood is tracked inside the runner, so the runner hands
+the final value back via `onFinish(score, total, mood)` and the page stores it in plain
+`useState(MOOD_NEUTRAL)` — that is the only reason `onFinish` carries a third argument.
 
 Decorative emoji are **retired** in favour of TAK. The session-summary screen previously rendered
 😊/😢; it now renders `<PageMascot phrase="Valio!" mood={…} />`. Decorative link/pagination arrows
@@ -170,6 +177,75 @@ shadow-[0_1px_2px_rgba(0,0,0,0.06)]`, inactive `text-muted`) rather than a new p
 in `?category=` (`useSearchParams`/`router.push`, wrapped in `<Suspense>`); filtering happens
 client-side against the already build-time-fetched article list. `GET /api/articles?category=` is
 the matching server-side filter/validation in `backend/routers/articles.py`.
+
+## Session components and the combined session
+
+| Thing | File |
+|---|---|
+| Word session UI | `frontend/app/dashboard/components/QuizSession.tsx` |
+| Phrase session UI | `frontend/app/dashboard/components/PhraseSession.tsx` |
+| Grammar exercise UI (all 4 task types) | `frontend/app/dashboard/components/GrammarTaskRunner.tsx` |
+| Combined "Продолжить занятие" page | `frontend/app/dashboard/continue/page.tsx` |
+| Its single data call + grammar result save | `getContinueSession()` / `saveGrammarLessonResult()` in `frontend/lib/api.ts` |
+| Its backend endpoint | `GET /api/me/continue-session` — `backend/routers/continue_session.py` |
+| Its strings | `tr.continueSession.*` in `frontend/lib/i18n/{ru,en}.ts` (+ `types.ts`) |
+| Its CTA | `app/LandingClient.tsx` — `hasStudied ? '/dashboard/continue' : '/dashboard/lists'` |
+| Its own settings | `GET`/`PATCH /me/continue-settings` — "Комбо-тренировка" tab, `frontend/app/dashboard/settings/page.tsx` |
+
+`GrammarTaskRunner` is an extraction out of `app/dashboard/grammar/page.tsx`, not a new design: only
+the exercise screen moved (with `InlineSentenceInput`, `GrammarRuleCard`, `VerbHintCard`, which have
+no other call sites). The lesson list and grammar's own done screen stayed on the page. The runner
+never fetches, never charges quota and never posts a result — `onFinish` hands the score back and
+the caller decides.
+
+`QuizSession`/`PhraseSession` take an optional `onAdvance?: () => void`. When set, this is a
+non-final phase of a multi-phase session: the match round's `onDone` calls `onAdvance()` directly
+instead of setting `done`, so that phase's own "session complete" screen never renders at all —
+only the true last phase in the sequence shows one. (An earlier version routed this through the
+done screen's primary button with a relabeled `advanceLabel`; real usage showed a full stats/mascot
+screen between phases read as the session ending early, so it was changed to hand off immediately.
+`advanceLabel` no longer exists — don't reintroduce it without re-reading that history first.)
+
+**Quota:** the whole three-phase flow costs exactly one daily session, charged once server-side in
+`continue_session.py` via `quota_check_and_increment()`, and only when at least one phase has
+content. That is why the page fetches everything in one request — never re-fetch a phase from
+`/review/known` or `/phrases/review` from this flow. `/dashboard/continue` is not a top-nav page, so
+it deliberately does not use `PageShell` and is not in `NAV_PAGES`.
+
+**Enrollment gate:** before any of that, `GET /me/continue-session` checks whether the user has at
+least one enrollment in *each* of `UserProgram` (words), `UserGrammarProgram` (grammar), and
+`UserPhraseProgramEnrollment` (phrases) — `_enrollment_gaps()` in `continue_session.py`. Zero
+enrollment in any one of them returns `needs_enrollment: [...]` with everything else empty and no
+quota charge; the frontend renders a dedicated blocking screen (`needsEnrollment` state in
+`continue/page.tsx`, `data-testid="continue-needs-enrollment"`) that links out to each missing
+category's existing enroll page (`/dashboard/lists`, `/dashboard/grammar/programs`,
+`/dashboard/phrases`) rather than building a picker inline. This is a **hard gate** — no
+skip-and-continue option — and it is distinct from a category that's enrolled but simply has
+nothing due yet, which still silently omits that phase as before. Note `backend/onboarding.py`'s
+`enroll_default_programs()` already auto-enrolls every new user in a starter phrase program (and
+word programs matching `DEFAULT_WORD_PROGRAM_KEYS`) on first login — in practice the phrases (and
+often words) gap rarely fires for real users; grammar has no equivalent auto-enrollment, so it's the
+one most likely to.
+
+**Per-phase counts and new-content mixing:** each phase's item count comes directly from
+`continue_words_count` / `continue_grammar_count` / `continue_phrases_count` on `User` (nullable,
+default 3 — no longer derived from `words_per_session`/`phrases_per_session`). `continue_include_new`
+(default `True`) blends in never-seen content: words and phrases mix new + review via the existing
+`new_words_ratio`/`new_phrases_ratio` split (`_split_counts()`, same fill-the-gap-from-the-other-pool
+rule as `GET /lists/{id}/study` and `GET /phrase-programs/{id}/study`); grammar's candidate lesson
+pool widens from "passed only" to "passed OR unlocked-and-not-yet-passed", reusing the exact locking
+rule `list_lessons` already computed — extracted into `_annotate_lesson_progress()` in
+`backend/routers/grammar.py` specifically so `continue_session.py` never reimplements it.
+
+The page's mount effect is latched behind a `startedRef`, which is *not* boilerplate: unlike every
+other study page, the GET itself is what charges the quota, so a second invocation of the effect
+silently costs the user another session. React StrictMode double-invokes mount effects in
+development (the Next dev server the Playwright suite runs against), which did exactly that — worth
+remembering when writing any request-count assertion in this suite: a `[]`-dependency effect fires
+**twice** in dev, once in the production export. The done-screen "repeat" buttons still call
+`load()` directly, where paying for a fresh session is the intent. Covered by
+`frontend/tests/continue-session.spec.ts`, whose mocks derive `sessions_today` from the requests the
+client actually made rather than returning a constant.
 
 ## Conventions worth keeping
 

@@ -199,11 +199,19 @@ export default function PhraseSession({
   phrases,
   backHref,
   onRepeat,
+  onAdvance,
   recordProgress = recordPhraseProgress,
 }: {
   phrases: PhraseStudyItem[];
   backHref: string;
   onRepeat: () => void;
+  /**
+   * When set, this phase belongs to a multi-phase session (see /dashboard/continue)
+   * and is not the last one: the match round hands off straight to the next phase
+   * instead of showing this phase's own done screen. Callers that omit it keep the
+   * plain single-session behaviour (match round → done screen → onRepeat/backHref).
+   */
+  onAdvance?: () => void;
   recordProgress?: (
     phraseId: number,
     payload: { quality: number; stage_completed: number; mistake_word?: string },
@@ -620,6 +628,7 @@ export default function PhraseSession({
             <button
               onClick={onRepeat}
               className="w-full py-3.5 bg-purple-600 text-white rounded-[10px] font-semibold hover:bg-purple-700 transition-colors"
+              data-testid="done-primary"
             >
               {tr.phraseSession.repeatBtn}
             </button>
@@ -641,7 +650,14 @@ export default function PhraseSession({
       <MatchRound
         words={phrasesToWords(phrases)}
         lang={lang}
-        onDone={() => { setShowMatchRound(false); setDone(true); }}
+        onDone={() => {
+          setShowMatchRound(false);
+          // Mid-flow phase (continue-session): skip this phase's own done screen
+          // entirely and hand off straight to the next one — only the last phase
+          // in the sequence should show "session complete".
+          if (onAdvance) { onAdvance(); return; }
+          setDone(true);
+        }}
         backHref={backHref}
       />
     );

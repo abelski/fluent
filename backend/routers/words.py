@@ -611,6 +611,37 @@ def _word_to_dict(w: Word, status: str) -> dict:
     }
 
 
+def _known_due_words(user: User, session: Session, limit: int) -> list[dict]:
+    """Return up to `limit` known words that are due for review today.
+
+    Words without a scheduled next_review (legacy rows or first-time review) are
+    always included. Words with next_review are included only when next_review <= today.
+    Ordered by next_review ASC (most overdue first), then last_seen ASC for unscheduled.
+    Archived words are excluded before `limit` is applied (not after) — otherwise a
+    small `limit` can come back short or empty whenever the most-overdue entries
+    happen to be archived, even though plenty of eligible words exist further down.
+
+    Shared by GET /review/known and the combined continue-session endpoint, so both
+    surfaces serve the exact same pool.
+    """
+    today = date.today()
+
+    rows = session.exec(
+        select(UserWordProgress, Word)
+        .join(Word, Word.id == UserWordProgress.word_id)
+        .where(
+            UserWordProgress.user_id == user.id,
+            UserWordProgress.status == "known",
+            (UserWordProgress.next_review == None) | (UserWordProgress.next_review <= today),  # noqa: E711
+            Word.archived == False,  # noqa: E712
+        )
+        .order_by(UserWordProgress.next_review.asc().nulls_first(), UserWordProgress.last_seen)
+        .limit(limit)
+    ).all()
+
+    return [_word_to_dict(word, progress.status) for progress, word in rows]
+
+
 @router.get("/review/known")
 def get_review_known(
     authorization: Optional[str] = Header(None),
@@ -619,40 +650,11 @@ def get_review_known(
     """Return up to the user's configured session size (words_per_session) of known
     words that are due for review today.
 
-    Words without a scheduled next_review (legacy rows or first-time review) are
-    always included. Words with next_review are included only when next_review <= today.
-    Ordered by next_review ASC (most overdue first), then last_seen ASC for unscheduled.
     Does not count against the daily session quota.
     """
     user = _require_user(authorization, session)
-    today = date.today()
     limit_size = user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE
-
-    progress_records = session.exec(
-        select(UserWordProgress)
-        .where(
-            UserWordProgress.user_id == user.id,
-            UserWordProgress.status == "known",
-            (UserWordProgress.next_review == None) | (UserWordProgress.next_review <= today),  # noqa: E711
-        )
-        .order_by(UserWordProgress.next_review.asc().nulls_first(), UserWordProgress.last_seen)
-        .limit(limit_size)
-    ).all()
-
-    if not progress_records:
-        return []
-
-    word_ids = [p.word_id for p in progress_records]
-    words = session.exec(
-        select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
-    ).all()
-    word_map = {w.id: w for w in words}
-
-    return [
-        _word_to_dict(word_map[p.word_id], p.status)
-        for p in progress_records
-        if p.word_id in word_map
-    ]
+    return _known_due_words(user, session, limit_size)
 
 
 @router.get("/review/known/upcoming")

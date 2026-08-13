@@ -7,6 +7,10 @@ function makeFakeJwt(name: string): string {
 }
 
 const DEFAULT_SETTINGS = { words_per_session: 10, new_words_ratio: 0.7, lesson_mode: 'thorough', use_question_timer: false, question_timer_seconds: 5 };
+const DEFAULT_PHRASES_SETTINGS = { phrases_per_session: 10, new_phrases_ratio: 0.3 };
+const DEFAULT_CONTINUE_SETTINGS = {
+  continue_words_count: 3, continue_grammar_count: 3, continue_phrases_count: 3, continue_include_new: true,
+};
 
 test.describe('User settings page', () => {
   test.beforeEach(async ({ page }) => {
@@ -16,6 +20,17 @@ test.describe('User settings page', () => {
     await page.route('**/api/me/settings', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({ json: DEFAULT_SETTINGS });
+      } else {
+        const body = JSON.parse(route.request().postData() ?? '{}');
+        await route.fulfill({ json: body });
+      }
+    });
+    await page.route('**/api/me/phrases-settings', async (route) => {
+      await route.fulfill({ json: DEFAULT_PHRASES_SETTINGS });
+    });
+    await page.route('**/api/me/continue-settings', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ json: DEFAULT_CONTINUE_SETTINGS });
       } else {
         const body = JSON.parse(route.request().postData() ?? '{}');
         await route.fulfill({ json: body });
@@ -124,5 +139,45 @@ test.describe('User settings page', () => {
     expect(savedBody.lesson_mode).toBe('quick');
     expect(savedBody.use_question_timer).toBe(true);
     expect(savedBody.question_timer_seconds).toBe(15);
+  });
+
+  test('combined-training tab renders with the saved per-phase counts and include-new toggle', async ({ page }) => {
+    await page.goto('/dashboard/settings');
+    await page.locator('[data-testid="tab-combined"]').click();
+
+    await expect(page.locator('[data-testid="continue-words-count-value"]')).toHaveText('3');
+    await expect(page.locator('[data-testid="continue-grammar-count-slider"]')).toHaveValue('3');
+    await expect(page.locator('[data-testid="continue-phrases-count-slider"]')).toHaveValue('3');
+    await expect(page.locator('[data-testid="continue-include-new-checkbox"]')).toBeChecked();
+  });
+
+  test('combined-training tab saves the three counts and the toggle independently of the other tabs', async ({ page }) => {
+    let savedBody: Record<string, unknown> = {};
+    await page.route('**/api/me/continue-settings', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ json: DEFAULT_CONTINUE_SETTINGS });
+      } else {
+        savedBody = JSON.parse(route.request().postData() ?? '{}');
+        await route.fulfill({ json: savedBody });
+      }
+    });
+
+    await page.goto('/dashboard/settings');
+    await page.locator('[data-testid="tab-combined"]').click();
+    await page.waitForSelector('[data-testid="continue-words-count-slider"]');
+
+    await page.locator('[data-testid="continue-words-count-slider"]').fill('7');
+    await page.locator('[data-testid="continue-grammar-count-slider"]').fill('2');
+    await page.locator('[data-testid="continue-phrases-count-slider"]').fill('5');
+    await page.locator('[data-testid="continue-include-new-checkbox"]').uncheck();
+    await page.locator('[data-testid="save-continue-settings-btn"]').click();
+
+    await expect(page.locator('[data-testid="continue-saved-message"]')).toBeVisible({ timeout: 3000 });
+    expect(savedBody).toEqual({
+      continue_words_count: 7,
+      continue_grammar_count: 2,
+      continue_phrases_count: 5,
+      continue_include_new: false,
+    });
   });
 });

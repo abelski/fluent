@@ -3,6 +3,16 @@
 // BACKEND_URL is injected at build time via NEXT_PUBLIC_BACKEND_URL so it can
 // differ between local development (localhost:8000) and production (same origin).
 
+// Type-only imports (erased at build time — no runtime dependency on the
+// components): the continue-session payload is consumed verbatim by QuizSession /
+// GrammarTaskRunner, so it reuses their types rather than re-declaring them.
+import type { Word } from '../app/dashboard/components/QuizSession';
+import type {
+  GrammarRule,
+  Task as GrammarTask,
+  VerbHint,
+} from '../app/dashboard/components/GrammarTaskRunner';
+
 export const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:8000';
 
@@ -920,6 +930,105 @@ export async function getPhraseReview(): Promise<PhraseStudySession> {
     throw new Error((err as { detail?: string }).detail ?? 'Failed to load review session');
   }
   return r.json();
+}
+
+// ── Combined continue-session ("Продолжить занятие") ─────────────────────────
+
+/** One phase of the combined session, in the order the backend returns them. */
+export type ContinuePhase = 'words' | 'grammar' | 'phrases';
+
+export interface ContinueGrammarPhase {
+  lesson_id: number;
+  level: 'basic' | 'advanced' | 'practice';
+  rules: GrammarRule[];
+  hint: VerbHint | null;
+  tasks: GrammarTask[];
+}
+
+export interface ContinueSession {
+  phases: ContinuePhase[];
+  words: Word[];
+  grammar: ContinueGrammarPhase | null;
+  phrases: PhraseStudyItem[];
+  /** Categories (subset of ContinuePhase) the user has zero enrollment in at all.
+   * Non-empty means the hard gate blocked the session — phases/words/grammar/phrases
+   * are all empty in that case, not a partial session. */
+  needs_enrollment: ContinuePhase[];
+}
+
+/**
+ * Content for one combined words → grammar → phrases session.
+ *
+ * The backend sizes every phase and charges the daily quota exactly once for the
+ * whole thing, so this must stay a SINGLE call — never re-fetch per phase.
+ * `limitReached` is true when the non-premium daily limit is already used up (429).
+ */
+export async function getContinueSession(): Promise<
+  { limitReached: true } | ({ limitReached: false } & ContinueSession)
+> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/continue-session`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (r.status === 429) return { limitReached: true };
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail ?? 'Failed to load session');
+  }
+  const data: ContinueSession = await r.json();
+  return { limitReached: false, ...data };
+}
+
+export interface ContinueSettings {
+  continue_words_count: number;
+  continue_grammar_count: number;
+  continue_phrases_count: number;
+  continue_include_new: boolean;
+}
+
+export async function getContinueSettings(): Promise<ContinueSettings> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/continue-settings`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) throw new Error('Failed to load combined-training settings');
+  return r.json();
+}
+
+export async function updateContinueSettings(data: ContinueSettings): Promise<ContinueSettings> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/continue-settings`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error('Failed to save combined-training settings');
+  return r.json();
+}
+
+/**
+ * Save a finished grammar lesson attempt (noun lessons and verb lessons share the
+ * GrammarLessonResult row — only the URL segment differs).
+ * Returns false when there is no token, so nothing was saved.
+ */
+export async function saveGrammarLessonResult(
+  lessonId: number,
+  score: number,
+  total: number,
+): Promise<boolean> {
+  const token = getToken();
+  if (!token) return false;
+  const base = lessonId >= 200 ? 'verb-lessons' : 'lessons';
+  const r = await fetch(`${BACKEND_URL}/api/grammar/${base}/${lessonId}/results`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ score, total }),
+  });
+  if (!r.ok) throw new Error('Failed to save lesson result');
+  return true;
 }
 
 /**

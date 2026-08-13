@@ -295,6 +295,18 @@ export interface Translations {
     randomBtn: string;
     noWordsFound: string;
   };
+  // Combined "Продолжить занятие" session (/dashboard/continue). Everything else it
+  // shows (limit reached, session done, back links) reuses common/review strings.
+  continueSession: {
+    emptyBody: string;          // nothing due in any of the three phases
+    gateTitle: string;          // heading of the "you need to enroll" screen
+    gateBody: string;           // explanation shown under the heading
+    gateLinkPrefix: string;     // e.g. "Choose a program:" before the category label
+    gateRetry: string;          // "check again" button, re-fetches after enrolling
+    categoryWords: string;
+    categoryGrammar: string;
+    categoryPhrases: string;
+  };
   admin: {
     title: string;
     subtitle: string;
@@ -548,6 +560,7 @@ export interface Translations {
     tabGrammar: string;
     tabPractice: string;
     tabPhrases: string;
+    tabCombined: string;
     tabOther: string;
     tabEmptyPlaceholder: string;
     sessionSizeLabel: string;
@@ -588,7 +601,14 @@ export interface Translations {
     loadError: string;
     saveError: string;
     phrasesSaveError: string;
+    continueSaveError: string;
     timerSecondsUnit: string;
+    continueWordsCountLabel: string;
+    continueGrammarCountLabel: string;
+    continuePhrasesCountLabel: string;
+    continueCountHint: string;
+    continueIncludeNewLabel: string;
+    continueIncludeNewHint: string;
   };
   phraseSession: {
     sessionDone: string;

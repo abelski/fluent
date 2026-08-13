@@ -387,6 +387,16 @@
       carets, the small triangle expand/collapse glyphs, or the ⭐ difficulty-rating glyphs — see Emoji &amp; arrow policy.
       <code>/dashboard/admin/**</code> is out of scope, same as <code>PageMascot</code>.
     </p>
+    <p style="font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.7;">
+      <b>Inside an icon badge — <code>size={16}</code>:</b> the logged-in home's "Продолжить занятие" CTA
+      (<code>app/LandingClient.tsx</code>) puts the mark in the existing <code>w-9 h-9</code> (36px)
+      <code>rounded-xl bg-emerald-500</code> badge, replacing a bespoke play-triangle SVG that existed nowhere else
+      in the system. 16px, not the 22px the old triangle used: <code>TakChevron</code> is a solid filled polygon
+      while that triangle was a 1.5px stroke, so matching its box would read far heavier. Note the fill is
+      <code>BODY</code> (<code>#ec3013</code>), <b>not</b> <code>currentColor</code> — a text-color class on the
+      badge does not tint it, and the orange-on-emerald pairing is intentional, the same TAK-accent exception the
+      logo lockup uses.
+    </p>
   </div>
 
   <h2>StarLevelToggle — complexity selector</h2>
@@ -558,6 +568,68 @@
     </p>
   </div>
 
+  <h2>Session components — QuizSession / PhraseSession / GrammarTaskRunner</h2>
+  <div class="card">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      The three "answer things one at a time" screens are presentational components driven by props, so a page can
+      compose them without duplicating their UI:
+      <code>app/dashboard/components/QuizSession.tsx</code> (words),
+      <code>app/dashboard/components/PhraseSession.tsx</code> (phrases) and
+      <code>app/dashboard/components/GrammarTaskRunner.tsx</code> (grammar). Each owns its own card layout, mascot
+      mood, progress bar and answer feedback; the caller owns loading the content and deciding what happens at the end.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b><code>GrammarTaskRunner</code> is an extraction, not a new design.</b> It was lifted verbatim out of
+      <code>app/dashboard/grammar/page.tsx</code>, which used to inline the lesson list, the exercise screen and its
+      own done screen in one 1000-line component with zero props. Only the <i>exercise screen</i> moved — the lesson
+      list and grammar's own done screen (next-lesson / repeat / back-to-lessons) stayed on the page and are
+      unchanged. It carries <code>InlineSentenceInput</code>, <code>GrammarRuleCard</code> and
+      <code>VerbHintCard</code> with it (they had no other call sites) and renders all four task types
+      (<code>declension</code>, <code>sentence</code>, <code>verb_conjugation</code>, <code>verb_case</code>).
+      Props: <code>tasks</code>, <code>level</code>, <code>rules?</code>, <code>hint?</code>, <code>onExit</code>,
+      <code>onFinish(score, total, mood)</code>. It never fetches, never charges quota and never saves a result —
+      the caller does, which is what lets both the standalone lesson and one phase of a combined session reuse it.
+      <code>mood</code> is handed back so the caller's done screen can carry TAK's final mood over unchanged.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>Multi-phase composition — <code>onAdvance</code>:</b>
+      <code>QuizSession</code> and <code>PhraseSession</code> take one optional prop. When
+      <code>onAdvance</code> is set, this is a non-final phase of a multi-phase session: the match round's
+      <code>onDone</code> calls it directly instead of setting <code>done</code>, so that phase's own
+      "session complete" screen (mascot, stats tiles, pass/fail) never renders at all — the next phase's
+      content simply replaces it. Only the true last phase in the sequence shows a done screen, with its
+      normal unmodified behaviour. Omitting the prop leaves the component's original behaviour untouched, so
+      existing callers are unaffected.
+      <br><br>
+      <b>Deliberately not a relabeled button.</b> An earlier version surfaced <code>onAdvance</code> as a
+      relabeled primary button on the done screen ("Дальше — грамматика" instead of "Ещё раз"). Real usage
+      showed that a full congratulatory stats screen between phases reads as the session having ended, even
+      with a different button label — the fix was to skip that screen entirely for non-final phases, not to
+      relabel it. There is no <code>advanceLabel</code> prop; don't reintroduce one without re-reading
+      <code>documentation/IMPLEMENTATION.md</code>'s account of this first.
+    </p>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0 0 16px;">
+      <b>The composed page:</b> <code>app/dashboard/continue/page.tsx</code> ("Продолжить занятие") runs
+      words → grammar → phrases back-to-back from a <b>single</b> <code>GET /api/me/continue-session</code>
+      response — one request, because that is where the backend charges the daily quota exactly once for the whole
+      flow. It holds a <code>phaseIdx</code> over the returned <code>phases</code> array and passes
+      <code>backHref="/"</code> to every phase. A phase the backend omitted (nothing due) simply never renders — it
+      is not an error state. Its loading / limit-reached / empty screens reuse the same markup as
+      <code>app/dashboard/review/page.tsx</code>, and its strings live under <code>tr.continueSession</code> plus
+      the existing <code>tr.common.limitTitle</code>/<code>limitBody</code>/<code>tr.review.nothingTitle</code>.
+    </p>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0;">
+      <b>Enrollment gate.</b> Before fetching anything, the endpoint checks the user has at least one
+      enrollment in each of words/grammar/phrases; zero in any one blocks the whole session (hard gate, no
+      partial session) and the page shows a dedicated screen
+      (<code>data-testid="continue-needs-enrollment"</code>, same card/button chrome as the other
+      <code>/dashboard/continue</code> screens) linking out to that category's existing enroll page instead of
+      building a picker inline. Its own settings — per-phase item counts and an "include new content" toggle —
+      live on a fourth <code>/dashboard/settings</code> tab ("Комбо-тренировка"), styled identically to the
+      existing "Слова"/"Фразы" tabs (same slider and card markup, own save button).
+    </p>
+  </div>
+
   <h2>Emoji &amp; arrow policy</h2>
   <div class="card">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 12px;">
@@ -647,6 +719,12 @@
         7 entries fit without scrolling) uses the extra width without stretching either. The CTA/news/premium
         cards below stay at <code>max-w-2xl</code>, left-aligned (not centered) to match the row above, since
         news body text at full width hurts readability.</td></tr>
+      <tr><td><code>/dashboard/continue</code> (the combined session) does not use <code>PageShell</code></td><td>
+        Same reason as the logged-in home above: it is not one of the 5 top-nav pages, and it is a full-screen
+        session surface, not a browse page. It follows the conventions already used by
+        <code>app/dashboard/review/page.tsx</code>/<code>QuizSession</code>/<code>PhraseSession</code> instead —
+        centered <code>min-h-screen</code> states on the <code>bg-slate-50</code> wash. Adding it to
+        <code>NAV_PAGES</code> in <code>design-system-parity.spec.ts</code> would be wrong for the same reason.</td></tr>
     </table>
   </div>
 

@@ -12,7 +12,7 @@ from auth import require_user as _require_user, try_get_user as _try_get_user
 from data.grammar.lessons import CASE_INFO as _CASE_INFO
 from database import get_session
 from grammar_service import get_lessons, get_lesson_tasks, get_verb_lessons, get_verb_lesson_tasks
-from models import GrammarLessonResult, GrammarProgram, UserGrammarProgram
+from models import GrammarLessonResult, GrammarProgram, User, UserGrammarProgram
 from quota import quota_check_and_increment as _quota_check_and_increment
 
 _SEED_PROGRAMS = [
@@ -47,21 +47,17 @@ def _ensure_seed(session: Session) -> None:
 router = APIRouter()
 
 
-@router.get("/grammar/lessons")
-def list_lessons(
-    authorization: Optional[str] = Header(None),
-    session: Session = Depends(get_session),
-):
-    """Return all lessons with metadata.
+def _annotate_lesson_progress(lessons: list[dict], user: Optional[User], session: Session) -> list[dict]:
+    """Attach `best_score_pct` and `is_locked` to each lesson dict, in place.
 
-    Includes is_locked and best_score_pct per lesson when user is authenticated.
-    Locking rule: lesson N is locked until lesson N-1 best score > 75%.
-    Unauthenticated users see all lessons unlocked (no progression tracking).
+    Locking rule: lesson N is locked until lesson N-1's best score > 75%. The first
+    lesson overall — and the first lesson of every program the user is enrolled in —
+    is always unlocked. Unauthenticated users see everything unlocked (no progression).
+
+    Extracted from GET /grammar/lessons so the combined continue-session endpoint can
+    widen its candidate pool to unlocked-but-unpassed lessons using this exact rule
+    instead of reimplementing it.
     """
-    user = _try_get_user(authorization, session)
-    is_admin = user is not None and user.is_admin
-    lessons = get_lessons(session, is_admin=is_admin)
-
     best_scores: dict[int, float] = {}
 
     user_authenticated = user is not None
@@ -110,6 +106,23 @@ def list_lessons(
             lesson["is_locked"] = best_scores.get(prev_id, 0.0) <= 0.75
 
     return lessons
+
+
+@router.get("/grammar/lessons")
+def list_lessons(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return all lessons with metadata.
+
+    Includes is_locked and best_score_pct per lesson when user is authenticated.
+    Locking rule: lesson N is locked until lesson N-1 best score > 75%.
+    Unauthenticated users see all lessons unlocked (no progression tracking).
+    """
+    user = _try_get_user(authorization, session)
+    is_admin = user is not None and user.is_admin
+    lessons = get_lessons(session, is_admin=is_admin)
+    return _annotate_lesson_progress(lessons, user, session)
 
 
 @router.get("/grammar/lessons/{lesson_id}/tasks")

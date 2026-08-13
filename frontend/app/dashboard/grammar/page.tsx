@@ -1,27 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BACKEND_URL, getToken, getGrammarPrograms, unenrollGrammarProgram, type GrammarProgramSummary } from '../../../lib/api';
+import { BACKEND_URL, getToken, getGrammarPrograms, unenrollGrammarProgram, saveGrammarLessonResult, type GrammarProgramSummary } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
-import { isAnswerMatch } from '../../../lib/normalizeLt';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
-import { useMascotMood } from '../../../lib/mascotMood';
+import { MOOD_NEUTRAL } from '../../../lib/mascotMood';
 import ProgressStatCard from '../components/ProgressStatCard';
 import PageShell from '../components/PageShell';
-
-interface GrammarRule {
-  question: string;
-  name_ru: string;
-  usage: string;
-  endings_sg: string;
-  endings_pl: string;
-  transform?: string;
-  article_slug?: string;
-  article_title_ru?: string;
-  article_title_en?: string;
-}
+// The exercise screen itself lives in GrammarTaskRunner so the combined
+// continue-session can reuse it; this page keeps the lesson list and done screen.
+import GrammarTaskRunner, { type GrammarRule, type Task, type VerbHint } from '../components/GrammarTaskRunner';
 
 interface Lesson {
   id: number;
@@ -37,128 +27,12 @@ interface Lesson {
   status?: string;
 }
 
-interface DeclensionTask {
-  type: 'declension';
-  prompt_lt: string;
-  prompt_ru: string;
-  case_name: string;
-  number: string;
-  answer: string;
-}
-
-interface SentenceTask {
-  type: 'sentence';
-  display: string;
-  answer: string;
-  full_answer: string;
-  translation_ru: string;
-  base_lt?: string;
-}
-
-interface VerbConjugationTask {
-  type: 'verb_conjugation';
-  verb_infinitive: string;
-  translation_ru: string;
-  tense_label: string;
-  person_label: string;
-  answer: string;
-}
-
-interface VerbCaseTask {
-  type: 'verb_case';
-  verb_infinitive: string;
-  translation_ru: string;
-  example_lt: string;
-  example_ru: string;
-  answer: string;
-}
-
-interface VerbHint {
-  description: string;
-  rows: [string, string][];
-}
-
-type Task = DeclensionTask | SentenceTask | VerbConjugationTask | VerbCaseTask;
-
-type AnswerState = 'unanswered' | 'correct' | 'wrong';
-
 const LEVEL_STYLES: Record<string, string> = {
   basic: 'bg-teal-50 border-line text-teal-600',
   advanced: 'bg-emerald-50 border-line text-emerald-600',
   practice: 'bg-amber-50 border-line text-amber-600',
 };
 
-
-
-function InlineSentenceInput({
-  display,
-  value,
-  onChange,
-  onKeyDown,
-  disabled,
-  answerState,
-  inputRef,
-  placeholder,
-}: {
-  display: string;
-  value: string;
-  onChange: (v: string) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  disabled: boolean;
-  answerState: AnswerState;
-  inputRef: React.RefObject<HTMLInputElement>;
-  placeholder?: string;
-}) {
-  const [before, after] = display.split('___');
-  const mirrorRef = useRef<HTMLSpanElement>(null);
-  const [inputWidth, setInputWidth] = useState('2ch');
-
-  useEffect(() => {
-    if (mirrorRef.current) {
-      const w = mirrorRef.current.offsetWidth;
-      setInputWidth(`${Math.max(w + 4, 24)}px`);
-    }
-  }, [value]);
-
-  const inputColor =
-    answerState === 'correct'
-      ? 'text-emerald-700 border-emerald-500 bg-emerald-50'
-      : answerState === 'wrong'
-      ? 'text-red-700 border-red-400 bg-red-50'
-      : 'text-gray-900 border-line bg-transparent';
-
-  return (
-    <p className="text-lg sm:text-2xl md:text-3xl font-mono tracking-tight leading-relaxed text-center break-words" style={{ overflowWrap: 'break-word' }}>
-      <span>{before}</span>
-      <span className="relative inline-block">
-        {/* hidden mirror to measure text width */}
-        <span
-          ref={mirrorRef}
-          aria-hidden
-          className="absolute invisible whitespace-pre text-lg sm:text-2xl md:text-3xl font-mono tracking-tight"
-        >
-          {value || ' '}
-        </span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={onKeyDown}
-          disabled={disabled}
-          autoCapitalize="none"
-          autoCorrect="off"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder={placeholder}
-          style={{ width: inputWidth, maxWidth: '100%' }}
-          className={`inline-block border-b-2 outline-none text-lg sm:text-2xl md:text-3xl font-mono tracking-tight text-center transition-colors duration-200 ${inputColor}`}
-        />
-      </span>
-      <span>{after}</span>
-    </p>
-  );
-}
 
 function GrammarStatsBar({ lessons }: { lessons: Lesson[] }) {
   const { tr } = useT();
@@ -184,113 +58,6 @@ function GrammarStatsBar({ lessons }: { lessons: Lesson[] }) {
         }}
         testId="stats-card-grammar"
       />
-    </div>
-  );
-}
-
-function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collapsible: boolean }) {
-  const { tr } = useT();
-  const [open, setOpen] = useState(!collapsible);
-
-  if (rules.length === 0) return null;
-
-  return (
-    <div className="w-full border border-line rounded-2xl overflow-hidden bg-teal-50">
-      {collapsible ? (
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-teal-50 transition-colors"
-        >
-          <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarHint}</span>
-          <svg
-            width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
-            className={`text-teal-500 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
-          >
-            <path d="M6 8L1 3h10L6 8z" />
-          </svg>
-        </button>
-      ) : (
-        <div className="px-5 py-3 border-b border-line">
-          <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarRule}</span>
-        </div>
-      )}
-
-      {open && (
-        <div className={`px-5 py-4 flex flex-col gap-4 ${collapsible ? 'border-t border-line' : ''}`}>
-          {rules.map((rule, i) => (
-            <div key={i} className={rules.length > 1 ? 'pb-4 border-b border-line last:border-0 last:pb-0' : ''}>
-              <p className="text-teal-700 text-sm font-semibold mb-1">{rule.name_ru}</p>
-              <p className="text-gray-500 text-xs mb-2">{rule.question}</p>
-              <p className="text-gray-600 text-sm mb-2 leading-relaxed">{rule.usage}</p>
-              {rule.transform && (
-                <p className="text-gray-500 text-xs mb-3 leading-relaxed font-mono bg-white/60 rounded px-2 py-1">{rule.transform}</p>
-              )}
-              {rule.endings_sg !== '—' && (
-                <div className="flex flex-wrap gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-400">{tr.grammar.singular} </span>
-                    <span className="text-gray-500 font-mono">{rule.endings_sg}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">{tr.grammar.plural} </span>
-                    <span className="text-gray-500 font-mono">{rule.endings_pl}</span>
-                  </div>
-                </div>
-              )}
-              {rule.endings_sg === '—' && (
-                <div className="text-xs">
-                  <span className="text-gray-400">{tr.grammar.plural} </span>
-                  <span className="text-gray-500 font-mono">{rule.endings_pl}</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function VerbHintCard({ hint, collapsible }: { hint: VerbHint; collapsible: boolean }) {
-  const { tr } = useT();
-  const [open, setOpen] = useState(!collapsible);
-
-  return (
-    <div className="w-full border border-line rounded-2xl overflow-hidden bg-teal-50">
-      {collapsible ? (
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-teal-50 transition-colors"
-        >
-          <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarHint}</span>
-          <svg
-            width="12" height="12" viewBox="0 0 12 12" fill="currentColor"
-            className={`text-teal-500 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
-          >
-            <path d="M6 8L1 3h10L6 8z" />
-          </svg>
-        </button>
-      ) : (
-        <div className="px-5 py-3 border-b border-line">
-          <span className="text-teal-600 text-sm font-medium">{tr.grammar.grammarRule}</span>
-        </div>
-      )}
-
-      {open && (
-        <div className={`px-5 py-4 ${collapsible ? 'border-t border-line' : ''}`}>
-          <p className="text-gray-600 text-sm mb-3">{hint.description}</p>
-          <table className="w-full text-xs">
-            <tbody>
-              {hint.rows.map(([person, ending], i) => (
-                <tr key={i} className={i % 2 === 0 ? 'bg-white/40 rounded' : ''}>
-                  <td className="py-1.5 pr-4 text-gray-500 font-medium w-1/2">{person}</td>
-                  <td className="py-1.5 text-gray-900 font-mono">{ending}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }
@@ -461,31 +228,14 @@ export default function GrammarPage() {
     });
   }
 
-  // TAK's mood for the active lesson — neutral at the start, one step per answer.
-  const { mood, recordAnswer, reset: resetMood } = useMascotMood();
-
-  // Exercise state
+  // Exercise state — the run itself lives in GrammarTaskRunner; the page only keeps
+  // what its own done screen needs (final score and TAK's final mood).
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [taskIndex, setTaskIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
+  const [mood, setMood] = useState(MOOD_NEUTRAL);
   const [done, setDone] = useState(false);
   const [exerciseLoading, setExerciseLoading] = useState(false);
-
-  // Per-task UI
-  const [typed, setTyped] = useState('');
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered');
-  const [shownAnswer, setShownAnswer] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dismissBtnRef = useRef<HTMLButtonElement>(null);
-
-  // Focus dismiss button after a short delay so the Enter keypress that
-  // triggered the wrong answer doesn't immediately activate it.
-  useEffect(() => {
-    if (answerState !== 'wrong') return;
-    const id = setTimeout(() => dismissBtnRef.current?.focus(), 100);
-    return () => clearTimeout(id);
-  }, [answerState]);
 
   const fetchLessons = useCallback(() => {
     const token = getToken();
@@ -542,76 +292,26 @@ export default function GrammarPage() {
   function isVerbLesson(lessonId: number) { return lessonId >= 200; }
 
   function postResult(lessonId: number, score: number, total: number) {
-    const token = getToken();
-    if (!token) return;
-    const base = isVerbLesson(lessonId) ? 'verb-lessons' : 'lessons';
-    fetch(`${BACKEND_URL}/api/grammar/${base}/${lessonId}/results`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ score, total }),
-    })
-      .then(() => fetchLessons())
+    saveGrammarLessonResult(lessonId, score, total)
+      .then((saved) => { if (saved) fetchLessons(); })
       .catch((err) => console.error('API error:', err));
   }
 
   function startLesson(lesson: Lesson) {
     setExerciseLoading(true);
     setActiveLesson(lesson);
-    setTaskIndex(0);
     setCorrect(0);
+    setMood(MOOD_NEUTRAL);
     setDone(false);
-    resetMood();
-    setTyped('');
-    setAnswerState('unanswered');
-    setShownAnswer('');
 
     const base = isVerbLesson(lesson.id) ? 'verb-lessons' : 'lessons';
     fetch(`${BACKEND_URL}/api/grammar/${base}/${lesson.id}/tasks`)
       .then((r) => r.json())
       .then((data: Task[]) => {
         setTasks(Array.isArray(data) ? data : []);
-        setTimeout(() => inputRef.current?.focus(), 100);
       })
       .catch(() => setTasks([]))
       .finally(() => setExerciseLoading(false));
-  }
-
-  function advanceTask(isCorrect: boolean) {
-    const next = taskIndex + 1;
-    if (next >= tasks.length) {
-      const finalCorrect = isCorrect ? correct + 1 : correct;
-      if (activeLesson) postResult(activeLesson.id, finalCorrect, tasks.length);
-      if (isCorrect) setCorrect((c) => c + 1);
-      setDone(true);
-    } else {
-      if (isCorrect) setCorrect((c) => c + 1);
-      setTaskIndex(next);
-      setTyped('');
-      setAnswerState('unanswered');
-      setShownAnswer('');
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }
-
-  function checkAnswer() {
-    if (answerState !== 'unanswered') return;
-    const task = tasks[taskIndex];
-    const isCorrect = isAnswerMatch(typed.trim(), task.answer);
-    setAnswerState(isCorrect ? 'correct' : 'wrong');
-    recordAnswer(isCorrect);
-    if (!isCorrect) {
-      setShownAnswer(task.type === 'sentence' ? task.full_answer : task.answer);
-    }
-
-    if (isCorrect) {
-      // Correct: auto-advance after short delay
-      setTimeout(() => advanceTask(true), 1000);
-    }
-    // Wrong: wait for user to click "Понятно, дальше"
-  }
-
-  function dismissWrongGrammar() {
-    advanceTask(false);
   }
 
   function resetToLessons() {
@@ -833,172 +533,19 @@ export default function GrammarPage() {
     );
   }
 
-  const task = tasks[taskIndex];
-  const progressPct = (taskIndex / tasks.length) * 100;
-  const level = activeLesson.level;
-  const showRule = level === 'basic' || level === 'advanced';
-  const ruleCollapsible = level === 'advanced';
-
   return (
-    <main className="min-h-screen text-gray-900 flex flex-col px-6 py-8">
-
-      <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col flex-1">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <button
-            onClick={resetToLessons}
-            className="text-gray-400 hover:text-gray-900 text-sm transition-colors"
-          >
-            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.grammar.backToLessons}
-          </button>
-          <span className="text-gray-400 text-sm">{taskIndex + 1} / {tasks.length}</span>
-        </div>
-
-        {/* Progress bar */}
-        <div className="w-full h-1 bg-gray-100 rounded-full mb-8">
-          <div
-            className="h-1 bg-emerald-500 rounded-full transition-all duration-300"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-
-        {/* Grammar rule — basic (always visible) or advanced (collapsible) */}
-        {showRule && (
-          <div className="mb-6">
-            {activeLesson.hint ? (
-              <VerbHintCard hint={activeLesson.hint} collapsible={ruleCollapsible} />
-            ) : (
-              <GrammarRuleCard rules={activeLesson.rules ?? []} collapsible={ruleCollapsible} />
-            )}
-          </div>
-        )}
-
-        {/* Task card */}
-        <div className="flex flex-col items-center justify-center flex-1 gap-12">
-          <PageMascot phrase="Pagalvok!" mood={mood} />
-          {task.type === 'declension' && (
-            <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center">
-              <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
-                {task.case_name} · {task.number}
-              </p>
-              <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-4 break-words">{task.prompt_lt}</p>
-              <p className="text-gray-500 text-base sm:text-lg mb-5">{task.prompt_ru}</p>
-              <input
-                ref={inputRef}
-                type="text"
-                value={typed}
-                onChange={(e) => setTyped(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
-                disabled={answerState !== 'unanswered'}
-                autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
-                placeholder={tr.grammar.typeDeclension}
-                className={`w-full py-3 px-4 rounded-xl border text-base text-gray-900 placeholder-gray-400 focus:outline-none transition-colors duration-200
-                  ${answerState === 'correct' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
-                    answerState === 'wrong'   ? 'border-red-300 bg-red-50 text-red-600 line-through' :
-                    'border-gray-200 bg-gray-50 focus:border-emerald-400 focus:bg-white'}`}
-              />
-            </div>
-          )}
-
-          {task.type === 'sentence' && (
-            <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
-              {task.base_lt && (
-                <p className="text-gray-400 text-xs mb-4">{tr.grammar.sentenceFrom}<span className="font-medium text-gray-500">{task.base_lt}</span></p>
-              )}
-              <div className="mb-4">
-                <InlineSentenceInput
-                  display={task.display}
-                  value={typed}
-                  onChange={setTyped}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
-                  disabled={answerState !== 'unanswered'}
-                  answerState={answerState}
-                  inputRef={inputRef}
-                />
-              </div>
-              <p className="text-gray-500 text-base">{task.translation_ru}</p>
-            </div>
-          )}
-
-          {task.type === 'verb_conjugation' && (
-            <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
-              <p className="text-gray-400 text-xs mb-4">{task.tense_label}</p>
-              <div className="mb-4">
-                <InlineSentenceInput
-                  display={`${task.verb_infinitive} — ${task.person_label} ___`}
-                  value={typed}
-                  onChange={setTyped}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
-                  disabled={answerState !== 'unanswered'}
-                  answerState={answerState}
-                  inputRef={inputRef}
-                  placeholder={tr.grammar.verbConjugationPlaceholder}
-                />
-              </div>
-              <p className="text-gray-500 text-base">{task.translation_ru}</p>
-            </div>
-          )}
-
-          {task.type === 'verb_case' && (
-            <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center">
-              <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">
-                {task.verb_infinitive} — {task.translation_ru}
-              </p>
-              <p className="text-lg sm:text-xl font-medium text-gray-900 mb-2">{task.example_lt}</p>
-              <p className="text-gray-500 text-base mb-5">{task.example_ru}</p>
-              <p className="text-gray-400 text-xs mb-3">{tr.grammar.verbCaseGovernancePrompt}</p>
-              <input
-                ref={inputRef}
-                type="text"
-                value={typed}
-                onChange={(e) => setTyped(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && typed.trim()) checkAnswer(); }}
-                disabled={answerState !== 'unanswered'}
-                autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
-                placeholder={tr.grammar.verbCasePlaceholder}
-                className={`w-full py-3 px-4 rounded-xl border text-base text-gray-900 placeholder-gray-400 focus:outline-none transition-colors duration-200
-                  ${answerState === 'correct' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
-                    answerState === 'wrong'   ? 'border-red-300 bg-red-50 text-red-600 line-through' :
-                    'border-gray-200 bg-gray-50 focus:border-emerald-400 focus:bg-white'}`}
-              />
-            </div>
-          )}
-
-          <div className="w-full flex flex-col gap-3">
-            {answerState === 'unanswered' && (
-              <button
-                onClick={checkAnswer}
-                disabled={!typed.trim()}
-                className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {tr.common.check}
-              </button>
-            )}
-
-            {answerState === 'correct' && (task.type === 'sentence' || task.type === 'verb_conjugation') && (
-              <p className="text-emerald-600 text-sm font-medium text-center">{tr.common.correct}</p>
-            )}
-
-            {answerState === 'wrong' && (
-              <div className="flex flex-col gap-3 animate-in fade-in duration-150">
-                <div className="text-center">
-                  <p className="text-gray-500 text-sm">
-                    {tr.common.correctAnswer} <span className="text-gray-900 font-semibold">{shownAnswer}</span>
-                  </p>
-                </div>
-                <button
-                  ref={dismissBtnRef}
-                  data-testid="dismiss-wrong"
-                  onClick={dismissWrongGrammar}
-                  className="w-full py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors"
-                >
-                  {tr.common.dismiss} <TakChevron size={10} className="inline-block align-[-1px]" />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </main>
+    <GrammarTaskRunner
+      tasks={tasks}
+      level={activeLesson.level}
+      rules={activeLesson.rules}
+      hint={activeLesson.hint}
+      onExit={resetToLessons}
+      onFinish={(score, total, finalMood) => {
+        postResult(activeLesson.id, score, total);
+        setCorrect(score);
+        setMood(finalMood);
+        setDone(true);
+      }}
+    />
   );
 }

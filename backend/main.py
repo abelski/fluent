@@ -29,6 +29,7 @@ from routers.phrases import router as phrases_router
 from routers.phrase_lists import router as phrase_lists_router
 from routers.word_lists import router as word_lists_router
 from routers.extension import router as extension_router
+from routers.continue_session import router as continue_session_router
 from database import create_db_and_tables, get_session
 from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage  # noqa: F401 — registers table
 from data.grammar.lessons import LESSON_CONFIG
@@ -137,6 +138,7 @@ app.include_router(phrases_router, prefix="/api")
 app.include_router(phrase_lists_router, prefix="/api")
 app.include_router(word_lists_router, prefix="/api")
 app.include_router(extension_router, prefix="/api")
+app.include_router(continue_session_router, prefix="/api")
 
 
 @app.get("/health")

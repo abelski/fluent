@@ -751,18 +751,66 @@ def get_phrase_study_session(
 
 # ── Cross-program review ─────────────────────────────────────────────────────
 
-@router.get("/phrases/review")
-def get_phrase_review_session(
-    authorization: Optional[str] = Header(None),
-    session: Session = Depends(get_session),
-):
-    """Return due phrases across ALL enrolled programs for a review session.
+def _serialize_phrase_batch(
+    session_phrases: list[Phrase],
+    progress_map: dict[int, UserPhraseProgress],
+    distractor_source: list[Phrase],
+) -> list[dict]:
+    """Serialize phrases into the study-session payload the frontend consumes.
 
-    Collects phrases where next_review <= today (or in-progress) from every
-    enrolled program, up to user.phrases_per_session total.
+    `progress_map` may be missing a phrase entirely — an unseen ("new") phrase then
+    serializes as lesson_stage 0 with no next_review, exactly as the per-program study
+    endpoint already does for new phrases.
+    `distractor_source` supplies the word pool for stage-1 MCQ options; phrases that are
+    part of this batch are skipped so an option never leaks from the phrase being asked.
+
+    Shared by GET /phrases/review and the combined continue-session endpoint so both
+    surfaces emit the exact same item shape.
     """
-    user = _require_user(authorization, session)
+    session_ids = {p.id for p in session_phrases}
+    other_words: list[str] = []
+    for phrase in distractor_source:
+        if phrase.id not in session_ids:
+            words = [w.strip(".,!?;:'\"()") for w in phrase.text.split() if len(w.strip(".,!?;:'\"()")) > 1]
+            other_words.extend(words)
+    random.shuffle(other_words)
+    distractor_pool = list(dict.fromkeys(other_words))
 
+    result = []
+    for phrase in session_phrases:
+        prog = progress_map.get(phrase.id)
+        lesson_stage = prog.lesson_stage if prog else 0
+        mistake_words_json = prog.mistake_words_json if prog else "{}"
+        blank_word = _pick_blank_word(phrase.text, mistake_words_json)
+        mcq_distractors = [w for w in distractor_pool if w.lower() != blank_word.lower()][:3]
+        result.append({
+            "id": phrase.id,
+            "text": phrase.text,
+            "translation": phrase.translation,
+            "translation_en": phrase.translation_en,
+            "alt_texts": phrase.alt_texts,
+            "lesson_stage": lesson_stage,
+            "blank_word": blank_word,
+            "mcq_distractors": mcq_distractors,
+            "word_tiles": _word_tiles(phrase.text),
+            "translation_tiles": _word_tiles(phrase.translation),
+            "translation_en_tiles": _word_tiles(phrase.translation_en) if phrase.translation_en else None,
+            "next_review": prog.next_review.isoformat() if prog and prog.next_review else None,
+        })
+    return result
+
+
+def _due_phrases_for_review(user: User, session: Session, limit: int) -> list[dict]:
+    """Return up to `limit` due phrases across ALL enrolled programs, serialized for a
+    review session.
+
+    Collects phrases where next_review <= today (or in-progress) from every enrolled
+    program. Returns an empty list when nothing is due — the endpoint turns that into a
+    404, while the combined continue-session endpoint simply skips the phrase phase.
+
+    Shared by GET /phrases/review and the continue-session endpoint so both surfaces
+    serve the exact same pool and payload shape.
+    """
     enrollments = session.exec(
         select(UserPhraseProgramEnrollment).where(
             UserPhraseProgramEnrollment.user_id == user.id
@@ -800,7 +848,6 @@ def get_phrase_review_session(
     progress_map = {r.phrase_id: r for r in progress_rows}
 
     today = date.today()
-    total = user.phrases_per_session if user.phrases_per_session else DEFAULT_PHRASES_PER_SESSION
 
     due_phrases = []
     for phrase in all_phrases:
@@ -813,7 +860,7 @@ def get_phrase_review_session(
             due_phrases.append(phrase)
 
     if not due_phrases:
-        raise HTTPException(status_code=404, detail="No phrases due for review")
+        return []
 
     # Sort oldest/most-overdue first: null next_review (in-progress) → date.min, then last_seen
     due_phrases.sort(key=lambda p: (
@@ -821,40 +868,27 @@ def get_phrase_review_session(
         progress_map[p.id].last_seen,
     ))
 
-    session_phrases = due_phrases[:total]
+    session_phrases = due_phrases[:limit]
 
-    # Build distractors from all phrases not in session
-    session_ids = {p.id for p in session_phrases}
-    other_words: list[str] = []
-    for phrase in all_phrases:
-        if phrase.id not in session_ids:
-            words = [w.strip(".,!?;:'\"()") for w in phrase.text.split() if len(w.strip(".,!?;:'\"()")) > 1]
-            other_words.extend(words)
-    random.shuffle(other_words)
-    distractor_pool = list(dict.fromkeys(other_words))
+    # Distractors come from all phrases not in the session (see _serialize_phrase_batch).
+    return _serialize_phrase_batch(session_phrases, progress_map, list(all_phrases))
 
-    result = []
-    for phrase in session_phrases:
-        prog = progress_map.get(phrase.id)
-        lesson_stage = prog.lesson_stage if prog else 0
-        mistake_words_json = prog.mistake_words_json if prog else "{}"
-        blank_word = _pick_blank_word(phrase.text, mistake_words_json)
-        mcq_distractors = [w for w in distractor_pool if w.lower() != blank_word.lower()][:3]
-        result.append({
-            "id": phrase.id,
-            "text": phrase.text,
-            "translation": phrase.translation,
-            "translation_en": phrase.translation_en,
-            "alt_texts": phrase.alt_texts,
-            "lesson_stage": lesson_stage,
-            "blank_word": blank_word,
-            "mcq_distractors": mcq_distractors,
-            "word_tiles": _word_tiles(phrase.text),
-            "translation_tiles": _word_tiles(phrase.translation),
-            "translation_en_tiles": _word_tiles(phrase.translation_en) if phrase.translation_en else None,
-            "next_review": prog.next_review.isoformat() if prog and prog.next_review else None,
-        })
 
+@router.get("/phrases/review")
+def get_phrase_review_session(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Return due phrases across ALL enrolled programs for a review session.
+
+    Collects phrases where next_review <= today (or in-progress) from every
+    enrolled program, up to user.phrases_per_session total.
+    """
+    user = _require_user(authorization, session)
+    limit = user.phrases_per_session if user.phrases_per_session else DEFAULT_PHRASES_PER_SESSION
+    result = _due_phrases_for_review(user, session, limit)
+    if not result:
+        raise HTTPException(status_code=404, detail="No phrases due for review")
     return {"phrases": result}
 
 
