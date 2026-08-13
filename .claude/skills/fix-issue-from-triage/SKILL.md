@@ -1,6 +1,6 @@
 ---
 name: fix-issue-from-triage
-description: Fix a triaged issue from plans/triage/active/ — read the plan, apply the fix, run smoke tests, and leave the local server ready for user validation.
+description: Fix a triaged issue from plans/triage/active/ — delegate the fix + tests to the ralph-implement loop, smoke test, and leave the local server ready for user validation before confirming resolution.
 ---
 
 Fix a triaged issue by following its pre-written plan from `plans/triage/active/`.
@@ -11,44 +11,30 @@ If `$ARGUMENTS` is provided, treat it as an issue number (e.g. `35`) or partial 
 - Search `plans/triage/active/` (not `implemented/` or `hold/`) for a file matching `issue-<number>` or the given string.
 - If no match is found, list all open plan files and use `AskUserQuestion` to ask which one to fix.
 
-Read the matched plan file in full before proceeding.
+`/triage` always writes plan files with frontmatter `status: draft` — there's no separate
+approval UI for the bugfix pipeline the way `feature-analyst` has one; the user invoking this
+skill on a specific issue *is* the approval. If the located plan's `status` is still `draft`,
+flip it to `approved` now, before delegating in Step 2 (this is what lets `ralph-implement`
+proceed instead of bouncing it back as unapproved).
 
-## Step 2 — Understand and apply the fix
+## Step 2 — Delegate the fix and tests
 
-The plan file contains a **Root cause** section and a **Fix plan** section. Follow the Fix plan steps exactly.
-
-Fix types you may encounter:
-
-### Data-only fix (SQL)
-- Read `backend/.env` and extract `DATABASE_URL`.
-- Run all SQL statements using a psql heredoc so they execute in one session:
-  ```bash
-  psql "<DATABASE_URL>" <<'EOF'
-  <SQL statements>
-  EOF
-  ```
-- Run the verification SELECT from the plan (if present) and display results as a markdown table.
-- If the plan has no verification SELECT, write one yourself targeting the updated rows.
-
-### Code fix
-- Read the affected files before editing.
-- Apply the minimal change described in the plan — do not refactor surrounding code.
-- If the fix requires a frontend rebuild, do it (see Step 3).
-
-### Mixed fix (SQL + code)
-- Apply SQL changes first, then code changes.
-
-## Step 3 — Rebuild frontend if code was changed
-
-Only rebuild if Step 2 touched frontend files:
-
-```bash
-cd frontend && npm run build
+```
+Skill(skill: "ralph-implement", args: "plans/triage/active/issue-<N>-*.md")
 ```
 
-If the build fails, fix the error before continuing.
+`ralph-implement` reads the plan's `## Root cause` and `## Fix plan` checklist, applies each item
+(code fix, data-only fix, or mixed — it handles all three), then works through `## Tests`,
+running real commands and retrying failures up to the plan's `max_iterations` before giving up.
+It owns all checkbox flipping, retry/iteration bookkeeping, and the final `## Definition of Done`
+gate. Do not duplicate any of that logic here.
 
-## Step 4 — Ensure local server is running and ready
+- If it reports `status: blocked` — relay its `## Blocked` section to the user verbatim and stop.
+  Do not attempt to silently finish the fix yourself.
+- If it reports `status: done` — proceed to Step 3. The plan file is still in `plans/triage/active/`
+  at this point (`ralph-implement` never moves files — that stays this skill's job, see Step 5).
+
+## Step 3 — Ensure local server is running and ready
 
 For user validation the backend must serve the built static export (not DEV mode).
 
@@ -64,22 +50,21 @@ For user validation the backend must serve the built static export (not DEV mode
    ```
 3. Report whether the server was already running or was just started.
 
-## Step 5 — Smoke test the fix
+## Step 4 — Smoke test the fix
 
 Navigate to the URL from the plan's header (e.g. `/dashboard/lists/187/study`) using the Playwright browser:
 
 1. Open `http://localhost:8000<path>` — substitute the path from the plan's `# Issue #N — <path>` line.
 2. Take a screenshot.
 3. Verify the specific data fixed in the issue is now correct (e.g. translation shown, word displayed).
-4. If a Playwright autotest exists for this fix, run it:
-   ```bash
-   cd frontend && npx playwright test --reporter=list
-   ```
-   Report pass/fail counts.
 
-If the smoke check fails, investigate and fix before proceeding to Step 6.
+(The Playwright autotest suite itself already ran as part of `ralph-implement`'s `## Tests`/
+`## Definition of Done` pass in Step 2 — this step is the human-facing visual check on top of
+that, not a repeat of it.)
 
-## Step 6 — Confirm resolution with user
+If the smoke check fails, investigate and fix before proceeding to Step 5.
+
+## Step 5 — Confirm resolution with user
 
 Use `AskUserQuestion` to ask:
 - Question: `"Issue #<N> — <one-line summary of what was fixed>. Mark as resolved?"`
@@ -120,8 +105,15 @@ If the user selects **No**, ask a follow-up `AskUserQuestion`: "What still looks
 
 ## Notes
 
-- DATABASE_URL is in `backend/.env` — read it fresh every time, never hard-code it.
+- This skill is the pipeline-specific wrapper around `ralph-implement`, not a reimplementation of
+  it — it owns issue lookup, the browser-based smoke check, the human resolution gate, DB update,
+  notifications, and the `implemented/` move, exactly the parts of this flow that are unique to
+  bugfixes and have no equivalent in the feature pipeline. `ralph-implement` itself never touches
+  the DB directly, never notifies anyone, and never moves plan files.
+- DATABASE_URL is in `backend/.env` — read it fresh every time, never hard-code it. (SQL-fix
+  checklist items inside `ralph-implement`'s delegated pass follow the same rule — see the
+  `ralph-implementer` agent definition.)
 - Do not push to git.
 - For destructive SQL (DELETE without WHERE, DROP, TRUNCATE) ask the user to confirm first.
-- Triage plan files live in `plans/triage/active/`. Resolved files go to `plans/triage/implemented/` with the `IMPLEMENTED-` prefix. Blocked files live in `plans/triage/hold/`.
+- Triage plan files live in `plans/triage/active/`. Resolved files go to `plans/triage/implemented/` with the `IMPLEMENTED-` prefix. Blocked files live in `plans/triage/hold/` (this is the DB-driven `hold` state from `/triage`, separate from a plan's own `status: blocked` frontmatter field, which means the implementation loop hit its retry budget — check both meanings if a plan seems stuck).
 - The plan may reference optional steps (e.g. "Option B — add a new word row"). Only do these if the plan explicitly marks them as required, or the user asks.

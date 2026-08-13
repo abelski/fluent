@@ -29,6 +29,7 @@ For all confirmed issues that do not yet have a plan file, spawn **Plan agents i
 Each agent prompt must include:
 - Issue id, context, description, and status
 - Instruction to explore the codebase and identify: the affected area, likely root cause, specific files/endpoints involved, and concrete step-by-step fix steps
+- Instruction to judge, from the nature of the fix, a `suggested_model` (`sonnet` | `opus` | `haiku` | `fable`) and `suggested_effort` (`low` | `medium` | `high` | `xhigh` | `max`) for the *implementation* of the fix — a mechanical, well-scoped data-only or single-file fix suggests a cheaper/faster tier; something spanning multiple files, ambiguous root cause, or auth/data-integrity risk suggests a stronger tier — plus a one-line reason.
 
 Wait for **all** agents to return before proceeding. Collect each agent's output and use it to populate the corresponding plan file in step 6.
 
@@ -37,9 +38,20 @@ For each issue, derive a short slug from the description (3-5 words, lowercase, 
 
 Check if a file matching `plans/triage/active/issue-<id>-*.md` or `plans/triage/hold/issue-<id>-*.md` already exists. If it does, skip that issue entirely. Otherwise, write a new file using the slug-based name.
 
-Format each file as:
+Format each file as (this schema is shared with the feature-planning pipeline — `ralph-implement` drives both from the same frontmatter + checkbox shape):
 
 ```
+---
+kind: bugfix
+status: draft
+iteration: 0
+max_iterations: <N>
+suggested_model: <sonnet | opus | haiku | fable>
+suggested_effort: <low | medium | high | xhigh | max>
+confirmed_model: null
+confirmed_effort: null
+---
+
 # Issue #<id> — <context>
 
 **Reported:** <created_at>
@@ -47,16 +59,21 @@ Format each file as:
 **Description:** <description>
 
 ## Root cause
-...
+... (include the one-line suggested_model/suggested_effort reason here)
 
 ## Fix plan
-1. ...
-2. ...
+- [ ] 1. ...
+- [ ] 2. ...
+
 ## Tests
-1. Write a Playwright test in `frontend/tests/` that reproduces and verifies the fix for this issue.
-2. Rebuild the frontend and restart the local server.
-3. Run the new Playwright test and confirm it passes.
-4. Leave the local server running so the user can manually verify the fix in the browser.
+- [ ] Write a Playwright test in `frontend/tests/` that reproduces and verifies the fix for this issue.
+- [ ] Run it: `cd frontend && npx playwright test <path-to-new-test> --reporter=list`
+
+## Definition of Done
+
+​```bash
+cd frontend && npx playwright test --reporter=list
+​```
 
 ## Confirm resolution
 Ask the user: "Issue #<id> — <description>. Mark as resolved?"
@@ -64,6 +81,12 @@ Only if the user confirms:
 1. Run `UPDATE mistake_report SET status = 'resolved' WHERE id = <id>;` and report success.
 2. Move the plan file to `plans/triage/implemented/` and add the `IMPLEMENTED-` prefix (e.g. `issue-12-wrong-verb-form.md` → `plans/triage/implemented/IMPLEMENTED-issue-12-wrong-verb-form.md`).
 ```
+
+`max_iterations` = `clamp((Fix plan items + Tests items) * 2, 8, 30)`. Set `status: draft` here —
+`fix-issue-from-triage` (via `ralph-implement`) flips it to `approved` and beyond once a human
+starts working the issue; `/triage` itself only ever produces drafts. Frontend rebuild / local
+server staging is *not* a checklist item here — that's handled procedurally by
+`fix-issue-from-triage` after `ralph-implement` finishes, not authored per-issue.
 
 After saving all files, print the list of created file paths.
 
