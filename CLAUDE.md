@@ -72,6 +72,9 @@
 - never use ANTHROPIC_API_KEY (we dont have it in our subscription)
 - Keep `documentation/design system/` updated whenever new UI components or patterns are introduced; treat it as the source of truth for visual/component decisions during development
 - When you hit a non-obvious gotcha, constraint, or piece of investigative context (a broken/missing tool, an undocumented quirk, a workaround, "why this isn't just X") — write it down in `documentation/` instead of letting it live only in conversation. Re-deriving the same finding by re-exploring the codebase in a future session burns tokens for nothing; a short note prevents that.
+- Document architecture decisions too, not just gotchas: whenever you choose one approach over a plausible alternative for a non-obvious reason (a tradeoff, a constraint from hosting/DB/auth, a rejected simpler option), write the decision and its "why" into `documentation/` next to the related feature. Future sessions should be able to tell *why* something is built the way it is without re-deriving it from the diff.
+- Only ever run one local dev server per side (one `uvicorn`/backend process, one `next dev`/frontend process) at a time. Before starting a server, check whether one is already running (e.g. `ps aux | grep -E "uvicorn|next dev"` or the listening port) and reuse/restart it instead of spawning a duplicate — stale extra instances cause confusing port conflicts and stale-code symptoms.
+- Give every feature or notable change a sequential number so change order stays legible across sessions (plan files, commits, and `documentation/` notes referencing it). Track the running counter and log in `documentation/CHANGELOG.md` — append an entry (`#N — date — short description`) whenever a feature/change is completed, and reuse that number when naming its plan file (e.g. `plans/improvements/active/plan_<N>_<slug>.md`).
 
 # Design System — ALWAYS consult before writing UI
 

@@ -74,7 +74,7 @@ export default function StarLevelToggle({ value, onChange, label, levelLabels, t
             ))}
           </span>
         </button>
-        <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-50">
+        <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity z-50">
           {'★'.repeat(value)} — {levelLabels[value - 1]}
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
         </div>

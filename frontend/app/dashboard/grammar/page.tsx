@@ -80,11 +80,19 @@ function SubcategoryGroup({
 
   return (
     <div>
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen((v) => !v);
+          }
+        }}
         aria-expanded={open}
         data-testid="subcategory-toggle"
-        className={`w-full flex items-center justify-between px-6 py-4 bg-white hover:bg-[#fafbfa] transition-colors text-left relative border-l-[3px] ${
+        className={`w-full flex items-center justify-between px-6 py-4 bg-white hover:bg-[#fafbfa] transition-colors text-left relative border-l-[3px] flex-wrap gap-y-1 ${
           complete ? 'border-l-emerald-600' : 'border-l-transparent'
         }`}
       >
@@ -106,8 +114,8 @@ function SubcategoryGroup({
             );
           })()}
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`text-[13.5px] ${complete ? 'text-emerald-600' : 'text-faint'}`}>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`text-[13.5px] whitespace-nowrap ${complete ? 'text-emerald-600' : 'text-faint'}`}>
             {passedCount > 0 ? `${passedCount}/${total}` : total}{' '}
             {plural(total, tr.grammar.levelsCount)}
             <span
@@ -118,7 +126,7 @@ function SubcategoryGroup({
             </span>
           </span>
         </div>
-      </button>
+      </div>
       {open && (
         <div className="px-5 py-4 bg-white">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -383,8 +391,16 @@ export default function GrammarPage() {
                       className="border border-line rounded-[14px] overflow-hidden bg-white"
                       data-testid={`category-${catKey}`}
                     >
-                      <button
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => toggleCategory(catKey)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            toggleCategory(catKey);
+                          }
+                        }}
                         aria-expanded={isOpen}
                         data-testid={`category-toggle-${catKey}`}
                         className="w-full flex items-center justify-between px-6 py-[18px] bg-white cursor-pointer transition-colors text-left border-b border-line-strong"
@@ -392,7 +408,7 @@ export default function GrammarPage() {
                         <div className="flex items-baseline gap-2.5">
                           <span role="heading" aria-level={2} className="font-bold text-base text-gray-900">{(lang === 'en' && program.title_en) ? program.title_en : program.title}</span>
                           {loading ? null : (
-                            <span className="text-faint text-[13px]">{programLessons.length} {plural(programLessons.length, tr.grammar.lessonsCount)}</span>
+                            <span className="text-faint text-[13px] whitespace-nowrap">{programLessons.length} {plural(programLessons.length, tr.grammar.lessonsCount)}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
@@ -411,7 +427,7 @@ export default function GrammarPage() {
                             <path d="M6 8L1 3h10L6 8z" />
                           </svg>
                         </div>
-                      </button>
+                      </div>
 
                       {isOpen && (
                         <div className="divide-y divide-line border-t border-line">

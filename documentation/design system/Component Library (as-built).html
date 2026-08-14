@@ -107,6 +107,18 @@
         <code>/dashboard/admin/**</code> shows exactly one, and his emotion tracks the session mood. The two
         <code>bare</code> icon call sites (bug-report FAB, landing streak ring) and the navbar's <code>TakMark</code>
         logo icon are the only exemptions.</li>
+      <li><b>Icon-only buttons get a 44×44px minimum tap area.</b> The visible glyph can stay small (e.g. the 14px
+        delete/chevron SVGs in list/accordion rows) but the button itself needs <code>min-w-11 min-h-11 flex
+        items-center justify-center</code> around it, not just padding — a 14px icon with <code>p-1</code> measures
+        22×22px, half the Apple HIG / WCAG 2.5.5 minimum, confirmed via <code>getBoundingClientRect()</code> on a
+        375px viewport. Applies wherever a bare icon is the whole button, not to text/pill buttons.</li>
+      <li><b>Accordion/expandable group headers use a <code>&lt;div role="button" tabIndex={0}&gt;</code>, never a
+        real <code>&lt;button&gt;</code>, whenever they contain another interactive control</b> (e.g. a nested
+        delete/unenroll icon button). A <code>&lt;button&gt;</code> cannot legally contain another
+        <code>&lt;button&gt;</code>/<code>&lt;a&gt;</code> — React logs a hydration warning for it, and the nested
+        controls create an ambiguous tap target on touch. Keep the existing <code>onClick</code> +
+        <code>aria-expanded</code>, add <code>onKeyDown</code> handling Enter/Space for keyboard parity. See
+        <code>lists/page.tsx</code>, <code>phrases/page.tsx</code>, <code>grammar/page.tsx</code> group headers.</li>
     </ol>
   </div>
 
@@ -492,6 +504,15 @@
       square — corrected after review). One per page, rendered only once real data justifies it — see PageShell below
       for what each page shows instead while loading or empty.
     </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>Stacks below <code>sm</code>.</b> The demo below shows the desktop row layout (mascot beside the stats,
+      <code>nextMilestone</code> pinned right) — below <code>sm</code> it switches to <code>flex-col</code> (mascot
+      above the stats block) instead, because at 375px the 128px mascot left only ~180px for the count/badge/button
+      row, wrapping button labels mid-word (confirmed on Фразы: "Повторить" / "фразы" split across two lines).
+      <code>nextMilestone</code> becomes an <code>absolute top-4 right-4</code> corner label on mobile (same idiom
+      as the "Done" badges on list/chapter cards) instead of squeezing into the row, reverting to its normal inline
+      position at <code>sm</code> and up.
+    </p>
     <div class="hero-demo">
       <svg class="tak-svg" width="70" height="84" viewBox="0 0 200 240" style="flex-shrink:0;"><g class="float">
         <polygon points="55,70 115,70 148,115 115,160 55,160 88,115" fill="#ec3013"/>
@@ -666,6 +687,13 @@
   <div class="card">
     <table>
       <tr><th>Deviation</th><th>Why</th></tr>
+      <tr><td>Статьи' category filter (<code>rounded-full</code> pill track) scrolls horizontally on mobile instead
+        of wrapping</td><td>The shared segmented-pill recipe (<code>bg-[#f2f3f3] rounded-full p-1</code>, also used
+        for nav tabs and the RU/EN switch) assumes one row — wrapping the 4 category pills to 2 rows on a 375px
+        viewport turned the <code>rounded-full</code> container into a tall, oddly-rounded stadium shape (confirmed
+        via screenshot). Dropped <code>flex-wrap</code> for <code>overflow-x-auto</code> +
+        <code>.no-scrollbar</code> (globals.css) instead, keeping the pill shape intact everywhere it's used rather
+        than introducing a wrap-only variant of the recipe.</td></tr>
       <tr><td>Mobile hamburger menu kept</td><td>The original mockups had no hamburger, but they were only ever drawn at desktop width — their silence isn't a decision about mobile.</td></tr>
       <tr><td>Hamburger breakpoint moved from Tailwind's <code>sm</code> (640px) to <code>1000px</code></td><td>
         <code>Header.tsx</code> switched between the hamburger and the full tab strip at 640px, but from

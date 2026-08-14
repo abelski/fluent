@@ -310,7 +310,7 @@ export default function ListsPage() {
                       {mt.createList}
                     </button>
                   )}
-                  <button onClick={() => setOpenMyLists((o) => !o)} aria-label="toggle" className="p-1 cursor-pointer">
+                  <button onClick={() => setOpenMyLists((o) => !o)} aria-label="toggle" className="min-w-11 min-h-11 flex items-center justify-center cursor-pointer">
                     <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor" className={`text-gray-400 transition-transform duration-200 ${openMyLists ? 'rotate-180' : ''}`}>
                       <path d="M6 8L1 3h10L6 8z" />
                     </svg>
@@ -368,7 +368,7 @@ export default function ListsPage() {
                               <button
                                 onClick={() => setConfirmDeleteWordList(lst.id)}
                                 title={mt.deleteList}
-                                className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded shrink-0"
+                                className="min-w-11 min-h-11 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors rounded shrink-0"
                               >
                                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
@@ -470,12 +470,24 @@ export default function ListsPage() {
                 const meta = subcategoryMeta[group.key];
                 return (
                   <div key={group.key} className="bg-white border border-line rounded-[14px] overflow-hidden">
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setOpenSubcategories((prev) => {
                         const next = new Set(prev);
                         next.has(group.key) ? next.delete(group.key) : next.add(group.key);
                         return next;
                       })}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setOpenSubcategories((prev) => {
+                            const next = new Set(prev);
+                            next.has(group.key) ? next.delete(group.key) : next.add(group.key);
+                            return next;
+                          });
+                        }
+                      }}
                       aria-expanded={isOpen}
                       className="w-full flex items-center justify-between px-6 py-[18px] hover:bg-gray-50 transition-colors text-left cursor-pointer"
                     >
@@ -529,7 +541,7 @@ export default function ListsPage() {
                           onClick={(e) => { e.stopPropagation(); if (!removingKeys.has(group.key)) setConfirmKey(group.key); }}
                           disabled={removingKeys.has(group.key)}
                           title={tr.programs.removeBtn}
-                          className={`text-gray-300 hover:text-red-500 transition-colors p-1 rounded ${removingKeys.has(group.key) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                          className={`min-w-11 min-h-11 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors rounded ${removingKeys.has(group.key) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
@@ -542,7 +554,7 @@ export default function ListsPage() {
                           <path d="M6 8L1 3h10L6 8z" />
                         </svg>
                       </div>
-                    </button>
+                    </div>
 
                     {isOpen && (
                       <div className="px-5 py-4 border-t border-gray-100">
@@ -639,18 +651,30 @@ export default function ListsPage() {
               const isOpen = openCustomPrograms.has(enrollment.id);
               return (
                 <div key={`custom-${enrollment.id}`} className="bg-white border border-line rounded-[14px] overflow-hidden">
-                  <button
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setOpenCustomPrograms((prev) => {
                       const next = new Set(prev);
                       next.has(enrollment.id) ? next.delete(enrollment.id) : next.add(enrollment.id);
                       return next;
                     })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setOpenCustomPrograms((prev) => {
+                          const next = new Set(prev);
+                          next.has(enrollment.id) ? next.delete(enrollment.id) : next.add(enrollment.id);
+                          return next;
+                        });
+                      }
+                    }}
                     aria-expanded={isOpen}
                     className="w-full flex items-center justify-between px-6 py-[18px] hover:bg-gray-50 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-3 flex-wrap">
                       <span role="heading" aria-level={2} className="font-semibold text-gray-900">{enrollment.title}</span>
-                      <span className="text-gray-400 text-sm">{programLists.length} {plural(programLists.length, tr.lists.listsCount)}</span>
+                      <span className="text-gray-400 text-sm whitespace-nowrap">{programLists.length} {plural(programLists.length, tr.lists.listsCount)}</span>
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                         Сообщество
                       </span>
@@ -661,7 +685,7 @@ export default function ListsPage() {
                         onClick={(e) => { e.stopPropagation(); if (!removingCustomIds.has(enrollment.id)) setConfirmCustomId(enrollment.id); }}
                         disabled={removingCustomIds.has(enrollment.id)}
                         title={tr.programs.removeBtn}
-                        className={`text-gray-300 hover:text-red-500 transition-colors p-1 rounded ${removingCustomIds.has(enrollment.id) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                        className={`min-w-11 min-h-11 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors rounded ${removingCustomIds.has(enrollment.id) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
@@ -674,7 +698,7 @@ export default function ListsPage() {
                         <path d="M6 8L1 3h10L6 8z" />
                       </svg>
                     </div>
-                  </button>
+                  </div>
 
                   {isOpen && (
                     <div className="px-5 py-4 border-t border-gray-100">

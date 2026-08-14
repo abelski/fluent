@@ -62,7 +62,7 @@ export default function ProgressStatCard({
 
   return (
     <div
-      className="rounded-[14px] bg-white border border-line px-4 py-5 sm:px-[26px] sm:py-[22px] flex items-center gap-4 sm:gap-6"
+      className="relative rounded-[14px] bg-white border border-line px-4 py-5 sm:px-[26px] sm:py-[22px] flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"
       data-testid={testId}
     >
       {icon}
@@ -128,7 +128,7 @@ export default function ProgressStatCard({
       </div>
 
       {nextMilestone && (
-        <div className="text-right shrink-0">
+        <div className="absolute top-4 right-4 text-right sm:static sm:shrink-0">
           <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide">{tr.stats.nextLabel}</p>
           <p className="text-sm font-semibold text-ink">{nextMilestone}</p>
         </div>

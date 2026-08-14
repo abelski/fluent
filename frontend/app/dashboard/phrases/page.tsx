@@ -330,7 +330,7 @@ export default function PhrasesPage() {
                     {t.createList}
                   </button>
                 )}
-                <button onClick={() => setOpenMyLists((o) => !o)} aria-label="toggle" className="p-1 cursor-pointer">
+                <button onClick={() => setOpenMyLists((o) => !o)} aria-label="toggle" className="min-w-11 min-h-11 flex items-center justify-center cursor-pointer">
                   <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor" className={`text-gray-400 transition-transform duration-200 ${openMyLists ? 'rotate-180' : ''}`}>
                     <path d="M6 8L1 3h10L6 8z" />
                   </svg>
@@ -413,7 +413,7 @@ export default function PhrasesPage() {
                             <button
                               onClick={() => setConfirmDeleteList(lst.id)}
                               title={t.deleteList}
-                              className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded shrink-0"
+                              className="min-w-11 min-h-11 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors rounded shrink-0"
                             >
                               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
@@ -489,8 +489,16 @@ export default function PhrasesPage() {
                   className="bg-white border border-line rounded-[14px] overflow-hidden"
                 >
                   {/* Accordion header */}
-                  <button
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => toggleProgram(program.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleProgram(program.id);
+                      }
+                    }}
                     aria-expanded={isOpen}
                     className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left cursor-pointer"
                   >
@@ -498,7 +506,7 @@ export default function PhrasesPage() {
                       <span className="font-semibold text-gray-900">
                         {lang === 'en' ? (program.title_en || program.title) : program.title}
                       </span>
-                      <span className="text-gray-400 text-sm">{program.phrase_count} {plural(program.phrase_count, t.phrasesPlural)}</span>
+                      <span className="text-gray-400 text-sm whitespace-nowrap">{program.phrase_count} {plural(program.phrase_count, t.phrasesPlural)}</span>
                       {listDifficultyLabels[program.difficulty] && (
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${DIFFICULTY_BADGE[program.difficulty]}`}>
                           {listDifficultyLabels[program.difficulty]}
@@ -510,7 +518,7 @@ export default function PhrasesPage() {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setConfirmUnenroll(program.id); }}
                         title={t.removeProgram}
-                        className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded cursor-pointer"
+                        className="min-w-11 min-h-11 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors rounded cursor-pointer"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
@@ -523,7 +531,7 @@ export default function PhrasesPage() {
                         <path d="M6 8L1 3h10L6 8z" />
                       </svg>
                     </div>
-                  </button>
+                  </div>
 
                   {/* Chapter grid */}
                   {isOpen && (

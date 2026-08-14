@@ -75,12 +75,12 @@ function ArticlesListInner({ initialArticles }: { initialArticles: ArticleSummar
           <PageMascot phrase="Paskaitykime!" className="hidden sm:block shrink-0" />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1 bg-[#f2f3f3] rounded-full p-1 mb-5 w-fit">
+        <div className="flex items-center gap-1 bg-[#f2f3f3] rounded-full p-1 mb-5 w-fit max-w-full overflow-x-auto no-scrollbar">
           {CATEGORIES.map((category) => (
             <button
               key={category}
               onClick={() => handleCategoryClick(category)}
-              className={`px-4 py-2 text-sm rounded-full transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-4 py-2 text-sm rounded-full transition-colors ${
                 activeCategory === category
                   ? 'bg-white font-semibold text-ink shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
                   : 'text-muted hover:text-ink'

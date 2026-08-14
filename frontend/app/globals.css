@@ -43,6 +43,17 @@ a:hover {
   background: #fafbfa;
 }
 
+/* Hides the scrollbar on horizontally-scrollable chip/pill strips (e.g. the
+   articles category filter on mobile) while keeping the element scrollable. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .font-sans {
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
