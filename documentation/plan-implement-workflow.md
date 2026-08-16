@@ -178,3 +178,15 @@ every later retry or resume reads those fields and never re-asks.
   `status` (draft/approved/in_progress/blocked/done, owned by this workflow) is unrelated to the
   production DB row's `status` (open/onhold/resolved, owned by `/triage` Step 7's cleanup pass).
   A plan can be frontmatter-`blocked` while its DB issue is still `open`.
+- **`backend/.env` ships with `DEV=true`**, which makes `backend/main.py`'s catch-all route
+  (`serve_frontend`) 307-redirect every full-page request to `FRONTEND_URL` (`localhost:3000`,
+  the `next dev` server) instead of serving the built static export from `frontend/out/`. That's
+  the right mode for interactive local dev, but it silently breaks the "Definition of Done"
+  Playwright gate: `fix-issue-from-triage` Step 3 explicitly requires the *static export*, not
+  DEV mode, and a plain `uvicorn main:app --port 8000` inherits `DEV=true` from `.env` and fails
+  ~15 unrelated tests that assert `toHaveURL(/localhost:8000.../)` after an auth redirect. Start
+  the backend with `DEV=false .venv/bin/python -m uvicorn main:app --port 8000` for any
+  Definition-of-Done / smoke-test run, and rebuild the export first (`cd frontend && npm run
+  build`) if source has changed since `frontend/out/` was last generated — first discovered while
+  validating issue #155 (2026-08-16), whose full-suite run went from 15 failing (DEV mode +
+  stale export) to 7 failing (all pre-existing, unrelated to that issue) once both were fixed.
