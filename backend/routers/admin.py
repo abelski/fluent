@@ -14,7 +14,7 @@ from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, Wor
 from sqlalchemy import text, delete as sa_delete, update as sa_update
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
-from grammar_service import get_lessons as _get_grammar_lessons
+from grammar_service import get_lessons as _get_grammar_lessons, _sentence_invariant_holds
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
 import email_service
 import telegram_service
@@ -1084,6 +1084,14 @@ def create_grammar_sentence(
         raise HTTPException(status_code=400, detail="full_word is required")
     if not body.russian.strip():
         raise HTTPException(status_code=400, detail="russian is required")
+    if not _sentence_invariant_holds(body.display, body.answer_ending.strip(), body.full_word.strip()):
+        # issue #156 — the grader checks answer_ending but the UI shows full_word; if they
+        # disagree, a correct answer gets marked wrong (or vice versa).
+        raise HTTPException(
+            status_code=400,
+            detail="full_word must match the sentence's blank stem + answer_ending "
+                   "(e.g. 'dukt___' + 'erimi' must build 'dukterimi')",
+        )
     sentence = GrammarSentence(
         case_index=body.case_index,
         display=body.display.strip(),
@@ -1127,6 +1135,14 @@ def update_grammar_sentence(
         raise HTTPException(status_code=400, detail="full_word is required")
     if not body.russian.strip():
         raise HTTPException(status_code=400, detail="russian is required")
+    if not _sentence_invariant_holds(body.display, body.answer_ending.strip(), body.full_word.strip()):
+        # issue #156 — the grader checks answer_ending but the UI shows full_word; if they
+        # disagree, a correct answer gets marked wrong (or vice versa).
+        raise HTTPException(
+            status_code=400,
+            detail="full_word must match the sentence's blank stem + answer_ending "
+                   "(e.g. 'dukt___' + 'erimi' must build 'dukterimi')",
+        )
     sentence = session.get(GrammarSentence, sentence_id)
     if not sentence:
         raise HTTPException(status_code=404, detail="Sentence not found")

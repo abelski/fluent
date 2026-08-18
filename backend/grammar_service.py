@@ -116,6 +116,28 @@ def _extract_stem(display: str) -> str:
     return match.group(1) if match else ''
 
 
+# ── Sentence-row invariant guard (issue #156) ─────────────────────────────────
+# The grader checks the student's input against `answer_ending`, but the UI shows
+# `full_word` as the "correct answer" — those two columns are edited independently
+# by admins, so nothing stops them drifting apart (a typo in either one produces
+# "I typed what you say is correct and you marked it wrong"). The invariant is
+# `stem(display) + answer_ending == full_word`, case-insensitively.
+#
+# `stem(display)` only ever captures the single word immediately before `___`
+# (see `_extract_stem`), but some rows (cases 17-19, ordinal-number sentences,
+# e.g. "dvidešimt pirm___" -> "dvidešimt pirmu") legitimately store a longer,
+# non-inflecting numeral prefix in `full_word` for a more informative display.
+# So the check allows `full_word` to *equal* `stem+answer_ending`, or to end with
+# it as a whole extra word (a leading " " + stem+answer_ending) — never a bare
+# substring, so it can't accidentally accept a truncated/corrupted stem.
+def _sentence_invariant_holds(display: str, answer_ending: str, full_word: str) -> bool:
+    """True if full_word is consistent with what the grader actually checks."""
+    stem = _extract_stem(display)
+    built = (stem + (answer_ending or '')).lower()
+    full = (full_word or '').lower()
+    return full == built or full.endswith(' ' + built)
+
+
 def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
     """Return metadata for all lessons defined in LESSON_CONFIG.
 
@@ -259,6 +281,12 @@ def _generate_sentence_tasks(cases: list[int], count: int, session: Session, lev
             level_filter,
         )
     ).all()
+
+    rows = [
+        r for r in rows
+        if _sentence_invariant_holds(r.display, r.answer_ending, r.full_word)
+    ]  # issue #156 — never serve a row where the displayed "correct answer" (full_word)
+       # disagrees with what the grader actually checks (answer_ending)
 
     if not rows:
         # Fallback to declension tasks if no sentences in DB for these cases.
