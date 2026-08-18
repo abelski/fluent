@@ -15,6 +15,7 @@ from models import User, Word, WordList, WordListItem, UserWordProgress, DailySt
 from constants import DAILY_LIMIT
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
+from leaderboard_service import build_leaderboard_score_joins, current_week_bounds, LEADERBOARD_SCORE_EXPR
 
 router = APIRouter()
 
@@ -1012,48 +1013,22 @@ def get_leaderboard(
     # Use calendar-week boundaries (ISO: Mon–Sun) so "this week" is unambiguous.
     # A rolling 7-day window can include users who studied 7 days ago and are
     # borderline, making it look like they have points "this week" when they don't.
+    # Deliberately the *current* (in-progress) week, unlike the reward job which
+    # targets the previous completed week — see documentation/reward-vs-leaderboard-week.md.
     is_week = period == "week"
-    word_filter    = "AND DATE_TRUNC('week', uwp.last_seen)  = DATE_TRUNC('week', NOW())" if is_week else ""
-    phrase_filter  = "AND DATE_TRUNC('week', upp.last_seen)  = DATE_TRUNC('week', NOW())" if is_week else ""
-    grammar_filter = "AND DATE_TRUNC('week', glr.created_at) = DATE_TRUNC('week', NOW())" if is_week else ""
-    practice_filter= "AND DATE_TRUNC('week', per.created_at) = DATE_TRUNC('week', NOW())" if is_week else ""
+    bounds = current_week_bounds() if is_week else None
+    joins_sql, params = build_leaderboard_score_joins(bounds)
     rows = session.execute(
         text(f"""
             SELECT u.picture,
-                   COALESCE(w.pts, 0) + COALESCE(p.pts, 0) + COALESCE(g.pts, 0) + COALESCE(x.pts, 0) AS score
+                   {LEADERBOARD_SCORE_EXPR} AS score
             FROM "user" u
-            LEFT JOIN (
-                SELECT uwp.user_id,
-                       SUM(CASE WHEN uwp.status = 'known' THEN 3 ELSE 1 END) AS pts
-                FROM   user_word_progress uwp
-                WHERE  1=1 {word_filter}
-                GROUP  BY uwp.user_id
-            ) w ON w.user_id = u.id
-            LEFT JOIN (
-                SELECT upp.user_id,
-                       SUM(CASE WHEN upp.lesson_stage >= 2 THEN 3 ELSE 1 END) AS pts
-                FROM   user_phrase_progress upp
-                WHERE  upp.lesson_stage > 0 {phrase_filter}
-                GROUP  BY upp.user_id
-            ) p ON p.user_id = u.id
-            LEFT JOIN (
-                SELECT glr.user_id,
-                       COUNT(*) * 5 AS pts
-                FROM   grammar_lesson_result glr
-                WHERE  glr.passed = true {grammar_filter}
-                GROUP  BY glr.user_id
-            ) g ON g.user_id = u.id
-            LEFT JOIN (
-                SELECT per.user_id,
-                       COUNT(*) * 5 AS pts
-                FROM   practice_exam_result per
-                WHERE  1=1 {practice_filter}
-                GROUP  BY per.user_id
-            ) x ON x.user_id = u.id
-            WHERE  COALESCE(w.pts, 0) + COALESCE(p.pts, 0) + COALESCE(g.pts, 0) + COALESCE(x.pts, 0) > 0
+            {joins_sql}
+            WHERE  {LEADERBOARD_SCORE_EXPR} > 0
             ORDER  BY score DESC
             LIMIT  10
-        """)
+        """),
+        params,
     ).all()
     return [
         LeaderboardEntry(rank=i + 1, picture=row.picture, score=int(row.score))

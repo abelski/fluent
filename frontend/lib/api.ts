@@ -236,8 +236,15 @@ export interface LeaderboardTop5User {
   score: number;
 }
 
-/** Fetch current week's top 5 leaderboard users with full info. Superadmin-only. */
-export async function getLeaderboardTop5(): Promise<LeaderboardTop5User[]> {
+export interface LeaderboardTop5Response {
+  users: LeaderboardTop5User[];
+  week_start: string;
+  week_end: string;
+}
+
+/** Fetch last week's top 5 leaderboard users (the week rewards are granted for) with full info,
+ * plus the week_start/week_end bounds used. Superadmin-only. */
+export async function getLeaderboardTop5(): Promise<LeaderboardTop5Response> {
   const token = getToken();
   const r = await fetch(`${BACKEND_URL}/api/admin/leaderboard-top5`, {
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -246,7 +253,7 @@ export async function getLeaderboardTop5(): Promise<LeaderboardTop5User[]> {
   return r.json();
 }
 
-/** Generate reward/notice draft messages for this week's top 5. Superadmin-only. */
+/** Generate reward/notice draft messages for last week's top 5. Superadmin-only. */
 export async function generateLeaderboardRewards(): Promise<{ created: number }> {
   const token = getToken();
   const r = await fetch(`${BACKEND_URL}/api/admin/leaderboard-rewards/generate`, {

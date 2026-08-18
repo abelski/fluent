@@ -6,6 +6,15 @@ import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, sendEmailToUser, getAdminMessages, updateAdminMessage, sendAdminMessage, deleteAdminMessage, triggerMessageGeneration, AdminMessage, getMessageTemplates, saveMessageTemplates, EmailTemplates, getLeaderboardTop5, generateLeaderboardRewards, LeaderboardTop5User } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
+/** Format a `[week_start, week_end)` ISO pair (Mon 00:00 .. next Mon 00:00) as "10–16 авг" for admin copy. */
+function formatWeekRange(weekStart: string, weekEnd: string): string {
+  const start = new Date(weekStart);
+  const end = new Date(new Date(weekEnd).getTime() - 24 * 60 * 60 * 1000); // last day of the range, inclusive
+  const startLabel = start.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  const endLabel = end.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  return `${startLabel}–${endLabel}`;
+}
+
 interface UserRow {
   id: string;
   email: string;
@@ -620,6 +629,7 @@ export default function AdminPage() {
   const [messagesSubTab, setMessagesSubTab] = useState<'dismissal' | 'rewards' | 'notices'>('dismissal');
   const [top5Users, setTop5Users] = useState<LeaderboardTop5User[]>([]);
   const [top5Loaded, setTop5Loaded] = useState(false);
+  const [top5WeekRange, setTop5WeekRange] = useState<{ start: string; end: string } | null>(null);
   const [rewardsGenerating, setRewardsGenerating] = useState(false);
   const [rewardsError, setRewardsError] = useState('');
 
@@ -754,7 +764,8 @@ const [practiceQPage, setPracticeQPage] = useState(1);
   async function loadTop5() {
     try {
       const data = await getLeaderboardTop5();
-      setTop5Users(data);
+      setTop5Users(data.users);
+      setTop5WeekRange({ start: data.week_start, end: data.week_end });
       setTop5Loaded(true);
     } catch {
       setRewardsError('Ошибка загрузки рейтинга');
@@ -1649,7 +1660,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               {tr.news.adminTitle}
             </button>
             <button
-              onClick={() => { setContentTab('settings'); if (!cefrLoaded) loadCefrThresholds(); if (!autoSend) loadAutoSend(); }}
+              onClick={() => { setContentTab('settings'); if (!cefrLoaded) loadCefrThresholds(); if (!autoSend) loadAutoSend(); if (!top5Loaded) loadTop5(); }}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'settings' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
               Настройки
@@ -2239,7 +2250,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <p className="text-sm text-gray-500">
-                    Топ-3 пользователя этой недели получают 1 неделю Premium при отправке письма.
+                    Топ-3 пользователя прошлой недели{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} получают 1 неделю Premium при отправке письма.
                   </p>
                   <button
                     onClick={handleGenerateRewards}
@@ -2254,9 +2265,9 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 {/* Current week top 3 */}
                 {top5Loaded && (
                   <div className="flex flex-col gap-2">
-                    <h3 className="font-headline text-sm font-semibold text-gray-900">Рейтинг этой недели — топ-3</h3>
+                    <h3 className="font-headline text-sm font-semibold text-gray-900">Рейтинг прошлой недели{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} — топ-3</h3>
                     {top5Users.filter((u) => u.rank <= 3).length === 0 ? (
-                      <p className="text-gray-400 text-sm">Нет активных пользователей на этой неделе.</p>
+                      <p className="text-gray-400 text-sm">Нет активных пользователей на прошлой неделе.</p>
                     ) : (
                       top5Users.filter((u) => u.rank <= 3).map((u) => (
                         <div key={u.id} className="border border-gray-200 rounded-2xl p-3 flex items-center gap-3 bg-gray-50">
@@ -3594,7 +3605,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
                   {([
                     { key: 'auto_send_inactive_emails' as const, label: 'Письма неактивным пользователям', desc: 'Ежедневно в 09:00 UTC — пользователи без активности 30+ дней' },
-                    { key: 'auto_send_weekly_rewards' as const, label: 'Награды и уведомления лидерборда', desc: 'По понедельникам в 10:00 UTC — топ-3 получают Premium, топ 4–5 получают уведомление' },
+                    { key: 'auto_send_weekly_rewards' as const, label: 'Награды и уведомления лидерборда', desc: `По понедельникам в 10:00 UTC — топ-3 прошлой недели${top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} получают Premium, топ 4–5 получают уведомление` },
                   ] as const).map(({ key, label, desc }) => (
                     <div key={key} className="flex items-center justify-between gap-4 px-4 py-3">
                       <div>

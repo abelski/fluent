@@ -64,4 +64,19 @@ test.describe('Leaderboard', () => {
     await expect(page.getByTestId('leaderboard')).toBeVisible();
     await expect(page.getByTestId('leaderboard-entry')).toHaveCount(0);
   });
+
+  // Guard for issue #157: the reward job's window was moved to the *previous*
+  // completed week, but the user-facing widget must keep promising "this
+  // week" — these are deliberately different requirements (see
+  // documentation/reward-vs-leaderboard-week.md). If someone "fixes" this
+  // widget to also show last week, this test should catch it.
+  test('week toggle still advertises the current (in-progress) week, not last week', async ({ page }) => {
+    await setupAuthPage(page);
+    await page.goto('/');
+    await expect(page.getByTestId('leaderboard')).toBeVisible({ timeout: 5000 });
+    // Default period is 'week' — its subtext is the static "this week" copy
+    // (ru default locale: "очки за эту неделю").
+    await expect(page.getByText('очки за эту неделю')).toBeVisible();
+    await expect(page.getByText(/прошло/i)).toHaveCount(0);
+  });
 });

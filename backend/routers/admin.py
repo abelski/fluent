@@ -361,10 +361,18 @@ def get_leaderboard_top5(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return the top 5 users for the current ISO week with full info. Superadmin-only."""
+    """Return the top 5 users for last week (the week the reward job will grant
+    Premium for) with full info, plus the `week_start`/`week_end` bounds used.
+    Superadmin-only.
+    """
     _require_superadmin(authorization, session)
+    from scheduler import previous_week_bounds
+    from leaderboard_service import build_leaderboard_score_joins, LEADERBOARD_SCORE_EXPR
+
+    week_start, week_end = previous_week_bounds()
+    joins_sql, params = build_leaderboard_score_joins((week_start, week_end))
     rows = session.execute(
-        text("""
+        text(f"""
             SELECT u.id,
                    u.email,
                    u.name,
@@ -372,53 +380,33 @@ def get_leaderboard_top5(
                    u.is_premium,
                    u.premium_until,
                    u.lang,
-                   COALESCE(w.pts, 0) + COALESCE(p.pts, 0) + COALESCE(g.pts, 0) + COALESCE(x.pts, 0) AS score
+                   {LEADERBOARD_SCORE_EXPR} AS score
             FROM "user" u
-            LEFT JOIN (
-                SELECT uwp.user_id, SUM(CASE WHEN uwp.status = 'known' THEN 3 ELSE 1 END) AS pts
-                FROM   user_word_progress uwp
-                WHERE  DATE_TRUNC('week', uwp.last_seen) = DATE_TRUNC('week', NOW())
-                GROUP  BY uwp.user_id
-            ) w ON w.user_id = u.id
-            LEFT JOIN (
-                SELECT upp.user_id, SUM(CASE WHEN upp.lesson_stage >= 2 THEN 3 ELSE 1 END) AS pts
-                FROM   user_phrase_progress upp
-                WHERE  upp.lesson_stage > 0
-                AND    DATE_TRUNC('week', upp.last_seen) = DATE_TRUNC('week', NOW())
-                GROUP  BY upp.user_id
-            ) p ON p.user_id = u.id
-            LEFT JOIN (
-                SELECT glr.user_id, COUNT(*) * 5 AS pts
-                FROM   grammar_lesson_result glr
-                WHERE  glr.passed = true
-                AND    DATE_TRUNC('week', glr.created_at) = DATE_TRUNC('week', NOW())
-                GROUP  BY glr.user_id
-            ) g ON g.user_id = u.id
-            LEFT JOIN (
-                SELECT per.user_id, COUNT(*) * 5 AS pts
-                FROM   practice_exam_result per
-                WHERE  DATE_TRUNC('week', per.created_at) = DATE_TRUNC('week', NOW())
-                GROUP  BY per.user_id
-            ) x ON x.user_id = u.id
-            WHERE  COALESCE(w.pts, 0) + COALESCE(p.pts, 0) + COALESCE(g.pts, 0) + COALESCE(x.pts, 0) > 0
+            {joins_sql}
+            WHERE  {LEADERBOARD_SCORE_EXPR} > 0
             ORDER  BY score DESC
             LIMIT  5
-        """)
+        """),
+        params,
     ).all()
-    return [
-        {
-            "rank": i + 1,
-            "id": row.id,
-            "email": row.email,
-            "name": row.name,
-            "picture": row.picture,
-            "is_premium": row.is_premium,
-            "premium_until": row.premium_until,
-            "lang": row.lang,
-            "score": int(row.score),
-        }
-        for i, row in enumerate(rows)
-    ]
+    return {
+        "users": [
+            {
+                "rank": i + 1,
+                "id": row.id,
+                "email": row.email,
+                "name": row.name,
+                "picture": row.picture,
+                "is_premium": row.is_premium,
+                "premium_until": row.premium_until,
+                "lang": row.lang,
+                "score": int(row.score),
+            }
+            for i, row in enumerate(rows)
+        ],
+        "week_start": week_start,
+        "week_end": week_end,
+    }
 
 
 @router.post("/leaderboard-rewards/generate")
@@ -426,73 +414,21 @@ def generate_leaderboard_rewards(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Generate reward/notice PreparedMessage drafts for this week's top 5. Superadmin-only.
+    """Generate reward/notice PreparedMessage drafts for last week's top 5. Superadmin-only.
 
-    Idempotent: skips users who already have a reward or notice draft for this week.
+    Idempotent: skips users who already have a reward or notice draft for the
+    rewarded week. Delegates to the scheduler's `generate_weekly_reward_messages`
+    so the manual and automatic paths can never drift apart again. As a side
+    effect this also skips users without email consent up front (previously
+    they were included in the draft and only rejected at send time by
+    `send_prepared_message`'s 403 check).
     Returns count of newly created messages.
     """
     _require_superadmin(authorization, session)
-    from email_templates import generate_reward_email, generate_notice_email
+    from scheduler import generate_weekly_reward_messages
 
-    rows = session.execute(
-        text("""
-            SELECT u.id,
-                   u.email,
-                   u.name,
-                   u.lang,
-                   u.email_consent,
-                   SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
-                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) AS score
-            FROM   "user" u
-            JOIN   user_word_progress uwp ON uwp.user_id = u.id
-            WHERE  DATE_TRUNC('week', uwp.last_seen) = DATE_TRUNC('week', NOW())
-            GROUP  BY u.id, u.email, u.name, u.lang, u.email_consent
-            HAVING SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
-                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) > 0
-            ORDER  BY score DESC
-            LIMIT  5
-        """)
-    ).all()
-
-    # Find users who already have a reward/notice draft/sent this week
-    week_start = datetime.now(timezone.utc).replace(
-        hour=0, minute=0, second=0, microsecond=0, tzinfo=None
-    )
-    # Approximate: check messages created in the past 7 days with type reward/notice
-    existing_msgs = session.exec(
-        select(PreparedMessage).where(
-            PreparedMessage.message_type.in_(["reward", "notice"]),
-            PreparedMessage.created_at >= week_start - timedelta(days=6),
-        )
-    ).all()
-    already_generated: set[str] = {m.user_id for m in existing_msgs}
-
-    created = 0
-    for i, row in enumerate(rows):
-        rank = i + 1
-        if row.id in already_generated:
-            continue
-        msg_type = "reward" if rank <= 3 else "notice"
-        lang = row.lang if row.lang in ("ru", "en") else "ru"
-        if msg_type == "reward":
-            subject, body = generate_reward_email(row.name, rank, lang)
-        else:
-            subject, body = generate_notice_email(row.name, rank, lang)
-        msg = PreparedMessage(
-            user_id=row.id,
-            user_email=row.email,
-            user_name=row.name,
-            user_lang=lang,
-            subject=subject,
-            body=body,
-            status="draft",
-            message_type=msg_type,
-        )
-        session.add(msg)
-        created += 1
-
-    session.commit()
-    return {"ok": True, "created": created}
+    new_ids = generate_weekly_reward_messages(session)
+    return {"ok": True, "created": len(new_ids)}
 
 
 # ── Email Templates ──────────────────────────────────────────────────────────

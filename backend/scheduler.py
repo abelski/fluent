@@ -26,6 +26,22 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def previous_week_bounds(now: datetime | None = None) -> tuple[datetime, datetime]:
+    """Return `[Mon 00:00, next Mon 00:00)` (UTC-naive) of the last **fully completed**
+    ISO week relative to `now`.
+
+    Pure function of `now` (defaults to the real current time) so it can be tested
+    without a DB or a running clock. Used to anchor the weekly-reward job so it always
+    scores the 7 days that just ended, never the in-progress week it started in.
+    """
+    if now is None:
+        now = _utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    this_week_start = today_start - timedelta(days=today_start.weekday())
+    prev_week_start = this_week_start - timedelta(days=7)
+    return prev_week_start, this_week_start
+
+
 def _is_auto_send_enabled(session: Session, key: str) -> bool:
     """Return the boolean value of an auto-send toggle setting (default True if not set)."""
     import json as _json
@@ -113,37 +129,38 @@ def generate_inactive_messages() -> None:
             )
 
 
-def _generate_weekly_reward_messages(session: Session) -> list[int]:
-    """Create reward/notice PreparedMessage drafts for this week's top 5.
+def generate_weekly_reward_messages(session: Session) -> list[int]:
+    """Create reward/notice PreparedMessage drafts for the last completed week's top 5.
 
     Returns list of IDs of newly created messages. Skips users who already
-    have a reward/notice message this week or who have not consented to emails.
+    have a reward/notice message for the rewarded week or who have not
+    consented to emails.
     """
+    from leaderboard_service import build_leaderboard_score_joins, LEADERBOARD_SCORE_EXPR
+
+    week_start, week_end = previous_week_bounds()
+    joins_sql, params = build_leaderboard_score_joins((week_start, week_end))
     rows = session.execute(
-        text("""
+        text(f"""
             SELECT u.id,
                    u.email,
                    u.name,
                    u.lang,
                    u.email_consent,
-                   SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
-                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) AS score
+                   {LEADERBOARD_SCORE_EXPR} AS score
             FROM   "user" u
-            JOIN   user_word_progress uwp ON uwp.user_id = u.id
-            WHERE  DATE_TRUNC('week', uwp.last_seen) = DATE_TRUNC('week', NOW())
-            GROUP  BY u.id, u.email, u.name, u.lang, u.email_consent
-            HAVING SUM(CASE WHEN uwp.status = 'known'    THEN 3 ELSE 0 END) +
-                   SUM(CASE WHEN uwp.status = 'learning' THEN 1 ELSE 0 END) > 0
+            {joins_sql}
+            WHERE  {LEADERBOARD_SCORE_EXPR} > 0
             ORDER  BY score DESC
             LIMIT  5
-        """)
+        """),
+        params,
     ).all()
 
-    week_start = _utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     existing_msgs = session.exec(
         select(PreparedMessage).where(
             PreparedMessage.message_type.in_(["reward", "notice"]),
-            PreparedMessage.created_at >= week_start - timedelta(days=6),
+            PreparedMessage.created_at >= week_end,
         )
     ).all()
     already_generated: set[str] = {m.user_id for m in existing_msgs}
@@ -189,7 +206,7 @@ def send_weekly_rewards() -> None:
         if not _is_auto_send_enabled(session, "auto_send_weekly_rewards"):
             logger.info("Scheduler: weekly rewards auto-send is disabled, skipping")
             return
-        new_ids = _generate_weekly_reward_messages(session)
+        new_ids = generate_weekly_reward_messages(session)
         logger.info("Scheduler: generated %d reward/notice drafts", len(new_ids))
 
         if not new_ids:
@@ -241,7 +258,10 @@ def send_weekly_rewards() -> None:
 def start_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone="UTC")
     scheduler.add_job(generate_inactive_messages, "cron", hour=9, minute=0)
-    scheduler.add_job(send_weekly_rewards, "cron", day_of_week="mon", hour=10, minute=0)
+    scheduler.add_job(
+        send_weekly_rewards, "cron", day_of_week="mon", hour=10, minute=0,
+        misfire_grace_time=3600, coalesce=True,
+    )
     scheduler.start()
     logger.info(
         "Scheduler started — inactive-user job daily 09:00 UTC, "
