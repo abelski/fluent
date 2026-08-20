@@ -34,6 +34,21 @@ With `DEV` set, `http://localhost:8000/` answers `307` and redirects to `http://
   `http://localhost:8000/api/...`.
 - Verifying the real static export (what production serves) requires unsetting `DEV` and rebuilding.
 
+## `PW_BASE_URL=http://127.0.0.1:8000` breaks specs that fetch the live API
+
+`frontend/playwright.config.ts` offers `PW_BASE_URL` to pin the address family, and it is the right
+tool for that job — but it is the wrong reflex for a connection error, and it breaks a whole class
+of tests. Specs like `issue-156-*` and `issue-158-*` load a page and then `fetch()` the real API
+with an **absolute** `http://localhost:8000/...` URL. Setting `PW_BASE_URL=http://127.0.0.1:8000`
+makes the page origin `127.0.0.1:8000` while the fetch still targets `localhost:8000` — a different
+origin. `backend/main.py` builds its CORS allowlist from `{localhost:3000, localhost:8000,
+FRONTEND_URL}`, with **no 127.0.0.1 entry**, so the browser blocks the request and the test fails
+inside `page.evaluate` rather than at navigation. Run those specs on the default `baseURL`.
+
+Worth knowing because the two failure modes look alike but have opposite fixes: if `page.goto`
+itself dies with `ERR_CONNECTION_REFUSED` on `/`, that is almost always **DEV mode** redirecting to
+`:3000` (see the section above) — restart uvicorn with `DEV=false`, do not change the base URL.
+
 ## Playwright MCP: "Browser is already in use"
 
 If the MCP browser errors with `Browser is already in use for .../mcp-chrome-for-testing-<hash>`, a

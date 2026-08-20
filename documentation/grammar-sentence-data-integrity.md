@@ -78,3 +78,73 @@ conn = psycopg.connect(db_url)
 Since this touches production data directly, prefer one guarded `UPDATE ... WHERE id = … AND
 <column> = <expected current value>` per row over broad statements, and re-select the row
 afterward to confirm the change landed as intended.
+
+## `grammar_case_rule` is DB-authoritative too (issue #158)
+
+The rule cards shown above each grammar exercise live in the `grammar_case_rule` table, and for
+**cases 1–14 that table is the only source** — exactly like `grammar_sentence`:
+
+- there is no seed file for them; `backend/scripts/seed_numbers_grammar.py` writes `GrammarCaseRule`
+  rows but is scoped to the **numbers program, cases 15–20**, and is run manually;
+- `api/data/grammar/rules.py` (`CASE_RULES`) is **dead code** from the pre-refactor `api/` app — both
+  `render.yaml` and the root `main.py` boot `backend/main.py`, and that copy has no `transform`
+  field at all. Do not edit it and do not treat it as a seed to keep in lockstep;
+- migrations are schema-only.
+
+So a wrong rule card is fixed with a guarded `UPDATE` against production, same as a wrong sentence.
+`GET /api/grammar/lessons` does no caching, so the change is live immediately with no deploy.
+
+### Invariant: every gradeable ending must be derivable from its rule card
+
+The exercise shows a bare stem (`profesor___`) and grades the **stem-relative ending** the learner
+types. The rule cards, however, were originally written in terms of **nominative** endings for
+declensions I–III only (`-as→-u`, `-is/-ys→-iu`, `-ė→-e`). For IV-declension (`sūnus`,
+`profesorius`) and V-declension (`sesuo`, `duktė`, `vanduo`) nouns that is not merely an omission —
+the card *actively mispredicts* the answer: `-is/-ys→-iu` implies `profesoriu` where the graded
+answer is `profesoriumi`, and `-ė→-e` implies `dukte` where it is `dukterimi`. The learner is told
+one thing and marked wrong for doing it.
+
+Hence the invariant:
+
+> Every `answer_ending` reachable in a case's live sentences must be derivable from that case's rule
+> card — i.e. it must appear somewhere in `transform || endings_sg || endings_pl`.
+
+Enforced by `backend/scripts/audit_case_rule_coverage.py` (read-only) and by the live-data half of
+`frontend/tests/issue-158-instrumental-iv-v-declension.spec.ts`.
+
+### Guarded vs. deferred cases
+
+The invariant holds today only for the case that was actually reported. Issue #158 fixed **case 5**
+(Įnagininkas); the sibling audit found the identical I–III-only gap in **cases 2, 3, 4, 6, 7, 8, 9
+and 13**, but rewriting nine cases of user-facing grammar explanations is a far larger editorial
+change than the report asked for, so it was deliberately deferred to a follow-up.
+
+Both the audit script and the spec therefore carry a `GUARDED_CASES` set (`{5}`) and a matching
+`DEFERRED_CASES` set. Uncovered endings in deferred cases are *reported as known debt* but do not
+fail the run — otherwise the guard would be permanently red and would stop catching new
+regressions. **Keep the two lists in sync, and move a case from deferred to guarded in the same
+change that fixes its rule card.** That is the executable half of the follow-up.
+
+Known debt at the time of writing: 10 uncovered endings across the 8 deferred cases (`profesoriaus`,
+`aktoriaus`, `dukterį` ×2, `vandenį`, `seserį`, `bažnyčioje`, `bažnyčios`, `pilyse`, `stotyse`,
+`bažnyčiose`).
+
+**Case 7 is a coupled pair, not a lone row.** Sentence 198 (`Ačiū, dukt___!` → `dukte`) is
+linguistically wrong — `words.txt` gives the vocative of *duktė* as `dukterie`. But rule 12 says
+`-ė→-e`, which predicts exactly `dukte`, so card and row currently agree. Fixing the row on its own
+would make the card mispredict the graded answer — i.e. recreate the #158 bug inside case 7. Row 198
+and rule 12 must move together, or not at all.
+
+Two caveats when using the audit:
+
+- **It is a floor, not a ceiling.** The check is a substring test, so very short endings (`-e`,
+  `-au`, `-ui`, `-ių`) match incidentally inside longer words in `transform` and can hide a real
+  gap. Cases 3, 7 and 9 each reported "0 uncovered" while still being wrong by inspection. Ground
+  truth for what an ending *should* be is `backend/data/grammar/words.txt`, not this script.
+- **One allowlisted row**: sentence id 203, `Jonas neša krep___.` → `šį`. Its display truncates the
+  stem *inside* the cluster `krepš`, so the expected answer isn't expressible as an ending mapping
+  at all. That is a separate defect (issue #135 / #52 territory), not a rule-card gap.
+
+A corollary worth remembering: fixing a rule card can *require* fixing sentence rows in the same
+pass. Correcting the instrumental card to say `sesuo→seserimi` while row 126 still graded `seseria`
+would have made the contradiction worse, not better — so both move together.
