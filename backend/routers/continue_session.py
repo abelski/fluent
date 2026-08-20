@@ -52,7 +52,13 @@ from routers.phrases import (
     _due_phrases_for_review,
     _serialize_phrase_batch,
 )
-from routers.words import DEFAULT_NEW_RATIO, _known_due_words, _word_to_dict
+from routers.words import (
+    DEFAULT_NEW_RATIO,
+    SESSION_OVERFETCH,
+    _dedupe_by_translation,
+    _known_due_words,
+    _word_to_dict,
+)
 
 router = APIRouter()
 
@@ -246,18 +252,30 @@ def _split_counts(count: int, ratio: float, new_available: int, review_available
 # ── Phases ───────────────────────────────────────────────────────────────────
 
 def _words_phase(user: User, session: Session, count: int, include_new: bool) -> list[dict]:
-    """Known words due for review, optionally blended with never-seen words."""
+    """Known words due for review, optionally blended with never-seen words.
+
+    Both pools are over-fetched and the *combined* list is de-duplicated on translation
+    before the new/review split is applied — a new word and a due word meaning the same
+    thing would otherwise slip past `_known_due_words`' own per-pool de-duplication and
+    still meet inside one phase.
+    """
     if count <= 0:
         return []
-    review = _known_due_words(user, session, count)
     if not include_new:
-        return review
+        return _known_due_words(user, session, count)
 
-    new_pool = _new_words_pool(user, session, limit=count)
+    review = _known_due_words(user, session, count * SESSION_OVERFETCH)
+    new_pool = _new_words_pool(user, session, limit=count * SESSION_OVERFETCH)
+    merged = _dedupe_by_translation(
+        [_word_to_dict(word, "new") for word in new_pool] + review
+    )
+    deduped_new = [w for w in merged if w["status"] == "new"]
+    deduped_review = [w for w in merged if w["status"] != "new"]
+
     ratio = user.new_words_ratio if user.new_words_ratio is not None else DEFAULT_NEW_RATIO
-    take_new, take_review = _split_counts(count, ratio, len(new_pool), len(review))
+    take_new, take_review = _split_counts(count, ratio, len(deduped_new), len(deduped_review))
     # New first, then review — mirrors GET /lists/{id}/study's own ordering.
-    return [_word_to_dict(word, "new") for word in new_pool[:take_new]] + review[:take_review]
+    return deduped_new[:take_new] + deduped_review[:take_review]
 
 
 def _phrases_phase(user: User, session: Session, count: int, include_new: bool) -> list[dict]:

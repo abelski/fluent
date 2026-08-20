@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { assembleTarget } from './helpers/studyFlow';
 
 // Regression test for issue #147 (also covers the UX half of #107): the study
 // session done screen showed "Верно 10 из 10" next to a "6 Ошибок" tile plus a
@@ -116,17 +117,20 @@ async function playThrough(page: Page, wrongFirst: boolean) {
       continue;
     }
 
-    // Stage 2a — assemble the word from shuffled syllable tiles. Both test words
-    // are single-word entries, so this stage is reached after a correct MC
-    // answer. Always assemble correctly (this scenario isn't about 2a mistakes).
+    // Stage 2a — assemble the word from shuffled fragments. Always assemble
+    // correctly (this scenario isn't about 2a mistakes).
+    //
+    // Feature #5: the fragments are no longer always syllables. A word too short to
+    // have two syllables ("šuo" — 'uo' is one diphthong) is offered as LETTERS, and
+    // a multi-word entry as whole words, so this must ask the page how it fragmented
+    // the entry instead of assuming `splitSyllables`.
     const tilePool = page.getByTestId('syllable-tile-pool');
     if (await tilePool.isVisible().catch(() => false)) {
       const prompt = await page.locator('main').innerText();
       const word = WORDS.find((w) => prompt.includes(w.translation_ru));
       if (word) {
-        for (const syl of splitSyllables(word.lithuanian)) {
-          await tilePool.getByRole('button', { name: syl, exact: true, disabled: false }).first().click();
-        }
+        const mode = await tilePool.getAttribute('data-tile-mode');
+        await assembleTarget(page, word.lithuanian, mode === 'word' ? ' ' : '');
         await page.waitForTimeout(1400);
       }
       continue;

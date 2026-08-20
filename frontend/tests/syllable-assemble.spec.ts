@@ -1,133 +1,151 @@
 import { test, expect } from '@playwright/test';
+import {
+  mockStudy, stageOf, stageAfter, waitForAnyStage, answerCorrectly, answerWrong,
+  type MockWord, type Stage,
+} from './helpers/studyFlow';
 
-// Tests for the syllable-assembly stage ('2a') in the vocabulary/words study
-// flow: after a correct MCQ (stage 2) or reverse-MCQ (stage 2r) answer, a
-// single-word entry is assembled from its shuffled syllables before the user
-// is asked to type it from memory (stage 3). Multi-word phrases and
-// slash-separated multi-form entries skip this stage entirely.
+// The assemble stage ('2a') in the vocabulary/words study flow: after a correct
+// SELECT answer, the entry is assembled from shuffled fragments before the learner
+// is asked to type it from memory.
+//
+// REWRITTEN for feature #5. This spec used to assert that "multi-word phrases and
+// slash-separated multi-form entries skip this stage entirely" — that premise is now
+// false. Assembly covers every entry type: whole-word tiles for a phrase, syllables
+// for a normal word, letters for a word too short to have two syllables. The
+// fragment-choice rules themselves are covered by assemble-all-entry-types.spec.ts;
+// what this file still owns is the *interaction* — tiles, the assembled row, and
+// what a wrong assembly costs.
 
-function makeFakeJwt(): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = btoa(JSON.stringify({ email: 'test@test.com', name: 'Test User', exp: 9999999999 }));
-  return `${header}.${payload}.fakesignature`;
-}
-
-async function setFakeToken(page: import('@playwright/test').Page) {
-  await page.addInitScript((token) => {
-    localStorage.setItem('fluent_token', token);
-  }, makeFakeJwt());
-}
-
-const MOCK_SETTINGS = {
-  words_per_session: 10,
-  new_words_ratio: 0.7,
-  lesson_mode: 'thorough',
-  use_question_timer: false,
-  question_timer_seconds: 5,
+const AUTOMOBILIS: MockWord = {
+  id: 1, lithuanian: 'automobilis', accented: null,
+  translation_ru: 'машина', translation_en: 'car', hint: null, status: 'new', mature: false,
+};
+const ORO_UOSTAS: MockWord = {
+  id: 2, lithuanian: 'oro uostas', accented: null,
+  translation_ru: 'аэропорт', translation_en: 'airport', hint: null, status: 'new', mature: false,
+};
+const SLASH_FORM: MockWord = {
+  id: 3, lithuanian: 'airis / airė', accented: null,
+  translation_ru: 'ирландец', translation_en: 'Irish person', hint: null, status: 'new', mature: false,
 };
 
-async function mockRoutes(page: import('@playwright/test').Page, words: object[]) {
-  await page.route('**/api/lists/*/study**', (r) => r.fulfill({ json: { words, distractors: [] } }));
-  await page.route('**/api/me/settings', (r) => r.fulfill({ json: MOCK_SETTINGS }));
-  await page.route('**/api/words/*/progress', (r) => r.fulfill({ json: { ok: true } }));
-}
+const SYLLABLES = ['au', 'to', 'mo', 'bi', 'lis'];
 
-// Drives stage 1 -> stage 2/2r (quality=3, "С трудом") and clicks the correct
-// MC option regardless of which of the two random MC stages appeared.
-async function reachAssembleStage(page: import('@playwright/test').Page, lithuanian: string, translationRu: string) {
+/** Drive «С трудом» → SELECT → the assemble screen. */
+async function reachAssemble(page: import('@playwright/test').Page, word: MockWord) {
+  await mockStudy(page, [word]);
   await page.goto('/dashboard/lists/_/study');
-  await page.getByText('С трудом', { exact: true }).click();
-  const correctOption = page.locator('.grid button', { hasText: new RegExp(`^(${lithuanian}|${translationRu})$`) });
-  await correctOption.waitFor({ timeout: 5000 });
-  await correctOption.click();
+  expect(await stageOf(page)).toBe('card');
+  await answerCorrectly(page, 'card', word);
+  expect(await stageAfter(page, 'card')).toBe('select');
+  await answerCorrectly(page, 'select', word);
+  expect(await stageAfter(page, 'select')).toBe('assemble');
 }
 
-async function clickSyllablesInOrder(page: import('@playwright/test').Page, syllables: string[]) {
+async function clickTiles(page: import('@playwright/test').Page, fragments: string[]) {
   const pool = page.getByTestId('syllable-tile-pool');
-  for (const syl of syllables) {
-    await pool.getByRole('button', { name: syl, exact: true, disabled: false }).first().click();
+  for (const f of fragments) {
+    await pool.getByRole('button', { name: f, exact: true, disabled: false }).first().click();
   }
 }
 
-const AUTOMOBILIS = { id: 1, lithuanian: 'automobilis', translation_ru: 'машина', translation_en: 'car', hint: null, status: 'new' };
-const ORO_UOSTAS = { id: 2, lithuanian: 'oro uostas', translation_ru: 'аэропорт', translation_en: 'airport', hint: null, status: 'new' };
-const SLASH_FORM = { id: 3, lithuanian: 'airis / airė', translation_ru: 'ирландец', translation_en: 'Irish person', hint: null, status: 'new' };
+test.describe('assemble stage (2a) interaction', () => {
+  test('a single-word entry is offered as its syllables', async ({ page }) => {
+    await reachAssemble(page, AUTOMOBILIS);
 
-test.describe('Syllable-assemble stage (2a) in vocabulary study', () => {
-  test.beforeEach(async ({ page }) => {
-    await setFakeToken(page);
-  });
-
-  test('single-word entry: correct MC answer shows the assemble screen with its syllables', async ({ page }) => {
-    await mockRoutes(page, [AUTOMOBILIS]);
-    await reachAssembleStage(page, 'automobilis', 'машина');
-
-    await expect(page.getByText('Соберите слово из слогов')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Соберите слово из слогов')).toBeVisible();
     const tiles = await page.getByTestId('syllable-tile-pool').getByRole('button').allTextContents();
-    expect(tiles.sort()).toEqual(['au', 'bi', 'lis', 'mo', 'to'].sort());
+    expect(tiles.sort()).toEqual([...SYLLABLES].sort());
   });
 
-  test('assembling correctly advances to stage 3 (typing)', async ({ page }) => {
-    await mockRoutes(page, [AUTOMOBILIS]);
-    await reachAssembleStage(page, 'automobilis', 'машина');
-    await expect(page.getByTestId('syllable-tile-pool')).toBeVisible({ timeout: 5000 });
+  test('assembling correctly advances to the typing stage', async ({ page }) => {
+    await reachAssemble(page, AUTOMOBILIS);
 
-    await clickSyllablesInOrder(page, ['au', 'to', 'mo', 'bi', 'lis']);
+    await clickTiles(page, SYLLABLES);
     await expect(page.getByText('Правильно')).toBeVisible();
-    await expect(page.locator('input[type="text"]')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('input[type="text"]')).toBeVisible({ timeout: 5000 });
   });
 
-  test('assembling wrong shows dismiss footer, counts a mistake, retries once, then still reaches typing', async ({ page }) => {
-    await mockRoutes(page, [AUTOMOBILIS]);
-    await reachAssembleStage(page, 'automobilis', 'машина');
-    await expect(page.getByTestId('syllable-tile-pool')).toBeVisible({ timeout: 5000 });
-
-    // Wrong order
-    await clickSyllablesInOrder(page, ['lis', 'au', 'to', 'mo', 'bi']);
-    await expect(page.getByText('Не совсем')).toBeVisible();
-    await expect(page.getByText('automobilis')).toBeVisible();
-    await expect(page.getByText('1 ✗')).toBeVisible();
-
-    await page.getByTestId('dismiss-wrong').click();
-
-    // Retry: assemble screen shown again with a fresh, empty assembled row
-    await expect(page.getByTestId('syllable-tile-pool')).toBeVisible({ timeout: 3000 });
-    await expect(page.getByTestId('assembled-row').getByRole('button')).toHaveCount(0);
-
-    // Fail again -> falls through to stage 3 regardless
-    await clickSyllablesInOrder(page, ['lis', 'au', 'to', 'mo', 'bi']);
-    await expect(page.getByText('Не совсем')).toBeVisible();
-    await page.getByTestId('dismiss-wrong').click();
-    await expect(page.locator('input[type="text"]')).toBeVisible({ timeout: 3000 });
-  });
-
-  test('clicking an assembled syllable returns it to the pool', async ({ page }) => {
-    await mockRoutes(page, [AUTOMOBILIS]);
-    await reachAssembleStage(page, 'automobilis', 'машина');
-    await expect(page.getByTestId('syllable-tile-pool')).toBeVisible({ timeout: 5000 });
+  test('clicking an assembled fragment returns it to the pool', async ({ page }) => {
+    await reachAssemble(page, AUTOMOBILIS);
 
     const pool = page.getByTestId('syllable-tile-pool');
+    const row = page.getByTestId('assembled-row');
     await pool.getByRole('button', { name: 'au', exact: true }).click();
-    await expect(page.getByTestId('assembled-row').getByRole('button', { name: 'au', exact: true })).toBeVisible();
+    await expect(row.getByRole('button', { name: 'au', exact: true })).toBeVisible();
 
-    await page.getByTestId('assembled-row').getByRole('button', { name: 'au', exact: true }).click();
-    await expect(page.getByTestId('assembled-row').getByRole('button')).toHaveCount(0);
+    await row.getByRole('button', { name: 'au', exact: true }).click();
+    await expect(row.getByRole('button')).toHaveCount(0);
     await expect(pool.getByRole('button', { name: 'au', exact: true })).toBeEnabled();
   });
 
-  test('multi-word entry skips the assemble stage entirely', async ({ page }) => {
-    await mockRoutes(page, [ORO_UOSTAS]);
-    await reachAssembleStage(page, 'oro uostas', 'аэропорт');
+  test('a wrong assembly reveals the answer and counts a mistake', async ({ page }) => {
+    await reachAssemble(page, AUTOMOBILIS);
 
-    await expect(page.locator('input[type="text"]')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByTestId('syllable-tile-pool')).toHaveCount(0);
+    await clickTiles(page, ['lis', 'au', 'to', 'mo', 'bi']);
+    await expect(page.getByText('Не совсем')).toBeVisible();
+    await expect(page.getByText('automobilis')).toBeVisible();
+    await expect(page.getByText('1 ✗')).toBeVisible();
+    await expect(page.getByTestId('dismiss-wrong')).toBeVisible();
   });
 
-  test('slash-form (multi-form) entry skips the assemble stage entirely', async ({ page }) => {
-    await mockRoutes(page, [SLASH_FORM]);
-    await reachAssembleStage(page, 'airis / airė', 'ирландец');
+  test('a wrong assembly buys the +2 assemble / +2 type penalty drill', async ({ page }) => {
+    await reachAssemble(page, AUTOMOBILIS);
+    await answerWrong(page, 'assemble', AUTOMOBILIS);
 
-    await expect(page.locator('input[type="text"]')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByTestId('syllable-tile-pool')).toHaveCount(0);
+    // The chain still owed one type card; the penalty adds two of each on top.
+    const seen: Stage[] = [];
+    for (let i = 0; i < 30; i++) {
+      const stage = await waitForAnyStage(page);
+      if (stage === null) break;
+      seen.push(stage);
+      await answerCorrectly(page, stage, AUTOMOBILIS);
+      await page.waitForTimeout(1500);
+    }
+    expect(seen.filter((s) => s === 'assemble').length).toBe(2);
+    expect(seen.filter((s) => s === 'type').length).toBe(3);
+  });
+
+  test('a retry starts from an empty assembled row', async ({ page }) => {
+    await reachAssemble(page, AUTOMOBILIS);
+    await clickTiles(page, ['lis', 'au', 'to', 'mo', 'bi']);
+    await page.getByTestId('dismiss-wrong').click();
+
+    // Whatever comes next, no assemble screen may arrive pre-filled.
+    for (let i = 0; i < 6; i++) {
+      const stage = await waitForAnyStage(page);
+      if (stage === null) break;
+      if (stage === 'assemble') {
+        await expect(page.getByTestId('assembled-row').getByRole('button')).toHaveCount(0);
+        return;
+      }
+      await answerCorrectly(page, stage, AUTOMOBILIS);
+      await page.waitForTimeout(1500);
+    }
+    throw new Error('no assemble screen appeared after the miss');
+  });
+});
+
+test.describe('entry types that used to skip this stage', () => {
+  test('a multi-word entry now assembles, from whole-word tiles', async ({ page }) => {
+    await reachAssemble(page, ORO_UOSTAS);
+
+    await expect(page.getByText('Соберите фразу из слов')).toBeVisible();
+    const tiles = await page.getByTestId('syllable-tile-pool').getByRole('button').allTextContents();
+    expect(tiles.map((t) => t.trim()).sort()).toEqual(['oro', 'uostas']);
+  });
+
+  test('a slash multi-form entry now assembles, one form at a time', async ({ page }) => {
+    await reachAssemble(page, SLASH_FORM);
+
+    const pool = page.getByTestId('syllable-tile-pool');
+    await expect(pool).toBeVisible();
+    const tiles = (await pool.getByRole('button').allTextContents()).map((t) => t.trim());
+    // Exactly one of the two forms is being asked for — never the raw stored string.
+    const joined = tiles.join('');
+    expect(joined).not.toContain('/');
+    const forms = ['airis', 'airė'];
+    const matched = forms.find((f) => joined.split('').sort().join('') === f.split('').sort().join(''));
+    expect(matched, `tiles ${JSON.stringify(tiles)} should spell one of ${forms.join(' / ')}`).toBeTruthy();
   });
 });

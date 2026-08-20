@@ -118,11 +118,13 @@ export interface Translations {
     whatMeans: string;
     selectLithuanian: string;
     assembleWord: string;
+    assemblePhrase: string;   // multi-word entry — whole-word tiles
+    assembleLetters: string;  // one-syllable word — letter tiles
     fillMissing: string;
     howInLithuanian: string;
     typePlaceholder: string;
     typeEmptyHint: string;
-    didntKnow: string;   // SM-2 quality = 1
+    didntKnow: string;   // «Забыл» on the typing stage (routed through the wrong-answer path)
     hard: string;        // SM-2 quality = 3
     easy: string;        // SM-2 quality = 5
     matchTitle: string;

@@ -12,7 +12,7 @@ from sqlmodel import Session, select, col, func
 
 from database import get_session
 from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress, UserCustomPhraseProgress, Article
-from constants import DAILY_LIMIT
+from constants import DAILY_LIMIT, MATURE_WORD_REPS
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
 from leaderboard_service import build_leaderboard_score_joins, current_week_bounds, LEADERBOARD_SCORE_EXPR
@@ -56,6 +56,85 @@ def _apply_sm2(progress: UserWordProgress, quality: int) -> None:
     progress.ease_factor = round(ef, 4)
     progress.interval = interval
     progress.next_review = date.today() + timedelta(days=interval)
+
+
+# ── Maturity (server-side, never re-derived on the client) ───────────────────
+
+def _is_mature(progress: Optional[UserWordProgress]) -> bool:
+    """Whether the user has retained this word well enough to be asked to type it first.
+
+    Mature = status "known" AND at least MATURE_WORD_REPS consecutive successful
+    SM-2 reviews. Anonymous users and words without a progress row are never mature.
+    Decided here rather than in the client so every study surface agrees — see
+    documentation/review-flow-stage-graph.md.
+    """
+    if progress is None:
+        return False
+    return progress.status == "known" and progress.sm2_reps >= MATURE_WORD_REPS
+
+
+# ── Identical-translation de-duplication ─────────────────────────────────────
+#
+# Two distinct Lithuanian lemmas that share one translation ("kalbėti"/"sakyti" →
+# «говорить») are indistinguishable once a session asks the learner to produce the
+# Lithuanian, so they must never land in the same session queue. Endpoints over-fetch
+# by SESSION_OVERFETCH and de-duplicate *before* truncating to the session size, so a
+# dropped twin is backfilled instead of shrinking the session.
+
+SESSION_OVERFETCH = 3
+
+# "Needs the work most" ordering for the tie-break below.
+_STATUS_RANK = {"new": 0, "learning": 1, "known": 2}
+
+
+def _translation_keys(word) -> set[str]:
+    """Collision keys for one word (accepts a serialized dict or a Word row).
+
+    The key is the *displayed* translation — whitespace-collapsed and case-folded —
+    with ru and en kept as separate keys, so a collision in either language counts.
+
+    Parentheses are deliberately NOT stripped: issue #152 added qualifiers
+    («коллега (по работе)» vs «коллега (по профессии)») precisely so those pairs
+    *are* distinguishable, and stripping them would re-break that fix.
+    """
+    keys: set[str] = set()
+    for field in ("translation_ru", "translation_en"):
+        value = word.get(field) if isinstance(word, dict) else getattr(word, field, None)
+        if not value:
+            continue
+        normalized = " ".join(str(value).split()).casefold()
+        if normalized:
+            keys.add(f"{field}:{normalized}")
+    return keys
+
+
+def _dedupe_by_translation(
+    candidates: list[dict],
+    progress_map: Optional[dict[int, UserWordProgress]] = None,
+) -> list[dict]:
+    """Drop every word whose translation already appears earlier in `candidates`.
+
+    Of a colliding group the twin that *needs the work most* is kept — lowest
+    (status_rank, review_count, id) with new < learning < known — so the loser wins a
+    later session instead of being permanently starved by a stable list ordering.
+    The surviving words keep the caller's own ordering (due-first, new-first, …).
+    """
+    progress_map = progress_map or {}
+
+    def need_rank(word: dict) -> tuple[int, int, int]:
+        p = progress_map.get(word.get("id"))
+        status = (p.status if p else word.get("status")) or "new"
+        return (_STATUS_RANK.get(status, 0), p.review_count if p else 0, word.get("id") or 0)
+
+    claimed: set[str] = set()
+    kept: set[int] = set()
+    for i in sorted(range(len(candidates)), key=lambda idx: need_rank(candidates[idx])):
+        keys = _translation_keys(candidates[i])
+        if keys & claimed:
+            continue
+        claimed |= keys
+        kept.add(i)
+    return [w for i, w in enumerate(candidates) if i in kept]
 
 
 def _can_access_list(wl: WordList, user: Optional[User], session: Session) -> bool:
@@ -360,6 +439,11 @@ def get_study_words(
         for w in all_words:
             p = progress_map.get(w["id"])
             w["status"] = p.status if p else "new"
+            w["mature"] = _is_mature(p)
+
+        # Two lemmas sharing one translation must never queue together — done before
+        # the pool is split and truncated, so the survivors simply backfill the session.
+        all_words = _dedupe_by_translation(all_words, progress_map)
 
         new_words = [w for w in all_words if w["status"] == "new"]
         learning_words = [w for w in all_words if w["status"] == "learning"]
@@ -407,7 +491,8 @@ def get_study_words(
             _quota_check_and_increment(user, session)
         for w in all_words:
             w["status"] = "new"
-        session_words = all_words[:DEFAULT_SESSION_SIZE]
+            w["mature"] = False
+        session_words = _dedupe_by_translation(all_words)[:DEFAULT_SESSION_SIZE]
 
     # NB: words that share the same translation_ru (synonyms in one list, e.g.
     # "kolega"/"bendradarbis" → "коллега") are NOT disambiguated by appending the
@@ -600,7 +685,12 @@ def update_progress(
 
 
 
-def _word_to_dict(w: Word, status: str) -> dict:
+def _word_to_dict(w: Word, status: str, progress: Optional[UserWordProgress] = None) -> dict:
+    """Serialize one word for a study/review queue.
+
+    `progress` is the caller's UserWordProgress row when it has one; it is only used to
+    compute the `mature` flag (never-seen words simply pass None → mature false).
+    """
     return {
         "id": w.id,
         "lithuanian": w.lithuanian,
@@ -609,6 +699,7 @@ def _word_to_dict(w: Word, status: str) -> dict:
         "translation_ru": w.translation_ru,
         "hint": w.hint,
         "status": status,
+        "mature": _is_mature(progress),
     }
 
 
@@ -624,6 +715,9 @@ def _known_due_words(user: User, session: Session, limit: int) -> list[dict]:
 
     Shared by GET /review/known and the combined continue-session endpoint, so both
     surfaces serve the exact same pool.
+
+    Over-fetches by SESSION_OVERFETCH and de-duplicates identical translations before
+    truncating, so dropping a twin backfills the session instead of shrinking it.
     """
     today = date.today()
 
@@ -637,10 +731,12 @@ def _known_due_words(user: User, session: Session, limit: int) -> list[dict]:
             Word.archived == False,  # noqa: E712
         )
         .order_by(UserWordProgress.next_review.asc().nulls_first(), UserWordProgress.last_seen)
-        .limit(limit)
+        .limit(limit * SESSION_OVERFETCH)
     ).all()
 
-    return [_word_to_dict(word, progress.status) for progress, word in rows]
+    candidates = [_word_to_dict(word, progress.status, progress) for progress, word in rows]
+    progress_map = {progress.word_id: progress for progress, _ in rows}
+    return _dedupe_by_translation(candidates, progress_map)[:limit]
 
 
 @router.get("/review/known")
@@ -681,7 +777,7 @@ def get_review_known_upcoming(
             UserWordProgress.next_review > today,
         )
         .order_by(UserWordProgress.next_review.asc())
-        .limit(limit_size)
+        .limit(limit_size * SESSION_OVERFETCH)
     ).all()
 
     if not progress_records:
@@ -693,11 +789,13 @@ def get_review_known_upcoming(
     ).all()
     word_map = {w.id: w for w in words}
 
-    return [
-        _word_to_dict(word_map[p.word_id], p.status)
+    candidates = [
+        _word_to_dict(word_map[p.word_id], p.status, p)
         for p in progress_records
         if p.word_id in word_map
     ]
+    progress_map = {p.word_id: p for p in progress_records}
+    return _dedupe_by_translation(candidates, progress_map)[:limit_size]
 
 
 @router.get("/review/known/random")
@@ -720,7 +818,7 @@ def get_review_known_random(
             UserWordProgress.status == "known",
         )
         .order_by(func.random())
-        .limit(limit_size)
+        .limit(limit_size * SESSION_OVERFETCH)
     ).all()
 
     if not progress_records:
@@ -732,11 +830,13 @@ def get_review_known_random(
     ).all()
     word_map = {w.id: w for w in words}
 
-    return [
-        _word_to_dict(word_map[p.word_id], p.status)
+    candidates = [
+        _word_to_dict(word_map[p.word_id], p.status, p)
         for p in progress_records
         if p.word_id in word_map
     ]
+    progress_map = {p.word_id: p for p in progress_records}
+    return _dedupe_by_translation(candidates, progress_map)[:limit_size]
 
 
 @router.get("/review/mistakes")
@@ -759,7 +859,7 @@ def get_review_mistakes(
             UserWordProgress.mistake_count > 0,
         )
         .order_by(col(UserWordProgress.mistake_count).desc())
-        .limit(limit_size)
+        .limit(limit_size * SESSION_OVERFETCH)
     ).all()
 
     if not progress_records:
@@ -771,11 +871,13 @@ def get_review_mistakes(
     ).all()
     word_map = {w.id: w for w in words}
 
-    return [
-        _word_to_dict(word_map[p.word_id], p.status)
+    candidates = [
+        _word_to_dict(word_map[p.word_id], p.status, p)
         for p in progress_records
         if p.word_id in word_map
     ]
+    progress_map = {p.word_id: p for p in progress_records}
+    return _dedupe_by_translation(candidates, progress_map)[:limit_size]
 
 
 @router.get("/me/lists-progress")

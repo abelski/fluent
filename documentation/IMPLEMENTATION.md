@@ -247,6 +247,27 @@ remembering when writing any request-count assertion in this suite: a `[]`-depen
 `frontend/tests/continue-session.spec.ts`, whose mocks derive `sessions_today` from the requests the
 client actually made rather than returning a constant.
 
+## Word session stage graph, tiles and «Забыл» (feature #5)
+
+| Thing | File |
+|---|---|
+| Stage graph, penalty, «Забыл» handler | `frontend/app/dashboard/components/QuizSession.tsx` |
+| Tile builder (word / syllable / letter) | `frontend/lib/assembleTiles.ts` |
+| Interleaved queue insertion | `frontend/lib/scheduleCards.ts` |
+| `mature` flag + session de-duplication | `backend/routers/words.py` (`_is_mature`, `_dedupe_by_translation`) |
+| Maturity threshold | `MATURE_WORD_REPS` in `backend/constants.py` |
+| Prose + rationale | `documentation/review-flow-stage-graph.md` |
+
+- The «Забыл» button on stage 3 uses `data-testid="forgot-btn"` and `tr.study.didntKnow`, and is a
+  quiet text button (`text-[13.5px] text-muted hover:text-ink`, no fill) rather than
+  `PhraseSession`'s filled gray pill — deliberate, see the component library.
+- The `'2a'` tile pool keeps `data-testid="syllable-tile-pool"` (renaming would break existing specs)
+  and adds `data-tile-mode="word|syllable|letter"`.
+- Every insertion into the queue goes through `scheduleCards` **except** the `'3s'` near-miss drill,
+  which keeps its deliberate near-the-front placement via `insertDrillThenSchedule`.
+- `mature` is decided server-side and only rendered by the client — never re-derive it from SM-2
+  fields in the frontend.
+
 ## Conventions worth keeping
 
 - Cards are flat: `border border-line rounded-[14px]`, **no drop shadow**, no accent-colored border.

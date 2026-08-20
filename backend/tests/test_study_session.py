@@ -71,6 +71,11 @@ def test_synonyms_do_not_leak_lithuanian_into_translation(client):
     (e.g. "kolega" and "bendradarbis" both → "коллега"), the study endpoint must
     NOT append the Lithuanian word in parentheses to translation_ru. Doing so
     revealed the answer in the produce-Lithuanian stages ("в задании сразу есть ответ").
+
+    Feature #5 changed the *premise*, not this guard: such twins are now de-duplicated
+    server-side so only one of them reaches the session at all (see
+    test_review_flow.py). Whichever one is served must still carry its translation
+    verbatim — the anti-leak invariant this test exists for is unchanged.
     """
     import database as _db
     from sqlmodel import Session
@@ -89,9 +94,10 @@ def test_synonyms_do_not_leak_lithuanian_into_translation(client):
     assert r.status_code == 200
     words = r.json()["words"]
 
-    by_id = {w["id"]: w for w in words}
-    assert by_id[901]["translation_ru"] == "коллега", by_id[901]["translation_ru"]
-    assert by_id[902]["translation_ru"] == "коллега", by_id[902]["translation_ru"]
+    served = [w for w in words if w["id"] in (901, 902)]
+    assert served, "one of the two synonyms must still be served"
+    for w in served:
+        assert w["translation_ru"] == "коллега", w["translation_ru"]
     # No word's prompt translation may contain the Lithuanian answer in parentheses.
     for w in words:
         assert "(" not in (w.get("translation_ru") or ""), f"translation_ru leaks answer: {w['translation_ru']}"

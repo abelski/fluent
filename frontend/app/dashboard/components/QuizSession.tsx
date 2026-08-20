@@ -9,6 +9,8 @@ import type { Lang } from '../../../lib/useLang';
 import MatchRound from './MatchRound';
 import CharDiff from './CharDiff';
 import { normalizeLt, collapseWs } from '../../../lib/normalizeLt';
+import { buildAssemblyTiles, parseForms, splitSyllables, type AssemblyTiles } from '../../../lib/assembleTiles';
+import { scheduleCards } from '../../../lib/scheduleCards';
 import { renderAccented } from '../../../lib/renderAccented';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
@@ -24,18 +26,30 @@ export interface Word {
   translation_ru: string;
   hint: string | null;
   status?: string;
+  /**
+   * Server-decided: this word is retained well enough to be asked to type it first,
+   * with no answer-revealing flashcard. Never derived on the client — see
+   * `_is_mature` in backend/routers/words.py.
+   */
+  mature?: boolean;
 }
 
 interface StudyCard {
   word: Word;
-  // '2a' = assemble the word from shuffled syllables, inserted between 2/2r and 3
-  // for single-word entries. Distinct from '2r' (reverse MCQ) and '3s' (mistake
-  // syllable gap-fill).
+  // '2a' = assemble the entry from shuffled fragments — whole words, syllables or
+  // letters depending on the entry (lib/assembleTiles.ts). Sits between the select
+  // stage and typing for every entry type. Distinct from '2r' (reverse MCQ) and
+  // '3s' (mistake syllable gap-fill).
   stage: 1 | 2 | '2r' | '2a' | 3 | '3s';
   failCount: number;
+  /** A reminder card inside an already-queued chain: answering it queues nothing new. */
   standalone?: boolean;
   easyChosen?: boolean;
   targetSyllable?: string;
+  /** Opening TYPE card of a mature word — a miss here drops it into the learning flow. */
+  matureStart?: boolean;
+  /** This word already spent its once-per-session +assemble/+type penalty. */
+  penaltyApplied?: boolean;
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong' | 'empty';
@@ -104,17 +118,6 @@ function checkAnswer(typed: string, target: string, complexity: Complexity): boo
   return normTyped === normTarget;
 }
 
-function parseForms(lithuanian: string): string[] {
-  const parts = lithuanian.split(/[,/]/).map((s) => s.trim()).filter(Boolean);
-  return parts.length > 1 ? parts : [lithuanian.trim()];
-}
-
-// Eligible for the syllable-assembly stage: a single word, not a multi-word
-// phrase and not a slash/comma multi-form entry (e.g. gender pairs).
-function isSingleWordEntry(word: Word): boolean {
-  return parseForms(word.lithuanian).length === 1 && !word.lithuanian.includes(' ');
-}
-
 function trans(word: Word, lang: Lang): string {
   return lang === 'en' ? (word.translation_en || word.translation_ru) : word.translation_ru;
 }
@@ -123,9 +126,14 @@ function optionText(word: Word, lang: Lang): string {
   return getDigit(word) ?? trans(word, lang);
 }
 
-function pickDistractors(word: Word, allWords: Word[], distractorPool: Word[]): Word[] {
+function pickDistractors(word: Word, allWords: Word[], distractorPool: Word[], lang: Lang): Word[] {
+  // Filter on translation_ru *and* on the translation actually displayed for this
+  // language: an EN session must not offer two options meaning the same thing just
+  // because their Russian translations happen to differ (feature #5, R6.2).
   const combined = [...allWords, ...distractorPool].filter(
-    (w) => w.id !== word.id && w.translation_ru !== word.translation_ru,
+    (w) => w.id !== word.id
+      && w.translation_ru !== word.translation_ru
+      && trans(w, lang) !== trans(word, lang),
   );
   const seen = new Set<number>();
   const pool = combined.filter((w) => { if (seen.has(w.id)) return false; seen.add(w.id); return true; });
@@ -133,7 +141,7 @@ function pickDistractors(word: Word, allWords: Word[], distractorPool: Word[]): 
 }
 
 function buildOptions(word: Word, allWords: Word[], distractorPool: Word[], lang: Lang) {
-  const distractors = pickDistractors(word, allWords, distractorPool);
+  const distractors = pickDistractors(word, allWords, distractorPool, lang);
   const correctText = optionText(word, lang);
   // Drop distractors whose displayed text collides with another option. Two synonyms
   // (same translation) would otherwise render as identical buttons now that the backend
@@ -149,78 +157,41 @@ function buildOptions(word: Word, allWords: Word[], distractorPool: Word[], lang
   return opts.sort(() => Math.random() - 0.5);
 }
 
-function buildOptions2r(word: Word, allWords: Word[], distractorPool: Word[]) {
-  const distractors = pickDistractors(word, allWords, distractorPool);
+function buildOptions2r(word: Word, allWords: Word[], distractorPool: Word[], lang: Lang) {
+  const distractors = pickDistractors(word, allWords, distractorPool, lang);
   // Drop distractors whose Lithuanian text collides with another option — the same
   // dedup buildOptions does for translations. Duplicate word rows share a lemma but
   // may carry different translations, so pickDistractors' same-translation filter
   // does not catch them and two identical buttons would render, one scored wrong.
+  // Also drop an option that *means* the same as another one: the prompt is a single
+  // translation, so two options sharing it would both be right, only one scored so
+  // (feature #5, R6.2).
   const seen = new Set([normalizeLt(word.lithuanian)]);
+  const seenMeaning = new Set([normalizeLt(trans(word, lang))]);
   const opts = [{ text: word.lithuanian, correct: true }];
   for (const d of distractors) {
     const key = normalizeLt(d.lithuanian);
-    if (seen.has(key)) continue;
+    const meaning = normalizeLt(trans(d, lang));
+    if (seen.has(key) || seenMeaning.has(meaning)) continue;
     seen.add(key);
+    seenMeaning.add(meaning);
     opts.push({ text: d.lithuanian, correct: false });
   }
   return opts.sort(() => Math.random() - 0.5);
 }
 
-function insertRandom(rest: StudyCard[], newCards: StudyCard[]): StudyCard[] {
-  if (rest.length === 0) return newCards;
-  const minPos = Math.min(1, rest.length);
-  const pos = minPos + Math.floor(Math.random() * (rest.length - minPos + 1));
-  return [...rest.slice(0, pos), ...newCards, ...rest.slice(pos)];
-}
-
-// Insert close to front (max 2 cards away) — used for syllable drill so it feels immediate
-function insertNear(rest: StudyCard[], newCards: StudyCard[]): StudyCard[] {
+// The near-miss syllable drill keeps its deliberate near-the-front placement (max 2
+// cards away, so it feels immediate) — the one insertion feature #5 does NOT route
+// through `scheduleCards`. Everything that follows it is scheduled normally, but into
+// the tail *after* the drill so the drill always comes first.
+function insertDrillThenSchedule(rest: StudyCard[], drill: StudyCard, cards: StudyCard[]): StudyCard[] {
   const pos = Math.min(2, rest.length);
-  return [...rest.slice(0, pos), ...newCards, ...rest.slice(pos)];
+  return [...rest.slice(0, pos), drill, ...scheduleCards(rest.slice(pos), cards)];
 }
 
 // ── Syllable helpers ──────────────────────────────────────────────────────────
-
-const LT_DIPHTHONGS = new Set(['ie', 'uo', 'ai', 'ei', 'ui', 'au', 'ia', 'ua']);
-
-function splitSyllables(word: string): string[] {
-  const isVowel = (c: string) => /[aeiouąęėįųūy]/i.test(c);
-  const vowelIdx: number[] = [];
-  for (let i = 0; i < word.length; i++) if (isVowel(word[i])) vowelIdx.push(i);
-  if (vowelIdx.length <= 1) return [word];
-
-  const splits: number[] = [0];
-  let i = 0;
-  while (i < vowelIdx.length - 1) {
-    const v1 = vowelIdx[i];
-    const v2 = vowelIdx[i + 1];
-    const gap = v2 - v1 - 1;
-    if (gap === 0) {
-      const pair = (word[v1] + word[v2]).toLowerCase().replace(/[ąęėįųū]/g, (c) =>
-        ({ ą: 'a', ę: 'e', ė: 'e', į: 'i', ų: 'u', ū: 'u' }[c] ?? c));
-      if (LT_DIPHTHONGS.has(pair)) { i++; continue; }
-      splits.push(v2);
-    } else if (gap === 1) {
-      splits.push(v1 + 1);
-    } else {
-      splits.push(v1 + 1 + Math.floor(gap / 2));
-    }
-    i++;
-  }
-  splits.push(word.length);
-  return splits.slice(0, -1).map((s, idx) => word.slice(s, splits[idx + 1])).filter(Boolean);
-}
-
-// Shuffled syllable tiles for the '2a' assembly stage. Reshuffles up to 10x if
-// the order matches the original (a 1-syllable word just stays as itself).
-function shuffleSyllables(syllables: string[]): string[] {
-  const tiles = syllables.slice();
-  for (let i = 0; i < 10; i++) {
-    tiles.sort(() => Math.random() - 0.5);
-    if (tiles.join('') !== syllables.join('') || tiles.length <= 1) break;
-  }
-  return tiles;
-}
+// splitSyllables / shuffleSyllables / parseForms live in lib/assembleTiles.ts so the
+// quiz and the tile builder share one implementation.
 
 function findMistakeSyllable(typed: string, target: string): string {
   let pos = target.length;
@@ -274,6 +245,11 @@ export default function QuizSession({
   const doneWordIdsRef      = useRef<Set<number>>(new Set());
   const correctWordIdsRef   = useRef<Set<number>>(new Set());
   const initialQualityRef   = useRef<Record<number, number>>({});
+  // Words whose once-per-session "+2 assemble / +2 type" penalty has already fired.
+  const penaltyWordIdsRef   = useRef<Set<number>>(new Set());
+  // Form a multi-form entry was assembled as, so the type card that follows asks for
+  // exactly that form (R4). Set at the '2a' stage, read at stage 3.
+  const formIndexRef        = useRef<Record<number, number>>({});
   const [mistakeWordCount, setMistakeWordCount] = useState(0);
 
   // TAK's mood for this session — neutral at the start, one step per answer.
@@ -287,7 +263,7 @@ export default function QuizSession({
   const [nearMiss, setNearMiss] = useState<string | null>(null);
   const [blankIndex, setBlankIndex] = useState(0);
   const [syllableTyped, setSyllableTyped] = useState('');
-  const [syllableTiles, setSyllableTiles] = useState<string[]>([]);
+  const [assembly, setAssembly] = useState<AssemblyTiles>({ target: '', tiles: [], separator: '', mode: 'syllable' });
   const [assembledSyllables, setAssembledSyllables] = useState<number[]>([]);
   const inputRef         = useRef<HTMLInputElement>(null);
   const syllableInputRef = useRef<HTMLInputElement>(null);
@@ -319,9 +295,16 @@ export default function QuizSession({
     doneWordIdsRef.current      = new Set();
     correctWordIdsRef.current   = new Set();
     initialQualityRef.current   = {};
+    penaltyWordIdsRef.current   = new Set();
+    formIndexRef.current        = {};
     resetMood();
     setMistakeWordCount(0);
-    setQueue(words.map((w) => ({ word: w, stage: 1, failCount: 0 })));
+    // A mature word is asked to type straight away — no answer-revealing flashcard.
+    setQueue(words.map((w) => (
+      w.mature
+        ? { word: w, stage: 3 as const, failCount: 0, matureStart: true }
+        : { word: w, stage: 1 as const, failCount: 0 }
+    )));
     setTotalWords(words.length);
     setWordsDone(0);
     setCorrectWords(0);
@@ -355,15 +338,22 @@ export default function QuizSession({
       setOptions(buildOptions(queue[0].word, words, distractors, lang));
     }
     if (queue.length > 0 && queue[0].stage === '2r') {
-      setOptions(buildOptions2r(queue[0].word, words, distractors));
+      setOptions(buildOptions2r(queue[0].word, words, distractors, lang));
     }
     if (queue.length > 0 && queue[0].stage === '2a') {
-      setSyllableTiles(shuffleSyllables(splitSyllables(queue[0].word.lithuanian)));
+      const w = queue[0].word;
+      const forms = parseForms(w.lithuanian);
+      // Pick the form once per word and remember it, so the type card that follows
+      // asks for the same form the learner just assembled.
+      const idx = formIndexRef.current[w.id] ?? Math.floor(Math.random() * forms.length);
+      formIndexRef.current[w.id] = idx;
+      setAssembly(buildAssemblyTiles(w.lithuanian, idx));
       setAssembledSyllables([]);
     }
     if (queue.length > 0 && queue[0].stage === 3) {
-      const forms = parseForms(queue[0].word.lithuanian);
-      setBlankIndex(Math.floor(Math.random() * forms.length));
+      const w = queue[0].word;
+      const forms = parseForms(w.lithuanian);
+      setBlankIndex(formIndexRef.current[w.id] ?? Math.floor(Math.random() * forms.length));
       setTimeout(() => inputRef.current?.focus(), 50);
     }
     if (queue.length > 0 && queue[0].stage === '3s') {
@@ -449,120 +439,101 @@ export default function QuizSession({
   }, [timeLeft, useTimer, frontCardId, frontCardStage, answerState, sessionMode, saveProgress, blankIndex, recordAnswer]);
 
   // ── Queue helpers ────────────────────────────────────────────────────────────
-  function buildRetryCards(card: StudyCard, syllable?: string): StudyCard[] {
-    // "Легко" + stage-3 fail: demote to С трудом path (MC → reverse MC → type once more)
-    if (card.stage === 3 && card.easyChosen) {
-      const mcStage: 2 | '2r' = Math.random() < 0.5 ? 2 : '2r';
-      const otherMc: 2 | '2r' = mcStage === 2 ? '2r' : 2;
-      return [
-        { word: card.word, stage: mcStage, failCount: 0, standalone: true },
-        { word: card.word, stage: otherMc, failCount: 0, standalone: true },
-        { word: card.word, stage: 3,       failCount: card.failCount + 1 },
-      ];
+  //
+  // The stage graph (feature #5 — documentation/review-flow-stage-graph.md):
+  //
+  //   mature word     → TYPE ──miss/«Забыл»──→ learning chain
+  //   non-mature word → CARD ─«Легко»→ TYPE ──miss──→ difficult chain
+  //                          └«С трудом»────────────→ difficult chain
+  //   difficult chain = SELECT → ASSEMBLE → TYPE
+  //   learning chain  = CARD → SELECT → ASSEMBLE → TYPE
+  //   a miss anywhere in a chain → once per word: +2 ASSEMBLE +2 TYPE (+1/+1 quick)
+  //
+  // Chains are queued whole and interleaved by `scheduleCards`, so a correct answer
+  // only retires the current card — the next stage is already further down the queue.
+
+  // SELECT is a coin flip between the two multiple-choice directions; that variation
+  // is itself part of not repeating the same exercise.
+  function selectStage(): 2 | '2r' {
+    return Math.random() < 0.5 ? 2 : '2r';
+  }
+
+  function buildDifficultChain(word: Word, penaltyApplied?: boolean): StudyCard[] {
+    return [
+      { word, stage: selectStage(), failCount: 0, penaltyApplied },
+      { word, stage: '2a', failCount: 0, penaltyApplied },
+      { word, stage: 3, failCount: 0, penaltyApplied },
+    ];
+  }
+
+  // The full flow, opened by a reminder flashcard. Used by the «Забыл» button and by a
+  // mature word's first miss — the single constructor that replaces the old dead
+  // handleStage1Quality(1) branch. The flashcard is `standalone`: the rest of the
+  // chain is already queued, so answering it must not queue anything new.
+  function buildLearningChain(word: Word, penaltyApplied?: boolean): StudyCard[] {
+    return [
+      { word, stage: 1, failCount: 0, standalone: true, penaltyApplied },
+      ...buildDifficultChain(word, penaltyApplied),
+    ];
+  }
+
+  // Cost of the first mistake anywhere in a chain. Quick mode keeps its lighter
+  // contract with half the drill.
+  function buildPenaltyCards(word: Word): StudyCard[] {
+    const reps = lessonMode === 'quick' ? 1 : 2;
+    const cards: StudyCard[] = [];
+    for (let i = 0; i < reps; i++) cards.push({ word, stage: '2a', failCount: 0, penaltyApplied: true });
+    for (let i = 0; i < reps; i++) cards.push({ word, stage: 3, failCount: 0, penaltyApplied: true });
+    return cards;
+  }
+
+  function buildRetryCards(card: StudyCard): StudyCard[] {
+    // A mature word missed the card it opened on → drop it into the full learning flow.
+    if (card.matureStart) return buildLearningChain(card.word, card.penaltyApplied);
+    // «Легко» and then a typing miss → demote to the difficult path.
+    if (card.stage === 3 && card.easyChosen) return buildDifficultChain(card.word, card.penaltyApplied);
+    // First mistake for this word → the once-per-session penalty drill.
+    if (!card.penaltyApplied && !penaltyWordIdsRef.current.has(card.word.id)) {
+      penaltyWordIdsRef.current.add(card.word.id);
+      return buildPenaltyCards(card.word);
     }
-    // Syllable-assemble: one bounded retry regardless of lesson mode, then
-    // unconditionally fall through to stage 3 — never drops the word.
-    if (card.stage === '2a') {
-      if (card.failCount === 0) return [{ word: card.word, stage: '2a', failCount: 1 }];
-      return [{ word: card.word, stage: 3, failCount: 0 }];
-    }
-    if (lessonMode === 'thorough') {
-      if (card.stage === 2 || card.stage === '2r') {
-        return [
-          { word: card.word, stage: card.stage, failCount: card.failCount + 1 },
-          { word: card.word, stage: card.stage, failCount: card.failCount + 1 },
-        ];
-      }
-      if (card.stage === 3) {
-        if (syllable) return [
-          { word: card.word, stage: '3s', failCount: 0, targetSyllable: syllable },
-          { word: card.word, stage: 3, failCount: card.failCount + 1 },
-        ];
-        return [
-          { word: card.word, stage: 3, failCount: card.failCount + 1 },
-          { word: card.word, stage: 3, failCount: card.failCount + 1 },
-        ];
-      }
-      return [];
-    }
-    if (card.stage === 2) {
-      if (card.failCount === 0) return [{ word: card.word, stage: 2, failCount: 1 }];
-      if (card.failCount === 1) return [
-        { word: card.word, stage: 1, failCount: 0, standalone: true },
-        { word: card.word, stage: 2, failCount: 2 },
-      ];
-      return [];
-    }
-    if (card.stage === '2r') {
-      if (card.failCount === 0) return [{ word: card.word, stage: '2r', failCount: 1 }];
-      if (card.failCount === 1) return [
-        { word: card.word, stage: 1, failCount: 0, standalone: true },
-        { word: card.word, stage: '2r', failCount: 2 },
-      ];
-      return [];
-    }
-    if (card.stage === 3) {
-      if (card.failCount === 0) {
-        if (syllable) return [
-          { word: card.word, stage: '3s', failCount: 0, targetSyllable: syllable },
-          { word: card.word, stage: 3, failCount: 1 },
-        ];
-        return [{ word: card.word, stage: 3, failCount: 1 }];
-      }
-      if (card.failCount === 1) return [
-        { word: card.word, stage: 2, failCount: 0, standalone: true },
-        { word: card.word, stage: 3, failCount: 2 },
-      ];
-      return [];
-    }
+    // Later mistakes re-queue only the failed card, bounded so a session terminates.
+    if (card.failCount === 0) return [{ ...card, failCount: 1 }];
     return [];
   }
 
-  function advance(card: StudyCard, correct: boolean, retryCards: StudyCard[] = []) {
+  function advance(correct: boolean, retryCards: StudyCard[] = []) {
     setQueue((prev) => {
       const rest = prev.slice(1);
-      if (correct && card.standalone) return rest;
-      if (correct && (card.stage === 2 || card.stage === '2r')) {
-        const next: StudyCard = isSingleWordEntry(card.word)
-          ? { word: card.word, stage: '2a', failCount: 0 }
-          : { word: card.word, stage: 3, failCount: 0 };
-        return insertRandom(rest, [next]);
-      }
-      if (correct && card.stage === '2a') {
-        return insertRandom(rest, [{ word: card.word, stage: 3, failCount: 0 }]);
-      }
-      if (retryCards.length > 0) return insertRandom(rest, retryCards);
+      if (correct) return rest;
+      if (retryCards.length > 0) return scheduleCards(rest, retryCards);
       return rest;
     });
   }
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
-  function handleStage1Quality(quality: 1 | 3 | 5) {
+  function handleStage1Quality(quality: 3 | 5) {
     if (Date.now() < blockUntilRef.current) return;
     const card = queue[0];
-    initialQualityRef.current[card.word.id] = quality;
     blockUntilRef.current = Date.now() + 200;
 
-    const mcStage: 2 | '2r' = Math.random() < 0.5 ? 2 : '2r';
-    // Stage 1 is self-assessment — no saveProgress, no mistake counter.
-    if (quality === 1) {
-      // Didn't know — re-queue full 3-stage cycle (flashcard → MC → type), no mistake recorded
-      setQueue((prev) => {
-        const rest = prev.slice(1);
-        const s1: StudyCard = { word: card.word, stage: 1, failCount: 0 };
-        const s2: StudyCard = { word: card.word, stage: mcStage, failCount: 0 };
-        const s3: StudyCard = { word: card.word, stage: 3, failCount: 0 };
-        // Insert the triplet together so they stay in order (1→2→3) at a random gap position
-        return insertRandom(rest, [s1, s2, s3]);
-      });
-    } else if (quality === 5) {
-      // Easy — write-only round (easyChosen marks the card so a typing failure demotes to С трудом path)
-      setQueue((prev) => insertRandom(prev.slice(1), [{ word: card.word, stage: 3, failCount: 0, easyChosen: true }]));
-    } else {
-      // Medium — one full round (MC → write)
-      setQueue((prev) => insertRandom(prev.slice(1), [{ word: card.word, stage: mcStage, failCount: 0 }]));
+    // A reminder flashcard inside an already-queued learning chain: the rest of the
+    // flow is in the queue already, so this card only dismisses.
+    if (card.standalone) {
+      setQueue((prev) => prev.slice(1));
+      return;
     }
+
+    initialQualityRef.current[card.word.id] = quality;
+    // Stage 1 is self-assessment — no saveProgress, no mistake counter.
+    const next = quality === 5
+      // Easy — straight to typing. easyChosen marks the card so a typing miss
+      // demotes the word to the difficult path.
+      ? [{ word: card.word, stage: 3 as const, failCount: 0, easyChosen: true }]
+      // Hard — the full difficult path: select → assemble → type.
+      : buildDifficultChain(card.word);
+    setQueue((prev) => scheduleCards(prev.slice(1), next));
   }
 
   function handleStage2Select(index: number) {
@@ -589,7 +560,7 @@ export default function QuizSession({
         setAnswerState('unanswered');
         setSelectedOption(null);
         blockUntilRef.current = Date.now() + 200;
-        advance(card, true);
+        advance(true);
       }, 1200);
     }
   }
@@ -604,7 +575,7 @@ export default function QuizSession({
     setAnswerState('unanswered');
     setSelectedOption(null);
     blockUntilRef.current = Date.now() + 200;
-    advance(card, false, retryCards);
+    advance(false, retryCards);
     if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession(true);
   }
 
@@ -631,7 +602,7 @@ export default function QuizSession({
         setAnswerState('unanswered');
         setSelectedOption(null);
         blockUntilRef.current = Date.now() + 200;
-        advance(card, true);
+        advance(true);
       }, 1200);
     }
   }
@@ -646,7 +617,7 @@ export default function QuizSession({
     setAnswerState('unanswered');
     setSelectedOption(null);
     blockUntilRef.current = Date.now() + 200;
-    advance(card, false, retryCards);
+    advance(false, retryCards);
     if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession(true);
   }
 
@@ -655,10 +626,10 @@ export default function QuizSession({
     const card = queue[0];
     const next = [...assembledSyllables, tileIdx];
     setAssembledSyllables(next);
-    if (next.length !== syllableTiles.length) return;
+    if (next.length !== assembly.tiles.length) return;
 
-    const attempt = next.map((i) => syllableTiles[i]).join('');
-    const isCorrect = normalizeLt(attempt) === normalizeLt(card.word.lithuanian.trim());
+    const attempt = next.map((i) => assembly.tiles[i]).join(assembly.separator);
+    const isCorrect = normalizeLt(attempt) === normalizeLt(assembly.target);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     recordAnswer(isCorrect);
 
@@ -674,7 +645,7 @@ export default function QuizSession({
         setAnswerState('unanswered');
         setAssembledSyllables([]);
         blockUntilRef.current = Date.now() + 200;
-        advance(card, true);
+        advance(true);
       }, 1200);
     }
   }
@@ -689,7 +660,7 @@ export default function QuizSession({
     setAnswerState('unanswered');
     setAssembledSyllables([]);
     blockUntilRef.current = Date.now() + 200;
-    advance(card, false, retryCards);
+    advance(false, retryCards);
     if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession(true);
   }
 
@@ -746,7 +717,7 @@ export default function QuizSession({
         setShownAnswer('');
         setNearMiss(null);
         blockUntilRef.current = Date.now() + 200;
-        advance(card, true);
+        advance(true);
       }, delay);
     } else {
       // Only update backend in study mode on failure
@@ -754,11 +725,31 @@ export default function QuizSession({
     }
   }
 
+  // «Забыл» — reveal the answer through the *existing* wrong-answer path, so the
+  // mistake is counted and the word re-queued exactly as a wrong answer would be.
+  // No new scoring path (issue #144's pattern, mirrored from PhraseSession).
+  function handleStage3Forgot() {
+    if (answerState !== 'unanswered' && answerState !== 'empty') return;
+    const card = queue[0];
+    const forms = parseForms(card.word.lithuanian);
+    const target = forms[blankIndex] ?? forms[0];
+
+    blockUntilRef.current = Date.now() + 300;
+    setShownAnswer(target);
+    setAnswerState('wrong');
+    recordAnswer(false);
+    if (!mistakeWordIdsRef.current.has(card.word.id)) {
+      mistakeWordIdsRef.current.add(card.word.id);
+      setMistakeWordCount((c) => c + 1);
+    }
+    const initQ = initialQualityRef.current[card.word.id] ?? 3;
+    if (sessionMode === 'study') saveProgress(card.word.id, 'learning', true, false, initQ === 5 ? 3 : 2);
+  }
+
   function handleStage3Dismiss() {
     const card = queue[0];
+    const retryCards = buildRetryCards(card);
     const syllable = shownAnswer ? findMistakeSyllable(typedAnswer, shownAnswer) : undefined;
-    const retryCards = buildRetryCards(card, syllable);
-    const hasSyllable = retryCards.length > 0 && retryCards[0].stage === '3s';
     if (!card.standalone && retryCards.length === 0 && !doneWordIdsRef.current.has(card.word.id)) {
       doneWordIdsRef.current.add(card.word.id);
       setWordsDone((c) => c + 1);
@@ -768,12 +759,15 @@ export default function QuizSession({
     setShownAnswer('');
     setNearMiss(null);
     blockUntilRef.current = Date.now() + 200;
-    // Syllable cards go near the front so the drill feels immediate
-    if (hasSyllable) {
-      setQueue((prev) => insertNear(prev.slice(1), retryCards));
-    } else {
-      advance(card, false, retryCards);
-    }
+    setQueue((prev) => {
+      const rest = prev.slice(1);
+      if (!syllable || retryCards.length === 0) return scheduleCards(rest, retryCards);
+      return insertDrillThenSchedule(
+        rest,
+        { word: card.word, stage: '3s', failCount: 0, targetSyllable: syllable, penaltyApplied: card.penaltyApplied },
+        retryCards,
+      );
+    });
     if (lessonMode === 'quick' && mistakeWordIdsRef.current.size / totalWords >= 0.25) finishSession(true);
   }
 
@@ -796,20 +790,18 @@ export default function QuizSession({
         setSyllableTyped('');
         setShownAnswer('');
         blockUntilRef.current = Date.now() + 200;
-        advance(card, true);
+        advance(true);
       }, 1200);
     }
   }
 
   function handleStage3sDismiss() {
     const card = queue[0];
-    setQueue((prev) => {
-      const rest = prev.slice(1);
-      return insertNear(rest, [
-        { word: card.word, stage: '3s' as const, failCount: card.failCount + 1, targetSyllable: card.targetSyllable },
-        { word: card.word, stage: 3 as const, failCount: 0 },
-      ]);
-    });
+    setQueue((prev) => insertDrillThenSchedule(
+      prev.slice(1),
+      { word: card.word, stage: '3s', failCount: card.failCount + 1, targetSyllable: card.targetSyllable, penaltyApplied: card.penaltyApplied },
+      [{ word: card.word, stage: 3, failCount: 0, penaltyApplied: card.penaltyApplied }],
+    ));
     setAnswerState('unanswered');
     setSyllableTyped('');
     setShownAnswer('');
@@ -1085,11 +1077,15 @@ export default function QuizSession({
           </div>
         )}
 
-        {/* ── Stage 2a: Assemble the word from shuffled syllables ── */}
+        {/* ── Stage 2a: Assemble the entry from shuffled tiles (word / syllable / letter) ── */}
         {stage === '2a' && (
           <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-4 sm:pt-6">
             <div className="text-center">
-              <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.assembleWord}</p>
+              <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">
+                {assembly.mode === 'word'
+                  ? tr.study.assemblePhrase
+                  : assembly.mode === 'letter' ? tr.study.assembleLetters : tr.study.assembleWord}
+              </p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
               {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
@@ -1102,13 +1098,13 @@ export default function QuizSession({
                   onClick={() => { if (answerState === 'unanswered') setAssembledSyllables((a) => a.filter((_, j) => j !== pos)); }}
                   className="py-2 px-3 rounded-xl text-sm font-medium bg-emerald-100 border border-gray-900 text-emerald-700"
                 >
-                  {syllableTiles[tileIdx]}
+                  {assembly.tiles[tileIdx]}
                 </button>
               ))}
             </div>
 
-            <div className="w-full flex flex-wrap gap-2 justify-center" data-testid="syllable-tile-pool">
-              {syllableTiles.map((syl, i) => {
+            <div className="w-full flex flex-wrap gap-2 justify-center" data-testid="syllable-tile-pool" data-tile-mode={assembly.mode}>
+              {assembly.tiles.map((syl, i) => {
                 const used = assembledSyllables.includes(i);
                 return (
                   <button
@@ -1135,7 +1131,7 @@ export default function QuizSession({
                 <div className="text-center">
                   <p className="text-red-600 text-sm font-medium">{tr.common.notQuite}</p>
                   <p className="text-gray-500 text-sm mt-1">
-                    {tr.common.correctAnswer} <span className="text-gray-900 font-medium">{word.lithuanian}</span>
+                    {tr.common.correctAnswer} <span className="text-gray-900 font-medium">{assembly.target}</span>
                   </p>
                 </div>
                 <button ref={dismissBtnRef} data-testid="dismiss-wrong" onClick={handleStage2aDismiss} className="w-full py-4 bg-gray-100 hover:bg-gray-100 rounded-xl font-medium transition-colors">
@@ -1185,9 +1181,20 @@ export default function QuizSession({
                 </p>
               )}
               {(answerState === 'unanswered' || answerState === 'empty') && (
-                <button onClick={handleStage3Submit} className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors">
-                  {tr.common.check}
-                </button>
+                <>
+                  <button onClick={handleStage3Submit} className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors">
+                    {tr.common.check}
+                  </button>
+                  {/* Routed through the wrong-answer path — mistake counted, word
+                      re-queued — so there is no second scoring path to keep in sync. */}
+                  <button
+                    onClick={handleStage3Forgot}
+                    data-testid="forgot-btn"
+                    className="w-full py-2 text-[13.5px] text-muted hover:text-ink transition-colors text-center"
+                  >
+                    {tr.study.didntKnow}
+                  </button>
+                </>
               )}
               {answerState === 'correct' && (
                 <div className="flex flex-col gap-2 items-center animate-in fade-in duration-150">

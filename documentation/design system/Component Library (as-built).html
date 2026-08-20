@@ -651,6 +651,47 @@
     </p>
   </div>
 
+  <h2>Word session — «Забыл» control and the three tile variants</h2>
+  <div class="card">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>«Забыл» on the typing card.</b> <code>QuizSession</code>'s stage-3 card carries a quiet
+      secondary button under the dark <code>Проверить</code> primary
+      (<code>data-testid="forgot-btn"</code>, copy <code>tr.study.didntKnow</code>). Spec:
+      <code>w-full py-2 text-[13.5px] text-muted hover:text-ink transition-colors text-center</code> —
+      no fill, no border, no shadow. It reveals the answer by running the <i>existing</i> wrong-answer
+      path (mistake counted, word re-queued), so there is no second scoring path.
+      <br><br>
+      <b>Deliberately quieter than <code>PhraseSession</code>'s own <code>forgot-btn</code></b>, which is
+      a filled gray pill: the phrase card's actions sit in a two-button row, so its "I forgot" needs a
+      fill to read as a third action; the word card has a single full-width dark primary above it, and a
+      second filled button directly under it read as a competing primary. Same behaviour, same
+      <code>data-testid</code>, same copy slot — different weight, because the surrounding button
+      hierarchy differs. Recorded in "Deliberate deviations" below.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      <b>Assembly tiles — three variants, one card.</b> The <code>'2a'</code> "assemble it" card now
+      runs for <i>every</i> entry type, not just single words. <code>lib/assembleTiles.ts</code> picks
+      the fragment size and the card renders the matching prompt; the tile chrome is identical in all
+      three cases (<code>py-2 px-3 rounded-xl text-sm font-medium</code>, white/emerald states), so the
+      variants differ only in what a tile contains and what the prompt says.
+    </p>
+    <table>
+      <tr><th>Variant</th><th>When</th><th>Prompt</th><th><code>data-tile-mode</code></th></tr>
+      <tr><td>Whole-word tiles</td><td>Target contains a space (<code>oro uostas</code>)</td>
+        <td><code>tr.study.assemblePhrase</code></td><td><code>word</code></td></tr>
+      <tr><td>Syllable tiles</td><td>Normal word, 2+ syllables (<code>automobilis</code>)</td>
+        <td><code>tr.study.assembleWord</code></td><td><code>syllable</code></td></tr>
+      <tr><td>Letter tiles</td><td>Fewer than 2 syllables (<code>kas</code>)</td>
+        <td><code>tr.study.assembleLetters</code></td><td><code>letter</code></td></tr>
+    </table>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:16px 0 0;">
+      The pool keeps its original <code>data-testid="syllable-tile-pool"</code> (renaming it would
+      break the specs that already drive it) and gains <code>data-tile-mode</code> so a test can assert
+      which variant rendered. A multi-form entry ("airis / airė") assembles exactly the one form the
+      typing card that follows will ask for.
+    </p>
+  </div>
+
   <h2>Emoji &amp; arrow policy</h2>
   <div class="card">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 12px;">
@@ -753,6 +794,18 @@
         (not centered) to match the row above, since news body text at full width hurts readability. The
         logged-out marketing hero/features sections in the same file (<code>GuestLanding</code>) were left alone —
         that is a distinct marketing surface, not part of this pass.</td></tr>
+      <tr><td>Word session's «Забыл» is a quiet text button, while the phrase session's is a filled
+        gray pill</td><td>Same control, same <code>data-testid="forgot-btn"</code>, same wrong-answer
+        routing — different weight, because the button hierarchy around it differs (see "Word session"
+        above). The word card already has one full-width dark primary; a second filled button under it
+        competed with it.</td></tr>
+      <tr><td>The <code>'3s'</code> syllable drill is the one card NOT placed by
+        <code>scheduleCards</code></td><td>Feature #5 interleaves every insertion so no two cards of one
+        word sit next to each other — except the near-miss syllable drill, which is deliberately
+        inserted at most 2 cards from the front (<code>insertDrillThenSchedule</code> in
+        <code>QuizSession.tsx</code>). The drill only makes sense while the mistake is still fresh, so
+        its adjacency to the word that just failed is the point, not a violation. The retype that
+        follows it does go through the scheduler.</td></tr>
       <tr><td><code>/dashboard/continue</code> (the combined session) does not use <code>PageShell</code></td><td>
         Same reason as the logged-in home above: it is not one of the 5 top-nav pages, and it is a full-screen
         session surface, not a browse page. It follows the conventions already used by

@@ -54,3 +54,23 @@ itself dies with `ERR_CONNECTION_REFUSED` on `/`, that is almost always **DEV mo
 If the MCP browser errors with `Browser is already in use for .../mcp-chrome-for-testing-<hash>`, a
 previous Chrome-for-Testing instance is still holding the profile lock. Clear it with
 `pkill -f "mcp-chrome-for-testing"`, wait a couple of seconds, then navigate again.
+
+## Playwright tests can silently exercise STALE frontend code
+
+`backend/out` is a **symlink to `frontend/out`**, the Next.js static export. When no `next dev`
+server is running on :3000, uvicorn serves that export directly — so `npx playwright test` exercises
+whatever was last built, **not** your working tree.
+
+The dangerous part is the failure mode: tests do not error, they just run against the old UI. A spec
+asserting new behaviour fails with a confusing message (an attribute reading `null`, a stage that
+never appears), and — much worse — a spec asserting *unchanged* behaviour **passes**, giving false
+confidence that a change is safe.
+
+The tell: dump the element you are asserting on (`el.outerHTML`) and look for an attribute you know
+you just added. If it is absent from the DOM but present in the `.tsx` source, you are looking at
+the old export, not a bug in your code.
+
+**Fix:** `cd frontend && npm run build` before running Playwright, whenever frontend source changed.
+`start.sh` already does this (`npm run build` then restart uvicorn); running specs by hand does not.
+The alternative is to start `next dev` on :3000 and let DEV-mode redirect serve live source — but
+only one dev server per side, per CLAUDE.md.

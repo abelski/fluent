@@ -132,6 +132,8 @@ const ru: Translations = {
     whatMeans: 'Что это означает?',
     selectLithuanian: 'Выберите литовское слово',
     assembleWord: 'Соберите слово из слогов',
+    assemblePhrase: 'Соберите фразу из слов',
+    assembleLetters: 'Соберите слово из букв',
     fillMissing: 'Вставьте пропущенную форму',
     howInLithuanian: 'Как будет по-литовски?',
     typePlaceholder: 'Напишите пропущенное слово...',
