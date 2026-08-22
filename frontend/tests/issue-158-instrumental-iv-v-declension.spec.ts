@@ -33,7 +33,7 @@ const BACKEND = 'http://localhost:8000';
 const COVERAGE_ALLOWLIST = [{ display: 'Jonas neša krep___.', answer: 'šį' }];
 
 // Keep in sync with GUARDED_CASES in backend/scripts/audit_case_rule_coverage.py.
-const GUARDED_CASES = [5];
+const GUARDED_CASES = [3, 5, 7];
 
 function makeFakeJwt(): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));

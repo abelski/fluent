@@ -27,8 +27,8 @@ ALLOWLIST = {203: "šį"}  # "Jonas neša krep___." -> šį
 # reported case (5); the same I-III-only gap exists in the cases listed in DEFERRED and is
 # scheduled for a follow-up, so those are reported but do not fail the run. Move a case
 # from DEFERRED to GUARDED in the same change that fixes its rule card.
-GUARDED_CASES = {5}
-DEFERRED_CASES = {2, 3, 4, 6, 7, 8, 9, 13}
+GUARDED_CASES = {3, 5, 7}
+DEFERRED_CASES = {2, 4, 6, 8, 9, 13}
 
 ENV_PATH = os.path.join(os.path.dirname(__file__), "..", ".env")
 

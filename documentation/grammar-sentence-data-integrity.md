@@ -114,33 +114,37 @@ Enforced by `backend/scripts/audit_case_rule_coverage.py` (read-only) and by the
 
 ### Guarded vs. deferred cases
 
-The invariant holds today only for the case that was actually reported. Issue #158 fixed **case 5**
-(Įnagininkas); the sibling audit found the identical I–III-only gap in **cases 2, 3, 4, 6, 7, 8, 9
-and 13**, but rewriting nine cases of user-facing grammar explanations is a far larger editorial
-change than the report asked for, so it was deliberately deferred to a follow-up.
+The invariant holds today for the cases that have actually been reported and fixed. Issue #158
+fixed **case 5** (Įnagininkas); issue #159 fixed **case 3** (Naudininkas/Dative) and **case 7**
+(Šauksmininkas/Vocative). The sibling audit found the identical I–III-only gap in **cases 2, 4, 6,
+8, 9 and 13** too, but rewriting six more cases of user-facing grammar explanations is a far larger
+editorial change than any single report asked for, so those remain deliberately deferred to a
+follow-up.
 
-Both the audit script and the spec therefore carry a `GUARDED_CASES` set (`{5}`) and a matching
-`DEFERRED_CASES` set. Uncovered endings in deferred cases are *reported as known debt* but do not
-fail the run — otherwise the guard would be permanently red and would stop catching new
+Both the audit script and the spec therefore carry a `GUARDED_CASES` set (`{3, 5, 7}`) and a
+matching `DEFERRED_CASES` set. Uncovered endings in deferred cases are *reported as known debt* but
+do not fail the run — otherwise the guard would be permanently red and would stop catching new
 regressions. **Keep the two lists in sync, and move a case from deferred to guarded in the same
 change that fixes its rule card.** That is the executable half of the follow-up.
 
-Known debt at the time of writing: 10 uncovered endings across the 8 deferred cases (`profesoriaus`,
+Known debt at the time of writing: 10 uncovered endings across the 6 deferred cases (`profesoriaus`,
 `aktoriaus`, `dukterį` ×2, `vandenį`, `seserį`, `bažnyčioje`, `bažnyčios`, `pilyse`, `stotyse`,
 `bažnyčiose`).
 
-**Case 7 is a coupled pair, not a lone row.** Sentence 198 (`Ačiū, dukt___!` → `dukte`) is
-linguistically wrong — `words.txt` gives the vocative of *duktė* as `dukterie`. But rule 12 says
-`-ė→-e`, which predicts exactly `dukte`, so card and row currently agree. Fixing the row on its own
-would make the card mispredict the graded answer — i.e. recreate the #158 bug inside case 7. Row 198
-and rule 12 must move together, or not at all.
+**Case 7 was a coupled pair, not a lone row (fixed by issue #159).** Sentence 198 (`Ačiū, dukt___!`
+→ `dukte`) was linguistically wrong — `words.txt` gives the vocative of *duktė* as `dukterie`. Rule
+12 said `-ė→-e`, which predicted exactly `dukte`, so card and row agreed by coincidence. Fixing the
+row alone would have made the card mispredict the graded answer — i.e. recreated the #158 bug
+inside case 7. Row 198 (now `erie`/`dukterie`) and rule 12 (now stating the IV/V mappings, e.g.
+`sūnau`, `profesoriau`, `dukterie`) were moved together in the same change.
 
 Two caveats when using the audit:
 
 - **It is a floor, not a ceiling.** The check is a substring test, so very short endings (`-e`,
   `-au`, `-ui`, `-ių`) match incidentally inside longer words in `transform` and can hide a real
-  gap. Cases 3, 7 and 9 each reported "0 uncovered" while still being wrong by inspection. Ground
-  truth for what an ending *should* be is `backend/data/grammar/words.txt`, not this script.
+  gap. Cases 3 and 7 (fixed by #159) and case 9 (still deferred) each reported "0 uncovered" while
+  still being wrong by inspection. Ground truth for what an ending *should* be is
+  `backend/data/grammar/words.txt`, not this script.
 - **One allowlisted row**: sentence id 203, `Jonas neša krep___.` → `šį`. Its display truncates the
   stem *inside* the cluster `krepš`, so the expected answer isn't expressible as an ending mapping
   at all. That is a separate defect (issue #135 / #52 territory), not a rule-card gap.
