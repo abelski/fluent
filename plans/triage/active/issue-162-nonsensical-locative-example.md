@@ -1,12 +1,12 @@
 ---
 kind: bugfix
-status: approved
-iteration: 0
+status: in_progress
+iteration: 1
 max_iterations: 16
 suggested_model: sonnet
 suggested_effort: low
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: sonnet
+confirmed_effort: low
 ---
 
 # Issue #162 — /dashboard/grammar/
