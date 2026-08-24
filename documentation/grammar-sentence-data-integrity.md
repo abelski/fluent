@@ -249,3 +249,68 @@ case form), not vocabulary recall from bare sentence context. No frontend, DB, o
 were needed: `InlineSentenceInput` and `checkAnswer()` in `GrammarTaskRunner.tsx` were already
 fully generic over the served `display`/`answer` string content and length (proven by
 `declension`/`verb_conjugation` task types, which already require full words at every level).
+
+**Gotcha — practice-level `answer` breaks any spec that expects `task.answer` to equal a rule
+card's ending list.** `frontend/tests/issue-158-instrumental-iv-v-declension.spec.ts` and
+`frontend/tests/issue-159-dative-vocative-us-stem.spec.ts` both run a live-data audit — "every
+gradeable ending in a guarded case is derivable from that lesson's rule card" — by fetching real
+`/api/grammar/lessons/{id}/tasks` and checking `task.answer` against the rule card's
+`transform`/`endings_sg`/`endings_pl` text. Once practice-level `task.answer` became the whole word
+(`"dukterie"`) instead of just the ending (`"erie"`), that check broke for guarded case-7/case-3/
+case-5 practice lessons — not because the underlying ending changed, but because a whole word
+doesn't appear verbatim inside a rule card written in terms of endings. Both specs now exclude
+`level === 'practice'` from that specific audit (`lesson.level !== 'practice'` in the lesson
+filter) — the same rows are still covered by the check at `basic`/`advanced`, where `task.answer`
+is still ending-only. **This class of spec (a live audit filtered only by `cases`/case set, not by
+level) is easy to miss from a plan's own curated regression list** — plan #8's own
+`## Definition of Done` only listed `issue-159-...spec.ts`, not `issue-158-...spec.ts`, even though
+both do the same kind of check over overlapping guarded cases. A full `npx playwright test` run
+(not just a curated file list) is the reliable way to catch a sibling spec like this.
+
+## `_STEM_TO_NOMINATIVE` needed the same collision guard as `_FORM_TO_NOMINATIVE` (issue #161)
+
+**The bug had two independent layers, both traced back to the same root cause: `draugas`
+(masculine) and `draugė` (feminine) share the vocative form "drauge".** The vocative transform
+rule (`-as→-e`, `-ė→-e`) makes this a genuine Lithuanian homograph — there is no way to tell the
+two genders apart from the inflected form alone.
+
+- **Layer 1 — content.** `grammar_sentence` rows 192 (masculine, "Labas, draug___!" / "Привет,
+  друг!") and 202 (feminine, "Sveiki, draug___!" / "Привет, подруга!") used the identical blank
+  and answer with nothing in `display` to disambiguate which gender the sentence means — unlike
+  the existing precedent at rows 416/417 ("Kiek ___ metų? (draugas)" / "(draugė)"), which already
+  solves the identical dative ambiguity with a parenthetical noun hint. Fixed the same way: `display`
+  now reads `"Labas, draug___! (draugas)"` / `"Sveiki, draug___! (draugė)"`.
+- **Layer 2 — code.** `_generate_sentence_tasks()` computes the `base_lt` "от: …" dictionary-form
+  hint as `_FORM_TO_NOMINATIVE.get(row.full_word) or _STEM_TO_NOMINATIVE.get(stem)`.
+  `_FORM_TO_NOMINATIVE["drauge"]` was already correctly `None` — that exact collision was handled
+  once before, for issue #25. But the fallback, `_STEM_TO_NOMINATIVE`, was still a plain
+  last-write-wins `{stem: stem+nominative_ending}` dict comprehension built once from
+  `words.txt` in file order. "draug" is the only stem that appears twice in `words.txt`
+  (`draugas` then `draugė`), so `_STEM_TO_NOMINATIVE["draug"]` always resolved to `"draugė"`
+  regardless of which row (192 or 202) was actually being served — row 192 (masculine) incorrectly
+  showed the hint "от: draugė". Fixing `display` alone (Layer 1) would **not** have fixed this,
+  since `base_lt` is computed independently of `display`, only from `full_word`/stem.
+
+**The fix:** `_STEM_TO_NOMINATIVE` is now built with the same collision-aware loop
+`_FORM_TO_NOMINATIVE` already used — first duplicate stem seen wins, but a *second* stem that
+maps to a *different* nominative flips the value to `None` (ambiguous) instead of silently
+overwriting it. Since `.get(stem)` returning `None` is falsy, `base_lt` correctly falls through to
+`None` for "draug" (hiding the hint entirely) rather than guessing a gender. This mirrors exactly
+how `_FORM_TO_NOMINATIVE` already handled full-word collisions for issue #25 — `_STEM_TO_NOMINATIVE`
+had simply never been given the same treatment.
+
+**"draug" is the only duplicated stem in `words.txt` today** — confirmed by grouping all rows by
+`w[0]` (the stem column). No other noun currently needs this guard, but the fix is general: any
+future stem collision added to `words.txt` will now correctly resolve to a hidden hint instead of
+a silently wrong one.
+
+**Do not "fix" this by editing `words.txt`.** The collision is not a data-quality bug in
+`words.txt` — `draugas` and `draugė` are two genuinely different, correctly-spelled words that
+happen to share a stem and, in one specific case (vocative), an identical inflected form. The
+correct fix is exactly what both dicts now do: hide the ambiguous hint rather than guess, the same
+policy already established for `_FORM_TO_NOMINATIVE` by issue #25.
+
+Regression coverage: `backend/tests/test_grammar_practice_full_word.py` (a sentinel pair of rows
+sharing `full_word="drauge"` with opposite genders asserts `base_lt is None` for both) and
+`frontend/tests/issue-161-drauge-vocative-base-form.spec.ts` (the "от: draugė" hint line must not
+render for the masculine row, and `display` must carry the disambiguating suffix).

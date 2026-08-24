@@ -79,9 +79,13 @@ test.describe('Issue #158 — IV/V declension endings are derivable from the rul
       async ({ backend, allowlist, guarded }) => {
         const res = await fetch(`${backend}/api/grammar/lessons`);
         const lessons: Lesson[] = await res.json();
-        // guarded noun-declension cases only (see GUARDED_CASES above)
+        // guarded noun-declension cases only (see GUARDED_CASES above). Practice-level
+        // lessons are excluded: plan #8 made their `task.answer` the whole inflected word
+        // (stem + ending) instead of just the ending, so it won't appear verbatim inside
+        // the rule card's ending list even when the underlying ending is fine — the same
+        // rows are also served at basic/advanced, where this check still covers them.
         const nounLessons = lessons.filter(
-          (l) => l.cases.length > 0 && l.cases.every((c) => guarded.includes(c)),
+          (l) => l.level !== 'practice' && l.cases.length > 0 && l.cases.every((c) => guarded.includes(c)),
         );
 
         const bad: Array<{ lesson: number; display: string; answer: string; full: string }> = [];

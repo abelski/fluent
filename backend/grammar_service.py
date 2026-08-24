@@ -62,13 +62,32 @@ WORDS = [
 ]
 
 # Precomputed mapping: stem → nominative singular form (stem + nominative ending).
-# Used as a fallback when the full-word lookup is ambiguous.
-_STEM_TO_NOMINATIVE: dict[str, str] = {w[0]: w[0] + w[1] for w in WORDS}
+# Used as a fallback when the full-word lookup (_FORM_TO_NOMINATIVE below) is
+# ambiguous. Collision-aware for the same reason as _FORM_TO_NOMINATIVE: when two
+# different words share the same stem the value is set to None (ambiguous) instead
+# of silently picking whichever word was seen last in words.txt. "draug" (draugas
+# vs. draugė) is the only duplicated stem in words.txt today — this fallback used
+# to last-write-win to "draugė" for it, which is what caused issue #161 (a
+# masculine "drauge" vocative sentence showing the "от: draugė" hint). Even with
+# this fix, the underlying homograph — Lithuanian vocative "drauge" is identical
+# for both genders — isn't "resolvable"; see issue #25 for the sibling fix on
+# _FORM_TO_NOMINATIVE, and documentation/grammar-sentence-data-integrity.md for
+# the full writeup.
+_STEM_TO_NOMINATIVE: dict[str, str | None] = {}
+for _w in WORDS:
+    _stem_nom = _w[0] + _w[1]
+    if _w[0] in _STEM_TO_NOMINATIVE:
+        if _STEM_TO_NOMINATIVE[_w[0]] != _stem_nom:
+            _STEM_TO_NOMINATIVE[_w[0]] = None  # ambiguous — two words share this stem
+    else:
+        _STEM_TO_NOMINATIVE[_w[0]] = _stem_nom
 
 # Mapping from any full word form → its nominative singular.
 # When two different words share the same form the value is set to None (ambiguous).
 # This is used in sentence tasks so that words with a shared stem (e.g. draugas/draugė)
 # are resolved correctly from the stored full_word rather than just the stem.
+# Originally added for issue #25; the sibling collision above it (_STEM_TO_NOMINATIVE)
+# had the same bug and was only fixed later, for issue #161.
 _FORM_TO_NOMINATIVE: dict[str, str | None] = {}
 for _w in WORDS:
     _nom = _w[0] + _w[1]
