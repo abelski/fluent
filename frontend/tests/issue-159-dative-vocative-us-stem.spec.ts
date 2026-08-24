@@ -15,6 +15,13 @@
 // (b) Live-data: a lesson with cases [7] (Vocative) states the IV-declension mapping.
 // (c) Live-data: no case-7 task is still graded "dukte"; the duktė row is "dukterie".
 // (d) UI (mocked): the longer rule text renders and stays usable at 390×844.
+//
+// The IV/V-declension examples deliberately use words NOT drawn from either lesson's own
+// exercise pool (turgus/vaisius/vanduo, not sūnus/profesorius/duktė) — an earlier draft of
+// this fix reused the exercise words themselves, which let a student read the answer straight
+// off the rule card instead of applying the pattern. duktė→dukterie was the worst case: it's
+// the literal answer to sentence 198. See "Rule-card examples must not equal an answer" in
+// documentation/grammar-sentence-data-integrity.md.
 
 import { test, expect } from '@playwright/test';
 
@@ -51,9 +58,10 @@ test.describe('Issue #159 — Dative/Vocative u-stem (declension IV) coverage', 
     expect(rule).not.toBeNull();
     const transform = rule!.transform || '';
 
-    // IV declension: sūnus→sūnui, profesorius→profesoriui — the exact gap the reporter hit.
-    expect(transform).toContain('sūnui');
-    expect(transform).toContain('profesoriui');
+    // IV declension is now covered (this was the exact gap the reporter hit), via example
+    // words not drawn from this lesson's own exercises — turgus/vaisius, not sūnus/profesorius.
+    expect(transform).toContain('turgui');
+    expect(transform).toContain('vaisiui');
 
     // The old endings_sg carried an unlabeled duplicate "-ui" (once for -as→-ui, once
     // stray) with no matching transform clause. It must not still be duplicated.
@@ -74,8 +82,10 @@ test.describe('Issue #159 — Dative/Vocative u-stem (declension IV) coverage', 
     expect(rule).not.toBeNull();
     const transform = rule!.transform || '';
 
-    expect(transform).toContain('sūnau');
-    expect(transform).toContain('dukterie');
+    // Non-exercise-pool examples again — turgus/vanduo, not sūnus/duktė (both of which are
+    // themselves case-7 exercise answers).
+    expect(transform).toContain('turgau');
+    expect(transform).toContain('vandenie');
   });
 
   test('no Vocative (case 7) task is still graded "dukte"; the duktė row is dukterie', async ({ page }) => {
@@ -86,16 +96,16 @@ test.describe('Issue #159 — Dative/Vocative u-stem (declension IV) coverage', 
       const lessons: Lesson[] = await res.json();
       const caseLessons = lessons.filter((l) => l.cases.length === 1 && l.cases[0] === 7);
 
-      const dukteHits: Task[] = [];
-      const duktRows: Task[] = [];
+      const dukteHits: (Task & { level: string })[] = [];
+      const duktRows: (Task & { level: string })[] = [];
       for (const lesson of caseLessons) {
         const tasksRes = await fetch(`${backend}/api/grammar/lessons/${lesson.id}/tasks`);
         const tasks: Task[] = await tasksRes.json();
         for (const t of tasks) {
           if (t.type !== 'sentence') continue;
           const fa = (t.full_answer || '').toLowerCase();
-          if (fa === 'dukte') dukteHits.push(t);
-          if (fa.startsWith('dukt')) duktRows.push(t);
+          if (fa === 'dukte') dukteHits.push({ ...t, level: lesson.level });
+          if (fa.startsWith('dukt')) duktRows.push({ ...t, level: lesson.level });
         }
       }
       return { dukteHits, duktRows };
@@ -105,7 +115,11 @@ test.describe('Issue #159 — Dative/Vocative u-stem (declension IV) coverage', 
     expect(result.duktRows.length).toBeGreaterThan(0);
     for (const row of result.duktRows) {
       expect(row.full_answer).toBe('dukterie');
-      expect(row.answer).toBe('erie');
+      // Plan #8: practice-level sentence tasks strip the stem and grade the whole
+      // inflected word (stem+ending), so "dukt" + "erie" is the correct practice-level
+      // answer — only basic/advanced stay ending-only ("erie").
+      const expectedAnswer = row.level === 'practice' ? 'dukterie' : 'erie';
+      expect(row.answer).toBe(expectedAnswer);
     }
   });
 });
@@ -114,7 +128,7 @@ test.describe('Issue #159 — Dative/Vocative u-stem (declension IV) coverage', 
 
 const NEW_DATIVE_TRANSFORM =
   'Ед.ч.: -as→-ui, -ias/-is/-ys→-iui, -a→-ai, -ia→-iai, -ė→-ei; ' +
-  'IV: -us→-ui (sūnus→sūnui), -ius→-iui (profesorius→profesoriui); ' +
+  'IV: -us→-ui (turgus→turgui), -ius→-iui (vaisius→vaisiui); ' +
   'III ж.р. -is→-iai (pilis→piliai); ' +
   'V: sesuo→seseriai, duktė→dukteriai, vanduo→vandeniui. ' +
   'Мн.ч.: -ai→-ams, -iai→-iams, -os→-oms, -ės→-ėms, -ūs→-ums.';
@@ -177,10 +191,10 @@ test.describe('Issue #159 — Dative rule card renders the IV-stem text and stay
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
   }
 
-  test('the sūnui rule text is visible on the basic (always-expanded) card', async ({ page }) => {
+  test('the turgui rule text is visible on the basic (always-expanded) card', async ({ page }) => {
     await openLesson(page);
-    await expect(page.getByText('sūnus→sūnui')).toBeVisible();
-    await expect(page.getByText('profesorius→profesoriui')).toBeVisible();
+    await expect(page.getByText('turgus→turgui')).toBeVisible();
+    await expect(page.getByText('vaisius→vaisiui')).toBeVisible();
   });
 
   test('answer input stays reachable at 390x844 with the longer rule text, no horizontal overflow', async ({ page }) => {

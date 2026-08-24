@@ -338,7 +338,8 @@ export default function GrammarPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-[32px] font-bold mb-1.5">{tr.grammar.title}</h1>
-              <p className="text-[15px] text-muted mb-4">{tr.grammar.subtitle}</p>
+              <p className="text-[15px] text-muted mb-1">{tr.grammar.subtitle}</p>
+              <p className="text-[13px] text-muted mb-4">{tr.grammar.charactersNote}</p>
             </div>
             {/* The mascot lives in the hero card once it renders (enrolled state);
                 loading/empty states have no hero, so it stays beside the title

@@ -110,9 +110,16 @@ _PLACE_STEMS: frozenset[str] = frozenset([
 _LOCATION_CASES: frozenset[int] = frozenset([6, 13])
 
 
+# Matches the single word immediately before the fill-in-blank marker, e.g.
+# "brol" in "Laima mato brol___." Hoisted to module level so `_extract_stem`
+# (read the stem) and the practice-level strip (`_STEM_BLANK_RE.sub(...)`) can
+# never target a different span from each other.
+_STEM_BLANK_RE = re.compile(r'(\w+)___')
+
+
 def _extract_stem(display: str) -> str:
     """Extract the word stem from a sentence display string like 'Laima mato brol___.'"""
-    match = re.search(r'(\w+)___', display)
+    match = _STEM_BLANK_RE.search(display)
     return match.group(1) if match else ''
 
 
@@ -305,10 +312,22 @@ def _generate_sentence_tasks(cases: list[int], count: int, session: Session, lev
             after = re.sub(re.escape(row.full_word), '', parts[1], count=1, flags=re.IGNORECASE)
             after = re.sub(r'\s+', ' ', after).strip()
             display = parts[0] + '___' + (' ' + after if after else '')
+        if level == "practice":
+            # Practice level requires typing the whole inflected word: strip the
+            # stem span from display (so the blank stands for the full word, not
+            # just the ending) and grade against stem+answer_ending. Cases 17-19's
+            # non-inflecting numeral prefix (e.g. "dvidešimt") was never part of
+            # the captured stem, so it's untouched and stays visible as ordinary
+            # sentence text before the blank — grading only covers the word the
+            # student actually has to type.
+            display = _STEM_BLANK_RE.sub('___', display, count=1)
+            answer = stem + row.answer_ending
+        else:
+            answer = row.answer_ending
         tasks.append({
             "type": "sentence",
             "display": display,
-            "answer": row.answer_ending,
+            "answer": answer,
             "full_answer": row.full_word,
             "translation_ru": row.russian,
             "base_lt": base_lt,
@@ -320,10 +339,16 @@ def get_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None:
     """Look up a lesson by ID and generate its tasks.
 
     Returns None if the lesson_id is not found — the router converts this to 404.
-    Level determines task type:
-      'basic'    → sentence puzzle tasks (grammar rule always visible on frontend)
-      'advanced' → sentence puzzle tasks (with collapsible grammar rule)
-      'practice' → sentence puzzle tasks (no grammar rule shown)
+    Level determines task type and how much of the word is pre-printed:
+      'basic'    → sentence puzzle tasks (grammar rule always visible on frontend);
+                   stem shown, student types only the case ending.
+      'advanced' → sentence puzzle tasks (with collapsible grammar rule); stem
+                   shown, student types only the case ending.
+      'practice' → sentence puzzle tasks (no grammar rule shown); the stem is
+                   stripped out of `display` so the blank stands for the whole
+                   word, and the student must type the full inflected word
+                   (`stem + answer_ending`). The `base_lt` dictionary-form hint
+                   stays visible at every level, including practice.
     All levels use grammar_sentence rows. Falls back to declension tasks if no
     sentences exist for the requested cases.
     """

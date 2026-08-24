@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../../lib/api';
+import { useT } from '../../../../lib/useT';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -136,6 +137,7 @@ function deriveGroupCases(config: GrammarConfig): Record<string, number[]> {
 
 export default function GrammarAdminPage() {
   const router = useRouter();
+  const { tr } = useT();
 
   const [config, setConfig] = useState<GrammarConfig | null>(null);
   const [lessonsByCase, setLessonsByCase] = useState<Record<number, LessonInfo[]>>({});
@@ -204,7 +206,7 @@ export default function GrammarAdminPage() {
   }
 
   async function saveProgram() {
-    if (!programForm.title.trim()) { setProgramError('Название обязательно'); return; }
+    if (!programForm.title.trim()) { setProgramError(tr.adminGrammar.titleRequiredError); return; }
     setSaving(true); setProgramError('');
     const isNew = programModal === 'new';
     const url = isNew
@@ -224,11 +226,11 @@ export default function GrammarAdminPage() {
     }).catch(() => null);
     setSaving(false);
     if (res?.ok) { setProgramModal(null); loadData(); }
-    else setProgramError('Ошибка при сохранении');
+    else setProgramError(tr.adminGrammar.saveErrorGeneric);
   }
 
   async function deleteProgram(id: number) {
-    if (!confirm('Удалить программу? Пользователи потеряют доступ.')) return;
+    if (!confirm(tr.adminGrammar.confirmDeleteProgram)) return;
     await fetch(`${BACKEND_URL}/api/admin/grammar/programs/${id}`, {
       method: 'DELETE', headers: authHeaders(),
     }).catch(() => null);
@@ -303,7 +305,7 @@ export default function GrammarAdminPage() {
   }
 
   async function archiveSentence(id: number) {
-    if (!confirm('Скрыть это предложение из упражнений?')) return;
+    if (!confirm(tr.adminGrammar.confirmArchiveSentence)) return;
     const res = await fetch(`${BACKEND_URL}/api/admin/grammar/sentences/${id}`, {
       method: 'DELETE', headers: authHeaders(),
     }).catch(() => null);
@@ -322,8 +324,8 @@ export default function GrammarAdminPage() {
 
   async function saveSentence() {
     if (!sentenceModal) return;
-    if (!sentenceModal.display.includes('___')) { setFormError('Предложение должно содержать ___ (пропуск)'); return; }
-    if (!sentenceModal.answer_ending.trim() || !sentenceModal.full_word.trim() || !sentenceModal.russian.trim()) { setFormError('Все поля обязательны'); return; }
+    if (!sentenceModal.display.includes('___')) { setFormError(tr.adminGrammar.missingBlankError); return; }
+    if (!sentenceModal.answer_ending.trim() || !sentenceModal.full_word.trim() || !sentenceModal.russian.trim()) { setFormError(tr.adminGrammar.allFieldsRequiredError); return; }
     setSaving(true); setFormError('');
     const isNew = sentenceModal.id === null;
     const url = isNew
@@ -342,7 +344,7 @@ export default function GrammarAdminPage() {
     }).catch(() => null);
     setSaving(false);
     if (res?.ok) { setSentenceModal(null); loadData(); }
-    else setFormError('Ошибка при сохранении');
+    else setFormError(tr.adminGrammar.saveErrorGeneric);
   }
 
   if (loading) {
@@ -364,24 +366,24 @@ export default function GrammarAdminPage() {
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <div className="flex items-center gap-3 mb-2">
           <Link href="/dashboard/admin" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
-            ← Админ
+            {tr.adminGrammar.backToAdmin}
           </Link>
         </div>
-        <h1 className="font-headline text-3xl font-bold mb-1">Грамматика</h1>
-        <p className="text-gray-400 mb-6 text-sm">Программы, падежи и предложения</p>
+        <h1 className="font-headline text-3xl font-bold mb-1">{tr.grammar.title}</h1>
+        <p className="text-gray-400 mb-6 text-sm">{tr.adminGrammar.subtitle}</p>
 
         {/* Programs section */}
         <div className="flex items-center justify-between mb-3">
-          <span className="font-bold text-gray-900">Программы</span>
+          <span className="font-bold text-gray-900">{tr.adminGrammar.programsLabel}</span>
           <button
             onClick={() => openProgramModal('new')}
             className="text-xs px-3 py-1.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors font-medium"
           >
-            + Добавить
+            {tr.adminGrammar.addProgramBtn}
           </button>
         </div>
         {programs.length === 0 ? (
-          <p className="text-gray-400 text-sm py-6 text-center">Нет программ</p>
+          <p className="text-gray-400 text-sm py-6 text-center">{tr.adminGrammar.noPrograms}</p>
         ) : (
           <div className="flex flex-col gap-4">
             {programs.map(p => {
@@ -407,7 +409,7 @@ export default function GrammarAdminPage() {
                         {p.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{p.description}</p>}
                       </div>
                       <span className="text-xs text-gray-400 shrink-0">
-                        {progCases.length} падежей · {totalActive} пред.
+                        {progCases.length} {tr.adminGrammar.casesCountSuffix} · {totalActive} {tr.adminGrammar.programSentencesSuffix}
                       </span>
                     </button>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
@@ -418,7 +420,7 @@ export default function GrammarAdminPage() {
                       {p.difficulty === 1 ? 'easy' : p.difficulty === 2 ? 'medium' : 'hard'}
                     </span>
                     {!p.is_public && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0">скрыта</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0">{tr.adminGrammar.hiddenBadge}</span>
                     )}
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                       <button
@@ -440,12 +442,12 @@ export default function GrammarAdminPage() {
                   {isOpen && (
                     <div className="border-t border-gray-100 divide-y divide-gray-100" data-testid={`program-lessons-panel-${p.id}`}>
                       {progCases.length === 0 ? (
-                        <p className="text-gray-400 text-xs py-4 px-5">Нет падежей</p>
+                        <p className="text-gray-400 text-xs py-4 px-5">{tr.adminGrammar.noCases}</p>
                       ) : progCases.map((caseIdx: number) => (
                         <CaseRow
                           key={caseIdx}
                           caseIdx={caseIdx}
-                          caseName={config?.cases[String(caseIdx)]?.[0] ?? `Падеж ${caseIdx}`}
+                          caseName={config?.cases[String(caseIdx)]?.[0] ?? tr.adminGrammar.casesFallback.replace('{n}', String(caseIdx))}
                           lessons={lessonsByCase[caseIdx] ?? []}
                           rule={rules.find(r => r.case_index === caseIdx) ?? null}
                           sentences={sentences.filter(s => s.case_index === caseIdx)}
@@ -475,29 +477,29 @@ export default function GrammarAdminPage() {
         >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h2 className="font-headline text-lg font-bold mb-4 text-gray-900">
-              {programModal === 'new' ? 'Новая программа' : 'Редактировать программу'}
+              {programModal === 'new' ? tr.adminGrammar.programModalNewTitle : tr.adminGrammar.programModalEditTitle}
             </h2>
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Название (RU)</label>
+                <label className="text-xs text-gray-500">{tr.adminGrammar.nameRuLabel}</label>
                 <input
                   value={programForm.title}
                   onChange={e => setProgramForm(f => ({ ...f, title: e.target.value }))}
-                  placeholder="Литовские падежи"
+                  placeholder={tr.adminGrammar.nameRuPlaceholder}
                   className="border border-gray-300 focus:border-gray-900 rounded-xl px-3 py-2 text-sm outline-none transition-colors"
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Название (EN)</label>
+                <label className="text-xs text-gray-500">{tr.adminGrammar.nameEnLabel}</label>
                 <input
                   value={programForm.title_en}
                   onChange={e => setProgramForm(f => ({ ...f, title_en: e.target.value }))}
-                  placeholder="Lithuanian Cases"
+                  placeholder={tr.adminGrammar.nameEnPlaceholder}
                   className="border border-gray-300 focus:border-gray-900 rounded-xl px-3 py-2 text-sm outline-none transition-colors"
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Описание</label>
+                <label className="text-xs text-gray-500">{tr.adminGrammar.descLabel}</label>
                 <textarea
                   value={programForm.description}
                   onChange={e => setProgramForm(f => ({ ...f, description: e.target.value }))}
@@ -507,7 +509,7 @@ export default function GrammarAdminPage() {
               </div>
               <div className="flex gap-3">
                 <div className="flex flex-col gap-1 flex-1">
-                  <label className="text-xs text-gray-500">Сложность</label>
+                  <label className="text-xs text-gray-500">{tr.adminGrammar.difficultyLabel}</label>
                   <select
                     value={programForm.difficulty}
                     onChange={e => setProgramForm(f => ({ ...f, difficulty: Number(e.target.value) }))}
@@ -526,24 +528,24 @@ export default function GrammarAdminPage() {
                       onChange={e => setProgramForm(f => ({ ...f, is_public: e.target.checked }))}
                       className="w-4 h-4"
                     />
-                    Публичная
+                    {tr.adminGrammar.publicLabel}
                   </label>
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Фильтр уроков</label>
+                <label className="text-xs text-gray-500">{tr.adminGrammar.lessonFilterLabel}</label>
                 <select
                   value={programForm.lesson_filter}
                   onChange={e => setProgramForm(f => ({ ...f, lesson_filter: e.target.value }))}
                   className="border border-gray-300 focus:border-gray-900 rounded-xl px-3 py-2 text-sm outline-none transition-colors"
                 >
-                  <option value="">Все уроки</option>
-                  <option value='["Vienaskaita","Daugiskaita"]'>Падежи (ед. и мн. число)</option>
-                  <option value='["Vienaskaita"]'>Только единственное число</option>
-                  <option value='["Daugiskaita"]'>Только множественное число</option>
-                  <option value='["Skaičiai"]'>Числительные</option>
+                  <option value="">{tr.adminGrammar.lessonFilterAllOption}</option>
+                  <option value='["Vienaskaita","Daugiskaita"]'>{tr.adminGrammar.lessonFilterBothOption}</option>
+                  <option value='["Vienaskaita"]'>{tr.adminGrammar.lessonFilterSingularOption}</option>
+                  <option value='["Daugiskaita"]'>{tr.adminGrammar.lessonFilterPluralOption}</option>
+                  <option value='["Skaičiai"]'>{tr.adminGrammar.lessonFilterNumbersOption}</option>
                 </select>
-                <p className="text-[10px] text-gray-400 mt-0.5">Какие уроки показывать пользователям в этой программе</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">{tr.adminGrammar.lessonFilterHint}</p>
               </div>
             </div>
             {programError && (
@@ -555,13 +557,13 @@ export default function GrammarAdminPage() {
                 disabled={saving}
                 className="flex-1 py-2 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white text-sm transition-colors disabled:opacity-50"
               >
-                {saving ? '...' : 'Сохранить'}
+                {saving ? '...' : tr.adminGrammar.saveBtn}
               </button>
               <button
                 onClick={() => { setProgramModal(null); setProgramError(''); }}
                 className="px-4 py-2 text-gray-500 hover:text-gray-900 text-sm transition-colors"
               >
-                Отмена
+                {tr.adminGrammar.cancelBtn}
               </button>
             </div>
           </div>
@@ -576,11 +578,11 @@ export default function GrammarAdminPage() {
         >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
             <h2 className="font-headline text-lg font-bold mb-4 text-gray-900">
-              {sentenceModal.id === null ? 'Новое предложение' : 'Редактировать предложение'}
+              {sentenceModal.id === null ? tr.adminGrammar.sentenceModalNewTitle : tr.adminGrammar.sentenceModalEditTitle}
             </h2>
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Предложение с пропуском (___)</label>
+                <label className="text-xs text-gray-500">{tr.adminGrammar.sentenceDisplayLabel}</label>
                 <input
                   value={sentenceModal.display}
                   onChange={e => setSentenceModal(d => d ? { ...d, display: e.target.value } : d)}
@@ -590,7 +592,7 @@ export default function GrammarAdminPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-gray-500">Окончание</label>
+                  <label className="text-xs text-gray-500">{tr.adminGrammar.sentenceEndingLabel}</label>
                   <input
                     value={sentenceModal.answer_ending}
                     onChange={e => setSentenceModal(d => d ? { ...d, answer_ending: e.target.value } : d)}
@@ -599,7 +601,7 @@ export default function GrammarAdminPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-gray-500">Полное слово</label>
+                  <label className="text-xs text-gray-500">{tr.adminGrammar.sentenceFullWordLabel}</label>
                   <input
                     value={sentenceModal.full_word}
                     onChange={e => setSentenceModal(d => d ? { ...d, full_word: e.target.value } : d)}
@@ -609,11 +611,11 @@ export default function GrammarAdminPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Перевод на русский</label>
+                <label className="text-xs text-gray-500">{tr.adminGrammar.sentenceRussianLabel}</label>
                 <input
                   value={sentenceModal.russian}
                   onChange={e => setSentenceModal(d => d ? { ...d, russian: e.target.value } : d)}
-                  placeholder="Лайма видит брата."
+                  placeholder={tr.adminGrammar.sentenceRussianPlaceholder}
                   className="bg-white border border-gray-300 focus:border-gray-900 rounded-xl px-3 py-2 text-sm outline-none w-full transition-colors"
                 />
               </div>
@@ -627,13 +629,13 @@ export default function GrammarAdminPage() {
                 disabled={saving}
                 className="flex-1 py-2 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white text-sm transition-colors disabled:opacity-50"
               >
-                {saving ? '...' : 'Сохранить'}
+                {saving ? '...' : tr.adminGrammar.saveBtn}
               </button>
               <button
                 onClick={() => { setSentenceModal(null); setFormError(''); }}
                 className="px-4 py-2 text-gray-500 hover:text-gray-900 text-sm transition-colors"
               >
-                Отмена
+                {tr.adminGrammar.cancelBtn}
               </button>
             </div>
           </div>
@@ -672,6 +674,7 @@ function CaseRow({
   onArchiveSentence: (id: number) => void;
   onToggleLevel: (s: GrammarSentence, level: 'basic' | 'advanced' | 'practice') => void;
 }) {
+  const { tr } = useT();
   const activeCount = sentences.filter(s => !s.archived).length;
   const hasLessons = lessons.length > 0;
   const status = rule?.status ?? 'draft';
@@ -702,10 +705,10 @@ function CaseRow({
               })}
             </div>
           ) : (
-            <span className="text-[10px] text-amber-400 shrink-0">нет уроков</span>
+            <span className="text-[10px] text-amber-400 shrink-0">{tr.adminGrammar.noLessonsLabel}</span>
           )}
 
-          <span className="text-xs text-gray-400 shrink-0">{activeCount} пр.</span>
+          <span className="text-xs text-gray-400 shrink-0">{activeCount} {tr.adminGrammar.caseSentencesSuffix}</span>
         </button>
 
         {/* Status selector — always visible */}
@@ -716,9 +719,9 @@ function CaseRow({
             onChange={e => onSetStatus(rule.id, e.target.value)}
             className={`text-[11px] border rounded-lg px-2 py-1 outline-none font-medium shrink-0 transition-colors ${STATUS_COLORS[status] ?? STATUS_COLORS.draft}`}
           >
-            <option value="draft">Черновик</option>
-            <option value="testing">Тестирование</option>
-            <option value="published">Опубликован</option>
+            <option value="draft">{tr.admin.statusDraftOption}</option>
+            <option value="testing">{tr.admin.statusTestingOption}</option>
+            <option value="published">{tr.admin.statusPublishedOption}</option>
           </select>
         )}
 
@@ -726,7 +729,7 @@ function CaseRow({
           onClick={e => { e.stopPropagation(); onAddSentence(); }}
           className="text-xs px-2 py-1 border border-gray-200 rounded-lg text-gray-400 hover:border-gray-900 hover:text-gray-900 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
         >
-          + пред.
+          {tr.adminGrammar.addSentenceBtnShort}
         </button>
       </div>
 
@@ -736,16 +739,16 @@ function CaseRow({
           {/* Rule summary */}
           {rule && (rule.usage || rule.endings_sg) && (
             <div className="px-5 py-3 border-b border-gray-100 flex gap-6 text-xs text-gray-500">
-              {rule.question && <span><span className="text-gray-400">Вопрос:</span> {rule.question}</span>}
-              {rule.endings_sg && <span><span className="text-gray-400">Ед.ч.:</span> <span className="font-mono">{rule.endings_sg}</span></span>}
-              {rule.endings_pl && <span><span className="text-gray-400">Мн.ч.:</span> <span className="font-mono">{rule.endings_pl}</span></span>}
+              {rule.question && <span><span className="text-gray-400">{tr.adminGrammar.questionPrefix}</span> {rule.question}</span>}
+              {rule.endings_sg && <span><span className="text-gray-400">{tr.grammar.singular}</span> <span className="font-mono">{rule.endings_sg}</span></span>}
+              {rule.endings_pl && <span><span className="text-gray-400">{tr.grammar.plural}</span> <span className="font-mono">{rule.endings_pl}</span></span>}
             </div>
           )}
 
           {/* Sentences */}
           <div className="divide-y divide-gray-100">
             {sentences.filter(s => !s.archived).length === 0 && (
-              <p className="text-gray-400 text-xs py-4 px-5">Нет предложений</p>
+              <p className="text-gray-400 text-xs py-4 px-5">{tr.adminGrammar.noSentences}</p>
             )}
             {sentences.filter(s => !s.archived).map(s => (
               <div key={s.id} className="flex items-start gap-2 px-5 py-2 group/row hover:bg-white transition-colors">
@@ -798,7 +801,7 @@ function CaseRow({
               onClick={onAddSentence}
               className="text-xs text-gray-400 hover:text-gray-900 transition-colors"
             >
-              + Добавить предложение
+              {tr.adminGrammar.addSentenceBtn}
             </button>
           </div>
         </div>

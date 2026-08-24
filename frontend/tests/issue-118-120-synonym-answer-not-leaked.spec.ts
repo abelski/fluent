@@ -75,7 +75,10 @@ test('issue #118/#120 — MatchRound drops synonym duplicates so no answer-spell
 
   const result = await page.evaluate(() => {
     type W = { id: number; lithuanian: string; translation_ru: string; translation_en: string };
-    const lang = 'ru';
+    // Mirrors MatchRound.tsx's `lang: Lang` prop (Lang = 'ru' | 'en'); widened here so
+    // TS doesn't narrow this test fixture to the single literal 'ru' and flag the
+    // lang === 'en' branch below as unreachable.
+    const lang: 'ru' | 'en' = 'ru';
     function translation(word: W): string {
       return lang === 'en' ? (word.translation_en || word.translation_ru) : word.translation_ru;
     }

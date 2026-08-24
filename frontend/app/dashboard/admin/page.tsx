@@ -311,6 +311,7 @@ interface UserProgress {
 }
 
 function UserProgressModal({ userId, userName, onClose }: { userId: string; userName: string; onClose: () => void }) {
+  const { tr } = useT();
   const [data, setData] = useState<UserProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -335,25 +336,25 @@ function UserProgressModal({ userId, userName, onClose }: { userId: string; user
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
             <p className="font-semibold text-gray-900">{userName}</p>
-            <p className="text-xs text-gray-400">Прогресс обучения</p>
+            <p className="text-xs text-gray-400">{tr.adminUserProgress.title}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-900 transition-colors text-xl leading-none">×</button>
         </div>
 
         {/* Body */}
         <div className="px-6 py-5">
-          {loading && <p className="text-sm text-gray-400 text-center py-6">Загрузка...</p>}
-          {error && <p className="text-sm text-red-500 text-center py-6">Не удалось загрузить данные</p>}
+          {loading && <p className="text-sm text-gray-400 text-center py-6">{tr.adminUserProgress.loading}</p>}
+          {error && <p className="text-sm text-red-500 text-center py-6">{tr.adminUserProgress.loadError}</p>}
           {data && (
             <div className="flex flex-col gap-4">
               {/* Vocabulary */}
               <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Словарный запас</p>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">{tr.adminUserProgress.vocabularyHeading}</p>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: 'Выучено', value: data.words_known, color: 'text-emerald-600' },
-                    { label: 'Учится', value: data.words_learning, color: 'text-amber-600' },
-                    { label: 'Новые', value: data.words_new, color: 'text-gray-500' },
+                    { label: tr.adminUserProgress.knownLabel, value: data.words_known, color: 'text-emerald-600' },
+                    { label: tr.adminUserProgress.learningLabel, value: data.words_learning, color: 'text-amber-600' },
+                    { label: tr.adminUserProgress.newLabel, value: data.words_new, color: 'text-gray-500' },
                   ].map(({ label, value, color }) => (
                     <div key={label} className="bg-gray-50 rounded-xl px-3 py-3 text-center">
                       <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -365,12 +366,12 @@ function UserProgressModal({ userId, userName, onClose }: { userId: string; user
 
               {/* Activity */}
               <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Активность</p>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">{tr.adminUserProgress.activityHeading}</p>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: 'Серия', value: `${data.streak} д.`, color: 'text-orange-500' },
-                    { label: 'Сессий сегодня', value: data.sessions_today, color: 'text-gray-900' },
-                    { label: 'Сессий всего', value: data.sessions_total, color: 'text-gray-900' },
+                    { label: tr.adminUserProgress.streakLabel, value: `${data.streak} ${tr.adminUserProgress.daysUnit}`, color: 'text-orange-500' },
+                    { label: tr.admin.colSessionsToday, value: data.sessions_today, color: 'text-gray-900' },
+                    { label: tr.adminUserProgress.sessionsTotalLabel, value: data.sessions_total, color: 'text-gray-900' },
                   ].map(({ label, value, color }) => (
                     <div key={label} className="bg-gray-50 rounded-xl px-3 py-3 text-center">
                       <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -382,23 +383,23 @@ function UserProgressModal({ userId, userName, onClose }: { userId: string; user
 
               {/* Grammar & Practice */}
               <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Грамматика и тесты</p>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">{tr.adminUserProgress.grammarTestsHeading}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gray-50 rounded-xl px-3 py-3 text-center">
                     <p className="text-2xl font-bold text-gray-900">{data.grammar_lessons_passed}<span className="text-sm font-normal text-gray-400"> / {data.grammar_lessons_total}</span></p>
-                    <p className="text-xs text-gray-400 mt-0.5">Уроков грамматики</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{tr.adminUserProgress.grammarLessonsLabel}</p>
                   </div>
                   <div className="bg-gray-50 rounded-xl px-3 py-3 text-center">
                     <p className="text-2xl font-bold text-gray-900">{data.practice_exams_completed}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Практических тестов</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{tr.adminUserProgress.practiceTestsLabel}</p>
                   </div>
                 </div>
               </div>
 
               {/* Meta */}
               <div className="flex justify-between text-xs text-gray-400 pt-1 border-t border-gray-100">
-                <span>Последний вход: {data.last_active ? new Date(data.last_active).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
-                <span>С нами с: {data.member_since ? new Date(data.member_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+                <span>{tr.adminUserProgress.lastActivePrefix} {data.last_active ? new Date(data.last_active).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+                <span>{tr.adminUserProgress.memberSincePrefix} {data.member_since ? new Date(data.member_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
               </div>
             </div>
           )}
@@ -413,6 +414,7 @@ function ActionMenu({
 }: {
   items: { label: string; danger?: boolean; onClick: () => void }[];
 }) {
+  const { tr } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -429,7 +431,7 @@ function ActionMenu({
       <button
         onClick={() => setOpen((v) => !v)}
         className="text-sm px-2 py-1 text-gray-400 hover:text-gray-900 border border-gray-200 hover:border-gray-900 rounded-lg transition-colors"
-        title="Действия"
+        title={tr.admin.actionsTitle}
       >
         ···
       </button>
@@ -571,7 +573,7 @@ export default function AdminPage() {
   }
 
   async function deletePhraseProgram(id: number) {
-    if (!confirm('Удалить программу и все её фразы?')) return;
+    if (!confirm(tr.adminPhrasePrograms.confirmDeleteProgram)) return;
     const token = getToken();
     await fetch(`${BACKEND_URL}/api/admin/phrase-programs/${id}`, { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
     await loadPhrasePrograms();
@@ -593,7 +595,7 @@ export default function AdminPage() {
   }
 
   async function deletePhrase(phraseId: number, programId: number) {
-    if (!confirm('Удалить фразу?')) return;
+    if (!confirm(tr.adminPhrasePrograms.confirmDeletePhrase)) return;
     const token = getToken();
     await fetch(`${BACKEND_URL}/api/admin/phrases/${phraseId}`, { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} });
     await loadPhrasesForProgram(programId);
@@ -703,7 +705,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       setTemplates(tmpl);
       setMessagesLoaded(true);
     } catch {
-      setMsgError('Ошибка загрузки сообщений');
+      setMsgError(tr.adminMessages.loadError);
     }
   }
 
@@ -715,10 +717,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       await saveMessageTemplates(templateDraft);
       setTemplates(templateDraft);
       setTemplateEditing(false);
-      setTemplateMsg('Сохранено');
+      setTemplateMsg(tr.admin.savedLabel);
       setTimeout(() => setTemplateMsg(''), 3000);
     } catch {
-      setTemplateMsg('Ошибка сохранения');
+      setTemplateMsg(tr.adminMessages.saveError);
     } finally {
       setTemplateSaving(false);
     }
@@ -731,33 +733,33 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       await triggerMessageGeneration();
       await loadMessages();
     } catch {
-      setMsgError('Ошибка генерации сообщений');
+      setMsgError(tr.adminMessages.generateError);
     } finally {
       setMsgGenerating(false);
     }
   }
 
   async function handleSendMessage(msg: AdminMessage) {
-    if (!window.confirm(`Отправить письмо пользователю ${msg.user_name}?`)) return;
+    if (!window.confirm(tr.adminMessages.confirmSendMessage.replace('{name}', msg.user_name))) return;
     setMsgSending(msg.id);
     setMsgError('');
     try {
       await sendAdminMessage(msg.id);
       await loadMessages();
     } catch (e: unknown) {
-      setMsgError(e instanceof Error ? e.message : 'Ошибка отправки');
+      setMsgError(e instanceof Error ? e.message : tr.adminMessages.sendError);
     } finally {
       setMsgSending(null);
     }
   }
 
   async function handleDeleteMessage(id: number) {
-    if (!window.confirm('Удалить сообщение?')) return;
+    if (!window.confirm(tr.adminMessages.confirmDeleteMessage)) return;
     try {
       await deleteAdminMessage(id);
       setMessages((prev) => prev.filter((m) => m.id !== id));
     } catch {
-      setMsgError('Ошибка удаления');
+      setMsgError(tr.adminMessages.deleteError);
     }
   }
 
@@ -768,7 +770,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       setTop5WeekRange({ start: data.week_start, end: data.week_end });
       setTop5Loaded(true);
     } catch {
-      setRewardsError('Ошибка загрузки рейтинга');
+      setRewardsError(tr.adminMessages.rankingLoadError);
     }
   }
 
@@ -779,10 +781,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       const result = await generateLeaderboardRewards();
       await Promise.all([loadMessages(), loadTop5()]);
       if (result.created === 0) {
-        setRewardsError('Письма уже сгенерированы для этой недели.');
+        setRewardsError(tr.adminMessages.alreadyGeneratedThisWeek);
       }
     } catch {
-      setRewardsError('Ошибка генерации наград');
+      setRewardsError(tr.adminMessages.generateRewardsError);
     } finally {
       setRewardsGenerating(false);
     }
@@ -794,7 +796,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       setMessages((prev) => prev.map((m) => m.id === id ? { ...m, subject: msgDraft.subject, body: msgDraft.body } : m));
       setEditingMsg(null);
     } catch {
-      setMsgError('Ошибка сохранения');
+      setMsgError(tr.adminMessages.saveError);
     }
   }
 
@@ -821,7 +823,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(autoSend),
       });
-      setAutoSendMsg(res.ok ? 'Сохранено' : 'Ошибка');
+      setAutoSendMsg(res.ok ? tr.admin.savedLabel : tr.admin.genericError);
     } finally {
       setAutoSendSaving(false);
     }
@@ -837,10 +839,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         body: JSON.stringify(cefrThresholds),
       });
       if (res.ok) {
-        setCefrMsg('Сохранено');
+        setCefrMsg(tr.admin.savedLabel);
       } else {
         const err = await res.json().catch(() => ({}));
-        setCefrMsg(err.detail ?? 'Ошибка');
+        setCefrMsg(err.detail ?? tr.admin.genericError);
       }
     } finally {
       setCefrSaving(false);
@@ -1050,7 +1052,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
   }
 
   async function deleteUser(userId: string, userName: string) {
-    if (!confirm(`Удалить пользователя «${userName}» и все его данные? Это действие необратимо.`)) return;
+    if (!confirm(tr.admin.confirmDeleteUser.replace('{name}', userName))) return;
     setSaving(true);
     const token = getToken();
     await fetch(`${BACKEND_URL}/api/admin/users/${userId}`, {
@@ -1064,7 +1066,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
   async function bulkDeleteUsers() {
     const ids = Array.from(selectedUserIds);
     if (ids.length === 0) return;
-    if (!confirm(`Удалить ${ids.length} пользователей и все их данные? Это действие необратимо.`)) return;
+    if (!confirm(tr.admin.confirmBulkDeleteUsers.replace('{n}', String(ids.length)))) return;
     setSaving(true);
     const token = getToken();
     await fetch(`${BACKEND_URL}/api/admin/users/bulk-delete`, {
@@ -1131,7 +1133,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         setEmailSuccess(false);
       }, 1500);
     } catch (err: unknown) {
-      setEmailError(err instanceof Error ? err.message : 'Ошибка отправки');
+      setEmailError(err instanceof Error ? err.message : tr.adminMessages.sendError);
     } finally {
       setEmailSending(false);
     }
@@ -1175,7 +1177,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
   }
 
   async function deleteFeedback(id: number) {
-    if (!confirm('Удалить это сообщение?')) return;
+    if (!confirm(tr.admin.confirmDeleteFeedback)) return;
     await fetch(`${BACKEND_URL}/api/admin/feedback/${id}`, {
       method: 'DELETE',
       headers: authHeaders(),
@@ -1572,13 +1574,13 @@ const [practiceQPage, setPracticeQPage] = useState(1);
             onClick={() => setArea('admin')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${area === 'admin' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
-            Администрирование
+            {tr.admin.title}
           </button>
           <button
             onClick={() => setArea('content')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${area === 'content' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
           >
-            Контент
+            {tr.admin.tabContent}
           </button>
         </div>
 
@@ -1607,7 +1609,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               onClick={() => setAdminTab('feedback')}
               className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${adminTab === 'feedback' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
-              Обратная связь
+              {tr.admin.tabFeedback}
               {feedbackList.length > 0 && (
                 <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 text-[10px] font-bold bg-gray-500 text-white rounded-full">{feedbackList.length}</span>
               )}
@@ -1616,7 +1618,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               onClick={() => { setAdminTab('messages'); if (!messagesLoaded) loadMessages(); }}
               className={`relative px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${adminTab === 'messages' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
-              Письма
+              {tr.admin.tabMessagesNav}
               {messages.filter((m) => m.status === 'draft').length > 0 && (
                 <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 text-[10px] font-bold bg-red-500 text-white rounded-full">
                   {messages.filter((m) => m.status === 'draft').length}
@@ -1639,13 +1641,13 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               onClick={() => setContentTab('vocabularies')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'vocabularies' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
-              Слова
+              {tr.admin.tabVocabulariesNav}
             </button>
             <button
               onClick={() => router.push('/dashboard/admin/grammar')}
               className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:text-gray-900"
             >
-              Грамматика
+              {tr.admin.tabGrammarNav}
             </button>
 <button
               onClick={() => { setContentTab('practice'); if (!categoriesLoaded) loadPracticeCategories(); if (!constitutionLoaded) loadConstitutionQuestions(); }}
@@ -1663,13 +1665,13 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               onClick={() => { setContentTab('settings'); if (!cefrLoaded) loadCefrThresholds(); if (!autoSend) loadAutoSend(); if (!top5Loaded) loadTop5(); }}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'settings' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
-              Настройки
+              {tr.admin.tabSettingsNav}
             </button>
             <button
               onClick={() => { setContentTab('phrases'); if (!phraseProgramsLoaded) loadPhrasePrograms(); }}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${contentTab === 'phrases' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
             >
-              Фразы
+              {tr.admin.tabPhrasesNav}
             </button>
           </div>
         )}
@@ -1680,7 +1682,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
           <div className="flex flex-wrap gap-2 items-center">
             <input
               type="text"
-              placeholder="Поиск по имени или email..."
+              placeholder={tr.admin.searchPlaceholder}
               value={userSearch}
               onChange={(e) => { setUserSearch(e.target.value); setUsersPage(1); }}
               className="w-full max-w-sm bg-white border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:border-gray-600"
@@ -1692,7 +1694,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   onClick={() => { setUserActivityFilter(f); setUsersPage(1); setSelectedUserIds(new Set()); }}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${userActivityFilter === f ? (f === 'deletion' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-900') : 'text-gray-400 hover:text-gray-900'}`}
                 >
-                  {f === 'all' ? 'Все' : f === 'active' ? 'Активные' : f === 'inactive' ? 'Неактивные' : '☠️ Удаление'}
+                  {f === 'all' ? tr.admin.filterAllUsers : f === 'active' ? tr.admin.filterActiveUsers : f === 'inactive' ? tr.admin.filterInactiveUsers : tr.admin.filterDeletionUsers}
                 </button>
               ))}
             </div>
@@ -1704,13 +1706,13 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 disabled={saving}
                 className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
-                ☠️ Удалить выбранных ({selectedUserIds.size})
+                {tr.admin.bulkDeleteSelected.replace('{n}', String(selectedUserIds.size))}
               </button>
               <button
                 onClick={() => setSelectedUserIds(new Set())}
                 className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
               >
-                Снять выбор
+                {tr.admin.clearSelection}
               </button>
             </div>
           )}
@@ -1736,7 +1738,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   <th className="px-4 py-3 font-medium">{tr.admin.colPlan}</th>
                   <th className="px-4 py-3 font-medium hidden sm:table-cell">{tr.admin.colPremiumUntil}</th>
                   <th className="px-4 py-3 font-medium hidden sm:table-cell">{tr.admin.colSessionsToday}</th>
-                  <th className="px-4 py-3 font-medium hidden lg:table-cell">Последний вход</th>
+                  <th className="px-4 py-3 font-medium hidden lg:table-cell">{tr.admin.colLastLogin}</th>
                   <th className="px-4 py-3 font-medium">{tr.admin.colAction}</th>
                 </tr>
               </thead>
@@ -1765,19 +1767,19 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       {u.deletion_warning && u.deletion_due && (
                         <p className="text-orange-600 text-xs mt-0.5 flex items-center gap-1 font-medium">
                           <span className="text-base leading-none">☠️</span>
-                          удаление {new Date(u.deletion_due).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                          {tr.admin.deletionDuePrefix} {new Date(u.deletion_due).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
                         </p>
                       )}
                       {!u.deletion_warning && u.inactive_flag && u.inactive_since && (
                         <p className="text-red-500 text-xs mt-0.5 flex items-center gap-1">
                           <span className="inline-block w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
-                          не входил с {new Date(u.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {tr.admin.inactiveSincePrefix} {new Date(u.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}
                       {u.notice_sent_at && (
                         <p className="text-blue-500 text-xs mt-0.5 flex items-center gap-1">
                           <span>✉</span>
-                          уведомление {new Date(u.notice_sent_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {tr.admin.noticeSentPrefix} {new Date(u.notice_sent_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}
                     </td>
@@ -1787,7 +1789,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       ) : u.is_admin ? (
                         <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.adminBadge}</span>
                       ) : u.is_redactor ? (
-                        <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-gray-900 rounded-full px-2 py-0.5">Редактор</span>
+                        <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.editorBadge}</span>
                       ) : u.premium_active ? (
                         <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.premium}</span>
                       ) : (
@@ -1846,7 +1848,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           {isSuperadmin && u.email_consent && (
                             <button
                               onClick={() => { setEmailUserId(u.id); setEmailUserName(u.name); setEmailSubject(''); setEmailBody(''); setEmailError(''); setEmailSuccess(false); }}
-                              title="Отправить письмо"
+                              title={tr.admin.sendEmailTitle}
                               className="text-xs px-2 py-1.5 text-blue-600 hover:text-blue-800 border border-gray-900 hover:border-gray-900 rounded-lg transition-colors"
                             >
                               ✉
@@ -1855,12 +1857,12 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           <ActionMenu
                             items={[
                               {
-                                label: 'Прогресс',
+                                label: tr.admin.progressActionLabel,
                                 onClick: () => { setProgressUserId(u.id); setProgressUserName(u.name); },
                               },
                               ...(!u.is_superadmin ? [
                                 {
-                                  label: u.is_redactor ? 'Убрать редактора' : 'Сделать редактором',
+                                  label: u.is_redactor ? tr.admin.removeEditor : tr.admin.makeEditor,
                                   onClick: () => applyRedactor(u.id, !u.is_redactor),
                                 },
                               ] : []),
@@ -1870,7 +1872,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   onClick: () => applyAdmin(u.id, !u.is_admin),
                                 },
                                 {
-                                  label: 'Удалить',
+                                  label: tr.admin.delete,
                                   danger: true,
                                   onClick: () => deleteUser(u.id, u.name),
                                 },
@@ -1900,7 +1902,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   onClick={() => { setReportFilter(f); setReportsPage(1); }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${reportFilter === f ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
                 >
-                  {f === 'open' ? 'Открытые' : f === 'onhold' ? 'На паузе' : f === 'resolved' ? 'Решённые' : 'Все'}
+                  {f === 'open' ? tr.admin.reportFilterOpen : f === 'onhold' ? tr.admin.reportFilterOnHold : f === 'resolved' ? tr.admin.reportFilterResolved : tr.admin.reportFilterAll}
                   {f === 'open' && openReports > 0 && (
                     <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full">{openReports}</span>
                   )}
@@ -1996,7 +1998,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         {area === 'admin' && adminTab === 'feedback' && (
           <div className="flex flex-col gap-3">
             {feedbackList.length === 0 ? (
-              <p className="text-gray-400 text-sm">Сообщений пока нет.</p>
+              <p className="text-gray-400 text-sm">{tr.admin.noFeedback}</p>
             ) : (
               <>
                 {feedbackList.slice((feedbackPage - 1) * PAGE_SIZE, feedbackPage * PAGE_SIZE).map((f) => (
@@ -2028,9 +2030,9 @@ const [practiceQPage, setPracticeQPage] = useState(1);
             {/* Sub-tab navigation */}
             <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
               {([
-                { key: 'dismissal', label: 'Отчисление' },
-                { key: 'rewards', label: '🏆 Награды' },
-                { key: 'notices', label: '🔔 Уведомления' },
+                { key: 'dismissal', label: tr.adminMessages.tabDismissal },
+                { key: 'rewards', label: tr.adminMessages.tabRewards },
+                { key: 'notices', label: tr.adminMessages.tabNotices },
               ] as const).map(({ key, label }) => (
                 <button
                   key={key}
@@ -2050,14 +2052,14 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <p className="text-sm text-gray-500">
-                    Письма автоматически генерируются для пользователей, не входивших 30+ дней.
+                    {tr.adminMessages.dismissalAutoInfo}
                   </p>
                   <button
                     onClick={handleGenerateMessages}
                     disabled={msgGenerating}
                     className="text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
                   >
-                    {msgGenerating ? 'Генерация...' : '↻ Сгенерировать сейчас'}
+                    {msgGenerating ? tr.adminMessages.generating : tr.adminMessages.generateNow}
                   </button>
                 </div>
                 {msgError && <p className="text-red-500 text-sm">{msgError}</p>}
@@ -2077,27 +2079,27 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         }
                       }}
                     >
-                      <span>✏️ Редактировать шаблоны писем</span>
+                      <span>{tr.adminMessages.editTemplatesToggle}</span>
                       <span className="text-gray-400 text-xs">{templateEditing ? '▲' : '▼'}</span>
                     </summary>
                     {templateEditing && templateDraft && (
                       <div className="px-4 pb-4 flex flex-col gap-5 border-t border-gray-200 pt-4">
                         <p className="text-xs text-gray-400">
-                          Используйте <code className="bg-gray-100 px-1 rounded">{'{{name}}'}</code> для имени пользователя и{' '}
-                          <code className="bg-gray-100 px-1 rounded">{'{{days}}'}</code> для количества дней неактивности.
+                          {tr.adminMessages.templateVarsIntro} <code className="bg-gray-100 px-1 rounded">{'{{name}}'}</code> {tr.adminMessages.templateVarsNameConnector}{' '}
+                          <code className="bg-gray-100 px-1 rounded">{'{{days}}'}</code> {tr.adminMessages.templateVarsDaysConnector}
                         </p>
                         {(['ru', 'en'] as const).map((lang) => (
                           <div key={lang} className="flex flex-col gap-2">
                             <h4 className="font-headline text-xs font-bold text-gray-500 uppercase tracking-wide">
                               {lang === 'ru' ? 'Русский шаблон' : 'English template'}
                             </h4>
-                            <label className="text-xs text-gray-500">Тема / Subject</label>
+                            <label className="text-xs text-gray-500">{tr.adminMessages.subjectLabel}</label>
                             <input
                               value={templateDraft[lang].subject}
                               onChange={(e) => setTemplateDraft((d) => d ? { ...d, [lang]: { ...d[lang], subject: e.target.value } } : d)}
                               className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600"
                             />
-                            <label className="text-xs text-gray-500">Текст / Body</label>
+                            <label className="text-xs text-gray-500">{tr.adminMessages.bodyLabel}</label>
                             <textarea
                               value={templateDraft[lang].body}
                               onChange={(e) => setTemplateDraft((d) => d ? { ...d, [lang]: { ...d[lang], body: e.target.value } } : d)}
@@ -2112,13 +2114,13 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                             disabled={templateSaving}
                             className="text-sm px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
                           >
-                            {templateSaving ? 'Сохранение...' : 'Сохранить шаблоны'}
+                            {templateSaving ? tr.adminMessages.savingEllipsis : tr.adminMessages.saveTemplates}
                           </button>
                           <button
                             onClick={() => setTemplateEditing(false)}
                             className="text-sm px-3 py-2 text-gray-400 hover:text-gray-900 transition-colors"
                           >
-                            Отмена
+                            {tr.admin.cancel}
                           </button>
                           {templateMsg && <span className="text-xs text-emerald-600 font-medium">{templateMsg}</span>}
                         </div>
@@ -2135,11 +2137,11 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   return (
                     <>
                       {drafts.length === 0 && sent.length === 0 && (
-                        <p className="text-gray-400 text-sm">Нет подготовленных писем.</p>
+                        <p className="text-gray-400 text-sm">{tr.adminMessages.noPreparedMessages}</p>
                       )}
                       {drafts.length > 0 && (
                         <div className="flex flex-col gap-3">
-                          <h3 className="font-headline text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
+                          <h3 className="font-headline text-sm font-semibold text-gray-900">{tr.adminMessages.draftsCount.replace('{n}', String(drafts.length))}</h3>
                           {drafts.map((msg) => (
                             <div key={msg.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-3 bg-white">
                               <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -2149,7 +2151,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   {msg.inactive_since && (
                                     <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1">
                                       <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
-                                      не входил с {new Date(msg.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                      {tr.admin.inactiveSincePrefix} {new Date(msg.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </p>
                                   )}
                                 </div>
@@ -2179,30 +2181,30 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                     value={msgDraft.subject}
                                     onChange={(e) => setMsgDraft((d) => ({ ...d, subject: e.target.value }))}
                                     className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600"
-                                    placeholder="Тема письма"
+                                    placeholder={tr.adminMessages.subjectPlaceholder}
                                   />
                                   <textarea
                                     value={msgDraft.body}
                                     onChange={(e) => setMsgDraft((d) => ({ ...d, body: e.target.value }))}
                                     rows={6}
                                     className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-600 resize-y"
-                                    placeholder="Текст письма"
+                                    placeholder={tr.adminMessages.bodyPlaceholder}
                                   />
                                   <div className="flex gap-2">
-                                    <button onClick={() => handleSaveMsgEdit(msg.id)} className="text-xs px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">Сохранить</button>
-                                    <button onClick={() => setEditingMsg(null)} className="text-xs px-3 py-1.5 text-gray-400 hover:text-gray-900 transition-colors">Отмена</button>
+                                    <button onClick={() => handleSaveMsgEdit(msg.id)} className="text-xs px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">{tr.admin.save}</button>
+                                    <button onClick={() => setEditingMsg(null)} className="text-xs px-3 py-1.5 text-gray-400 hover:text-gray-900 transition-colors">{tr.admin.cancel}</button>
                                   </div>
                                 </div>
                               ) : (
                                 <div className="flex flex-col gap-1">
-                                  <p className="text-xs font-semibold text-gray-500">Тема: <span className="text-gray-900 font-normal">{msg.subject}</span></p>
+                                  <p className="text-xs font-semibold text-gray-500">{tr.adminMessages.subjectPrefix} <span className="text-gray-900 font-normal">{msg.subject}</span></p>
                                   <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans bg-gray-50 rounded-xl p-3 border border-gray-200">{msg.body}</pre>
                                 </div>
                               )}
                               <div className="flex items-center gap-2 flex-wrap">
-                                <button onClick={() => { setEditingMsg(msg); setMsgDraft({ subject: msg.subject, body: msg.body }); }} className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg hover:bg-gray-50 transition-colors">Редактировать</button>
-                                <button onClick={() => handleSendMessage(msg)} disabled={msgSending === msg.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium">{msgSending === msg.id ? 'Отправка...' : '✉ Отправить'}</button>
-                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 rounded-lg transition-colors">Удалить</button>
+                                <button onClick={() => { setEditingMsg(msg); setMsgDraft({ subject: msg.subject, body: msg.body }); }} className="text-xs px-3 py-1.5 border border-gray-900 rounded-lg hover:bg-gray-50 transition-colors">{tr.admin.edit}</button>
+                                <button onClick={() => handleSendMessage(msg)} disabled={msgSending === msg.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium">{msgSending === msg.id ? tr.adminMessages.sending : tr.adminMessages.sendBtn}</button>
+                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 rounded-lg transition-colors">{tr.admin.delete}</button>
                               </div>
                             </div>
                           ))}
@@ -2210,7 +2212,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       )}
                       {sent.length > 0 && (
                         <details className="mt-2">
-                          <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">Отправленные ({sent.length})</summary>
+                          <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">{tr.adminMessages.sentCount.replace('{n}', String(sent.length))}</summary>
                           <div className="flex flex-col gap-2 mt-3">
                             {sent.map((msg) => (
                               <div key={msg.id} className="border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap bg-gray-50">
@@ -2219,19 +2221,19 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   <p className="text-xs text-gray-400">{msg.subject}</p>
                                   {msg.sent_at && (
                                     <p className="text-xs text-gray-400">
-                                      Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}
+                                      {tr.adminMessages.sentAtPrefix} {new Date(msg.sent_at).toLocaleString('ru-RU')}
                                       {(() => {
                                         const daysAgo = Math.floor((Date.now() - new Date(msg.sent_at).getTime()) / 86400000);
                                         const dueDate = new Date(new Date(msg.sent_at).getTime() + 7 * 86400000);
-                                        if (daysAgo >= 7) return <span className="ml-2 text-orange-600 font-medium">☠️ срок истёк {dueDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>;
-                                        if (daysAgo >= 5) return <span className="ml-2 text-orange-500 font-medium">⚠️ осталось {7 - daysAgo} дн.</span>;
+                                        if (daysAgo >= 7) return <span className="ml-2 text-orange-600 font-medium">{tr.adminMessages.expiredPrefix} {dueDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>;
+                                        if (daysAgo >= 5) return <span className="ml-2 text-orange-500 font-medium">{tr.adminMessages.daysLeftSuffix.replace('{n}', String(7 - daysAgo))}</span>;
                                         return null;
                                       })()}
                                     </p>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? 'отправлено' : 'ошибка'}</span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? tr.adminMessages.statusSent : tr.adminMessages.statusError}</span>
                                   <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">✕</button>
                                 </div>
                               </div>
@@ -2250,14 +2252,14 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <p className="text-sm text-gray-500">
-                    Топ-3 пользователя прошлой недели{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} получают 1 неделю Premium при отправке письма.
+                    {tr.adminMessages.rewardsInfoPrefix}{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} {tr.adminMessages.rewardsInfoSuffix}
                   </p>
                   <button
                     onClick={handleGenerateRewards}
                     disabled={rewardsGenerating}
                     className="text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
                   >
-                    {rewardsGenerating ? 'Генерация...' : '↻ Сгенерировать письма'}
+                    {rewardsGenerating ? tr.adminMessages.generating : tr.adminMessages.generateRewardsBtn}
                   </button>
                 </div>
                 {rewardsError && <p className="text-amber-600 text-sm">{rewardsError}</p>}
@@ -2265,9 +2267,9 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 {/* Current week top 3 */}
                 {top5Loaded && (
                   <div className="flex flex-col gap-2">
-                    <h3 className="font-headline text-sm font-semibold text-gray-900">Рейтинг прошлой недели{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} — топ-3</h3>
+                    <h3 className="font-headline text-sm font-semibold text-gray-900">{tr.adminMessages.rankingTitlePrefix}{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} {tr.adminMessages.rankingTitleSuffix}</h3>
                     {top5Users.filter((u) => u.rank <= 3).length === 0 ? (
-                      <p className="text-gray-400 text-sm">Нет активных пользователей на прошлой неделе.</p>
+                      <p className="text-gray-400 text-sm">{tr.adminMessages.noActiveUsersLastWeek}</p>
                     ) : (
                       top5Users.filter((u) => u.rank <= 3).map((u) => (
                         <div key={u.id} className="border border-gray-200 rounded-2xl p-3 flex items-center gap-3 bg-gray-50">
@@ -2278,7 +2280,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-bold text-gray-900">{u.score} pts</p>
-                            <p className="text-xs text-gray-400">{u.is_premium ? '✓ Premium' : 'Базовый'}</p>
+                            <p className="text-xs text-gray-400">{u.is_premium ? '✓ Premium' : tr.adminMessages.basicPlanLabel}</p>
                           </div>
                         </div>
                       ))
@@ -2291,28 +2293,28 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   const rewardMsgs = messages.filter((m) => m.message_type === 'reward');
                   const drafts = rewardMsgs.filter((m) => m.status === 'draft');
                   const sent = rewardMsgs.filter((m) => m.status !== 'draft');
-                  if (rewardMsgs.length === 0) return <p className="text-gray-400 text-sm">Нет наградных писем. Нажмите «Сгенерировать письма».</p>;
+                  if (rewardMsgs.length === 0) return <p className="text-gray-400 text-sm">{tr.adminMessages.noRewardMessages}</p>;
                   return (
                     <>
                       {drafts.length > 0 && (
                         <div className="flex flex-col gap-3">
-                          <h3 className="font-headline text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
+                          <h3 className="font-headline text-sm font-semibold text-gray-900">{tr.adminMessages.draftsCount.replace('{n}', String(drafts.length))}</h3>
                           {drafts.map((msg) => (
                             <div key={msg.id} className="border border-emerald-200 rounded-2xl p-4 flex flex-col gap-3 bg-emerald-50">
                               <div className="flex items-center justify-between gap-2">
                                 <div>
                                   <p className="font-medium text-gray-900 text-sm">{msg.user_name}</p>
                                   <p className="text-xs text-gray-500">{msg.user_email}</p>
-                                  <p className="text-xs text-emerald-700 font-medium mt-0.5">+7 дней Premium при отправке</p>
+                                  <p className="text-xs text-emerald-700 font-medium mt-0.5">{tr.adminMessages.rewardBonusNote}</p>
                                 </div>
                               </div>
                               <div className="flex flex-col gap-1">
-                                <p className="text-xs font-semibold text-gray-500">Тема: <span className="text-gray-900 font-normal">{msg.subject}</span></p>
+                                <p className="text-xs font-semibold text-gray-500">{tr.adminMessages.subjectPrefix} <span className="text-gray-900 font-normal">{msg.subject}</span></p>
                                 <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans bg-white rounded-xl p-3 border border-emerald-200">{msg.body}</pre>
                               </div>
                               <div className="flex items-center gap-2">
-                                <button onClick={() => handleSendMessage(msg)} disabled={msgSending === msg.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium">{msgSending === msg.id ? 'Отправка...' : '✉ Отправить + выдать Premium'}</button>
-                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-200 rounded-lg transition-colors">Удалить</button>
+                                <button onClick={() => handleSendMessage(msg)} disabled={msgSending === msg.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium">{msgSending === msg.id ? tr.adminMessages.sending : tr.adminMessages.sendAndGrantBtn}</button>
+                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-200 rounded-lg transition-colors">{tr.admin.delete}</button>
                               </div>
                             </div>
                           ))}
@@ -2320,17 +2322,17 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       )}
                       {sent.length > 0 && (
                         <details className="mt-2">
-                          <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">Отправленные ({sent.length})</summary>
+                          <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">{tr.adminMessages.sentCount.replace('{n}', String(sent.length))}</summary>
                           <div className="flex flex-col gap-2 mt-3">
                             {sent.map((msg) => (
                               <div key={msg.id} className="border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap bg-gray-50">
                                 <div>
                                   <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
                                   <p className="text-xs text-gray-400">{msg.subject}</p>
-                                  {msg.sent_at && <p className="text-xs text-gray-400">Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
+                                  {msg.sent_at && <p className="text-xs text-gray-400">{tr.adminMessages.sentAtPrefix} {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? 'отправлено' : 'ошибка'}</span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? tr.adminMessages.statusSent : tr.adminMessages.statusError}</span>
                                   <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">✕</button>
                                 </div>
                               </div>
@@ -2349,14 +2351,14 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <p className="text-sm text-gray-500">
-                    Уведомления для пользователей на 4–5 местах — мотивация войти в топ-3.
+                    {tr.adminMessages.noticesInfo}
                   </p>
                   <button
                     onClick={handleGenerateRewards}
                     disabled={rewardsGenerating}
                     className="text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
                   >
-                    {rewardsGenerating ? 'Генерация...' : '↻ Сгенерировать письма'}
+                    {rewardsGenerating ? tr.adminMessages.generating : tr.adminMessages.generateRewardsBtn}
                   </button>
                 </div>
                 {rewardsError && <p className="text-amber-600 text-sm">{rewardsError}</p>}
@@ -2366,14 +2368,14 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   const sent = noticeMsgs.filter((m) => m.status !== 'draft');
                   if (noticeMsgs.length === 0) return (
                     <p className="text-gray-400 text-sm">
-                      Нет уведомительных писем. Нажмите «Сгенерировать письма».
+                      {tr.adminMessages.noNoticeMessages}
                     </p>
                   );
                   return (
                     <>
                       {drafts.length > 0 && (
                         <div className="flex flex-col gap-3">
-                          <h3 className="font-headline text-sm font-semibold text-gray-900">Черновики ({drafts.length})</h3>
+                          <h3 className="font-headline text-sm font-semibold text-gray-900">{tr.adminMessages.draftsCount.replace('{n}', String(drafts.length))}</h3>
                           {drafts.map((msg) => (
                             <div key={msg.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-3 bg-white">
                               <div>
@@ -2381,12 +2383,12 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                 <p className="text-xs text-gray-400">{msg.user_email}</p>
                               </div>
                               <div className="flex flex-col gap-1">
-                                <p className="text-xs font-semibold text-gray-500">Тема: <span className="text-gray-900 font-normal">{msg.subject}</span></p>
+                                <p className="text-xs font-semibold text-gray-500">{tr.adminMessages.subjectPrefix} <span className="text-gray-900 font-normal">{msg.subject}</span></p>
                                 <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans bg-gray-50 rounded-xl p-3 border border-gray-200">{msg.body}</pre>
                               </div>
                               <div className="flex items-center gap-2">
-                                <button onClick={() => handleSendMessage(msg)} disabled={msgSending === msg.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium">{msgSending === msg.id ? 'Отправка...' : '✉ Отправить'}</button>
-                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 rounded-lg transition-colors">Удалить</button>
+                                <button onClick={() => handleSendMessage(msg)} disabled={msgSending === msg.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 font-medium">{msgSending === msg.id ? tr.adminMessages.sending : tr.adminMessages.sendBtn}</button>
+                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs px-3 py-1.5 text-red-500 hover:text-red-600 border border-gray-900 rounded-lg transition-colors">{tr.admin.delete}</button>
                               </div>
                             </div>
                           ))}
@@ -2394,17 +2396,17 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       )}
                       {sent.length > 0 && (
                         <details className="mt-2">
-                          <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">Отправленные ({sent.length})</summary>
+                          <summary className="text-sm font-semibold text-gray-400 cursor-pointer select-none hover:text-gray-700 transition-colors">{tr.adminMessages.sentCount.replace('{n}', String(sent.length))}</summary>
                           <div className="flex flex-col gap-2 mt-3">
                             {sent.map((msg) => (
                               <div key={msg.id} className="border border-gray-200 rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap bg-gray-50">
                                 <div>
                                   <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
                                   <p className="text-xs text-gray-400">{msg.subject}</p>
-                                  {msg.sent_at && <p className="text-xs text-gray-400">Отправлено: {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
+                                  {msg.sent_at && <p className="text-xs text-gray-400">{tr.adminMessages.sentAtPrefix} {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? 'отправлено' : 'ошибка'}</span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? tr.adminMessages.statusSent : tr.adminMessages.statusError}</span>
                                   <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs text-gray-400 hover:text-red-500 transition-colors">✕</button>
                                 </div>
                               </div>
@@ -2575,7 +2577,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                               }}
                               className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
                             >
-                              <option value="">— нет —</option>
+                              <option value="">{tr.admin.contentNoLinkOption}</option>
                               {articles.filter(a => a.published).map(a => (
                                 <option key={a.slug} value={`/dashboard/articles/${a.slug}`}>{a.title_ru}</option>
                               ))}
@@ -2584,7 +2586,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                               type="text"
                               value={listDraft.article_url.startsWith('http') || (!articles.find(a => `/dashboard/articles/${a.slug}` === listDraft.article_url) && listDraft.article_url !== '') ? listDraft.article_url : ''}
                               onChange={(e) => setListDraft((d) => ({ ...d, article_url: e.target.value }))}
-                              placeholder="https://… (внешняя ссылка)"
+                              placeholder={tr.admin.contentExternalUrlPlaceholder}
                               className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full mt-1"
                             />
                           </div>
@@ -2594,7 +2596,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                               type="text"
                               value={listDraft.article_name_ru}
                               onChange={(e) => setListDraft((d) => ({ ...d, article_name_ru: e.target.value }))}
-                              placeholder="Читать статью…"
+                              placeholder={tr.admin.contentReadArticlePlaceholder}
                               className="bg-white border border-gray-900 rounded-lg px-3 py-1.5 text-sm text-gray-900 outline-none w-full"
                             />
                           </div>
@@ -2682,13 +2684,13 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                               'border-gray-300 bg-gray-50 text-gray-500'
                             }`}
                           >
-                            <option value="draft">Черновик</option>
-                            <option value="testing">Тестирование</option>
-                            <option value="published">Опубликован</option>
+                            <option value="draft">{tr.admin.statusDraftOption}</option>
+                            <option value="testing">{tr.admin.statusTestingOption}</option>
+                            <option value="published">{tr.admin.statusPublishedOption}</option>
                           </select>
                           <button
                             onClick={() => startEditSubcat(scMeta)}
-                            title="Редактировать метаданные"
+                            title={tr.admin.contentEditMetaTitle}
                             className="w-7 h-7 flex items-center justify-center rounded border border-gray-900 text-emerald-600 hover:bg-white transition-colors text-xs"
                           >
                             ✎
@@ -2804,7 +2806,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                                   />
                                                 </div>
                                                 <div className="flex flex-col gap-1">
-                                                  <label className="text-xs text-gray-400">Ударение (*слог*)</label>
+                                                  <label className="text-xs text-gray-400">{tr.admin.contentAccentLabel}</label>
                                                   <input
                                                     value={editingWord.accented}
                                                     onChange={(e) => setEditingWord((d) => d ? { ...d, accented: e.target.value } : d)}
@@ -3054,8 +3056,8 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           <input value={newTest.description_ru ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, description_ru: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                         </div>
                         <div className="sm:col-span-2 flex flex-col gap-1">
-                          <label className="text-xs text-gray-400">Текст урока (Markdown)</label>
-                          <textarea rows={6} value={newTest.lesson_text_lt ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, lesson_text_lt: e.target.value || null }))} placeholder="— Строка диалога&#10;**Говорящий:** Текст&#10;*Контекст*" className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none font-mono resize-y" />
+                          <label className="text-xs text-gray-400">{tr.adminPractice.lessonTextLabel}</label>
+                          <textarea rows={6} value={newTest.lesson_text_lt ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, lesson_text_lt: e.target.value || null }))} placeholder={tr.adminPractice.lessonTextPlaceholder} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none font-mono resize-y" />
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="flex flex-col gap-1">
@@ -3067,11 +3069,11 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                             <input type="number" step="0.05" min="0" max="1" value={newTest.pass_threshold} onChange={(e) => setNewTest((p) => ({ ...p, pass_threshold: Number(e.target.value) }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-xs text-gray-400">Статус</label>
+                            <label className="text-xs text-gray-400">{tr.adminPractice.statusLabel}</label>
                             <select value={newTest.status} onChange={(e) => setNewTest((p) => ({ ...p, status: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none">
-                              <option value="draft">Черновик</option>
-                              <option value="testing">Тестирование</option>
-                              <option value="published">Опубликован</option>
+                              <option value="draft">{tr.admin.statusDraftOption}</option>
+                              <option value="testing">{tr.admin.statusTestingOption}</option>
+                              <option value="published">{tr.admin.statusPublishedOption}</option>
                             </select>
                           </div>
                         </div>
@@ -3108,8 +3110,8 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   <input value={editingTest.description_ru ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, description_ru: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                                 </div>
                                 <div className="sm:col-span-2 flex flex-col gap-1">
-                                  <label className="text-xs text-gray-400">Текст урока (Markdown)</label>
-                                  <textarea rows={8} value={editingTest.lesson_text_lt ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, lesson_text_lt: e.target.value || null } : p)} placeholder="— Строка диалога&#10;**Говорящий:** Текст&#10;*Контекст*" className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none font-mono resize-y" />
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.lessonTextLabel}</label>
+                                  <textarea rows={8} value={editingTest.lesson_text_lt ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, lesson_text_lt: e.target.value || null } : p)} placeholder={tr.adminPractice.lessonTextPlaceholder} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none font-mono resize-y" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
                                   <div className="flex flex-col gap-1">
@@ -3124,11 +3126,11 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                               </div>
                               <div className="flex items-center gap-4 flex-wrap">
                                 <div className="flex items-center gap-2">
-                                  <label className="text-xs text-gray-400">Статус</label>
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.statusLabel}</label>
                                   <select value={editingTest.status} onChange={(e) => setEditingTest((p) => p ? { ...p, status: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs outline-none">
-                                    <option value="draft">Черновик</option>
-                                    <option value="testing">Тестирование</option>
-                                    <option value="published">Опубликован</option>
+                                    <option value="draft">{tr.admin.statusDraftOption}</option>
+                                    <option value="testing">{tr.admin.statusTestingOption}</option>
+                                    <option value="published">{tr.admin.statusPublishedOption}</option>
                                   </select>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -3150,9 +3152,9 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                 </div>
                                 {t.title_en && <p className="text-xs text-gray-400">{t.title_en}</p>}
                                 <p className="text-xs text-gray-400 mt-0.5">
-                                  {t.active_questions}/{t.total_questions} {tr.adminPractice.questionsCount} · {Math.round(t.pass_threshold * 100)}% · {t.question_count} на экзамен
-                                  {t.status === 'draft' && <span className="ml-2 text-gray-500 font-medium">· Черновик</span>}
-                                  {t.status === 'testing' && <span className="ml-2 text-amber-600 font-medium">· Тестирование</span>}
+                                  {t.active_questions}/{t.total_questions} {tr.adminPractice.questionsCount} · {Math.round(t.pass_threshold * 100)}% · {t.question_count} {tr.adminPractice.examCountSuffix}
+                                  {t.status === 'draft' && <span className="ml-2 text-gray-500 font-medium">{tr.adminPractice.statusDraftSuffix}</span>}
+                                  {t.status === 'testing' && <span className="ml-2 text-amber-600 font-medium">{tr.adminPractice.statusTestingSuffix}</span>}
                                 </p>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
@@ -3433,37 +3435,37 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         {area === 'content' && contentTab === 'phrases' && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-headline font-semibold text-gray-900">Программы фраз</h2>
+              <h2 className="font-headline font-semibold text-gray-900">{tr.adminPhrasePrograms.title}</h2>
               <button
                 onClick={() => { setAddingPhraseProgram(true); setEditingPhraseProgram(null); setPhraseProgramDraft({ title: '', title_en: '', description: '', description_en: '', difficulty: 1, is_public: true }); }}
                 className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
               >
-                + Добавить программу
+                {tr.adminPhrasePrograms.addProgram}
               </button>
             </div>
 
             {(addingPhraseProgram || editingPhraseProgram) && (
               <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4 space-y-3">
-                <h3 className="font-headline font-medium text-gray-900 text-sm">{editingPhraseProgram ? 'Редактировать программу' : 'Новая программа'}</h3>
-                <input value={phraseProgramDraft.title} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, title: e.target.value }))} placeholder="Название (RU)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
-                <input value={phraseProgramDraft.title_en} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, title_en: e.target.value }))} placeholder="Название (EN)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
-                <input value={phraseProgramDraft.description} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, description: e.target.value }))} placeholder="Описание (RU)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
-                <input value={phraseProgramDraft.description_en} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, description_en: e.target.value }))} placeholder="Описание (EN)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                <h3 className="font-headline font-medium text-gray-900 text-sm">{editingPhraseProgram ? tr.adminPhrasePrograms.editProgramTitle : tr.adminPhrasePrograms.newProgramTitle}</h3>
+                <input value={phraseProgramDraft.title} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, title: e.target.value }))} placeholder={tr.adminPhrasePrograms.namePlaceholderRu} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                <input value={phraseProgramDraft.title_en} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, title_en: e.target.value }))} placeholder={tr.adminPhrasePrograms.namePlaceholderEn} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                <input value={phraseProgramDraft.description} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, description: e.target.value }))} placeholder={tr.adminPhrasePrograms.descPlaceholderRu} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                <input value={phraseProgramDraft.description_en} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, description_en: e.target.value }))} placeholder={tr.adminPhrasePrograms.descPlaceholderEn} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
                 <div className="flex items-center gap-4">
-                  <label className="text-sm text-gray-600">Сложность:</label>
+                  <label className="text-sm text-gray-600">{tr.adminPhrasePrograms.difficultyLabel}</label>
                   {[1, 2, 3].map((d) => (
                     <button key={d} onClick={() => setPhraseProgramDraft((prev) => ({ ...prev, difficulty: d }))} className={`px-3 py-1 rounded-lg text-sm font-medium border transition-colors ${phraseProgramDraft.difficulty === d ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}>{d}</button>
                   ))}
                   <label className="flex items-center gap-2 text-sm text-gray-600 ml-4">
                     <input type="checkbox" checked={phraseProgramDraft.is_public} onChange={(e) => setPhraseProgramDraft((d) => ({ ...d, is_public: e.target.checked }))} />
-                    Публичная
+                    {tr.adminPhrasePrograms.publicLabel}
                   </label>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={savePhraseProgram} disabled={phraseProgramSaving} className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors">
-                    {phraseProgramSaving ? 'Сохранение…' : 'Сохранить'}
+                    {phraseProgramSaving ? tr.adminPhrasePrograms.savingBtn : tr.adminPhrasePrograms.saveBtn}
                   </button>
-                  <button onClick={() => { setAddingPhraseProgram(false); setEditingPhraseProgram(null); }} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">Отмена</button>
+                  <button onClick={() => { setAddingPhraseProgram(false); setEditingPhraseProgram(null); }} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">{tr.adminPhrasePrograms.cancelBtn}</button>
                 </div>
               </div>
             )}
@@ -3474,7 +3476,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   <div className="flex items-center justify-between px-4 py-3">
                     <div>
                       <span className="font-medium text-gray-900 text-sm">{prog.title}</span>
-                      <span className="ml-2 text-xs text-gray-400">{prog.phrase_count} фраз · {prog.enrolled_count} пользователей</span>
+                      <span className="ml-2 text-xs text-gray-400">{tr.adminPhrasePrograms.statsLine.replace('{phrases}', String(prog.phrase_count)).replace('{users}', String(prog.enrolled_count))}</span>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -3484,16 +3486,16 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         }}
                         className="text-xs text-gray-500 hover:text-gray-900 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
                       >
-                        {expandedPhraseProgram === prog.id ? 'Свернуть' : 'Фразы'}
+                        {expandedPhraseProgram === prog.id ? tr.adminPhrasePrograms.collapseBtn : tr.adminPhrasePrograms.phrasesBtn}
                       </button>
                       <button
                         onClick={() => { setEditingPhraseProgram(prog); setAddingPhraseProgram(false); setPhraseProgramDraft({ title: prog.title, title_en: prog.title_en ?? '', description: prog.description ?? '', description_en: prog.description_en ?? '', difficulty: prog.difficulty, is_public: prog.is_public }); }}
                         className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
                       >
-                        Редактировать
+                        {tr.adminPhrasePrograms.editBtn}
                       </button>
                       <button onClick={() => deletePhraseProgram(prog.id)} className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
-                        Удалить
+                        {tr.adminPhrasePrograms.deleteBtn}
                       </button>
                     </div>
                   </div>
@@ -3505,15 +3507,15 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           <div key={phrase.id} className="flex items-start justify-between gap-3 bg-gray-50 rounded-xl px-3 py-2">
                             {editingPhrase?.id === phrase.id ? (
                               <div className="flex-1 space-y-2">
-                                <input value={phraseDraft.text} onChange={(e) => setPhraseDraft((d) => ({ ...d, text: e.target.value }))} placeholder="Литовский текст" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
-                                <input value={phraseDraft.translation} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation: e.target.value }))} placeholder="Перевод (RU)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                                <input value={phraseDraft.text} onChange={(e) => setPhraseDraft((d) => ({ ...d, text: e.target.value }))} placeholder={tr.adminPhrasePrograms.litTextPlaceholder} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                                <input value={phraseDraft.translation} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation: e.target.value }))} placeholder={tr.adminPhrasePrograms.translationRuPlaceholder} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                                 <input value={phraseDraft.translation_en} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation_en: e.target.value }))} placeholder="Translation (EN)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
-                                <input value={phraseDraft.alt_texts} onChange={(e) => setPhraseDraft((d) => ({ ...d, alt_texts: e.target.value }))} placeholder="Альтернативные ответы (через |)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
-                                <input value={phraseDraft.chapter_title} onChange={(e) => setPhraseDraft((d) => ({ ...d, chapter_title: e.target.value }))} placeholder="Глава (RU)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                                <input value={phraseDraft.alt_texts} onChange={(e) => setPhraseDraft((d) => ({ ...d, alt_texts: e.target.value }))} placeholder={tr.adminPhrasePrograms.altTextsPlaceholder} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                                <input value={phraseDraft.chapter_title} onChange={(e) => setPhraseDraft((d) => ({ ...d, chapter_title: e.target.value }))} placeholder={tr.adminPhrasePrograms.chapterRuPlaceholder} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                                 <input value={phraseDraft.chapter_title_en} onChange={(e) => setPhraseDraft((d) => ({ ...d, chapter_title_en: e.target.value }))} placeholder="Chapter (EN)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                                 <div className="flex gap-2">
-                                  <button onClick={() => savePhrase(prog.id)} disabled={phraseSaving} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium disabled:opacity-50">Сохранить</button>
-                                  <button onClick={() => setEditingPhrase(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">Отмена</button>
+                                  <button onClick={() => savePhrase(prog.id)} disabled={phraseSaving} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium disabled:opacity-50">{tr.adminPhrasePrograms.saveBtn}</button>
+                                  <button onClick={() => setEditingPhrase(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">{tr.adminPhrasePrograms.cancelBtn}</button>
                                 </div>
                               </div>
                             ) : (
@@ -3534,20 +3536,20 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
                       {addingPhrase === prog.id ? (
                         <div className="bg-gray-50 rounded-xl px-3 py-2 space-y-2">
-                          <input value={phraseDraft.text} onChange={(e) => setPhraseDraft((d) => ({ ...d, text: e.target.value }))} placeholder="Литовский текст" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
-                          <input value={phraseDraft.translation} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation: e.target.value }))} placeholder="Перевод (RU)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                          <input value={phraseDraft.text} onChange={(e) => setPhraseDraft((d) => ({ ...d, text: e.target.value }))} placeholder={tr.adminPhrasePrograms.litTextPlaceholder} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                          <input value={phraseDraft.translation} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation: e.target.value }))} placeholder={tr.adminPhrasePrograms.translationRuPlaceholder} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                           <input value={phraseDraft.translation_en} onChange={(e) => setPhraseDraft((d) => ({ ...d, translation_en: e.target.value }))} placeholder="Translation (EN)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
-                          <input value={phraseDraft.alt_texts} onChange={(e) => setPhraseDraft((d) => ({ ...d, alt_texts: e.target.value }))} placeholder="Альтернативные ответы (через |)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
-                          <input value={phraseDraft.chapter_title} onChange={(e) => setPhraseDraft((d) => ({ ...d, chapter_title: e.target.value }))} placeholder="Глава (RU)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                          <input value={phraseDraft.alt_texts} onChange={(e) => setPhraseDraft((d) => ({ ...d, alt_texts: e.target.value }))} placeholder={tr.adminPhrasePrograms.altTextsPlaceholder} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
+                          <input value={phraseDraft.chapter_title} onChange={(e) => setPhraseDraft((d) => ({ ...d, chapter_title: e.target.value }))} placeholder={tr.adminPhrasePrograms.chapterRuPlaceholder} className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                           <input value={phraseDraft.chapter_title_en} onChange={(e) => setPhraseDraft((d) => ({ ...d, chapter_title_en: e.target.value }))} placeholder="Chapter (EN)" className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500" />
                           <div className="flex gap-2">
-                            <button onClick={() => savePhrase(prog.id)} disabled={phraseSaving} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium disabled:opacity-50">Добавить</button>
-                            <button onClick={() => setAddingPhrase(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">Отмена</button>
+                            <button onClick={() => savePhrase(prog.id)} disabled={phraseSaving} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium disabled:opacity-50">{tr.adminPhrasePrograms.addBtnShort}</button>
+                            <button onClick={() => setAddingPhrase(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">{tr.adminPhrasePrograms.cancelBtn}</button>
                           </div>
                         </div>
                       ) : (
                         <button onClick={() => { setAddingPhrase(prog.id); setPhraseDraft({ text: '', translation: '', translation_en: '', alt_texts: '', position: (phrasesMap[prog.id]?.length ?? 0), chapter_title: '', chapter_title_en: '' }); }} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">
-                          + Добавить фразу
+                          {tr.adminPhrasePrograms.addPhraseBtn}
                         </button>
                       )}
                     </div>
@@ -3555,7 +3557,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 </div>
               ))}
               {phraseProgramsLoaded && phrasePrograms.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-6">Нет программ фраз.</p>
+                <p className="text-sm text-gray-400 text-center py-6">{tr.adminPhrasePrograms.noPrograms}</p>
               )}
             </div>
           </div>
@@ -3565,8 +3567,8 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         {area === 'content' && contentTab === 'settings' && (
           <div className="flex flex-col gap-10">
             <div>
-              <h2 className="font-headline font-semibold text-gray-900 mb-1">CEFR уровни — пороговые значения слов</h2>
-              <p className="text-sm text-gray-500 mb-4">Количество выученных слов, необходимое для достижения каждого уровня.</p>
+              <h2 className="font-headline font-semibold text-gray-900 mb-1">{tr.adminSettings.cefrTitle}</h2>
+              <p className="text-sm text-gray-500 mb-4">{tr.adminSettings.cefrSubtitle}</p>
               {cefrLoaded && (
                 <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
                   {cefrThresholds.map((row) => (
@@ -3581,7 +3583,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         )}
                         className="w-32 border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-emerald-500"
                       />
-                      <span className="text-xs text-gray-400">слов</span>
+                      <span className="text-xs text-gray-400">{tr.adminSettings.wordsUnit}</span>
                     </div>
                   ))}
                 </div>
@@ -3592,20 +3594,20 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   disabled={cefrSaving || !cefrLoaded}
                   className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
                 >
-                  {cefrSaving ? 'Сохранение…' : 'Сохранить'}
+                  {cefrSaving ? tr.adminSettings.savingEllipsis : tr.adminSettings.save}
                 </button>
                 {cefrMsg && <span className="text-sm text-emerald-600">{cefrMsg}</span>}
               </div>
             </div>
 
             <div>
-              <h2 className="font-headline font-semibold text-gray-900 mb-1">Автоматическая рассылка</h2>
-              <p className="text-sm text-gray-500 mb-4">Управление автоматической отправкой писем по расписанию.</p>
+              <h2 className="font-headline font-semibold text-gray-900 mb-1">{tr.adminSettings.autoSendTitle}</h2>
+              <p className="text-sm text-gray-500 mb-4">{tr.adminSettings.autoSendSubtitle}</p>
               {autoSend ? (
                 <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
                   {([
-                    { key: 'auto_send_inactive_emails' as const, label: 'Письма неактивным пользователям', desc: 'Ежедневно в 09:00 UTC — пользователи без активности 30+ дней' },
-                    { key: 'auto_send_weekly_rewards' as const, label: 'Награды и уведомления лидерборда', desc: `По понедельникам в 10:00 UTC — топ-3 прошлой недели${top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} получают Premium, топ 4–5 получают уведомление` },
+                    { key: 'auto_send_inactive_emails' as const, label: tr.adminSettings.autoSendInactiveLabel, desc: tr.adminSettings.autoSendInactiveDesc },
+                    { key: 'auto_send_weekly_rewards' as const, label: tr.adminSettings.autoSendRewardsLabel, desc: `${tr.adminSettings.autoSendRewardsDescPrefix}${top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} ${tr.adminSettings.autoSendRewardsDescSuffix}` },
                   ] as const).map(({ key, label, desc }) => (
                     <div key={key} className="flex items-center justify-between gap-4 px-4 py-3">
                       <div>
@@ -3624,7 +3626,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-400 mb-4">Загрузка…</p>
+                <p className="text-sm text-gray-400 mb-4">{tr.adminSettings.loadingEllipsis}</p>
               )}
               <div className="flex items-center gap-3">
                 <button
@@ -3632,7 +3634,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   disabled={autoSendSaving || !autoSend}
                   className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
                 >
-                  {autoSendSaving ? 'Сохранение…' : 'Сохранить'}
+                  {autoSendSaving ? tr.adminSettings.savingEllipsis : tr.adminSettings.save}
                 </button>
                 {autoSendMsg && <span className="text-sm text-emerald-600">{autoSendMsg}</span>}
               </div>
@@ -3640,15 +3642,15 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
             {/* Welcome screen content is edited via the articles admin editor (slug: "welcome") */}
             <div>
-              <h2 className="font-headline font-semibold text-gray-900 mb-1">Приветственный экран</h2>
+              <h2 className="font-headline font-semibold text-gray-900 mb-1">{tr.adminSettings.welcomeTitle}</h2>
               <p className="text-sm text-gray-500 mb-2">
-                Текст, который видит пользователь при первом входе. Редактируется как статья со слагом <code className="bg-gray-100 px-1 rounded text-xs">welcome</code>.
+                {tr.adminSettings.welcomeDesc} <code className="bg-gray-100 px-1 rounded text-xs">welcome</code>.
               </p>
               <a
                 href="/dashboard/admin/articles"
                 className="inline-flex items-center gap-1.5 text-sm text-emerald-700 hover:underline"
               >
-                Открыть редактор статей →
+                {tr.adminSettings.openArticleEditorLink}
               </a>
             </div>
           </div>
@@ -3668,36 +3670,36 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     {emailUserId && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
         <div className="bg-white border border-gray-900 rounded-2xl p-6 w-full max-w-md flex flex-col gap-4">
-          <h2 className="font-headline text-base font-semibold text-gray-900">Письмо пользователю: {emailUserName}</h2>
+          <h2 className="font-headline text-base font-semibold text-gray-900">{tr.admin.emailModalTitle.replace('{name}', emailUserName)}</h2>
           <input
             type="text"
-            placeholder="Тема письма"
+            placeholder={tr.admin.emailSubjectPlaceholder}
             value={emailSubject}
             onChange={(e) => setEmailSubject(e.target.value)}
             className="w-full border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none focus:border-gray-600"
           />
           <textarea
-            placeholder="Текст письма"
+            placeholder={tr.admin.emailBodyPlaceholder}
             value={emailBody}
             onChange={(e) => setEmailBody(e.target.value)}
             rows={6}
             className="w-full border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none focus:border-gray-600 resize-none"
           />
           {emailError && <p className="text-red-600 text-sm">{emailError}</p>}
-          {emailSuccess && <p className="text-emerald-600 text-sm font-medium">Письмо отправлено</p>}
+          {emailSuccess && <p className="text-emerald-600 text-sm font-medium">{tr.admin.emailSentSuccess}</p>}
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => { setEmailUserId(null); setEmailUserName(''); setEmailSubject(''); setEmailBody(''); setEmailError(''); }}
               className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
             >
-              Отмена
+              {tr.admin.cancel}
             </button>
             <button
               onClick={handleSendEmail}
               disabled={emailSending || !emailSubject.trim() || !emailBody.trim()}
               className="px-4 py-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-xl text-sm font-medium text-white transition-colors"
             >
-              {emailSending ? '...' : 'Отправить'}
+              {emailSending ? '...' : tr.admin.emailSendBtn}
             </button>
           </div>
         </div>

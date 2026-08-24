@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 // Single word with a diacritic — allows us to test both wrong answer and near-miss
 const SINGLE_WORD = [
@@ -30,7 +30,7 @@ test.describe('Mistake diff — stage 3', () => {
    * Helper: navigate to the study page and advance past stage 1 using quality=5 ("Легко").
    * With one word and quality=5, the word is queued directly at stage 3, skipping stage 2.
    */
-  async function reachStage3(page: Parameters<Parameters<typeof test>[1]>[0]) {
+  async function reachStage3(page: Page) {
     await page.goto('/dashboard/lists/_/study');
     // Stage 1 flashcard — click "Легко" (quality=5) to go straight to stage 3
     await page.waitForSelector('button:has-text("Легко")', { timeout: 5000 });

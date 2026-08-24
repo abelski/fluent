@@ -152,3 +152,100 @@ Two caveats when using the audit:
 A corollary worth remembering: fixing a rule card can *require* fixing sentence rows in the same
 pass. Correcting the instrumental card to say `sesuo→seserimi` while row 126 still graded `seseria`
 would have made the contradiction worse, not better — so both move together.
+
+### Second invariant: rule-card examples must not equal an answer (found during #159)
+
+Separate from ending-coverage above: a rule card's illustrative examples (the words in
+parentheses, e.g. `sūnus→sūnui`) must not be words that are themselves the graded answer to one
+of that *same case's* exercise sentences. `grammar_service.py::get_lessons()` bundles one rule
+card with every sentence for that case, and shows it statically for the whole lesson — so if the
+card's example word matches an exercise word, the student can read the answer straight off the
+card instead of applying the pattern, defeating the exercise.
+
+This was caught only after #159 shipped, from user feedback right after the fix: the first draft
+of the case 3/7 fix reused `sūnus`, `profesorius`, and `duktė` as examples — all three are also
+graded answers in those same two lessons, and `duktė→dukterie` was the exact answer to sentence
+198, the row the fix itself had just corrected. Fixed by swapping to words present in
+`words.txt` but absent from either lesson's exercise pool (`turgus`, `vaisius`, `vanduo`, `namas`,
+`maišelis`, `knyga`, `gatvė` — cross-checked with a script comparing each case's rule-card tokens
+against `grammar_sentence.full_word` for that case).
+
+**Known debt — the same leak still exists, unfixed, in 9 other cases** (found by the same
+cross-check, not yet acted on — out of scope for #159, no tracking issue filed yet):
+
+| Case | Name | Leaking example word(s) |
+| --- | --- | --- |
+| 2 | Родительный (Kilmininkas) | `brolio` |
+| 5 | Творительный (Įnagininkas) | `sūnumi`, `profesoriumi`, `seserimi`, `dukterimi` |
+| 6 | Местный (Vietininkas) | `name`, `kambaryje`, `muziejuje`, `gatvėje` |
+| 8 | Именительный мн.ч. | `broliai`, `knygos`, `muziejai` |
+| 9 | Родительный мн.ч. | `namų`, `brolių`, `knygų` |
+| 10 | Дательный мн.ч. | `broliams`, `sūnums` |
+| 11 | Винительный мн.ч. | `brolius`, `knygas`, `sūnus` |
+| 12 | Творительный мн.ч. | `broliais`, `knygomis`, `sūnumis` |
+| 13 | Местный мн.ч. | `namuose`, `gatvėse` |
+
+Note case 5 is #158's own fix — the ending-coverage invariant above was satisfied, but this
+second invariant wasn't checked at the time. `knyga`, `namas`, and `gatvė` are otherwise-safe
+placeholder nouns used correctly elsewhere in the rule set (e.g. `name`/`gatvė` are the swap-in
+examples used for case 7 above) — they only leak in the specific cases listed, where that case's
+own exercise pool happens to include them.
+
+## Issue #52 ("placeholder shows 3 underscores, answer is shorter") is stale — do not "fix" it
+
+Filed 2026-04-15 against a UI that no longer exists. The `display` column has always stored
+exactly `___` (3 literal underscores) regardless of `answer_ending` length, and #52's own fix plan
+proposed sizing it to `len(answer_ending)` server-side — reasonable *at the time*, when `___` was
+rendered as literal placeholder text.
+
+**That is no longer how the sentence task renders.** `InlineSentenceInput`
+(`frontend/app/dashboard/components/GrammarTaskRunner.tsx:104`) does
+`const [before, after] = display.split('___')` and drops an actual `<input type="text">` in
+between — no `placeholder` prop is even passed at the `type === 'sentence'` call site (line
+~429), and the input's width auto-grows from what the student *types* (a hidden mirror `<span>`
+measures `value`, `frontend/app/dashboard/components/GrammarTaskRunner.tsx:104-113`), not from
+`display`. The literal `___` is now purely an internal split marker the student never sees — the
+undercount/overcount complaint #52 describes cannot reproduce against current code, on any case,
+regardless of `answer_ending` length. This looks to have been an accidental side effect of an
+unrelated input-rendering rewrite sometime after April 2026, not a deliberate fix.
+
+**Do not implement #52's original plan** (resize `display`'s `___` run to
+`'_' * len(answer_ending)` in `_generate_sentence_tasks`). Doing so would not fix anything
+visible — and would actively break rendering: `InlineSentenceInput`'s `split('___')` hardcodes
+exactly 3 characters, so any other length makes the split fail to find the marker, `after` comes
+back `undefined`, and the sentence loses everything past the blank. If #52 is reopened, verify
+first against current `GrammarTaskRunner.tsx` before touching `grammar_service.py` — the correct
+resolution is almost certainly "close as already resolved by unrelated work," not a code change.
+
+## Practice-level full-word answers are derived, not a new invariant (plan #8)
+
+At `practice` level, `_generate_sentence_tasks()` requires the student to type the whole inflected
+word instead of just the case ending: the stem is stripped out of `display` (so the blank stands
+for the whole word, e.g. `"Laima mato brol___."` → `"Laima mato ___."`) and the served `"answer"`
+becomes `stem + answer_ending` (`"brolį"`) instead of `answer_ending` alone (`"į"`). `basic` and
+`advanced` levels are untouched — they still pre-print the stem and grade the ending only.
+
+This is a pure **derivation** at request time from the same three columns the existing
+`stem(display) + answer_ending == full_word` invariant (issue #156, top of this doc) already
+guards — it does not introduce a new invariant or a new DB column. Both `_extract_stem` (used to
+read the stem for `base_lt` resolution and the multi-word exception, see below) and the
+practice-level strip now share one compiled regex, `_STEM_BLANK_RE = re.compile(r'(\w+)___')`, so
+capture and strip can never target a different span of `display` from each other.
+
+**Cases 17–19 grade against `stem+answer_ending`, not `full_word`.** The multi-word exception
+described above (a non-inflecting numeral prefix like `"dvidešimt"` stored in `full_word` but
+outside the single-word `stem(display)` capture) matters here too: at practice level the served
+`"answer"` is still `stem + answer_ending` (e.g. `"pirmu"`), never `row.full_word`
+(`"dvidešimt pirmu"`). The numeral prefix was never part of the captured stem, so the practice-level
+strip (`_STEM_BLANK_RE.sub('___', display, count=1)`) never touches it either — it stays visible in
+`display` as ordinary sentence text before the blank (`"Važiuoju dvidešimt ___ autobusu."`).
+Grading against the longer `full_word` would wrongly force the student to retype text they never
+had to touch (and never saw removed). Covered by
+`backend/tests/test_grammar_practice_full_word.py`.
+
+The `base_lt` dictionary-form hint (`"от: brolis"`) is unconditional on level today and stays that
+way at practice level too — the exercise is testing inflection (turn a known word into the right
+case form), not vocabulary recall from bare sentence context. No frontend, DB, or admin changes
+were needed: `InlineSentenceInput` and `checkAnswer()` in `GrammarTaskRunner.tsx` were already
+fully generic over the served `display`/`answer` string content and length (proven by
+`declension`/`verb_conjugation` task types, which already require full words at every level).

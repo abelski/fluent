@@ -103,7 +103,7 @@ test.describe('Design-system parity', () => {
         .find((s) => s.getBoundingClientRect().width > 0) as SVGElement | undefined;
       if (!svg) return null;
       return {
-        pose: (svg as HTMLElement).dataset.pose,
+        pose: svg.dataset.pose,
         children: svg.children.length,
         hasFloat: !!svg.querySelector('g[style*="tak-float"]'),
         hasArmSwing: !!svg.querySelector('animateTransform'),
