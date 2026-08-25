@@ -17,11 +17,13 @@
 // (d) UI (mocked): the longer rule text renders and stays usable at 390×844.
 //
 // The IV/V-declension examples deliberately use words NOT drawn from either lesson's own
-// exercise pool (turgus/vaisius/vanduo, not sūnus/profesorius/duktė) — an earlier draft of
-// this fix reused the exercise words themselves, which let a student read the answer straight
-// off the rule card instead of applying the pattern. duktė→dukterie was the worst case: it's
-// the literal answer to sentence 198. See "Rule-card examples must not equal an answer" in
-// documentation/grammar-sentence-data-integrity.md.
+// exercise pool — an earlier draft of this fix reused the exercise words themselves, which
+// let a student read the answer straight off the rule card instead of applying the pattern.
+// duktė→dukterie was the worst case: it's the literal answer to sentence 198. Plan #9 then
+// re-picked case 3's examples once more for real-world plausibility (a dative example has to
+// be a plausible recipient: muziejus/direktorius, not turgus/vaisius) — hence this spec
+// asserts the *mapping* rather than a particular example word. See "Rule-card examples must
+// not equal an answer" in documentation/grammar-sentence-data-integrity.md.
 
 import { test, expect } from '@playwright/test';
 
@@ -58,10 +60,16 @@ test.describe('Issue #159 — Dative/Vocative u-stem (declension IV) coverage', 
     expect(rule).not.toBeNull();
     const transform = rule!.transform || '';
 
-    // IV declension is now covered (this was the exact gap the reporter hit), via example
-    // words not drawn from this lesson's own exercises — turgus/vaisius, not sūnus/profesorius.
-    expect(transform).toContain('turgui');
-    expect(transform).toContain('vaisiui');
+    // IV declension is now covered (this was the exact gap the reporter hit). Asserted as
+    // the *mapping*, not a specific example word: plan #9 re-picked the examples for
+    // real-world plausibility (a dative example should be a plausible recipient, so
+    // turgus/vaisius — "to the market", "to the fruit" — gave way to muziejus/direktorius).
+    expect(transform).toContain('-us→-ui');
+    expect(transform).toContain('-ius→-iui');
+    // …and never with a word this lesson itself grades (second invariant, plan #9).
+    for (const answer of ['sūnui', 'profesoriui', 'aktoriui', 'broliui', 'mamai', 'draugei']) {
+      expect(transform).not.toContain(answer);
+    }
 
     // The old endings_sg carried an unlabeled duplicate "-ui" (once for -as→-ui, once
     // stray) with no matching transform clause. It must not still be duplicated.
@@ -126,12 +134,14 @@ test.describe('Issue #159 — Dative/Vocative u-stem (declension IV) coverage', 
 
 // ── UI regression (mocked routes) ────────────────────────────────────────────
 
+// Mirrors the live case-3 card (plan #9): every example is a plausible recipient and none
+// of them is a graded answer in this lesson.
 const NEW_DATIVE_TRANSFORM =
-  'Ед.ч.: -as→-ui, -ias/-is/-ys→-iui, -a→-ai, -ia→-iai, -ė→-ei; ' +
-  'IV: -us→-ui (turgus→turgui), -ius→-iui (vaisius→vaisiui); ' +
-  'III ж.р. -is→-iai (pilis→piliai); ' +
-  'V: sesuo→seseriai, duktė→dukteriai, vanduo→vandeniui. ' +
-  'Мн.ч.: -ai→-ams, -iai→-iams, -os→-oms, -ės→-ėms, -ūs→-ums.';
+  '-as→-ui (kaimynas→kaimynui), -ias/-is/-ys→-iui (tėvelis→tėveliui), ' +
+  '-a→-ai (padavėja→padavėjai), -ia→-iai (ponia→poniai), -ė→-ei (močiutė→močiutei); ' +
+  'III ж.р. -is→-iai (žuvis→žuviai); ' +
+  'IV: -us→-ui (muziejus→muziejui), -ius→-iui (direktorius→direktoriui); ' +
+  'V: -uo→-eniui (šuo→šuniui), sesuo/duktė→-eriai.';
 
 const MOCK_LESSONS = [
   {
@@ -191,10 +201,10 @@ test.describe('Issue #159 — Dative rule card renders the IV-stem text and stay
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
   }
 
-  test('the turgui rule text is visible on the basic (always-expanded) card', async ({ page }) => {
+  test('the IV-declension rule text is visible on the basic (always-expanded) card', async ({ page }) => {
     await openLesson(page);
-    await expect(page.getByText('turgus→turgui')).toBeVisible();
-    await expect(page.getByText('vaisius→vaisiui')).toBeVisible();
+    await expect(page.getByText('muziejus→muziejui')).toBeVisible();
+    await expect(page.getByText('direktorius→direktoriui')).toBeVisible();
   });
 
   test('answer input stays reachable at 390x844 with the longer rule text, no horizontal overflow', async ({ page }) => {

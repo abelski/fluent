@@ -18,7 +18,17 @@ async function setToken(page: Page, lang: 'ru' | 'en' = 'ru') {
 // Mock the endpoints the phrases page loads, with a configurable quota + lists.
 async function mockPhrasesPage(
   page: Page,
-  opts: { premium: boolean; isAdmin?: boolean; lists?: Array<{ id: number; title: string; phrase_count: number; mastered?: number; learning?: number }> },
+  opts: {
+    premium: boolean;
+    isAdmin?: boolean;
+    lists?: Array<{
+      id: number; title: string; phrase_count: number; mastered?: number; learning?: number;
+      // Star level range of the phrases inside the list — the API derives these from
+      // the phrases themselves (backend/routers/phrase_lists.py), and they are null
+      // for an empty list. The card renders them as a ★ badge.
+      star_min?: number; star_max?: number;
+    }>,
+  },
 ) {
   await page.route('**/api/me/quota', (route) =>
     route.fulfill({ json: { premium_active: opts.premium, is_admin: opts.isAdmin ?? false, sessions_today: 0, daily_limit: opts.premium ? null : 5 } }),
@@ -37,6 +47,8 @@ async function mockPhrasesPage(
           id: l.id, title: l.title, difficulty: 1, phrase_count: l.phrase_count,
           created_at: '2026-07-16T00:00:00',
           stage_distribution: { stage0: l.phrase_count - mastered - learning, stage1: learning, stage2: mastered },
+          star_min: l.star_min ?? null,
+          star_max: l.star_max ?? null,
         };
       }),
     });
@@ -88,7 +100,10 @@ test.describe('Мои списки (user phrase lists)', () => {
 
   test('interface is translatable — English UI shows English labels', async ({ page }) => {
     await setToken(page, 'en');
-    await mockPhrasesPage(page, { premium: true, lists: [{ id: 9, title: 'My list', phrase_count: 3 }] });
+    await mockPhrasesPage(page, {
+      premium: true,
+      lists: [{ id: 9, title: 'My list', phrase_count: 3, mastered: 1, star_min: 2, star_max: 2 }],
+    });
     await page.goto('/dashboard/phrases/');
 
     // Page chrome is localized too (was previously hardcoded Russian)
@@ -102,9 +117,12 @@ test.describe('Мои списки (user phrase lists)', () => {
     await expect(card.getByText('3 phrases')).toBeVisible();
     await expect(card.getByRole('link', { name: 'Study' })).toBeVisible();
     await expect(card.getByRole('link', { name: 'Edit' })).toBeVisible();
-    // Difficulty badge must be localized (mock lists default to difficulty 1)
-    await expect(card.getByText('Easy')).toBeVisible();
-    await expect(card.getByText('Лёгкий')).toHaveCount(0);
+    // The card's progress summary is localized too ("1 / 3 выучено" in RU)
+    await expect(card.getByText('1 / 3 learned')).toBeVisible();
+    await expect(card.getByText('выучено')).toHaveCount(0);
+    // The textual difficulty badge ("Easy"/"Лёгкий") was replaced by a language-neutral
+    // star-level badge derived from the phrases in the list — assert that instead.
+    await expect(card.getByTestId('list-star-badge')).toHaveText('★★');
   });
 
   test('lapsed premium: existing lists show greyed and locked, no study/edit', async ({ page }) => {

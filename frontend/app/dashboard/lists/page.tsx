@@ -19,7 +19,6 @@ import {
 } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
 import TakChevron from '../../../components/TakChevron';
-import QuotaBanner from '../components/QuotaBanner';
 import PageShell from '../components/PageShell';
 import StarLevelToggle from '../components/StarLevelToggle';
 import WelcomeModal from '../../../components/WelcomeModal';
@@ -268,9 +267,6 @@ export default function ListsPage() {
             </a>
           </div>
         )}
-
-        {/* Quota / premium banner */}
-        {isLoggedIn && <QuotaBanner quota={quota} />}
 
         <div className="flex flex-wrap items-center gap-4 mb-2">
           <h1 className="text-[28px] font-bold">{tr.lists.title}</h1>

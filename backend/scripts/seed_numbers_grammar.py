@@ -32,13 +32,18 @@ CASE_RULES = [
         "name_ru": "Числительные: Именительный (kiek? yra)",
         "question": "Kiek? (Сколько?)",
         "usage": (
-            "Числительные 1–9 согласуются с существительными по роду в именительном падеже. "
-            "Мужской род: vienas, du, trys, keturi, penki, šeši, septyni, aštuoni, devyni. "
-            "Женский род: viena, dvi, trys, keturios, penkios, šešios, septynios, aštuonios, devynios."
+            "Сколько чего есть. Числительные 1–9 согласуются с существительным в роде: "
+            "м.р. vienas, du, trys, keturi, penki, šeši, septyni, aštuoni, devyni; "
+            "ж.р. viena, dvi, trys, keturios, penkios, šešios, septynios, aštuonios, "
+            "devynios. С 2–9 существительное стоит в им. п. мн. ч. (keturi studentai), "
+            "с vienas/viena — в ед. ч., от 10 — в род. п. мн. ч. (dešimt studentų)."
         ),
-        "endings_sg": "м.р.: du, trys, keturi, penki… / ж.р.: dvi, trys, keturios, penkios…",
+        "endings_sg": "м.р.: -i (keturi, penki, šeši…) / ж.р.: -ios (keturios, penkios, šešios…)",
         "endings_pl": "—",
-        "transform": "Число + существительное в форме именительного падежа множественного числа.",
+        "transform": (
+            "4–9: м.р. -i → ж.р. -ios (keturi→keturios, penki→penkios, devyni→devynios); "
+            "особые формы: vienas→viena, du→dvi, trys — одинаково для обоих родов."
+        ),
         "status": "published",
         "article_slug": "numbers-02-nouns-and-prices",
     },
@@ -47,13 +52,19 @@ CASE_RULES = [
         "name_ru": "Числительные: Винительный (turiu — у меня есть)",
         "question": "Ką turiu? (Что имею?)",
         "usage": (
-            "После глагола turiu (у меня есть) числительные принимают форму винительного падежа. "
-            "Мужской род: vieną, du, tris, keturis, penkis, šešis, septynis, aštuonis, devynis. "
-            "Женский род: vieną, dvi, tris, keturias, penkias, šešias, septynias, aštuonias, devynias."
+            "После turiu/turi (у меня/у него есть) и других переходных глаголов "
+            "числительное и существительное стоят в винительном падеже: "
+            "м.р. vieną, du, tris, keturis, penkis, šešis, septynis, aštuonis, devynis; "
+            "ж.р. vieną, dvi, tris, keturias, penkias, šešias, septynias, aštuonias, "
+            "devynias. От 10 существительное — в род. п. мн. ч.: Turiu dešimt knygų."
         ),
-        "endings_sg": "м.р.: du, tris, keturis, penkis… / ж.р.: dvi, tris, keturias, penkias…",
+        "endings_sg": "м.р.: -is (keturis, penkis, šešis…) / ж.р.: -ias (keturias, penkias, šešias…)",
         "endings_pl": "—",
-        "transform": "Turiu + [числительное в вин. пад.] + [существительное в вин. пад. мн. ч.]",
+        "transform": (
+            "Vardininkas → Galininkas. 4–9: м.р. -i→-is (keturi→keturis, penki→penkis), "
+            "ж.р. -ios→-ias (keturios→keturias, penkios→penkias); trys→tris (оба рода); "
+            "du/dvi не изменяются; vienas/viena→vieną."
+        ),
         "status": "published",
         "article_slug": "numbers-02-nouns-and-prices",
     },
@@ -62,12 +73,17 @@ CASE_RULES = [
         "name_ru": "Порядковые числительные: Творительный (каким автобусом?)",
         "question": "Kaip važiuoji? (Каким автобусом?)",
         "usage": (
-            "Для номеров автобусов и троллейбусов порядковые числительные ставятся в творительный падеж. "
-            "Правило: окончание -as → -u (pirmas → pirmu, antras → antru, trečias → trečiu, ketvirtas → ketvirtu…)"
+            "Номер автобуса или троллейбуса ставится в творительный падеж: Važiuoju pirmu "
+            "autobusu. Порядковое числительное склоняется как прилагательное мужского рода "
+            "и согласуется с autobusu / troleibusu."
         ),
-        "endings_sg": "-u (pirmu, antru, trečiu, ketvirtu, penktu, šeštu, septintu…)",
+        "endings_sg": "-u (pirmu, antru, ketvirtu, penktu, šeštu…) / -iu (trečiu)",
         "endings_pl": "—",
-        "transform": "Vardininkas (-as) → Įnagininkas (-u): pirmas → pirmu, trečias → trečiu",
+        "transform": (
+            "Vardininkas → Įnagininkas: -as→-u (pirmas→pirmu, aštuntas→aštuntu), "
+            "-ias→-iu (trečias→trečiu). В составных числительных изменяется только "
+            "последнее слово: dvidešimt pirmas→dvidešimt pirmu."
+        ),
         "status": "published",
         "article_slug": "numbers-04-ordinal",
     },
@@ -76,12 +92,17 @@ CASE_RULES = [
         "name_ru": "Порядковые числительные: Местный (на каком этаже? в какой аудитории?)",
         "question": "Kelintame aukšte? Kelintoje auditorijoje?",
         "usage": (
-            "Этажи (мужской род): окончание -as → -ame (šeštas → šeštame aukšte). "
-            "Аудитории (женский род): окончание -a → -oje (šešta → šeštoje auditorijoje)."
+            "Где именно. Этаж (м.р. aukštas): Gyvenu pirmame aukšte. Аудитория или класс "
+            "(ж.р. auditorija, klasė): Paskaita pirmoje auditorijoje. Порядковое "
+            "числительное согласуется с существительным в роде."
         ),
-        "endings_sg": "м.р.: -ame (pirmame, antrame, trečiame…) / ж.р.: -oje (pirmoje, antroje, trečioje…)",
+        "endings_sg": "м.р.: -ame, -iame (pirmame, trečiame…) / ж.р.: -oje, -ioje (pirmoje, trečioje…)",
         "endings_pl": "—",
-        "transform": "м.р.: -as → -ame | ж.р.: -a → -oje",
+        "transform": (
+            "м.р.: -as→-ame (pirmas→pirmame), -ias→-iame (trečias→trečiame); "
+            "ж.р.: -a→-oje (pirma→pirmoje), -ia→-ioje (trečia→trečioje). "
+            "В составных изменяется только последнее слово: šimtas pirmoje auditorijoje."
+        ),
         "status": "published",
         "article_slug": "numbers-04-ordinal",
     },
@@ -90,13 +111,18 @@ CASE_RULES = [
         "name_ru": "Время: Винительный (во сколько? — kelintą valandą?)",
         "question": "Kelintą valandą? (Во сколько?)",
         "usage": (
-            "При назначении встречи время ставится в винительный падеж: -a → -ą (antra → antrą valandą). "
-            "Исключение: trečia → trečią. "
-            "Полчаса: pusę + родительный (-a → -os/-ios): pusę antros (13:30), pusę trečios (14:30)."
+            "Во сколько? Час ставится в винительный падеж: Susitinkame antrą valandą. "
+            "«Половина» — pusę + порядковое в родительном падеже, на час вперёд: "
+            "pusę antros (13:30), pusę trečios (14:30). Начало и конец — nuo/iki + "
+            "род. п.: nuo aštuntos valandos iki penktos."
         ),
-        "endings_sg": "-ą (pirmą, antrą, trečią, ketvirtą, penktą…) / pusę + -os/-ios",
+        "endings_sg": "-ą, -ią (pirmą, antrą, trečią…) / pusę + -os, -ios (pirmos, antros, trečios…)",
         "endings_pl": "—",
-        "transform": "Vardininkas (-a) → Galininkas (-ą): antra valanda → antrą valandą",
+        "transform": (
+            "Vardininkas → Galininkas: -a→-ą (antra valanda→antrą valandą), "
+            "-ia→-ią (trečia→trečią). Полчаса — Kilmininkas: -a→-os, -ia→-ios "
+            "(pusę antros, pusę trečios)."
+        ),
         "status": "published",
         "article_slug": "numbers-03-time",
     },
@@ -105,13 +131,20 @@ CASE_RULES = [
         "name_ru": "Собирательные числительные: возраст (kiek metų?)",
         "question": "Kiek tau metų? (Сколько тебе лет?)",
         "usage": (
-            "Для возраста используются собирательные числительные 1–9: vieni, dveji, treji, ketveri, penkeri, šešeri, septyneri, aštuoneri, devyneri. "
-            "Конструкция: [дат. пад. лица] + [собирательное] + metai. "
-            "Для 10+: [дат. пад. лица] + [кардинальное] + metų."
+            "Возраст. Человек называется в дательном падеже (kam?): Kaimynui dvylika metų. "
+            "1–9 лет и составные, кончающиеся на 1–9, — собирательное числительное + metai; "
+            "от 10 до 19 и круглые десятки — количественное + metų."
         ),
-        "endings_sg": "1–9: vieni/dveji/treji/ketveri/penkeri… metai | 10+: dešimt/penkiolika… metų",
+        "endings_sg": (
+            "1–9: vieni, dveji, treji, ketveri, penkeri, šešeri, septyneri, aštuoneri, "
+            "devyneri + metai | 10+: dvylika, dvidešimt, penkiasdešimt… + metų"
+        ),
         "endings_pl": "—",
-        "transform": "Man dveji metai. / Draugui septyniolika metų. / Mamai dvidešimt penkeri metai.",
+        "transform": (
+            "[кому — дат. п.] + [числительное] + metai/metų: Tetai ketveri metai (1–9 → "
+            "собирательное + metai); Kaimynui dvylika metų (10+ → количественное + metų); "
+            "Dėdei trisdešimt treji metai (составное на 1–9 → собирательное + metai)."
+        ),
         "status": "published",
         "article_slug": "numbers-05-age-dates-years",
     },
@@ -151,7 +184,7 @@ SENTENCES = [
     (15, "Klasėje yra ___ mergaitės. (4, f.)",           "keturios",  "keturios",  "В классе четыре девочки."),
     (15, "Šeimoje yra ___ dukterys. (3, f.)",            "trys",      "trys",      "В семье три дочери."),
     (15, "Universitete studijuoja ___ studentės. (5, f.)","penkios",  "penkios",   "В университете учатся пять студенток."),
-    (15, "___ tetos atvažiuoja šį savaitgalį. (6, f.)",  "Šešios",    "Šešios",    "Шесть тёток приезжают в эти выходные."),
+    (15, "___ tetos atvažiuoja šį savaitgalį. (6, f.)",  "Šešios",    "Šešios",    "Шесть тётей приезжают в эти выходные."),
     (15, "Bibliotekoje dirba ___ moterys. (7, f.)",      "septynios", "septynios", "В библиотеке работают семь женщин."),
     (15, "Renginyje buvo ___ merginos. (8, f.)",         "aštuonios", "aštuonios", "На мероприятии было восемь девушек."),
     (15, "___ pusseserės gyvena užsienyje. (9, f.)",     "Devynios",  "Devynios",  "Девять двоюродных сестёр живут за рубежом."),
@@ -161,11 +194,11 @@ SENTENCES = [
     (15, "___ dienos praėjo labai greitai. (3, f.)",      "Trys",      "Trys",      "Три дня прошли очень быстро."),
     (15, "Kambaryje yra ___ lovos. (2, f.)",              "dvi",       "dvi",       "В комнате две кровати."),
     (15, "Parke auga ___ liepos. (6, f.)",                "šešios",    "šešios",    "В парке растут шесть лип."),
-    (15, "Stalui yra ___ kojos. (4, f.)",                 "keturios",  "keturios",  "У стола четыре ножки."),
+    (15, "Ant stalo stovi ___ lėkštės. (4, f.)",           "keturios",  "keturios",  "На столе стоят четыре тарелки."),
     (15, "___ valandos praėjo greitai. (2, f.)",          "Dvi",       "Dvi",       "Два часа прошли быстро."),
     (15, "Miestelyje yra ___ parduotuvės. (5, f.)",       "penkios",   "penkios",   "В городке пять магазинов."),
-    (15, "Ryšulėlyje yra ___ dėžutės. (6, f.)",           "šešios",    "šešios",    "В упаковке шесть коробочек."),
-    (15, "___ sesers klasėje mokosi gerai. (8, f.)",      "Aštuonios", "Aštuonios", "Восемь сестёр учатся в классе хорошо."),
+    (15, "Pakuotėje yra ___ dėžutės. (6, f.)",            "šešios",    "šešios",    "В упаковке шесть коробочек."),
+    (15, "___ seserys mokosi vienoje klasėje. (8, f.)",   "Aštuonios", "Aštuonios", "Восемь сестёр учатся в одном классе."),
     (15, "Lentynoje stovi ___ knygos. (9, f.)",           "devynios",  "devynios",  "На полке стоят девять книг."),
 
     # -----------------------------------------------------------------------
@@ -182,9 +215,9 @@ SENTENCES = [
     (16, "Jis turi ___ brolius. (9, m.)",                "devynis",   "devynis",   "У него девять братьев."),
     (16, "Turiu ___ dėdes. (2, m.)",                     "du",        "du",        "У меня два дяди."),
     (16, "Aš turiu ___ brolius. (6, m.)",                "šešis",     "šešis",     "У меня шесть братьев."),
-    (16, "Jis turi ___ pusbrolių. (8, m.)",              "aštuonis",  "aštuonis",  "У него восемь двоюродных братьев."),
+    (16, "Jis turi ___ pusbrolius. (8, m.)",             "aštuonis",  "aštuonis",  "У него восемь двоюродных братьев."),
     (16, "Vaikai turi ___ draugus. (5, m.)",             "penkis",    "penkis",    "У детей пять друзей."),
-    (16, "Rūta turi ___ pusbrolių. (7, m.)",             "septynis",  "septynis",  "У Руты семь двоюродных братьев."),
+    (16, "Rūta turi ___ pusbrolius. (7, m.)",            "septynis",  "septynis",  "У Руты семь двоюродных братьев."),
     (16, "Jis turi ___ vaikus. (9, m.)",                 "devynis",   "devynis",   "У него девять детей."),
     (16, "Jie turi ___ namus. (3, m.)",                  "tris",      "tris",      "У них три дома."),
     (16, "Aš turiu ___ brolius. (8, m.)",                "aštuonis",  "aštuonis",  "У меня восемь братьев."),
@@ -205,7 +238,7 @@ SENTENCES = [
     (16, "Rūta turi ___ drauges. (8, f.)",               "aštuonias", "aštuonias", "У Руты восемь подруг."),
     (16, "Ji turi ___ kates. (9, f.)",                   "devynias",  "devynias",  "У неё девять кошек."),
     (16, "Andrius turi ___ dukterį. (1, f.)",            "vieną",     "vieną",     "У Андрюса одна дочь."),
-    (16, "Laima turi ___ seseris. (2, f.)",              "dvi",       "dvi",       "У Laima две сестры."),
+    (16, "Laima turi ___ seseris. (2, f.)",              "dvi",       "dvi",       "У Лаймы две сестры."),
     (16, "Ji turi ___ vaikus. (2, m.)",                  "du",        "du",        "У неё двое детей."),
     (16, "Jis turi ___ seseris. (4, f.)",                "keturias",  "keturias",  "У него четыре сестры."),
 
@@ -215,36 +248,36 @@ SENTENCES = [
     (17, "Važiuoju pirm___ autobusu.",                  "u",  "pirmu",                  "Я еду на первом автобусе."),
     (17, "Važiuoju antr___ autobusu.",                  "u",  "antru",                  "Я еду на втором автобусе."),
     (17, "Važiuoju treč___ autobusu.",                  "iu", "trečiu",                 "Я еду на третьем автобусе."),
-    (17, "Važiuoju ketvirt___ troleibуsu.",             "u",  "ketvirtu",               "Я еду на четвёртом троллейбусе."),
+    (17, "Važiuoju ketvirt___ troleibusu.",             "u",  "ketvirtu",               "Я еду на четвёртом троллейбусе."),
     (17, "Pas draugę važiuoju penkt___ autobusu.",      "u",  "penktu",                 "К подруге я еду на пятом автобусе."),
     (17, "Į mokyklą važiuoja šešt___ autobusu.",        "u",  "šeštu",                  "В школу едут на шестом автобусе."),
-    (17, "Namo grįžtu septint___ troleibуsu.",          "u",  "septintu",               "Домой возвращаюсь на седьмом троллейбусе."),
+    (17, "Namo grįžtu septint___ troleibusu.",          "u",  "septintu",               "Домой возвращаюсь на седьмом троллейбусе."),
     (17, "Reikia važiuoti aštunt___ autobusu.",         "u",  "aštuntu",                "Нужно ехать на восьмом автобусе."),
-    (17, "Mama važiuoja devint___ troleibуsu.",         "u",  "devintu",                "Мама едет на девятом троллейбусе."),
+    (17, "Mama važiuoja devint___ troleibusu.",         "u",  "devintu",                "Мама едет на девятом троллейбусе."),
     (17, "Į centrą važiuojame dešimt___ autobusu.",     "u",  "dešimtu",                "В центр мы едем на десятом автобусе."),
     (17, "Pas Lainą važiuosiu vienuolikt___ autobusu.", "u",  "vienuoliktu",            "К Лайне поеду на одиннадцатом автобусе."),
-    (17, "Tėvai važiuoja dvylikt___ troleibуsu.",       "u",  "dvyliktu",               "Родители едут на двенадцатом троллейбусе."),
+    (17, "Tėvai važiuoja dvylikt___ troleibusu.",       "u",  "dvyliktu",               "Родители едут на двенадцатом троллейбусе."),
     (17, "Grįžtu trylikt___ autobusu.",                 "u",  "tryliktu",               "Возвращаюсь на тринадцатом автобусе."),
     (17, "Važiuojame keturiolikt___ autobusu.",         "u",  "keturioliktu",           "Едем на четырнадцатом автобусе."),
-    (17, "Senelis važiuoja penkiolikt___ troleibуsu.",  "u",  "penkioliktu",            "Дедушка едет на пятнадцатом троллейбусе."),
+    (17, "Senelis važiuoja penkiolikt___ troleibusu.",  "u",  "penkioliktu",            "Дедушка едет на пятнадцатом троллейбусе."),
     (17, "Į stotį reikia važiuoti šešiolikt___ autobusu.", "u", "šešioliktu",           "До вокзала нужно ехать на шестнадцатом автобусе."),
-    (17, "Į universitetą važiuoju septyniolikt___ troleibуsu.", "u", "septynioliktu",   "В университет я еду на семнадцатом троллейбусе."),
+    (17, "Į universitetą važiuoju septyniolikt___ troleibusu.", "u", "septynioliktu",   "В университет я еду на семнадцатом троллейбусе."),
     (17, "Į ligoninę važiuojame aštuoniolikt___ autobusu.", "u", "aštuonioliktu",       "В больницу едем на восемнадцатом автобусе."),
-    (17, "Grįžtu devyniolikt___ troleibуsu.",           "u",  "devynioliktu",           "Возвращаюсь на девятнадцатом троллейбусе."),
+    (17, "Grįžtu devyniolikt___ troleibusu.",           "u",  "devynioliktu",           "Возвращаюсь на девятнадцатом троллейбусе."),
     (17, "Į turgų reikia važiuoti dvidešimt___ autobusu.", "u", "dvidešimtu",           "На рынок нужно ехать на двадцатом автобусе."),
     (17, "Važiuoju dvidešimt pirm___ autobusu.",        "u",  "dvidešimt pirmu",        "Я еду на двадцать первом автобусе."),
     (17, "Pas draugą važiuojame trisdešimt pirm___ autobusu.", "u", "trisdešimt pirmu", "К другу едем на тридцать первом автобусе."),
     (17, "Reikia važiuoti penkiasdešimt šešt___ autobusu.", "u", "penkiasdešimt šeštu","Нужно ехать на пятьдесят шестом автобусе."),
     (17, "Kaip nuvažiuoti į centrą? — Treč___ autobusu.", "iu", "trečiu",              "Как добраться до центра? — На третьем автобусе."),
-    (17, "Antr___ troleibуsu važiuoji pas mamą?",       "u",  "antru",                  "Ко маме едешь на втором троллейбусе?"),
-    (17, "Aš visada važiuoju šešt___ troleibуsu.",      "u",  "šeštu",                  "Я всегда езжу на шестом троллейбусе."),
+    (17, "Antr___ troleibusu važiuoji pas mamą?",       "u",  "antru",                  "Ко маме едешь на втором троллейбусе?"),
+    (17, "Aš visada važiuoju šešt___ troleibusu.",      "u",  "šeštu",                  "Я всегда езжу на шестом троллейбусе."),
     (17, "Į mokyklą vaikai važiuoja treč___ autobusu.", "iu", "trečiu",                 "В школу дети едут на третьем автобусе."),
-    (17, "Seneliui reikia važiuoti pirm___ troleibуsu.","u",  "pirmu",                  "Дедушке нужно ехать на первом троллейбусе."),
+    (17, "Seneliui reikia važiuoti pirm___ troleibusu.","u",  "pirmu",                  "Дедушке нужно ехать на первом троллейбусе."),
     (17, "Pas Tomą važiuojame devint___ autobusu.",     "u",  "devintu",                "К Томасу едем на девятом автобусе."),
-    (17, "Važiuok antr___ troleibуsu iki galinės stotelės!", "u", "antru",              "Езжай на втором троллейбусе до конечной!"),
-    (17, "Kaip nuvažiuoti į turgų? — Ketvirt___ troleibуsu.", "u", "ketvirtu",         "Как до рынка? — На четвёртом троллейбусе."),
+    (17, "Važiuok antr___ troleibusu iki galinės stotelės!", "u", "antru",              "Езжай на втором троллейбусе до конечной!"),
+    (17, "Kaip nuvažiuoti į turgų? — Ketvirt___ troleibusu.", "u", "ketvirtu",         "Как до рынка? — На четвёртом троллейбусе."),
     (17, "Mes su drauge važiuojame dvylikt___ autobusu.", "u", "dvyliktu",              "Мы с подругой едем на двенадцатом автобусе."),
-    (17, "Sūnus į mokyklą važiuoja vienuolikt___ troleibуsu.", "u", "vienuoliktu",     "Сын едет в школу на одиннадцатом троллейбусе."),
+    (17, "Sūnus į mokyklą važiuoja vienuolikt___ troleibusu.", "u", "vienuoliktu",     "Сын едет в школу на одиннадцатом троллейбусе."),
     (17, "Duktė grįžta šešiolikt___ autobusu.",         "u",  "šešioliktu",            "Дочь возвращается на шестнадцатом автобусе."),
     (17, "Į biblioteką važiuokite trylikt___ autobusu.", "u", "tryliktu",               "В библиотеку езжайте на тринадцатом автобусе."),
     (17, "Greitai atvažiuosiu — važiuoju penkt___ autobusu.", "u", "penktu",           "Скоро приеду — еду на пятом автобусе."),
@@ -320,18 +353,18 @@ SENTENCES = [
     (19, "Susitinkame dvidešimt___ valandą.",           "ą",   "dvidešimtą",  "Встречаемся в двадцать (20:00)."),
     (19, "Traukinys atvyksta dvidešimt pirm___ valandą.","ą",  "dvidešimt pirmą","Поезд прибывает в двадцать один (21:00)."),
     # Half past (pusę + genitive)
-    (19, "Susitinkame pusę antr___ .",                  "os",  "antros",      "Встречаемся в половину второго (13:30)."),
-    (19, "Paskaita prasideda pusę treč___ .",           "ios", "trečios",     "Лекция начинается в половину третьего (14:30)."),
-    (19, "Susitinkame pusę ketvirt___ .",               "os",  "ketvirtos",   "Встречаемся в половину четвёртого (15:30)."),
-    (19, "Eisime pusę penkt___ .",                      "os",  "penktos",     "Пойдём в половину пятого (16:30)."),
-    (19, "Filmas pusę šešt___ .",                       "os",  "šeštos",      "Фильм в половину шестого (17:30)."),
-    (19, "Susitinkame pusę septint___ .",               "os",  "septintos",   "Встречаемся в половину седьмого (18:30)."),
-    (19, "Vakarienė pusę aštunt___ .",                  "os",  "aštuntos",    "Ужин в половину восьмого (19:30)."),
-    (19, "Spektaklis pusę devint___ .",                  "os",  "devintos",    "Спектакль в половину девятого (20:30)."),
-    (19, "Susitinkame pusę dešimt___ .",                "os",  "dešimtos",    "Встречаемся в половину десятого (21:30)."),
-    (19, "Pusryčiai pusę aštunt___ .",                  "os",  "aštuntos",    "Завтрак в половину восьмого (7:30)."),
-    (19, "Pietūs pusę pirm___ .",                       "os",  "pirmos",      "Обед в половину первого (12:30)."),
-    (19, "Susitinkame pusę treč___ .",                  "ios", "trečios",     "Встречаемся в половину третьего (14:30)."),
+    (19, "Susitinkame pusę antr___.",                  "os",  "antros",      "Встречаемся в половину второго (13:30)."),
+    (19, "Paskaita prasideda pusę treč___.",           "ios", "trečios",     "Лекция начинается в половину третьего (14:30)."),
+    (19, "Susitinkame pusę ketvirt___.",               "os",  "ketvirtos",   "Встречаемся в половину четвёртого (15:30)."),
+    (19, "Eisime pusę penkt___.",                      "os",  "penktos",     "Пойдём в половину пятого (16:30)."),
+    (19, "Filmas pusę šešt___.",                       "os",  "šeštos",      "Фильм в половину шестого (17:30)."),
+    (19, "Susitinkame pusę septint___.",               "os",  "septintos",   "Встречаемся в половину седьмого (18:30)."),
+    (19, "Vakarienė pusę aštunt___.",                  "os",  "aštuntos",    "Ужин в половину восьмого (19:30)."),
+    (19, "Spektaklis pusę devint___.",                  "os",  "devintos",    "Спектакль в половину девятого (20:30)."),
+    (19, "Susitinkame pusę dešimt___.",                "os",  "dešimtos",    "Встречаемся в половину десятого (21:30)."),
+    (19, "Pusryčiai pusę aštunt___.",                  "os",  "aštuntos",    "Завтрак в половину восьмого (7:30)."),
+    (19, "Pietūs pusę pirm___.",                       "os",  "pirmos",      "Обед в половину первого (12:30)."),
+    (19, "Susitinkame pusę treč___.",                  "ios", "trečios",     "Встречаемся в половину третьего (14:30)."),
     # Nuo/iki + genitive
     (19, "Bankas dirba nuo aštunt___ valandos.",        "os",  "aštuntos",    "Банк работает с восьми часов."),
     (19, "Dirbu iki penkt___ valandos.",                "os",  "penktos",     "Я работаю до пяти часов."),

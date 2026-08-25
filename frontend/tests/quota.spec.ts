@@ -42,38 +42,13 @@ test.describe('Pricing page', () => {
   });
 });
 
-// ── Quota banner on lists page ──────────────────────────────────────────────
+// ── Daily session limit on the lists page ───────────────────────────────────
 
-test.describe('Quota banner', () => {
-  test('shows session counter for basic user', async ({ page }) => {
-    await page.route('**/api/me/quota', async (route) => {
-      await route.fulfill({
-        json: { is_premium: false, premium_active: false, premium_until: null, sessions_today: 3, daily_limit: 10, is_admin: false },
-      });
-    });
-    await page.route('**/api/me/lists-progress', async (route) => {
-      await route.fulfill({ json: {} });
-    });
-    await setToken(page);
-    await page.goto('/dashboard/lists');
-    await expect(page.getByText(/Сессий сегодня/)).toBeVisible();
-    await expect(page.getByText(/3 \/ 10/)).toBeVisible();
-  });
-
-  test('shows limit reached banner when sessions exhausted', async ({ page }) => {
-    await page.route('**/api/me/quota', async (route) => {
-      await route.fulfill({
-        json: { is_premium: false, premium_active: false, premium_until: null, sessions_today: 10, daily_limit: 10, is_admin: false },
-      });
-    });
-    await page.route('**/api/me/lists-progress', async (route) => {
-      await route.fulfill({ json: {} });
-    });
-    await setToken(page);
-    await page.goto('/dashboard/lists');
-    await expect(page.getByText(/Лимит на сегодня исчерпан/)).toBeVisible();
-  });
-
+// The "Сессий сегодня: N / limit" and "Лимит на сегодня исчерпан" banner used to be
+// asserted here. Plan #9 removed that banner from /dashboard/lists and /dashboard/phrases
+// app-wide; the limit itself still gates the study buttons (below) and the study page's
+// 429 screen (further down). Its absence is asserted in quota-banner-removed.spec.ts.
+test.describe('Quota limit', () => {
   test('study button is disabled when limit reached', async ({ page }) => {
     await page.route('**/api/me/quota', async (route) => {
       await route.fulfill({
@@ -120,7 +95,14 @@ test.describe('Quota banner', () => {
     });
     await setToken(page);
     await page.goto('/dashboard/lists');
-    await expect(page.getByText('✦ Premium')).toBeVisible();
+    // The premium indicator lives in the shared header (components/Header.tsx):
+    // a small pill under the avatar, with the expiry date in its hover tooltip.
+    const badge = page.getByTestId('premium-badge');
+    await expect(badge).toBeVisible();
+    await expect(badge).toContainText('Premium');
+    // Tooltip carries "до <formatted premium_until>" (month name is locale-dependent,
+    // so assert on the stable prefix + year).
+    await expect(badge).toContainText(/до\s.*2026/);
   });
 });
 

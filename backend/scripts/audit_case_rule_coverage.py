@@ -24,11 +24,13 @@ import psycopg
 ALLOWLIST = {203: "šį"}  # "Jonas neša krep___." -> šį
 
 # Cases whose rule cards are guaranteed to satisfy the invariant. Issue #158 fixed the
-# reported case (5); the same I-III-only gap exists in the cases listed in DEFERRED and is
-# scheduled for a follow-up, so those are reported but do not fail the run. Move a case
-# from DEFERRED to GUARDED in the same change that fixes its rule card.
-GUARDED_CASES = {3, 5, 7}
-DEFERRED_CASES = {2, 4, 6, 8, 9, 13}
+# reported case (5) and #159 cases 3 and 7; plan #9 rewrote every remaining noun case, so
+# all of 2-13 are guarded now (cases 1 and 14 have no lesson and no sentences). DEFERRED is
+# kept, empty, as the mechanism for any future debt: a case reported but not yet fixed goes
+# here so the gate stays green and keeps catching new regressions, and moves back to
+# GUARDED in the same change that fixes its rule card.
+GUARDED_CASES = set(range(2, 14))
+DEFERRED_CASES: set[int] = set()
 
 ENV_PATH = os.path.join(os.path.dirname(__file__), "..", ".env")
 
@@ -94,8 +96,7 @@ def main() -> int:
     for sid, case_index, ending, display in allowlisted:
         print(f"allowlisted: id {sid} (case {case_index}) {ending!r} -- {display}")
     print(f"\nguarded cases {sorted(GUARDED_CASES)}: {blocking} uncovered  <- gate")
-    print(f"deferred cases {sorted(DEFERRED_CASES)}: {known_debt} uncovered (known debt, "
-          f"tracked as the issue #158 follow-up)")
+    print(f"deferred cases {sorted(DEFERRED_CASES)}: {known_debt} uncovered (known debt)")
     print(f"allowlisted: {len(allowlisted)}")
     return 1 if blocking else 0
 

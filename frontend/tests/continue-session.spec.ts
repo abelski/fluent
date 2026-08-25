@@ -19,7 +19,9 @@ import type { Page, Route } from '@playwright/test';
  * /lists/{id}/study, /grammar/lessons/{id}/tasks) pushes onto `charged`, and
  * /api/me/quota reports `sessions_today` derived from it. A frontend that
  * re-fetched a phase instead of walking the single payload would therefore show
- * up as a second charge in the quota banner, exactly as it would in production.
+ * up as a second charge on /api/me/quota, exactly as it would in production.
+ * (That number used to be asserted via the lists page's quota banner; plan #9
+ * removed the banner, so the test reads the endpoint the banner rendered.)
  */
 
 const BASE_SESSIONS_TODAY = 3;
@@ -387,10 +389,18 @@ test.describe('Combined continue session', () => {
   test('charges exactly one daily session for the whole three-phase flow', async ({ page }) => {
     const fake = await setup(page, { withGrammar: true });
 
-    // Baseline, read the same way quota.spec.ts reads it — off the lists banner.
+    // The counter used to be read off the lists page's quota banner; plan #9 removed
+    // that banner app-wide, so read the same number from the endpoint it rendered —
+    // /api/me/quota, whose mock derives sessions_today from the charges (see header).
+    const sessionsToday = () =>
+      page.evaluate(async () => {
+        const res = await fetch('/api/me/quota');
+        return ((await res.json()) as { sessions_today: number }).sessions_today;
+      });
+
+    // Baseline: the page is loaded and nothing has been charged yet.
     await page.goto('/dashboard/lists');
-    await expect(page.getByText(/Сессий сегодня/)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(`${BASE_SESSIONS_TODAY} / ${DAILY_LIMIT}`)).toBeVisible();
+    expect(await sessionsToday()).toBe(BASE_SESSIONS_TODAY);
 
     await page.goto('/dashboard/continue');
     await playWordPhase(page);
@@ -400,9 +410,8 @@ test.describe('Combined continue session', () => {
     // Exactly one charge for three phases — the whole point of the rework.
     expect(fake.charged).toEqual(['/me/continue-session']);
 
+    // …and it lands as exactly +1 session, never +2 (a per-phase re-fetch).
     await page.goto('/dashboard/lists');
-    await expect(page.getByText(/Сессий сегодня/)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(`${BASE_SESSIONS_TODAY + 1} / ${DAILY_LIMIT}`)).toBeVisible();
-    await expect(page.getByText(`${BASE_SESSIONS_TODAY + 2} / ${DAILY_LIMIT}`)).toHaveCount(0);
+    expect(await sessionsToday()).toBe(BASE_SESSIONS_TODAY + 1);
   });
 });

@@ -4,14 +4,16 @@
 // *nominative* terms, the card did not merely omit those forms — it actively mispredicted
 // them ("-is/-ys→-iu" implies profesoriu, but the graded answer is profesoriumi).
 //
-// (a) Live-data: lesson 28 (basic, case 5) rule text now states the IV/V mappings.
+// (a) Live-data: lesson 28 (basic, case 5) rule text now states the IV/V mappings — and,
+//     since plan #9, states them *without* printing the graded answer word itself
+//     (sūnumi/profesoriumi/seserimi/dukterimi were also exercise answers in this same
+//     lesson, the second invariant; the card now maps from the dictionary form instead).
 // (b) Live-data (the generalized guard for this whole bug class): for every lesson in a
 //     GUARDED case, every ending the grader will accept must be derivable from that
 //     lesson's own rule card — i.e. present somewhere in transform + endings_sg +
-//     endings_pl. Only case 5 (the reported one) is guarded today; the same gap exists in
-//     cases 2, 3, 4, 6, 7, 8, 9 and 13 and is deferred to a follow-up, so those are
-//     excluded here rather than asserted-and-failing. Widen GUARDED_CASES in the same
-//     change that fixes a deferred case — it is the executable half of that follow-up.
+//     endings_pl. Plan #9 rewrote every noun case, so all of 2–13 are guarded now
+//     (cases 1 and 14 have no lesson). Keep this list in sync with GUARDED_CASES in
+//     backend/scripts/audit_case_rule_coverage.py.
 // (c) Live-data: the sesuo row is "seserimi" (was wrongly stored as "seseria"; issue #156
 //     fixed duktė and words.txt but missed this row, which passes the stem invariant).
 // (d) UI (mocked): the longer rule text renders and still leaves the answer input usable
@@ -33,7 +35,7 @@ const BACKEND = 'http://localhost:8000';
 const COVERAGE_ALLOWLIST = [{ display: 'Jonas neša krep___.', answer: 'šį' }];
 
 // Keep in sync with GUARDED_CASES in backend/scripts/audit_case_rule_coverage.py.
-const GUARDED_CASES = [3, 5, 7];
+const GUARDED_CASES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
 function makeFakeJwt(): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -59,17 +61,22 @@ test.describe('Issue #158 — IV/V declension endings are derivable from the rul
     expect(rule).not.toBeNull();
     const transform = (rule!.transform || '').toLowerCase();
 
-    // IV declension: sūnus→sūnumi, profesorius→profesoriumi
+    // IV declension: -us→-umi, -ius→-iumi
     expect(transform).toContain('umi');
     expect(transform).toContain('iumi');
-    expect(transform).toContain('sūnumi');
-    expect(transform).toContain('profesoriumi');
-    // V declension: the two forms the reporter could not derive
-    expect(transform).toContain('seserimi');
-    expect(transform).toContain('dukterimi');
+    // V declension: the two forms the reporter could not derive (sesuo/duktė → -erimi)
+    expect(transform).toContain('erimi');
+    expect(transform).toContain('sesuo');
+    expect(transform).toContain('duktė');
+    // …but the card must not hand the learner the graded word itself (second invariant,
+    // plan #9): these four are answers in this very lesson's sentence pool.
+    for (const answer of ['sūnumi', 'profesoriumi', 'seserimi', 'dukterimi']) {
+      expect(transform).not.toContain(answer);
+    }
     // the ending list the card advertises must carry the IV/V singular endings too
     expect(rule!.endings_sg).toContain('-umi');
     expect(rule!.endings_sg).toContain('-iumi');
+    expect(rule!.endings_sg).toContain('-erimi');
   });
 
   test('every gradeable ending in a guarded case is derivable from that lesson rule card', async ({ page }) => {
@@ -139,12 +146,14 @@ test.describe('Issue #158 — IV/V declension endings are derivable from the rul
 
 // ── UI regression (mocked routes) ────────────────────────────────────────────
 
+// Mirrors the live case-5 card (plan #9) — examples map from the dictionary form and are
+// never themselves a graded answer in this lesson.
 const NEW_TRANSFORM =
-  'Ед.ч.: -as→-u, -ias/-is/-ys→-iu, -a→-a, -ia→-ia, -ė→-e; ' +
-  'IV: -us→-umi (sūnus→sūnumi), -ius→-iumi (profesorius→profesoriumi); ' +
-  'III ж.р. -is→-imi (pilis→pilimi); ' +
-  'V: sesuo→seserimi, duktė→dukterimi, vanduo→vandeniu. ' +
-  'Мн.ч.: -ai→-ais, -iai→-iais, -os→-omis, -ės→-ėmis, -ūs→-umis.';
+  '-as→-u (agurkas→agurku), -ias/-is/-ys→-iu (maišelis→maišeliu, virdulys→virduliu), ' +
+  '-a→-a (morka→morka), -ia→-ia (vyšnia→vyšnia), -ė→-e (bandelė→bandele); ' +
+  'III ж.р. -is→-imi (žuvis→žuvimi); ' +
+  'IV: -us→-umi (medus→medumi), -ius→-iumi (direktorius→direktoriumi); ' +
+  'V: -uo→-eniu (vanduo→vandeniu), sesuo/duktė→-erimi.';
 
 const MOCK_LESSONS = [
   {
@@ -206,8 +215,8 @@ test.describe('Issue #158 — rule card renders the IV/V text and stays usable',
 
   test('the IV/V rule text is visible on the basic (always-expanded) card', async ({ page }) => {
     await openLesson(page);
-    await expect(page.getByText('profesorius→profesoriumi')).toBeVisible();
-    await expect(page.getByText('sesuo→seserimi')).toBeVisible();
+    await expect(page.getByText('direktorius→direktoriumi')).toBeVisible();
+    await expect(page.getByText('sesuo/duktė→-erimi')).toBeVisible();
   });
 
   test('answer input stays reachable at 390x844 with the longer rule text', async ({ page }) => {

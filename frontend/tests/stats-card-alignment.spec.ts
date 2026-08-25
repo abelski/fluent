@@ -2,8 +2,12 @@ import { test, expect } from '@playwright/test';
 
 // Verifies that the words (/dashboard/lists) and phrases (/dashboard/phrases)
 // sections share an aligned experience: the same stat card layout
-// (count + milestone progress + actions + due bar) and the same
-// quota/premium banners, in the same page order (card → banner → title).
+// (count + milestone progress + actions + due bar) and the same premium
+// indicator, with the stats card above the page title. The free-tier quota
+// banner was removed from both pages by plan #9 — see quota-banner-removed.spec.ts.
+// The premium indicator is no longer an in-page banner either: the redesign moved
+// it into the shared header as the `premium-badge` pill under the avatar
+// (components/Header.tsx), so both pages get it from the shared shell.
 
 function makeFakeJwt(name: string): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -31,13 +35,6 @@ const QUOTA_PREMIUM = {
   premium_until: '2026-07-20T00:00:00',
   sessions_today: 0,
   daily_limit: null,
-};
-
-const QUOTA_FREE = {
-  premium_active: false,
-  premium_until: null,
-  sessions_today: 2,
-  daily_limit: 10,
 };
 
 async function mockCommon(page: import('@playwright/test').Page, quota: object) {
@@ -77,14 +74,15 @@ test.describe('Stats card alignment — words page', () => {
     await expect(card.getByText('69 из 723 слов нужно освежить')).toBeVisible();
   });
 
-  test('premium banner is shown on words page', async ({ page }) => {
+  test('premium badge is shown on words page', async ({ page }) => {
     await setFakeToken(page);
     await mockCommon(page, QUOTA_PREMIUM);
     await mockListsPage(page);
 
     await page.goto('/dashboard/lists');
-    await expect(page.getByTestId('premium-banner')).toBeVisible();
-    await expect(page.getByText('✦ Premium')).toBeVisible();
+    const badge = page.getByTestId('premium-badge');
+    await expect(badge).toBeVisible();
+    await expect(badge).toContainText('Premium');
   });
 });
 
@@ -106,26 +104,21 @@ test.describe('Stats card alignment — phrases page', () => {
     await expect(card.getByText('188 из 189 фраз нужно освежить')).toBeVisible();
   });
 
-  test('premium banner is shown on phrases page (parity with words page)', async ({ page }) => {
+  test('premium badge is shown on phrases page (parity with words page)', async ({ page }) => {
     await setFakeToken(page);
     await mockCommon(page, QUOTA_PREMIUM);
     await mockPhrasesPage(page);
 
     await page.goto('/dashboard/phrases');
-    await expect(page.getByTestId('premium-banner')).toBeVisible();
+    const badge = page.getByTestId('premium-badge');
+    await expect(badge).toBeVisible();
+    await expect(badge).toContainText('Premium');
   });
 
-  test('free-tier quota banner matches words page styling and content', async ({ page }) => {
-    await setFakeToken(page);
-    await mockCommon(page, QUOTA_FREE);
-    await mockPhrasesPage(page);
-
-    await page.goto('/dashboard/phrases');
-    const banner = page.getByTestId('quota-banner');
-    await expect(banner).toBeVisible();
-    await expect(banner.getByText('2 / 10')).toBeVisible();
-    await expect(banner.getByRole('link', { name: /Premium/ })).toBeVisible();
-  });
+  // The free-tier "Sessions today: N/limit" banner used to be asserted here, for parity
+  // with the words page. Plan #9 removed that banner from both pages app-wide (the daily
+  // limit still gates the session buttons themselves), so the parity assertion now lives
+  // in quota-banner-removed.spec.ts as an *absence* check on both pages.
 
   test('vocabulary pages are aligned: same filters, table layout and columns', async ({ page }) => {
     await setFakeToken(page);

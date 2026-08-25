@@ -1,6 +1,6 @@
 ---
 kind: bugfix
-status: in_progress
+status: done
 iteration: 1
 max_iterations: 16
 suggested_model: sonnet
@@ -53,15 +53,15 @@ suggested_model/suggested_effort reason: two rows, both current/new `transform` 
 answer pools, no open design decisions — same narrow, well-precedented shape as issues #158/#159.
 
 ## Fix plan
-- [ ] 1. Guarded UPDATE for case 6 (id=10, "Местный / Vietininkas"): `UPDATE grammar_case_rule SET transform = '-as→-e (namas→name), -is→-yje (maišelis→maišelyje), -ys→-yje (kambarys→kambaryje), -a→-oje (knyga→knygoje), -ė→-ėje (gatvė→gatvėje), -us→-uje (muziejus→muziejuje).' WHERE id = 10 AND case_index = 6 AND transform = '-as→-e (namas→name), -is→-yje (brolis→brolyje), -ys→-yje (kambarys→kambaryje), -a→-oje (knyga→knygoje), -ė→-ėje (gatvė→gatvėje), -us→-uje (muziejus→muziejuje).';`
-- [ ] 2. Guarded UPDATE for case 13 (id=9, "Местный мн.ч. / Vietininkas Dgs.", the reported row): `UPDATE grammar_case_rule SET transform = '-ai→-uose (namuose), -iai→-iuose (maišeliuose), -os→-ose (knygose), -ės→-ėse (gatvėse).' WHERE id = 9 AND case_index = 13 AND transform = '-ai→-uose (namuose), -iai→-iuose (broliuose), -os→-ose (knygose), -ės→-ėse (gatvėse).';`
-- [ ] 3. Re-`SELECT id, transform FROM grammar_case_rule WHERE id IN (9, 10)` immediately after and confirm both landed (via `backend/.venv/bin/python` + `psycopg`, parsing `DATABASE_URL` fresh from `backend/.env` — no `psql` on this machine; `GET /api/grammar/lessons` has no caching so the change is live immediately).
-- [ ] 4. Re-run `backend/.venv/bin/python backend/scripts/audit_case_rule_coverage.py` — expect no change in output (only an illustrative word changed, not an ending), confirming the ending-coverage invariant is untouched.
-- [ ] 5. Add a new section to `documentation/grammar-sentence-data-integrity.md` (mirroring the existing "Second invariant" section's style) documenting this third invariant: rule-card example nouns must be real-world plausible for the case's meaning, not just grammatically well-formed — cite issue #162, the two fixed rows (ids 9 and 10), note `brolis` was the only offending example noun and locative (cases 6/13) the only case type where this class of error occurs in current data, and cross-reference `_PLACE_STEMS`/`_LOCATION_CASES` in `backend/grammar_service.py` as prior art for the same concern in the sibling auto-generated-exercise code path.
+- [x] 1. Guarded UPDATE for case 6 (id=10, "Местный / Vietininkas"): `UPDATE grammar_case_rule SET transform = '-as→-e (namas→name), -is→-yje (maišelis→maišelyje), -ys→-yje (kambarys→kambaryje), -a→-oje (knyga→knygoje), -ė→-ėje (gatvė→gatvėje), -us→-uje (muziejus→muziejuje).' WHERE id = 10 AND case_index = 6 AND transform = '-as→-e (namas→name), -is→-yje (brolis→brolyje), -ys→-yje (kambarys→kambaryje), -a→-oje (knyga→knygoje), -ė→-ėje (gatvė→gatvėje), -us→-uje (muziejus→muziejuje).';`
+- [x] 2. Guarded UPDATE for case 13 (id=9, "Местный мн.ч. / Vietininkas Dgs.", the reported row): `UPDATE grammar_case_rule SET transform = '-ai→-uose (namuose), -iai→-iuose (maišeliuose), -os→-ose (knygose), -ės→-ėse (gatvėse).' WHERE id = 9 AND case_index = 13 AND transform = '-ai→-uose (namuose), -iai→-iuose (broliuose), -os→-ose (knygose), -ės→-ėse (gatvėse).';`
+- [x] 3. Re-`SELECT id, transform FROM grammar_case_rule WHERE id IN (9, 10)` immediately after and confirm both landed (via `backend/.venv/bin/python` + `psycopg`, parsing `DATABASE_URL` fresh from `backend/.env` — no `psql` on this machine; `GET /api/grammar/lessons` has no caching so the change is live immediately).
+- [x] 4. Re-run `backend/.venv/bin/python backend/scripts/audit_case_rule_coverage.py` — expect no change in output (only an illustrative word changed, not an ending), confirming the ending-coverage invariant is untouched.
+- [x] 5. Add a new section to `documentation/grammar-sentence-data-integrity.md` (mirroring the existing "Second invariant" section's style) documenting this third invariant: rule-card example nouns must be real-world plausible for the case's meaning, not just grammatically well-formed — cite issue #162, the two fixed rows (ids 9 and 10), note `brolis` was the only offending example noun and locative (cases 6/13) the only case type where this class of error occurs in current data, and cross-reference `_PLACE_STEMS`/`_LOCATION_CASES` in `backend/grammar_service.py` as prior art for the same concern in the sibling auto-generated-exercise code path.
 
 ## Tests
-- [ ] Write a Playwright test `frontend/tests/issue-162-locative-broliuose-nonsense.spec.ts` following the `frontend/tests/issue-159-dative-vocative-us-stem.spec.ts` live-data convention (absolute `http://localhost:8000` fetch, no relative-fetch pitfall): (a) fetch `/api/grammar/lessons`, find the case-13 lesson, assert `rule.transform` no longer contains `broliuose` and does contain `maišeliuose`; (b) same for the case-6 lesson, assert `transform` no longer contains `brolyje` and does contain `maišelyje`; (c) for both lessons, fetch `/api/grammar/lessons/{id}/tasks` and assert no task's `full_answer` (case-insensitive) is `brolyje`/`broliuose`/`maišelyje`/`maišeliuose`.
-- [ ] Run it: `cd frontend && npx playwright test frontend/tests/issue-162-locative-broliuose-nonsense.spec.ts --reporter=list`
+- [x] Write a Playwright test `frontend/tests/issue-162-locative-broliuose-nonsense.spec.ts` following the `frontend/tests/issue-159-dative-vocative-us-stem.spec.ts` live-data convention (absolute `http://localhost:8000` fetch, no relative-fetch pitfall): (a) fetch `/api/grammar/lessons`, find the case-13 lesson, assert `rule.transform` no longer contains `broliuose` and does contain `maišeliuose`; (b) same for the case-6 lesson, assert `transform` no longer contains `brolyje` and does contain `maišelyje`; (c) for both lessons, fetch `/api/grammar/lessons/{id}/tasks` and assert no task's `full_answer` (case-insensitive) is `brolyje`/`broliuose`/`maišelyje`/`maišeliuose`.
+- [x] Run it: `cd frontend && npx playwright test frontend/tests/issue-162-locative-broliuose-nonsense.spec.ts --reporter=list`
 
 ## Definition of Done
 

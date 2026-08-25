@@ -19,7 +19,6 @@ import StarLevelToggle from '../components/StarLevelToggle';
 import TakChevron from '../../../components/TakChevron';
 import { getPhraseStarLevel, setPhraseStarLevel } from '../../../lib/starLevel';
 import ProgressStatCard from '../components/ProgressStatCard';
-import QuotaBanner from '../components/QuotaBanner';
 import PageMascot from '../../../components/PageMascot';
 import PageShell from '../components/PageShell';
 
@@ -297,8 +296,6 @@ export default function PhrasesPage() {
             </div>
           );
         })()}
-
-        <QuotaBanner quota={quota} />
 
         <h1 className="text-[32px] font-bold mb-1.5">{t.pageTitle}</h1>
         <p className="text-[15px] text-muted mb-4">{t.pageSubtitle}</p>

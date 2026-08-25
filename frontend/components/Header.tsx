@@ -206,7 +206,10 @@ export default function Header() {
                     </div>
                   )}
                   {premiumUntil && (
-                    <span className="group absolute left-1/2 top-full -translate-x-1/2 mt-1 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-[1px] text-[9px] font-semibold text-emerald-700">
+                    <span
+                      data-testid="premium-badge"
+                      className="group absolute left-1/2 top-full -translate-x-1/2 mt-1 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-[1px] text-[9px] font-semibold text-emerald-700"
+                    >
                       Premium
                       <span className="pointer-events-none absolute left-1/2 top-full mt-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-lg bg-gray-900 px-2.5 py-1.5 text-center text-[11px] text-white opacity-0 transition-opacity group-hover:opacity-100 z-50">
                         {tr.lists.premiumUntil} {new Date(premiumUntil).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}

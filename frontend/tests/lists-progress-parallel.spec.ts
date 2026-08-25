@@ -59,9 +59,10 @@ test('/api/me/lists-progress is not blocked behind /api/lists', async ({ page })
   });
 
   t0 = Date.now();
-  // Hit the app directly (trailing slash) rather than via the backend's
-  // static-file redirect, which drops the path.
-  await page.goto('http://localhost:3000/dashboard/lists/');
+  // Relative, so it resolves against playwright.config.ts's baseURL (the backend
+  // on :8000, which serves the built static export). Do not hardcode :3000 — this
+  // repo runs a single server per side, so no `next dev` listens there.
+  await page.goto('/dashboard/lists/');
 
   await expect.poll(() => progressStart, { timeout: 10000 }).toBeGreaterThanOrEqual(0);
   expect(listsStart).toBeGreaterThanOrEqual(0);

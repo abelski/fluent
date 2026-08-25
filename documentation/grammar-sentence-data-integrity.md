@@ -114,22 +114,26 @@ Enforced by `backend/scripts/audit_case_rule_coverage.py` (read-only) and by the
 
 ### Guarded vs. deferred cases
 
-The invariant holds today for the cases that have actually been reported and fixed. Issue #158
-fixed **case 5** (Įnagininkas); issue #159 fixed **case 3** (Naudininkas/Dative) and **case 7**
-(Šauksmininkas/Vocative). The sibling audit found the identical I–III-only gap in **cases 2, 4, 6,
-8, 9 and 13** too, but rewriting six more cases of user-facing grammar explanations is a far larger
-editorial change than any single report asked for, so those remain deliberately deferred to a
-follow-up.
+Issue #158 fixed **case 5** (Įnagininkas); issue #159 fixed **case 3** (Naudininkas/Dative) and
+**case 7** (Šauksmininkas/Vocative). The sibling audit found the identical I–III-only gap in
+**cases 2, 4, 6, 8, 9 and 13** too, and those were deferred as a larger editorial change than any
+single report asked for. **Plan #9 closed them**: every noun case 2–13 was rewritten in one pass,
+so `GUARDED_CASES` is now `set(range(2, 14))` and `DEFERRED_CASES` is empty (cases 1 and 14 have no
+lesson, hence no sentences — see that plan's Non-Goals).
 
-Both the audit script and the spec therefore carry a `GUARDED_CASES` set (`{3, 5, 7}`) and a
-matching `DEFERRED_CASES` set. Uncovered endings in deferred cases are *reported as known debt* but
-do not fail the run — otherwise the guard would be permanently red and would stop catching new
-regressions. **Keep the two lists in sync, and move a case from deferred to guarded in the same
-change that fixes its rule card.** That is the executable half of the follow-up.
+Both the audit script and the live-data spec carry the `GUARDED_CASES` set, plus a matching
+`DEFERRED_CASES` set that is kept — empty — as the mechanism for future debt: uncovered endings in
+a deferred case are *reported as known debt* but do not fail the run, so the guard can never go
+permanently red and stop catching new regressions. **Keep the two lists in sync, and move a case
+back to guarded in the same change that fixes its rule card.**
 
-Known debt at the time of writing: 10 uncovered endings across the 6 deferred cases (`profesoriaus`,
-`aktoriaus`, `dukterį` ×2, `vandenį`, `seserį`, `bažnyčioje`, `bažnyčios`, `pilyse`, `stotyse`,
-`bažnyčiose`).
+The rewrite that closed the gap is also what makes it stay closed: each card now maps from the
+**dictionary form** (`-as→-o (agurkas→agurko)`), covers every declension class present in that
+case's own live pool (I/II plus the `III ж.р. -is`, `IV -us/-ius` and `V -uo` classes the original
+cards omitted), and — where the only possible example word *is* a graded answer (`sesuo`/`duktė`
+are the entire V feminine class) — states the mapping as `sesuo/duktė→-erį`, naming the source but
+not the answer. That form satisfies invariant 1 (the ending is derivable) without breaking
+invariant 2 (the answer word is never printed).
 
 **Case 7 was a coupled pair, not a lone row (fixed by issue #159).** Sentence 198 (`Ačiū, dukt___!`
 → `dukte`) was linguistically wrong — `words.txt` gives the vocative of *duktė* as `dukterie`. Rule
@@ -170,26 +174,151 @@ graded answers in those same two lessons, and `duktė→dukterie` was the exact 
 `maišelis`, `knyga`, `gatvė` — cross-checked with a script comparing each case's rule-card tokens
 against `grammar_sentence.full_word` for that case).
 
-**Known debt — the same leak still exists, unfixed, in 9 other cases** (found by the same
-cross-check, not yet acted on — out of scope for #159, no tracking issue filed yet):
+**Debt table — all resolved by plan #9** (the same cross-check found the leak in 9 further cases
+after #159 shipped; each was fixed by re-picking that card's examples from words absent from its
+own pool):
 
-| Case | Name | Leaking example word(s) |
-| --- | --- | --- |
-| 2 | Родительный (Kilmininkas) | `brolio` |
-| 5 | Творительный (Įnagininkas) | `sūnumi`, `profesoriumi`, `seserimi`, `dukterimi` |
-| 6 | Местный (Vietininkas) | `name`, `kambaryje`, `muziejuje`, `gatvėje` |
-| 8 | Именительный мн.ч. | `broliai`, `knygos`, `muziejai` |
-| 9 | Родительный мн.ч. | `namų`, `brolių`, `knygų` |
-| 10 | Дательный мн.ч. | `broliams`, `sūnums` |
-| 11 | Винительный мн.ч. | `brolius`, `knygas`, `sūnus` |
-| 12 | Творительный мн.ч. | `broliais`, `knygomis`, `sūnumis` |
-| 13 | Местный мн.ч. | `namuose`, `gatvėse` |
+| Case | Name | Leaking example word(s) | Status |
+| --- | --- | --- | --- |
+| 2 | Родительный (Kilmininkas) | `brolio` | fixed (plan #9) |
+| 5 | Творительный (Įnagininkas) | `sūnumi`, `profesoriumi`, `seserimi`, `dukterimi` | fixed (plan #9) |
+| 6 | Местный (Vietininkas) | `name`, `kambaryje`, `muziejuje`, `gatvėje` | fixed (plan #9) |
+| 8 | Именительный мн.ч. | `broliai`, `knygos`, `muziejai` | fixed (plan #9) |
+| 9 | Родительный мн.ч. | `namų`, `brolių`, `knygų` | fixed (plan #9) |
+| 10 | Дательный мн.ч. | `broliams`, `sūnums` | fixed (plan #9) |
+| 11 | Винительный мн.ч. | `brolius`, `knygas`, `sūnus` | fixed (plan #9) |
+| 12 | Творительный мн.ч. | `broliais`, `knygomis`, `sūnumis` | fixed (plan #9) |
+| 13 | Местный мн.ч. | `namuose`, `gatvėse` | fixed (plan #9) |
 
 Note case 5 is #158's own fix — the ending-coverage invariant above was satisfied, but this
 second invariant wasn't checked at the time. `knyga`, `namas`, and `gatvė` are otherwise-safe
 placeholder nouns used correctly elsewhere in the rule set (e.g. `name`/`gatvė` are the swap-in
-examples used for case 7 above) — they only leak in the specific cases listed, where that case's
+examples used for case 7 above) — they only leaked in the specific cases listed, where that case's
 own exercise pool happens to include them.
+
+#### `audit_rule_card_examples.py` — the executable check (added by plan #9)
+
+`backend/scripts/audit_rule_card_examples.py` is the read-only sibling of
+`audit_case_rule_coverage.py` and closes the gap that this invariant had *no* committed check for
+(it was verified ad hoc twice, and drifted back both times). It tokenizes each card's
+`transform || endings_sg || endings_pl` into letter runs and fails if any token equals, case
+-insensitively, a live `full_word` of the same `case_index`. Same DB-connection recipe as its
+sibling (`DATABASE_URL` from `backend/.env`, `psycopg`), same exit convention: `1` if a **guarded**
+case leaks.
+
+Two case sets, for the same reason the coverage audit has two:
+
+- `GUARDED_CASES = range(2, 14)` — the noun cases. Their rule is a *productive* suffix mapping, so
+  an example noun can always be drawn from the open class of nouns the lesson does not grade.
+  A leak here is a real defect.
+- `PARADIGM_CASES = range(15, 21)` — the numbers program. Cardinals (15, 16) and collective
+  numerals (20) are a **closed class with no productive suffix**: a card that refuses to name
+  `keturios`/`dveji` cannot teach them at all, and the exercise hands the learner the digit and
+  the gender (`(4, f.)`) precisely because it is a form-recall drill. Ordinals (17–19) *are*
+  productive, but every ordinal the card could cite is also a graded answer somewhere in the same
+  38-sentence pool. These overlaps are printed as accepted, not gated. **Do not "fix" a paradigm
+  case by deleting the form list from its card** — that removes the only place the learner can
+  read the paradigm and makes the lesson unusable at `basic` level.
+
+The audit only reads the three ending/transform columns, matching the invariant's own wording;
+`usage` (which for the numeral cases legitimately carries the full masculine/feminine list) is out
+of its scope by design, not as a hiding place.
+
+### Third invariant: rule-card example nouns must be real-world plausible for the case's meaning (found via #162)
+
+Separate from the two invariants above: a rule card's illustrative example noun must make sense
+in the real world for what the case actually *means*, not just be grammatically well-formed.
+Vietininkas (locative, cases 6 and 13) answers "where is X located" — the example noun has to be
+something a person/thing can plausibly be "in" or "at". A kinship term for a person doesn't work
+as a location: "in a brother" (`brolyje`) / "in brothers" (`broliuose`) is grammatically correct
+Lithuanian but nonsensical as an answer to "where", unlike the other examples in the same
+`transform` string (`namuose`, `knygose`, `gatvėse` — houses, books, streets, all genuine "where"
+answers).
+
+Issue #162 reported exactly this for case 13's example (`broliuose`). A full audit of all
+`grammar_case_rule.transform` rows (case_index 1–20) found exactly two offending rows, both
+locative, both using `brolis` ("brother") as the example noun: case 6 (id 10, singular,
+`brolis→brolyje`) and case 13 (id 9, plural, `broliuose`, the reported row). No other case_index
+has an analogous real-world-plausibility problem — the many other cases where `brolis`/`broliai`
+appear (genitive "of a brother", dative "to a brother", instrumental "with brothers", etc.) are
+all real-world-plausible for what those cases mean; `brolis` was only ever wrong as a *locative*
+example.
+
+Fixed by swapping both rows to `maišelis` ("bag/package") — already used elsewhere in this same
+rule set (case 7's vocative example) — for which "located inside a bag" (`maišelyje`/
+`maišeliuose`) is a genuine "where" answer. Verified via a live DB query that `maišelyje`/
+`maišeliuose` are not currently graded `full_word` answers in case 6 or case 13's live sentence
+pools, so the fix does not reintroduce the second invariant's leak (above).
+
+This was already a known concern for the *auto-generated* declension exercises:
+`_PLACE_STEMS` and `_LOCATION_CASES = frozenset([6, 13])` (`backend/grammar_service.py`, lines
+107–129) restrict the locative sentence pool to genuine place/institution nouns "so every prompt
+makes semantic sense as a location", and `brol` was deliberately never included in that set. The
+hand-written rule-card `transform` text for those same two cases had simply never been held to
+the same standard — this invariant closes that gap for the hand-authored side of the data too.
+
+**Plan #9 extended the same sense-check past the locative.** Re-picking every card's examples for
+invariant 2 forced a second look at meaning, and the rule generalizes: the example must be
+plausible *for what that case means*, not merely well-formed. A dative example should be a
+plausible recipient, which is why #159's `turgus→turgui` / `vaisius→vaisiui` ("to the market",
+"to the fruit") became `muziejus→muziejui` / `direktorius→direktoriui` — both still IV-declension,
+both still absent from case 3's pool, but now something you can actually give a thing to. Cases
+6/13 keep genuine places throughout (`miestas`, `kelias`, `maišelis`, `knyga`, `giria`, `kavinė`,
+`šalis`, `dangus`, `vanduo`); no kinship term is used as a locative example anywhere.
+
+Sentence-level sense-checking is part of the same standard. Rows fixed in that pass: `tėveliais`
+glossed as "с папами" (the plural of *tėvelis* means *parents*), `Vaikai mokosi bažnyčiose`
+("children study in churches" → `Žmonės meldžiasi bažnyčiose`), `Jis gyvena name` glossed as
+"он живёт дома", `Stalui yra keturios kojos` (dative-of-possession, not idiomatic Lithuanian),
+`Aštuonios sesers` (not a nominative plural — *seserys* is), and `turi aštuonis pusbrolių`
+(cardinals 1–9 *agree*; they do not govern the genitive plural, so the noun must be `pusbrolius`).
+
+## Gotcha: Cyrillic look-alike letters hide inside Lithuanian text (plan #9)
+
+13 case-17 rows spelled `troleibusu` with a **Cyrillic `у` (U+0443)** instead of Latin `u`, and so
+did their literals in `backend/scripts/seed_numbers_grammar.py` — which is where the corruption
+came from. It renders identically in every font we use, so no amount of reading the admin UI or
+the diff finds it; the sentence is simply not the Lithuanian word any more. This content is
+authored by copy-paste between Russian explanations and Lithuanian examples, so the class of bug
+recurs. Detect it, don't eyeball it:
+
+```python
+import unicodedata
+cyr = [c for c in text if "CYRILLIC" in unicodedata.name(c, "")]
+```
+
+Run that over `display`/`full_word`/`answer_ending` (all pure-Lithuanian columns) after any bulk
+content edit. The reverse case — Latin look-alikes inside the Russian `russian`/`usage` columns —
+is the same check with `"LATIN"` and a Cyrillic-majority string.
+
+## Rule-card ↔ linked-article contradictions (requirement carried over from #158)
+
+`grammar_case_rule.article_slug` points cases 2–13 at the `daiktavardžiai-linksniavimas` article,
+whose declension tables are rendered as the "long form" of the same rules. A card rewrite has to
+re-read that article: issue #158 already had to fix one cell there, and plan #9 found another —
+the masculine `-is` locative singular was tabled as `paukšč-iuje`, but that class takes `-yje`
+(`brolyje`, `paukštyje`, per `words.txt`), which is exactly what the case-6 card now states. Fixed
+in both `body_ru` and `body_en` (the two bodies carry the same table twice — always patch both).
+
+Note the article numbers the declensions differently from the rule cards (its "3-е склонение" is
+`-is` of both genders, following its litsheets source). The cards avoid the clash by labelling
+only the classes both agree on (`III ж.р.`, `IV`, `V`) and writing the I/II classes as bare
+endings — the format the vocative card established. Keep that convention.
+
+## The verb program's `tense_hints` had the same coverage gap (plan #9)
+
+`backend/data/grammar/verb_lessons.json`'s `tense_hints` is the Verb Conjugation program's rule
+card — repo-committed code, not DB (the one structural difference from cases 1–20). It carried
+the same defect invariant 1 describes: the present-tense table listed `aš -u/-iu` and `tu -i`,
+which are the I and II conjugations only, so for a III-conjugation verb (`skaityti → skaitau,
+skaitai`) the card mispredicted the graded answer. Rows are now grouped by conjugation, keyed by
+the 3rd-person form (`I -a/-ia`, `II -i`, `III -o`) so the learner can tell which column applies.
+
+The second gap was reflexives: ~12% of the `verb` table is `-tis` verbs (`aunuosi`, `ilsiesi`,
+`aukimės`), whose endings differ in every person, and no tense's table mentioned them. Each of the
+six tenses now ends with a `возвратные (-tis)` row. Both gaps were found by aggregating the real
+`Verb.conjugations` endings out of the DB rather than by reasoning from a grammar book — worth
+repeating before editing these hints, since the served answers come from that same table.
 
 ## Issue #52 ("placeholder shows 3 underscores, answer is shorter") is stale — do not "fix" it
 

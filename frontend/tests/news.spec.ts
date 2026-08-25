@@ -50,8 +50,10 @@ test.describe('Landing page — News section', () => {
     await page.route('**/api/news**', async (route) => route.fulfill({ json: MOCK_NEWS }));
     await page.goto('/');
     await expect(page.getByText('Новость первая')).toBeVisible({ timeout: 5000 });
-    // Click the global nav RU/EN toggle
-    await page.getByRole('button', { name: /RU\s*\/\s*EN/i }).click();
+    // Click the global nav language toggle. It is a segmented RU|EN pill with no
+    // slash separator (design-system-parity.spec.ts enforces the slash-free form),
+    // so it is addressed by its testid like every other spec in this suite.
+    await page.getByTestId('lang-toggle').click();
     await expect(page.getByText('First news', { exact: true })).toBeVisible();
     await expect(page.getByText('Новость первая', { exact: true })).not.toBeVisible();
   });

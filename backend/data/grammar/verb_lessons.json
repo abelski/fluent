@@ -23,61 +23,67 @@
   ],
   "tense_hints": {
     "indicative_present": {
-      "description": "Действие происходит сейчас или повторяется регулярно",
+      "description": "Действие происходит сейчас или повторяется регулярно: dirbu — я работаю. Тип спряжения виден по 3-му лицу: I — -a/-ia (dirba, verkia), II — -i (myli), III — -o (skaito).",
       "rows": [
-        ["aš (я)", "-u / -iu"],
-        ["tu (ты)", "-i"],
-        ["jis / ji / jie / jos", "-a / -ia / -o / -i"],
-        ["mes (мы)", "-ame / -iame / -ome / -ime"],
-        ["jūs (вы)", "-ate / -iate / -ote / -ite"]
+        ["aš (я)", "-u / -iu (I, II); -au (III)"],
+        ["tu (ты)", "-i (I, II); -ai (III)"],
+        ["jis / ji / jie / jos", "-a / -ia (I); -i (II); -o (III)"],
+        ["mes (мы)", "-ame / -iame (I); -ime (II); -ome (III)"],
+        ["jūs (вы)", "-ate / -iate (I); -ite (II); -ote (III)"],
+        ["возвратные (-tis)", "-uosi, -iesi, -asi, -amės, -atės"]
       ]
     },
     "indicative_past_simple": {
-      "description": "Однократное завершённое действие в прошлом",
+      "description": "Однократное завершённое действие в прошлом: dirbau — я поработал(а). Тип виден по 3-му лицу: -o (dirbo, mylėjo) или -ė (skaitė).",
       "rows": [
-        ["aš (я)", "-au / -iau"],
-        ["tu (ты)", "-ai / -ei"],
-        ["jis / ji / jie / jos", "-o / -ė / -jo"],
-        ["mes (мы)", "-ome / -ėme / -jome"],
-        ["jūs (вы)", "-ote / -ėte / -jote"]
+        ["aš (я)", "-au (тип -o); -iau (тип -ė)"],
+        ["tu (ты)", "-ai (тип -o); -ei (тип -ė)"],
+        ["jis / ji / jie / jos", "-o / -jo; -ė"],
+        ["mes (мы)", "-ome; -ėme"],
+        ["jūs (вы)", "-ote; -ėte"],
+        ["возвратные (-tis)", "-ausi / -iausi, -aisi / -eisi, -osi / -ėsi, -omės / -ėmės, -otės / -ėtės"]
       ]
     },
     "indicative_past_habitual": {
-      "description": "Повторявшееся или привычное действие в прошлом",
+      "description": "Повторявшееся, привычное действие в прошлом («бывало, делал»): dirbdavau — я, бывало, работал. Образуется одинаково для всех глаголов: основа инфинитива + -dav- + окончание.",
       "rows": [
         ["aš (я)", "-davau"],
         ["tu (ты)", "-davai"],
         ["jis / ji / jie / jos", "-davo"],
         ["mes (мы)", "-davome"],
-        ["jūs (вы)", "-davote"]
+        ["jūs (вы)", "-davote"],
+        ["возвратные (-tis)", "-davausi, -davaisi, -davosi, -davomės, -davotės"]
       ]
     },
     "indicative_future": {
-      "description": "Действие произойдёт в будущем",
+      "description": "Действие произойдёт в будущем: dirbsiu — я буду работать. Основа инфинитива + -s- + окончание; после s, š, z, ž два s сливаются: nešti → nešiu, neš.",
       "rows": [
         ["aš (я)", "-siu"],
         ["tu (ты)", "-si"],
         ["jis / ji / jie / jos", "-s"],
         ["mes (мы)", "-sime"],
-        ["jūs (вы)", "-site"]
+        ["jūs (вы)", "-site"],
+        ["возвратные (-tis)", "-siuosi, -siesi, -sis, -simės, -sitės"]
       ]
     },
     "conditional": {
-      "description": "Желаемое, возможное или предполагаемое действие",
+      "description": "Желаемое, возможное или предполагаемое действие («сделал бы»): dirbčiau — я бы работал. Образуется от основы инфинитива одинаково для всех глаголов.",
       "rows": [
         ["aš (я)", "-čiau"],
         ["tu (ты)", "-tum / -tumei"],
         ["jis / ji / jie / jos", "-tų"],
         ["mes (мы)", "-tume / -tumėme"],
-        ["jūs (вы)", "-tute / -tumėte"]
+        ["jūs (вы)", "-tute / -tumėte"],
+        ["возвратные (-tis)", "-čiausi, -tumeisi, -tųsi, -tumėmės, -tumėtės"]
       ]
     },
     "imperative": {
-      "description": "Приказ, просьба или призыв к действию",
+      "description": "Приказ, просьба или призыв к действию: dirbk! — работай! Основа инфинитива + -k- + окончание; отрицание — приставка ne-: nedirbk!",
       "rows": [
-        ["tu (ты)", "-k / -ki / -ik / -iki"],
-        ["mes (мы)", "-kime / -ime"],
-        ["jūs (вы)", "-kite / -ite"]
+        ["tu (ты)", "-k / -ki"],
+        ["mes (мы)", "-kime"],
+        ["jūs (вы)", "-kite / -kit"],
+        ["возвратные (-tis)", "-kis, -kimės, -kitės"]
       ]
     }
   }
