@@ -201,6 +201,9 @@ const en: Translations = {
     verbCasePlaceholder: 'Enter case question (kuo?, ką?…)',
     verbConjugationPlaceholder: 'Enter verb form...',
     verbCaseGovernancePrompt: 'What case does this verb govern?',
+    lockedUpsell: 'Open with Premium',
+    lockedTitle: 'Lesson locked',
+    lockedBody: 'Pass the previous lesson to unlock this one — or open every lesson with Premium.',
   },
   practice: {
     title: 'Practice',

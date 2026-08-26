@@ -134,45 +134,58 @@ function SubcategoryGroup({
               const locked = lesson.is_locked ?? false;
               const scorePct = lesson.best_score_pct;
               return (
-                <button
-                  key={lesson.id}
-                  onClick={() => !locked && onStartLesson(lesson)}
-                  disabled={locked}
-                  data-testid={locked ? 'lesson-locked' : undefined}
-                  className={`bg-gray-50 border rounded-2xl p-5 text-left flex flex-col gap-3 transition-colors ${
-                    locked
-                      ? 'border-line opacity-40 cursor-not-allowed'
-                      : 'border-line hover:bg-white cursor-pointer'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {locked && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 shrink-0">
-                        <path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/>
-                      </svg>
-                    )}
-                    <span className={`text-xs px-2 py-0.5 rounded-full border ${LEVEL_STYLES[lesson.level] ?? ''}`}>
-                      {tr.grammar.levels[lesson.level] ?? lesson.level}
-                    </span>
-                    {lesson.status && lesson.status !== 'published' && (
-                      <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px leading-tight">
-                        {lesson.status === 'draft' ? tr.grammar.lessonStatusDraft : tr.grammar.lessonStatusTesting}
+                <div key={lesson.id} className="flex flex-col">
+                  <button
+                    onClick={() => !locked && onStartLesson(lesson)}
+                    disabled={locked}
+                    data-testid={locked ? 'lesson-locked' : undefined}
+                    className={`flex-1 bg-gray-50 border rounded-2xl p-5 text-left flex flex-col gap-3 transition-colors ${
+                      locked
+                        ? 'border-line opacity-40 cursor-not-allowed'
+                        : 'border-line hover:bg-white cursor-pointer'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {locked && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 shrink-0">
+                          <path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/>
+                        </svg>
+                      )}
+                      <span className={`text-xs px-2 py-0.5 rounded-full border ${LEVEL_STYLES[lesson.level] ?? ''}`}>
+                        {tr.grammar.levels[lesson.level] ?? lesson.level}
                       </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-gray-400 text-xs">{lesson.task_count} {plural(lesson.task_count, tr.grammar.tasksCount)}</div>
-                    {scorePct !== null && scorePct !== undefined && (
-                      <div className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        scorePct > 0.75
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'bg-amber-50 text-amber-600'
-                      }`}>
-                        {Math.round(scorePct * 100)}%
-                      </div>
-                    )}
-                  </div>
-                </button>
+                      {lesson.status && lesson.status !== 'published' && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px leading-tight">
+                          {lesson.status === 'draft' ? tr.grammar.lessonStatusDraft : tr.grammar.lessonStatusTesting}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-gray-400 text-xs">{lesson.task_count} {plural(lesson.task_count, tr.grammar.tasksCount)}</div>
+                      {scorePct !== null && scorePct !== undefined && (
+                        <div className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          scorePct > 0.75
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : 'bg-amber-50 text-amber-600'
+                        }`}>
+                          {Math.round(scorePct * 100)}%
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                  {/* The upsell sits outside the (disabled, dimmed) card button so it stays
+                      clickable and legible. `is_locked` is server-side and already false for
+                      premium/admin, so this only ever renders for free users. */}
+                  {locked && (
+                    <Link
+                      href="/pricing"
+                      data-testid="lesson-locked-upsell"
+                      className="mt-1.5 self-start text-[12px] font-medium text-amber-700 hover:text-amber-600 transition-colors"
+                    >
+                      {tr.grammar.lockedUpsell}
+                    </Link>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -244,6 +257,9 @@ export default function GrammarPage() {
   const [mood, setMood] = useState(MOOD_NEUTRAL);
   const [done, setDone] = useState(false);
   const [exerciseLoading, setExerciseLoading] = useState(false);
+  // Why the lesson couldn't be started: 403 (still locked for a free user) or 429
+  // (daily session limit). Without this the fetch failure left an endless spinner.
+  const [blocked, setBlocked] = useState<'locked' | 'quota' | null>(null);
 
   const fetchLessons = useCallback(() => {
     const token = getToken();
@@ -311,14 +327,26 @@ export default function GrammarPage() {
     setCorrect(0);
     setMood(MOOD_NEUTRAL);
     setDone(false);
+    setBlocked(null);
 
     const base = isVerbLesson(lesson.id) ? 'verb-lessons' : 'lessons';
-    fetch(`${BACKEND_URL}/api/grammar/${base}/${lesson.id}/tasks`)
-      .then((r) => r.json())
-      .then((data: Task[]) => {
+    const token = getToken();
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+    // Without this header the request was anonymous, so the server-side lock/quota
+    // checks below (403/429) never actually fired — see documentation/grammar-lesson-lock-and-premium.md.
+    fetch(`${BACKEND_URL}/api/grammar/${base}/${lesson.id}/tasks`, { headers })
+      .then(async (r) => {
+        // The response status used to be ignored entirely: any non-200 fell through
+        // to an empty task list, which renders as an infinite spinner. 403 (lesson
+        // still locked — free users only) and 429 (daily limit) now get a real screen;
+        // anything else drops back to the lesson list instead of hanging.
+        if (r.status === 403) { setTasks([]); setBlocked('locked'); return; }
+        if (r.status === 429) { setTasks([]); setBlocked('quota'); return; }
+        if (!r.ok) { setTasks([]); setActiveLesson(null); return; }
+        const data: Task[] = await r.json();
         setTasks(Array.isArray(data) ? data : []);
       })
-      .catch(() => setTasks([]))
+      .catch(() => { setTasks([]); setActiveLesson(null); })
       .finally(() => setExerciseLoading(false));
   }
 
@@ -326,6 +354,7 @@ export default function GrammarPage() {
     setActiveLesson(null);
     setTasks([]);
     setDone(false);
+    setBlocked(null);
   }
 
   // ── Lesson list ────────────────────────────────────────────────────────────
@@ -461,6 +490,44 @@ export default function GrammarPage() {
             </>
           )}
       </PageShell>
+    );
+  }
+
+  // ── Blocked screen (403 locked / 429 daily limit) ──────────────────────────
+  if (blocked) {
+    const isLocked = blocked === 'locked';
+    return (
+      <main className="min-h-screen text-gray-900 flex flex-col items-center justify-center px-6">
+        <div
+          className="relative z-10 text-center max-w-sm w-full"
+          data-testid={`grammar-blocked-${blocked}`}
+        >
+          <div className="flex justify-center mb-6">
+            <PageMascot phrase="Oi!" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">
+            {isLocked ? tr.grammar.lockedTitle : tr.common.limitTitle}
+          </h1>
+          <p className="text-[15px] text-muted mb-8">
+            {isLocked ? tr.grammar.lockedBody : tr.common.limitBody}
+          </p>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/pricing"
+              className="block w-full py-3 text-center rounded-xl font-semibold bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-colors"
+            >
+              {tr.common.getPremium}
+            </Link>
+            <button
+              onClick={resetToLessons}
+              className="w-full py-3 text-muted hover:text-ink text-sm transition-colors"
+            >
+              <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />
+              {tr.grammar.backToLessons}
+            </button>
+          </div>
+        </div>
+      </main>
     );
   }
 

@@ -201,6 +201,9 @@ const ru: Translations = {
     verbCasePlaceholder: 'Введите падежный вопрос (kuo?, ką?…)',
     verbConjugationPlaceholder: 'Введите форму глагола...',
     verbCaseGovernancePrompt: 'Каким падежом управляет этот глагол?',
+    lockedUpsell: 'Открыть с Premium',
+    lockedTitle: 'Урок закрыт',
+    lockedBody: 'Пройдите предыдущий урок, чтобы открыть этот, — или откройте все уроки с Premium.',
   },
   practice: {
     title: 'Практика',

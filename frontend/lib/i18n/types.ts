@@ -183,6 +183,9 @@ export interface Translations {
     verbCasePlaceholder: string;
     verbConjugationPlaceholder: string;
     verbCaseGovernancePrompt: string;
+    lockedUpsell: string; // small hint on a locked lesson card, links to /pricing
+    lockedTitle: string; // blocked state after a 403 from the tasks endpoint
+    lockedBody: string;
   };
   practice: {
     title: string;
