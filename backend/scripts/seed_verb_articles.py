@@ -166,7 +166,7 @@ Reflexive verbs add **-si** suffix after each personal ending.
     },
     {
         "slug": "verb-past-tenses",
-        "title_ru": "Прошедшее время: картинное и многократное",
+        "title_ru": "Прошедшее время: однократное и многократное",
         "title_en": "Past Tenses: Simple and Habitual",
         "tags": "глаголы,грамматика,времена",
         "body_ru": """\

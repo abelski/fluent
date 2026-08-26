@@ -45,7 +45,7 @@ _PERSON_KEY = {
 }
 _TENSE_LABELS = {
     "indicative_present":       "Настоящее время",
-    "indicative_past_simple":   "Прошедшее картинное",
+    "indicative_past_simple":   "Прошедшее однократное",
     "indicative_past_habitual": "Прошедшее многократное",
     "indicative_future":        "Будущее время",
     "conditional":              "Условное наклонение",

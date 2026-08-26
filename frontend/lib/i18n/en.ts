@@ -152,7 +152,6 @@ const en: Translations = {
   grammar: {
     title: 'Grammar',
     subtitle: 'Choose a lesson to practise declensions',
-    betaNotice: 'The Grammar section is in beta. Tasks and answer checking may contain inaccuracies. Please use with care — we welcome your feedback.',
     charactersNote: 'Exercises use two recurring characters, Jonas and Ona.',
     grammarHint: 'Grammar hint',
     grammarRule: 'Grammar rule',

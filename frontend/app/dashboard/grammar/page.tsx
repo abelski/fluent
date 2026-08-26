@@ -377,10 +377,6 @@ export default function GrammarPage() {
               <PageMascot phrase="Mokomės!" className="hidden sm:block shrink-0" />
             )}
           </div>
-          <div className="mb-6 rounded-xl px-5 py-4 bg-[#fdf6e3] border border-[#f0e0a8] text-[#8a6d1d] text-[13.5px] leading-[1.5]">
-            {tr.grammar.betaNotice}
-          </div>
-
           {programsLoading ? (
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />

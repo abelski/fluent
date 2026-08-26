@@ -138,7 +138,6 @@ export interface Translations {
   grammar: {
     title: string;
     subtitle: string;
-    betaNotice: string;
     charactersNote: string;
     grammarHint: string;
     grammarRule: string;

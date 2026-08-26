@@ -67,6 +67,17 @@ test.describe('Verb grammar programs', () => {
     expect(task.answer).toBeTruthy();
   });
 
+  test('issue #163 — lesson 202 (indicative_past_simple) has correct tense_label without картинное', async ({ request }) => {
+    const res = await request.get('http://localhost:8000/api/grammar/verb-lessons/202/tasks');
+    expect(res.status()).toBe(200);
+    const tasks = await res.json();
+    expect(Array.isArray(tasks)).toBe(true);
+    expect(tasks.length).toBeGreaterThan(0);
+    const task = tasks[0];
+    expect(task.tense_label).toBe('Прошедшее однократное');
+    expect(task.tense_label).not.toContain('картинное');
+  });
+
   test('backend GET /grammar/verb-lessons/300/tasks returns verb_case tasks', async ({ request }) => {
     const res = await request.get('http://localhost:8000/api/grammar/verb-lessons/300/tasks');
     expect(res.status()).toBe(200);
