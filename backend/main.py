@@ -323,6 +323,25 @@ def llms_txt(session: Session = Depends(get_session)):
     return Response(content=content, media_type="text/plain; charset=utf-8")
 
 
+def _static_file_response(path: Path) -> FileResponse:
+    """FileResponse with cache headers appropriate to the file's kind.
+
+    Next.js content-hashes everything under `_next/static/` (the filename itself
+    changes when the content does), so those can be cached forever. Everything else
+    (HTML pages, in particular) has a stable URL whose content changes on every
+    deploy — serving those with no explicit header lets browsers fall back to
+    heuristic freshness, which can hold onto a pre-deploy copy for a while and show
+    a stale page until a manual hard refresh. `no-cache` forces a cheap conditional
+    revalidation (still ETag/304-backed) on every load instead.
+    """
+    headers = (
+        {"Cache-Control": "public, max-age=31536000, immutable"}
+        if "_next/static/" in str(path)
+        else {"Cache-Control": "no-cache"}
+    )
+    return FileResponse(path, headers=headers)
+
+
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
     if DEV_MODE:
@@ -331,7 +350,7 @@ def root():
         raise HTTPException(status_code=503, detail="Frontend not built")
     index = OUT_DIR / "index.html"
     if index.is_file():
-        return FileResponse(index)
+        return _static_file_response(index)
     raise HTTPException(status_code=404, detail="Not found")
 
 
@@ -390,6 +409,6 @@ async def serve_frontend(full_path: str, request: Request):
         # Guard against path traversal: ensure resolved path stays inside OUT_DIR
         if not resolved.resolve().is_relative_to(OUT_DIR.resolve()):
             raise HTTPException(status_code=400, detail="Invalid path")
-        return FileResponse(resolved)
+        return _static_file_response(resolved)
 
     raise HTTPException(status_code=404, detail="Not found")
