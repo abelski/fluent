@@ -354,6 +354,11 @@ export interface Translations {
     adminBadge: string;
     premium: string;
     basic: string;
+    // #11 — subscription status shown next to the Premium badge
+    subscriptionActive: string;
+    subscriptionPastDue: string;
+    subscriptionCanceled: string;
+    viewInStripe: string; // title/tooltip on the subscription-status link
     save: string;
     cancel: string;
     revoke: string;

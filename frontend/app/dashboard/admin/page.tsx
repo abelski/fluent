@@ -22,6 +22,8 @@ interface UserRow {
   is_premium: boolean;
   premium_until: string | null;
   premium_active: boolean;
+  subscription_status: 'active' | 'past_due' | 'canceled' | null;
+  stripe_customer_id: string | null;
   is_admin: boolean;
   is_superadmin: boolean;
   is_redactor: boolean;
@@ -1794,6 +1796,39 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.premium}</span>
                       ) : (
                         <span className="text-xs font-semibold text-gray-400 bg-white border border-gray-900 rounded-full px-2 py-0.5">{tr.admin.basic}</span>
+                      )}
+                      {u.subscription_status && (
+                        <div className="mt-1">
+                          {u.stripe_customer_id ? (
+                            <a
+                              href={`https://dashboard.stripe.com/customers/${u.stripe_customer_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={tr.admin.viewInStripe}
+                              className={`text-[10px] font-medium underline decoration-dotted whitespace-nowrap ${
+                                u.subscription_status === 'active'
+                                  ? 'text-emerald-600'
+                                  : u.subscription_status === 'past_due'
+                                  ? 'text-amber-600'
+                                  : 'text-gray-400'
+                              }`}
+                            >
+                              {u.subscription_status === 'active'
+                                ? tr.admin.subscriptionActive
+                                : u.subscription_status === 'past_due'
+                                ? tr.admin.subscriptionPastDue
+                                : tr.admin.subscriptionCanceled}
+                            </a>
+                          ) : (
+                            <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">
+                              {u.subscription_status === 'active'
+                                ? tr.admin.subscriptionActive
+                                : u.subscription_status === 'past_due'
+                                ? tr.admin.subscriptionPastDue
+                                : tr.admin.subscriptionCanceled}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">

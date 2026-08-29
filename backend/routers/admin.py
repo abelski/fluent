@@ -103,6 +103,7 @@ def list_users(
             "premium_until": u.premium_until,
             "premium_active": _is_premium_active(u),
             "subscription_status": u.subscription_status,
+            "stripe_customer_id": u.stripe_customer_id,
             "is_admin": u.is_admin,
             "is_superadmin": u.is_superadmin,
             "is_redactor": u.is_redactor,
