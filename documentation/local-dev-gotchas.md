@@ -74,3 +74,34 @@ the old export, not a bug in your code.
 `start.sh` already does this (`npm run build` then restart uvicorn); running specs by hand does not.
 The alternative is to start `next dev` on :3000 and let DEV-mode redirect serve live source — but
 only one dev server per side, per CLAUDE.md.
+
+## `npm run build` can still serve stale content — even after rebuilding
+
+Some routes (e.g. `app/dashboard/articles/[slug]/`) call `fetch()` against the backend **inside a
+server component**, at build time, to pre-render known slugs via `generateStaticParams`. Next.js
+caches that `fetch()` response indefinitely in `.next/cache/fetch-cache/` and reuses it on the
+*next* `npm run build` too — there is no time-based expiry, and the call sites here pass no `cache:
+'no-store'` or revalidation tag. So editing a row in the database and rebuilding is **not**
+sufficient to see the change locally: the rebuild silently reuses the old fetch result, produces a
+static HTML file with the old content baked in again, and gives no error or warning that it did so.
+Found while updating `terms-of-service`/`refund-policy` article content for #11 — a `.next/cache`
+already stale since **Aug 17** meant every local rebuild since then had been re-baking content from
+that date for any route on this pattern, unnoticed.
+
+This is **not a production risk** — Render builds each deploy in a clean container with no
+leftover `.next/cache` — but it will burn time locally. If content fetched at build time doesn't
+seem to update after a rebuild, `rm -rf frontend/.next/cache` before rebuilding.
+
+## Adding a column to a model 500s every `select(Model)` until you run Alembic by hand
+
+`main.py`'s startup calls `database.create_db_and_tables()` → `SQLModel.metadata.create_all()`,
+which creates **missing tables only**. It does not add missing *columns*. So the moment a new field
+is added to a model, every query against that table emits SQL naming a column the database does not
+have, and unrelated endpoints start returning 500 — `#11` added three columns to `User` and
+`GET /api/programs/community` (which does one `select(User)` to resolve author names) began failing
+with no code path of its own having changed.
+
+Restarting uvicorn does not fix it; the schema is only reconciled by
+`cd backend && .venv/bin/python -m alembic upgrade head`. The tell is that the backend unit tests
+pass (`conftest.py` builds a fresh in-memory SQLite from the current models, so it always matches)
+while live-API Playwright specs 500 — the opposite of the usual "tests are stale" direction.

@@ -1221,6 +1221,8 @@ def get_quota(
         "is_premium": user.is_premium,
         "premium_until": user.premium_until,
         "premium_active": premium_active,
+        "subscription_status": user.subscription_status,
+        "has_billing_account": user.stripe_customer_id is not None,
         "sessions_today": sessions_today,
         "daily_limit": None if premium_active else DAILY_LIMIT,
         "is_admin": user.is_admin,

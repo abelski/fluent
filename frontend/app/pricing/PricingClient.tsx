@@ -1,8 +1,21 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useT } from '../../lib/useT';
+import { BACKEND_URL, getToken } from '../../lib/api';
 import TakChevron from '../../components/TakChevron';
+
+// This page is a documented "heavy-border pages left alone" deviation in the component
+// library — it keeps border-gray-900 / rounded-2xl rather than the newer flat tokens.
+// Do not migrate it here; #11 only replaced the mailto CTA with real checkout.
+
+type Quota = {
+  premium_active: boolean;
+  premium_until: string | null;
+  subscription_status: string | null;
+  has_billing_account: boolean;
+};
 
 function CheckIcon() {
   return (
@@ -14,7 +27,146 @@ function CheckIcon() {
 }
 
 export default function PricingClient() {
-  const { tr } = useT();
+  const { tr, lang } = useT();
+
+  const [billingEnabled, setBillingEnabled] = useState<boolean | null>(null);
+  const [quota, setQuota] = useState<Quota | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // 'success' while we wait for the webhook to land; then 'activated', or 'slow' if the
+  // poll budget runs out first. 'cancelled' is dismissible; the others are terminal.
+  const [returned, setReturned] = useState<'success' | 'cancelled' | 'activated' | 'slow' | null>(null);
+
+  const fetchQuota = useCallback(async (): Promise<Quota | null> => {
+    const token = getToken();
+    if (!token) return null;
+    try {
+      const r = await fetch(`${BACKEND_URL}/api/me/quota`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) return null;
+      const q: Quota = await r.json();
+      setQuota(q);
+      return q;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Latched behind a startedRef, like the continue-session mount effect
+  // (frontend/app/dashboard/continue/page.tsx) — React double-invokes mount effects
+  // under some hydration paths, and here that would fire two independent poll chains
+  // against the same 2s/5-attempt budget instead of one, racing each other. The gate
+  // makes sure exactly one chain ever starts.
+  const startedRef = useRef(false);
+
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+
+    setLoggedIn(!!getToken());
+
+    fetch(`${BACKEND_URL}/api/billing/config`)
+      .then((r) => (r.ok ? r.json() : { enabled: false }))
+      .then((d) => setBillingEnabled(!!d.enabled))
+      .catch(() => setBillingEnabled(false));
+
+    // Read the Checkout return via window.location rather than useSearchParams: under
+    // `output: 'export'` useSearchParams forces a Suspense/CSR bailout for the whole route.
+    const param = new URLSearchParams(window.location.search).get('checkout');
+    if (param === 'cancelled') { setReturned('cancelled'); fetchQuota(); return; }
+
+    if (param === 'success') {
+      setReturned('success');
+      // The webhook is normally faster than this redirect, but it is not guaranteed to be —
+      // and a flat "success" over a still-free account reads as a broken payment.
+      let attempts = 0;
+      const poll = async () => {
+        const q = await fetchQuota();
+        if (q?.premium_active) { setReturned('activated'); return; }
+        // Budget spent (~10s). Don't leave a permanent "activating…" — say it may take a
+        // minute, because the payment itself did succeed; only our copy of it is late.
+        if (++attempts < 5) setTimeout(poll, 2000); else setReturned('slow');
+      };
+      poll();
+      return;
+    }
+
+    fetchQuota();
+  }, [fetchQuota]);
+
+  const go = async (path: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const token = getToken();
+      const r = await fetch(`${BACKEND_URL}${path}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token ?? ''}` },
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.url) { setError(tr.pricing.checkoutError); setBusy(false); return; }
+      window.location.href = data.url;
+    } catch {
+      setError(tr.pricing.checkoutError);
+      setBusy(false);
+    }
+  };
+
+  const premiumActive = quota?.premium_active === true;
+  const btnClass = 'w-full py-3 text-center text-sm font-medium bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-colors disabled:opacity-60';
+
+  function PremiumCta() {
+    // Billing off (no STRIPE_* env, e.g. before go-live) — keep the pre-#11 contact CTA.
+    if (billingEnabled === false) {
+      return (
+        <a
+          href="mailto:artyrbelski@gmail.com?subject=Fluent Premium&body=Привет! Хочу получить Premium-доступ."
+          className={btnClass}
+          data-testid="premium-cta-contact"
+        >
+          {tr.pricing.contactUs}
+        </a>
+      );
+    }
+    if (billingEnabled === null) return <div className={`${btnClass} opacity-40`} aria-hidden />;
+
+    if (!loggedIn) {
+      return (
+        <a href={`${BACKEND_URL}/api/auth/google`} className={btnClass} data-testid="premium-cta-login">
+          {tr.pricing.loginToUpgrade}
+        </a>
+      );
+    }
+    if (premiumActive && quota?.has_billing_account) {
+      return (
+        <button type="button" onClick={() => go('/api/billing/portal-session')} disabled={busy}
+          className={btnClass} data-testid="premium-cta-manage">
+          {tr.pricing.manageButton}
+        </button>
+      );
+    }
+    // Premium granted by an admin or a leaderboard reward — nothing to manage, nothing to buy.
+    if (premiumActive) return null;
+
+    return (
+      <button type="button" onClick={() => go('/api/billing/checkout-session')} disabled={busy}
+        className={btnClass} data-testid="premium-cta-upgrade">
+        {tr.pricing.upgradeButton}
+      </button>
+    );
+  }
+
+  function premiumNote() {
+    if (quota?.subscription_status === 'past_due') return tr.pricing.pastDue;
+    if (premiumActive && quota?.premium_until) {
+      return tr.pricing.renewsOn.replace(
+        '{date}',
+        new Date(quota.premium_until).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB'),
+      );
+    }
+    if (billingEnabled === false) return tr.pricing.contactNote;
+    return null;
+  }
 
   return (
     <main className="bg-slate-50 text-gray-900 min-h-screen">
@@ -35,10 +187,49 @@ export default function PricingClient() {
           <p className="text-gray-500 text-lg leading-relaxed">{tr.pricing.mission}</p>
         </div>
 
-        {/* Beta notice */}
+        {/* Checkout return notices */}
+        {returned === 'success' && (
+          <div className="max-w-2xl mx-auto mb-6 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4 text-sm text-emerald-800"
+            data-testid="checkout-activating">
+            {tr.pricing.activating}
+          </div>
+        )}
+        {returned === 'slow' && (
+          <div className="max-w-2xl mx-auto mb-6 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4 text-sm text-emerald-800"
+            data-testid="checkout-activating-slow">
+            {tr.pricing.activatingSlow}
+          </div>
+        )}
+        {returned === 'activated' && (
+          <div className="max-w-2xl mx-auto mb-6 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4 text-sm text-emerald-800"
+            data-testid="checkout-activated">
+            {tr.pricing.activated}
+          </div>
+        )}
+        {returned === 'cancelled' && (
+          <div className="max-w-2xl mx-auto mb-6 flex items-start gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-sm text-gray-600"
+            data-testid="checkout-cancelled">
+            <span className="flex-1">{tr.pricing.cancelledNote}</span>
+            <button type="button" onClick={() => setReturned(null)} aria-label="×"
+              className="shrink-0 text-gray-400 hover:text-gray-900 transition-colors leading-none"
+              data-testid="checkout-cancelled-dismiss">
+              ×
+            </button>
+          </div>
+        )}
+        {error && (
+          <div className="max-w-2xl mx-auto mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700"
+            data-testid="checkout-error">
+            {error}
+          </div>
+        )}
+
+        {/* Beta / billing notice */}
         <div className="max-w-2xl mx-auto mb-10 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
-          <span className="text-xl shrink-0">🚧</span>
-          <p className="text-sm text-amber-800 leading-relaxed">{tr.pricing.betaBanner}</p>
+          <span className="text-xl shrink-0">{billingEnabled ? '💳' : '🚧'}</span>
+          <p className="text-sm text-amber-800 leading-relaxed" data-testid="pricing-banner">
+            {billingEnabled ? tr.pricing.betaBannerPaid : tr.pricing.betaBanner}
+          </p>
         </div>
 
         {/* Cards */}
@@ -90,13 +281,10 @@ export default function PricingClient() {
                 </li>
               ))}
             </ul>
-            <a
-              href="mailto:artyrbelski@gmail.com?subject=Fluent Premium&body=Привет! Хочу получить Premium-доступ."
-              className="w-full py-3 text-center text-sm font-medium bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-colors"
-            >
-              {tr.pricing.contactUs}
-            </a>
-            <p className="text-gray-400 text-xs text-center mt-3">{tr.pricing.contactNote}</p>
+            <PremiumCta />
+            {premiumNote() && (
+              <p className="text-gray-400 text-xs text-center mt-3" data-testid="premium-note">{premiumNote()}</p>
+            )}
           </div>
         </div>
 

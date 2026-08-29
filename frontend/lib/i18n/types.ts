@@ -75,7 +75,18 @@ export interface Translations {
     contactUs: string;
     contactNote: string;
     freeNote: string;
-    betaBanner: string;
+    betaBanner: string;      // shown while Stripe billing is OFF (payments not accepted)
+    betaBannerPaid: string;  // shown once billing is live — betaBanner would be false then
+    upgradeButton: string;
+    manageButton: string;
+    loginToUpgrade: string;
+    activating: string;
+    activatingSlow: string;  // poll budget exhausted, webhook still not in
+    activated: string;
+    checkoutError: string;
+    cancelledNote: string;
+    renewsOn: string;        // {date} interpolated by caller
+    pastDue: string;
     whyTitle: string;
     whyBody: string;
     backToLists: string;

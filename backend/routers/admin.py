@@ -1,6 +1,7 @@
 # Admin-only endpoints for managing user tiers and premium access.
 # All routes require is_admin=True on the authenticated user, otherwise 403.
 
+import re
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 
@@ -101,6 +102,7 @@ def list_users(
             "is_premium": u.is_premium,
             "premium_until": u.premium_until,
             "premium_active": _is_premium_active(u),
+            "subscription_status": u.subscription_status,
             "is_admin": u.is_admin,
             "is_superadmin": u.is_superadmin,
             "is_redactor": u.is_redactor,
@@ -1020,6 +1022,13 @@ def create_grammar_sentence(
         raise HTTPException(status_code=400, detail="full_word is required")
     if not body.russian.strip():
         raise HTTPException(status_code=400, detail="russian is required")
+    if re.search(r'\([^)]*\)\s*$', body.display):
+        # issue #164 — leaked authoring notes like "(3, f.)" ended up baked into the
+        # sentence text shown to students; block re-introducing that pattern here.
+        raise HTTPException(
+            status_code=400,
+            detail="display must not end with a parenthetical annotation — move authoring notes elsewhere.",
+        )
     if not _sentence_invariant_holds(body.display, body.answer_ending.strip(), body.full_word.strip()):
         # issue #156 — the grader checks answer_ending but the UI shows full_word; if they
         # disagree, a correct answer gets marked wrong (or vice versa).
@@ -1071,6 +1080,13 @@ def update_grammar_sentence(
         raise HTTPException(status_code=400, detail="full_word is required")
     if not body.russian.strip():
         raise HTTPException(status_code=400, detail="russian is required")
+    if re.search(r'\([^)]*\)\s*$', body.display):
+        # issue #164 — leaked authoring notes like "(3, f.)" ended up baked into the
+        # sentence text shown to students; block re-introducing that pattern here.
+        raise HTTPException(
+            status_code=400,
+            detail="display must not end with a parenthetical annotation — move authoring notes elsewhere.",
+        )
     if not _sentence_invariant_holds(body.display, body.answer_ending.strip(), body.full_word.strip()):
         # issue #156 — the grader checks answer_ending but the UI shows full_word; if they
         # disagree, a correct answer gets marked wrong (or vice versa).

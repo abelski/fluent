@@ -24,6 +24,12 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_utcnow)
     is_premium: bool = Field(default=False)
     premium_until: Optional[datetime] = None  # None = no expiry; past date = expired
+    # Stripe billing (#11). Null across all three = never went through checkout.
+    # Entitlement still lives in is_premium/premium_until above — these three only record
+    # *why*, so support can tell a lapsed subscriber from a never-subscribed free user.
+    stripe_customer_id: Optional[str] = Field(default=None, index=True)
+    stripe_subscription_id: Optional[str] = None
+    subscription_status: Optional[str] = None  # 'active' | 'past_due' | 'canceled'
     is_admin: bool = Field(default=False)
     is_superadmin: bool = Field(default=False)
     is_redactor: bool = Field(default=False)

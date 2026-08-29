@@ -21,6 +21,11 @@ Two annotators own that rule, and nothing else may reimplement it:
 
 ## What Premium changes
 
+> Since #11, Premium is also **bought** self-serve through Stripe, not only granted by an
+> admin or won as a weekly leaderboard reward — see `documentation/stripe-subscriptions.md`.
+> Nothing in this document changes: Stripe writes `premium_until`, and `is_premium_active`
+> stays the only thing this lock consults.
+
 `_lock_bypassed(user)` → `user is not None and (user.is_admin or is_premium_active(user))`. Same
 premium gate as personal word lists (`routers/word_lists.py:_require_list_creator`), and admins are
 included for support/debugging. When it's true, both annotators emit `is_locked: false` for every
