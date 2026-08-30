@@ -7,7 +7,7 @@ from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import text
+from sqlalchemy import text, and_, or_, case, cast, Date, Float
 from sqlmodel import Session, select, col, func
 
 from database import get_session
@@ -971,6 +971,29 @@ def get_all_lists_progress(
     return result
 
 
+def _count_where(*conditions):
+    """SUM(CASE WHEN ... THEN 1 ELSE 0 END), COALESCE'd to 0.
+
+    Portable conditional count across both Postgres (production) and SQLite
+    (tests) — unlike `func.count().filter(...)`, which relies on the SQL
+    FILTER clause that not every backend/version supports the same way.
+    """
+    return func.coalesce(func.sum(case((and_(*conditions), 1), else_=0)), 0)
+
+
+def _distinct_dates(session: Session, date_col, user_id_col, user_id: str) -> set:
+    """DISTINCT calendar dates for one user's rows in a single date/datetime column.
+
+    Ships O(unique active days) rows instead of one row per progress record —
+    the whole point of this rewrite (see plan #15).
+    """
+    return set(
+        session.exec(
+            select(func.date(date_col, type_=Date)).where(user_id_col == user_id).distinct()
+        ).all()
+    )
+
+
 @router.get("/me/stats")
 def get_stats(
     authorization: Optional[str] = Header(None),
@@ -980,58 +1003,75 @@ def get_stats(
 
     The streak counts consecutive days on which the user studied at least one word,
     by looking at the set of unique dates in UserWordProgress.last_seen.
+
+    Computed via SQL aggregates / DISTINCT-date queries rather than fetching every
+    progress row into Python — this endpoint is hit on nearly every dashboard page
+    load (see StatsBar.tsx), so an unbounded fetch here was the dominant driver of
+    Neon's data-transfer usage. See plans/improvements/active/plan_15_stats-endpoint
+    -egress-fix.md.
     """
     user = _require_user(authorization, session)
-    all_progress = session.exec(
-        select(UserWordProgress).where(UserWordProgress.user_id == user.id)
-    ).all()
-    known = sum(1 for p in all_progress if p.status == "known")
-    learning = sum(1 for p in all_progress if p.status == "learning")
-    mistakes = sum(1 for p in all_progress if p.mistake_count > 0)
-
     today = datetime.now(timezone.utc).date()
-    due_review = sum(
-        1 for p in all_progress
-        if p.status == "known" and (p.next_review is None or p.next_review <= today)
+
+    word_row = session.exec(
+        select(
+            _count_where(UserWordProgress.status == "known"),
+            _count_where(UserWordProgress.status == "learning"),
+            _count_where(UserWordProgress.mistake_count > 0),
+            _count_where(
+                UserWordProgress.status == "known",
+                or_(UserWordProgress.next_review == None, UserWordProgress.next_review <= today),  # noqa: E711
+            ),
+        ).where(UserWordProgress.user_id == user.id)
+    ).one()
+    known, learning, mistakes, due_review = word_row
+
+    # Grammar: count distinct lessons passed — best attempt's score/total > 75%.
+    # A lesson_id with every attempt at total=0 gets a NULL best_pct (division by
+    # NULLIF(total, 0)); NULL > 0.75 is false, matching the old code's `pct = 0.0`
+    # fallback for that case without needing a separate CASE for it.
+    best_pct = func.max(
+        cast(GrammarLessonResult.score, Float) / cast(func.nullif(GrammarLessonResult.total, 0), Float)
     )
-
-    # Grammar: count distinct lessons passed (best score > 75%)
-    grammar_results = session.exec(
-        select(GrammarLessonResult).where(GrammarLessonResult.user_id == user.id)
-    ).all()
-    best_grammar: dict[int, float] = {}
-    for r in grammar_results:
-        pct = r.score / r.total if r.total > 0 else 0.0
-        if r.lesson_id not in best_grammar or pct > best_grammar[r.lesson_id]:
-            best_grammar[r.lesson_id] = pct
-    grammar_lessons_passed = sum(1 for pct in best_grammar.values() if pct > 0.75)
-
-    # Practice: count completed exam attempts
-    practice_results = session.exec(
-        select(PracticeExamResult).where(PracticeExamResult.user_id == user.id)
-    ).all()
-    practice_exams_completed = len(practice_results)
-
-    # Phrases: count learned (stage 2) and due for review
-    phrase_progress = session.exec(
-        select(UserPhraseProgress).where(UserPhraseProgress.user_id == user.id)
-    ).all()
-    phrases_learned = sum(1 for p in phrase_progress if p.lesson_stage >= 2)
-    phrases_due_review = sum(
-        1 for p in phrase_progress
-        if p.lesson_stage >= 2 and (p.next_review is None or p.next_review <= today)
+    lesson_best = (
+        select(GrammarLessonResult.lesson_id, best_pct.label("best_pct"))
+        .where(GrammarLessonResult.user_id == user.id)
+        .group_by(GrammarLessonResult.lesson_id)
+        .subquery()
     )
+    grammar_lessons_passed = session.exec(
+        select(func.count()).select_from(lesson_best).where(lesson_best.c.best_pct > 0.75)
+    ).one()
 
-    # Custom phrase lists ("Мои списки") — separate progress table, also counts toward the streak
-    custom_phrase_progress = session.exec(
-        select(UserCustomPhraseProgress).where(UserCustomPhraseProgress.user_id == user.id)
-    ).all()
+    practice_exams_completed = session.exec(
+        select(func.count()).select_from(PracticeExamResult).where(PracticeExamResult.user_id == user.id)
+    ).one()
 
-    # Streak: count consecutive active days across words + grammar + phrases
-    studied_dates: set = {p.last_seen.date() for p in all_progress}
-    studied_dates |= {r.created_at.date() for r in grammar_results}
-    studied_dates |= {p.last_seen.date() for p in phrase_progress}
-    studied_dates |= {p.last_seen.date() for p in custom_phrase_progress}
+    phrase_row = session.exec(
+        select(
+            _count_where(UserPhraseProgress.lesson_stage >= 2),
+            _count_where(
+                UserPhraseProgress.lesson_stage >= 2,
+                or_(UserPhraseProgress.next_review == None, UserPhraseProgress.next_review <= today),  # noqa: E711
+            ),
+        ).where(UserPhraseProgress.user_id == user.id)
+    ).one()
+    phrases_learned, phrases_due_review = phrase_row
+
+    # Streak: count consecutive active days across words + grammar + phrases, using
+    # only the distinct dates each table has for this user (not every raw row).
+    studied_dates: set = _distinct_dates(
+        session, UserWordProgress.last_seen, UserWordProgress.user_id, user.id
+    )
+    studied_dates |= _distinct_dates(
+        session, GrammarLessonResult.created_at, GrammarLessonResult.user_id, user.id
+    )
+    studied_dates |= _distinct_dates(
+        session, UserPhraseProgress.last_seen, UserPhraseProgress.user_id, user.id
+    )
+    studied_dates |= _distinct_dates(
+        session, UserCustomPhraseProgress.last_seen, UserCustomPhraseProgress.user_id, user.id
+    )
     streak = 0
     check = today if today in studied_dates else today - timedelta(days=1)
     while check in studied_dates:
@@ -1061,38 +1101,31 @@ def get_activity_calendar(
 
     A day is active if the user reviewed a word, completed a grammar lesson,
     or progressed on a phrase (admin-curated program or personal list) on that day.
+
+    Computed via DISTINCT-date SQL queries scoped to the 28-day window rather than
+    fetching every progress row — see get_stats() above and plan #15 for why.
     """
     user = _require_user(authorization, session)
     today = datetime.now(timezone.utc).date()
     window_start = today - timedelta(days=27)
 
     word_dates = {
-        p.last_seen.date()
-        for p in session.exec(
-            select(UserWordProgress).where(UserWordProgress.user_id == user.id)
-        ).all()
-        if p.last_seen.date() >= window_start
+        d for d in _distinct_dates(session, UserWordProgress.last_seen, UserWordProgress.user_id, user.id)
+        if d >= window_start
     }
     grammar_dates = {
-        r.created_at.date()
-        for r in session.exec(
-            select(GrammarLessonResult).where(GrammarLessonResult.user_id == user.id)
-        ).all()
-        if r.created_at.date() >= window_start
+        d for d in _distinct_dates(session, GrammarLessonResult.created_at, GrammarLessonResult.user_id, user.id)
+        if d >= window_start
     }
     phrase_dates = {
-        p.last_seen.date()
-        for p in session.exec(
-            select(UserPhraseProgress).where(UserPhraseProgress.user_id == user.id)
-        ).all()
-        if p.last_seen.date() >= window_start
+        d for d in _distinct_dates(session, UserPhraseProgress.last_seen, UserPhraseProgress.user_id, user.id)
+        if d >= window_start
     }
     custom_phrase_dates = {
-        p.last_seen.date()
-        for p in session.exec(
-            select(UserCustomPhraseProgress).where(UserCustomPhraseProgress.user_id == user.id)
-        ).all()
-        if p.last_seen.date() >= window_start
+        d for d in _distinct_dates(
+            session, UserCustomPhraseProgress.last_seen, UserCustomPhraseProgress.user_id, user.id
+        )
+        if d >= window_start
     }
 
     active_dates = sorted(word_dates | grammar_dates | phrase_dates | custom_phrase_dates)

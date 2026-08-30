@@ -257,7 +257,7 @@ def test_subscription_updated_syncs_status_and_period(client, monkeypatch):
 
 # ── 5. Events and customers we don't act on ──────────────────────────────────
 
-def test_unhandled_event_type_is_acknowledged_without_mutation(client, monkeypatch):
+def test_unhandled_event_type_is_acknowledged_without_mutation(client, monkeypatch, _telegram_spy):
     uid = _user_id(client, "unhandled@example.com")
     _link_customer(uid, "cus_unhandled")
 
@@ -266,6 +266,7 @@ def test_unhandled_event_type_is_acknowledged_without_mutation(client, monkeypat
 
     assert r.status_code == 200 and r.json()["handled"] is False
     assert _get(uid).is_premium is False
+    assert _telegram_spy == []
 
 
 def test_unknown_customer_is_acknowledged_not_retried(client, monkeypatch):
@@ -273,3 +274,130 @@ def test_unknown_customer_is_acknowledged_not_retried(client, monkeypatch):
     event = {"type": "invoice.paid", "data": {"object": {"customer": "cus_does_not_exist"}}}
     r = _post(client, event, monkeypatch)
     assert r.status_code == 200 and r.json()["handled"] is False
+
+
+# ── 6. Telegram notifications (#13) ──────────────────────────────────────────
+# `_telegram_spy` is the autouse fixture in backend/conftest.py: it replaces
+# telegram_service.send_telegram with a list-appender, so nothing here hits the network.
+# The rule under test: exactly the payment-lifecycle events notify, and a single purchase
+# produces a single message even though Stripe sends two events for it.
+
+def test_checkout_completed_notifies_admin(client, monkeypatch, _telegram_spy):
+    uid = _user_id(client, "notify-new@example.com")
+    event = {
+        "id": "evt_new_sub",
+        "type": "checkout.session.completed",
+        "data": {"object": {"customer": "cus_notify_new", "subscription": "sub_notify_new",
+                            "client_reference_id": uid, "amount_total": 450, "currency": "eur"}},
+    }
+    _post(client, event, monkeypatch, sub={"id": "sub_notify_new", "current_period_end": _ts(30)})
+
+    assert len(_telegram_spy) == 1
+    msg = _telegram_spy[0]
+    assert "notify-new@example.com" in msg
+    assert "4.50 EUR" in msg
+    assert "Fluent Premium" in msg
+    assert "evt_new_sub" in msg
+
+
+def test_invoice_paid_renewal_notifies_admin(client, monkeypatch, _telegram_spy):
+    uid = _user_id(client, "notify-renew@example.com")
+    _link_customer(uid, "cus_notify_renew")
+    event = {
+        "id": "evt_renewal",
+        "type": "invoice.paid",
+        "data": {"object": {"customer": "cus_notify_renew", "subscription": "sub_notify_renew",
+                            "billing_reason": "subscription_cycle", "amount_paid": 450, "currency": "eur"}},
+    }
+    _post(client, event, monkeypatch, sub={"id": "sub_notify_renew", "current_period_end": _ts(60)})
+
+    assert len(_telegram_spy) == 1
+    msg = _telegram_spy[0]
+    assert "renewed" in msg
+    assert "notify-renew@example.com" in msg and "4.50 EUR" in msg and "evt_renewal" in msg
+
+
+def test_invoice_paid_first_invoice_of_new_subscription_is_silent(client, monkeypatch, _telegram_spy):
+    """billing_reason=subscription_create is the SAME payment checkout.session.completed announced."""
+    uid = _user_id(client, "notify-first@example.com")
+    _link_customer(uid, "cus_notify_first")
+    event = {
+        "id": "evt_first_invoice",
+        "type": "invoice.paid",
+        "data": {"object": {"customer": "cus_notify_first", "subscription": "sub_notify_first",
+                            "billing_reason": "subscription_create", "amount_paid": 450, "currency": "eur"}},
+    }
+    _post(client, event, monkeypatch, sub={"id": "sub_notify_first", "current_period_end": _ts(30)})
+
+    assert _telegram_spy == []
+    assert _get(uid).is_premium is True          # entitlement still granted, only the ping is skipped
+
+
+def test_one_signup_produces_exactly_one_notification(client, monkeypatch, _telegram_spy):
+    """Stripe sends two events for one purchase; the admin must get one message, not two."""
+    uid = _user_id(client, "notify-signup@example.com")
+    sub = {"id": "sub_signup", "current_period_end": _ts(30)}
+    _post(client, {
+        "id": "evt_signup_checkout",
+        "type": "checkout.session.completed",
+        "data": {"object": {"customer": "cus_notify_signup", "subscription": "sub_signup",
+                            "client_reference_id": uid, "amount_total": 450, "currency": "eur"}},
+    }, monkeypatch, sub=sub)
+    _post(client, {
+        "id": "evt_signup_invoice",
+        "type": "invoice.paid",
+        "data": {"object": {"customer": "cus_notify_signup", "subscription": "sub_signup",
+                            "billing_reason": "subscription_create", "amount_paid": 450, "currency": "eur"}},
+    }, monkeypatch, sub=sub)
+
+    assert len(_telegram_spy) == 1
+    assert "New Premium subscriber" in _telegram_spy[0]
+
+
+def test_payment_failed_notifies_admin(client, monkeypatch, _telegram_spy):
+    uid = _user_id(client, "notify-failed@example.com")
+    _link_customer(uid, "cus_notify_failed")
+    event = {
+        "id": "evt_failed",
+        "type": "invoice.payment_failed",
+        "data": {"object": {"customer": "cus_notify_failed", "amount_due": 450, "currency": "eur"}},
+    }
+    _post(client, event, monkeypatch)
+
+    assert len(_telegram_spy) == 1
+    msg = _telegram_spy[0]
+    assert "Payment failed" in msg
+    assert "notify-failed@example.com" in msg and "4.50 EUR" in msg and "evt_failed" in msg
+
+
+def test_subscription_deleted_notifies_admin_without_amount(client, monkeypatch, _telegram_spy):
+    uid = _user_id(client, "notify-cancel@example.com")
+    _link_customer(uid, "cus_notify_cancel")
+    event = {
+        "id": "evt_canceled",
+        "type": "customer.subscription.deleted",
+        "data": {"object": {"id": "sub_notify_cancel", "customer": "cus_notify_cancel"}},
+    }
+    _post(client, event, monkeypatch)
+
+    assert len(_telegram_spy) == 1
+    msg = _telegram_spy[0]
+    assert "canceled" in msg
+    assert "notify-cancel@example.com" in msg and "evt_canceled" in msg
+    assert "EUR" not in msg and "amount unknown" not in msg     # nothing was paid at cancellation
+
+
+def test_subscription_updated_is_silent(client, monkeypatch, _telegram_spy):
+    """It overlaps invoice.paid on every renewal and also fires when no payment happened."""
+    uid = _user_id(client, "notify-updated@example.com")
+    _link_customer(uid, "cus_notify_updated")
+    event = {
+        "id": "evt_updated",
+        "type": "customer.subscription.updated",
+        "data": {"object": {"id": "sub_notify_upd", "customer": "cus_notify_updated",
+                            "status": "active", "current_period_end": _ts(45)}},
+    }
+    _post(client, event, monkeypatch)
+
+    assert _telegram_spy == []
+    assert _get(uid).subscription_status == "active"     # entitlement sync still happened

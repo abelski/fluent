@@ -15,6 +15,12 @@ from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
 import database as _db
+import telegram_service
+
+# Baseline no-op, installed at import time — see the `_telegram_spy` fixture below for why the
+# fixture alone is not enough: pytest builds the session-scoped `client` fixture (which runs
+# main.py's startup handler, and that pings Telegram) BEFORE any function-scoped autouse fixture.
+telegram_service.send_telegram = lambda text: None
 
 # Capture the original get_session function reference BEFORE any patching.
 # This reference is used as the FastAPI dependency override key — routers imported
@@ -98,3 +104,19 @@ def client():
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+# ── 5. No test ever pings the real Telegram Bot API ──────────────────────────
+# `database.load_dotenv()` runs at import time and backend/.env holds REAL
+# TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID values, which `send_telegram()` reads at call
+# time — so without this every code path that notifies (billing webhook, feedback,
+# mistake reports, admin mail, scheduler) would POST to Telegram for real during tests.
+# autouse so it protects every test file, present and future; tests that assert on the
+# message content just depend on `_telegram_spy` by name to read the captured list.
+# Function-scoped (monkeypatch is), so it cannot cover app startup — the module-level
+# no-op above does that.
+@pytest.fixture(autouse=True)
+def _telegram_spy(monkeypatch):
+    sent: list[str] = []
+    monkeypatch.setattr(telegram_service, "send_telegram", lambda text: sent.append(text))
+    return sent

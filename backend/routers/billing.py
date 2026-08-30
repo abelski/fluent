@@ -24,6 +24,7 @@ Design rules that must not be relaxed:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from typing import Any, Optional
@@ -32,6 +33,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlmodel import Session, select
 
 import stripe_service
+import telegram_service
 from auth import require_user
 from database import get_session
 from models import User
@@ -93,6 +95,27 @@ def _customer_id(obj: Any) -> Optional[str]:
     if not cust:
         return None
     return cust if isinstance(cust, str) else cust.get("id")
+
+
+# ── Admin notifications (Telegram) ───────────────────────────────────────────
+
+def _field(obj: Any, key: str) -> Any:
+    """Read a field off a Stripe object that may be a dict or an attribute-style object."""
+    return obj.get(key) if isinstance(obj, dict) else getattr(obj, key, None)
+
+
+def _money(amount_cents: Any, currency: Any) -> str:
+    """Format a Stripe minor-unit amount for a human. `0` is a valid amount — test for None.
+
+    Never raises: this runs before the entitlement commit, so an unexpected payload shape must
+    degrade the message, not 500 the webhook (which would leave premium ungranted).
+    """
+    if amount_cents is None or not currency:
+        return "amount unknown"
+    try:
+        return f"{amount_cents / 100:.2f} {str(currency).upper()}"
+    except (TypeError, ValueError):
+        return "amount unknown"
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
@@ -192,6 +215,9 @@ async def stripe_webhook(
         logger.warning("Stripe webhook %s: no matching user", event_type)
         return {"received": True, "handled": False}
 
+    event_id = _field(event, "id")
+    notify_text: Optional[str] = None
+
     if event_type == "checkout.session.completed":
         sub_id = obj.get("subscription") if isinstance(obj, dict) else getattr(obj, "subscription", None)
         if sub_id and not isinstance(sub_id, str):
@@ -206,6 +232,11 @@ async def stripe_webhook(
             except Exception as exc:
                 # customer.subscription.updated will carry the same period end moments later.
                 logger.error("Could not retrieve subscription %s: %s", sub_id, type(exc).__name__)
+        notify_text = (
+            f"💳 New Premium subscriber\n{user.email}\n"
+            f"{_money(_field(obj, 'amount_total'), _field(obj, 'currency'))} — Fluent Premium\n"
+            f"Event: {event_id}"
+        )
 
     elif event_type == "invoice.paid":
         sub_id = stripe_service.subscription_id_from_invoice(obj)
@@ -218,8 +249,18 @@ async def stripe_webhook(
                 user.subscription_status = "active"
             except Exception as exc:
                 logger.error("Could not retrieve subscription %s: %s", sub_id, type(exc).__name__)
+        # Only a true renewal notifies. `subscription_create` is the first invoice of a new
+        # subscription — the same payment checkout.session.completed already announced.
+        if _field(obj, "billing_reason") == "subscription_cycle":
+            notify_text = (
+                f"🔄 Premium renewed\n{user.email}\n"
+                f"{_money(_field(obj, 'amount_paid'), _field(obj, 'currency'))} — Fluent Premium\n"
+                f"Event: {event_id}"
+            )
 
     elif event_type == "customer.subscription.updated":
+        # Deliberately silent (no notify_text): this overlaps invoice.paid on every renewal and
+        # also fires on trial/plan/dunning changes where no payment happened.
         sub_id = obj.get("id") if isinstance(obj, dict) else getattr(obj, "id", None)
         status = obj.get("status") if isinstance(obj, dict) else getattr(obj, "status", None)
         user.stripe_subscription_id = sub_id
@@ -237,12 +278,27 @@ async def stripe_webhook(
         # they already paid for, and is_premium_active() expires them when it elapses.
         user.subscription_status = "canceled"
         user.stripe_subscription_id = None
+        notify_text = (
+            f"🚫 Subscription canceled\n{user.email}\nFluent Premium\nEvent: {event_id}"
+        )
 
     elif event_type == "invoice.payment_failed":
         # No entitlement change — Stripe's dunning retries, and premium lapses on its own if
         # the retries never succeed.
         user.subscription_status = "past_due"
+        notify_text = (
+            f"⚠️ Payment failed\n{user.email}\n"
+            f"{_money(_field(obj, 'amount_due'), _field(obj, 'currency'))} — Fluent Premium\n"
+            f"Event: {event_id}"
+        )
 
     session.add(user)
     session.commit()
+
+    # After the commit only, so a failed DB write can never produce a "success" ping — and at
+    # most one message per delivery. Stripe redelivery can duplicate this ping; accepted, not
+    # solved (same stance as the missing processed-event table).
+    if notify_text:
+        await asyncio.to_thread(telegram_service.send_telegram, notify_text)
+
     return {"received": True, "handled": True}

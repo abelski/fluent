@@ -272,10 +272,10 @@ avoids that class of bug entirely.
       `/api/billing/config` stubbed via `page.route`, assert `/pricing` renders the Upgrade CTA for
       a free user, the Manage CTA for a premium user, the fallback CTA when Stripe is disabled, and
       that no `mailto:` anchor remains in the Stripe-enabled states.
-- [ ] 18. Manual end-to-end against Stripe **test** mode, with `stripe listen` running: pay with
+- [x] 18. Manual end-to-end against Stripe **test** mode, with `stripe listen` running: pay with
       `4242 4242 4242 4242`, confirm Premium activates and the daily quota cap disappears; then
       cancel via the portal and confirm access persists to the period end. Also exercise the decline
-      card `4000 0000 0000 0002`.
+      card `4000 0000 0000 0002`. Confirmed by user — run twice, working.
 
 ## Definition of Done
 

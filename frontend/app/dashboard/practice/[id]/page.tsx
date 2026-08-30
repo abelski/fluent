@@ -388,9 +388,13 @@ export default function PracticeCategoryPage() {
                           )}
                           <p className="font-semibold text-gray-900">{title}</p>
                           {test.is_premium && (
-                            <span className="text-[10px] px-2 py-0.5 bg-amber-50 border border-amber-300 text-amber-700 rounded-full font-semibold">
+                            <Link
+                              href="/pricing"
+                              data-testid="practice-premium-badge"
+                              className="text-[10px] px-2 py-0.5 bg-amber-50 border border-amber-300 text-amber-700 rounded-full font-semibold cursor-pointer hover:bg-amber-100 transition-colors"
+                            >
                               {t.premiumBadge}
-                            </span>
+                            </Link>
                           )}
                           {test.lesson_text_lt && (
                             <span className="text-[11px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-semibold">

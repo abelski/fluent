@@ -87,6 +87,54 @@ to production before the Stripe account is live and go live by pasting three env
 Anything else → 200 + ignored. Returning non-2xx for an unhandled type makes Stripe retry forever.
 An event for an unknown customer also returns 200, for the same reason.
 
+## Telegram notifications (#13)
+
+The webhook pings the admin's existing Telegram chat (`telegram_service.send_telegram`, the same
+bot used by feedback/reports/scheduler) on payment-lifecycle events. Message content: user email,
+amount + currency where one exists, "Fluent Premium", and the Stripe **event id** — paste that into
+the dashboard to find the delivery.
+
+| Event | Notifies? |
+| --- | --- |
+| `checkout.session.completed` | ✅ "💳 New Premium subscriber" (`amount_total`) |
+| `invoice.paid`, `billing_reason == "subscription_cycle"` | ✅ "🔄 Premium renewed" (`amount_paid`) |
+| `invoice.paid`, any other `billing_reason` | ❌ silent |
+| `invoice.payment_failed` | ✅ "⚠️ Payment failed" (`amount_due`) |
+| `customer.subscription.deleted` | ✅ "🚫 Subscription canceled" (no amount) |
+| `customer.subscription.updated` | ❌ silent |
+| anything outside `HANDLED_EVENTS` | ❌ silent |
+
+**Why `invoice.paid` is gated on `billing_reason`.** Stripe creates *and immediately pays* the
+first invoice of a new subscription, so one purchase delivers both `checkout.session.completed` and
+an `invoice.paid` with `billing_reason=subscription_create`. Notifying on both would send two
+messages for one payment, and the second would falsely read "renewed" on day one. Only
+`subscription_cycle` — a real renewal — notifies.
+
+**Why `customer.subscription.updated` is silent.** It overlaps `invoice.paid` on every renewal (the
+same pairing the entitlement handlers call harmless above) and also fires on trial transitions,
+plan/quantity edits and dunning status changes where no payment happened at all. The four other
+branches already cover every real payment signal.
+
+**Dispatch is `await asyncio.to_thread(telegram_service.send_telegram, …)`, not a direct call.**
+`send_telegram()` is synchronous and does a blocking `httpx.post(..., timeout=5)`, and
+`stripe_webhook` is `async def` — a direct call would stall the whole event loop for up to 5s per
+notifying delivery (blocking every other concurrent request) and push the webhook's own response
+toward Stripe's delivery timeout, which triggers retries. Every *other* `send_telegram` caller in
+the app is a sync `def`, where this does not apply.
+
+**One message per delivery, sent after `session.commit()`.** Each branch only sets a local
+`notify_text`; the single send happens after the commit succeeds, so a failed DB write can never
+produce a "payment succeeded" ping. Stripe redelivery (mostly an admin clicking "Resend" while
+debugging) can therefore duplicate a ping — **accepted, not solved**, consistent with there being
+no processed-event table: entitlement stays correct, the admin just sees the message twice.
+
+**Tests never hit the real Bot API.** `backend/.env` holds real Telegram credentials and
+`send_telegram()` reads them at call time, so `backend/conftest.py` neutralises the function
+twice: a module-level no-op assigned at import time (covers `main.py`'s startup ping, which fires
+inside the *session*-scoped `client` fixture and therefore before any function-scoped fixture
+exists), plus an **autouse** `_telegram_spy` fixture that swaps in a list-appender per test. Tests
+that assert on message content just request `_telegram_spy` by name.
+
 ## Gotchas (each of these cost real debugging time somewhere)
 
 **The webhook must read the RAW body.** `await request.body()` — binding a Pydantic model

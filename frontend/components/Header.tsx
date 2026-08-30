@@ -208,7 +208,22 @@ export default function Header() {
                   {premiumUntil && (
                     <span
                       data-testid="premium-badge"
-                      className="group absolute left-1/2 top-full -translate-x-1/2 mt-1 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-[1px] text-[9px] font-semibold text-emerald-700"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        router.push('/pricing');
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setMenuOpen(false);
+                          router.push('/pricing');
+                        }
+                      }}
+                      className="group absolute left-1/2 top-full -translate-x-1/2 mt-1 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-[1px] text-[9px] font-semibold text-emerald-700 cursor-pointer hover:bg-emerald-100 transition-colors"
                     >
                       Premium
                       <span className="pointer-events-none absolute left-1/2 top-full mt-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-lg bg-gray-900 px-2.5 py-1.5 text-center text-[11px] text-white opacity-0 transition-opacity group-hover:opacity-100 z-50">
