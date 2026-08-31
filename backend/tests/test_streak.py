@@ -76,3 +76,110 @@ def test_custom_phrase_progress_appears_in_activity_calendar(client):
     calendar = client.get("/api/me/activity-calendar", headers=auth(token)).json()
     today = date.today().isoformat()
     assert today in calendar["dates"]
+
+
+# Regression test for plan #17: completing a practice exam
+# (PracticeExamResult) silently didn't count toward the streak or the 28-day
+# activity calendar either — same bug class as issue #141 above, just a
+# different activity table that was never added to the union.
+# See plans/improvements/active/plan_17_practice-exams-count-toward-streak.md
+
+
+def _create_practice_test() -> int:
+    """Create a minimal published PracticeCategory + PracticeTest directly via a
+    DB session — there is no user-facing endpoint to create a practice test
+    (creation is admin-only), so tests exercise the DB the same way an admin's
+    write would."""
+    from sqlmodel import Session
+    import database
+    from models import PracticeCategory, PracticeTest
+
+    with Session(database.engine) as s:
+        category = PracticeCategory(name_ru="Streak Test Category")
+        s.add(category)
+        s.commit()
+        s.refresh(category)
+
+        test = PracticeTest(
+            category_id=category.id,
+            title_ru="Streak Test",
+            status="published",
+        )
+        s.add(test)
+        s.commit()
+        s.refresh(test)
+        return test.id
+
+
+def test_practice_exam_counts_toward_streak(client):
+    email = "streak_practice_exam@example.com"
+    token = make_token(email)
+    client.get("/api/me/stats", headers=auth(token))  # ensure user row exists
+
+    test_id = _create_practice_test()
+
+    stats_before = client.get("/api/me/stats", headers=auth(token)).json()
+    assert stats_before["streak"] == 0
+
+    r = client.post(
+        f"/api/practice/tests/{test_id}/results",
+        json={"score": 8, "total": 10},
+        headers=auth(token),
+    )
+    assert r.status_code == 200
+
+    stats_after = client.get("/api/me/stats", headers=auth(token)).json()
+    assert stats_after["streak"] >= 1
+
+
+def test_practice_exam_appears_in_activity_calendar(client):
+    email = "calendar_practice_exam@example.com"
+    token = make_token(email)
+    client.get("/api/me/stats", headers=auth(token))  # ensure user row exists
+
+    test_id = _create_practice_test()
+    client.post(
+        f"/api/practice/tests/{test_id}/results",
+        json={"score": 8, "total": 10},
+        headers=auth(token),
+    )
+
+    calendar = client.get("/api/me/activity-calendar", headers=auth(token)).json()
+    today = date.today().isoformat()
+    assert today in calendar["dates"]
+
+
+# Regression test pinning down that spaced-repetition review (not just
+# list-study) already counts toward the streak, since it reaches the same
+# POST /words/{id}/progress endpoint. Not a bug fix — this already worked —
+# but nothing pinned it down before, so a future refactor of the review
+# endpoints could silently break it without any test noticing.
+
+
+def test_review_counts_toward_streak(client):
+    email = "streak_review@example.com"
+    token = make_token(email)
+    client.get("/api/me/stats", headers=auth(token))  # ensure user row exists
+
+    from sqlmodel import Session, select
+    import database
+    from models import User, UserWordProgress
+
+    with Session(database.engine) as s:
+        user = s.exec(select(User).where(User.email == email)).first()
+        # status="known", no next_review → due for review today (see _known_due_words)
+        s.add(UserWordProgress(user_id=user.id, word_id=1, status="known", review_count=1))
+        s.commit()
+
+    due = client.get("/api/review/known", headers=auth(token)).json()
+    assert any(w["id"] == 1 for w in due)
+
+    r = client.post(
+        "/api/words/1/progress",
+        json={"status": "known", "quality": 5},
+        headers=auth(token),
+    )
+    assert r.status_code == 200
+
+    stats = client.get("/api/me/stats", headers=auth(token)).json()
+    assert stats["streak"] >= 1

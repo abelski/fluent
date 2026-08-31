@@ -1001,8 +1001,11 @@ def get_stats(
 ):
     """Return overall stats for the dashboard header: known/learning counts and study streak.
 
-    The streak counts consecutive days on which the user studied at least one word,
-    by looking at the set of unique dates in UserWordProgress.last_seen.
+    The streak counts consecutive days on which the user did any learning activity:
+    studied a word, passed a grammar lesson, progressed a phrase, or completed a
+    practice exam (dates unioned from UserWordProgress.last_seen,
+    GrammarLessonResult.created_at, UserPhraseProgress/UserCustomPhraseProgress.last_seen,
+    and PracticeExamResult.created_at).
 
     Computed via SQL aggregates / DISTINCT-date queries rather than fetching every
     progress row into Python — this endpoint is hit on nearly every dashboard page
@@ -1072,6 +1075,9 @@ def get_stats(
     studied_dates |= _distinct_dates(
         session, UserCustomPhraseProgress.last_seen, UserCustomPhraseProgress.user_id, user.id
     )
+    studied_dates |= _distinct_dates(
+        session, PracticeExamResult.created_at, PracticeExamResult.user_id, user.id
+    )
     streak = 0
     check = today if today in studied_dates else today - timedelta(days=1)
     while check in studied_dates:
@@ -1100,7 +1106,8 @@ def get_activity_calendar(
     """Return ISO date strings of active days within the last 28 days.
 
     A day is active if the user reviewed a word, completed a grammar lesson,
-    or progressed on a phrase (admin-curated program or personal list) on that day.
+    progressed on a phrase (admin-curated program or personal list), or completed
+    a practice exam on that day.
 
     Computed via DISTINCT-date SQL queries scoped to the 28-day window rather than
     fetching every progress row — see get_stats() above and plan #15 for why.
@@ -1127,8 +1134,14 @@ def get_activity_calendar(
         )
         if d >= window_start
     }
+    practice_dates = {
+        d for d in _distinct_dates(session, PracticeExamResult.created_at, PracticeExamResult.user_id, user.id)
+        if d >= window_start
+    }
 
-    active_dates = sorted(word_dates | grammar_dates | phrase_dates | custom_phrase_dates)
+    active_dates = sorted(
+        word_dates | grammar_dates | phrase_dates | custom_phrase_dates | practice_dates
+    )
     return {"dates": [d.isoformat() for d in active_dates]}
 
 
