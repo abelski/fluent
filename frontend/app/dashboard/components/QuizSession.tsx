@@ -239,6 +239,12 @@ export default function QuizSession({
   const [endedEarly, setEndedEarly] = useState(false);
   const [showMatchRound, setShowMatchRound] = useState(false);
   const [matchRoundWords, setMatchRoundWords] = useState<Word[]>([]);
+  // Plan #16 — end-of-lesson Premium upsell card: null while unresolved (card hidden
+  // until we know), false → show the card, true → never show it. Admins never see
+  // it either (Goals: "Premium/admin users never see it") even though they are not
+  // exempt from the daily session quota itself.
+  const [premiumActive, setPremiumActive] = useState<boolean | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
 
   const learnedWordIdsRef   = useRef<Set<number>>(new Set());
   const mistakeWordIdsRef   = useRef<Set<number>>(new Set());
@@ -325,6 +331,20 @@ export default function QuizSession({
       setUseTimer(s.use_question_timer);
       setTimerSeconds(s.question_timer_seconds);
     }).catch(() => {/* use defaults */});
+  }, []);
+
+  // Plan #16 — one-time `/api/me/quota` fetch for the end-of-lesson Premium upsell
+  // card (mirrors PricingClient.tsx's fetchQuota pattern).
+  useEffect(() => {
+    const token = getToken();
+    if (!token) { setPremiumActive(false); return; }
+    fetch(`${BACKEND_URL}/api/me/quota`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        setPremiumActive(data?.premium_active === true);
+        setIsAdminUser(data?.is_admin === true || data?.is_superadmin === true);
+      })
+      .catch(() => setPremiumActive(false));
   }, []);
 
   // ── Recompute options/blank when front card changes ─────────────────────────
@@ -886,6 +906,22 @@ export default function QuizSession({
                   ? tr.common.masteredWithMistakes.replace('{count}', String(stumbled))
                   : tr.common.perfectSession}
             </p>
+          )}
+          {premiumActive === false && !isAdminUser && (
+            <div
+              className="bg-white border border-line rounded-[14px] px-5 py-4 mb-6 text-left"
+              data-testid="premium-upsell-card"
+            >
+              <p className="text-sm font-semibold text-ink mb-1">{tr.common.premiumUpsellTitle}</p>
+              <p className="text-[13px] text-muted mb-3">{tr.common.premiumUpsellBody}</p>
+              <Link
+                href="/pricing"
+                className="inline-block text-[13px] font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+                data-testid="premium-upsell-cta"
+              >
+                {tr.common.premiumUpsellButton} <TakChevron direction="right" size={10} className="inline-block align-[-1px]" />
+              </Link>
+            </div>
           )}
           <div className="flex flex-col gap-3">
             <button

@@ -18,7 +18,9 @@ import {
   type WordListMineSummary,
 } from '../../../lib/api';
 import StatsBar from '../components/StatsBar';
+import DailyLimitBanner from '../components/DailyLimitBanner';
 import TakChevron from '../../../components/TakChevron';
+import Tak from '../../../components/Tak';
 import PageShell from '../components/PageShell';
 import StarLevelToggle from '../components/StarLevelToggle';
 import WelcomeModal from '../../../components/WelcomeModal';
@@ -279,6 +281,8 @@ export default function ListsPage() {
         </div>
         <p className="text-gray-400 mb-8">{tr.lists.subtitle}</p>
 
+        <DailyLimitBanner quota={quota} />
+
         {/* Мои списки — personal word lists (Premium/admin) */}
         {isLoggedIn && (
           <section className="mb-8" data-testid="my-word-lists-section">
@@ -320,7 +324,9 @@ export default function ListsPage() {
                     !eligible ? (
                       <div className="relative rounded-2xl bg-gradient-to-br from-amber-50 to-white border border-amber-100 overflow-hidden p-5">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center text-xl">⭐️</div>
+                          <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center">
+                            <Tak bare size={32} />
+                          </div>
                           <div>
                             <p className="font-semibold text-gray-900">{mt.upsellTitle}</p>
                             <p className="text-sm text-gray-500 mt-1">{mt.upsellBody}</p>

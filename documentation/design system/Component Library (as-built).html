@@ -721,6 +721,16 @@
       <tr><td>Content container</td><td><code>.page</code> — <code>max-width:1180px; margin:0 auto; padding-bottom:80px</code>, 32px gutters (16px below 860px).</td><td><code>app/globals.css</code></td></tr>
       <tr><td>Footer</td><td>Transparent on the page wash (no white band), <code>border-top:1px solid #d9d9d9</code>, 1180px, 13px <code>#9a9fa6</code>, link gap 24px.</td><td><code>components/Footer.tsx</code></td></tr>
       <tr><td>Bug-report FAB</td><td><code>right:24px bottom:40px</code>, white pill, <code>border #e2e4e3</code>, <code>shadow 0 2px 8px rgba(0,0,0,0.06)</code>, <code>z-60</code>, <code>bare</code> TAK. Label hidden below <code>sm</code>.</td><td><code>components/MistakeButton.tsx</code></td></tr>
+      <tr><td>Inline Premium-upsell/notice card (Plan #16)</td><td>Flat <code>bg-white border border-line rounded-[14px]</code>
+        card, no shadow — same recipe as the done-screen result tiles. Bold <code>text-ink</code> headline, one line
+        of <code>text-muted</code> body copy, an <code>emerald-600</code> text link (not a filled button) to
+        <code>/pricing</code>. Used by three call sites that share this shape: the end-of-lesson upsell card
+        (<code>data-testid="premium-upsell-card"</code>, always after the result message and before the primary/secondary
+        buttons, non-Premium users only), the daily-limit banner (<code>data-testid="daily-limit-banner"</code>,
+        conditional — only at 1 or 0 free sessions left today), and the milestone nudge
+        (<code>data-testid="milestone-nudge"</code>, adds a dismiss <code>×</code> button, shown once per streak/known-words
+        threshold via a <code>localStorage</code> dedup key).</td><td><code>app/dashboard/components/QuizSession.tsx</code>,
+        <code>app/dashboard/components/DailyLimitBanner.tsx</code>, <code>app/dashboard/components/StatsBar.tsx</code></td></tr>
     </table>
   </div>
 
@@ -738,10 +748,18 @@
       <tr><td>Mobile hamburger menu kept</td><td>The original mockups had no hamburger, but they were only ever drawn at desktop width — their silence isn't a decision about mobile.</td></tr>
       <tr><td>Hamburger breakpoint moved from Tailwind's <code>sm</code> (640px) to <code>1000px</code></td><td>
         <code>Header.tsx</code> switched between the hamburger and the full tab strip at 640px, but from
-        640-999px the logo, 5 Russian nav pills, language toggle and avatar/name don't fit on one line —
+        640-999px the logo, 6 Russian nav pills (Слова/Фразы/Грамматика/Практика/Статьи plus, as of Plan #16,
+        Тарифы/Pricing), language toggle and avatar/name don't fit on one line —
         the row's own <code>flex-wrap</code> let the language toggle + avatar silently drop onto an orphaned
         second row instead of the hamburger taking over. Measured live: wrapping started below ~915px, so
         1000px was chosen for margin.</td></tr>
+      <tr><td>Pricing joined the nav pill strip, but not the 5-page <code>PageShell</code> family (Plan #16)</td><td>
+        <code>Header.tsx</code>'s <code>navLinks</code> got a 6th pill, <code>tr.nav.pricing</code> ("Тарифы"),
+        active-highlighted via <code>pathname.startsWith('/pricing')</code> exactly like the other 5. But
+        <code>/pricing</code> itself still keeps its own documented "heavy-border pages left alone" layout
+        (<code>border-gray-900</code>, its own blur blob, no <code>.page</code> container) — it is not added to
+        <code>NAV_PAGES</code> in <code>design-system-parity.spec.ts</code>, and the 1180px-container/no-blur-blob
+        parity checks do not run against it. Only the physical pill strip is shared, not the page shell.</td></tr>
       <tr><td>FAB label hidden below <code>sm</code></td><td>The mockup kept it at 13px; hiding it protects the tap target on narrow screens, leaving a round icon button.</td></tr>
       <tr><td>Small-caps secondary labels at <code>#5b6067</code></td><td>The mockup used <code>#b0b4ba</code> and the app had drifted lighter still to <code>#d1d5db</code>. Both were reported unreadable; <code>#5b6067</code> clears WCAG AA at these sizes.</td></tr>
       <tr><td><code>PageMascot</code> at 128px, not 176px</td><td>No responsive size prop; a literal 176px crowds a 375px viewport.</td></tr>

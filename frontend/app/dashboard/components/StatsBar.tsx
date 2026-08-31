@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import type { Translations } from '../../../lib/i18n/types';
 import ProgressStatCard from './ProgressStatCard';
 import PageMascot from '../../../components/PageMascot';
 
@@ -11,6 +13,28 @@ interface Stats {
   streak: number;
   mistakes: number;
   due_review: number;
+}
+
+// Plan #16 — milestone-triggered Premium nudge. Highest threshold first so a user
+// who jumps straight past several thresholds (e.g. catching up after time away)
+// gets the single most impressive one, not the smallest.
+const STREAK_MILESTONES: number[] = [30, 14, 7, 3];
+const KNOWN_MILESTONES: number[] = [100, 50];
+
+type Motivations = Translations['stats']['motivations'];
+const STREAK_MOTIVATION_KEY: Record<number, keyof Motivations> = {
+  30: 'streak30', 14: 'streak14', 7: 'streak7', 3: 'streak3',
+};
+const KNOWN_MOTIVATION_KEY: Record<number, keyof Motivations> = {
+  100: 'known100', 50: 'known50',
+};
+
+const STREAK_SHOWN_KEY = 'fluent_milestone_streak_shown';
+const WORDS_SHOWN_KEY = 'fluent_milestone_words_shown';
+
+interface Milestone {
+  kind: 'streak' | 'known';
+  threshold: number;
 }
 
 interface CefrLevel { level: string; threshold: number; }
@@ -45,6 +69,14 @@ export default function StatsBar() {
   const { tr } = useT();
   const [stats, setStats] = useState<Stats | null>(null);
   const [cefrLevels, setCefrLevels] = useState<CefrLevel[]>(CEFR_LEVELS_DEFAULT);
+  // Plan #16 — milestone nudge state. `premiumActive` starts `null` (unresolved)
+  // so the nudge never flashes for a Premium user while the quota fetch is in
+  // flight. Admins are excluded too (Goals: "a free user..."), even though they
+  // are not exempt from the daily session quota itself.
+  const [premiumActive, setPremiumActive] = useState<boolean | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [milestone, setMilestone] = useState<Milestone | null>(null);
+  const [milestoneDismissed, setMilestoneDismissed] = useState(false);
 
   const fetchStats = () => {
     const token = getToken();
@@ -77,7 +109,52 @@ export default function StatsBar() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Plan #16 — one-time `/api/me/quota` fetch for `premium_active`, mirroring the
+  // same fetch-on-mount pattern used elsewhere (PricingClient.tsx, Header.tsx).
+  useEffect(() => {
+    const token = getToken();
+    if (!token) { setPremiumActive(false); return; }
+    fetch(`${BACKEND_URL}/api/me/quota`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        setPremiumActive(data?.premium_active === true);
+        setIsAdminUser(data?.is_admin === true || data?.is_superadmin === true);
+      })
+      .catch(() => setPremiumActive(false));
+  }, []);
+
+  // Plan #16 — check for a newly-crossed streak/known-words milestone whenever fresh
+  // stats land, but only once we know the user is not Premium. Streak takes priority
+  // over words if both are newly crossed in the same load (Requirement 5). The
+  // crossed threshold is persisted to localStorage immediately (view = dedup) so it
+  // never re-shows for that same threshold, even across page reloads.
+  useEffect(() => {
+    if (!stats || premiumActive !== false || isAdminUser || typeof window === 'undefined') return;
+
+    const streakShown = Number(window.localStorage.getItem(STREAK_SHOWN_KEY) ?? '0');
+    const crossedStreak = STREAK_MILESTONES.find((t) => stats.streak >= t && streakShown < t);
+    if (crossedStreak !== undefined) {
+      window.localStorage.setItem(STREAK_SHOWN_KEY, String(crossedStreak));
+      setMilestone({ kind: 'streak', threshold: crossedStreak });
+      return;
+    }
+
+    const wordsShown = Number(window.localStorage.getItem(WORDS_SHOWN_KEY) ?? '0');
+    const crossedKnown = KNOWN_MILESTONES.find((t) => stats.known >= t && wordsShown < t);
+    if (crossedKnown !== undefined) {
+      window.localStorage.setItem(WORDS_SHOWN_KEY, String(crossedKnown));
+      setMilestone({ kind: 'known', threshold: crossedKnown });
+    }
+  }, [stats, premiumActive, isAdminUser]);
+
   if (!stats) return null;
+
+  const showMilestoneNudge = milestone !== null && !milestoneDismissed;
+  const milestoneHeadline = milestone
+    ? tr.stats.motivations[
+        milestone.kind === 'streak' ? STREAK_MOTIVATION_KEY[milestone.threshold] : KNOWN_MOTIVATION_KEY[milestone.threshold]
+      ]
+    : null;
 
   const { currentLevel, nextLevel, next: cefrNext, pct: vocabPct } = getCefrProgress(stats.known, cefrLevels);
 
@@ -110,6 +187,32 @@ export default function StatsBar() {
         }}
         testId="stats-card-words"
       />
+      {showMilestoneNudge && (
+        <div
+          className="mt-4 flex items-start justify-between gap-3 border border-line rounded-[14px] px-5 py-4 bg-white"
+          data-testid="milestone-nudge"
+        >
+          <div>
+            <p className="text-sm font-semibold text-ink mb-1">{milestoneHeadline}</p>
+            <p className="text-[13px] text-muted mb-2">{tr.stats.milestonePremiumHint}</p>
+            <Link
+              href="/pricing"
+              className="text-[13px] font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+            >
+              {tr.stats.milestonePremiumButton}
+            </Link>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMilestoneDismissed(true)}
+            aria-label="×"
+            className="shrink-0 text-gray-400 hover:text-gray-900 transition-colors leading-none"
+            data-testid="milestone-nudge-dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 }

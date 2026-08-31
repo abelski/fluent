@@ -42,6 +42,10 @@ export interface Translations {
     gotIt: string;
     review: string; // "Повторение" — flashcard stage label in review mode
     youTyped: string; // "You typed:" / "Вы написали:" label in char diff
+    // ── Plan #16 — end-of-lesson Premium upsell ──
+    premiumUpsellTitle: string;
+    premiumUpsellBody: string;
+    premiumUpsellButton: string;
   };
   nav: {
     dictionaries: string;
@@ -50,6 +54,7 @@ export interface Translations {
     practice: string;
     articles: string;
     programs: string;
+    pricing: string; // Plan #16 — 6th nav pill
     signIn: string;
     admin: string;
     createProgram: string;
@@ -92,9 +97,11 @@ export interface Translations {
     backToLists: string;
     freeFeatures: string[];
     premiumFeatures: string[];
+    priceComparison: string; // Plan #16 — "less than a burger/coffee" price-framing caption
   };
   lists: {
     limitReached: string; // {count}/{limit} interpolated by caller
+    limitNear: string; // Plan #16 — shown when exactly 1 free session left today
     sessionsToday: string; // {count}/{limit}
     getPremium: string;
     premiumUntil: string; // date interpolated by caller
@@ -698,6 +705,9 @@ export interface Translations {
       knownSome: string;
       none: string;
     };
+    // ── Plan #16 — milestone-triggered Premium nudge ──
+    milestonePremiumHint: string;
+    milestonePremiumButton: string;
   };
   landing: {
     progressTitle: string;

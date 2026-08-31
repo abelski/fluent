@@ -38,6 +38,9 @@ const en: Translations = {
     gotIt: 'Got it',
     review: 'Review',
     youTyped: 'You typed:',
+    premiumUpsellTitle: 'Fluent runs on Premium support',
+    premiumUpsellBody: 'No ads, no data selling — Premium from learners like you covers the servers and new lessons.',
+    premiumUpsellButton: 'See Premium',
   },
   nav: {
     dictionaries: 'Dictionaries',
@@ -46,6 +49,7 @@ const en: Translations = {
     practice: 'Practice',
     articles: 'Articles',
     programs: 'Programs',
+    pricing: 'Pricing',
     signIn: 'Sign in',
     admin: 'Admin panel',
     createProgram: '+ Create program',
@@ -101,9 +105,11 @@ const en: Translations = {
       'Chrome extension — translate words on any website',
       'Support the project',
     ],
+    priceComparison: 'Less than a burger or a specialty coffee — per month',
   },
   lists: {
     limitReached: "Today's limit reached ({count}/{limit}). Try again tomorrow or upgrade to Premium.",
+    limitNear: "This is today's last free session. Premium removes the daily limit.",
     sessionsToday: 'Sessions today:',
     getPremium: 'Get Premium',
     premiumUntil: 'until',
@@ -682,6 +688,8 @@ const en: Translations = {
       knownSome: 'Great start! Every word counts.',
       none: 'Start learning — your first word is waiting!',
     },
+    milestonePremiumHint: 'Premium removes the daily limit and supports Fluent.',
+    milestonePremiumButton: 'See Premium',
   },
   landing: {
     progressTitle: 'My Progress',

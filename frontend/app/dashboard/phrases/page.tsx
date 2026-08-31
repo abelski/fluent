@@ -20,7 +20,9 @@ import TakChevron from '../../../components/TakChevron';
 import { getPhraseStarLevel, setPhraseStarLevel } from '../../../lib/starLevel';
 import ProgressStatCard from '../components/ProgressStatCard';
 import PageMascot from '../../../components/PageMascot';
+import Tak from '../../../components/Tak';
 import PageShell from '../components/PageShell';
+import DailyLimitBanner from '../components/DailyLimitBanner';
 
 interface Quota {
   premium_active: boolean;
@@ -300,6 +302,8 @@ export default function PhrasesPage() {
         <h1 className="text-[32px] font-bold mb-1.5">{t.pageTitle}</h1>
         <p className="text-[15px] text-muted mb-4">{t.pageSubtitle}</p>
 
+        <DailyLimitBanner quota={quota} />
+
         {/* Мои списки — a program-style container holding the user's lists as chapter-like cards */}
         <section className="mb-8" data-testid="my-lists-section">
           <div className="bg-white border border-line rounded-[14px] overflow-hidden">
@@ -353,7 +357,9 @@ export default function PhrasesPage() {
                   !eligible ? (
                     <div className="relative rounded-2xl bg-gradient-to-br from-amber-50 to-white border border-amber-100 overflow-hidden p-5">
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center text-xl">⭐️</div>
+                        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center">
+                          <Tak bare size={32} />
+                        </div>
                         <div>
                           <p className="font-semibold text-gray-900">{t.upsellTitle}</p>
                           <p className="text-sm text-gray-500 mt-1">{t.upsellBody}</p>

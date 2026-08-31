@@ -91,6 +91,7 @@ export default function Header() {
   const grammarActive = pathname.startsWith('/dashboard/grammar');
   const practiceActive = pathname.startsWith('/dashboard/practice');
   const articlesActive = pathname.startsWith('/dashboard/articles');
+  const pricingActive = pathname.startsWith('/pricing');
 
   const navLinks = (
     <>
@@ -134,6 +135,14 @@ export default function Header() {
       >
         {tr.nav.articles}
       </Link>
+      <Link
+        href="/pricing"
+        className={`px-4 py-2 rounded-full text-sm transition-colors whitespace-nowrap ${
+          pricingActive ? 'bg-white shadow-[0_1px_2px_rgba(0,0,0,0.06)] font-semibold text-ink' : 'text-muted-nav hover:text-emerald-600'
+        }`}
+      >
+        {tr.nav.pricing}
+      </Link>
     </>
   );
 
@@ -155,10 +164,11 @@ export default function Header() {
         </Link>
 
         {/* Desktop tab strip; below 1000px the hamburger dropdown takes over.
-            (Not Tailwind's `sm` — at 640-900px the 5 Russian nav labels plus the
-            language toggle and avatar/name don't fit on one line and wrap into a
-            broken second row, so the switch to the compact hamburger has to happen
-            earlier than content-hidden breakpoints elsewhere in the app.) */}
+            (Not Tailwind's `sm` — at 640-900px the 6 Russian nav labels (Plan #16
+            added "Тарифы"/Pricing as the 6th pill) plus the language toggle and
+            avatar/name don't fit on one line and wrap into a broken second row, so
+            the switch to the compact hamburger has to happen earlier than
+            content-hidden breakpoints elsewhere in the app.) */}
         <nav className="hidden min-[1000px]:flex gap-1 bg-[#f2f3f3] rounded-full p-1 shrink-0 overflow-x-auto max-w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {navLinks}
         </nav>

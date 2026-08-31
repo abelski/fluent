@@ -272,6 +272,7 @@ export default function PricingClient() {
                 <span className="text-4xl font-bold">{tr.pricing.premiumPrice}</span>
                 <span className="text-gray-400 mb-1">{tr.pricing.perMonth}</span>
               </div>
+              <p className="text-gray-400 text-xs mt-2" data-testid="price-comparison">{tr.pricing.priceComparison}</p>
             </div>
             <ul className="flex flex-col gap-3 flex-1 mb-8">
               {tr.pricing.premiumFeatures.map((f) => (

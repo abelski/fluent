@@ -38,6 +38,9 @@ const ru: Translations = {
     gotIt: 'Понял',
     review: 'Повторение',
     youTyped: 'Вы написали:',
+    premiumUpsellTitle: 'Fluent живёт благодаря Premium',
+    premiumUpsellBody: 'Мы не показываем рекламу и не продаём данные — Premium от таких же учеников, как ты, покрывает сервера и новые уроки.',
+    premiumUpsellButton: 'Узнать про Premium',
   },
   nav: {
     dictionaries: 'Слова',
@@ -46,6 +49,7 @@ const ru: Translations = {
     practice: 'Практика',
     articles: 'Статьи',
     programs: 'Программы',
+    pricing: 'Тарифы',
     signIn: 'Войти',
     admin: 'Администрирование',
     createProgram: '+ Создать программу',
@@ -101,9 +105,11 @@ const ru: Translations = {
       'Расширение Chrome — перевод слов на любом сайте',
       'Поддержка развития сервиса',
     ],
+    priceComparison: 'Меньше, чем бургер или чашка кофе в кофейне — в месяц',
   },
   lists: {
     limitReached: 'Лимит на сегодня исчерпан ({count}/{limit}). Попробуйте завтра или перейдите на Premium.',
+    limitNear: 'Осталась последняя бесплатная сессия на сегодня. Premium снимает дневной лимит.',
     sessionsToday: 'Сессий сегодня:',
     getPremium: 'Получить Premium',
     premiumUntil: 'до',
@@ -682,6 +688,8 @@ const ru: Translations = {
       knownSome: 'Отличный старт! Каждое слово на счету.',
       none: 'Начни учить — первое слово уже ждёт!',
     },
+    milestonePremiumHint: 'Premium снимает дневной лимит и поддерживает Fluent.',
+    milestonePremiumButton: 'Узнать про Premium',
   },
   landing: {
     progressTitle: 'Мой прогресс',
