@@ -12,8 +12,9 @@ import email_service
 import telegram_service
 from auth import require_user as _require_user
 from database import get_session
-from email_templates import generate_report_status_email
+from email_templates import append_premium_upsell, generate_report_status_email
 from models import MistakeReport, User
+from quota import is_premium_active
 
 router = APIRouter()
 
@@ -31,6 +32,7 @@ def _notify_reporter(session: Session, report: MistakeReport, new_status: str) -
         return
     try:
         subject, body = generate_report_status_email(user.name, report.description, new_status)
+        body = append_premium_upsell(body, is_premium_active(user), "both")
         email_service.send_email(user.email, subject, body)
         telegram_service.send_telegram(
             f"📬 Report #{report.id} → {new_status} — email sent to {user.email}"

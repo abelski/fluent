@@ -12,10 +12,16 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from sqlmodel import Session, select, text
 
 from database import engine
-from email_templates import generate_reengagement_email, generate_reward_email, generate_notice_email
+from email_templates import (
+    append_premium_upsell,
+    generate_reengagement_email,
+    generate_reward_email,
+    generate_notice_email,
+)
 import email_service
 import telegram_service
 from models import AppSetting, PreparedMessage, User
+from quota import is_premium_active
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +102,10 @@ def generate_inactive_messages() -> None:
                 body = custom[1].replace("{{name}}", user.name).replace("{{days}}", str(days_inactive))
             else:
                 subject, body = generate_reengagement_email(user.name, days_inactive, user.lang)
+
+            lang = user.lang if user.lang in ("ru", "en") else "ru"
+            body = append_premium_upsell(body, is_premium_active(user), lang, "inactive")
+
             msg = PreparedMessage(
                 user_id=user.id,
                 user_email=user.email,
@@ -178,6 +188,11 @@ def generate_weekly_reward_messages(session: Session) -> list[int]:
             subject, body = generate_reward_email(row.name, rank, lang)
         else:
             subject, body = generate_notice_email(row.name, rank, lang)
+
+        user_obj = session.get(User, row.id)
+        variant = "convert" if msg_type == "reward" else "generic"
+        body = append_premium_upsell(body, is_premium_active(user_obj), lang, variant)
+
         msg = PreparedMessage(
             user_id=row.id,
             user_email=row.email,

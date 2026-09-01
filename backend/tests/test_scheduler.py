@@ -8,13 +8,16 @@ draft records, then verify that send_weekly_rewards:
   - marks messages as sent / failed appropriately
 """
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
 from sqlmodel import Session, select
 
 import email_service
+import scheduler
 from conftest import _test_engine
+from email_templates import append_premium_upsell, generate_notice_email, generate_reward_email
 from models import User, PreparedMessage
+from quota import is_premium_active
 
 
 def _utcnow():
@@ -49,7 +52,14 @@ def _clean_scheduler_data():
     """Remove users/messages created by scheduler tests after each test."""
     yield
     with Session(_test_engine) as s:
-        for uid in ("sched-reward-1", "sched-reward-2", "sched-notice-1", "sched-noconsent-1"):
+        for uid in (
+            "sched-reward-1",
+            "sched-reward-2",
+            "sched-notice-1",
+            "sched-noconsent-1",
+            "sched-inactive-1",
+            "sched-inactive-premium-1",
+        ):
             user = s.get(User, uid)
             if user:
                 msgs = s.exec(select(PreparedMessage).where(PreparedMessage.user_id == uid)).all()
@@ -171,3 +181,110 @@ def test_smtp_failure_marks_message_failed():
         with Session(_test_engine) as s:
             msg = s.get(PreparedMessage, ids[0])
             assert msg.status == "failed"
+
+
+# ── Premium upsell in the inactive-user re-engagement email (plan #18) ──────
+
+
+def test_generate_inactive_messages_appends_upsell_for_non_premium_user():
+    user_id = "sched-inactive-1"
+    old_login = _utcnow() - timedelta(days=40)
+    with Session(_test_engine) as s:
+        s.add(User(
+            id=user_id,
+            email="sched-inactive-1@example.com",
+            name="Inactive User",
+            email_consent=True,
+            is_premium=False,
+            last_login=old_login,
+            lang="ru",
+        ))
+        s.commit()
+
+    with patch("email_service.send_email") as mock_send:
+        scheduler.generate_inactive_messages()
+
+    matching_calls = [c for c in mock_send.call_args_list if c.args[0] == "sched-inactive-1@example.com"]
+    assert len(matching_calls) == 1
+    sent_body = matching_calls[0].args[2]
+    assert "fluent.lt/pricing" in sent_body
+    assert "не удаляются за неактивность" in sent_body  # inactive-variant RU copy
+
+    with Session(_test_engine) as s:
+        msg = s.exec(select(PreparedMessage).where(PreparedMessage.user_id == user_id)).first()
+        assert msg is not None
+        assert msg.status == "sent"
+        assert "fluent.lt/pricing" in msg.body
+        assert "не удаляются за неактивность" in msg.body
+
+
+def test_generate_inactive_messages_no_upsell_for_premium_user():
+    user_id = "sched-inactive-premium-1"
+    old_login = _utcnow() - timedelta(days=40)
+    with Session(_test_engine) as s:
+        s.add(User(
+            id=user_id,
+            email="sched-inactive-premium-1@example.com",
+            name="Premium Inactive User",
+            email_consent=True,
+            is_premium=True,
+            premium_until=None,
+            last_login=old_login,
+            lang="ru",
+        ))
+        s.commit()
+
+    with patch("email_service.send_email") as mock_send:
+        scheduler.generate_inactive_messages()
+
+    matching_calls = [
+        c for c in mock_send.call_args_list if c.args[0] == "sched-inactive-premium-1@example.com"
+    ]
+    assert len(matching_calls) == 1
+    sent_body = matching_calls[0].args[2]
+    assert "fluent.lt/pricing" not in sent_body
+    assert "не удаляются за неактивность" not in sent_body
+
+    with Session(_test_engine) as s:
+        msg = s.exec(select(PreparedMessage).where(PreparedMessage.user_id == user_id)).first()
+        assert msg is not None
+        assert "fluent.lt/pricing" not in msg.body
+
+
+# ── Premium upsell in weekly reward/notice emails (plan #18) ────────────────
+#
+# `generate_weekly_reward_messages`'s raw-SQL leaderboard query isn't exercised
+# end-to-end against SQLite anywhere (see module docstring / plan #18 Context), so
+# these tests replicate the per-row snippet from Requirement 4 directly against
+# real `User` objects instead of calling the function itself.
+
+
+def _apply_weekly_upsell_snippet(user: User, rank: int, lang: str = "ru") -> str:
+    msg_type = "reward" if rank <= 3 else "notice"
+    if msg_type == "reward":
+        _subject, body = generate_reward_email(user.name, rank, lang)
+    else:
+        _subject, body = generate_notice_email(user.name, rank, lang)
+    variant = "convert" if msg_type == "reward" else "generic"
+    return append_premium_upsell(body, is_premium_active(user), lang, variant)
+
+
+def test_weekly_reward_top3_non_premium_gets_convert_copy():
+    user = _make_user("sched-rank1", "sched-rank1@example.com", consent=True, is_premium=False)
+    body = _apply_weekly_upsell_snippet(user, rank=1)
+    assert "бесплатной неделей Premium" in body
+    assert "fluent.lt/pricing" in body
+
+
+def test_weekly_notice_rank4_5_non_premium_gets_generic_copy():
+    user = _make_user("sched-rank4", "sched-rank4@example.com", consent=True, is_premium=False)
+    body = _apply_weekly_upsell_snippet(user, rank=4)
+    assert "Fluent живёт благодаря поддержке пользователей" in body
+    assert "fluent.lt/pricing" in body
+
+
+def test_weekly_reward_top3_premium_gets_no_upsell():
+    user = _make_user("sched-rank1-premium", "sched-rank1-premium@example.com", consent=True, is_premium=True)
+    body = _apply_weekly_upsell_snippet(user, rank=1)
+    assert "fluent.lt/pricing" not in body
+    assert "бесплатной неделей Premium" not in body

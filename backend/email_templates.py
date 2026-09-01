@@ -99,6 +99,69 @@ def generate_notice_email(name: str, rank: int, lang: str) -> tuple[str, str]:
     return subject, body
 
 
+_PREMIUM_UPSELL_COPY: dict[str, dict[str, str]] = {
+    "generic": {
+        "ru": (
+            "Кстати: Fluent живёт благодаря поддержке пользователей — Premium помогает "
+            "оплачивать хостинг и инфраструктуру, без которых проекта просто не будет. "
+            "Плюс с Premium снимается дневной лимит занятий.\n"
+            "👉 https://fluent.lt/pricing"
+        ),
+        "en": (
+            "By the way — Fluent runs on user support: Premium covers the hosting and "
+            "infrastructure that keep the project alive, and it also removes your daily "
+            "session limit.\n"
+            "👉 https://fluent.lt/pricing"
+        ),
+    },
+    "convert": {
+        "ru": (
+            "Пользуйтесь бесплатной неделей Premium! Она уже активна — и если Fluent вам "
+            "полезен, будем благодарны, если вы останетесь на Premium и после её окончания: "
+            "подписки — это то, что покрывает расходы на хостинг и не даёт проекту закрыться.\n"
+            "👉 https://fluent.lt/pricing"
+        ),
+        "en": (
+            "Enjoy your free week of Premium — it's already active! If Fluent has been useful "
+            "to you, we'd be grateful if you kept your subscription after the free week ends: "
+            "subscriptions are what cover the hosting costs and keep the project alive.\n"
+            "👉 https://fluent.lt/pricing"
+        ),
+    },
+    "inactive": {
+        "ru": (
+            "Кстати: аккаунты с Premium не удаляются за неактивность, а подписка помогает "
+            "оплачивать хостинг и инфраструктуру, без которых Fluent не сможет существовать.\n"
+            "👉 https://fluent.lt/pricing"
+        ),
+        "en": (
+            "By the way — Premium accounts are never deleted for inactivity, and your "
+            "subscription helps cover the hosting and infrastructure that keep Fluent alive.\n"
+            "👉 https://fluent.lt/pricing"
+        ),
+    },
+}
+
+
+def build_premium_upsell(lang: str, variant: Literal["generic", "convert", "inactive"] = "generic") -> str:
+    """Return the soft Premium-upsell paragraph for a given language and copy variant.
+
+    `lang == "both"` composes the RU and EN paragraphs for the requested variant,
+    joined by the same "— — —" separator used in `generate_report_status_email`.
+    """
+    copy = _PREMIUM_UPSELL_COPY[variant]
+    if lang == "both":
+        return f"{copy['ru']}\n\n— — —\n\n{copy['en']}"
+    return copy[lang]
+
+
+def append_premium_upsell(body: str, is_premium: bool, lang: str, variant: str = "generic") -> str:
+    """Append the soft Premium-upsell paragraph to `body` unless the user is already premium."""
+    if is_premium:
+        return body
+    return f"{body}\n\n{build_premium_upsell(lang, variant)}"
+
+
 _STATUS_COPY_RU = {
     "resolved": "Спасибо! Мы исправили проблему, о которой вы сообщили.",
     "onhold": "Мы получили вашу заявку и пока отложили её — она не забыта и вернётся в работу позже.",

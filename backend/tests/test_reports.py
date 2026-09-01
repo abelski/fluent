@@ -125,6 +125,16 @@ def _set_email_consent(email: str, consent: bool) -> None:
         s.commit()
 
 
+def _set_premium(email: str, is_premium: bool, premium_until=None) -> None:
+    with Session(_test_engine) as s:
+        u = s.exec(select(User).where(User.email == email)).first()
+        assert u is not None
+        u.is_premium = is_premium
+        u.premium_until = premium_until
+        s.add(u)
+        s.commit()
+
+
 @pytest.fixture
 def email_recorder(monkeypatch):
     """Replace email_service.send_email with a recorder. Also ensures the
@@ -147,6 +157,7 @@ def test_resolve_notifies_reporter(client, email_recorder):
     assert "обновлена" in subject and "updated" in subject
     assert "исправили" in body  # RU resolved copy
     assert "fixed" in body       # EN resolved copy
+    assert "fluent.lt/pricing" in body  # non-premium reporter gets the Premium upsell
 
 
 def test_hold_notifies_reporter(client, email_recorder):
@@ -173,6 +184,22 @@ def test_reopen_notifies_reporter(client, email_recorder):
     _, _, body = email_recorder.calls[0]
     assert "вернули" in body
     assert "reopened" in body
+
+
+def test_no_upsell_for_premium_reporter(client, email_recorder):
+    _ensure_user(client, USER_TOKEN)
+    _set_premium("report_user@example.com", True, None)
+    try:
+        rid = client.post(
+            "/api/reports", json={"description": "Already premium"}, headers=auth(USER_TOKEN)
+        ).json()["id"]
+        r = client.patch(f"/api/admin/reports/{rid}/resolve", headers=auth(ADMIN_TOKEN))
+        assert r.status_code == 200
+        assert len(email_recorder.calls) == 1
+        _, _, body = email_recorder.calls[0]
+        assert "fluent.lt/pricing" not in body
+    finally:
+        _set_premium("report_user@example.com", False, None)
 
 
 def test_no_notification_when_email_consent_false(client, monkeypatch):

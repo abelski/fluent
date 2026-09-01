@@ -213,8 +213,13 @@ def send_email_to_user(
         raise HTTPException(status_code=404, detail="User not found")
     if not target.email_consent:
         raise HTTPException(status_code=403, detail="User has not consented to emails")
+
+    from email_templates import append_premium_upsell
+    lang = target.lang if target.lang in ("ru", "en") else "ru"
+    body = append_premium_upsell(payload.body, _is_premium_active(target), lang)
+
     try:
-        email_service.send_email(target.email, payload.subject, payload.body)
+        email_service.send_email(target.email, payload.subject, body)
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
     return {"ok": True}
