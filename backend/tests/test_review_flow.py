@@ -49,6 +49,18 @@ def _seed_list(list_id: int, words: list[tuple[int, str, str, str]]) -> None:
         s.commit()
 
 
+def _seed_list_with_stars(list_id: int, words: list[tuple[int, str, str, str, int]]) -> None:
+    """Like `_seed_list` but lets each word specify its ★ complexity level."""
+    with Session(_db.engine) as s:
+        if s.get(WordList, list_id) is None:
+            s.add(WordList(id=list_id, title=f"List {list_id}", is_public=True, subcategory="test_program"))
+        for position, (word_id, lt, ru, en, star) in enumerate(words):
+            if s.get(Word, word_id) is None:
+                s.add(Word(id=word_id, lithuanian=lt, translation_ru=ru, translation_en=en, star=star))
+                s.add(WordListItem(id=word_id, word_list_id=list_id, word_id=word_id, position=position))
+        s.commit()
+
+
 def _set_progress(email: str, word_id: int, **fields) -> None:
     """Upsert a UserWordProgress row directly — SM-2 internals are what's under test."""
     user_id = _user_id(email)
@@ -265,3 +277,46 @@ def test_tiebreak_keeps_the_twin_with_fewer_reviews(client):
     ids = [w["id"] for w in client.get("/api/review/known", headers=headers).json()]
     assert 9732 in ids
     assert 9731 not in ids
+
+
+# ── issue #168: new words gated behind a higher ★ level ──────────────────────
+
+def test_more_new_at_higher_level_flag_when_new_words_are_star_gated(client):
+    """When a user's current star_level has no new words left (all known/learning)
+    but a higher star_level has unlearned words, the session must still fall back to
+    review-only at the current level (correct, unchanged behavior) while the response
+    surfaces `more_new_at_higher_level`/`new_words_at_higher_level` so the frontend can
+    offer to bump the level, instead of silently serving 0% new with no signal."""
+    email = "flow_more_new_higher@example.com"
+    headers = auth(make_token(email))
+    _seed_list_with_stars(9740, [
+        (9741, "vienas9740", "один9740", "one9740", 1),   # star=1, will be known
+        (9742, "du9740", "два9740", "two9740", 1),        # star=1, will be learning
+        (9743, "trys9740", "три9740", "three9740", 2),    # star=2, new — gated
+        (9744, "keturi9740", "четыре9740", "four9740", 2),  # star=2, new — gated
+    ])
+    client.get("/api/me/quota", headers=headers)
+    _set_progress(email, 9741, status="known", sm2_reps=5)
+    _set_progress(email, 9742, status="learning")
+
+    r = client.patch(
+        "/api/me/settings",
+        json={"words_per_session": 10, "new_words_ratio": 1.0},
+        headers=headers,
+    )
+    assert r.status_code == 200
+
+    r = client.get("/api/lists/9740/study?star_level=1", headers=headers)
+    assert r.status_code == 200
+    data = r.json()
+
+    # Regression guard: session composition is unchanged by this fix — still the
+    # existing (correct) review-only fallback, since star_level=1 truly has no new
+    # words. The core ratio/gap-fill algorithm is not touched by issue #168.
+    assert "all_known" not in data or data["all_known"] is False
+    served_ids = sorted(w["id"] for w in data["words"])
+    assert served_ids == [9741, 9742], served_ids
+
+    # The new signal: 2 new words exist at star=2, gated behind the current level.
+    assert data["more_new_at_higher_level"] is True
+    assert data["new_words_at_higher_level"] == 2

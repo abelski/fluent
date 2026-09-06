@@ -22,12 +22,16 @@ export default function QuizPage() {
   const [limitReached, setLimitReached] = useState(false);
   const [empty, setEmpty] = useState(false);
   const [allKnown, setAllKnown] = useState(false);
+  const [moreNewAtHigherLevel, setMoreNewAtHigherLevel] = useState(false);
+  const [newWordsAtHigherLevel, setNewWordsAtHigherLevel] = useState(0);
 
   const loadWords = useCallback((includeKnown = false) => {
     setLoading(true);
     setLimitReached(false);
     setEmpty(false);
     setAllKnown(false);
+    setMoreNewAtHigherLevel(false);
+    setNewWordsAtHigherLevel(0);
     const token = getToken();
     const starLevel = getStarLevel();
     const params = `star_level=${starLevel}${includeKnown ? '&include_known=true' : ''}`;
@@ -39,10 +43,20 @@ export default function QuizPage() {
         if (r.status === 404) { router.replace('/dashboard/lists'); return null; }
         return r.json();
       })
-      .then((data: { words: Word[]; distractors: Word[]; all_known?: boolean } | null) => {
+      .then((data: {
+        words: Word[];
+        distractors: Word[];
+        all_known?: boolean;
+        more_new_at_higher_level?: boolean;
+        new_words_at_higher_level?: number;
+      } | null) => {
         if (!data) return;
         const ws = Array.isArray(data) ? data : (data.words ?? []);
         const ds = Array.isArray(data) ? [] : (data.distractors ?? []);
+        if (!Array.isArray(data)) {
+          setMoreNewAtHigherLevel(!!data.more_new_at_higher_level);
+          setNewWordsAtHigherLevel(data.new_words_at_higher_level ?? 0);
+        }
         if (ws.length === 0) {
           if ((data as { all_known?: boolean }).all_known) setAllKnown(true);
           else setEmpty(true);
@@ -144,13 +158,38 @@ export default function QuizPage() {
     );
   }
 
+  const currentStarLevel = getStarLevel();
+  const nextStarLevel = currentStarLevel < 3 ? currentStarLevel + 1 : null;
+
   return (
-    <QuizSession
-      words={words}
-      distractors={distractors}
-      sessionMode="study"
-      backHref="/dashboard/lists"
-      onRepeat={loadWords}
-    />
+    <>
+      {moreNewAtHigherLevel && nextStarLevel && (
+        <div className="max-w-2xl mx-auto px-6 pt-4">
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 border border-line rounded-[14px] px-5 py-3.5 mb-2"
+            data-testid="more-new-at-higher-level-banner"
+          >
+            <p className="text-[13.5px] text-ink">
+              {tr.study.moreNewAtHigherLevel
+                .replace('{count}', String(newWordsAtHigherLevel))
+                .replace('{stars}', '★'.repeat(nextStarLevel))}
+            </p>
+            <button
+              onClick={() => { setStarLevel(nextStarLevel); loadWords(); }}
+              className="shrink-0 text-[13px] font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+            >
+              {tr.study.advanceToLevel.replace('{stars}', '★'.repeat(nextStarLevel))}
+            </button>
+          </div>
+        </div>
+      )}
+      <QuizSession
+        words={words}
+        distractors={distractors}
+        sessionMode="study"
+        backHref="/dashboard/lists"
+        onRepeat={loadWords}
+      />
+    </>
   );
 }

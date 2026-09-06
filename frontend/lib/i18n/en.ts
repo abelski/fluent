@@ -165,6 +165,7 @@ const en: Translations = {
     levelCompleteBody: 'You know all words at this difficulty level.',
     advanceToLevel: 'Advance to {stars}',
     studyAgain: 'Study again',
+    moreNewAtHigherLevel: 'No more new words at this complexity level — {count} new words are available at {stars}.',
   },
   grammar: {
     title: 'Grammar',

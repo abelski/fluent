@@ -165,6 +165,7 @@ const ru: Translations = {
     levelCompleteBody: 'Вы знаете все слова на этом уровне сложности.',
     advanceToLevel: 'Перейти на {stars}',
     studyAgain: 'Повторить ещё раз',
+    moreNewAtHigherLevel: 'На этом уровне сложности новых слов больше нет — {count} новых слов доступны на {stars}.',
   },
   grammar: {
     title: 'Грамматика',

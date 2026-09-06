@@ -16,8 +16,24 @@ from constants import DAILY_LIMIT, MATURE_WORD_REPS
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
 from leaderboard_service import build_leaderboard_score_joins, current_week_bounds, LEADERBOARD_SCORE_EXPR
+from routers.admin import _accented_matches_lithuanian
 
 router = APIRouter()
+
+
+def _safe_accented(w: Word) -> Optional[str]:
+    """Serve `w.accented` only if it satisfies the write-time invariant against
+    `w.lithuanian` (asterisks stripped, case-insensitive); otherwise emit None.
+
+    A handful of rows predate the `update_word` write-time guard added for issue
+    #166 and can still hold a stale, mismatched `accented` value. Rather than a
+    per-row data migration, this read-time filter makes any such row degrade to
+    None, which the frontend's existing `word.accented || word.lithuanian`
+    fallback already renders correctly as the plain word.
+    """
+    if not w.accented:
+        return None
+    return w.accented if _accented_matches_lithuanian(w.accented, w.lithuanian) else None
 
 
 # ── SM-2 spaced repetition ────────────────────────────────────────────────────
@@ -180,7 +196,7 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
         {
             "id": w.id,
             "lithuanian": w.lithuanian,
-            "accented": w.accented,
+            "accented": _safe_accented(w),
             "translation_en": w.translation_en,
             "translation_ru": w.translation_ru,
             "hint": w.hint,
@@ -420,10 +436,16 @@ def get_study_words(
     if not _can_access_list(wl, user, session):
         raise HTTPException(status_code=404, detail="List not found")
 
-    all_words = _list_words(list_id, session)
+    all_words_unfiltered = _list_words(list_id, session)
 
     # Filter by complexity level
-    all_words = [w for w in all_words if w["star"] <= star_level]
+    all_words = [w for w in all_words_unfiltered if w["star"] <= star_level]
+
+    # issue #168: default to "no higher-level new words" — set below only when the
+    # session actually falls back to review because new words exist but are gated
+    # behind a higher star_level than the user is currently studying at.
+    more_new_at_higher_level = False
+    new_words_at_higher_level = 0
 
     if user and all_words:
         word_ids = [w["id"] for w in all_words]
@@ -449,11 +471,40 @@ def get_study_words(
         learning_words = [w for w in all_words if w["status"] == "learning"]
         known_words = [w for w in all_words if w["status"] == "known"]
 
+        # issue #168: when there are no new words *at this star_level*, check whether
+        # the list has new words gated behind a higher complexity level — without this,
+        # the session silently falls back to 100% review with no signal that raising
+        # star_level would unlock new words. Computed here so it's available for both
+        # the all_known early return below and the normal session response further down.
+        if not new_words:
+            higher_words = [w for w in all_words_unfiltered if w["star"] > star_level]
+            if higher_words:
+                higher_word_ids = [w["id"] for w in higher_words]
+                known_higher_ids = {
+                    p.word_id
+                    for p in session.exec(
+                        select(UserWordProgress).where(
+                            UserWordProgress.user_id == user.id,
+                            col(UserWordProgress.word_id).in_(higher_word_ids),
+                        )
+                    ).all()
+                }
+                new_words_at_higher_level = sum(
+                    1 for w in higher_words if w["id"] not in known_higher_ids
+                )
+                more_new_at_higher_level = new_words_at_higher_level > 0
+
         # All words at this star_level are already known — return empty so the frontend
         # shows the level-complete state instead of a pointless review session.
         # When include_known=True the user explicitly wants to re-study known words.
         if not new_words and not learning_words and not include_known:
-            return {"words": [], "distractors": [], "all_known": True}
+            return {
+                "words": [],
+                "distractors": [],
+                "all_known": True,
+                "more_new_at_higher_level": more_new_at_higher_level,
+                "new_words_at_higher_level": new_words_at_higher_level,
+            }
 
         _quota_check_and_increment(user, session)
 
@@ -522,7 +573,7 @@ def get_study_words(
         {
             "id": w.id,
             "lithuanian": w.lithuanian,
-            "accented": w.accented,
+            "accented": _safe_accented(w),
             "translation_en": w.translation_en,
             "translation_ru": w.translation_ru,
             "hint": w.hint,
@@ -531,7 +582,12 @@ def get_study_words(
         for w in distractor_rows
     ]
 
-    return {"words": session_words, "distractors": distractors}
+    return {
+        "words": session_words,
+        "distractors": distractors,
+        "more_new_at_higher_level": more_new_at_higher_level,
+        "new_words_at_higher_level": new_words_at_higher_level,
+    }
 
 
 @router.get("/lists/{list_id}/progress")
@@ -694,7 +750,7 @@ def _word_to_dict(w: Word, status: str, progress: Optional[UserWordProgress] = N
     return {
         "id": w.id,
         "lithuanian": w.lithuanian,
-        "accented": w.accented,
+        "accented": _safe_accented(w),
         "translation_en": w.translation_en,
         "translation_ru": w.translation_ru,
         "hint": w.hint,
@@ -1234,7 +1290,7 @@ def get_known_words(
         result.append({
             "id": w.id,
             "lithuanian": w.lithuanian,
-            "accented": w.accented,
+            "accented": _safe_accented(w),
             "translation_ru": w.translation_ru,
             "translation_en": w.translation_en,
             "hint": w.hint,

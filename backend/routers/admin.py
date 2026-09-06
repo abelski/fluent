@@ -888,6 +888,17 @@ def get_list_words_admin(
     ]
 
 
+def _accented_matches_lithuanian(accented: str, lithuanian: str) -> bool:
+    """Whether `accented` (with stress-mark `*` characters stripped) spells the same
+    word as `lithuanian`, case-insensitively.
+
+    Mirrors `_sentence_invariant_holds()` in `grammar_service.py` (issue #156's
+    precedent) — same "typo in a free-text admin field breaks display" bug class,
+    this time for `Word.accented` vs `Word.lithuanian`. See issue #166.
+    """
+    return accented.replace("*", "").strip().casefold() == lithuanian.strip().casefold()
+
+
 class WordUpdate(BaseModel):
     lithuanian: str
     translation_en: str
@@ -912,6 +923,12 @@ def update_word(
         raise HTTPException(status_code=400, detail="translation_ru is required")
     if body.star is not None and body.star not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="star must be 1, 2 or 3")
+    accented = body.accented.strip() if body.accented and body.accented.strip() else None
+    if accented is not None and not _accented_matches_lithuanian(accented, body.lithuanian):
+        raise HTTPException(
+            status_code=400,
+            detail="accented text (asterisks stripped) must match lithuanian exactly",
+        )
     word = session.get(Word, word_id)
     if not word or word.archived:
         raise HTTPException(status_code=404, detail="Word not found")
@@ -919,7 +936,7 @@ def update_word(
     word.translation_en = body.translation_en.strip()
     word.translation_ru = body.translation_ru.strip()
     word.hint = body.hint.strip() if body.hint and body.hint.strip() else None
-    word.accented = body.accented.strip() if body.accented and body.accented.strip() else None
+    word.accented = accented
     if body.star is not None:
         word.star = body.star
     session.add(word)

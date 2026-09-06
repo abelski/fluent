@@ -152,6 +152,7 @@ export interface Translations {
     levelCompleteBody: string;
     advanceToLevel: string;
     studyAgain: string;
+    moreNewAtHigherLevel: string; // banner shown when session fell back to review because new words are gated behind a higher star_level (issue #168)
   };
   grammar: {
     title: string;
