@@ -440,8 +440,21 @@
       <code>frontend/components/PageMascot.tsx</code>. TAK plus a comic speech bubble, at the standard 128px.
       <b>Exactly one per rendered screen</b>, on every page except <code>/dashboard/admin/**</code>.
       Props: <code>phrase: string</code> (the page's own phrase, shown at neutral mood),
-      <code>mood?: number</code> (&minus;3&hellip;+3, default 0), <code>size?</code>, <code>className?</code>.
+      <code>mood?: number</code> (&minus;3&hellip;+3, default 0), <code>size?</code>, <code>className?</code>,
+      <code>phraseTestId?: string</code> (a <code>data-testid</code> on the bubble text, for a caller whose
+      phrase carries feature-specific content a test needs to target), <code>forcePhrase?: boolean</code>
+      (pin the bubble to exactly <code>phrase</code>, bypassing the mood-reaction table below &mdash;
+      TAK's <b>pose</b> still follows <code>mood</code> either way, only the text is pinned).
       Replaced <code>TakGreeting</code>, which no longer exists.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b><code>forcePhrase</code></b> exists for exactly one case so far: <code>QuizSession.tsx</code> passes a
+      verb's principal forms (<code>duoti &ndash; duoda &ndash; dav&#279;</code>) as <code>phrase</code> with
+      <code>forcePhrase</code> set whenever they're safe to reveal (see feature #20) &mdash; without it, the
+      bubble would show a mood reaction (<code>Puiku!</code>, etc.) instead the instant the session's mood moves
+      off neutral, which happens almost immediately after any answer. This is a deliberate exception to "one
+      bubble reacts to mood": the forms are lexical content tied to the current word, not part of the
+      session's ongoing reaction stream.
     </p>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
       <b>Mood</b> lives in <code>frontend/lib/mascotMood.ts</code> (<code>useMascotMood()</code>,

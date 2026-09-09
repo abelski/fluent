@@ -32,6 +32,10 @@ export interface Word {
    * `_is_mature` in backend/routers/words.py.
    */
   mature?: boolean;
+  /** Verb principal forms, populated server-side (backend/verb_lookup.py). */
+  part_of_speech?: string | null;
+  verb_present_3p?: string | null;
+  verb_past_3p?: string | null;
 }
 
 interface StudyCard {
@@ -90,6 +94,15 @@ const ENGLISH_TO_DIGIT: Record<string, string> = {
 function getDigit(word: Word): string | null {
   if (word.hint !== 'skaitvardis') return null;
   return ENGLISH_TO_DIGIT[word.translation_en] ?? null;
+}
+
+/**
+ * "suprasti – supranta – suprato" for verbs whose principal forms are known.
+ * Both conjugated forms must be present — a partial triple is never shown.
+ */
+function getVerbForms(word: Word): string | null {
+  if (!word.verb_present_3p || !word.verb_past_3p) return null;
+  return `${word.lithuanian} – ${word.verb_present_3p} – ${word.verb_past_3p}`;
 }
 
 
@@ -960,6 +973,17 @@ export default function QuizSession({
   const cloveIsCloze = cloveForms.length > 1;
   const cloveText   = cloveForms.map((f, i) => i === blankIndex ? '______' : f).join(' / ');
   const digit       = getDigit(word);
+  const verbForms   = getVerbForms(word);
+  // Stages 1/2/'3s' already show the Lithuanian word as the prompt (or, on
+  // '3s', everywhere except one syllable), so the forms are safe immediately.
+  // Stages '2r'/'2a'/3 ask the user to produce word.lithuanian themselves —
+  // showing it there before they've answered would hand them the answer, so
+  // it only appears once answerState leaves 'unanswered' and the correct
+  // answer is already on screen.
+  const showVerbForms = !!verbForms && (
+    stage === 1 || stage === 2 || stage === '3s' ||
+    (answerState !== 'unanswered' && answerState !== 'empty')
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 text-gray-900 flex flex-col px-6 py-4 sm:py-8">
@@ -1001,9 +1025,18 @@ export default function QuizSession({
         </div>
 
         {/* One mascot for the whole session — sits above every stage so his mood
-            stays visible while answering, not just on the stage-1 flashcard. */}
+            stays visible while answering, not just on the stage-1 flashcard.
+            For a verb whose forms are safe to show right now, his bubble says
+            them ("duoti – duoda – davė") instead of the usual prompt — same
+            single bubble, same neutral-mood-only visibility rule the prompt
+            already had. */}
         <div className="flex justify-center pt-6 sm:pt-10">
-          <PageMascot phrase={stage === 1 ? 'Prisimeni?' : 'Pagalvok!'} mood={mood} />
+          <PageMascot
+            phrase={showVerbForms && verbForms ? verbForms : (stage === 1 ? 'Prisimeni?' : 'Pagalvok!')}
+            phraseTestId={showVerbForms ? 'verb-forms' : undefined}
+            forcePhrase={showVerbForms}
+            mood={mood}
+          />
         </div>
 
         {/* ── Stage 1: Flashcard + self-evaluation ── */}

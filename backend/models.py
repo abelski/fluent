@@ -94,6 +94,12 @@ class Word(SQLModel, table=True):
     archived: bool = Field(default=False)  # soft-delete: hide but preserve FK integrity
     star: int = Field(default=1)  # complexity: 1=base form, 2=inflected/multi-form, 3=phrase
     accented: Optional[str] = None  # stressed syllable wrapped in *...*  e.g. "apsi*pir*ko"
+    # Verb principal forms, shown during study as "infinitive – present – past".
+    # All three are best-effort (curated Verb table / Wiktionary lookup) and stay
+    # null when unknown — see backend/verb_lookup.py.
+    part_of_speech: Optional[str] = None  # e.g. "verb", "noun" (Wiktionary vocabulary)
+    verb_present_3p: Optional[str] = None  # 3rd-person present: "supranta"
+    verb_past_3p: Optional[str] = None     # 3rd-person past simple: "suprato"
 
 
 class WordListItem(SQLModel, table=True):

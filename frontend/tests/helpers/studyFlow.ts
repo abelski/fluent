@@ -33,6 +33,11 @@ export interface MockWord {
   hint: string | null;
   status?: string;
   mature?: boolean;
+  // Verb principal forms (plan #20) — rendered as "infinitive – present – past"
+  // on the stages where the Lithuanian word is not the answer being elicited.
+  part_of_speech?: string | null;
+  verb_present_3p?: string | null;
+  verb_past_3p?: string | null;
 }
 
 /** Routes every word-session spec needs. `review` also mocks the known-review pool. */

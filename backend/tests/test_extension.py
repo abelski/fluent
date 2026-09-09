@@ -612,6 +612,8 @@ def test_translate_wiktionary_and_simplemma_miss_is_exact_old_shape(client):
         "senses": None,
         "base_translation_en": None,
         "base_translation_ru": None,
+        "verb_present_3p": None,
+        "verb_past_3p": None,
     }
 
 

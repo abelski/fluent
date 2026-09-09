@@ -23,6 +23,7 @@ from models import (
     WordListItem,
     UserWordProgress,
 )
+from verb_lookup import EMPTY_VERB_FIELDS, enrich_verb_forms
 
 router = APIRouter()
 
@@ -270,6 +271,9 @@ def get_my_word_list(
                 "translation": w.translation_ru or w.translation_en,
                 "position": pos,
                 "status": status_map.get(w.id, "new"),
+                "part_of_speech": w.part_of_speech,
+                "verb_present_3p": w.verb_present_3p,
+                "verb_past_3p": w.verb_past_3p,
             }
             for w, pos in words
         ],
@@ -360,11 +364,24 @@ def add_my_word(
     translation = body.translation.strip()
     if not lithuanian or not translation:
         raise HTTPException(status_code=422, detail="lithuanian and translation are required")
+    # Best-effort verb enrichment (curated Verb table first, Wiktionary
+    # fallback) so verbs can show "infinitive – present – past" during study.
+    # Never allowed to block or fail the add — see backend/verb_lookup.py.
+    # Deliberately NOT done in bulk_add_my_words below: one network call per
+    # pasted line would make a large paste unacceptably slow.
+    try:
+        verb_fields = enrich_verb_forms(session, lithuanian, None)
+    except Exception:
+        verb_fields = dict(EMPTY_VERB_FIELDS)
+
     word = Word(
         lithuanian=lithuanian,
         translation_en=translation,
         translation_ru=translation,
         star=1,
+        part_of_speech=verb_fields["part_of_speech"],
+        verb_present_3p=verb_fields["verb_present_3p"],
+        verb_past_3p=verb_fields["verb_past_3p"],
     )
     session.add(word)
     session.commit()

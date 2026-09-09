@@ -9,6 +9,15 @@ interface PageMascotProps {
   /** px. Defaults to the standard 128; callers should not normally pass this. */
   size?: number;
   className?: string;
+  /** Optional `data-testid` on the bubble's text, for callers whose `phrase`
+   * carries feature-specific content a test needs to target directly. */
+  phraseTestId?: string;
+  /** Show `phrase` as-is instead of the usual mood reaction ("Puiku!",
+   * "Hmm…", …) that normally wins once `mood` moves off neutral. TAK's pose
+   * still follows `mood` either way — only the bubble text is pinned. For a
+   * caller that needs the bubble to state specific content on demand (e.g.
+   * a word's verb forms) regardless of the answer streak so far. */
+  forcePhrase?: boolean;
 }
 
 /** The one standard mascot size. Every page uses this. */
@@ -21,6 +30,8 @@ export default function PageMascot({
   mood = MOOD_NEUTRAL,
   size = MASCOT_SIZE,
   className,
+  phraseTestId,
+  forcePhrase = false,
 }: PageMascotProps) {
   // Bubble tail and head overlap are proportional so the bubble keeps pointing
   // at TAK's head if a call site ever scales him.
@@ -30,7 +41,7 @@ export default function PageMascot({
   return (
     <div className={className} data-testid="page-mascot" data-mood={mood}>
       <div className="relative bg-white border border-gray-100 rounded-xl px-4 py-2 font-bold text-sm w-fit">
-        {moodPhrase(mood, phrase)}
+        <span data-testid={phraseTestId}>{forcePhrase ? phrase : moodPhrase(mood, phrase)}</span>
         <span
           className="absolute -bottom-2 rotate-45 w-3.5 h-3.5 bg-white border-r border-b border-gray-100"
           style={{ left: tailLeft }}

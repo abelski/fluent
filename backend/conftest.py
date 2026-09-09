@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 
 import database as _db
 import telegram_service
+import verb_lookup
 
 # Baseline no-op, installed at import time — see the `_telegram_spy` fixture below for why the
 # fixture alone is not enough: pytest builds the session-scoped `client` fixture (which runs
@@ -120,3 +121,19 @@ def _telegram_spy(monkeypatch):
     sent: list[str] = []
     monkeypatch.setattr(telegram_service, "send_telegram", lambda text: sent.append(text))
     return sent
+
+
+# ── 6. No test ever scrapes the real Wiktionary for verb forms ───────────────
+# `verb_lookup.enrich_verb_forms` (called from add_my_word, the extension's
+# translate/save endpoints) falls back to a real HTTPS fetch of Wiktionary's
+# rendered page whenever the curated `Verb` table misses — which is always, for
+# throwaway test words. It also queries Wiktionary's definition endpoint
+# (`_wiktionary_pos_set`) first, to guard against homonyms across parts of
+# speech, before trusting that scrape. Stub both network calls to a miss by
+# default so tests stay offline and fast; the curated-table half still runs
+# for real. Tests that exercise the scraper/guard themselves restore the real
+# functions for their own scope (see tests/test_verb_lookup.py).
+@pytest.fixture(autouse=True)
+def _no_real_wiktionary_verb_calls(monkeypatch):
+    monkeypatch.setattr(verb_lookup, "wiktionary_verb_forms", lambda lithuanian: None)
+    monkeypatch.setattr(verb_lookup, "_wiktionary_pos_set", lambda lithuanian: None)

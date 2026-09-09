@@ -201,6 +201,9 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
             "translation_ru": w.translation_ru,
             "hint": w.hint,
             "star": w.star,
+            "part_of_speech": w.part_of_speech,
+            "verb_present_3p": w.verb_present_3p,
+            "verb_past_3p": w.verb_past_3p,
         }
         for w in rows
     ]
@@ -578,6 +581,9 @@ def get_study_words(
             "translation_ru": w.translation_ru,
             "hint": w.hint,
             "status": "new",
+            "part_of_speech": w.part_of_speech,
+            "verb_present_3p": w.verb_present_3p,
+            "verb_past_3p": w.verb_past_3p,
         }
         for w in distractor_rows
     ]
@@ -756,6 +762,9 @@ def _word_to_dict(w: Word, status: str, progress: Optional[UserWordProgress] = N
         "hint": w.hint,
         "status": status,
         "mature": _is_mature(progress),
+        "part_of_speech": w.part_of_speech,
+        "verb_present_3p": w.verb_present_3p,
+        "verb_past_3p": w.verb_past_3p,
     }
 
 
@@ -1294,6 +1303,9 @@ def get_known_words(
             "translation_ru": w.translation_ru,
             "translation_en": w.translation_en,
             "hint": w.hint,
+            "part_of_speech": w.part_of_speech,
+            "verb_present_3p": w.verb_present_3p,
+            "verb_past_3p": w.verb_past_3p,
             "last_seen": p.last_seen.isoformat() if p.last_seen else None,
             "next_review": p.next_review.isoformat() if p.next_review else None,
             "list_title": list_info[0] if list_info else None,

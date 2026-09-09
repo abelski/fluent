@@ -28,6 +28,7 @@ from database import get_session
 from quota import is_premium_active
 from models import User, Word, WordList, WordListItem, UserWordProgress
 from routers.word_lists import _next_position, _get_owned_list, _personal_list_ids
+from verb_lookup import EMPTY_VERB_FIELDS, _looks_like_verb, enrich_verb_forms
 
 router = APIRouter()
 
@@ -377,7 +378,21 @@ _EMPTY_ENRICHMENT = {
     "senses": None,
     "base_translation_en": None,
     "base_translation_ru": None,
+    "verb_present_3p": None,
+    "verb_past_3p": None,
 }
+
+
+def _add_verb_forms(result: dict, lithuanian: str, session: Session) -> None:
+    """Fill `verb_present_3p`/`verb_past_3p` in-place for a verb base form.
+
+    Best-effort: `enrich_verb_forms` never raises and returns Nones on a miss,
+    so a failed lookup simply leaves the enrichment card without verb forms."""
+    if not _looks_like_verb(result.get("part_of_speech")):
+        return
+    forms = enrich_verb_forms(session, lithuanian, result.get("part_of_speech"))
+    result["verb_present_3p"] = forms["verb_present_3p"]
+    result["verb_past_3p"] = forms["verb_past_3p"]
 
 
 def _enrich(word: str, lang: str, session: Session, db_word: Optional[Word] = None) -> dict:
@@ -405,6 +420,10 @@ def _enrich(word: str, lang: str, session: Session, db_word: Optional[Word] = No
         result = dict(_EMPTY_ENRICHMENT)
         result["base_form"] = db_word.lithuanian
         result["base_form_accented"] = db_word.accented
+        # Already-enriched DB row: reuse its stored verb forms, no network call.
+        result["part_of_speech"] = db_word.part_of_speech
+        result["verb_present_3p"] = db_word.verb_present_3p
+        result["verb_past_3p"] = db_word.verb_past_3p
         return result
 
     entry = _wiktionary_cached(word)
@@ -432,6 +451,7 @@ def _enrich(word: str, lang: str, session: Session, db_word: Optional[Word] = No
         result["senses"] = senses[:3] if senses else None
         if db_word:
             result["base_form_accented"] = db_word.accented
+        _add_verb_forms(result, word, session)
         return result
 
     lemma = form_of["lemma"]
@@ -451,6 +471,8 @@ def _enrich(word: str, lang: str, session: Session, db_word: Optional[Word] = No
     if lemma_entry:
         senses = lemma_entry.get("senses") or []
         result["senses"] = senses[:3] if senses else None
+    # Verb forms belong to the base form, so look them up for the lemma.
+    _add_verb_forms(result, lemma, session)
     result["base_translation_en"] = en
     result["base_translation_ru"] = ru
     result["base_form_accented"] = accented
@@ -696,11 +718,22 @@ def add_extension_word(
             response["list_id"] = wl.id
         return response
 
+    # Best-effort verb principal forms so the word shows "inf – pres – past"
+    # during study. Never allowed to break the save (enrich_verb_forms itself
+    # never raises; the try/except is belt-and-braces around DB/session hiccups).
+    try:
+        verb_fields = enrich_verb_forms(session, lithuanian, None)
+    except Exception:
+        verb_fields = dict(EMPTY_VERB_FIELDS)
+
     word = Word(
         lithuanian=lithuanian,
         translation_en=translation,
         translation_ru=translation_ru,
         star=1,
+        part_of_speech=verb_fields["part_of_speech"],
+        verb_present_3p=verb_fields["verb_present_3p"],
+        verb_past_3p=verb_fields["verb_past_3p"],
     )
     session.add(word)
     session.commit()
