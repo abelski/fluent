@@ -23,7 +23,7 @@ from models import (
     WordListItem,
     UserWordProgress,
 )
-from verb_lookup import EMPTY_VERB_FIELDS, enrich_verb_forms
+from verb_lookup import EMPTY_VERB_FIELDS, enrich_verb_forms, lazy_enrich_words
 
 router = APIRouter()
 
@@ -258,6 +258,8 @@ def get_my_word_list(
             )
         ).all()
         status_map = {r.word_id: r.status for r in rows}
+
+    lazy_enrich_words(session, (w for w, _ in words))
 
     return {
         "id": wl.id,

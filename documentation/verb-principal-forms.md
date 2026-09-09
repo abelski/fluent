@@ -35,6 +35,25 @@ whole suite (same rationale as the existing Telegram / `_wiktionary_lookup` stub
 half still runs for real. `backend/tests/test_verb_lookup.py` restores the real functions for
 their own scope, with `httpx.get`/`httpx.Client` mocked, to exercise the parsers.
 
+**The curated table has the exact same homonym risk, from a different angle — found while
+verifying the lazy-load change against real data.** `enrich_verb_forms()` originally checked the
+curated `Verb` table *before* a caller-supplied `part_of_speech`. This app's own vocabulary has two
+separate `Word` rows both spelled `stotis` — one a noun ("station", hint `daiktavardis`), one a verb
+("to stand up", hint `глагол`) — and the curated table separately has its own `stotis` entry for
+the verb sense. Checking curated first meant the **noun** row got the **verb's** conjugation forms
+attached every time, because the curated table has no way to know which of the app's two distinct
+word rows is being asked about — only the hint does. Reproduced live against production data
+(`lazy_enrich_word` on the still-unenriched noun row actually set `part_of_speech="verb"` before the
+fix) before landing the fix: a hint-confirmed non-verb is now checked *first* in
+`enrich_verb_forms()`, before the curated table is even queried. This is a distinct bug from the
+Wiktionary-side homonym guard below — fixing one did not fix the other, since they're two separate
+code paths that both consult `part_of_speech` at the wrong point relative to their own data source.
+**Residual limitation, accepted:** a word with *no* hint at all (unenriched pre-existing vocabulary,
+or a personal word added without one) that happens to share spelling with an unrelated curated verb
+is still not protected — there is no signal to know it's the "wrong" sense. Only Wiktionary-sourced
+enrichment for unhinted words gets the cross-part-of-speech ambiguity guard (below); the curated
+table is still trusted unconditionally for anything not hint-confirmed non-verb.
+
 **Wiktionary homonyms poison the scrape unless guarded — found via live user testing, not a
 review.** `arti` means "near" (adverb) in this app's vocabulary, but Wiktionary's page for `arti`
 *also* has a verb section — "arti" is a homonym meaning "to plow" as a verb. The scraper doesn't
@@ -45,6 +64,18 @@ a scraped verb section, `enrich_verb_forms()` now calls `_wiktionary_pos_set()` 
 `/page/definition/` endpoint, not the HTML page) and only proceeds if it lists **only** `"verb"`
 for that headword — anything else (including a lookup failure, conservatively) either skips or,
 better, defers to a caller-supplied `part_of_speech` that already know's the word's real sense.
+
+**The ambiguity guard's exact-match check was itself too strict — found while checking real
+verbs, not just the known-bad ones.** `_wiktionary_pos_set("valgyti")` ("to eat", an entirely
+ordinary, unambiguous verb) returns `{"participle", "verb"}`, not `{"verb"}` alone — Wiktionary
+documents a verb's own participle as a separate `Participle` entry under the same headword (its
+`definition` field is a `form-of-definition` pointing straight back at `valgyti` itself, confirmed
+by fetching the raw JSON). An exact `pos_set == {"verb"}` check would have silently blocked
+`valgyti`, and likely many other ordinary verbs, from ever being enriched via Wiktionary at all —
+the opposite failure mode from `arti`/`stotis` (false negative instead of false positive). Fixed by
+excluding `"participle"` from what counts as a competing sense: `(pos_set - {"participle"}) !=
+{"verb"}`. Re-verified against real Wiktionary afterward: `valgyti` now resolves correctly
+(`valgo`/`valgė`) while `arti`/`stotis`-style genuine homonyms are still correctly blocked.
 
 **The app already had a part-of-speech tagging scheme, hiding in `Word.hint` — also found via live
 testing.** Independent of this feature, hundreds of curriculum words already carry a POS tag as
@@ -60,18 +91,34 @@ runs don't re-derive it, and (b) trusts a hint-confirmed verb's scraped forms ev
 lists the same headword under another part of speech too — the app's own tagging of *this specific
 word row* outranks a generic homonym-ambiguity guard built for words with no such signal.
 
-## Backfill status
+## Enrichment now happens lazily, at serve time — the batch script is a secondary tool
 
-`backend/scripts/backfill_verb_forms.py` (`--dry-run`, `--limit N`) is safe to re-run — it only
-looks at rows with `part_of_speech IS NULL`, and non-verb hint matches are persisted (not just
-verbs), so re-runs get cheaper over time. It now: (1) tries the curated table, (2) for a miss,
-checks `Word.hint` — a confirmed non-verb is tagged and skipped with no network call, an unhinted
-multi-word phrase is skipped as "never a single verb", (3) otherwise calls `enrich_verb_forms()`
-(curated already tried; homonym-guarded Wiktionary scrape for the rest). Two network calls
-(pos-check + scrape) per non-curated attempt, both politely rate-limited, so a full run over
-thousands of words is a background job measured in hours, not minutes — run it detached and poll
-`select count(*) from word where archived=false and part_of_speech is null` rather than waiting on
-it synchronously.
+Originally this was populated purely by a standalone batch job
+(`backend/scripts/backfill_verb_forms.py`) crawling the entire vocabulary table once. That job is a
+`~1900`-non-verb-skip-fast + `~1500`-verb-lookup-slow split: the slow half is a rate-limited
+Wiktionary crawl (up to 2 calls per word) measured in **hours**, and — worse — most of vocabulary is
+never studied by any user, so a full pass spends most of its time enriching words nobody will ever
+see, while genuinely-studied words wait behind the queue.
+
+Per user request, enrichment now also happens **lazily, inline with serving a word**:
+`verb_lookup.lazy_enrich_word()`/`lazy_enrich_words()` run right before a study/review queue is
+returned (`backend/routers/words.py`'s `_list_words`, `_known_due_words`,
+`get_review_known_upcoming`, `get_review_known_random`, `get_review_mistakes`; and
+`word_lists.py`'s `/api/me/word-lists/{id}`), enriching only the words a real request is about to
+show. Cheap paths (curated-table match, hint-confirmed non-verb) always run — pure DB reads, no
+network. The slow Wiktionary path is capped by a per-request budget (`wiktionary_budget`, default
+3 — a 1-element list shared across every word in that request/batch, decremented as it's spent) so
+a page that happens to surface many never-enriched verbs at once can't turn into dozens of
+sequential HTTP calls inside one request; whatever the budget doesn't cover this time is simply
+retried the next time that word is served (there's no separate "already tried and missed" flag, so
+a word Wiktionary can never resolve costs one skipped/attempted lookup per view forever — bounded,
+not free, a known and accepted tradeoff for keeping this simple).
+
+The standalone `backfill_verb_forms.py` (`--dry-run`, `--limit N`) still exists and is still safe to
+run — it's useful for pre-warming the cheap paths across the whole table in one pass (curated
+matches + hint-confirmed non-verbs, both free) or for an operator who wants full coverage
+immediately rather than waiting for organic study traffic to reach every word. It is no longer load-
+bearing for the feature to work.
 
 ## Where the line is (and isn't) shown
 

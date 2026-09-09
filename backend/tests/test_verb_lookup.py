@@ -232,6 +232,27 @@ def test_enrich_verb_forms_skips_ambiguous_homonym(client):
     assert wikt_mock.call_count == 0
 
 
+def test_enrich_verb_forms_participle_entry_is_not_treated_as_ambiguous(client):
+    """Real bug found via manual testing: Wiktionary lists "valgyti" ("to eat")
+    as {"participle", "verb"} — but its "Participle" entry is the verb's own
+    non-finite form (a `form-of-definition` pointing back at "valgyti"
+    itself), not an unrelated word sense like "arti"'s adverb/verb split.
+    Treating it as ambiguous would block ordinary, unambiguous verbs from
+    ever being enriched via Wiktionary."""
+    with Session(database.engine) as s:
+        with patch.object(
+            verb_lookup, "_wiktionary_pos_set", return_value={"participle", "verb"}
+        ):
+            with patch.object(
+                verb_lookup,
+                "wiktionary_verb_forms",
+                return_value={"present_3p": "valgo", "past_3p": "valgė"},
+            ):
+                result = verb_lookup.enrich_verb_forms(s, "valgyti", None)
+
+    assert result == {"part_of_speech": "verb", "verb_present_3p": "valgo", "verb_past_3p": "valgė"}
+
+
 def test_enrich_verb_forms_proceeds_when_pos_set_unambiguous(client):
     """Wiktionary lists only "verb" for this headword -> the scrape proceeds
     normally."""
@@ -280,6 +301,150 @@ def test_enrich_verb_forms_hint_confirmed_verb_bypasses_ambiguity_check(client):
 
     assert result == {"part_of_speech": "verb", "verb_present_3p": "aria", "verb_past_3p": "arė"}
     pos_mock.assert_not_called()
+
+
+# ── lazy_enrich_word / lazy_enrich_words ─────────────────────────────────────
+#
+# On-demand enrichment run right before a word is served (study/review queues),
+# instead of relying solely on the standalone backfill script — so real usage
+# progressively fills in forms for whatever vocabulary users actually study.
+
+def _make_word(lithuanian: str, hint: str | None = None) -> Word:
+    with Session(database.engine) as s:
+        w = Word(lithuanian=lithuanian, translation_en="x", translation_ru="х", hint=hint)
+        s.add(w)
+        s.commit()
+        s.refresh(w)
+        return w
+
+
+def test_lazy_enrich_word_curated_hit_needs_no_budget(client):
+    """A curated-table match is a pure DB read -> no budget required at all."""
+    _seed_curated_verb("kalbėti", "kalba", "kalbėjo")
+    w = _make_word("kalbėti")
+    with Session(database.engine) as s:
+        with patch.object(verb_lookup, "wiktionary_verb_forms") as wikt_mock:
+            changed = verb_lookup.lazy_enrich_word(s, w, wiktionary_budget=[0])
+
+    assert changed is True
+    assert w.part_of_speech == "verb"
+    assert w.verb_present_3p == "kalba"
+    assert w.verb_past_3p == "kalbėjo"
+    assert wikt_mock.call_count == 0
+
+
+def test_lazy_enrich_word_hint_confirmed_nonverb_needs_no_budget(client):
+    """A word already hint-tagged non-verb is persisted with zero budget."""
+    w = _make_word("berniukas", hint="daiktavardis")
+    with Session(database.engine) as s:
+        with patch.object(verb_lookup, "wiktionary_verb_forms") as wikt_mock:
+            changed = verb_lookup.lazy_enrich_word(s, w, wiktionary_budget=[0])
+
+    assert changed is True
+    assert w.part_of_speech == "noun"
+    assert w.verb_present_3p is None
+    assert wikt_mock.call_count == 0
+
+
+def test_lazy_enrich_word_skips_network_path_without_budget(client):
+    """An unhinted single-token word not in the curated table needs a network
+    lookup -> with zero budget it is left untouched, to be retried later."""
+    w = _make_word("suprasti")
+    with Session(database.engine) as s:
+        with patch.object(
+            verb_lookup, "wiktionary_verb_forms", return_value={"present_3p": "supranta", "past_3p": "suprato"}
+        ) as wikt_mock:
+            changed = verb_lookup.lazy_enrich_word(s, w, wiktionary_budget=[0])
+
+    assert changed is False
+    assert w.part_of_speech is None
+    assert wikt_mock.call_count == 0
+
+
+def test_lazy_enrich_word_uses_network_path_with_budget(client):
+    """Same word, budget available -> the lookup runs and the budget counter
+    (shared across a batch) is decremented."""
+    w = _make_word("suprasti")
+    budget = [2]
+    with Session(database.engine) as s:
+        with patch.object(
+            verb_lookup, "_wiktionary_pos_set", return_value={"verb"}
+        ), patch.object(
+            verb_lookup, "wiktionary_verb_forms", return_value={"present_3p": "supranta", "past_3p": "suprato"}
+        ):
+            changed = verb_lookup.lazy_enrich_word(s, w, wiktionary_budget=budget)
+
+    assert changed is True
+    assert w.verb_present_3p == "supranta"
+    assert budget == [1]
+
+
+def test_lazy_enrich_word_already_enriched_is_a_no_op(client):
+    """A word that already has part_of_speech set is left alone entirely —
+    no curated lookup, no network, nothing to do."""
+    w = _make_word("suprasti")
+    w_id = w.id
+    with Session(database.engine) as s:
+        stored = s.get(Word, w_id)
+        stored.part_of_speech = "verb"
+        stored.verb_present_3p = "supranta"
+        stored.verb_past_3p = "suprato"
+        s.add(stored)
+        s.commit()
+
+    with Session(database.engine) as s:
+        stored = s.get(Word, w_id)
+        with patch.object(verb_lookup, "wiktionary_verb_forms") as wikt_mock:
+            changed = verb_lookup.lazy_enrich_word(s, stored)
+
+    assert changed is False
+    assert wikt_mock.call_count == 0
+
+
+def test_lazy_enrich_words_commits_batch_and_respects_budget(client):
+    """A batch of words: curated/hint-confirmed ones are always enriched, and
+    only as many network-bound words as the budget allows get resolved in one
+    call — the rest are left for a future request to pick up."""
+    _seed_curated_verb("kalbėti", "kalba", "kalbėjo")
+    curated_word = _make_word("kalbėti2", hint=None)
+    # Force a curated match for this row's own lithuanian instead of relying on
+    # a second seed — simpler to just seed a second curated verb.
+    with Session(database.engine) as s:
+        existing = s.exec(select(Verb).where(Verb.infinitive == "kalbėti2")).first()
+        if not existing:
+            s.add(Verb(number=9002, infinitive="kalbėti2", present_3p="kalba2", past_3p="kalbėjo2",
+                        translation_ru="х", translation="x"))
+            s.commit()
+
+    nonverb_word = _make_word("mašina", hint="daiktavardis")
+    network_word_a = _make_word("duoti")
+    network_word_b = _make_word("eiti")
+
+    with Session(database.engine) as s:
+        words = [
+            s.get(Word, curated_word.id),
+            s.get(Word, nonverb_word.id),
+            s.get(Word, network_word_a.id),
+            s.get(Word, network_word_b.id),
+        ]
+        with patch.object(verb_lookup, "_wiktionary_pos_set", return_value={"verb"}):
+            with patch.object(
+                verb_lookup, "wiktionary_verb_forms",
+                return_value={"present_3p": "x", "past_3p": "y"},
+            ) as wikt_mock:
+                verb_lookup.lazy_enrich_words(s, words, wiktionary_budget=1)
+
+        assert wikt_mock.call_count == 1  # only one of the two network-bound words
+
+    with Session(database.engine) as s:
+        assert s.get(Word, curated_word.id).part_of_speech == "verb"
+        assert s.get(Word, nonverb_word.id).part_of_speech == "noun"
+        network_results = [s.get(Word, network_word_a.id).part_of_speech,
+                            s.get(Word, network_word_b.id).part_of_speech]
+        # Exactly one of the two network-bound words got resolved; the other
+        # stays null, to be retried on a future request.
+        assert network_results.count("verb") == 1
+        assert network_results.count(None) == 1
 
 
 # ── part_of_speech_from_hint ─────────────────────────────────────────────────

@@ -195,6 +195,17 @@ existing code to mirror) — `opus` at `high` effort to get that scraper right t
   answer).
 - All of the above were re-verified against the full Playwright/pytest suites (see Definition of
   Done) after landing, not just the narrower specs that motivated each fix.
+- **Enrichment moved from a batch backfill to lazy, at-serve-time enrichment.** Per user request:
+  `verb_lookup.lazy_enrich_word()`/`lazy_enrich_words()` now run right before a study/review queue
+  is returned, enriching only words a real request is about to show instead of crawling the whole
+  vocabulary table up front. Cheap paths (curated match, hint-confirmed non-verb) always run; the
+  slow Wiktionary path is capped by a small per-request budget (default 3) so one request can't
+  fan out into dozens of HTTP calls — anything skipped is simply retried the next time that word
+  is served. The standalone `backfill_verb_forms.py` script still exists as an optional
+  pre-warming tool (and was stopped mid-run once this landed, since it was no longer adding
+  value beyond what lazy enrichment now covers organically) but is no longer load-bearing. New
+  tests: `test_lazy_enrich_word_*`/`test_lazy_enrich_words_*` in `test_verb_lookup.py`. See
+  `documentation/verb-principal-forms.md`.
 
 ## Definition of Done
 

@@ -17,6 +17,7 @@ from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
 from leaderboard_service import build_leaderboard_score_joins, current_week_bounds, LEADERBOARD_SCORE_EXPR
 from routers.admin import _accented_matches_lithuanian
+from verb_lookup import lazy_enrich_words
 
 router = APIRouter()
 
@@ -192,6 +193,7 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
         .where(Word.archived == False)  # noqa: E712
         .order_by(WordListItem.position)
     ).all()
+    lazy_enrich_words(session, rows)
     return [
         {
             "id": w.id,
@@ -799,6 +801,7 @@ def _known_due_words(user: User, session: Session, limit: int) -> list[dict]:
         .limit(limit * SESSION_OVERFETCH)
     ).all()
 
+    lazy_enrich_words(session, (word for _, word in rows))
     candidates = [_word_to_dict(word, progress.status, progress) for progress, word in rows]
     progress_map = {progress.word_id: progress for progress, _ in rows}
     return _dedupe_by_translation(candidates, progress_map)[:limit]
@@ -852,6 +855,7 @@ def get_review_known_upcoming(
     words = session.exec(
         select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
     ).all()
+    lazy_enrich_words(session, words)
     word_map = {w.id: w for w in words}
 
     candidates = [
@@ -893,6 +897,7 @@ def get_review_known_random(
     words = session.exec(
         select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
     ).all()
+    lazy_enrich_words(session, words)
     word_map = {w.id: w for w in words}
 
     candidates = [
@@ -934,6 +939,7 @@ def get_review_mistakes(
     words = session.exec(
         select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
     ).all()
+    lazy_enrich_words(session, words)
     word_map = {w.id: w for w in words}
 
     candidates = [
@@ -1277,6 +1283,7 @@ def get_known_words(
     words = session.exec(
         select(Word).where(col(Word.id).in_(word_ids), Word.archived == False)  # noqa: E712
     ).all()
+    lazy_enrich_words(session, words)
     word_map = {w.id: w for w in words}
 
     # One query to get a list title per word (use the first list found)

@@ -23,13 +23,13 @@ from __future__ import annotations
 import logging
 import re
 import unicodedata
-from typing import Optional
+from typing import Iterable, Optional
 from urllib.parse import quote
 
 import httpx
 from sqlmodel import Session, func, select
 
-from models import Verb
+from models import Verb, Word
 
 logger = logging.getLogger(__name__)
 
@@ -305,15 +305,32 @@ def enrich_verb_forms(
 ) -> dict:
     """Resolve `{part_of_speech, verb_present_3p, verb_past_3p}` for a word.
 
-    Curated `Verb` table first (hand-verified), Wiktionary HTML fallback.
-    Never raises — on any failure the verb fields come back None and the caller
-    just stores a word without principal forms.
+    A caller-confirmed non-verb `part_of_speech` (e.g. from the app's own
+    `Word.hint` tagging) is checked FIRST and wins outright — even before the
+    curated `Verb` table. Real bug found via manual testing: this app's own
+    vocabulary has two separate `Word` rows both spelled "stotis" — one a
+    noun ("station", hint `daiktavardis`), one a verb ("to stand up", hint
+    `глагол`) — and the curated table separately has its own "stotis" entry
+    for the *verb* sense. Checking curated before the hint meant the noun
+    row got the verb's conjugation forms attached, because the curated table
+    doesn't know which of the app's two distinct word rows it's being asked
+    about. The hint does. Whenever a hint doesn't say non-verb (still `None`,
+    or "verb"): curated `Verb` table (hand-verified), then a homonym-guarded
+    Wiktionary HTML fallback. Never raises — on any failure the verb fields
+    come back None and the caller just stores a word without principal
+    forms.
     """
     result = dict(EMPTY_VERB_FIELDS)
     result["part_of_speech"] = part_of_speech
     try:
         word = (lithuanian or "").strip()
         if not word:
+            return result
+
+        # A known non-verb never needs the (slow) network call, and is
+        # authoritative for this specific word row even over a same-spelled
+        # curated table entry — see the docstring above.
+        if part_of_speech and not _looks_like_verb(part_of_speech):
             return result
 
         curated = curated_verb_forms(session, word)
@@ -323,19 +340,24 @@ def enrich_verb_forms(
             result["verb_past_3p"] = curated["past_3p"]
             return result
 
-        # A known non-verb never needs the (slow) network call.
-        if part_of_speech and not _looks_like_verb(part_of_speech):
-            return result
-
         # Unless the caller already confirmed this word's actual sense is a
         # verb (e.g. from the app's own hint-based POS tagging), guard
         # against homonyms across parts of speech: don't trust a scraped verb
         # conjugation section if Wiktionary also lists a different part of
         # speech for the same headword — that page section may belong to an
         # unrelated word ("arti" = adverb "near" AND verb "to plow").
+        #
+        # "Participle" is excluded from what counts as "a different part of
+        # speech": Wiktionary documents a verb's own participle as a separate
+        # `Participle` entry under the same headword (confirmed by fetching
+        # "valgyti" ["to eat"] directly — its "Participle" entry is a
+        # `form-of-definition` pointing right back at "valgyti" itself, not
+        # an unrelated word). Without this, `{"participle", "verb"}` would
+        # wrongly read as ambiguous and block ordinary, unambiguous verbs
+        # like "valgyti" from ever being enriched via Wiktionary at all.
         if not _looks_like_verb(part_of_speech):
             pos_set = _wiktionary_pos_set(word)
-            if pos_set is not None and pos_set != {"verb"}:
+            if pos_set is not None and (pos_set - {"participle"}) != {"verb"}:
                 return result
 
         forms = wiktionary_verb_forms(word)
@@ -347,3 +369,76 @@ def enrich_verb_forms(
         logger.warning("verb form enrichment failed for %r", lithuanian, exc_info=True)
         return dict(EMPTY_VERB_FIELDS, part_of_speech=part_of_speech)
     return result
+
+
+def lazy_enrich_word(
+    session: Session, word: Word, wiktionary_budget: Optional[list[int]] = None
+) -> bool:
+    """On-demand enrichment for a single already-loaded `Word`, run right
+    before it's served to a study/review request rather than via a separate
+    batch job over the whole vocabulary table.
+
+    The cheap paths always run — a curated `Verb` table match or a `Word.hint`
+    that already confirms a non-verb are both pure DB reads, no network. The
+    slow Wiktionary path only runs while `wiktionary_budget` (a 1-element list
+    shared across every word in the same request, so the caller can decrement
+    it in place) is still positive: a page that happens to surface many
+    never-enriched verbs at once can't turn into dozens of sequential HTTP
+    calls in one request. Whatever is skipped this time is simply retried
+    the next time that word is served — no separate "already tried and
+    missed" bookkeeping, so a word Wiktionary can never resolve keeps costing
+    one skipped/attempted lookup per view, bounded by the per-request budget.
+
+    Mutates `word` in place and returns whether anything changed — the caller
+    is responsible for `session.add`/`commit`. Never raises.
+    """
+    if word.part_of_speech is not None:
+        return False
+    try:
+        hinted_pos = part_of_speech_from_hint(word.hint)
+        needs_network = curated_verb_forms(session, word.lithuanian) is None and (
+            not hinted_pos or hinted_pos == "verb"
+        )
+        if needs_network:
+            if not hinted_pos and len(word.lithuanian.split()) != 1:
+                return False  # a multi-word phrase is never a single verb
+            if wiktionary_budget is None or wiktionary_budget[0] <= 0:
+                return False
+            wiktionary_budget[0] -= 1
+
+        result = enrich_verb_forms(session, word.lithuanian, part_of_speech=hinted_pos)
+        if result["part_of_speech"] is None:
+            return False
+        word.part_of_speech = result["part_of_speech"]
+        word.verb_present_3p = result["verb_present_3p"]
+        word.verb_past_3p = result["verb_past_3p"]
+        return True
+    except Exception:
+        logger.warning("lazy verb-form enrichment failed for %r", word.lithuanian, exc_info=True)
+        return False
+
+
+def lazy_enrich_words(
+    session: Session, words: Iterable[Word], wiktionary_budget: int = 3
+) -> None:
+    """Batch form of `lazy_enrich_word` for a page of words about to be
+    served (a study/review queue). Commits once at the end if anything
+    changed. Never raises — a failure here should never block serving words
+    that were otherwise ready to go out.
+    """
+    budget = [wiktionary_budget]
+    changed = False
+    seen: set[int] = set()
+    try:
+        for word in words:
+            if word.id in seen:
+                continue
+            seen.add(word.id)
+            if lazy_enrich_word(session, word, budget):
+                session.add(word)
+                changed = True
+        if changed:
+            session.commit()
+    except Exception:
+        logger.warning("lazy verb-form enrichment failed for a word batch", exc_info=True)
+        session.rollback()
