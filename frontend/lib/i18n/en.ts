@@ -151,6 +151,7 @@ const en: Translations = {
     assembleWord: 'Assemble the word from syllables',
     assemblePhrase: 'Assemble the phrase from words',
     assembleLetters: 'Assemble the word from letters',
+    clearAssembly: 'Clear',
     fillMissing: 'Fill in the missing form',
     howInLithuanian: 'How do you say it in Lithuanian?',
     typePlaceholder: 'Type the missing word...',

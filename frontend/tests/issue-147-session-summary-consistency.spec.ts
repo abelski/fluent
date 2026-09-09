@@ -131,6 +131,7 @@ async function playThrough(page: Page, wrongFirst: boolean) {
       if (word) {
         const mode = await tilePool.getAttribute('data-tile-mode');
         await assembleTarget(page, word.lithuanian, mode === 'word' ? ' ' : '');
+        await page.getByTestId('check-assembly').click();
         await page.waitForTimeout(1400);
       }
       continue;

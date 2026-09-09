@@ -138,6 +138,7 @@ export interface Translations {
     assembleWord: string;
     assemblePhrase: string;   // multi-word entry — whole-word tiles
     assembleLetters: string;  // one-syllable word — letter tiles
+    clearAssembly: string;    // resets the assembled-row tiles on stage 2a
     fillMissing: string;
     howInLithuanian: string;
     typePlaceholder: string;

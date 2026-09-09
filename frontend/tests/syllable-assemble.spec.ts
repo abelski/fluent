@@ -62,6 +62,7 @@ test.describe('assemble stage (2a) interaction', () => {
     await reachAssemble(page, AUTOMOBILIS);
 
     await clickTiles(page, SYLLABLES);
+    await page.getByTestId('check-assembly').click();
     await expect(page.getByText('Правильно')).toBeVisible();
     await expect(page.locator('input[type="text"]')).toBeVisible({ timeout: 5000 });
   });
@@ -83,10 +84,46 @@ test.describe('assemble stage (2a) interaction', () => {
     await reachAssemble(page, AUTOMOBILIS);
 
     await clickTiles(page, ['lis', 'au', 'to', 'mo', 'bi']);
+    await page.getByTestId('check-assembly').click();
     await expect(page.getByText('Не совсем')).toBeVisible();
     await expect(page.getByText('automobilis')).toBeVisible();
     await expect(page.getByText('1 ✗')).toBeVisible();
     await expect(page.getByTestId('dismiss-wrong')).toBeVisible();
+  });
+
+  test('the Clear button empties the assembled row and re-enables all pool tiles', async ({ page }) => {
+    await reachAssemble(page, AUTOMOBILIS);
+
+    const pool = page.getByTestId('syllable-tile-pool');
+    const row = page.getByTestId('assembled-row');
+    await clickTiles(page, ['au', 'to']);
+    await expect(row.getByRole('button')).toHaveCount(2);
+
+    await page.getByTestId('clear-assembly').click();
+    await expect(row.getByRole('button')).toHaveCount(0);
+    for (const syl of SYLLABLES) {
+      await expect(pool.getByRole('button', { name: syl, exact: true })).toBeEnabled();
+    }
+  });
+
+  test('a misplaced last tile can be removed and corrected before Check is pressed', async ({ page }) => {
+    await reachAssemble(page, AUTOMOBILIS);
+
+    // Fill every slot but with the last two tiles swapped, so the assembly is wrong —
+    // yet scoring must not happen until Check is pressed.
+    await clickTiles(page, ['au', 'to', 'mo', 'lis', 'bi']);
+    const row = page.getByTestId('assembled-row');
+    await expect(row.getByRole('button')).toHaveCount(SYLLABLES.length);
+    await expect(page.getByTestId('check-assembly')).toBeVisible();
+    await expect(page.getByText('Не совсем')).not.toBeVisible();
+
+    // Remove the last two misplaced tiles and re-place them correctly.
+    await row.getByRole('button', { name: 'bi', exact: true }).click();
+    await row.getByRole('button', { name: 'lis', exact: true }).click();
+    await clickTiles(page, ['bi', 'lis']);
+
+    await page.getByTestId('check-assembly').click();
+    await expect(page.getByText('Правильно')).toBeVisible();
   });
 
   test('a wrong assembly buys the +2 assemble / +2 type penalty drill', async ({ page }) => {
@@ -109,6 +146,7 @@ test.describe('assemble stage (2a) interaction', () => {
   test('a retry starts from an empty assembled row', async ({ page }) => {
     await reachAssemble(page, AUTOMOBILIS);
     await clickTiles(page, ['lis', 'au', 'to', 'mo', 'bi']);
+    await page.getByTestId('check-assembly').click();
     await page.getByTestId('dismiss-wrong').click();
 
     // Whatever comes next, no assemble screen may arrive pre-filled.

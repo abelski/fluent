@@ -643,12 +643,15 @@ export default function QuizSession({
 
   function handleStage2aTileClick(tileIdx: number) {
     if (answerState !== 'unanswered') return;
-    const card = queue[0];
-    const next = [...assembledSyllables, tileIdx];
-    setAssembledSyllables(next);
-    if (next.length !== assembly.tiles.length) return;
+    setAssembledSyllables((a) => [...a, tileIdx]);
+  }
 
-    const attempt = next.map((i) => assembly.tiles[i]).join(assembly.separator);
+  function handleStage2aCheck() {
+    if (answerState !== 'unanswered') return;
+    if (assembledSyllables.length !== assembly.tiles.length) return;
+    const card = queue[0];
+
+    const attempt = assembledSyllables.map((i) => assembly.tiles[i]).join(assembly.separator);
     const isCorrect = normalizeLt(attempt) === normalizeLt(assembly.target);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     recordAnswer(isCorrect);
@@ -1132,12 +1135,24 @@ export default function QuizSession({
                 <button
                   key={pos}
                   onClick={() => { if (answerState === 'unanswered') setAssembledSyllables((a) => a.filter((_, j) => j !== pos)); }}
-                  className="py-2 px-3 rounded-xl text-sm font-medium bg-emerald-100 border border-gray-900 text-emerald-700"
+                  disabled={answerState !== 'unanswered'}
+                  className="py-2 px-3 rounded-xl text-sm font-medium bg-emerald-100 border border-gray-900 text-emerald-700 transition-colors enabled:cursor-pointer enabled:hover:bg-emerald-200 enabled:active:bg-emerald-300"
                 >
                   {assembly.tiles[tileIdx]}
+                  <span className="ml-1.5 text-emerald-600" aria-hidden="true">×</span>
                 </button>
               ))}
             </div>
+
+            {assembledSyllables.length > 0 && answerState === 'unanswered' && (
+              <button
+                onClick={() => setAssembledSyllables([])}
+                data-testid="clear-assembly"
+                className="-mt-2 py-2 text-[13.5px] text-muted hover:text-ink transition-colors text-center"
+              >
+                {tr.study.clearAssembly}
+              </button>
+            )}
 
             <div className="w-full flex flex-wrap gap-2 justify-center" data-testid="syllable-tile-pool" data-tile-mode={assembly.mode}>
               {assembly.tiles.map((syl, i) => {
@@ -1158,6 +1173,16 @@ export default function QuizSession({
                 );
               })}
             </div>
+
+            {answerState === 'unanswered' && assembledSyllables.length === assembly.tiles.length && assembly.tiles.length > 0 && (
+              <button
+                onClick={handleStage2aCheck}
+                data-testid="check-assembly"
+                className="w-full py-4 bg-gray-900 hover:bg-gray-800 rounded-xl font-medium text-white transition-colors"
+              >
+                {tr.common.check}
+              </button>
+            )}
 
             {answerState === 'correct' && (
               <p className="text-emerald-600 text-sm font-medium animate-in fade-in duration-150">{tr.common.correct}</p>

@@ -206,6 +206,9 @@ export async function answerCorrectly(page: Page, stage: Stage, word: MockWord, 
   if (stage === 'assemble') {
     const mode = await tileMode(page);
     await assembleTarget(page, word.lithuanian, mode === 'word' ? ' ' : '');
+    // Scoring no longer happens the instant the last tile lands — an explicit Check
+    // press is required so a misplaced last tile can still be fixed (issue #169).
+    await page.getByTestId('check-assembly').click();
     return;
   }
   if (stage === 'drill') {
@@ -253,6 +256,7 @@ export async function answerWrong(page: Page, stage: Stage, word: MockWord, wron
       throw new Error('swapped order still spells the target');
     }
     for (const i of order) await pool.getByRole('button').nth(i).click();
+    await page.getByTestId('check-assembly').click();
   }
   const dismiss = page.getByTestId('dismiss-wrong');
   await dismiss.waitFor({ timeout: 7000 });

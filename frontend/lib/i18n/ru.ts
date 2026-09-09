@@ -151,6 +151,7 @@ const ru: Translations = {
     assembleWord: 'Соберите слово из слогов',
     assemblePhrase: 'Соберите фразу из слов',
     assembleLetters: 'Соберите слово из букв',
+    clearAssembly: 'Очистить',
     fillMissing: 'Вставьте пропущенную форму',
     howInLithuanian: 'Как будет по-литовски?',
     typePlaceholder: 'Напишите пропущенное слово...',
