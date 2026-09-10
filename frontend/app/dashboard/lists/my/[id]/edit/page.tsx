@@ -43,6 +43,7 @@ function EditListContent() {
   const [bulkText, setBulkText] = useState('');
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // inline edit
   const [editId, setEditId] = useState<number | null>(null);
@@ -89,9 +90,10 @@ function EditListContent() {
       await addMyWord(id, { lithuanian: newText.trim(), translation: newTranslation.trim() });
       setNewText('');
       setNewTranslation('');
+      setActionError(null);
       load();
     } catch (e) {
-      console.error(e);
+      handleActionError(e);
     } finally {
       setAdding(false);
     }
@@ -119,23 +121,39 @@ function EditListContent() {
     setEditTranslation(w.translation);
   }
 
+  // Auth tokens can expire mid-session (login-redirect guard only runs once on
+  // mount). Any write action that fails with the backend's auth-error details
+  // should send the user back to login instead of failing silently; anything
+  // else surfaces as a visible error near the words list.
+  function handleActionError(e: unknown) {
+    const message = (e as Error).message;
+    if (message === 'Missing token' || message === 'Invalid token') {
+      localStorage.removeItem('fluent_token');
+      router.replace('/login');
+      return;
+    }
+    setActionError(message || t.loadError);
+  }
+
   async function saveEdit(wordId: number) {
     if (!editText.trim() || !editTranslation.trim()) return;
     try {
       await updateMyWord(wordId, { lithuanian: editText.trim(), translation: editTranslation.trim() });
       setEditId(null);
+      setActionError(null);
       load();
     } catch (e) {
-      console.error(e);
+      handleActionError(e);
     }
   }
 
   async function handleDelete(wordId: number) {
     try {
       await deleteMyWord(wordId);
+      setActionError(null);
       setDetail((d) => (d ? { ...d, words: d.words.filter((w) => w.id !== wordId) } : d));
     } catch (e) {
-      console.error(e);
+      handleActionError(e);
     }
   }
 
@@ -217,6 +235,10 @@ function EditListContent() {
         {/* Words */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 mb-6">
           <h2 className="font-headline font-semibold text-gray-900 mb-4">{t.wordsHeading} <span className="text-gray-400 font-normal">({detail.words.length})</span></h2>
+
+          {actionError && (
+            <p className="text-xs text-red-500 mb-3" data-testid="action-error">{actionError}</p>
+          )}
 
           <div className="flex flex-col divide-y divide-gray-100">
             {detail.words.map((w) => (
