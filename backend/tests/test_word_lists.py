@@ -7,6 +7,7 @@ from jose import jwt
 from sqlmodel import Session, select
 
 import database
+from conftest import enforce_foreign_keys
 from models import User, Word, WordList, WordListItem, UserWordProgress
 
 JWT_SECRET = "fluent-local-secret-change-in-prod"
@@ -147,6 +148,38 @@ def test_edit_and_delete_word(client):
     assert r.status_code == 200
     detail = client.get(f"/api/me/word-lists/{lid}", headers=auth(token)).json()
     assert len(detail["words"]) == 0
+
+
+def test_delete_word_does_not_violate_foreign_keys(client):
+    """Issue #172: deleting a word from a personal list failed in production
+    with a ForeignKeyViolation — SQLAlchemy has no ORM relationship between
+    `word` and `word_list_item`, so it emitted `DELETE FROM word` before the
+    join row pointing at it. The suite never caught it because SQLite does not
+    enforce foreign keys unless asked, so this test asks (see
+    `enforce_foreign_keys` in conftest). Without the `session.flush()` in
+    `delete_my_word`, this fails exactly the way production did.
+    """
+    email = "wl_prem_fk_delete@example.com"
+    _make_premium(client, email)
+    token = make_token(email)
+    lid = _create_list(client, token)
+    wid = client.post(
+        f"/api/me/word-lists/{lid}/words",
+        json={"lithuanian": "pasiūlymas", "translation": "Предложение"},
+        headers=auth(token),
+    ).json()["id"]
+    client.post(f"/api/words/{wid}/progress", json={"status": "learning"}, headers=auth(token))
+
+    with enforce_foreign_keys():
+        r = client.delete(f"/api/me/word-lists/words/{wid}", headers=auth(token))
+    assert r.status_code == 200, r.text
+
+    with Session(database.engine) as s:
+        assert s.get(Word, wid) is None
+        assert s.exec(select(WordListItem).where(WordListItem.word_id == wid)).first() is None
+        assert s.exec(
+            select(UserWordProgress).where(UserWordProgress.word_id == wid)
+        ).first() is None
 
 
 # ── Ownership isolation ───────────────────────────────────────────────────────

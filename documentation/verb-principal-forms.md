@@ -107,12 +107,64 @@ returned (`backend/routers/words.py`'s `_list_words`, `_known_due_words`,
 `word_lists.py`'s `/api/me/word-lists/{id}`), enriching only the words a real request is about to
 show. Cheap paths (curated-table match, hint-confirmed non-verb) always run — pure DB reads, no
 network. The slow Wiktionary path is capped by a per-request budget (`wiktionary_budget`, default
-3 — a 1-element list shared across every word in that request/batch, decremented as it's spent) so
-a page that happens to surface many never-enriched verbs at once can't turn into dozens of
-sequential HTTP calls inside one request; whatever the budget doesn't cover this time is simply
-retried the next time that word is served (there's no separate "already tried and missed" flag, so
-a word Wiktionary can never resolve costs one skipped/attempted lookup per view forever — bounded,
-not free, a known and accepted tradeoff for keeping this simple).
+1 — a 1-element list shared across every word in that request/batch, decremented as it's spent)
+**and** a wall-clock deadline (`_WIKTIONARY_BATCH_DEADLINE_SECONDS`, 4s — roughly one Wiktionary
+timeout window), so a page that happens to surface many never-enriched words at once can't turn
+into dozens of sequential HTTP calls, or unbounded latency, inside one request. Whatever neither
+covers this time (budget or deadline already exhausted, so no network call was even attempted) is
+simply retried the next time that word is served — that part costs nothing extra.
+
+**Bug #173 fix (2026-09), part 1 — the eternal retry.** A word that a *live* Wiktionary attempt
+actually ran for and still found nothing used to stay eternally retriable: `part_of_speech` was
+left `NULL` forever, so every future view of that word paid for another lookup attempt,
+indefinitely, for legal/constitutional or other niche vocabulary that will never resolve on
+Wiktionary. Now, whenever a live attempt is made (budget and deadline both allowed it) and still
+misses, a sentinel non-verb `part_of_speech = "unknown"` is persisted instead of `NULL`, so the
+existing `part_of_speech is not None` skip-gate stops retrying that specific word after its first
+real miss. A word that was *never* attempted (budget/deadline already exhausted before its turn)
+is left untouched and retried on a later visit — marking one of those would permanently label a
+word nobody ever looked up.
+
+## Why a list page took ~20 seconds — it was never Wiktionary (bug #173)
+
+Worth reading before optimising anything in this module again, because the obvious suspect was
+the wrong one. Issue #173 reported ~20s to open a 56-word personal list. The triage pass blamed
+the Wiktionary HTTP calls above — it is the only thing in the file that visibly does I/O. It was
+measured and it was wrong: Wiktionary answers in 0.7–1.3s and contributed almost nothing. The
+cost was **N+1 round trips to the remote Neon database**, from two places where nothing in the
+source looks like I/O at all:
+
+1. **`match_curated_verb()` ran two DB queries per word.** An exact `SELECT` on `Verb.infinitive`,
+   plus a `SELECT COUNT(*)` inside `_curated_index()` to check whether the in-memory cache was
+   stale — *per lookup*. The curated table is ~358 static rows that were already fully cached;
+   only the freshness poll wasn't. On list 316 (56 words): 9.94s of exact queries + 10.00s of
+   COUNTs ≈ the 20s reported. Fixed by building **both** indexes (exact lowercase infinitive and
+   accent-stripped lowercase) from the one table scan, and validating the row count **once per
+   `Session`** via `session.info` instead of once per lookup. A request is one session, so a
+   56-word list costs one COUNT. Tests that seed extra verbs still see them, because they open a
+   fresh `Session` after seeding — that is exactly why the invalidation is keyed to the session
+   and not to a timer.
+2. **`expire_on_commit` turned one commit into hundreds of SELECTs.** `lazy_enrich_words()`
+   commits, and SQLAlchemy's default expires every `Word` object the caller is holding. The very
+   next thing every caller does is serialize those same rows, so each attribute access silently
+   re-`SELECT`ed its row one at a time: **42.98s for list 178's 241 words**, dwarfing the bug as
+   originally reported. Fixed by turning `expire_on_commit` off around that single commit — the
+   rows were just written *from* these objects, so their in-memory state already matches the DB.
+   Note this got *worse* when the part-1 sentinel landed, because the sentinel makes the batch
+   commit something on nearly every visit; a fix for one half of a performance bug can activate
+   the other half.
+
+Measured on the real database, `_list_words`: list 178 (241 words) **45.2s → 1.7s**; list 316
+(the reported list, 56 words) **21.3s → 1.7s**. Over HTTP, `GET /api/lists/178` went from
+exceeding a 60s timeout to 1.8–4.0s.
+
+Both regressions are guarded by statement-counting tests in `backend/tests/test_verb_lookup.py`
+(`test_lazy_enrich_words_query_count_does_not_scale_with_word_count` and
+`test_lazy_enrich_words_commit_does_not_expire_caller_word_objects`), which count SQL via a
+`before_cursor_execute` listener rather than asserting on wall-clock time. Both were confirmed to
+fail against the pre-fix code. The general lesson: this app's database is remote (Neon, ~180ms per
+round trip from a dev machine), so a per-row query in a request path costs seconds, not
+milliseconds — count statements, don't eyeball the code for `requests.get`.
 
 The standalone `backfill_verb_forms.py` (`--dry-run`, `--limit N`) still exists and is still safe to
 run — it's useful for pre-warming the cheap paths across the whole table in one pass (curated

@@ -464,6 +464,13 @@ def delete_my_word(
     ).all():
         session.delete(prog)
     session.delete(item)
+    # Everything pointing at the word must actually be gone before the word
+    # itself. models.py declares no ORM relationship between these tables, so
+    # SQLAlchemy has no dependency edge to order the deletes by and is free to
+    # emit `DELETE FROM word` first — which Postgres rejects on
+    # word_list_item_word_id_fkey. Tests run on SQLite, which does not enforce
+    # foreign keys unless asked, so this only ever failed in production (#172).
+    session.flush()
     session.delete(word)
     session.commit()
     return {"ok": True}

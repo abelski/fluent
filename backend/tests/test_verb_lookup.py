@@ -14,10 +14,12 @@
 # exercise the scraper itself use the `real_wiktionary_verb_forms` fixture below
 # to restore it for their own scope.
 
+from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
 import httpx
 import pytest
+from sqlalchemy import event
 from sqlmodel import Session, select
 
 import database
@@ -517,3 +519,113 @@ def test_add_my_word_survives_unreachable_wiktionary(client):
         assert s.exec(
             select(WordListItem).where(WordListItem.word_id == w.id)
         ).first() is not None
+
+
+# ── issue #173 regression: N+1 DB round trips in lazy_enrich_words ──────────
+#
+# The reported ~20s /study load was never really about Wiktionary (0.7-1.3s,
+# negligible) — it was two N+1 patterns against the remote Neon DB:
+#   (a) an eternal per-visit retry: a word whose live Wiktionary attempt missed
+#       stayed NULL forever, so every future page view paid for another lookup;
+#   (b) match_curated_verb() ran two DB queries PER WORD, and the enrichment
+#       commit expired every caller-held Word so the caller's own serialization
+#       loop re-SELECTed each row one at a time.
+# These tests guard the actual regressions, not just the symptom.
+
+@contextmanager
+def _count_statements():
+    """Counts SQL statements issued against `database.engine` for the duration
+    of the `with` block. Returns a zero-arg callable so the count can be read
+    after the block exits (the listener itself must stay installed for the
+    whole duration to see every statement)."""
+    count = [0]
+
+    def _listener(conn, cursor, statement, parameters, context, executemany):
+        count[0] += 1
+
+    event.listen(database.engine, "before_cursor_execute", _listener)
+    try:
+        yield lambda: count[0]
+    finally:
+        event.remove(database.engine, "before_cursor_execute", _listener)
+
+
+def test_lazy_enrich_words_bounds_network_calls_and_stops_eternal_retry(client):
+    """Seed several unhinted, uncurated words and always MISS via call-counting
+    mocks. One pass attempts each never-enriched word at most once (bounded,
+    not runaway). A second pass over the SAME words — now sentinel-tagged
+    "unknown" — must make ZERO additional network calls; that's the actual
+    bug: a permanently-unresolvable word used to pay for a fresh lookup on
+    every single future page view, forever."""
+    words = [_make_word(f"nzverbword{i}") for i in range(4)]
+
+    pos_mock = Mock(return_value=None)
+    forms_mock = Mock(return_value=None)
+
+    with Session(database.engine) as s:
+        rows = [s.get(Word, w.id) for w in words]
+        with patch.object(verb_lookup, "_wiktionary_pos_set", pos_mock), patch.object(
+            verb_lookup, "wiktionary_verb_forms", forms_mock
+        ):
+            verb_lookup.lazy_enrich_words(s, rows, wiktionary_budget=len(rows))
+
+    # Bounded: exactly one attempt per never-enriched word this pass, not a
+    # multiple of it.
+    assert pos_mock.call_count == len(words)
+    assert forms_mock.call_count == len(words)
+
+    with Session(database.engine) as s:
+        rows = [s.get(Word, w.id) for w in words]
+        assert all(r.part_of_speech == "unknown" for r in rows)  # every miss got sentinel-tagged
+        with patch.object(verb_lookup, "_wiktionary_pos_set", pos_mock), patch.object(
+            verb_lookup, "wiktionary_verb_forms", forms_mock
+        ):
+            verb_lookup.lazy_enrich_words(s, rows, wiktionary_budget=len(rows))
+
+    # Same words, second pass -- zero ADDITIONAL calls (counts unchanged).
+    assert pos_mock.call_count == len(words)
+    assert forms_mock.call_count == len(words)
+
+
+def test_lazy_enrich_words_query_count_does_not_scale_with_word_count(client):
+    """match_curated_verb() used to run an exact SELECT plus a validating COUNT
+    per word. _curated_index() now builds both indexes from one table scan and
+    validates the row count at most once per Session, so the number of DB
+    statements issued while serving a batch must stay flat as the batch grows,
+    not scale with it (a 40-word batch must not issue ~10x the statements a
+    4-word batch does)."""
+    small = [_make_word(f"qcount_small_{i}") for i in range(4)]
+    large = [_make_word(f"qcount_large_{i}") for i in range(40)]
+
+    with Session(database.engine) as s:
+        rows = [s.get(Word, w.id) for w in small]
+        with _count_statements() as count:
+            verb_lookup.lazy_enrich_words(s, rows, wiktionary_budget=1)
+        small_count = count()
+
+    with Session(database.engine) as s:
+        rows = [s.get(Word, w.id) for w in large]
+        with _count_statements() as count:
+            verb_lookup.lazy_enrich_words(s, rows, wiktionary_budget=1)
+        large_count = count()
+
+    assert large_count <= small_count + 5, (small_count, large_count)
+
+
+def test_lazy_enrich_words_commit_does_not_expire_caller_word_objects(client):
+    """The enrichment commit used to expire every caller-held Word, so the very
+    next serialization loop re-SELECTed each row one at a time (measured 43s
+    for 241 words -- the dominant cost of bug #173). Reading attributes off the
+    same objects right after lazy_enrich_words() commits must issue zero
+    further SELECTs."""
+    words = [_make_word(f"noexpire{i}") for i in range(5)]
+    with Session(database.engine) as s:
+        rows = [s.get(Word, w.id) for w in words]
+        verb_lookup.lazy_enrich_words(s, rows, wiktionary_budget=1)
+        assert any(r.part_of_speech is not None for r in rows)  # a commit actually happened
+
+        with _count_statements() as count:
+            serialized = [(r.id, r.lithuanian, r.accented) for r in rows]
+
+        assert count() == 0
+    assert len(serialized) == len(words)

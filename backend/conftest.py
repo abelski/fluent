@@ -10,6 +10,8 @@
 #   4. Static seed data (admin user + one word list) is inserted once per process.
 
 import pytest
+from contextlib import contextmanager
+
 from sqlmodel import SQLModel, create_engine, Session
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
@@ -37,6 +39,24 @@ _test_engine = create_engine(
     poolclass=StaticPool,
 )
 _db.engine = _test_engine
+
+
+# SQLite ignores foreign keys unless each connection opts in, while production
+# Postgres always enforces them. That gap is what let issue #172 ship:
+# `delete_my_word` deleted a `word` row before the `word_list_item` pointing at
+# it, which this suite happily accepted and Postgres rejected on every real
+# request. Enforcement is NOT on globally — ~27 existing tests build fixtures
+# with dangling references and would fail — so a test that needs it opts in for
+# its own duration via this context manager. See
+# `documentation/testing-foreign-keys.md`.
+@contextmanager
+def enforce_foreign_keys():
+    with _test_engine.connect() as conn:
+        conn.exec_driver_sql("PRAGMA foreign_keys=ON")
+        try:
+            yield
+        finally:
+            conn.exec_driver_sql("PRAGMA foreign_keys=OFF")
 
 
 def _override_get_session():

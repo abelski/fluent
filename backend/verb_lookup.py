@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 import unicodedata
 from typing import Iterable, Optional
 from urllib.parse import quote
@@ -38,6 +39,13 @@ logger = logging.getLogger(__name__)
 # be a circular import. One constant is cheaper to duplicate than to refactor.
 _WIKTIONARY_UA = "FluentLT-Extension/1.0 (+https://fluent.lt; contact@fluent.lt)"
 _WIKTIONARY_TIMEOUT = 4.0
+
+# Worst-case latency a single `/study`-style request may add for never-enriched
+# words, regardless of how many such words the list contains: once this many
+# seconds have elapsed inside `lazy_enrich_words()`, no further Wiktionary
+# attempts start (bug #173 — was previously unbounded, up to
+# `wiktionary_budget * 2 network calls * _WIKTIONARY_TIMEOUT`).
+_WIKTIONARY_BATCH_DEADLINE_SECONDS = 4.0
 
 # Wiktionary's verb headword line, e.g.
 #   <strong class="Latn headword" lang="lt">supràsti</strong>
@@ -106,20 +114,37 @@ def _lithuanian_section(page_html: str) -> Optional[str]:
 # (static, ~365-row) table in memory; it is cached per process and invalidated by
 # row count, which is enough for a table only ever changed by an import script,
 # and keeps the cache from going stale under tests that seed extra verbs.
-_curated_cache: Optional[tuple[int, dict[str, Verb]]] = None
+#
+# Two indexes, both built from that one table scan: exact lowercase infinitive
+# (checked first, so a stress-mark collision can't hand back the wrong row) and
+# accent-stripped lowercase. Both lookups used to be DB round trips per word,
+# which is what made list pages take ~20s against a remote database (bug #173).
+_curated_cache: Optional[tuple[int, dict[str, Verb], dict[str, Verb]]] = None
+
+# Validated once per `Session` rather than once per lookup: a request is one
+# session, so serving a 56-word list costs one COUNT instead of 56. A session
+# opened after an import script runs still revalidates, which is what the tests
+# that seed extra verbs rely on.
+_CURATED_VALIDATED_KEY = "_fluent_curated_validated"
 
 
-def _curated_index(session: Session) -> dict[str, Verb]:
+def _curated_index(session: Session) -> tuple[dict[str, Verb], dict[str, Verb]]:
     global _curated_cache
+    if _curated_cache is not None and session.info.get(_CURATED_VALIDATED_KEY):
+        return _curated_cache[1], _curated_cache[2]
     count = session.exec(select(func.count()).select_from(Verb)).one()
     if _curated_cache is None or _curated_cache[0] != count:
-        index: dict[str, Verb] = {}
+        exact_index: dict[str, Verb] = {}
+        stripped_index: dict[str, Verb] = {}
         for verb in session.exec(select(Verb)).all():
-            key = _strip_accent_marks(verb.infinitive or "").strip().lower()
-            if key:
-                index.setdefault(key, verb)
-        _curated_cache = (count, index)
-    return _curated_cache[1]
+            infinitive = (verb.infinitive or "").strip()
+            if not infinitive:
+                continue
+            exact_index.setdefault(infinitive.lower(), verb)
+            stripped_index.setdefault(_strip_accent_marks(infinitive).lower(), verb)
+        _curated_cache = (count, exact_index, stripped_index)
+    session.info[_CURATED_VALIDATED_KEY] = True
+    return _curated_cache[1], _curated_cache[2]
 
 
 def match_curated_verb(session: Session, lithuanian: str) -> Optional[Verb]:
@@ -130,12 +155,10 @@ def match_curated_verb(session: Session, lithuanian: str) -> Optional[Verb]:
     word = (lithuanian or "").strip()
     if not word:
         return None
-    exact = session.exec(
-        select(Verb).where(func.lower(Verb.infinitive) == word.lower())
-    ).first()
-    if exact:
-        return exact
-    return _curated_index(session).get(_strip_accent_marks(word).lower())
+    exact_index, stripped_index = _curated_index(session)
+    return exact_index.get(word.lower()) or stripped_index.get(
+        _strip_accent_marks(word).lower()
+    )
 
 
 def wiktionary_verb_forms(lithuanian: str) -> Optional[dict]:
@@ -372,7 +395,10 @@ def enrich_verb_forms(
 
 
 def lazy_enrich_word(
-    session: Session, word: Word, wiktionary_budget: Optional[list[int]] = None
+    session: Session,
+    word: Word,
+    wiktionary_budget: Optional[list[int]] = None,
+    deadline: Optional[float] = None,
 ) -> bool:
     """On-demand enrichment for a single already-loaded `Word`, run right
     before it's served to a study/review request rather than via a separate
@@ -380,14 +406,21 @@ def lazy_enrich_word(
 
     The cheap paths always run — a curated `Verb` table match or a `Word.hint`
     that already confirms a non-verb are both pure DB reads, no network. The
-    slow Wiktionary path only runs while `wiktionary_budget` (a 1-element list
-    shared across every word in the same request, so the caller can decrement
-    it in place) is still positive: a page that happens to surface many
-    never-enriched verbs at once can't turn into dozens of sequential HTTP
-    calls in one request. Whatever is skipped this time is simply retried
-    the next time that word is served — no separate "already tried and
-    missed" bookkeeping, so a word Wiktionary can never resolve keeps costing
-    one skipped/attempted lookup per view, bounded by the per-request budget.
+    slow Wiktionary path only starts while `wiktionary_budget` (a 1-element
+    list shared across every word in the same request, so the caller can
+    decrement it in place) is still positive AND the shared `deadline` (a
+    `time.monotonic()` cutoff, also shared across the request) hasn't passed
+    yet — a page that happens to surface many never-enriched words at once
+    can't turn into dozens of sequential HTTP calls, or blow past roughly one
+    Wiktionary timeout window, in one request (bug #173).
+
+    When a live attempt *is* made and still finds nothing, a sentinel
+    non-verb `part_of_speech` ("unknown") is persisted so the skip-gate below
+    stops retrying this specific word on every future visit — that eternal
+    per-visit retry, not any single lookup's cost, was bug #173's actual
+    complaint. A word skipped *without* attempting the network (budget or
+    deadline already exhausted) is left untouched and simply retried next
+    time, since it was never actually looked up.
 
     Mutates `word` in place and returns whether anything changed — the caller
     is responsible for `session.add`/`commit`. Never raises.
@@ -399,15 +432,25 @@ def lazy_enrich_word(
         needs_network = curated_verb_forms(session, word.lithuanian) is None and (
             not hinted_pos or hinted_pos == "verb"
         )
+        attempted_network = False
         if needs_network:
             if not hinted_pos and len(word.lithuanian.split()) != 1:
                 return False  # a multi-word phrase is never a single verb
             if wiktionary_budget is None or wiktionary_budget[0] <= 0:
-                return False
+                return False  # budget exhausted -- never attempted, just retry later
+            if deadline is not None and time.monotonic() >= deadline:
+                return False  # out of time for this request -- ditto
             wiktionary_budget[0] -= 1
+            attempted_network = True
 
         result = enrich_verb_forms(session, word.lithuanian, part_of_speech=hinted_pos)
         if result["part_of_speech"] is None:
+            if attempted_network:
+                # A live Wiktionary lookup actually ran (budget/deadline both
+                # allowed it) and still found nothing -- persist the sentinel
+                # so `part_of_speech is not None` stops retrying this word.
+                word.part_of_speech = "unknown"
+                return True
             return False
         word.part_of_speech = result["part_of_speech"]
         word.verb_present_3p = result["verb_present_3p"]
@@ -419,14 +462,27 @@ def lazy_enrich_word(
 
 
 def lazy_enrich_words(
-    session: Session, words: Iterable[Word], wiktionary_budget: int = 3
+    session: Session, words: Iterable[Word], wiktionary_budget: int = 1
 ) -> None:
     """Batch form of `lazy_enrich_word` for a page of words about to be
     served (a study/review queue). Commits once at the end if anything
     changed. Never raises — a failure here should never block serving words
     that were otherwise ready to go out.
+
+    `wiktionary_budget` defaults to 1 (was 3) and a wall-clock deadline
+    (`_WIKTIONARY_BATCH_DEADLINE_SECONDS`) is applied on top of it, so this
+    call can add at most roughly one Wiktionary timeout window to the
+    request, not `budget * 2 network calls * _WIKTIONARY_TIMEOUT` (bug #173).
+
+    The commit deliberately does not expire the caller's `Word` objects. Every
+    caller serializes those same rows immediately afterwards, and the default
+    expire-on-commit would turn that into one refresh SELECT per word — 241
+    extra round trips, ~43s, on a list page against a remote database (bug
+    #173's actual dominant cost). The rows were just written from these very
+    objects, so their in-memory state is already what the DB holds.
     """
     budget = [wiktionary_budget]
+    deadline = time.monotonic() + _WIKTIONARY_BATCH_DEADLINE_SECONDS
     changed = False
     seen: set[int] = set()
     try:
@@ -434,11 +490,16 @@ def lazy_enrich_words(
             if word.id in seen:
                 continue
             seen.add(word.id)
-            if lazy_enrich_word(session, word, budget):
+            if lazy_enrich_word(session, word, budget, deadline):
                 session.add(word)
                 changed = True
         if changed:
-            session.commit()
+            previously_expiring = session.expire_on_commit
+            session.expire_on_commit = False
+            try:
+                session.commit()
+            finally:
+                session.expire_on_commit = previously_expiring
     except Exception:
         logger.warning("lazy verb-form enrichment failed for a word batch", exc_info=True)
         session.rollback()
