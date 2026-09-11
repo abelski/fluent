@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select, func, col
 
+import cache
 from auth import require_user as _decode_user
 from database import get_session
 from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage, UserProgram, UserPracticeCategoryEnrollment, ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment, UserPhraseProgress, UserGrammarProgram, CustomProgram, CustomPhraseList, CustomPhrase, UserCustomPhraseProgress
@@ -1208,11 +1209,25 @@ VALID_CEFR_LEVELS = {"0", "A1", "A2", "B1", "B2", "C1", "C2"}
 
 @router.get("/settings/cefr-thresholds")
 def get_cefr_thresholds(session: Session = Depends(get_session)):
-    """Return current CEFR level word-count thresholds. Public — no auth required."""
-    row = session.exec(select(AppSetting).where(AppSetting.key == "cefr_thresholds")).first()
-    if not row:
+    """Return current CEFR level word-count thresholds. Public — no auth required.
+
+    The only cached admin GET (#24, row 21): it is public and read on page loads,
+    unlike the rest of this router, which admins need served fresh.
+    """
+    value = cache.get_or_load(
+        ("setting", "cefr_thresholds"),
+        lambda: next(
+            iter(session.exec(
+                select(AppSetting.value).where(AppSetting.key == "cefr_thresholds")
+            ).all()),
+            None,
+        ),
+        tags={"app_setting"},
+        store_if=lambda v: v is not None,
+    )
+    if value is None:
         raise HTTPException(status_code=404, detail="CEFR thresholds not seeded")
-    return _json.loads(row.value)
+    return _json.loads(value)
 
 
 class CefrThresholdEntry(BaseModel):

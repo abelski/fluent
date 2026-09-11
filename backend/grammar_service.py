@@ -14,9 +14,11 @@ import re
 import random
 import unicodedata
 from pathlib import Path
+from types import SimpleNamespace
 
 from sqlmodel import Session, select
 
+import cache
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
 from models import GrammarSentence, GrammarCaseRule, Article, Verb
 
@@ -164,31 +166,27 @@ def _sentence_invariant_holds(display: str, answer_ending: str, full_word: str) 
     return full == built or full.endswith(' ' + built)
 
 
-def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
-    """Return metadata for all lessons defined in LESSON_CONFIG.
+def _load_case_rules(session: Session) -> list[dict]:
+    """Case rules plus the titles of their linked articles — cached (#24, row 3).
 
-    LESSON_CONFIG entries are tuples: (id, level, cases, task_count, title).
-    Each lesson includes the grammar rules for its cases so the frontend can
-    display hints without an extra API round-trip.
-    Rules are loaded from the grammar_case_rule DB table.
-    Non-admins only receive lessons where all case indices are published.
-    Admins receive all lessons with an is_published field on each.
+    Only the three article columns are selected: this used to pull whole Article
+    rows, bodies included, to show a title.
     """
     case_rules = session.exec(select(GrammarCaseRule)).all()
-    # published cases visible to all; testing+draft visible to admins
-    published_cases: set[int] = {r.case_index for r in case_rules if r.status == "published"}
-    admin_visible_cases: set[int] = {r.case_index for r in case_rules if r.status in ("published", "testing", "draft")}
-    case_status: dict[int, str] = {r.case_index: r.status for r in case_rules}
-
-    # Load article titles for any linked slugs (one query, keyed by slug)
     linked_slugs = {r.article_slug for r in case_rules if r.article_slug}
     article_titles: dict[str, tuple[str, str]] = {}
     if linked_slugs:
-        articles = session.exec(select(Article).where(Article.slug.in_(linked_slugs))).all()
-        article_titles = {a.slug: (a.title_ru, a.title_en) for a in articles}
-
-    db_rules = {
-        row.case_index: {
+        article_titles = {
+            slug: (title_ru, title_en)
+            for slug, title_ru, title_en in session.exec(
+                select(Article.slug, Article.title_ru, Article.title_en)
+                .where(Article.slug.in_(linked_slugs))
+            ).all()
+        }
+    return [
+        {
+            "case_index": row.case_index,
+            "status": row.status,
             "question": row.question,
             "name_ru": row.name_ru,
             "usage": row.usage,
@@ -199,6 +197,33 @@ def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
             "article_title_ru": article_titles.get(row.article_slug, (None, None))[0] if row.article_slug else None,
             "article_title_en": article_titles.get(row.article_slug, (None, None))[1] if row.article_slug else None,
         }
+        for row in case_rules
+    ]
+
+
+def get_lessons(session: Session, is_admin: bool = False) -> list[dict]:
+    """Return metadata for all lessons defined in LESSON_CONFIG.
+
+    LESSON_CONFIG entries are tuples: (id, level, cases, task_count, title).
+    Each lesson includes the grammar rules for its cases so the frontend can
+    display hints without an extra API round-trip.
+    Rules are loaded from the grammar_case_rule DB table.
+    Non-admins only receive lessons where all case indices are published.
+    Admins receive all lessons with an is_published field on each.
+    """
+    case_rules = cache.get_or_load(
+        ("grammar_rules",),
+        lambda: _load_case_rules(session),
+        tags={"grammar_case_rule", "article"},
+    )
+    # published cases visible to all; testing+draft visible to admins.
+    # Visibility is decided per request, on cached data — never cached itself.
+    published_cases: set[int] = {r["case_index"] for r in case_rules if r["status"] == "published"}
+    admin_visible_cases: set[int] = {r["case_index"] for r in case_rules if r["status"] in ("published", "testing", "draft")}
+    case_status: dict[int, str] = {r["case_index"]: r["status"] for r in case_rules}
+
+    db_rules = {
+        row["case_index"]: {k: v for k, v in row.items() if k not in ("case_index", "status")}
         for row in case_rules
     }
     result = []
@@ -287,12 +312,12 @@ def _generate_declension_tasks(cases: list[int], count: int) -> list[dict]:
     return tasks
 
 
-def _generate_sentence_tasks(cases: list[int], count: int, session: Session, level: str = "advanced") -> list[dict]:
-    """Generate sentence gap-fill tasks from the grammar_sentence DB table for given cases.
+def _load_sentence_pool(cases: list[int], level: str, session: Session) -> list[SimpleNamespace]:
+    """The usable sentence rows for these cases at this level — cached (#24, row 2).
 
-    Filters by the use_in_<level> flag so admins can control which sentences
-    appear in each lesson type. Falls back to declension tasks if no matching
-    sentences are found for the requested cases.
+    The #156 invariant filter is part of the cached result: it depends only on the
+    row's own columns, so there is no reason to re-run it per request. Plain
+    SimpleNamespace rows, never ORM instances.
     """
     level_filter = {
         "basic":    GrammarSentence.use_in_basic == True,    # noqa: E712
@@ -301,18 +326,40 @@ def _generate_sentence_tasks(cases: list[int], count: int, session: Session, lev
     }.get(level, GrammarSentence.use_in_advanced == True)    # noqa: E712
 
     rows = session.exec(
-        select(GrammarSentence).where(
+        select(
+            GrammarSentence.display,
+            GrammarSentence.answer_ending,
+            GrammarSentence.full_word,
+            GrammarSentence.russian,
+        ).where(
             GrammarSentence.case_index.in_(cases),
             GrammarSentence.archived == False,  # noqa: E712
             level_filter,
         )
     ).all()
 
-    rows = [
-        r for r in rows
-        if _sentence_invariant_holds(r.display, r.answer_ending, r.full_word)
-    ]  # issue #156 — never serve a row where the displayed "correct answer" (full_word)
-       # disagrees with what the grader actually checks (answer_ending)
+    # issue #156 — never serve a row where the displayed "correct answer"
+    # (full_word) disagrees with what the grader actually checks (answer_ending)
+    return [
+        SimpleNamespace(display=display, answer_ending=answer_ending,
+                        full_word=full_word, russian=russian)
+        for display, answer_ending, full_word, russian in rows
+        if _sentence_invariant_holds(display, answer_ending, full_word)
+    ]
+
+
+def _generate_sentence_tasks(cases: list[int], count: int, session: Session, level: str = "advanced") -> list[dict]:
+    """Generate sentence gap-fill tasks from the grammar_sentence DB table for given cases.
+
+    Filters by the use_in_<level> flag so admins can control which sentences
+    appear in each lesson type. Falls back to declension tasks if no matching
+    sentences are found for the requested cases.
+    """
+    rows = cache.get_or_load(
+        ("sentences", tuple(cases), level),
+        lambda: _load_sentence_pool(cases, level, session),
+        tags={"grammar_sentence"},
+    )
 
     if not rows:
         # Fallback to declension tasks if no sentences in DB for these cases.
@@ -526,6 +573,33 @@ def _is_usable_form(form: str, infinitive: str, tense_key: str, conj: dict) -> b
     return True
 
 
+def _verb_pool(session: Session) -> list[SimpleNamespace]:
+    """The whole verb table with its JSON columns already parsed — cached (#24, row 1).
+
+    This is the single biggest read in the app: ~1.3MB pulled from Neon, and four
+    `json.loads` per row, on *every* verb-lesson task request. Random sampling
+    still happens per request, on this shared pool.
+    """
+    return cache.get_or_load(
+        ("verbs",),
+        lambda: [
+            SimpleNamespace(
+                infinitive=infinitive,
+                translation_ru=translation_ru,
+                programs=json.loads(programs),
+                conjugations=json.loads(conjugations),
+                case_governance=json.loads(case_governance),
+            )
+            for infinitive, translation_ru, programs, conjugations, case_governance
+            in session.exec(
+                select(Verb.infinitive, Verb.translation_ru, Verb.programs,
+                       Verb.conjugations, Verb.case_governance)
+            ).all()
+        ],
+        tags={"verb"},
+    )
+
+
 def _generate_verb_conjugation_tasks(
     tense_key: str, count: int, session: Session, program_key: str | None = "sekmes"
 ) -> list[dict]:
@@ -534,19 +608,19 @@ def _generate_verb_conjugation_tasks(
     program_key: if set, restricts to verbs tagged with that vocabulary program.
     Falls back to all verbs if no tagged verbs have data for this tense.
     """
-    all_verbs = session.exec(select(Verb)).all()
+    all_verbs = _verb_pool(session)
 
     if program_key:
-        pool = [v for v in all_verbs if program_key in json.loads(v.programs)]
+        pool = [v for v in all_verbs if program_key in v.programs]
     else:
         pool = list(all_verbs)
 
     # Filter to verbs that have data for this tense
-    eligible = [v for v in pool if json.loads(v.conjugations).get(tense_key)]
+    eligible = [v for v in pool if v.conjugations.get(tense_key)]
 
     # Fall back to all verbs if program filter yields nothing
     if not eligible and program_key:
-        eligible = [v for v in all_verbs if json.loads(v.conjugations).get(tense_key)]
+        eligible = [v for v in all_verbs if v.conjugations.get(tense_key)]
     if not eligible:
         return []
 
@@ -557,7 +631,7 @@ def _generate_verb_conjugation_tasks(
     while len(tasks) < count and attempts < count * 10:
         attempts += 1
         verb = random.choice(eligible)
-        conj = json.loads(verb.conjugations).get(tense_key, {})
+        conj = verb.conjugations.get(tense_key, {})
         if not conj:
             continue
         person = random.choice(_VERB_PERSONS)
@@ -565,8 +639,7 @@ def _generate_verb_conjugation_tasks(
         if not form:
             continue
         # Skip imperative aš (no form)
-        all_conj = json.loads(verb.conjugations)
-        if not _is_usable_form(form, verb.infinitive, tense_key, all_conj):
+        if not _is_usable_form(form, verb.infinitive, tense_key, verb.conjugations):
             continue  # #151/#153 — corrupt extraction, never present it as a question
         tasks.append({
             "type": "verb_conjugation",
@@ -582,11 +655,7 @@ def _generate_verb_conjugation_tasks(
 
 def _generate_verb_case_tasks(count: int, session: Session) -> list[dict]:
     """Pick random verbs with case governance data, return verb_case tasks."""
-    verbs = session.exec(select(Verb)).all()
-    eligible = [
-        v for v in verbs
-        if json.loads(v.case_governance)
-    ]
+    eligible = [v for v in _verb_pool(session) if v.case_governance]
     if not eligible:
         return []
 
@@ -596,7 +665,7 @@ def _generate_verb_case_tasks(count: int, session: Session) -> list[dict]:
     while len(tasks) < count and attempts < count * 10:
         attempts += 1
         verb = random.choice(eligible)
-        governance = json.loads(verb.case_governance)
+        governance = verb.case_governance
         if not governance:
             continue
         entry = random.choice(governance)

@@ -3,6 +3,7 @@
 
 import random
 from datetime import datetime, timedelta, timezone, date
+from types import SimpleNamespace
 from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
@@ -10,6 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import text, and_, or_, case, cast, Date, Float
 from sqlmodel import Session, select, col, func
 
+import cache
 from database import get_session
 from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress, UserCustomPhraseProgress, Article
 from constants import DAILY_LIMIT, MATURE_WORD_REPS
@@ -17,6 +19,7 @@ from auth import require_user as _require_user, try_get_user as _try_get_user
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
 from leaderboard_service import build_leaderboard_score_joins, current_week_bounds, LEADERBOARD_SCORE_EXPR
 from routers.admin import _accented_matches_lithuanian
+from routers.articles import article_by_slug as _article_by_slug
 from verb_lookup import lazy_enrich_words
 
 router = APIRouter()
@@ -184,8 +187,7 @@ def _can_access_list(wl: WordList, user: Optional[User], session: Session) -> bo
     return enrolled is not None
 
 
-def _list_words(list_id: int, session: Session) -> list[dict]:
-    """Fetch all active (non-archived) words in a list ordered by their position."""
+def _load_list_words(list_id: int, session: Session) -> list[dict]:
     rows = session.exec(
         select(Word)
         .join(WordListItem, WordListItem.word_id == Word.id)
@@ -211,6 +213,50 @@ def _list_words(list_id: int, session: Session) -> list[dict]:
     ]
 
 
+def _list_words(list_id: int, session: Session) -> list[dict]:
+    """Fetch all active (non-archived) words in a list ordered by their position.
+
+    Cached (#24, row 9) — but only once every word's `part_of_speech` is set, i.e.
+    lazy verb enrichment has settled. Caching a half-enriched list would freeze it
+    that way, and `lazy_enrich_words` would never get another chance to run.
+    Callers mutate the result (adding per-user `status`), which is safe: every read
+    is a deepcopy.
+    """
+    return cache.get_or_load(
+        ("list_words", list_id),
+        lambda: _load_list_words(list_id, session),
+        tags={"word", "word_list_item"},
+        store_if=lambda words: all(w["part_of_speech"] is not None for w in words),
+    )
+
+
+def _subcategory_meta(session: Session) -> list[SimpleNamespace]:
+    """Subcategory metadata rows, cached (#24, row 5). SimpleNamespace so callers
+    keep attribute access; never ORM instances."""
+    return cache.get_or_load(
+        ("subcategory_meta",),
+        lambda: [
+            SimpleNamespace(**{c: getattr(r, c) for c in SubcategoryMeta.__table__.columns.keys()})
+            for r in session.exec(select(SubcategoryMeta)).all()
+        ],
+        tags={"subcategory_meta"},
+    )
+
+
+def _enrollment_counts(session: Session) -> dict[str, int]:
+    """Distinct users enrolled per subcategory, cached (#24, row 6)."""
+    return cache.get_or_load(
+        ("enrollment_counts",),
+        lambda: dict(
+            session.exec(
+                select(UserProgram.subcategory_key, func.count(func.distinct(UserProgram.user_id)))
+                .group_by(UserProgram.subcategory_key)
+            ).all()
+        ),
+        tags={"user_program"},
+    )
+
+
 @router.get("/subcategory-meta")
 def get_subcategory_meta(
     authorization: Optional[str] = Header(None),
@@ -221,14 +267,8 @@ def get_subcategory_meta(
     Admins receive is_published/status/created_by fields."""
     user = _try_get_user(authorization, session)
     is_admin = user is not None and user.is_admin
-    rows = session.exec(select(SubcategoryMeta)).all()
-
-    # One aggregation query: distinct user count per subcategory
-    enrollment_rows = session.exec(
-        select(UserProgram.subcategory_key, func.count(func.distinct(UserProgram.user_id)))
-        .group_by(UserProgram.subcategory_key)
-    ).all()
-    enrollment_counts: dict[str, int] = {key: cnt for key, cnt in enrollment_rows}
+    rows = _subcategory_meta(session)
+    enrollment_counts = _enrollment_counts(session)
 
     return {
         r.key: {
@@ -246,6 +286,73 @@ def get_subcategory_meta(
     }
 
 
+_WORD_LIST_COLUMNS = tuple(WordList.__table__.columns.keys())
+
+
+def _public_lists(session: Session) -> list[SimpleNamespace]:
+    """Public, non-archived word lists — cached (#24, row 7). Visibility by
+    subcategory status still runs per request, on this pool."""
+    return cache.get_or_load(
+        ("public_lists",),
+        lambda: [
+            SimpleNamespace(**{c: getattr(wl, c) for c in _WORD_LIST_COLUMNS})
+            for wl in session.exec(
+                select(WordList).where(WordList.is_public == True, WordList.archived == False)  # noqa: E712
+            ).all()
+        ],
+        tags={"word_list"},
+    )
+
+
+def _list_counts(list_ids: list[int], session: Session) -> tuple[dict, dict]:
+    """(word_count, cumulative star_counts) per list id — cached (#24, row 8).
+
+    Keyed on the id set because nearly every user on /dashboard/lists asks for
+    the same one.
+    """
+    if not list_ids:
+        return {}, {}
+    return cache.get_or_load(
+        ("list_counts", tuple(sorted(list_ids))),
+        lambda: _load_list_counts(list_ids, session),
+        tags={"word_list_item", "word"},
+    )
+
+
+def _load_list_counts(list_ids: list[int], session: Session) -> tuple[dict, dict]:
+    # Single aggregation query to get word counts for all visible lists at once
+    counts = dict(
+        session.exec(
+            select(WordListItem.word_list_id, func.count(WordListItem.id))
+            .where(col(WordListItem.word_list_id).in_(list_ids))
+            .group_by(WordListItem.word_list_id)
+        ).all()
+    )
+    # Per-star counts: group by (word_list_id, star) to compute cumulative star_counts
+    _star_rows = session.exec(
+        select(WordListItem.word_list_id, Word.star, func.count(WordListItem.id))
+        .join(Word, WordListItem.word_id == Word.id)
+        .where(
+            Word.archived == False,  # noqa: E712
+            col(WordListItem.word_list_id).in_(list_ids),
+        )
+        .group_by(WordListItem.word_list_id, Word.star)
+    ).all()
+    # Build cumulative counts: star_counts[list_id][N] = # words with star <= N
+    _star_by_list: dict[int, dict[int, int]] = {}
+    for list_id, star, cnt in _star_rows:
+        _star_by_list.setdefault(list_id, {})
+        _star_by_list[list_id][star] = _star_by_list[list_id].get(star, 0) + cnt
+    star_counts_map: dict[int, dict[str, int]] = {}
+    for list_id, by_star in _star_by_list.items():
+        cumulative = 0
+        star_counts_map[list_id] = {}
+        for level in (1, 2, 3):
+            cumulative += by_star.get(level, 0)
+            star_counts_map[list_id][str(level)] = cumulative
+    return counts, star_counts_map
+
+
 @router.get("/lists")
 def get_lists(
     authorization: Optional[str] = Header(None),
@@ -257,9 +364,7 @@ def get_lists(
     user = _try_get_user(authorization, session)
     is_admin = user is not None and user.is_admin
 
-    lists = session.exec(
-        select(WordList).where(WordList.is_public == True, WordList.archived == False)  # noqa: E712
-    ).all()
+    lists = _public_lists(session)
 
     # Collect private word lists from the user's custom program enrollments (added after visibility filter)
     custom_program_lists: list = []
@@ -278,14 +383,17 @@ def get_lists(
             existing_ids = {wl.id for wl in lists}
             diff_ids = list(custom_list_ids - existing_ids)
             if diff_ids:
-                custom_program_lists = session.exec(
-                    select(WordList).where(
-                        WordList.id.in_(diff_ids),
-                        WordList.archived == False,  # noqa: E712
-                    )
-                ).all()
+                custom_program_lists = [
+                    SimpleNamespace(**{c: getattr(wl, c) for c in _WORD_LIST_COLUMNS})
+                    for wl in session.exec(
+                        select(WordList).where(
+                            WordList.id.in_(diff_ids),
+                            WordList.archived == False,  # noqa: E712
+                        )
+                    ).all()
+                ]
     # Load subcategory metadata for ordering and status filtering
-    meta_rows = session.exec(select(SubcategoryMeta)).all()
+    meta_rows = _subcategory_meta(session)
     subcat_order = {r.key: (r.sort_order or 0) for r in meta_rows}
     meta_map = {r.key: r for r in meta_rows}
 
@@ -311,37 +419,7 @@ def get_lists(
     # Scope the aggregations below to just the lists actually returned, instead of the
     # whole catalogue — cost now tracks the response size, not total DB content.
     visible_ids = [wl.id for wl in lists]
-
-    # Single aggregation query to get word counts for all visible lists at once
-    counts = dict(
-        session.exec(
-            select(WordListItem.word_list_id, func.count(WordListItem.id))
-            .where(col(WordListItem.word_list_id).in_(visible_ids))
-            .group_by(WordListItem.word_list_id)
-        ).all()
-    ) if visible_ids else {}
-    # Per-star counts: group by (word_list_id, star) to compute cumulative star_counts
-    _star_rows = session.exec(
-        select(WordListItem.word_list_id, Word.star, func.count(WordListItem.id))
-        .join(Word, WordListItem.word_id == Word.id)
-        .where(
-            Word.archived == False,  # noqa: E712
-            col(WordListItem.word_list_id).in_(visible_ids),
-        )
-        .group_by(WordListItem.word_list_id, Word.star)
-    ).all() if visible_ids else []
-    # Build cumulative counts: star_counts[list_id][N] = # words with star <= N
-    _star_by_list: dict[int, dict[int, int]] = {}
-    for list_id, star, cnt in _star_rows:
-        _star_by_list.setdefault(list_id, {})
-        _star_by_list[list_id][star] = _star_by_list[list_id].get(star, 0) + cnt
-    star_counts_map: dict[int, dict[str, int]] = {}
-    for list_id, by_star in _star_by_list.items():
-        cumulative = 0
-        star_counts_map[list_id] = {}
-        for level in (1, 2, 3):
-            cumulative += by_star.get(level, 0)
-            star_counts_map[list_id][str(level)] = cumulative
+    counts, star_counts_map = _list_counts(visible_ids, session)
 
     sorted_lists = sorted(
         lists,
@@ -951,6 +1029,27 @@ def get_review_mistakes(
     return _dedupe_by_translation(candidates, progress_map)[:limit_size]
 
 
+def _list_items(list_ids: list[int], session: Session) -> list[tuple]:
+    """(list_id, word_id, star) for a set of lists — cached (#24, row 10).
+
+    Archived words are excluded so totals match what a study session can serve.
+    """
+    if not list_ids:
+        return []
+    return cache.get_or_load(
+        ("list_items", tuple(sorted(list_ids))),
+        lambda: [
+            tuple(row) for row in session.exec(
+                select(WordListItem.word_list_id, WordListItem.word_id, Word.star)
+                .join(Word, Word.id == WordListItem.word_id)
+                .where(col(WordListItem.word_list_id).in_(list_ids))
+                .where(Word.archived == False)  # noqa: E712
+            ).all()
+        ],
+        tags={"word_list_item", "word"},
+    )
+
+
 @router.get("/me/lists-progress")
 def get_all_lists_progress(
     authorization: Optional[str] = Header(None),
@@ -967,11 +1066,9 @@ def get_all_lists_progress(
 
     # Collect enrolled subcategory keys so public_rows is scoped to only the lists the user
     # has enrolled in — avoids scanning the entire catalogue on every page load.
-    enrolled_subcats = session.exec(
-        select(UserProgram.subcategory_key)
-        .where(UserProgram.user_id == user.id)
-    ).all()
-    enrolled_subcat_keys: list[str] = list(enrolled_subcats)
+    enrolled_subcat_keys: list[str] = sorted(
+        cache.enrollment_ids(session, UserProgram, UserProgram.subcategory_key, user.id)
+    )
 
     # Collect list IDs the user can see via custom program enrollments
     cp_enrollments = session.exec(
@@ -986,24 +1083,15 @@ def get_all_lists_progress(
         ).all()
         custom_list_ids = {link.word_list_id for link in cp_links}
 
-    # All (list_id, word_id, star) pairs for enrolled public lists only.
-    # Scoping to enrolled subcategories avoids scanning the entire catalogue.
-    # Exclude archived words so the total matches what study sessions can actually serve.
-    public_rows = session.exec(
-        select(WordListItem.word_list_id, WordListItem.word_id, Word.star)
-        .join(WordList, WordList.id == WordListItem.word_list_id)
-        .join(Word, Word.id == WordListItem.word_id)
-        .where(WordList.is_public == True)  # noqa: E712
-        .where(WordList.subcategory.in_(enrolled_subcat_keys))
-        .where(Word.archived == False)  # noqa: E712
-    ).all() if enrolled_subcat_keys else []
-    custom_rows = session.exec(
-        select(WordListItem.word_list_id, WordListItem.word_id, Word.star)
-        .join(Word, Word.id == WordListItem.word_id)
-        .where(WordListItem.word_list_id.in_(list(custom_list_ids)))
-        .where(Word.archived == False)  # noqa: E712
-    ).all() if custom_list_ids else []
-    rows = list(public_rows) + list(custom_rows)
+    # All (list_id, word_id, star) rows for the lists this user can see.
+    # Scoping to enrolled subcategories avoids scanning the entire catalogue; the
+    # rows themselves are shared between users, so they are cached (#24, row 10)
+    # while the progress join below stays per request.
+    enrolled_keys = set(enrolled_subcat_keys)
+    public_ids = {
+        wl.id for wl in _public_lists(session) if (wl.subcategory or "") in enrolled_keys
+    }
+    rows = _list_items(sorted(public_ids | custom_list_ids), session)
 
     # Group (word_id, star) tuples by list and collect the full set for the progress query
     list_word_stars: dict[int, list[tuple[int, int]]] = {}
@@ -1229,6 +1317,8 @@ def get_leaderboard(
     session: Session = Depends(get_session),
 ):
     _require_user(authorization, session)
+    # Public top-10, eventually consistent: the tables behind it change on every
+    # answer, so there is no useful tag — a flat 60s TTL instead (#24, row 23).
     # Use calendar-week boundaries (ISO: Mon–Sun) so "this week" is unambiguous.
     # A rolling 7-day window can include users who studied 7 days ago and are
     # borderline, making it look like they have points "this week" when they don't.
@@ -1237,21 +1327,33 @@ def get_leaderboard(
     is_week = period == "week"
     bounds = current_week_bounds() if is_week else None
     joins_sql, params = build_leaderboard_score_joins(bounds)
-    rows = session.execute(
-        text(f"""
-            SELECT u.picture,
-                   {LEADERBOARD_SCORE_EXPR} AS score
-            FROM "user" u
-            {joins_sql}
-            WHERE  {LEADERBOARD_SCORE_EXPR} > 0
-            ORDER  BY score DESC
-            LIMIT  10
-        """),
-        params,
-    ).all()
+
+    def _load() -> list[tuple]:
+        return [
+            (row.picture, int(row.score))
+            for row in session.execute(
+                text(f"""
+                    SELECT u.picture,
+                           {LEADERBOARD_SCORE_EXPR} AS score
+                    FROM "user" u
+                    {joins_sql}
+                    WHERE  {LEADERBOARD_SCORE_EXPR} > 0
+                    ORDER  BY score DESC
+                    LIMIT  10
+                """),
+                params,
+            ).all()
+        ]
+
+    rows = cache.get_or_load(
+        ("leaderboard", period, bounds[0] if bounds else None),
+        _load,
+        tags=set(),
+        ttl=60,
+    )
     return [
-        LeaderboardEntry(rank=i + 1, picture=row.picture, score=int(row.score))
-        for i, row in enumerate(rows)
+        LeaderboardEntry(rank=i + 1, picture=picture, score=score)
+        for i, (picture, score) in enumerate(rows)
     ]
 
 
@@ -1329,15 +1431,24 @@ def get_quota(
 ):
     """Return the current user's tier and daily session usage."""
     user = _require_user(authorization, session)
-    premium_active = _is_premium_active(user)
+    premium_active = _is_premium_active(user)   # depends on `now` — never cached
     today = datetime.now(timezone.utc).date()
-    row = session.exec(
-        select(DailyStudySession).where(
-            DailyStudySession.user_id == user.id,
-            DailyStudySession.study_date == today,
-        )
-    ).first()
-    sessions_today = row.session_count if row else 0
+    # Today's session count, cached per (user, date) — #24 row 22. The date is part
+    # of the key so the entry retires itself at midnight; starting a session writes
+    # this row, which evicts it immediately.
+    sessions_today = cache.get_or_load(
+        ("quota_day", user.id, today),
+        lambda: next(
+            iter(session.exec(
+                select(DailyStudySession.session_count).where(
+                    DailyStudySession.user_id == user.id,
+                    DailyStudySession.study_date == today,
+                )
+            ).all()),
+            0,
+        ),
+        tags={f"daily_study_session:user={user.id}"},
+    )
     return {
         "is_premium": user.is_premium,
         "premium_until": user.premium_until,
@@ -1366,10 +1477,9 @@ def get_enrolled_programs(
 ):
     """Return the subcategory keys the current user has enrolled in."""
     user = _require_user(authorization, session)
-    rows = session.exec(
-        select(UserProgram).where(UserProgram.user_id == user.id)
-    ).all()
-    return [r.subcategory_key for r in rows]
+    return sorted(
+        cache.enrollment_ids(session, UserProgram, UserProgram.subcategory_key, user.id)
+    )
 
 
 @router.post("/me/programs", status_code=201)
@@ -1429,13 +1539,13 @@ def get_welcome(
 ):
     """Return whether the welcome modal has been shown and the welcome article content."""
     user = _require_user(authorization, session)
-    article = session.exec(select(Article).where(Article.slug == _WELCOME_SLUG)).first()
+    article = _article_by_slug(_WELCOME_SLUG, session)
     if article:
         content = {
-            "title_ru": article.title_ru,
-            "title_en": article.title_en,
-            "body_ru": article.body_ru,
-            "body_en": article.body_en,
+            "title_ru": article["title_ru"],
+            "title_en": article["title_en"],
+            "body_ru": article["body_ru"],
+            "body_en": article["body_en"],
         }
     else:
         content = {"title_ru": "Добро пожаловать!", "title_en": "Welcome!", "body_ru": "", "body_en": ""}

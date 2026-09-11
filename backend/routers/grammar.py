@@ -2,12 +2,14 @@
 # This router is intentionally thin — all content logic lives in grammar_service.py.
 
 import json
+from types import SimpleNamespace
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+import cache
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from data.grammar.lessons import CASE_INFO as _CASE_INFO
 from database import get_session
@@ -31,18 +33,42 @@ _SEED_PROGRAMS = [
 ]
 
 
+def _grammar_programs(session: Session) -> list[SimpleNamespace]:
+    """All grammar programs as plain rows — cached (#24, row 4).
+
+    `is_public` filtering happens per request on this pool.
+    """
+    return cache.get_or_load(
+        ("grammar_programs",),
+        lambda: [
+            SimpleNamespace(id=p.id, title=p.title, title_en=p.title_en,
+                            description=p.description, difficulty=p.difficulty,
+                            is_public=p.is_public, lesson_filter=p.lesson_filter,
+                            program_type=p.program_type)
+            for p in session.exec(select(GrammarProgram)).all()
+        ],
+        tags={"grammar_program"},
+    )
+
+
 def _ensure_seed(session: Session) -> None:
-    existing_titles = {p.title for p in session.exec(select(GrammarProgram)).all()}
-    for seed in _SEED_PROGRAMS:
-        if seed["title"] not in existing_titles:
-            session.add(GrammarProgram(**seed))
+    """Idempotent bootstrap. Reads the cached pool first so the steady state — seeds
+    present, verb_cases already hidden — costs no DB round trip at all."""
+    programs = _grammar_programs(session)
+    existing_titles = {p.title for p in programs}
+    missing = [s for s in _SEED_PROGRAMS if s["title"] not in existing_titles]
     # verb_cases exercises are hidden — too confusing without more context
+    exposed_verb_cases = [p.id for p in programs if p.program_type == "verb_cases" and p.is_public]
+    if not missing and not exposed_verb_cases:
+        return
+    for seed in missing:
+        session.add(GrammarProgram(**seed))
     for prog in session.exec(
-        select(GrammarProgram).where(GrammarProgram.program_type == "verb_cases")
+        select(GrammarProgram).where(GrammarProgram.id.in_(exposed_verb_cases))
     ).all():
-        if prog.is_public:
-            prog.is_public = False
-    session.commit()
+        prog.is_public = False
+    session.commit()   # the flush evicts `grammar_program`, so the pool reloads
+
 
 router = APIRouter()
 
@@ -86,14 +112,11 @@ def _annotate_lesson_progress(lessons: list[dict], user: Optional[User], session
     first_program_lesson_ids: set[int] = set()
     if user:
         case_to_group = {k: v[1] for k, v in _CASE_INFO.items()}
-        enrollments = session.exec(
-            select(UserGrammarProgram).where(UserGrammarProgram.user_id == user.id)
-        ).all()
-        if enrollments:
-            enrolled_ids = {e.program_id for e in enrollments}
-            enrolled_programs = session.exec(
-                select(GrammarProgram).where(GrammarProgram.id.in_(enrolled_ids))
-            ).all()
+        enrolled_ids = cache.enrollment_ids(
+            session, UserGrammarProgram, UserGrammarProgram.program_id, user.id
+        )
+        if enrolled_ids:
+            enrolled_programs = [p for p in _grammar_programs(session) if p.id in enrolled_ids]
             for prog in enrolled_programs:
                 if not prog.lesson_filter:
                     if lessons:
@@ -231,15 +254,12 @@ def list_grammar_programs(
     """Return all public grammar programs with enrollment status for authenticated users."""
     _ensure_seed(session)
     user = _try_get_user(authorization, session)
-    programs = session.exec(
-        select(GrammarProgram).where(GrammarProgram.is_public == True)
-    ).all()
+    programs = [p for p in _grammar_programs(session) if p.is_public]
     enrolled_ids: set[int] = set()
     if user:
-        enrollments = session.exec(
-            select(UserGrammarProgram).where(UserGrammarProgram.user_id == user.id)
-        ).all()
-        enrolled_ids = {e.program_id for e in enrollments}
+        enrolled_ids = cache.enrollment_ids(
+            session, UserGrammarProgram, UserGrammarProgram.program_id, user.id
+        )
     return [
         {
             "id": p.id,

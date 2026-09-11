@@ -58,7 +58,8 @@ test.describe('Mistake button', () => {
     await page.goto('/dashboard/lists');
     await page.locator('[data-testid="mistake-button"]').click();
     await expect(page.locator('text=Сообщить об ошибке')).toBeVisible();
-    await page.locator('text=Отмена').click();
+    // exact role match: substring `text=Отмена` also matches the footer's "Возврат и отмена" link
+    await page.getByRole('button', { name: 'Отмена', exact: true }).click();
     await expect(page.locator('text=Сообщить об ошибке')).not.toBeVisible();
   });
 });

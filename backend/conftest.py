@@ -137,6 +137,19 @@ def client():
 # Function-scoped (monkeypatch is), so it cannot cover app startup — the module-level
 # no-op above does that.
 @pytest.fixture(autouse=True)
+def _clear_cache():
+    """Every test starts with an empty read cache (#24).
+
+    Tests that write through a raw engine connection (bypassing a Session, so the
+    invalidation listeners never fire) must call `cache.clear()` themselves.
+    """
+    import cache
+    cache.clear()
+    yield
+    cache.clear()
+
+
+@pytest.fixture(autouse=True)
 def _telegram_spy(monkeypatch):
     sent: list[str] = []
     monkeypatch.setattr(telegram_service, "send_telegram", lambda text: sent.append(text))

@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+import cache
 from auth import require_user as _require_user
 from database import get_session
 from models import ConstitutionQuestion, ConstitutionExamResult, User
@@ -36,24 +37,28 @@ def get_exam_questions(
     """Return a random set of active constitution questions for an exam.
     Requires authentication. Returns up to EXAM_QUESTION_COUNT questions."""
     _require_user(authorization, session)
-    active = session.exec(
-        select(ConstitutionQuestion).where(ConstitutionQuestion.is_active == True)
-    ).all()
+    # Shared question pool, cached (#24, row 20); sampling stays per request.
+    active = cache.get_or_load(
+        ("constitution_pool",),
+        lambda: [
+            {
+                "id": q.id,
+                "question_ru": q.question_ru,
+                "option_a": q.option_a,
+                "option_b": q.option_b,
+                "option_c": q.option_c,
+                "option_d": q.option_d,
+                "correct_option": q.correct_option,
+                "category": q.category,
+            }
+            for q in session.exec(
+                select(ConstitutionQuestion).where(ConstitutionQuestion.is_active == True)  # noqa: E712
+            ).all()
+        ],
+        tags={"constitution_question"},
+    )
     count = min(EXAM_QUESTION_COUNT, len(active))
-    chosen = random.sample(active, count) if len(active) >= count else active[:]
-    return [
-        {
-            "id": q.id,
-            "question_ru": q.question_ru,
-            "option_a": q.option_a,
-            "option_b": q.option_b,
-            "option_c": q.option_c,
-            "option_d": q.option_d,
-            "correct_option": q.correct_option,
-            "category": q.category,
-        }
-        for q in chosen
-    ]
+    return random.sample(active, count) if len(active) >= count else active[:]
 
 
 class ExamResultIn(BaseModel):

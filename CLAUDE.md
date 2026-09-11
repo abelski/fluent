@@ -48,6 +48,7 @@
 - **Visualization:** Recharts library for data visualization
 - **State management:** React hooks
 - **API design:** All business logic lives server-side so the same backend can serve a future mobile app
+- **Caching:** Reads of shared, admin-edited content go through `backend/cache.py` (see `documentation/caching.md`); never cache progress or `now`-relative results
 - **Security:** Never log secrets or tokens
 
 # Way of Working

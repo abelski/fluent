@@ -5,12 +5,14 @@
 import json
 import random
 from datetime import date, datetime, timedelta, timezone
+from types import SimpleNamespace
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, col, func, select
 
+import cache
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from database import get_session
 from models import (
@@ -101,6 +103,48 @@ def _word_tiles(phrase_text: str) -> list[str]:
 
 # ── Program endpoints ────────────────────────────────────────────────────────
 
+def _public_phrase_programs(session: Session) -> tuple[list[SimpleNamespace], dict[int, int]]:
+    """Public phrase programs and their phrase counts — cached (#24, row 16).
+    The per-user stage distribution stays per request."""
+    return cache.get_or_load(
+        ("phrase_programs",),
+        lambda: (
+            [
+                SimpleNamespace(id=p.id, title=p.title, title_en=p.title_en,
+                                description=p.description, description_en=p.description_en,
+                                difficulty=p.difficulty)
+                for p in session.exec(
+                    select(PhraseProgram).where(PhraseProgram.is_public == True)  # noqa: E712
+                ).all()
+            ],
+            dict(
+                session.exec(
+                    select(Phrase.program_id, func.count(Phrase.id)).group_by(Phrase.program_id)
+                ).all()
+            ),
+        ),
+        tags={"phrase_program", "phrase"},
+    )
+
+
+def _program_phrases(program_id: int, session: Session) -> list[SimpleNamespace]:
+    """A program's phrases in display order — cached (#24, row 17). Progress and
+    chapter selection stay per request."""
+    return cache.get_or_load(
+        ("phrases", program_id),
+        lambda: [
+            SimpleNamespace(id=p.id, text=p.text, translation=p.translation,
+                            translation_en=p.translation_en, alt_texts=p.alt_texts,
+                            chapter=p.chapter, chapter_title=p.chapter_title,
+                            chapter_title_en=p.chapter_title_en, position=p.position)
+            for p in session.exec(
+                select(Phrase).where(Phrase.program_id == program_id).order_by(Phrase.position)
+            ).all()
+        ],
+        tags={"phrase"},
+    )
+
+
 @router.get("/phrase-programs")
 def list_phrase_programs(
     authorization: Optional[str] = Header(None),
@@ -108,26 +152,14 @@ def list_phrase_programs(
 ):
     """Return all public phrase programs with phrase count and enrollment status."""
     user = _try_get_user(authorization, session)
-    programs = session.exec(
-        select(PhraseProgram).where(PhraseProgram.is_public == True)  # noqa: E712
-    ).all()
-
-    # Phrase counts per program
-    count_rows = session.exec(
-        select(Phrase.program_id, func.count(Phrase.id))
-        .group_by(Phrase.program_id)
-    ).all()
-    phrase_counts = {pid: cnt for pid, cnt in count_rows}
+    programs, phrase_counts = _public_phrase_programs(session)
 
     # Enrollment status for current user
     enrolled_ids: set[int] = set()
     if user:
-        enrollments = session.exec(
-            select(UserPhraseProgramEnrollment).where(
-                UserPhraseProgramEnrollment.user_id == user.id
-            )
-        ).all()
-        enrolled_ids = {e.program_id for e in enrollments}
+        enrolled_ids = cache.enrollment_ids(
+            session, UserPhraseProgramEnrollment, UserPhraseProgramEnrollment.program_id, user.id
+        )
 
     # Progress stage distribution per enrolled program — 2 queries total
     # regardless of how many programs the user is enrolled in.
@@ -538,11 +570,7 @@ def get_phrase_program(
     if not program or not program.is_public:
         raise HTTPException(status_code=404, detail="Program not found")
 
-    phrases = session.exec(
-        select(Phrase)
-        .where(Phrase.program_id == program_id)
-        .order_by(Phrase.position)
-    ).all()
+    phrases = _program_phrases(program_id, session)
 
     # Per-phrase progress for authenticated users
     user = _try_get_user(authorization, session)
@@ -656,20 +684,16 @@ def get_phrase_study_session(
     if not program:
         raise HTTPException(status_code=404, detail="Program not found")
 
-    # Check enrollment
-    enrollment = session.exec(
-        select(UserPhraseProgramEnrollment).where(
-            UserPhraseProgramEnrollment.user_id == user.id,
-            UserPhraseProgramEnrollment.program_id == program_id,
-        )
-    ).first()
-    if not enrollment:
+    # Check enrollment (server-side gate — runs per request, on cached data)
+    enrolled_ids = cache.enrollment_ids(
+        session, UserPhraseProgramEnrollment, UserPhraseProgramEnrollment.program_id, user.id
+    )
+    if program_id not in enrolled_ids:
         raise HTTPException(status_code=403, detail="Not enrolled in this program")
 
-    phrase_query = select(Phrase).where(Phrase.program_id == program_id)
+    all_phrases = _program_phrases(program_id, session)
     if chapter is not None:
-        phrase_query = phrase_query.where(Phrase.chapter == chapter)
-    all_phrases = session.exec(phrase_query.order_by(Phrase.position)).all()
+        all_phrases = [p for p in all_phrases if p.chapter == chapter]
     if not all_phrases:
         raise HTTPException(status_code=404, detail="No phrases in this program")
 

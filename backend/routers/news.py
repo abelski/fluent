@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+import cache
 from auth import require_user as _decode_user
 from database import get_session
 from models import NewsPost, User
@@ -36,25 +37,31 @@ def list_news(
     offset: int = 0,
     session: Session = Depends(get_session),
 ):
-    """Return published news posts sorted by published_at DESC."""
-    posts = session.exec(
-        select(NewsPost)
-        .where(NewsPost.published == True)  # noqa: E712
-        .order_by(NewsPost.published_at.desc())
-        .offset(offset)
-        .limit(limit)
-    ).all()
-    return [
-        {
-            "id": p.id,
-            "title_ru": p.title_ru,
-            "title_en": p.title_en,
-            "body_ru": p.body_ru,
-            "body_en": p.body_en,
-            "published_at": p.published_at,
-        }
-        for p in posts
-    ]
+    """Return published news posts sorted by published_at DESC.
+
+    Runs on every landing-page load, so it is cached (#24, row 14).
+    """
+    return cache.get_or_load(
+        ("news", limit, offset),
+        lambda: [
+            {
+                "id": p.id,
+                "title_ru": p.title_ru,
+                "title_en": p.title_en,
+                "body_ru": p.body_ru,
+                "body_en": p.body_en,
+                "published_at": p.published_at,
+            }
+            for p in session.exec(
+                select(NewsPost)
+                .where(NewsPost.published == True)  # noqa: E712
+                .order_by(NewsPost.published_at.desc())
+                .offset(offset)
+                .limit(limit)
+            ).all()
+        ],
+        tags={"news_post"},
+    )
 
 
 # ── Admin endpoints ───────────────────────────────────────────────────────────

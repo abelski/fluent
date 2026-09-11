@@ -5,6 +5,7 @@
 
 import json
 import random
+from types import SimpleNamespace
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File
@@ -13,6 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlmodel import Session, select
 
+import cache
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from database import get_session
 from models import PracticeTest, PracticeQuestion, PracticeExamResult, PracticeCategory, User, UserPracticeCategoryEnrollment
@@ -33,6 +35,55 @@ def _valid_option(v: str) -> bool:
 
 # ── User-facing endpoints ────────────────────────────────────────────────────
 
+_CATEGORY_COLUMNS = tuple(PracticeCategory.__table__.columns.keys())
+_TEST_COLUMNS = tuple(PracticeTest.__table__.columns.keys())
+
+
+def _practice_meta(session: Session) -> dict:
+    """Categories, tests and active-question counts — cached (#24, row 18).
+
+    The practice pages used to pull every `PracticeTest` row (~65KB) on every
+    visit just to count them. Visibility (`status`, `is_admin`, `created_by`) is
+    still decided per request, on this shared pool.
+
+    Deviation from the plan's "tests meta without lesson_text_lt": the column is
+    included, because `/practice/categories/{id}/tests` serves the lesson text to
+    the reading view and excluding it would just move that read back onto every
+    request. It is ~65KB total for the whole table and strings are shared by
+    deepcopy, so it costs nothing to keep here.
+    """
+    return cache.get_or_load(
+        ("practice_meta",),
+        lambda: {
+            "categories": [
+                SimpleNamespace(**{c: getattr(row, c) for c in _CATEGORY_COLUMNS})
+                for row in session.exec(
+                    select(PracticeCategory).order_by(PracticeCategory.sort_order, PracticeCategory.id)
+                ).all()
+            ],
+            "tests": [
+                SimpleNamespace(**{c: getattr(row, c) for c in _TEST_COLUMNS})
+                for row in session.exec(
+                    select(PracticeTest).order_by(PracticeTest.sort_order, PracticeTest.id)
+                ).all()
+            ],
+            "active_counts": dict(session.exec(
+                select(PracticeQuestion.test_id, func.count(PracticeQuestion.id))
+                .where(PracticeQuestion.is_active == True)  # noqa: E712
+                .group_by(PracticeQuestion.test_id)
+            ).all()),
+        },
+        tags={"practice_category", "practice_test", "practice_question"},
+    )
+
+
+def _enrolled_category_ids(user: User, session: Session) -> set[int]:
+    return cache.enrollment_ids(
+        session, UserPracticeCategoryEnrollment,
+        UserPracticeCategoryEnrollment.category_id, user.id,
+    )
+
+
 @router.get("/practice/categories")
 def list_categories(
     authorization: Optional[str] = Header(None),
@@ -42,14 +93,10 @@ def list_categories(
     user = _require_user(authorization, session)
     is_admin = user.is_admin
 
-    categories = session.exec(
-        select(PracticeCategory).order_by(PracticeCategory.sort_order, PracticeCategory.id)
-    ).all()
+    meta = _practice_meta(session)
+    categories = meta["categories"]
 
-    # Count visible tests per category
-    all_tests = session.exec(select(PracticeTest)).all()
-
-    def _visible(t: PracticeTest) -> bool:
+    def _visible(t) -> bool:
         if t.status == "published":
             return True
         if is_admin and t.status in ("testing", "draft"):
@@ -57,18 +104,11 @@ def list_categories(
         return False
 
     test_counts: dict[int, int] = {}
-    for t in all_tests:
+    for t in meta["tests"]:
         if _visible(t) and t.category_id is not None:
             test_counts[t.category_id] = test_counts.get(t.category_id, 0) + 1
 
-    enrolled_ids: set[int] = {
-        e.category_id
-        for e in session.exec(
-            select(UserPracticeCategoryEnrollment).where(
-                UserPracticeCategoryEnrollment.user_id == user.id
-            )
-        ).all()
-    }
+    enrolled_ids = _enrolled_category_ids(user, session)
 
     return [
         {
@@ -94,40 +134,27 @@ def list_enrolled_categories(
     user = _require_user(authorization, session)
     is_admin = user.is_admin
 
-    enrollments = session.exec(
-        select(UserPracticeCategoryEnrollment).where(
-            UserPracticeCategoryEnrollment.user_id == user.id
-        )
-    ).all()
-    enrolled_ids = {e.category_id for e in enrollments}
+    enrolled_ids = _enrolled_category_ids(user, session)
 
     if not enrolled_ids:
         return []
 
-    categories = session.exec(
-        select(PracticeCategory)
-        .where(PracticeCategory.id.in_(enrolled_ids))
-        .order_by(PracticeCategory.sort_order, PracticeCategory.id)
-    ).all()
+    meta = _practice_meta(session)
+    categories = [c for c in meta["categories"] if c.id in enrolled_ids]
 
-    all_tests = session.exec(select(PracticeTest)).all()
-
-    def _visible(t: PracticeTest) -> bool:
+    def _visible(t) -> bool:
         if t.status == "published":
             return True
         if is_admin and t.status in ("testing", "draft"):
             return True
         return False
 
-    # Build visible tests per category
-    tests_by_category: dict[int, list[PracticeTest]] = {}
-    for t in all_tests:
+    # Build visible tests per category — already ordered by (sort_order, id),
+    # the same order as list_category_tests.
+    tests_by_category: dict[int, list] = {}
+    for t in meta["tests"]:
         if _visible(t) and t.category_id is not None:
             tests_by_category.setdefault(t.category_id, []).append(t)
-
-    # Sort each category's tests by sort_order, id (same order as list_category_tests)
-    for cat_tests in tests_by_category.values():
-        cat_tests.sort(key=lambda t: (t.sort_order, t.id))
 
     # Best score per test for this user (only for tests in enrolled categories)
     all_test_ids = [t.id for tests in tests_by_category.values() for t in tests]
@@ -217,30 +244,19 @@ def list_category_tests(
     user = _require_user(authorization, session)
     is_admin = user.is_admin
 
-    category = session.get(PracticeCategory, category_id)
-    if not category:
+    meta = _practice_meta(session)
+    if not any(c.id == category_id for c in meta["categories"]):
         raise HTTPException(status_code=404, detail="Category not found")
 
-    all_tests = session.exec(
-        select(PracticeTest)
-        .where(PracticeTest.category_id == category_id)
-        .order_by(PracticeTest.sort_order, PracticeTest.id)
-    ).all()
-
-    def _visible(t: PracticeTest) -> bool:
+    def _visible(t) -> bool:
         if t.status == "published":
             return True
         if is_admin and t.status in ("testing", "draft"):
             return True
         return False
 
-    tests = [t for t in all_tests if _visible(t)]
-
-    active_counts = dict(session.exec(
-        select(PracticeQuestion.test_id, func.count(PracticeQuestion.id))
-        .where(PracticeQuestion.is_active == True)
-        .group_by(PracticeQuestion.test_id)
-    ).all())
+    tests = [t for t in meta["tests"] if t.category_id == category_id and _visible(t)]
+    active_counts = meta["active_counts"]
 
     # Compute best score per test for this user
     test_ids = [t.id for t in tests]
@@ -294,11 +310,9 @@ def list_active_tests(
     user = _require_user(authorization, session)
     is_admin = user.is_admin
 
-    all_tests = session.exec(
-        select(PracticeTest).order_by(PracticeTest.sort_order, PracticeTest.id)
-    ).all()
+    meta = _practice_meta(session)
 
-    def _visible(t: PracticeTest) -> bool:
+    def _visible(t) -> bool:
         if t.status == "published":
             return True
         if is_admin and t.status == "testing":
@@ -307,13 +321,8 @@ def list_active_tests(
             return True
         return False
 
-    tests = [t for t in all_tests if _visible(t)]
-
-    active_counts = dict(session.exec(
-        select(PracticeQuestion.test_id, func.count(PracticeQuestion.id))
-        .where(PracticeQuestion.is_active == True)
-        .group_by(PracticeQuestion.test_id)
-    ).all())
+    tests = [t for t in meta["tests"] if _visible(t)]
+    active_counts = meta["active_counts"]
     return [
         {
             "id": t.id,
@@ -338,25 +347,45 @@ def get_exam_questions(
 ):
     """Return a random set of active questions for the given test."""
     user = _require_user(authorization, session)
-    test = session.get(PracticeTest, test_id)
-    if not test or (test.status != "published" and not (
-        user.is_admin and (test.status == "testing" or (test.status == "draft" and test.created_by == user.id))
-    )):
+    # Test row + its active question pool are shared content, so they're cached
+    # (#24, row 19); the visibility check and the random sample stay per request.
+    exam = cache.get_or_load(
+        ("practice_exam", test_id),
+        lambda: _load_exam(test_id, session),
+        tags={"practice_test", "practice_question"},
+        store_if=lambda v: v is not None,
+    )
+    if exam is None:
         raise HTTPException(status_code=404, detail="Test not found")
-    active = session.exec(
-        select(PracticeQuestion)
-        .where(PracticeQuestion.test_id == test_id, PracticeQuestion.is_active == True)
-    ).all()
-    count = min(test.question_count, len(active))
+    test = exam["test"]
+    if test["status"] != "published" and not (
+        user.is_admin and (
+            test["status"] == "testing"
+            or (test["status"] == "draft" and test["created_by"] == user.id)
+        )
+    ):
+        raise HTTPException(status_code=404, detail="Test not found")
+    active = exam["questions"]
+    count = min(test["question_count"], len(active))
     chosen = random.sample(active, count) if len(active) >= count else list(active)
     return {
         "test": {
-            "id": test.id,
-            "title_ru": test.title_ru,
-            "title_en": test.title_en,
-            "pass_threshold": test.pass_threshold,
-            "lesson_text_lt": test.lesson_text_lt,
+            "id": test["id"],
+            "title_ru": test["title_ru"],
+            "title_en": test["title_en"],
+            "pass_threshold": test["pass_threshold"],
+            "lesson_text_lt": test["lesson_text_lt"],
         },
+        "questions": chosen,
+    }
+
+
+def _load_exam(test_id: int, session: Session) -> Optional[dict]:
+    test = session.get(PracticeTest, test_id)
+    if not test:
+        return None
+    return {
+        "test": {c: getattr(test, c) for c in _TEST_COLUMNS},
         "questions": [
             {
                 "id": q.id,
@@ -369,7 +398,10 @@ def get_exam_questions(
                 "correct_option": q.correct_option,
                 "category": q.category,
             }
-            for q in chosen
+            for q in session.exec(
+                select(PracticeQuestion)
+                .where(PracticeQuestion.test_id == test_id, PracticeQuestion.is_active == True)  # noqa: E712
+            ).all()
         ],
     }
 

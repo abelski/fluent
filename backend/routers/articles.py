@@ -14,6 +14,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+import cache
 from auth import require_user as _decode_user
 from database import get_session
 from models import Article, User
@@ -40,6 +41,63 @@ def _tags_list(tags_str: str) -> list[str]:
 
 # ── Public endpoints ──────────────────────────────────────────────────────────
 
+def _load_article_index(category: Optional[str], session: Session) -> list[dict]:
+    """Summary columns only — this used to select whole rows, bodies included,
+    just to render a list of titles (#24, row 11)."""
+    query = (
+        select(Article.slug, Article.title_ru, Article.title_en,
+               Article.tags, Article.category, Article.created_at)
+        .where(Article.published == True)  # noqa: E712
+        .where(Article.show_in_footer == False)  # noqa: E712
+    )
+    if category is not None:
+        query = query.where(Article.category == category)
+    return [
+        {
+            "slug": slug,
+            "title_ru": title_ru,
+            "title_en": title_en,
+            "tags": _tags_list(tags),
+            "category": cat,
+            "created_at": created_at,
+        }
+        for slug, title_ru, title_en, tags, cat, created_at
+        in session.exec(query.order_by(Article.created_at.desc())).all()
+    ]
+
+
+def article_by_slug(slug: str, session: Session) -> Optional[dict]:
+    """One article by slug, cached (#24, row 13). Includes `published` so the
+    caller decides the 404 per request — `None` means there is no such row.
+
+    Shared with `/me/welcome` in routers/words.py.
+    """
+    return cache.get_or_load(
+        ("article", slug),
+        lambda: _load_article_by_slug(slug, session),
+        tags={"article"},
+        store_if=lambda v: v is not None,
+    )
+
+
+def _load_article_by_slug(slug: str, session: Session) -> Optional[dict]:
+    article = session.exec(select(Article).where(Article.slug == slug)).first()
+    if not article:
+        return None
+    return {
+        "slug": article.slug,
+        "title_ru": article.title_ru,
+        "title_en": article.title_en,
+        "body_ru": article.body_ru,
+        "body_en": article.body_en,
+        "tags": article.tags,
+        "category": article.category,
+        "published": article.published,
+        "created_at": article.created_at,
+        "updated_at": article.updated_at,
+    }
+
+
 @router.get("/articles")
 def list_articles(category: Optional[str] = None, session: Session = Depends(get_session)):
     """Return all published articles that are not pinned to the footer (summary only, no body).
@@ -48,62 +106,51 @@ def list_articles(category: Optional[str] = None, session: Session = Depends(get
     """
     if category is not None and category not in _VALID_CATEGORIES:
         raise HTTPException(status_code=400, detail="Invalid category")
-    query = (
-        select(Article)
-        .where(Article.published == True)  # noqa: E712
-        .where(Article.show_in_footer == False)  # noqa: E712
+    return cache.get_or_load(
+        ("articles", category),
+        lambda: _load_article_index(category, session),
+        tags={"article"},
     )
-    if category is not None:
-        query = query.where(Article.category == category)
-    articles = session.exec(query.order_by(Article.created_at.desc())).all()
-    return [
-        {
-            "slug": a.slug,
-            "title_ru": a.title_ru,
-            "title_en": a.title_en,
-            "tags": _tags_list(a.tags),
-            "category": a.category,
-            "created_at": a.created_at,
-        }
-        for a in articles
-    ]
 
 
 @router.get("/footer-articles")
 def list_footer_articles(session: Session = Depends(get_session)):
-    """Return published articles pinned to the footer nav (slug + titles only)."""
-    articles = session.exec(
-        select(Article)
-        .where(Article.published == True)  # noqa: E712
-        .where(Article.show_in_footer == True)  # noqa: E712
-        .order_by(Article.created_at.asc())
-    ).all()
-    return [
-        {
-            "slug": a.slug,
-            "title_ru": a.title_ru,
-            "title_en": a.title_en,
-        }
-        for a in articles
-    ]
+    """Return published articles pinned to the footer nav (slug + titles only).
+
+    The Footer is in the root layout, so this runs on every full page load —
+    anonymous traffic included. Cached (#24, row 12).
+    """
+    return cache.get_or_load(
+        ("footer_articles",),
+        lambda: [
+            {"slug": slug, "title_ru": title_ru, "title_en": title_en}
+            for slug, title_ru, title_en in session.exec(
+                select(Article.slug, Article.title_ru, Article.title_en)
+                .where(Article.published == True)  # noqa: E712
+                .where(Article.show_in_footer == True)  # noqa: E712
+                .order_by(Article.created_at.asc())
+            ).all()
+        ],
+        tags={"article"},
+    )
 
 
 @router.get("/articles/{slug}")
 def get_article(slug: str, session: Session = Depends(get_session)):
     """Return a single published article with full body."""
-    article = session.exec(select(Article).where(Article.slug == slug)).first()
-    if not article or not article.published:
+    article = article_by_slug(slug, session)
+    if not article or not article["published"]:
         raise HTTPException(status_code=404, detail="Article not found")
     return {
-        "slug": article.slug,
-        "title_ru": article.title_ru,
-        "title_en": article.title_en,
-        "body_ru": article.body_ru,
-        "body_en": article.body_en,
-        "tags": _tags_list(article.tags),
-        "category": article.category,
-        "created_at": article.created_at,
-        "updated_at": article.updated_at,
+        "slug": article["slug"],
+        "title_ru": article["title_ru"],
+        "title_en": article["title_en"],
+        "body_ru": article["body_ru"],
+        "body_en": article["body_en"],
+        "tags": _tags_list(article["tags"]),
+        "category": article["category"],
+        "created_at": article["created_at"],
+        "updated_at": article["updated_at"],
     }
 
 

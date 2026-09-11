@@ -16,12 +16,58 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from fastapi.responses import RedirectResponse
 from jose import jwt, JWTError
+from sqlalchemy.orm import make_transient_to_detached
+from sqlalchemy.orm.util import identity_key
 from sqlmodel import Session, select
 
+import cache
 from database import get_session
 from models import PreparedMessage, User
 
 router = APIRouter()
+
+# The user row is read on EVERY authenticated request, so it is cached (#24).
+# Short TTL because it carries security-relevant flags (is_admin, is_premium):
+# in-process changes evict immediately, 60s only bounds writes this process can't
+# see — a seed script, or the other instance during a zero-downtime deploy.
+USER_CACHE_TTL = 60
+
+_USER_COLUMNS = tuple(User.__table__.columns.keys())
+
+
+def _load_user_values(session: Session, email: str) -> dict | None:
+    user = session.exec(select(User).where(User.email == email)).first()
+    if user is None:
+        return None
+    return {name: getattr(user, name) for name in _USER_COLUMNS}
+
+
+def _user_by_email(session: Session, email: str) -> User | None:
+    """Return a session-attached User for `email`, usually without any SELECT.
+
+    The cache holds plain column values, never a live ORM instance. Per request
+    we rebuild a User from them and hand it to the session as already-persistent
+    (`make_transient_to_detached` + `merge(load=False)`), so the handler gets an
+    object that behaves exactly like a queried one: mutating it marks it dirty,
+    and the resulting flush evicts `user:pk=<id>`.
+    """
+    values = cache.get_or_load(
+        ("user_by_email", email),
+        lambda: _load_user_values(session, email),
+        tags=lambda v: {f"user:pk={v['id']}"} if v else set(),
+        ttl=USER_CACHE_TTL,
+        store_if=lambda v: v is not None,   # never cache "no such user"
+    )
+    if values is None:
+        return None
+    # If this session already holds the row, use that instance — merging over it
+    # would discard changes the handler has already made.
+    attached = session.identity_map.get(identity_key(User, values["id"]))
+    if attached is not None:
+        return attached
+    user = User(**values)
+    make_transient_to_detached(user)
+    return session.merge(user, load=False)
 
 
 def try_get_user(authorization: str | None, session: Session) -> User | None:
@@ -39,7 +85,7 @@ def try_get_user(authorization: str | None, session: Session) -> User | None:
             return None
     except JWTError:
         return None
-    return session.exec(select(User).where(User.email == email)).first()
+    return _user_by_email(session, email)
 
 
 def require_user(authorization: str | None, session: Session) -> User:
@@ -57,7 +103,7 @@ def require_user(authorization: str | None, session: Session) -> User:
         email = payload["email"]
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-    user = session.exec(select(User).where(User.email == email)).first()
+    user = _user_by_email(session, email)
     if not user:
         user = User(
             email=email,

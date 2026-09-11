@@ -7,6 +7,10 @@ import re
 from sqlmodel import SQLModel, create_engine, Session
 from dotenv import load_dotenv
 
+# Importing cache installs the Session listeners that drive cache invalidation.
+# Every process that talks to the DB imports database, so they're always on.
+import cache  # noqa: F401
+
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
