@@ -22,6 +22,13 @@ import cache
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
 from models import GrammarSentence, GrammarCaseRule, Article, Verb
 
+# ── «Напомни что я мог забыть» (#26) ──────────────────────────────────────────
+# Sentinel lesson id used only for the *saved* GrammarLessonResult row of a remind
+# run — never a real LESSON_CONFIG/VERB_LESSON_CONFIG entry, so 0 is free (real
+# ids start at 1). Readers that count "lessons passed" must skip it explicitly.
+REMIND_LESSON_ID = 0
+REMIND_TASK_COUNT = 10
+
 # ── Verb lesson config ────────────────────────────────────────────────────────
 import json as _json
 _VERB_LESSONS_PATH = Path(__file__).parent / "data/grammar/verb_lessons.json"

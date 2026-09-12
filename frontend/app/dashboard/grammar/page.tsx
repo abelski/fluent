@@ -33,8 +33,25 @@ const LEVEL_STYLES: Record<string, string> = {
   practice: 'bg-amber-50 border-line text-amber-600',
 };
 
+// «Напомни что я мог забыть» (#26) — a pseudo-lesson through the same startLesson
+// flow. id=0 is the sentinel REMIND_LESSON_ID used server-side for the saved
+// result; it never matches a real lesson id, so it can't collide with `lessons`.
+const REMIND_LESSON: Lesson = {
+  id: 0,
+  title: '',
+  level: 'practice',
+  task_count: 10,
+  is_locked: false,
+  best_score_pct: null,
+};
 
-function GrammarStatsBar({ lessons }: { lessons: Lesson[] }) {
+function GrammarStatsBar({
+  lessons,
+  primaryAction,
+}: {
+  lessons: Lesson[];
+  primaryAction: { label: string; onClick: () => void; disabled?: boolean; hint?: string };
+}) {
   const { tr } = useT();
   const total = lessons.length;
   const passed = lessons.filter((l) => l.best_score_pct !== null && l.best_score_pct !== undefined && l.best_score_pct > 0.75).length;
@@ -56,6 +73,7 @@ function GrammarStatsBar({ lessons }: { lessons: Lesson[] }) {
           pct,
           caption: remaining > 0 ? tr.grammar.tipBody.replace('{count}', String(remaining)) : tr.grammar.tipBodyDone,
         }}
+        primaryAction={primaryAction}
         testId="stats-card-grammar"
       />
     </div>
@@ -332,9 +350,14 @@ export default function GrammarPage() {
     const base = isVerbLesson(lesson.id) ? 'verb-lessons' : 'lessons';
     const token = getToken();
     const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+    // The remind pseudo-lesson (id 0, #26) has its own endpoint — it isn't a real
+    // LESSON_CONFIG entry, so /grammar/lessons/0/tasks would just 404.
+    const url = lesson.id === REMIND_LESSON.id
+      ? `${BACKEND_URL}/api/grammar/remind/tasks`
+      : `${BACKEND_URL}/api/grammar/${base}/${lesson.id}/tasks`;
     // Without this header the request was anonymous, so the server-side lock/quota
     // checks below (403/429) never actually fired — see documentation/grammar-lesson-lock-and-premium.md.
-    fetch(`${BACKEND_URL}/api/grammar/${base}/${lesson.id}/tasks`, { headers })
+    fetch(url, { headers })
       .then(async (r) => {
         // The response status used to be ignored entirely: any non-200 fell through
         // to an empty task list, which renders as an infinite spinner. 403 (lesson
@@ -361,6 +384,13 @@ export default function GrammarPage() {
   if (activeLesson === null) {
     const enrolledPrograms = programs.filter((p) => p.enrolled);
     const isEnrolled = enrolledPrograms.length > 0;
+    // Remind is only offered once at least one «Повторение» lesson has been passed
+    // in a program the user is actually enrolled in — same eligibility rule the
+    // server enforces at GET /grammar/remind/tasks (404 otherwise).
+    const canRemind = enrolledPrograms.some((program) => {
+      const programLessons = filterLessonsForProgram(lessons, program.lesson_filter ?? null, caseGroups, program.program_type ?? 'cases');
+      return programLessons.some((l) => l.level === 'practice' && (l.best_score_pct ?? 0) > 0.75);
+    });
 
     return (
       <PageShell>
@@ -394,7 +424,15 @@ export default function GrammarPage() {
             </div>
           ) : (
             <>
-              <GrammarStatsBar lessons={lessons} />
+              <GrammarStatsBar
+                lessons={lessons}
+                primaryAction={{
+                  label: tr.stats.remindForgotten,
+                  onClick: () => startLesson(REMIND_LESSON),
+                  disabled: !canRemind,
+                  hint: canRemind ? undefined : tr.grammar.remindHint,
+                }}
+              />
 
               {enrolledPrograms.map((program) => {
                 const programLessons = filterLessonsForProgram(lessons, program.lesson_filter ?? null, caseGroups, program.program_type ?? 'cases');
@@ -546,16 +584,19 @@ export default function GrammarPage() {
           </div>
           <h1 className="font-headline text-2xl font-bold mb-2">{tr.grammar.lessonDone}</h1>
 
-          {/* Pass/fail banner */}
-          {passed ? (
-            <div className="flex items-center justify-center gap-2 mb-4 bg-emerald-50 border border-line rounded-xl px-4 py-2">
-              <span className="text-emerald-600 text-sm font-semibold">{tr.grammar.passed}</span>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1 mb-4 bg-amber-50 border border-line rounded-xl px-4 py-3">
-              <span className="text-amber-600 text-sm font-semibold">{tr.grammar.failedScore}</span>
-              <span className="text-gray-500 text-xs">{tr.grammar.failedHint}</span>
-            </div>
+          {/* Pass/fail banner — its copy is about unlocking the next lesson, which
+              doesn't apply to a remind run (no lesson list position, no lock). */}
+          {activeLesson.id !== REMIND_LESSON.id && (
+            passed ? (
+              <div className="flex items-center justify-center gap-2 mb-4 bg-emerald-50 border border-line rounded-xl px-4 py-2">
+                <span className="text-emerald-600 text-sm font-semibold">{tr.grammar.passed}</span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1 mb-4 bg-amber-50 border border-line rounded-xl px-4 py-3">
+                <span className="text-amber-600 text-sm font-semibold">{tr.grammar.failedScore}</span>
+                <span className="text-gray-500 text-xs">{tr.grammar.failedHint}</span>
+              </div>
+            )
           )}
 
           <p className="text-gray-400 mb-8">

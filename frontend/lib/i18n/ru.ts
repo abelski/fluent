@@ -230,6 +230,7 @@ const ru: Translations = {
     lockedUpsell: 'Открыть с Premium',
     lockedTitle: 'Урок закрыт',
     lockedBody: 'Пройдите предыдущий урок, чтобы открыть этот, — или откройте все уроки с Premium.',
+    remindHint: 'Пройдите хотя бы один урок «Повторение», чтобы открыть',
   },
   practice: {
     title: 'Практика',

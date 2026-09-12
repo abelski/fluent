@@ -230,6 +230,7 @@ const en: Translations = {
     lockedUpsell: 'Open with Premium',
     lockedTitle: 'Lesson locked',
     lockedBody: 'Pass the previous lesson to unlock this one — or open every lesson with Premium.',
+    remindHint: 'Pass at least one Practice lesson to unlock',
   },
   practice: {
     title: 'Practice',

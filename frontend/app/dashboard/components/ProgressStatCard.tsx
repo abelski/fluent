@@ -38,7 +38,13 @@ export interface ProgressStatCardProps {
   countBadge?: string | null;
   nextMilestone?: string | null;
   milestone?: { pct: number; caption?: string | null } | null;
-  primaryAction?: { href: string; label: string } | null;
+  /**
+   * Either a navigating action (`href`, rendered as a `Link`) or an in-place one
+   * (`onClick`, rendered as a `<button>` — used by Грамматика's remind action,
+   * which fetches before deciding where the user ends up). `disabled` + `hint`
+   * are for the onClick form: the button dims and a caption explains why.
+   */
+  primaryAction?: { label: string; href?: string; onClick?: () => void; disabled?: boolean; hint?: string } | null;
   secondaryAction?: { href: string; label: string } | null;
   due?: { count: number; total: number; caption: string } | null;
   testId?: string;
@@ -96,12 +102,25 @@ export default function ProgressStatCard({
           <div className="mt-3.5">
             <div className="flex flex-wrap gap-2.5">
               {primaryAction && (
-                <Link
-                  href={primaryAction.href}
-                  className={`inline-block text-xs ${c.primaryBtn} font-semibold px-3.5 py-2 rounded-lg transition-colors`}
-                >
-                  {primaryAction.label}
-                </Link>
+                primaryAction.href ? (
+                  <Link
+                    href={primaryAction.href}
+                    className={`inline-block text-xs ${c.primaryBtn} font-semibold px-3.5 py-2 rounded-lg transition-colors`}
+                  >
+                    {primaryAction.label}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={primaryAction.onClick}
+                    disabled={primaryAction.disabled}
+                    className={`inline-block text-xs ${c.primaryBtn} font-semibold px-3.5 py-2 rounded-lg transition-colors ${
+                      primaryAction.disabled ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {primaryAction.label}
+                  </button>
+                )
               )}
               {secondaryAction && (
                 <Link
@@ -112,6 +131,9 @@ export default function ProgressStatCard({
                 </Link>
               )}
             </div>
+            {primaryAction?.hint && (
+              <p className="text-xs text-faint mt-1.5">{primaryAction.hint}</p>
+            )}
             {due && due.count > 0 && due.total > 0 && (
               <div className="mt-3.5 w-[120px]">
                 <div className={`h-1 ${TRACK} rounded-full overflow-hidden`}>

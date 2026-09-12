@@ -518,6 +518,18 @@
       for what each page shows instead while loading or empty.
     </p>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>Two forms of <code>primaryAction</code> (#26).</b> The original navigating form —
+      <code>{ label, href }</code>, rendered as a <code>Link</code> — is still what Слова/Фразы/Практика use.
+      Грамматика's remind button ("Напомни что я мог забыть" — a mixed review of every passed practice lesson)
+      needed to fetch first and only navigate the user into an exercise once tasks came back, so
+      <code>primaryAction</code> also accepts an in-place form: <code>{ label, onClick, disabled?, hint? }</code>,
+      rendered as a plain <code>&lt;button&gt;</code> with the same classes. <code>disabled</code> adds
+      <code>opacity-50 cursor-not-allowed</code>; <code>hint</code> renders as
+      <code>text-xs text-faint mt-1.5</code> under the button row, explaining why it's disabled. The hero's
+      existing <code>count &gt; 0</code> gate is unchanged — with zero passed lessons the whole action row
+      (button + hint) is hidden, not just disabled.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
       <b>Stacks below <code>sm</code>.</b> The demo below shows the desktop row layout (mascot beside the stats,
       <code>nextMilestone</code> pinned right) — below <code>sm</code> it switches to <code>flex-col</code> (mascot
       above the stats block) instead, because at 375px the 128px mascot left only ~180px for the count/badge/button

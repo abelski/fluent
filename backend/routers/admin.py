@@ -17,7 +17,7 @@ from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, Wor
 from sqlalchemy import text, delete as sa_delete, update as sa_update
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
-from grammar_service import get_lessons as _get_grammar_lessons, _sentence_invariant_holds
+from grammar_service import get_lessons as _get_grammar_lessons, _sentence_invariant_holds, REMIND_LESSON_ID
 from data.grammar.lessons import LESSON_CONFIG, CASE_INFO
 import email_service
 import telegram_service
@@ -166,6 +166,8 @@ def get_user_progress(
     ).all()
     best_grammar: dict[int, float] = {}
     for r in grammar_results:
+        if r.lesson_id == REMIND_LESSON_ID:
+            continue  # #26 — the remind sentinel is not a real lesson
         pct = r.score / r.total if r.total > 0 else 0.0
         if r.lesson_id not in best_grammar or pct > best_grammar[r.lesson_id]:
             best_grammar[r.lesson_id] = pct

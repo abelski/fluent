@@ -17,6 +17,7 @@ from database import get_session
 from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress, UserCustomPhraseProgress, Article
 from constants import DAILY_LIMIT, MATURE_WORD_REPS
 from auth import require_user as _require_user, try_get_user as _try_get_user
+from grammar_service import REMIND_LESSON_ID
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
 from leaderboard_service import build_leaderboard_score_joins, current_week_bounds, LEADERBOARD_SCORE_EXPR
 from routers.admin import _accented_matches_lithuanian
@@ -1198,7 +1199,10 @@ def get_stats(
     )
     lesson_best = (
         select(GrammarLessonResult.lesson_id, best_pct.label("best_pct"))
-        .where(GrammarLessonResult.user_id == user.id)
+        .where(
+            GrammarLessonResult.user_id == user.id,
+            GrammarLessonResult.lesson_id != REMIND_LESSON_ID,  # #26 — sentinel, not a real lesson
+        )
         .group_by(GrammarLessonResult.lesson_id)
         .subquery()
     )

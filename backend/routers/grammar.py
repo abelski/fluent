@@ -2,6 +2,8 @@
 # This router is intentionally thin — all content logic lives in grammar_service.py.
 
 import json
+import math
+import random
 from types import SimpleNamespace
 from typing import Optional
 
@@ -13,7 +15,14 @@ import cache
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from data.grammar.lessons import CASE_INFO as _CASE_INFO
 from database import get_session
-from grammar_service import get_lessons, get_lesson_tasks, get_verb_lessons, get_verb_lesson_tasks
+from grammar_service import (
+    REMIND_LESSON_ID,
+    REMIND_TASK_COUNT,
+    get_lessons,
+    get_lesson_tasks,
+    get_verb_lessons,
+    get_verb_lesson_tasks,
+)
 from models import GrammarLessonResult, GrammarProgram, User, UserGrammarProgram
 from quota import is_premium_active as _is_premium_active, quota_check_and_increment as _quota_check_and_increment
 
@@ -240,10 +249,93 @@ def get_progress(
     ).all()
     best: dict[int, float] = {}
     for r in results:
+        if r.lesson_id == REMIND_LESSON_ID:
+            continue  # #26 — the remind sentinel is not a real lesson
         pct = r.score / r.total if r.total > 0 else 0.0
         if r.lesson_id not in best or pct > best[r.lesson_id]:
             best[r.lesson_id] = pct
     return best
+
+
+def _program_lesson_ids(program: SimpleNamespace, session: Session) -> list[int]:
+    """Lesson ids visible for this program — mirrors the frontend's own
+    `filterLessonsForProgram` (grammar/page.tsx) so remind's eligibility matches
+    exactly what the lesson list shows for this program."""
+    if program.program_type in ("verbs", "verb_cases"):
+        return [l["id"] for l in get_verb_lessons(session, program_type=program.program_type)]
+    lessons = get_lessons(session, is_admin=False)
+    if not program.lesson_filter:
+        return [l["id"] for l in lessons]
+    try:
+        allowed = set(json.loads(program.lesson_filter))
+    except Exception:
+        return [l["id"] for l in lessons]
+    case_to_group = {k: v[1] for k, v in _CASE_INFO.items()}
+    return [
+        l["id"] for l in lessons
+        if all(case_to_group.get(c, "") in allowed for c in l["cases"])
+    ]
+
+
+@router.get("/grammar/remind/tasks")
+def remind_tasks(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """«Напомни что я мог забыть» (#26) — a mixed run built from every «Повторение»
+    (practice) lesson the user has already passed, in programs they're enrolled in.
+
+    404 (no session charged) when nothing is eligible; otherwise a daily session is
+    spent like any other lesson. The result is saved by the caller against the
+    REMIND_LESSON_ID sentinel via the existing POST /grammar/lessons/0/results.
+    """
+    user = _require_user(authorization, session)
+
+    enrolled_ids = cache.enrollment_ids(
+        session, UserGrammarProgram, UserGrammarProgram.program_id, user.id
+    )
+    programs = [p for p in _grammar_programs(session) if p.id in enrolled_ids]
+
+    passed_ids: set[int] = set(session.exec(
+        select(GrammarLessonResult.lesson_id)
+        .where(
+            GrammarLessonResult.user_id == user.id,
+            GrammarLessonResult.passed == True,  # noqa: E712
+        )
+        .distinct()
+    ).all())
+
+    all_lessons = (
+        get_lessons(session, is_admin=False)
+        + get_verb_lessons(session, program_type="verbs")
+        + get_verb_lessons(session, program_type="verb_cases")
+    )
+    lesson_level = {l["id"]: l.get("level") for l in all_lessons}
+
+    eligible_ids: set[int] = set()
+    for program in programs:
+        for lid in _program_lesson_ids(program, session):
+            if lid in passed_ids and lesson_level.get(lid) == "practice":
+                eligible_ids.add(lid)
+
+    if not eligible_ids:
+        # Before quota — a user with nothing eligible pays nothing for asking.
+        raise HTTPException(status_code=404, detail={"code": "no_passed_practice"})
+
+    _quota_check_and_increment(user, session)
+
+    eligible = list(eligible_ids)
+    random.shuffle(eligible)
+    chosen = eligible[:REMIND_TASK_COUNT]
+    per_lesson = math.ceil(REMIND_TASK_COUNT / len(chosen))
+
+    pool: list[dict] = []
+    for lid in chosen:
+        tasks = (get_verb_lesson_tasks(lid, session) if lid >= 200 else get_lesson_tasks(lid, session)) or []
+        if tasks:
+            pool.extend(random.sample(tasks, min(per_lesson, len(tasks))))
+    random.shuffle(pool)
+    return pool[:REMIND_TASK_COUNT]
 
 
 @router.get("/grammar-programs")

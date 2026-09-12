@@ -210,6 +210,7 @@ export interface Translations {
     lockedUpsell: string; // small hint on a locked lesson card, links to /pricing
     lockedTitle: string; // blocked state after a 403 from the tasks endpoint
     lockedBody: string;
+    remindHint: string; // shown under the disabled remind button when no practice lesson is passed yet
   };
   practice: {
     title: string;

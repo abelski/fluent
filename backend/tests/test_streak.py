@@ -4,7 +4,7 @@
 # only ever queried the older, admin-program UserPhraseProgress table.
 # See temp_files/triage/implemented/IMPLEMENTED-issue-141-phrases-not-counted-streak.md
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 from jose import jwt
 
@@ -74,7 +74,7 @@ def test_custom_phrase_progress_appears_in_activity_calendar(client):
                 json={"quality": 5, "stage_completed": 0}, headers=auth(token))
 
     calendar = client.get("/api/me/activity-calendar", headers=auth(token)).json()
-    today = date.today().isoformat()
+    today = datetime.now(timezone.utc).date().isoformat()  # server stamps UTC
     assert today in calendar["dates"]
 
 
@@ -145,7 +145,7 @@ def test_practice_exam_appears_in_activity_calendar(client):
     )
 
     calendar = client.get("/api/me/activity-calendar", headers=auth(token)).json()
-    today = date.today().isoformat()
+    today = datetime.now(timezone.utc).date().isoformat()  # server stamps UTC
     assert today in calendar["dates"]
 
 

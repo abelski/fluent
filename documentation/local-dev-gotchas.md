@@ -105,3 +105,11 @@ Restarting uvicorn does not fix it; the schema is only reconciled by
 `cd backend && .venv/bin/python -m alembic upgrade head`. The tell is that the backend unit tests
 pass (`conftest.py` builds a fresh in-memory SQLite from the current models, so it always matches)
 while live-API Playwright specs 500 — the opposite of the usual "tests are stale" direction.
+
+## Backend tests that compare against `date.today()` fail between 00:00 and 03:00 local
+
+The server stamps activity in **UTC** (`datetime.now(timezone.utc)`), so a test that builds its
+expected day with `date.today()` (local time, EEST = UTC+3) expects tomorrow's date for three hours
+after local midnight. `tests/test_streak.py`'s two activity-calendar tests did exactly that and
+failed every night in that window — found while validating #26. Fix: build expected dates with
+`datetime.now(timezone.utc).date()`, never `date.today()`.
