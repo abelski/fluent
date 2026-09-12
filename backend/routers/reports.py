@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 import email_service
+import inbox_service
 import telegram_service
 from auth import require_user as _require_user
 from database import get_session
@@ -22,11 +23,16 @@ logger = logging.getLogger(__name__)
 
 
 def _notify_reporter(session: Session, report: MistakeReport, new_status: str) -> None:
-    """Send a bilingual status-change email to the report's author.
+    """Tell the report's author about a status change — in-app inbox, then email.
 
-    Silently swallows missing-user, missing-consent, and SMTP errors so the
-    surrounding admin action never fails because of email.
+    The inbox message goes out **before** the email-consent early return: the inbox
+    is not email, so a user who opted out of mail still gets told what happened to
+    their report. Silently swallows missing-user, missing-consent, and SMTP errors
+    so the surrounding admin action never fails because of a notification.
     """
+    inbox_service.notify_report_status(session, report, new_status)
+    session.commit()
+
     user = session.get(User, report.user_id)
     if not user or not user.email_consent:
         return

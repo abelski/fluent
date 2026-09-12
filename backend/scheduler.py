@@ -19,6 +19,7 @@ from email_templates import (
     generate_notice_email,
 )
 import email_service
+import inbox_service
 import telegram_service
 from models import AppSetting, PreparedMessage, User
 from quota import is_premium_active
@@ -255,6 +256,10 @@ def send_weekly_rewards() -> None:
                         target.premium_until = _utcnow() + timedelta(days=7)
                     session.add(target)
 
+                # Same inbox mirror the manual send does (#23) — shared helper so the
+                # automatic and manual paths can't drift apart.
+                inbox_service.notify_leaderboard(session, msg.user_id, msg.message_type)
+
                 session.add(msg)
                 sent += 1
             except Exception as exc:
@@ -270,6 +275,20 @@ def send_weekly_rewards() -> None:
         )
 
 
+def purge_deleted_inbox_deliveries() -> None:
+    """Daily job: hard-delete inbox rows soft-deleted more than 24h ago (#23).
+
+    `deleted_at` only exists so the Undo snackbar can put a message back; by the
+    next day that window is long gone, so the rows are dropped for real. One Core
+    DELETE, no per-row work.
+    """
+    with Session(engine) as session:
+        removed = inbox_service.purge_deleted(session)
+        session.commit()
+    if removed:
+        logger.info("Scheduler: purged %d soft-deleted inbox deliveries", removed)
+
+
 def start_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone="UTC")
     scheduler.add_job(generate_inactive_messages, "cron", hour=9, minute=0)
@@ -277,9 +296,10 @@ def start_scheduler() -> BackgroundScheduler:
         send_weekly_rewards, "cron", day_of_week="mon", hour=10, minute=0,
         misfire_grace_time=3600, coalesce=True,
     )
+    scheduler.add_job(purge_deleted_inbox_deliveries, "cron", hour=4, minute=0)
     scheduler.start()
     logger.info(
         "Scheduler started — inactive-user job daily 09:00 UTC, "
-        "weekly rewards job Mondays 10:00 UTC"
+        "weekly rewards job Mondays 10:00 UTC, inbox purge daily 04:00 UTC"
     )
     return scheduler

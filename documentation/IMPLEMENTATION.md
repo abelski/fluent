@@ -83,6 +83,9 @@ library's "Deliberate deviations" table.
 | Page mascot (bubble + standard size + mood) | `frontend/components/PageMascot.tsx` |
 | Mascot mood scale | `frontend/lib/mascotMood.ts` |
 | Top-nav page shell (`.page` container, no blur/shadow) | `frontend/app/dashboard/components/PageShell.tsx` |
+| Envelope + unread badge + dropdown preview (#23) | `frontend/components/InboxMenu.tsx` |
+| Inbox message list + message view (#23) | `frontend/app/dashboard/inbox/page.tsx`, `MessageView.tsx` |
+| Inbox API client + date formatting + `fluent:inbox-changed` (#23) | `frontend/lib/inbox.ts` |
 | Hero stat card | `frontend/app/dashboard/components/ProgressStatCard.tsx` |
 | Complexity selector (chevron-clipped knob) | `frontend/app/dashboard/components/StarLevelToggle.tsx` |
 

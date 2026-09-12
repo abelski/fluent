@@ -32,6 +32,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlmodel import Session, select
 
+import inbox_service
 import stripe_service
 import telegram_service
 from auth import require_user
@@ -292,8 +293,26 @@ async def stripe_webhook(
             f"Event: {event_id}"
         )
 
+    # Captured before the commit: `expire_on_commit` would make `user.id` re-SELECT the
+    # whole row afterwards (#22).
+    welcome_user_id = user.id if event_type == "checkout.session.completed" else None
+
     session.add(user)
     session.commit()
+
+    # The inbox welcome (#23) runs strictly AFTER the entitlement commit, in its own
+    # transaction. Never before it: a failed insert there would poison this session and
+    # roll back the Premium grant itself — a paying user with no Premium, plus a 500 that
+    # makes Stripe retry. A failed welcome is logged and swallowed; the webhook still
+    # returns 200. Stripe redelivery can duplicate the welcome, same accepted stance as
+    # the Telegram ping below.
+    if welcome_user_id:
+        try:
+            inbox_service.notify_premium_welcome(session, welcome_user_id)
+            session.commit()
+        except Exception:
+            session.rollback()
+            logger.exception("Inbox: premium welcome failed for event %s", event_id)
 
     # After the commit only, so a failed DB write can never produce a "success" ping — and at
     # most one message per delivery. Stripe redelivery can duplicate this ping; accepted, not

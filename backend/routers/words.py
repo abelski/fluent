@@ -12,6 +12,7 @@ from sqlalchemy import text, and_, or_, case, cast, Date, Float
 from sqlmodel import Session, select, col, func
 
 import cache
+import inbox_service
 from database import get_session
 from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress, UserCustomPhraseProgress, Article
 from constants import DAILY_LIMIT, MATURE_WORD_REPS
@@ -1243,7 +1244,7 @@ def get_stats(
         streak += 1
         check -= timedelta(days=1)
 
-    return {
+    stats = {
         "known": known,
         "learning": learning,
         "total_studied": known + learning,
@@ -1255,6 +1256,13 @@ def get_stats(
         "phrases_learned": phrases_learned,
         "phrases_due_review": phrases_due_review,
     }
+
+    # Milestone celebrations (#23) are evaluated here rather than in their own
+    # endpoint, from values this handler already computed: the awarded-key ledger
+    # and the CEFR thresholds are both cached, so a user with nothing new costs
+    # **zero** extra round trips on an endpoint that runs on every dashboard load.
+    stats["new_inbox_messages"] = inbox_service.award_achievements(session, user, stats)
+    return stats
 
 
 @router.get("/me/activity-calendar")

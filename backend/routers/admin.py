@@ -10,9 +10,10 @@ from pydantic import BaseModel
 from sqlmodel import Session, select, func, col
 
 import cache
+import inbox_service
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage, UserProgram, UserPracticeCategoryEnrollment, ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment, UserPhraseProgress, UserGrammarProgram, CustomProgram, CustomPhraseList, CustomPhrase, UserCustomPhraseProgress
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage, UserProgram, UserPracticeCategoryEnrollment, ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment, UserPhraseProgress, UserGrammarProgram, CustomProgram, CustomPhraseList, CustomPhrase, UserCustomPhraseProgress, InboxDelivery, UserAchievement
 from sqlalchemy import text, delete as sa_delete, update as sa_update
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
@@ -328,6 +329,9 @@ def send_prepared_message(
         session.add(target)
 
     session.add(msg)
+    # Inbox mirror of the leaderboard reward/notice (#23), in the same transaction as
+    # the status flip. Ignores `reengagement` — only reward/notice are mirrored.
+    inbox_service.notify_leaderboard(session, msg.user_id, msg.message_type)
     session.commit()
     telegram_service.send_telegram(
         f"📧 Mail sent: #{msg.id} ({msg.message_type}) → {msg.user_email}"
@@ -551,7 +555,7 @@ def _delete_user_data(user_id: str, session: Session) -> None:
         UserProgram, PracticeExamResult, UserPracticeCategoryEnrollment,
         ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment,
         PreparedMessage, UserPhraseProgress, UserGrammarProgram,
-        UserCustomPhraseProgress,
+        UserCustomPhraseProgress, InboxDelivery, UserAchievement,
     ]
     for model in _tables_with_user_id:
         session.exec(sa_delete(model).where(model.user_id == user_id))
@@ -729,10 +733,20 @@ def set_premium(
         if body.premium_until <= now_naive:
             raise HTTPException(status_code=400, detail="premium_until must be in the future")
 
+    # Captured before the commit — afterwards every attribute re-SELECTs the row (#22).
+    target_id = target.id
+    was_active = _is_premium_active(target)
+
     target.is_premium = body.is_premium
     target.premium_until = body.premium_until
     session.add(target)
     session.commit()
+
+    # Inbox welcome (#23) only on an inactive → active transition, so re-granting or
+    # extending an already-premium user doesn't re-congratulate them.
+    if body.is_premium and not was_active:
+        inbox_service.notify_premium_welcome(session, target_id)
+        session.commit()
     return {"ok": True}
 
 

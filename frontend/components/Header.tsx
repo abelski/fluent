@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../lib/api';
 import { useT } from '../lib/useT';
 import { BODY } from './Tak';
+import InboxMenu from './InboxMenu';
 import TakMark from './TakMark';
 
 function GoogleIcon() {
@@ -174,6 +175,9 @@ export default function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 min-[1000px]:gap-[18px] shrink-0">
+          {/* Inbox envelope (#23) — left of the RU/EN switch, logged-in users only. */}
+          {isAuthed && <InboxMenu />}
+
           {/* Language toggle */}
           <button
             onClick={() => { setLang(lang === 'ru' ? 'en' : 'ru'); window.location.reload(); }}

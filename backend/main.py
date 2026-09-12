@@ -31,8 +31,9 @@ from routers.word_lists import router as word_lists_router
 from routers.extension import router as extension_router
 from routers.continue_session import router as continue_session_router
 from routers.billing import router as billing_router
+from routers.inbox import router as inbox_router
 from database import create_db_and_tables, get_session
-from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage  # noqa: F401 — registers table
+from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage, InboxMessage, InboxDelivery, UserAchievement  # noqa: F401 — registers table
 from data.grammar.lessons import LESSON_CONFIG
 from scheduler import start_scheduler
 import telegram_service
@@ -57,15 +58,7 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 
-_DEFAULT_CEFR_THRESHOLDS = [
-    {"level": "0",  "threshold": 0},
-    {"level": "A1", "threshold": 500},
-    {"level": "A2", "threshold": 1000},
-    {"level": "B1", "threshold": 2000},
-    {"level": "B2", "threshold": 4000},
-    {"level": "C1", "threshold": 8000},
-    {"level": "C2", "threshold": 16000},
-]
+from constants import DEFAULT_CEFR_THRESHOLDS as _DEFAULT_CEFR_THRESHOLDS
 
 
 @app.on_event("startup")
@@ -141,6 +134,7 @@ app.include_router(word_lists_router, prefix="/api")
 app.include_router(extension_router, prefix="/api")
 app.include_router(continue_session_router, prefix="/api")
 app.include_router(billing_router, prefix="/api")
+app.include_router(inbox_router, prefix="/api")
 
 
 @app.get("/health")

@@ -723,6 +723,74 @@
     </p>
   </div>
 
+  <h2>Notification badge (Teams-style) &amp; Inbox</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/components/InboxMenu.tsx</code> — a 44&times;44 envelope button rendered in
+      <code>Header.tsx</code> immediately before the RU/EN switch, only when logged in. Opens a
+      dropdown preview; "All messages" links to <code>frontend/app/dashboard/inbox/page.tsx</code>,
+      a minimal Gmail-style message list. See <code>documentation/inbox.md</code> for the backend
+      and caching design behind it.
+    </p>
+    <h3 style="margin-bottom:12px;">Unread badge</h3>
+    <table>
+      <tr><th>Aspect</th><th>Spec</th></tr>
+      <tr><td>Placement</td><td>Absolutely positioned on a <code>relative</code> wrapper around
+        just the 20px envelope glyph &mdash; <b>not</b> the 44px tap area &mdash; so its centre sits on
+        the glyph's top-right corner and about half the badge overlaps the stroke, half sticks out.</td></tr>
+      <tr><td>Shape</td><td>18px tall, <code>rounded-full</code>. A perfect circle for 1&ndash;9
+        (<code>w-[18px]</code>, width = height), a pill for 10&ndash;99
+        (<code>min-w-[18px] px-[5px]</code>), and the string <code>"99+"</code> above 99. Hidden
+        entirely at 0 &mdash; no empty dot, no animation.</td></tr>
+      <tr><td>Colour &amp; type</td><td><code>bg-destructive</code> (<code>#c2504a</code>, the
+        design system's existing red token) with <code>text-white text-[11px] font-bold
+        tabular-nums leading-[18px]</code>, centred. White-on-<code>#c2504a</code> is ~4.6:1, AA
+        for small bold text.</td></tr>
+      <tr><td>Cut-out ring</td><td><code>ring-2 ring-white</code> &mdash; a deliberate deviation (badges
+        are normally borderless filled pills), invisible against the white header and present only
+        so the overlap with the envelope stroke reads as a clean cut-out, matching the Microsoft
+        Teams app-icon reference.</td></tr>
+      <tr><td>Accessibility</td><td>The badge itself is <code>aria-hidden</code>; the button's
+        <code>aria-label</code> carries the count instead
+        (&laquo;Входящие, 6 непрочитанных&raquo; / "Inbox, 6 unread"; plain
+        "Входящие"/"Inbox" at 0).</td></tr>
+    </table>
+    <h3 style="margin:20px 0 12px;">Dropdown preview</h3>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>bg-white border border-line rounded-[14px]</code> plus
+      <code>shadow-[0_6px_20px_rgba(0,0,0,0.08)]</code> &mdash; a deliberate deviation from the
+      no-shadow card rule, since a dropdown floating over page content needs the extra
+      separation. Width <code>min(20rem,100vw-2rem)</code>, right-aligned, closes on outside click.
+      Latest 5 messages: unread emerald dot, bold title if unread, 2-line snippet, Gmail-style
+      date. Header row shows "Mark all as read" only when <code>unread &gt; 0</code>; footer is
+      an <code>emerald-600</code> "All messages" link.
+    </p>
+    <h3 style="margin:20px 0 12px;"><code>/dashboard/inbox</code> &mdash; minimal Gmail-style list</h3>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      Dense rows inside a flat <code>border-line rounded-[14px]</code> card &mdash; unread dot,
+      sender "Fluent", a filled pill kind chip (celebration/offer only, no chip for plain
+      <code>info</code>), subject &mdash; snippet, and a right-aligned Gmail-style date
+      (today &rarr; time, this year &rarr; short date, older &rarr; full date; full date always in
+      the row's <code>title</code> tooltip). Unread rows are white/<code>font-semibold</code>, read
+      rows sit on the <code>chip</code> background. Below 860px each row goes two-line (sender +
+      date, then subject &mdash; snippet). Clicking a row opens the message view in place of the
+      list (<code>?m=&lt;id&gt;</code> URL state, browser Back returns to the list).
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>PageMascot</code> appears <b>only in the empty state</b> here, not beside the title
+      like every other top-nav page &mdash; a deliberate deviation, recorded below: a dense row list
+      has no room for a 128px mascot next to the title.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      Delete has no confirm dialog: it removes the row immediately and shows an Undo snackbar
+      (<code>bg-ink text-white rounded-[10px]</code>, bottom-left, auto-hides after 7s) &mdash; the
+      same "act now, offer a way back" pattern as a normal Gmail delete. Every rendered control is
+      one of the plan's 12, and nothing else is rendered (no search, folders, star, bulk actions,
+      pagination arrows) &mdash; enforced by <code>frontend/tests/inbox-buttons.spec.ts</code>'s
+      "nothing extra rendered" checks.
+    </p>
+  </div>
+
   <h2>Shell &amp; layout</h2>
   <div class="card">
     <table>
@@ -734,6 +802,10 @@
       <tr><td>Content container</td><td><code>.page</code> — <code>max-width:1180px; margin:0 auto; padding-bottom:80px</code>, 32px gutters (16px below 860px).</td><td><code>app/globals.css</code></td></tr>
       <tr><td>Footer</td><td>Transparent on the page wash (no white band), <code>border-top:1px solid #d9d9d9</code>, 1180px, 13px <code>#9a9fa6</code>, link gap 24px.</td><td><code>components/Footer.tsx</code></td></tr>
       <tr><td>Bug-report FAB</td><td><code>right:24px bottom:40px</code>, white pill, <code>border #e2e4e3</code>, <code>shadow 0 2px 8px rgba(0,0,0,0.06)</code>, <code>z-60</code>, <code>bare</code> TAK. Label hidden below <code>sm</code>.</td><td><code>components/MistakeButton.tsx</code></td></tr>
+      <tr><td>Envelope + unread badge + dropdown preview (Plan #23)</td><td>44&times;44 icon button,
+        left of the RU/EN switch, only when logged in. See "Notification badge (Teams-style) &amp; Inbox"
+        above for the full badge/dropdown spec.</td><td><code>components/InboxMenu.tsx</code>,
+        <code>components/Header.tsx</code></td></tr>
       <tr><td>Inline Premium-upsell/notice card (Plan #16)</td><td>Flat <code>bg-white border border-line rounded-[14px]</code>
         card, no shadow — same recipe as the done-screen result tiles. Bold <code>text-ink</code> headline, one line
         of <code>text-muted</code> body copy, an <code>emerald-600</code> text link (not a filled button) to
@@ -826,6 +898,16 @@
         (not centered) to match the row above, since news body text at full width hurts readability. The
         logged-out marketing hero/features sections in the same file (<code>GuestLanding</code>) were left alone —
         that is a distinct marketing surface, not part of this pass.</td></tr>
+      <tr><td>Inbox dropdown carries an elevation shadow (<code>shadow-[0_6px_20px_rgba(0,0,0,0.08)]</code>)</td>
+        <td>Cards are normally flat/no-shadow, but a dropdown floating over page content needs visual
+        separation a flat border doesn't give at this size.</td></tr>
+      <tr><td>Unread badge's 2px <code>ring-2 ring-white</code> cut-out ring</td><td>Badges are normally
+        borderless filled pills. The ring is invisible against the white header and exists only so the
+        badge reads as a clean cut-out where it overlaps the envelope glyph's stroke, matching the
+        Microsoft Teams reference screenshot.</td></tr>
+      <tr><td><code>PageMascot</code> shown only in the inbox's empty state, not beside the title</td>
+        <td>Unlike the other 5 top-nav pages, a dense Gmail-style row list has no room for a 128px
+        mascot next to the title &mdash; it only appears when there's nothing else to show.</td></tr>
       <tr><td>Word session's «Забыл» is a quiet text button, while the phrase session's is a filled
         gray pill</td><td>Same control, same <code>data-testid="forgot-btn"</code>, same wrong-answer
         routing — different weight, because the button hierarchy around it differs (see "Word session"

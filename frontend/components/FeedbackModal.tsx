@@ -1,21 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BACKEND_URL } from '../lib/api';
 import { useT } from '../lib/useT';
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** Prefill, applied each time the modal opens. Used by the inbox's Reply button. */
+  initialMessage?: string;
+  initialEmail?: string;
 }
 
-export default function FeedbackModal({ open, onClose }: Props) {
+export default function FeedbackModal({ open, onClose, initialMessage, initialEmail }: Props) {
   const { tr } = useT();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+
+  // Applied on open rather than on mount: the footer keeps this modal mounted
+  // between uses, so a value set once would never refresh for the next message.
+  useEffect(() => {
+    if (!open) return;
+    if (initialMessage !== undefined) setMessage(initialMessage);
+    if (initialEmail !== undefined) setEmail(initialEmail);
+  }, [open, initialMessage, initialEmail]);
 
   if (!open) return null;
 

@@ -200,6 +200,7 @@ def test_stats_new_user_has_no_progress(client):
         "practice_exams_completed": 0,
         "phrases_learned": 0,
         "phrases_due_review": 0,
+        "new_inbox_messages": 0,   # #23 — nothing reached, nothing celebrated
     }
 
 

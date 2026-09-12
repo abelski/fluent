@@ -501,6 +501,40 @@ export interface Translations {
     rankingLoadError: string;
     alreadyGeneratedThisWeek: string;
     generateRewardsError: string;
+    // Plan #23 — the Inbox sub-tab (bilingual composer + sent history)
+    tabInbox: string;
+    inboxAudienceLabel: string;
+    inboxAudienceUsers: string;
+    inboxAudienceAll: string;
+    inboxAudiencePremium: string;
+    inboxAudienceFree: string;
+    inboxAudienceInactive: string;
+    inboxSearchPlaceholder: string;
+    inboxSelectedCount: string;      // "{n}"
+    inboxInactiveDaysLabel: string;
+    inboxKindLabel: string;
+    inboxKindInfo: string;
+    inboxKindCelebration: string;
+    inboxKindOffer: string;
+    inboxTitleRu: string;
+    inboxTitleEn: string;
+    inboxBodyRu: string;
+    inboxBodyEn: string;
+    inboxCtaLabelRu: string;
+    inboxCtaLabelEn: string;
+    inboxCtaUrl: string;
+    inboxSendBtn: string;
+    inboxConfirmSend: string;        // "{n}"
+    inboxSendError: string;
+    inboxHistoryTitle: string;
+    inboxNoHistory: string;
+    inboxColTitle: string;
+    inboxColAudience: string;
+    inboxColRecipients: string;
+    inboxColRead: string;
+    inboxColDate: string;
+    inboxRetract: string;
+    inboxConfirmRetract: string;
   };
   adminPhrasePrograms: {
     title: string;
@@ -792,6 +826,37 @@ export interface Translations {
     send: string;
     sent: string;
     error: string;
+  };
+  // Plan #23 — in-app inbox (header envelope + /dashboard/inbox)
+  inbox: {
+    title: string;
+    ariaLabel: string;          // envelope button, nothing unread
+    ariaLabelUnread: string;    // "{n}" — envelope button with a count
+    markAllRead: string;
+    allMessages: string;
+    showOlder: string;
+    back: string;
+    reply: string;
+    replyPrefix: string;        // "{title}" — prefills the feedback modal
+    delete: string;
+    deleted: string;            // undo snackbar text
+    undo: string;
+    actionError: string;
+    loadError: string;
+    retry: string;
+    empty: string;
+    sender: string;
+    sources: {
+      admin: string;
+      achievement: string;
+      leaderboard: string;
+      report: string;
+      premium: string;
+    };
+    kinds: {
+      celebration: string;
+      offer: string;
+    };
   };
   programs: {
     title: string;

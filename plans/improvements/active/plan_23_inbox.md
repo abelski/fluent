@@ -1,12 +1,12 @@
 ---
 kind: feature
-status: approved
-iteration: 0
+status: done
+iteration: 1
 max_iterations: 30
 suggested_model: opus
 suggested_effort: high
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: opus
+confirmed_effort: high
 ---
 
 # #23 — In-app Inbox (envelope menu, admin broadcasts, achievements)
@@ -391,10 +391,10 @@ Deliberately **not** cached:
 
 ## Implementation
 
-- [ ] 1. `backend/models.py` — add `InboxMessage`, `InboxDelivery` (incl. `deleted_at`), `UserAchievement` (with
+- [x] 1. `backend/models.py` — add `InboxMessage`, `InboxDelivery` (incl. `deleted_at`), `UserAchievement` (with
   `__table_args__ = (UniqueConstraint("user_id", "key"),)`). No `User` changes, no Alembic
   revision (tables come from `create_all`).
-- [ ] 2. `backend/inbox_service.py` (new) — `send()` (one message row + bulk delivery insert,
+- [x] 2. `backend/inbox_service.py` (new) — `send()` (one message row + bulk delivery insert,
   returns recipient count). Bilingual copy constants for achievements, leaderboard, report status
   and premium welcome. `notify_leaderboard(session, user_id, message_type)`,
   `notify_report_status(session, report, status)`, `notify_premium_welcome(session, user)`.
@@ -403,29 +403,29 @@ Deliberately **not** cached:
   `get_inbox(user_id)` / `unread_count(user_id)` are built from the "Caching" loaders via
   `cache.get_or_load`, with the `cache_tags` execution options listed there. No cache plumbing
   of its own.
-- [ ] 3. `backend/routers/inbox.py` (new) + `backend/main.py` `include_router(..., prefix="/api")`
+- [x] 3. `backend/routers/inbox.py` (new) + `backend/main.py` `include_router(..., prefix="/api")`
   — user endpoints (`GET /me/inbox/unread-count`, `GET /me/inbox?limit&offset`,
   `GET /me/inbox/{id}`, `POST /me/inbox/actions` with `read|delete|undelete`, `ids|all`,
   `RETURNING` ids and user-scoped `cache_tags`) and superadmin endpoints (`POST/GET /admin/inbox`,
   `DELETE /admin/inbox/{id}`) with Pydantic bodies plus explicit 422 validation and SQL segment
   resolution. User endpoints use `require_user` and read through `inbox_service`'s cached
   loaders. Admin endpoints keep `_require_superadmin`.
-- [ ] 4. `backend/routers/words.py::get_stats` — call `award_achievements` after computing values,
+- [x] 4. `backend/routers/words.py::get_stats` — call `award_achievements` after computing values,
   commit if >0, add `new_inbox_messages` to the response.
-- [ ] 5. `backend/routers/reports.py::_notify_reporter` — call `notify_report_status` before the
+- [x] 5. `backend/routers/reports.py::_notify_reporter` — call `notify_report_status` before the
   consent early-return, exception-safe.
-- [ ] 6. `backend/routers/admin.py::send_prepared_message` + `backend/scheduler.py::send_weekly_rewards`
+- [x] 6. `backend/routers/admin.py::send_prepared_message` + `backend/scheduler.py::send_weekly_rewards`
   — call `notify_leaderboard` right where status becomes `sent`. `scheduler.py` — also register
   the daily purge of rows soft-deleted more than 24h ago.
-- [ ] 7. `backend/routers/billing.py` (`checkout.session.completed` only, **after** the existing
+- [x] 7. `backend/routers/billing.py` (`checkout.session.completed` only, **after** the existing
   entitlement commit, own try/commit/rollback, webhook still returns 200 on inbox failure) +
   `backend/routers/admin.py::set_premium` (inactive → active only) — call `notify_premium_welcome`.
   Test in `test_inbox.py`: with `notify_premium_welcome` patched to raise, the checkout webhook
   still returns 200 and the user is still premium.
-- [ ] 8. `backend/routers/admin.py::_delete_user_data` — add `InboxDelivery` and `UserAchievement`
+- [x] 8. `backend/routers/admin.py::_delete_user_data` — add `InboxDelivery` and `UserAchievement`
   to `_tables_with_user_id`. Their Core `sa_delete` evicts those tables' cache entries
   automatically via #24, so no manual eviction.
-- [ ] 9. `backend/tests/test_inbox.py` (new).
+- [x] 9. `backend/tests/test_inbox.py` (new).
   - **List:** newest first, snippets (no full bodies), `limit`/`offset`/`has_more` boundaries,
     422 on a bad limit/offset, deleted rows hidden from the list, detail and unread count.
   - **Detail:** `GET /me/inbox/{id}` returns full content; 404 for another user's id or a deleted row.
@@ -457,24 +457,24 @@ Deliberately **not** cached:
   (no phantom, no stale-refill); expired TTL (monkeypatched `time.monotonic`) reloads from DB;
   actions on another user's ids affect nothing even with a warm cache. Update any exact-dict stats assertions in
   `test_stats_query_efficiency.py`/`test_streak.py` for the new `new_inbox_messages` key.
-- [ ] 10. `frontend/lib/i18n/types.ts`, `en.ts`, `ru.ts` — new `inbox` namespace (RU+EN): page
+- [x] 10. `frontend/lib/i18n/types.ts`, `en.ts`, `ru.ts` — new `inbox` namespace (RU+EN): page
   title, "Mark all as read", "All messages", "Show older", "Back", "Reply", "Delete", snackbar
   texts ("Message deleted", "Undo", error), empty state, "Retry", source labels, kind labels,
   envelope aria label. Plus `adminMessages` inbox-composer keys.
-- [ ] 11. `frontend/components/FeedbackModal.tsx` — optional `initialMessage`/`initialEmail`
+- [x] 11. `frontend/components/FeedbackModal.tsx` — optional `initialMessage`/`initialEmail`
   props applied when `open` turns true. Footer usage unchanged.
-- [ ] 12. `frontend/components/InboxMenu.tsx` (new) + `frontend/components/Header.tsx` — envelope,
+- [x] 12. `frontend/components/InboxMenu.tsx` (new) + `frontend/components/Header.tsx` — envelope,
   badge and dropdown per Requirements, rendered before the lang toggle when `isAuthed`.
-- [ ] 13. `frontend/app/dashboard/components/StatsBar.tsx` — dispatch `fluent:inbox-changed` when
+- [x] 13. `frontend/app/dashboard/components/StatsBar.tsx` — dispatch `fluent:inbox-changed` when
   `new_inbox_messages > 0`.
-- [ ] 14. Minimal inbox per Requirements:
+- [x] 14. Minimal inbox per Requirements:
   - `frontend/lib/inbox.ts` (new): typed API calls, Gmail-style date formatting and the
     `fluent:inbox-changed` dispatcher; shared with `InboxMenu`.
   - `frontend/app/dashboard/inbox/page.tsx` (Suspense wrapper + URL state + list + snackbar).
   - `frontend/app/dashboard/inbox/MessageView.tsx`.
-- [ ] 15. `frontend/app/dashboard/admin/page.tsx` — Messages → Inbox sub-tab (composer, dry-run
+- [x] 15. `frontend/app/dashboard/admin/page.tsx` — Messages → Inbox sub-tab (composer, dry-run
   confirm, history, retract).
-- [ ] 16. `frontend/tests/inbox.spec.ts` (new, mocked API + fake JWT like
+- [x] 16. `frontend/tests/inbox.spec.ts` (new, mocked API + fake JWT like
   `premium-badge-click-to-pricing.spec.ts`) — envelope absent when logged out. **Badge visual contract:**
   - hidden at 0
   - "6" renders as a circle (bounding box width == height == 18px)
@@ -509,7 +509,7 @@ Deliberately **not** cached:
     `href="#"`/`javascript:`
   - a **375px** run: every control ≥44×44, no horizontal page scroll
 
-- [ ] 17. Docs — `documentation/inbox.md` (decisions: fan-out vs audience-at-read-time;
+- [x] 17. Docs — `documentation/inbox.md` (decisions: fan-out vs audience-at-read-time;
   tables-only to avoid the manual-Alembic deploy trap; achievements in `/me/stats` with
   grandfathering + `ON CONFLICT … RETURNING` race guard; why words milestones stop at 250;
   internal-only CTA; FK delete order; **the caching table, after-commit invalidation rule, TTL
@@ -525,15 +525,15 @@ Deliberately **not** cached:
 
 ## Validation
 
-- [ ] Backend unit: `cd backend && .venv/bin/python -m pytest tests/test_inbox.py -q`
-- [ ] Backend regression: `cd backend && .venv/bin/python -m pytest -q` (esp. `test_reports`,
+- [x] Backend unit: `cd backend && .venv/bin/python -m pytest tests/test_inbox.py -q`
+- [x] Backend regression: `cd backend && .venv/bin/python -m pytest -q` (esp. `test_reports`,
   `test_scheduler`, `test_billing_webhook`, `test_streak`, `test_stats_query_efficiency`,
   `test_admin_send_email`)
-- [ ] Types: `cd frontend && npx tsc --noEmit`
-- [ ] Playwright autotests added: `npx playwright test inbox.spec.ts inbox-buttons.spec.ts admin-inbox-composer.spec.ts`
-- [ ] Shared shell regression: `npx playwright test design-system-parity.spec.ts`
-- [ ] Full Playwright suite (header renders on every page): `npx playwright test`
-- [ ] Edge cases (covered in `test_inbox.py`): `cta_url: "javascript:alert(1)"` → 422;
+- [x] Types: `cd frontend && npx tsc --noEmit`
+- [x] Playwright autotests added: `npx playwright test inbox.spec.ts inbox-buttons.spec.ts admin-inbox-composer.spec.ts`
+- [x] Shared shell regression: `npx playwright test design-system-parity.spec.ts`
+- [x] Full Playwright suite (header renders on every page): `npx playwright test`
+- [x] Edge cases (covered in `test_inbox.py`): `cta_url: "javascript:alert(1)"` → 422;
   non-superadmin `POST /api/admin/inbox` → 403; unauthenticated `GET /api/me/inbox` → 401;
   marking another user's delivery → 404
 - [ ] Smoke (local, one uvicorn + one next dev, check `ps` first): log in → envelope left of

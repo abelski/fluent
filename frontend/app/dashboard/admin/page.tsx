@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BACKEND_URL, getToken, sendEmailToUser, getAdminMessages, updateAdminMessage, sendAdminMessage, deleteAdminMessage, triggerMessageGeneration, AdminMessage, getMessageTemplates, saveMessageTemplates, EmailTemplates, getLeaderboardTop5, generateLeaderboardRewards, LeaderboardTop5User } from '../../../lib/api';
+import { BACKEND_URL, getToken, sendEmailToUser, getAdminMessages, updateAdminMessage, sendAdminMessage, deleteAdminMessage, triggerMessageGeneration, AdminMessage, getMessageTemplates, saveMessageTemplates, EmailTemplates, getLeaderboardTop5, generateLeaderboardRewards, LeaderboardTop5User, getAdminInbox, sendAdminInbox, retractAdminInbox, AdminInboxRow } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 
 /** Format a `[week_start, week_end)` ISO pair (Mon 00:00 .. next Mon 00:00) as "10–16 авг" for admin copy. */
@@ -629,8 +629,23 @@ export default function AdminPage() {
   const [msgSending, setMsgSending] = useState<number | null>(null);
   const [msgError, setMsgError] = useState('');
 
-  // Messages sub-tabs: dismissal | rewards | notices
-  const [messagesSubTab, setMessagesSubTab] = useState<'dismissal' | 'rewards' | 'notices'>('dismissal');
+  // Messages sub-tabs: dismissal | rewards | notices | inbox
+  const [messagesSubTab, setMessagesSubTab] = useState<'dismissal' | 'rewards' | 'notices' | 'inbox'>('dismissal');
+
+  // In-app inbox composer (#23)
+  type InboxAudience = 'users' | 'all' | 'premium' | 'free' | 'inactive';
+  const [inboxAudience, setInboxAudience] = useState<InboxAudience>('users');
+  const [inboxUserSearch, setInboxUserSearch] = useState('');
+  const [inboxSelected, setInboxSelected] = useState<Set<string>>(new Set());
+  const [inboxDays, setInboxDays] = useState(30);
+  const [inboxKind, setInboxKind] = useState<'info' | 'celebration' | 'offer'>('info');
+  const [inboxForm, setInboxForm] = useState({
+    title_ru: '', title_en: '', body_ru: '', body_en: '',
+    cta_label_ru: '', cta_label_en: '', cta_url: '',
+  });
+  const [inboxSending, setInboxSending] = useState(false);
+  const [inboxError, setInboxError] = useState('');
+  const [inboxHistory, setInboxHistory] = useState<AdminInboxRow[]>([]);
   const [top5Users, setTop5Users] = useState<LeaderboardTop5User[]>([]);
   const [top5Loaded, setTop5Loaded] = useState(false);
   const [top5WeekRange, setTop5WeekRange] = useState<{ start: string; end: string } | null>(null);
@@ -789,6 +804,55 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       setRewardsError(tr.adminMessages.generateRewardsError);
     } finally {
       setRewardsGenerating(false);
+    }
+  }
+
+  // ── In-app inbox composer (#23) ──
+  async function loadInboxHistory() {
+    try {
+      setInboxHistory(await getAdminInbox());
+    } catch {
+      setInboxError(tr.adminMessages.loadError);
+    }
+  }
+
+  function inboxPayload(dryRun: boolean) {
+    return {
+      audience: inboxAudience,
+      ...(inboxAudience === 'users' ? { user_ids: Array.from(inboxSelected) } : {}),
+      ...(inboxAudience === 'inactive' ? { inactive_days: inboxDays } : {}),
+      kind: inboxKind,
+      ...inboxForm,
+      dry_run: dryRun,
+    };
+  }
+
+  async function handleInboxSend() {
+    setInboxSending(true);
+    setInboxError('');
+    try {
+      // Dry run first: the recipient count is resolved server-side, so the confirm
+      // shows the real number rather than whatever the composer guessed.
+      const preview = await sendAdminInbox(inboxPayload(true));
+      if (!window.confirm(tr.adminMessages.inboxConfirmSend.replace('{n}', String(preview.recipients)))) return;
+      await sendAdminInbox(inboxPayload(false));
+      setInboxForm({ title_ru: '', title_en: '', body_ru: '', body_en: '', cta_label_ru: '', cta_label_en: '', cta_url: '' });
+      setInboxSelected(new Set());
+      await loadInboxHistory();
+    } catch (e) {
+      setInboxError(e instanceof Error ? e.message : tr.adminMessages.inboxSendError);
+    } finally {
+      setInboxSending(false);
+    }
+  }
+
+  async function handleInboxRetract(id: number) {
+    if (!window.confirm(tr.adminMessages.inboxConfirmRetract)) return;
+    try {
+      await retractAdminInbox(id);
+      setInboxHistory((rows) => rows.filter((r) => r.id !== id));
+    } catch {
+      setInboxError(tr.adminMessages.inboxSendError);
     }
   }
 
@@ -2068,12 +2132,15 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 { key: 'dismissal', label: tr.adminMessages.tabDismissal },
                 { key: 'rewards', label: tr.adminMessages.tabRewards },
                 { key: 'notices', label: tr.adminMessages.tabNotices },
+                { key: 'inbox', label: tr.adminMessages.tabInbox },
               ] as const).map(({ key, label }) => (
                 <button
                   key={key}
+                  data-testid={`messages-subtab-${key}`}
                   onClick={() => {
                     setMessagesSubTab(key);
                     if (key === 'rewards' && !top5Loaded) loadTop5();
+                    if (key === 'inbox') loadInboxHistory();
                   }}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${messagesSubTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                 >
@@ -2452,6 +2519,191 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                     </>
                   );
                 })()}
+              </div>
+            )}
+
+            {/* ── In-app inbox sub-tab (#23) ── */}
+            {messagesSubTab === 'inbox' && (
+              <div className="flex flex-col gap-4" data-testid="admin-inbox">
+                {inboxError && <p className="text-red-500 text-sm">{inboxError}</p>}
+
+                <div className="border border-gray-900 rounded-2xl p-4 bg-white flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xs font-semibold text-gray-500">{tr.adminMessages.inboxAudienceLabel}</span>
+                    {([
+                      ['users', tr.adminMessages.inboxAudienceUsers],
+                      ['all', tr.adminMessages.inboxAudienceAll],
+                      ['premium', tr.adminMessages.inboxAudiencePremium],
+                      ['free', tr.adminMessages.inboxAudienceFree],
+                      ['inactive', tr.adminMessages.inboxAudienceInactive],
+                    ] as const).map(([value, label]) => (
+                      <label key={value} className="flex items-center gap-1.5 text-sm text-gray-700">
+                        <input
+                          type="radio"
+                          name="inbox-audience"
+                          value={value}
+                          checked={inboxAudience === value}
+                          onChange={() => setInboxAudience(value)}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+
+                  {inboxAudience === 'users' && (
+                    <div className="flex flex-col gap-2">
+                      <input
+                        value={inboxUserSearch}
+                        onChange={(e) => setInboxUserSearch(e.target.value)}
+                        placeholder={tr.adminMessages.inboxSearchPlaceholder}
+                        data-testid="admin-inbox-search"
+                        className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm"
+                      />
+                      <p className="text-xs text-gray-500">{tr.adminMessages.inboxSelectedCount.replace('{n}', String(inboxSelected.size))}</p>
+                      <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100">
+                        {users
+                          .filter((u) => {
+                            const q = inboxUserSearch.trim().toLowerCase();
+                            return !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+                          })
+                          .slice(0, 50)
+                          .map((u) => (
+                            <label key={u.id} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700">
+                              <input
+                                type="checkbox"
+                                checked={inboxSelected.has(u.id)}
+                                onChange={(e) => setInboxSelected((prev) => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(u.id); else next.delete(u.id);
+                                  return next;
+                                })}
+                              />
+                              <span className="truncate">{u.name} <span className="text-gray-400">— {u.email}</span></span>
+                            </label>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {inboxAudience === 'inactive' && (
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      {tr.adminMessages.inboxInactiveDaysLabel}
+                      <input
+                        type="number"
+                        min={1}
+                        max={3650}
+                        value={inboxDays}
+                        onChange={(e) => setInboxDays(Number(e.target.value))}
+                        data-testid="admin-inbox-days"
+                        className="w-24 border border-gray-900 rounded-xl px-3 py-2 text-sm"
+                      />
+                    </label>
+                  )}
+
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    {tr.adminMessages.inboxKindLabel}
+                    <select
+                      value={inboxKind}
+                      onChange={(e) => setInboxKind(e.target.value as typeof inboxKind)}
+                      data-testid="admin-inbox-kind"
+                      className="border border-gray-900 rounded-xl px-3 py-2 text-sm"
+                    >
+                      <option value="info">{tr.adminMessages.inboxKindInfo}</option>
+                      <option value="celebration">{tr.adminMessages.inboxKindCelebration}</option>
+                      <option value="offer">{tr.adminMessages.inboxKindOffer}</option>
+                    </select>
+                  </label>
+
+                  {([
+                    ['title_ru', tr.adminMessages.inboxTitleRu],
+                    ['title_en', tr.adminMessages.inboxTitleEn],
+                  ] as const).map(([field, label]) => (
+                    <input
+                      key={field}
+                      value={inboxForm[field]}
+                      onChange={(e) => setInboxForm((f) => ({ ...f, [field]: e.target.value }))}
+                      placeholder={label}
+                      data-testid={`admin-inbox-${field}`}
+                      className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm"
+                    />
+                  ))}
+                  {([
+                    ['body_ru', tr.adminMessages.inboxBodyRu],
+                    ['body_en', tr.adminMessages.inboxBodyEn],
+                  ] as const).map(([field, label]) => (
+                    <textarea
+                      key={field}
+                      rows={3}
+                      value={inboxForm[field]}
+                      onChange={(e) => setInboxForm((f) => ({ ...f, [field]: e.target.value }))}
+                      placeholder={label}
+                      data-testid={`admin-inbox-${field}`}
+                      className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm resize-y"
+                    />
+                  ))}
+                  {([
+                    ['cta_label_ru', tr.adminMessages.inboxCtaLabelRu],
+                    ['cta_label_en', tr.adminMessages.inboxCtaLabelEn],
+                    ['cta_url', tr.adminMessages.inboxCtaUrl],
+                  ] as const).map(([field, label]) => (
+                    <input
+                      key={field}
+                      value={inboxForm[field]}
+                      onChange={(e) => setInboxForm((f) => ({ ...f, [field]: e.target.value }))}
+                      placeholder={label}
+                      data-testid={`admin-inbox-${field}`}
+                      className="w-full border border-gray-900 rounded-xl px-3 py-2 text-sm"
+                    />
+                  ))}
+
+                  <button
+                    onClick={handleInboxSend}
+                    disabled={inboxSending}
+                    data-testid="admin-inbox-send"
+                    className="self-start text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 font-medium"
+                  >
+                    {inboxSending ? tr.adminMessages.sending : tr.adminMessages.inboxSendBtn}
+                  </button>
+                </div>
+
+                <h3 className="font-headline text-sm font-semibold text-gray-900">{tr.adminMessages.inboxHistoryTitle}</h3>
+                {inboxHistory.length === 0 ? (
+                  <p className="text-gray-400 text-sm">{tr.adminMessages.inboxNoHistory}</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm" data-testid="admin-inbox-history">
+                      <thead>
+                        <tr className="text-left text-xs text-gray-500">
+                          <th className="py-2 pr-3">{tr.adminMessages.inboxColTitle}</th>
+                          <th className="py-2 pr-3">{tr.adminMessages.inboxColAudience}</th>
+                          <th className="py-2 pr-3">{tr.adminMessages.inboxColRecipients}</th>
+                          <th className="py-2 pr-3">{tr.adminMessages.inboxColRead}</th>
+                          <th className="py-2 pr-3">{tr.adminMessages.inboxColDate}</th>
+                          <th />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {inboxHistory.map((row) => (
+                          <tr key={row.id} className="border-t border-gray-100">
+                            <td className="py-2 pr-3 text-gray-900">{row.title_ru}</td>
+                            <td className="py-2 pr-3 text-gray-500">{row.audience ?? '—'}</td>
+                            <td className="py-2 pr-3 text-gray-500">{row.recipients}</td>
+                            <td className="py-2 pr-3 text-gray-500">{row.read}</td>
+                            <td className="py-2 pr-3 text-gray-500">{new Date(row.created_at).toLocaleString('ru-RU')}</td>
+                            <td className="py-2">
+                              <button
+                                onClick={() => handleInboxRetract(row.id)}
+                                className="text-xs text-red-500 hover:text-red-600 transition-colors"
+                              >
+                                {tr.adminMessages.inboxRetract}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </div>

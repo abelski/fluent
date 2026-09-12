@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../../../lib/api';
+import { notifyInboxChanged } from '../../../lib/inbox';
 import { useT } from '../../../lib/useT';
 import type { Translations } from '../../../lib/i18n/types';
 import ProgressStatCard from './ProgressStatCard';
@@ -93,6 +94,9 @@ export default function StatsBar() {
           mistakes: data.mistakes ?? 0,
           due_review: data.due_review ?? 0,
         });
+        // Milestone celebrations are awarded inside /me/stats (#23). Handing the
+        // header the delta lets the badge update with no extra request.
+        if (data?.new_inbox_messages > 0) notifyInboxChanged({ delta: data.new_inbox_messages });
       })
       .catch((err) => console.error('API error:', err));
   };

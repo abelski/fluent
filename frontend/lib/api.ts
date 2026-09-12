@@ -165,6 +165,73 @@ export async function deleteAdminMessage(id: number): Promise<void> {
   if (!r.ok) throw new Error('Failed to delete message');
 }
 
+// ── In-app inbox composer (#23), superadmin-only ─────────────────────────────
+
+export interface AdminInboxRow {
+  id: number;
+  kind: string;
+  title_ru: string;
+  title_en: string;
+  audience: string | null;
+  created_at: string;
+  recipients: number;
+  read: number;
+}
+
+export interface AdminInboxPayload {
+  audience: 'users' | 'all' | 'premium' | 'free' | 'inactive';
+  user_ids?: string[];
+  inactive_days?: number;
+  kind: string;
+  title_ru: string;
+  title_en: string;
+  body_ru: string;
+  body_en: string;
+  cta_label_ru?: string | null;
+  cta_label_en?: string | null;
+  cta_url?: string | null;
+  dry_run?: boolean;
+}
+
+/** Send (or, with `dry_run`, just count the recipients of) an inbox broadcast. */
+export async function sendAdminInbox(
+  payload: AdminInboxPayload,
+): Promise<{ recipients: number; message_id?: number }> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/inbox`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) {
+    const data = await r.json().catch(() => ({}));
+    throw new Error(typeof data.detail === 'string' ? data.detail : 'Failed to send message');
+  }
+  return r.json();
+}
+
+export async function getAdminInbox(): Promise<AdminInboxRow[]> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/inbox`, {
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!r.ok) throw new Error('Failed to fetch inbox history');
+  return r.json();
+}
+
+/** Retract a sent message — deletes it for every recipient. */
+export async function retractAdminInbox(id: number): Promise<void> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/admin/inbox/${id}`, {
+    method: 'DELETE',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!r.ok) throw new Error('Failed to retract message');
+}
+
 export interface EmailTemplates {
   ru: { subject: string; body: string };
   en: { subject: string; body: string };

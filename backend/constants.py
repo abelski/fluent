@@ -17,3 +17,17 @@ DEFAULT_WORD_PROGRAM_KEYS = ["a1_a2_basics"]
 # ease factor — i.e. the first point at which the algorithm itself treats the word
 # as retained rather than still being introduced.
 MATURE_WORD_REPS = 3
+
+# CEFR level → words-known threshold. Seeded into AppSetting['cefr_thresholds'] at
+# startup and editable by admins; this list is the fallback whenever that row is
+# missing. Lives here so main.py (seeding) and inbox_service.py (achievements)
+# share one definition.
+DEFAULT_CEFR_THRESHOLDS = [
+    {"level": "0",  "threshold": 0},
+    {"level": "A1", "threshold": 500},
+    {"level": "A2", "threshold": 1000},
+    {"level": "B1", "threshold": 2000},
+    {"level": "B2", "threshold": 4000},
+    {"level": "C1", "threshold": 8000},
+    {"level": "C2", "threshold": 16000},
+]

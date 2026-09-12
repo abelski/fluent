@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, date, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field
-from sqlalchemy import Index
+from sqlalchemy import Index, UniqueConstraint
 
 
 def _utcnow() -> datetime:
@@ -581,6 +581,58 @@ class UserGrammarProgram(SQLModel, table=True):
     user_id: str = Field(foreign_key="user.id", index=True)
     program_id: int = Field(foreign_key="grammar_program.id", index=True)
     enrolled_at: datetime = Field(default_factory=_utcnow)
+
+
+# ── In-app inbox (#23) ───────────────────────────────────────────────────────
+# Deliberately three *new tables* and no new `User` column: startup's create_all()
+# creates missing tables on its own, while a new column would 500 every
+# select(User) until Alembic is run by hand. See documentation/inbox.md.
+
+class InboxMessage(SQLModel, table=True):
+    """One authored message. Immutable after send — retract deletes it outright."""
+    __tablename__ = "inbox_message"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    kind: str = Field(default="info")        # info | celebration | offer
+    source: str = Field(default="admin")     # admin | achievement | leaderboard | report | premium
+    title_ru: str
+    title_en: str
+    body_ru: str = Field(default="")
+    body_en: str = Field(default="")
+    cta_label_ru: Optional[str] = None
+    cta_label_en: Optional[str] = None
+    cta_url: Optional[str] = None            # internal path only, validated server-side
+    audience: Optional[str] = None           # admin history label: 'all' | 'premium' | 'inactive:30' | 'users:3'
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class InboxDelivery(SQLModel, table=True):
+    """One row per recipient (fan-out at send time).
+
+    `deleted_at` is a soft delete that exists only so the Undo snackbar can restore
+    a message; rows are hidden everywhere and hard-deleted by the daily purge after 24h.
+    """
+    __tablename__ = "inbox_delivery"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    message_id: int = Field(foreign_key="inbox_message.id", index=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    read_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class UserAchievement(SQLModel, table=True):
+    """Ledger of milestone keys already awarded to a user.
+
+    The unique constraint is the race guard: two concurrent /me/stats calls both
+    try to insert, and only the one whose INSERT ... ON CONFLICT actually returns
+    the key sends a message.
+    """
+    __tablename__ = "user_achievement"
+    __table_args__ = (UniqueConstraint("user_id", "key"),)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    key: str                                  # 'streak:7', 'words:100', 'cefr:A1', '_init', ...
+    created_at: datetime = Field(default_factory=_utcnow)
 
 
 class Verb(SQLModel, table=True):
