@@ -102,6 +102,11 @@ export interface Translations {
   lists: {
     limitReached: string; // {count}/{limit} interpolated by caller
     limitNear: string; // Plan #16 — shown when exactly 1 free session left today
+    // ── #25 — the out-of-sessions offer card (0 free sessions left today) ──
+    wallTitle: string;
+    wallSubtitle: string;
+    wallPerks: string[];
+    wallCta: string; // {price} interpolated from pricing.premiumPrice
     sessionsToday: string; // {count}/{limit}
     getPremium: string;
     premiumUntil: string; // date interpolated by caller

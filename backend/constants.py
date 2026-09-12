@@ -2,7 +2,13 @@
 # Import from here rather than duplicating values across routers.
 
 # Max study sessions per day for basic (non-premium) users.
-DAILY_LIMIT = 10
+# Lowered 10 → 5 in #25. Measured on production 2026-09-13: for non-premium users the
+# daily session count is p50=3, p75=9, p90=10, so at 10 the wall almost never fired
+# (16 users blocked in 90 days). At 5 the median free day (3 sessions) is still
+# untouched while blocked users rise to 27. 3 was rejected — it blocks the median day,
+# and day-1 retention is already the weakest part of the funnel.
+# See documentation/premium-conversion.md.
+DAILY_LIMIT = 5
 
 # Word programs (SubcategoryMeta keys) every new account is auto-enrolled in,
 # so the dashboard isn't empty on first login. Keys missing from the DB or not

@@ -14,6 +14,7 @@ from jose import jwt
 from sqlmodel import Session, select
 
 import database
+from constants import DAILY_LIMIT
 from models import (
     GrammarCaseRule,
     GrammarLessonResult,
@@ -661,14 +662,14 @@ def test_returns_429_when_daily_limit_already_reached(client):
     _known_words(client, token, 3)
 
     quota = client.get("/api/me/quota", headers=headers).json()
-    for _ in range(10 - quota["sessions_today"]):
+    for _ in range(DAILY_LIMIT - quota["sessions_today"]):
         assert client.get("/api/lists/1/study", headers=headers).status_code == 200
 
     r = client.get("/api/me/continue-session", headers=headers)
     assert r.status_code == 429
     detail = r.json()["detail"]
     assert detail["code"] == "daily_limit_reached"
-    assert detail["limit"] == 10
+    assert detail["limit"] == DAILY_LIMIT
 
     # Still capped — the refused call must not have incremented anything.
-    assert _sessions_today(client, token) == 10
+    assert _sessions_today(client, token) == DAILY_LIMIT

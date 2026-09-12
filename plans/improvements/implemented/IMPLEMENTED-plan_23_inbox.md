@@ -536,13 +536,13 @@ Deliberately **not** cached:
 - [x] Edge cases (covered in `test_inbox.py`): `cta_url: "javascript:alert(1)"` → 422;
   non-superadmin `POST /api/admin/inbox` → 403; unauthenticated `GET /api/me/inbox` → 401;
   marking another user's delivery → 404
-- [ ] Smoke (local, one uvicorn + one next dev, check `ps` first): log in → envelope left of
+- [x] Smoke (local, one uvicorn + one next dev, check `ps` first): log in → envelope left of
   RU/EN; Admin → Messages → Inbox → send a message with audience **users = your own account
   only** (backend/.env may point at the shared Neon DB) → badge increments after reload or tab refocus →
   dropdown → "Mark all as read" → open a message from the list → CTA → browser Back → Reply
   prefilled → Delete → Undo → Delete again → "Show older" (seed >20 to yourself) → retract from
   admin history. Nav, header, footer and login intact vs production. Mobile 375px: envelope fits, dropdown within viewport.
-- [ ] Design check vs `Component Library (as-built).html` (tokens, pills, 44px tap target, one mascot)
+- [x] Design check vs `Component Library (as-built).html` (tokens, pills, 44px tap target, one mascot)
 - [ ] News post written and published via /news-writer
 
 ## Definition of Done

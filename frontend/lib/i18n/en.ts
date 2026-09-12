@@ -32,7 +32,7 @@ const en: Translations = {
     perfectSession: 'Perfect! Every word on the first try 🎯',
     restartLesson: 'Restart the lesson',
     limitTitle: "Today's limit reached",
-    limitBody: "You've used all 10 free sessions for today. Come back tomorrow or upgrade to Premium.",
+    limitBody: "You've used today's free sessions. Come back tomorrow or upgrade to Premium.",
     getPremium: 'Get Premium',
     newWord: 'New word',
     gotIt: 'Got it',
@@ -91,7 +91,7 @@ const en: Translations = {
     whyBody: "Servers, database, domain — it all costs money. We don't show ads or sell data. Premium is simply a way to support the project and learn without limits. Every euro goes into improving Fluent.",
     backToLists: 'Back to dictionaries',
     freeFeatures: [
-      '10 study sessions per day',
+      '5 study sessions per day',
       'All dictionaries and topics',
       'Progress tracking',
       'Grammar lessons',
@@ -110,6 +110,14 @@ const en: Translations = {
   lists: {
     limitReached: "Today's limit reached ({count}/{limit}). Try again tomorrow or upgrade to Premium.",
     limitNear: "This is today's last free session. Premium removes the daily limit.",
+    wallTitle: 'Out of free sessions for today',
+    wallSubtitle: 'Premium removes the daily limit — keep going right now instead of waiting until tomorrow.',
+    wallPerks: [
+      'Unlimited study sessions',
+      'Your own word and phrase lists',
+      'Grammar lessons in any order',
+    ],
+    wallCta: 'Get Premium — {price} / month',
     sessionsToday: 'Sessions today:',
     getPremium: 'Get Premium',
     premiumUntil: 'until',

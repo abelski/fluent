@@ -5,6 +5,8 @@
 from datetime import datetime, timezone, timedelta
 from jose import jwt
 
+from constants import DAILY_LIMIT
+
 JWT_SECRET = "fluent-local-secret-change-in-prod"
 JWT_ALGORITHM = "HS256"
 
@@ -35,20 +37,20 @@ def test_quota_returns_basic_defaults(client):
     data = r.json()
     assert data["is_premium"] is False
     assert data["premium_active"] is False
-    assert data["daily_limit"] == 10
+    assert data["daily_limit"] == DAILY_LIMIT
     assert data["is_admin"] is False
 
 
 # ── Daily limit enforcement ────────────────────────────────────────────────
 
 def test_daily_limit_enforced(client):
-    """A basic user should be blocked after 10 sessions on the same day."""
+    """A basic user should be blocked after DAILY_LIMIT sessions on the same day."""
     token = make_token("quota_limit_test@example.com")
     headers = auth_headers(token)
 
     quota = client.get("/api/me/quota", headers=headers).json()
     already_used = quota["sessions_today"]
-    sessions_left = 10 - already_used
+    sessions_left = DAILY_LIMIT - already_used
 
     for _ in range(sessions_left):
         r = client.get("/api/lists/1/study", headers=headers)
@@ -58,7 +60,7 @@ def test_daily_limit_enforced(client):
     assert r.status_code == 429
     detail = r.json()["detail"]
     assert detail["code"] == "daily_limit_reached"
-    assert detail["limit"] == 10
+    assert detail["limit"] == DAILY_LIMIT
 
 
 # ── Admin endpoints ────────────────────────────────────────────────────────

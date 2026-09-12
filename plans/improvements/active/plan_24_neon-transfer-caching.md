@@ -247,13 +247,13 @@ Each loader returns plain data. The per-user / per-request parts of each handler
 - [x] Backend full suite: `cd backend && .venv/bin/python -m pytest -q`
 - [x] Types (unchanged frontend, sanity): `cd frontend && npx tsc --noEmit`
 - [x] Full Playwright suite, since live-API specs exercise cached endpoints: `cd frontend && npx playwright test`
-- [ ] Smoke (local, one uvicorn + one next dev, `ps` first):
+- [x] Smoke (local, one uvicorn + one next dev, `ps` first):
   - Log in; browse lists, a list, study, phrases, grammar (incl. a verb lesson), practice, articles, landing.
   - In admin, edit an article, a word and a practice question. Each change is visible
     immediately without a restart.
   - Grant/revoke premium on a test account: header badge and quota follow on the next request.
   - Nav, header, footer and login intact vs production.
-- [ ] Auth safety: revoke admin on a test account, and the next request to an admin endpoint → 403.
+- [x] Auth safety: revoke admin on a test account, and the next request to an admin endpoint → 403.
 - [ ] Post-deploy (manual, user): Neon console → "Data transfer" for the 7 days after deploy
   vs the 7 days before. Record the numbers in `documentation/caching.md`.
 - [ ] News post written and published via /news-writer ("pages load faster").

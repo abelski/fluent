@@ -49,13 +49,22 @@ test.describe('Daily-limit banner — /dashboard/lists', () => {
     await expect(banner).toContainText('последняя бесплатная сессия');
   });
 
-  test('shows the "limit reached" notice at 0 remaining', async ({ page }) => {
+  // #25 — at 0 remaining this is an offer card, not a text link: it must carry the
+  // price and a real button to /pricing. 28 users hit the old wall and never once
+  // reached checkout.
+  test('shows the Premium offer card at 0 remaining', async ({ page }) => {
     await setFakeToken(page);
-    await mockListsPage(page, { premium_active: false, sessions_today: 10, daily_limit: 10 });
+    await mockListsPage(page, { premium_active: false, sessions_today: 5, daily_limit: 5 });
     await page.goto('/dashboard/lists');
     const banner = page.getByTestId('daily-limit-banner');
     await expect(banner).toBeVisible();
-    await expect(banner).toContainText('Лимит на сегодня исчерпан');
+    await expect(banner).toContainText('Бесплатные сессии на сегодня закончились');
+    await expect(banner).toContainText('Неограниченные учебные сессии');
+    const cta = page.getByTestId('daily-limit-cta');
+    await expect(cta).toBeVisible();
+    await expect(cta).toContainText('4,50 €');
+    // trailingSlash: true — the exported href carries the slash.
+    await expect(cta).toHaveAttribute('href', '/pricing/');
   });
 
   test('absent for a Premium user even at 0 remaining', async ({ page }) => {
@@ -76,12 +85,13 @@ test.describe('Daily-limit banner — /dashboard/phrases', () => {
     await expect(banner).toContainText('последняя бесплатная сессия');
   });
 
-  test('shows the "limit reached" notice at 0 remaining', async ({ page }) => {
+  test('shows the Premium offer card at 0 remaining', async ({ page }) => {
     await setFakeToken(page);
-    await mockPhrasesPage(page, { premium_active: false, sessions_today: 10, daily_limit: 10 });
+    await mockPhrasesPage(page, { premium_active: false, sessions_today: 5, daily_limit: 5 });
     await page.goto('/dashboard/phrases');
     const banner = page.getByTestId('daily-limit-banner');
     await expect(banner).toBeVisible();
-    await expect(banner).toContainText('Лимит на сегодня исчерпан');
+    await expect(banner).toContainText('Бесплатные сессии на сегодня закончились');
+    await expect(page.getByTestId('daily-limit-cta')).toHaveAttribute('href', '/pricing/');
   });
 });
