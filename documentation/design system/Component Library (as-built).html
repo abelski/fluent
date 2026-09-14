@@ -775,7 +775,10 @@
       separation. Width <code>min(20rem,100vw-2rem)</code>, right-aligned, closes on outside click.
       Latest 5 messages: unread emerald dot, bold title if unread, 2-line snippet, Gmail-style
       date. Header row shows "Mark all as read" only when <code>unread &gt; 0</code>; footer is
-      an <code>emerald-600</code> "All messages" link.
+      an <code>emerald-600</code> "All messages" link. Loading state is a single skeleton row
+      (<code>h-3.5 w-1/2 rounded bg-[#f2f3f3] animate-pulse</code>); empty and load-error states
+      both render as centred muted 13.5px text (<code>inbox.empty</code> / <code>inbox.loadError</code>),
+      distinct from the header/footer chrome so neither reads as a blank dropdown.
     </p>
     <h3 style="margin:20px 0 12px;"><code>/dashboard/inbox</code> &mdash; minimal Gmail-style list</h3>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">

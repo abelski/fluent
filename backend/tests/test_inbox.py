@@ -169,6 +169,14 @@ def test_list_is_newest_first_with_snippets_and_no_full_bodies(client):
     assert len(body["items"][1]["snippet_en"]) <= inbox_service.SNIPPET_CHARS + 1
 
 
+def test_brand_new_user_gets_an_empty_inbox_not_an_error(client):
+    # Issue #175: a zero-delivery user's dropdown looked blank because the
+    # frontend didn't distinguish "empty" from "failed" — the backend side of
+    # that was already correct, this pins it down.
+    body = client.get("/api/me/inbox", headers=auth("inbox-brand-new@example.com")).json()
+    assert body == {"items": [], "has_more": False, "unread": 0}
+
+
 def test_limit_offset_and_has_more_boundaries(client):
     email = "inbox-paging@example.com"
     uid = _user_id(client, email)

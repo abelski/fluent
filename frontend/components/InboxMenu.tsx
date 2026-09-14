@@ -27,7 +27,8 @@ const PREVIEW_COUNT = 5;
  * navigation, throttles the visibility refresh to once a minute, reuses the
  * dropdown's list for 60s, and applies `unread`/`delta` carried on a
  * `fluent:inbox-changed` event locally instead of asking the server again.
- * Every failure is silent — ~90 Playwright specs don't mock these endpoints.
+ * The unread-count badge fails silently — ~90 Playwright specs don't mock
+ * these endpoints — but the open dropdown now surfaces a load-error message.
  */
 export default function InboxMenu() {
   const { tr, lang } = useT();
@@ -35,6 +36,7 @@ export default function InboxMenu() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<InboxItem[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const countFetchedAt = useRef(0);
   const listFetchedAt = useRef(0);
@@ -83,13 +85,14 @@ export default function InboxMenu() {
     if (!next) return;
     if (items && Date.now() - listFetchedAt.current < INBOX_REUSE_MS) return;
     setLoading(true);
+    setFailed(false);
     fetchInbox(PREVIEW_COUNT, 0)
       .then((page) => {
         setItems(page.items);
         setUnread(page.unread ?? 0);
         listFetchedAt.current = Date.now();
       })
-      .catch(() => {})
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }
 
@@ -157,10 +160,14 @@ export default function InboxMenu() {
           </div>
 
           {loading && !items && (
-            <p className="px-4 py-4 text-[13px] text-faint">…</p>
+            <div data-testid="inbox-dropdown-loading" className="px-4 py-4">
+              <div className="h-3.5 w-1/2 rounded bg-[#f2f3f3] animate-pulse" />
+            </div>
           )}
-          {!loading && items && items.length === 0 && (
-            <p className="px-4 py-4 text-[13px] text-muted">{tr.inbox.empty}</p>
+          {!loading && !items?.length && (
+            <p data-testid="inbox-dropdown-empty" className="px-4 py-6 text-center text-[13.5px] text-muted">
+              {failed && !items ? tr.inbox.loadError : tr.inbox.empty}
+            </p>
           )}
           {items && items.map((item) => (
             <Link

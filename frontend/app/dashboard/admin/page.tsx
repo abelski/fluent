@@ -668,6 +668,8 @@ export default function AdminPage() {
   // Pagination pages (1-based)
   const PAGE_SIZE = 20;
   const [usersPage, setUsersPage] = useState(1);
+  type UserSortKey = 'name' | 'plan' | 'premium_until' | 'sessions_today' | 'last_login';
+  const [userSort, setUserSort] = useState<{ key: UserSortKey; dir: 'asc' | 'desc' } | null>(null);
   const [reportsPage, setReportsPage] = useState(1);
   const [articlesPage, setArticlesPage] = useState(1);
 const [practiceQPage, setPracticeQPage] = useState(1);
@@ -1593,7 +1595,37 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     if (userActivityFilter === 'active') return !u.inactive_flag;
     return true;
   });
-  const pagedUsers = filteredUsers.slice((usersPage - 1) * PAGE_SIZE, usersPage * PAGE_SIZE);
+  const planRank = (u: UserRow) => u.is_superadmin ? 4 : u.is_admin ? 3 : u.is_redactor ? 2 : u.premium_active ? 1 : 0;
+  const sortedUsers = userSort ? [...filteredUsers].sort((a, b) => {
+    const { key, dir } = userSort;
+    const mul = dir === 'asc' ? 1 : -1;
+    let cmp = 0;
+    if (key === 'name') cmp = a.name.localeCompare(b.name);
+    else if (key === 'plan') cmp = planRank(a) - planRank(b);
+    else if (key === 'sessions_today') cmp = a.sessions_today - b.sessions_today;
+    else {
+      const av = key === 'premium_until' ? a.premium_until : a.last_login;
+      const bv = key === 'premium_until' ? b.premium_until : b.last_login;
+      if (av === null && bv === null) cmp = 0;
+      else if (av === null) return 1; // nulls last regardless of direction
+      else if (bv === null) return -1;
+      else cmp = av.localeCompare(bv);
+    }
+    return cmp * mul;
+  }) : filteredUsers;
+  const pagedUsers = sortedUsers.slice((usersPage - 1) * PAGE_SIZE, usersPage * PAGE_SIZE);
+  function toggleUserSort(key: UserSortKey) {
+    setUserSort((prev) => prev?.key === key ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' });
+  }
+  function SortTh({ sortKey, className, children }: { sortKey: UserSortKey; className?: string; children: React.ReactNode }) {
+    const active = userSort?.key === sortKey;
+    return (
+      <th className={`px-4 py-3 font-medium cursor-pointer select-none hover:text-gray-900 ${className ?? ''}`} onClick={() => toggleUserSort(sortKey)}>
+        {children}
+        <span className="ml-1 text-[10px]">{active ? (userSort!.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>
+      </th>
+    );
+  }
   const pagedReports = filteredReports.slice((reportsPage - 1) * PAGE_SIZE, reportsPage * PAGE_SIZE);
   const pagedArticles = articles.slice((articlesPage - 1) * PAGE_SIZE, articlesPage * PAGE_SIZE);
   const pagedPracticeQ = practiceQuestions.slice((practiceQPage - 1) * PAGE_SIZE, practiceQPage * PAGE_SIZE);
@@ -1800,11 +1832,11 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       />
                     </th>
                   )}
-                  <th className="px-4 py-3 font-medium">{tr.admin.colUser}</th>
-                  <th className="px-4 py-3 font-medium">{tr.admin.colPlan}</th>
-                  <th className="px-4 py-3 font-medium hidden sm:table-cell">{tr.admin.colPremiumUntil}</th>
-                  <th className="px-4 py-3 font-medium hidden sm:table-cell">{tr.admin.colSessionsToday}</th>
-                  <th className="px-4 py-3 font-medium hidden lg:table-cell">{tr.admin.colLastLogin}</th>
+                  <SortTh sortKey="name">{tr.admin.colUser}</SortTh>
+                  <SortTh sortKey="plan">{tr.admin.colPlan}</SortTh>
+                  <SortTh sortKey="premium_until" className="hidden sm:table-cell">{tr.admin.colPremiumUntil}</SortTh>
+                  <SortTh sortKey="sessions_today" className="hidden sm:table-cell">{tr.admin.colSessionsToday}</SortTh>
+                  <SortTh sortKey="last_login" className="hidden lg:table-cell">{tr.admin.colLastLogin}</SortTh>
                   <th className="px-4 py-3 font-medium">{tr.admin.colAction}</th>
                 </tr>
               </thead>
@@ -1985,7 +2017,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 ))}
               </tbody>
             </table>
-            <Pagination total={filteredUsers.length} page={usersPage} onPage={setUsersPage} />
+            <Pagination total={sortedUsers.length} page={usersPage} onPage={setUsersPage} />
           </div>
           </div>
         )}

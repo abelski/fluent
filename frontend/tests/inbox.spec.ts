@@ -212,6 +212,35 @@ test.describe('Dropdown', () => {
     await expect(page).toHaveURL(/\/dashboard\/inbox/);
   });
 
+  test('empty inbox shows the empty message, not a blank dropdown', async ({ page }) => {
+    await setFakeToken(page);
+    await mockListsPage(page);
+    await mockInbox(page, { items: [] });
+    await page.goto('/dashboard/lists');
+
+    await page.getByTestId('inbox-button').click();
+    await expect(page.getByTestId('inbox-dropdown-empty')).toBeVisible();
+    await expect(page.getByTestId('inbox-dropdown-empty')).toHaveText('Нет сообщений');
+    await expect(page.getByTestId('inbox-dropdown-item')).toHaveCount(0);
+  });
+
+  test('a failed fetch shows a load-error message, not a blank dropdown', async ({ page }) => {
+    await setFakeToken(page);
+    await mockListsPage(page);
+    // One handler for the whole /me/inbox* pattern (see mockInbox's own comment above):
+    // registering this alongside mockInbox would overlap and the latest route wins.
+    await page.route('**/api/me/inbox**', async (route) => {
+      const url = route.request().url();
+      if (url.includes('/unread-count')) return route.fulfill({ json: { unread: 0 } });
+      return route.fulfill({ status: 500, json: { detail: 'boom' } });
+    });
+    await page.goto('/dashboard/lists');
+
+    await page.getByTestId('inbox-button').click();
+    await expect(page.getByTestId('inbox-dropdown-empty')).toBeVisible();
+    await expect(page.getByTestId('inbox-dropdown-empty')).toHaveText('Не удалось загрузить сообщения');
+  });
+
   test('reopening within 60s does not refetch the list', async ({ page }) => {
     await setFakeToken(page);
     await mockListsPage(page);
