@@ -212,6 +212,20 @@ test.describe('Dropdown', () => {
     await expect(page).toHaveURL(/\/dashboard\/inbox/);
   });
 
+  test('stays within the viewport on mobile (issue #176)', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 720 });
+    await setFakeToken(page);
+    await mockListsPage(page);
+    await mockInbox(page, { items: [item(1), item(2)] });
+    await page.goto('/dashboard/lists');
+
+    await page.getByTestId('inbox-button').click();
+    const box = await boxOf(page, '[data-testid="inbox-dropdown"]');
+    const viewport = page.viewportSize()!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+  });
+
   test('empty inbox shows the empty message, not a blank dropdown', async ({ page }) => {
     await setFakeToken(page);
     await mockListsPage(page);

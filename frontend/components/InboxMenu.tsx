@@ -110,7 +110,7 @@ export default function InboxMenu() {
     : tr.inbox.ariaLabel;
 
   return (
-    <div className="relative" ref={wrapRef}>
+    <div ref={wrapRef}>
       <button
         type="button"
         onClick={toggle}
@@ -143,7 +143,7 @@ export default function InboxMenu() {
       {open && (
         <div
           data-testid="inbox-dropdown"
-          className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] bg-white border border-line rounded-[14px] shadow-[0_6px_20px_rgba(0,0,0,0.08)] overflow-hidden z-30"
+          className="absolute top-full right-4 min-[1000px]:right-8 mt-2 w-[min(20rem,calc(100vw-2rem))] bg-white border border-line rounded-[14px] shadow-[0_6px_20px_rgba(0,0,0,0.08)] overflow-hidden z-30"
         >
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-line-strong">
             <span className="text-sm font-semibold text-ink">{tr.inbox.title}</span>
