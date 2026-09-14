@@ -12,6 +12,11 @@ interface Entry {
   score: number;
 }
 
+interface Me {
+  rank: number | null;
+  score: number;
+}
+
 function parseCurrentPicture(token: string): string | null {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
@@ -37,6 +42,7 @@ function CrownIcon({ className }: { className: string }) {
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [me, setMe] = useState<Me | null>(null);
   const [period, setPeriod] = useState<Period>('week');
   const { tr } = useT();
   const t = tr.landing;
@@ -48,7 +54,10 @@ export default function Leaderboard() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data) setEntries(data); else setEntries([]); })
+      .then((data) => {
+        if (data) { setEntries(data.entries); setMe(data.me); }
+        else { setEntries([]); setMe(null); }
+      })
       .catch(() => {});
   }, [period]);
 
@@ -143,6 +152,31 @@ export default function Leaderboard() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {me && !entries.some((entry) => currentPicture && entry.picture === currentPicture) && (
+        <div
+          data-testid="leaderboard-me"
+          className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100"
+        >
+          {currentPicture ? (
+            <img
+              src={currentPicture}
+              referrerPolicy="no-referrer"
+              className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-400 ring-offset-1"
+              alt=""
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-400 text-xs font-bold ring-2 ring-emerald-400 ring-offset-1">
+              {me.rank ?? '–'}
+            </div>
+          )}
+          <span className="text-xs font-medium text-gray-600">
+            {me.rank
+              ? t.leaderboardMe.replace('{rank}', String(me.rank)).replace('{score}', String(me.score))
+              : t.leaderboardMeNoRank.replace('{score}', String(me.score))}
+          </span>
         </div>
       )}
     </div>

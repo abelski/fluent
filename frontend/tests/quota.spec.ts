@@ -31,9 +31,9 @@ test.describe('Pricing page', () => {
     await expect(page.getByRole('link', { name: /Вернуться к словарям/ })).toBeVisible();
   });
 
-  test('free plan shows 10 sessions per day', async ({ page }) => {
+  test('free plan shows 5 sessions per day', async ({ page }) => {
     await page.goto('/pricing');
-    await expect(page.getByText(/10 учебных сессий в день/)).toBeVisible();
+    await expect(page.getByText(/5 учебных сессий в день/)).toBeVisible();
   });
 
   test('premium plan shows unlimited sessions', async ({ page }) => {

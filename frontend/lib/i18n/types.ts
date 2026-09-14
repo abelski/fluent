@@ -786,6 +786,8 @@ export interface Translations {
     leaderboardWeekSub: string;
     leaderboardAllSub: string;
     leaderboardWeekEmpty: string;
+    leaderboardMe: string; // "{rank}", "{score}"
+    leaderboardMeNoRank: string; // "{score}"
   };
   news: {
     sectionTitle: string;

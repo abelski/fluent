@@ -1322,13 +1322,23 @@ class LeaderboardEntry(BaseModel):
     score: int
 
 
-@router.get("/leaderboard", response_model=list[LeaderboardEntry])
+class MeEntry(BaseModel):
+    rank: Optional[int]
+    score: int
+
+
+class LeaderboardResponse(BaseModel):
+    entries: list[LeaderboardEntry]
+    me: MeEntry
+
+
+@router.get("/leaderboard", response_model=LeaderboardResponse)
 def get_leaderboard(
     period: str = "all",
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    _require_user(authorization, session)
+    user = _require_user(authorization, session)
     # Public top-10, eventually consistent: the tables behind it change on every
     # answer, so there is no useful tag — a flat 60s TTL instead (#24, row 23).
     # Use calendar-week boundaries (ISO: Mon–Sun) so "this week" is unambiguous.
@@ -1363,10 +1373,41 @@ def get_leaderboard(
         tags=set(),
         ttl=60,
     )
-    return [
+    entries = [
         LeaderboardEntry(rank=i + 1, picture=picture, score=score)
         for i, (picture, score) in enumerate(rows)
     ]
+
+    # "My score" is per-user and cheap (two aggregate queries scoped to one user),
+    # so unlike the top-10 above it's computed live, not cached (see Non-Goals).
+    my_score = int(
+        session.execute(
+            text(f"""
+                SELECT {LEADERBOARD_SCORE_EXPR} AS score
+                FROM "user" u
+                {joins_sql}
+                WHERE u.id = :uid
+            """),
+            {**params, "uid": user.id},
+        ).scalar()
+        or 0
+    )
+    my_rank: Optional[int] = None
+    if my_score > 0:
+        higher_count = session.execute(
+            text(f"""
+                SELECT COUNT(*) FROM (
+                    SELECT {LEADERBOARD_SCORE_EXPR} AS score
+                    FROM "user" u
+                    {joins_sql}
+                ) sub
+                WHERE sub.score > :my_score
+            """),
+            {**params, "my_score": my_score},
+        ).scalar()
+        my_rank = int(higher_count) + 1
+
+    return LeaderboardResponse(entries=entries, me=MeEntry(rank=my_rank, score=my_score))
 
 
 @router.get("/me/known-words")

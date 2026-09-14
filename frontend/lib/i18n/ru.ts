@@ -770,6 +770,8 @@ const ru: Translations = {
     leaderboardWeekSub: 'очки за эту неделю',
     leaderboardAllSub: 'очки за всё время',
     leaderboardWeekEmpty: 'Учи слова, чтобы появиться здесь на этой неделе',
+    leaderboardMe: 'Ты: #{rank} · {score} очк.',
+    leaderboardMeNoRank: 'У тебя пока {score} очк.',
   },
   news: {
     sectionTitle: 'Новости',

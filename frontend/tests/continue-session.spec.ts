@@ -133,7 +133,7 @@ async function setup(
   await page.route('**/api/me/stats', (r) => r.fulfill({ json: STATS }));
   await page.route('**/api/me/activity-calendar', (r) => r.fulfill({ json: { dates: [] } }));
   await page.route('**/api/news**', (r) => r.fulfill({ json: [] }));
-  await page.route('**/api/leaderboard**', (r) => r.fulfill({ json: [] }));
+  await page.route('**/api/leaderboard**', (r) => r.fulfill({ json: { entries: [], me: { rank: null, score: 0 } } }));
   await page.route('**/api/me/lists-progress', (r) => r.fulfill({ json: {} }));
   await page.route('**/api/me/settings', (r) => r.fulfill({ json: SETTINGS }));
 

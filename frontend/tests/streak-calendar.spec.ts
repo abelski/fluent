@@ -19,7 +19,7 @@ async function setupAuthPage(page: import('@playwright/test').Page, calendarDate
   await page.route('**/api/me/stats', async (route) => route.fulfill({ json: MOCK_STATS }));
   await page.route('**/api/me/quota', async (route) => route.fulfill({ json: { is_admin: false } }));
   await page.route('**/api/news**', async (route) => route.fulfill({ json: [] }));
-  await page.route('**/api/leaderboard**', async (route) => route.fulfill({ json: [] }));
+  await page.route('**/api/leaderboard**', async (route) => route.fulfill({ json: { entries: [], me: { rank: null, score: 0 } } }));
   await page.route('**/api/me/activity-calendar', async (route) => route.fulfill({ json: { dates: calendarDates } }));
 }
 

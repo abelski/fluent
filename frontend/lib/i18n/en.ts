@@ -770,6 +770,8 @@ const en: Translations = {
     leaderboardWeekSub: 'points earned this week (Mon–Sun)',
     leaderboardAllSub: 'all-time points',
     leaderboardWeekEmpty: 'Study words to appear on this week\'s board',
+    leaderboardMe: 'You: #{rank} · {score} pts',
+    leaderboardMeNoRank: 'You have {score} pts so far',
   },
   news: {
     sectionTitle: 'News',
