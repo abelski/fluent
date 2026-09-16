@@ -37,6 +37,7 @@ import { normalizeLt } from '../../../lib/normalizeLt';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
+import { useNumberKeys } from '../../../lib/useNumberKeys';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -305,6 +306,25 @@ export default function PhraseSession({
   // Recompute only when the card changes, not on every render
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIdx]);
+
+  const handleMcqSelect = (word: string) => {
+    if (mcqResult || !current) return;
+    setMcqSelected(word);
+    const correct = word.toLowerCase() === current.phrase.blank_word.toLowerCase();
+    setMcqResult(correct ? 'correct' : 'wrong');
+    recordAnswer(correct);
+    if (correct) {
+      setTimeout(() => setStage1Step('type'), 700);
+    }
+  };
+
+  // ── Number keys pick an MCQ option ──────────────────────────────────────────
+  useNumberKeys(
+    mcqOptions.length,
+    stage1Step === 'mcq' && !mcqResult && !syllableChallenge && current?.mode !== 'gap_retry'
+      ? (i: number) => handleMcqSelect(mcqOptions[i])
+      : null,
+  );
 
   // Timer: start/reset on each new card (skip stage 0 intro, same as QuizSession skipping stage 1)
   useEffect(() => {
@@ -990,17 +1010,6 @@ export default function PhraseSession({
     if (stage1Step !== 'type' && current.mode !== 'gap_retry') {
       const options = mcqOptions;
 
-      const handleMcqSelect = (word: string) => {
-        if (mcqResult) return;
-        setMcqSelected(word);
-        const correct = word.toLowerCase() === phrase.blank_word.toLowerCase();
-        setMcqResult(correct ? 'correct' : 'wrong');
-        recordAnswer(correct);
-        if (correct) {
-          setTimeout(() => setStage1Step('type'), 700);
-        }
-      };
-
       return (
         <main className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20" data-testid="phrase-session-stage1-mcq">
           <div className="relative z-10 w-full max-w-[420px]">
@@ -1020,7 +1029,7 @@ export default function PhraseSession({
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {options.map((opt) => {
+              {options.map((opt, i) => {
                 const isSelected = mcqSelected === opt;
                 const isCorrectWord = opt.toLowerCase() === phrase.blank_word.toLowerCase();
                 let cls = 'py-3 px-4 rounded-xl text-sm font-medium border transition-colors text-center ';
@@ -1034,8 +1043,8 @@ export default function PhraseSession({
                   cls += 'bg-white border-gray-200 text-gray-400';
                 }
                 return (
-                  <button key={opt} onClick={() => handleMcqSelect(opt)} className={cls} disabled={!!mcqResult}>
-                    {opt}
+                  <button key={opt} onClick={() => handleMcqSelect(opt)} aria-keyshortcuts={String(i + 1)} className={cls} disabled={!!mcqResult}>
+                    <span aria-hidden="true" className="hidden sm:inline-block mr-2 text-[12px] font-normal opacity-50">{i + 1}</span>{opt}
                   </button>
                 );
               })}

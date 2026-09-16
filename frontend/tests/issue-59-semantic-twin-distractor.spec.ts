@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { stripBadge } from './helpers/studyFlow';
 
 function makeFakeJwt(): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -67,12 +68,15 @@ test.describe('Issue #59 — semantic twin distractor filtered in quiz', () => {
       const isStage3 = await typeInput.isVisible().catch(() => false);
       if (isStage3) break; // stop at typing stage, no distractors there
 
-      const optionTexts = await optionButtons.allTextContents();
-      const hasTwin = optionTexts.some((t) => t.trim() === 'mokinė');
+      // stripBadge: options carry an aria-hidden keyboard number (feature #30),
+      // so a raw compare would never match and the guard would pass vacuously.
+      const optionTexts = (await optionButtons.allTextContents()).map(stripBadge);
+      const hasTwin = optionTexts.some((t) => t === 'mokinė');
       expect(hasTwin, `mokinė (semantic twin) must not appear as option — found in: ${JSON.stringify(optionTexts)}`).toBe(false);
 
       // Click the correct answer to advance
-      const correctBtn = page.locator('.grid button').filter({ hasText: /^mokininė$|^mokinys$|^ученица$|^ученик$/ }).first();
+      // By accessible name, which excludes the aria-hidden number badge.
+      const correctBtn = page.getByRole('button', { name: /^(mokininė|mokinys|ученица|ученик)$/ }).first();
       await correctBtn.click().catch(() => {});
       await page.waitForTimeout(400);
     }

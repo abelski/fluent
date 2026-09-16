@@ -164,7 +164,9 @@ test.describe('the flashcard itself', () => {
   test('offers exactly the two self-assessment answers', async ({ page }) => {
     await startSession(page);
     await stageOf(page);
-    await expect(page.getByText('С трудом', { exact: true })).toBeVisible();
-    await expect(page.getByText('Легко', { exact: true })).toBeVisible();
+    // By accessible name, not text: the buttons carry an aria-hidden keyboard
+    // number badge (feature #30), so their textContent is "1С трудом".
+    await expect(page.getByRole('button', { name: 'С трудом', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Легко', exact: true })).toBeVisible();
   });
 });

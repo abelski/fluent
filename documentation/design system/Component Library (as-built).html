@@ -717,6 +717,37 @@
     </p>
   </div>
 
+  <h2>Option number badge — keyboard shortcuts on answer lists</h2>
+  <div class="card">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      Anywhere a session offers a short <b>list of answer buttons</b>, each button opens with the number key that
+      selects it. Spec, identical on every surface:
+      <code>&lt;span aria-hidden="true" class="hidden sm:inline-block mr-2 text-[12px] font-normal opacity-50"&gt;</code>
+      holding <code>1</code>&ndash;<code>9</code>, followed by the label. The button also carries
+      <code>aria-keyshortcuts</code>. Surfaces: <code>QuizSession</code> stage&nbsp;1 (the two self-evaluation
+      buttons, <code>1</code>&nbsp;=&nbsp;«С трудом», <code>2</code>&nbsp;=&nbsp;«Легко»), stages <code>2</code> and
+      <code>'2r'</code> (multiple choice), and <code>PhraseSession</code>'s stage-1 fill-word MCQ. The key handling
+      itself is one shared hook, <code>lib/useNumberKeys.ts</code>.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>Three rules that are not cosmetic.</b>
+      (1) <code>aria-hidden</code> on the badge is required, not decoration &mdash; it keeps the button's
+      accessible name equal to its label, which is what screen readers announce and what every Playwright
+      <code>getByRole('button', { name })</code> matcher in the suite relies on.
+      (2) <code>hidden sm:inline-block</code> &mdash; a phone has no number row, so the badge is desktop-only.
+      (3) <code>opacity-50</code> rather than a fixed token, so one span works on the white option rows and on
+      stage&nbsp;1's amber/emerald buttons without a per-surface colour.
+    </p>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0;">
+      <b>Not applied to tile pools.</b> The <code>'2a'</code> assembly card and <code>PhraseSession</code>'s word
+      tiles are ordered input, not a pick-one list, and a letter-mode pool can exceed nine tiles &mdash; a number
+      there would be ambiguous. <b>Test note:</b> the badge changes a button's <code>textContent</code>
+      ("<code>1Легко</code>"), so specs must match on the accessible name or strip it with
+      <code>stripBadge()</code> from <code>tests/helpers/studyFlow.ts</code>. See
+      <code>documentation/keyboard-shortcuts.md</code>.
+    </p>
+  </div>
+
   <h2>Emoji &amp; arrow policy</h2>
   <div class="card">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 12px;">

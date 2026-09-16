@@ -57,7 +57,7 @@ export async function mockStudy(
 // One probe per stage. `select` has two prompts because SELECT is a coin flip
 // between the two multiple-choice directions.
 const PROBES: [Stage, string][] = [
-  ['card', 'text="Легко"'],
+  ['card', 'role=button[name="Легко"]'],
   ['select', 'text="Что это означает?"'],
   ['select', 'text="Выберите литовское слово"'],
   ['assemble', '[data-testid="syllable-tile-pool"]'],
@@ -195,17 +195,23 @@ export async function answerDrill(page: Page, word: MockWord) {
   await input.press('Enter');
 }
 
+/**
+ * Option buttons render a leading `1`–`9` keyboard badge (feature #30). It is
+ * `aria-hidden`, so role/name matchers ignore it — but `textContent` does not.
+ */
+export const stripBadge = (t: string) => t.trim().replace(/^[1-9]\s*/, '');
+
 /** Answer whichever exercise is on screen correctly. */
 export async function answerCorrectly(page: Page, stage: Stage, word: MockWord, easy = false) {
   if (stage === 'card') {
-    await page.getByText(easy ? 'Легко' : 'С трудом', { exact: true }).click();
+    await page.getByRole('button', { name: easy ? 'Легко' : 'С трудом', exact: true }).click();
     return;
   }
   if (stage === 'select') {
     const wanted = (await page.getByText('Что это означает?').isVisible().catch(() => false))
       ? word.translation_ru
       : word.lithuanian;
-    await page.locator('.grid button', { hasText: new RegExp(`^${wanted}$`) }).first().click();
+    await page.locator('.grid').getByRole('button', { name: wanted, exact: true }).first().click();
     return;
   }
   if (stage === 'assemble') {
@@ -243,7 +249,7 @@ export async function answerWrong(page: Page, stage: Stage, word: MockWord, wron
     // The prompt renders one tick before the options state is filled in, so the
     // buttons briefly do not exist yet — reading their text without waiting yields [].
     await buttons.first().waitFor({ timeout: 7000 });
-    const texts = (await buttons.allTextContents()).map((t) => t.trim());
+    const texts = (await buttons.allTextContents()).map(stripBadge);
     const idx = texts.findIndex((t) => t !== correct);
     if (idx < 0) throw new Error(`no wrong option among [${texts.join(', ')}] (correct="${correct}")`);
     await buttons.nth(idx).click();

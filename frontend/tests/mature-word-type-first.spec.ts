@@ -36,8 +36,8 @@ test.describe('a mature word', () => {
     expect(await stageOf(page)).toBe('type');
     await expect(page.getByText('Как будет по-литовски?')).toBeVisible();
     // The answer-revealing self-assessment card is not on screen.
-    await expect(page.getByText('С трудом', { exact: true })).toHaveCount(0);
-    await expect(page.getByText('Легко', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'С трудом', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Легко', exact: true })).toHaveCount(0);
   });
 
   test('a correct answer completes it without any further drilling', async ({ page }) => {
@@ -98,7 +98,7 @@ test.describe('a non-mature word', () => {
   test('still opens on the flashcard', async ({ page }) => {
     await startStudy(page, NOT_MATURE);
     expect(await stageOf(page)).toBe('card');
-    await expect(page.getByText('С трудом', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'С трудом', exact: true })).toBeVisible();
   });
 
   test('a word with no mature flag at all is treated as not mature', async ({ page }) => {
@@ -114,7 +114,7 @@ test.describe('the review surface', () => {
     await page.goto('/dashboard/review');
 
     expect(await stageOf(page)).toBe('type');
-    await expect(page.getByText('С трудом', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'С трудом', exact: true })).toHaveCount(0);
   });
 
   test('«Забыл» is offered on the review typing card too', async ({ page }) => {

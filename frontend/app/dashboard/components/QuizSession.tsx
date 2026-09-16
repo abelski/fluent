@@ -15,6 +15,7 @@ import { renderAccented } from '../../../lib/renderAccented';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
+import { useNumberKeys } from '../../../lib/useNumberKeys';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -436,6 +437,18 @@ export default function QuizSession({
     return () => window.removeEventListener('keydown', onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answerState, queue]);
+
+  // ── Number keys pick an option ──────────────────────────────────────────────
+  // Read from queue[0] rather than the `stage` const below: that one is derived
+  // after the match-round / done early returns, and a hook cannot live there.
+  const keyStage = done || showMatchRound ? undefined : queue[0]?.stage;
+  useNumberKeys(
+    keyStage === 1 ? 2 : options.length,
+    keyStage === 1 ? (i: number) => handleStage1Quality(i === 0 ? 3 : 5)
+      : keyStage === 2 ? handleStage2Select
+      : keyStage === '2r' ? handleStage2rSelect
+      : null,
+  );
 
   // ── Timer ───────────────────────────────────────────────────────────────────
   const frontCard      = queue[0];
@@ -1054,10 +1067,10 @@ export default function QuizSession({
             </div>
             <div className="w-full max-w-[420px] grid grid-cols-2 gap-4">
               <button onClick={() => handleStage1Quality(3)} tabIndex={-1} className="p-3.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-[10px] font-semibold text-amber-600 transition-colors">
-                {tr.study.hard}
+                <span aria-hidden="true" className="hidden sm:inline-block mr-2 text-[12px] font-normal opacity-50">1</span>{tr.study.hard}
               </button>
               <button onClick={() => handleStage1Quality(5)} tabIndex={-1} className="p-3.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-[10px] font-semibold text-emerald-600 transition-colors">
-                {tr.study.easy}
+                <span aria-hidden="true" className="hidden sm:inline-block mr-2 text-[12px] font-normal opacity-50">2</span>{tr.study.easy}
               </button>
             </div>
           </div>
@@ -1084,7 +1097,7 @@ export default function QuizSession({
                 } else {
                   cls += 'bg-gray-50 border-gray-900 text-gray-400';
                 }
-                return <button key={i} onClick={() => handleStage2Select(i)} className={cls}>{opt.text}</button>;
+                return <button key={i} onClick={() => handleStage2Select(i)} aria-keyshortcuts={String(i + 1)} className={cls}><span aria-hidden="true" className="hidden sm:inline-block mr-2 text-[12px] font-normal opacity-50">{i + 1}</span>{opt.text}</button>;
               })}
             </div>
             {answerState === 'correct' && (
@@ -1127,7 +1140,7 @@ export default function QuizSession({
                 } else {
                   cls += 'bg-gray-50 border-gray-900 text-gray-400';
                 }
-                return <button key={i} onClick={() => handleStage2rSelect(i)} className={cls}>{opt.text}</button>;
+                return <button key={i} onClick={() => handleStage2rSelect(i)} aria-keyshortcuts={String(i + 1)} className={cls}><span aria-hidden="true" className="hidden sm:inline-block mr-2 text-[12px] font-normal opacity-50">{i + 1}</span>{opt.text}</button>;
               })}
             </div>
             {answerState === 'correct' && (

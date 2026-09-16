@@ -12,6 +12,7 @@
 // screen could render two identical "kolega" buttons, one scored correct and one wrong.
 
 import { test, expect } from '@playwright/test';
+import { stripBadge } from './helpers/studyFlow';
 
 function makeFakeJwt(): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -78,7 +79,8 @@ test.describe('Issue #152 — bendradarbis and kolega are distinguishable', () =
 
       const labels: string[] = [];
       for (let i = 0; i < count; i++) {
-        const text = (await buttons.nth(i).innerText()).trim();
+        // stripBadge: options carry an aria-hidden keyboard number (feature #30).
+        const text = stripBadge(await buttons.nth(i).innerText());
         if (text) labels.push(text);
       }
 

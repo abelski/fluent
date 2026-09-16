@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { assembleTarget } from './helpers/studyFlow';
+import { assembleTarget, stripBadge } from './helpers/studyFlow';
 
 // Regression test for issue #147 (also covers the UX half of #107): the study
 // session done screen showed "Верно 10 из 10" next to a "6 Ошибок" tile plus a
@@ -144,7 +144,7 @@ async function playThrough(page: Page, wrongFirst: boolean) {
     const count = await options.count();
     if (count > 1) {
       const texts: string[] = [];
-      for (let i = 0; i < count; i++) texts.push((await options.nth(i).innerText()).trim());
+      for (let i = 0; i < count; i++) texts.push(stripBadge(await options.nth(i).innerText()));
 
       const isReverse = texts.some((t) => WORDS.some((w) => w.lithuanian === t));
       const prompt = (await page.locator('main').innerText());
