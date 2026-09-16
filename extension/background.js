@@ -11,6 +11,16 @@ const BACKEND_URLS = {
   local: 'http://localhost:8000',
 };
 
+// "Local dev" in Options is a developer-only convenience — everyone loads
+// this same unpacked code (no Chrome Web Store build to gate on, see
+// documentation/extension-README.md), so the only real signal for "this is
+// my machine" is the connected account itself. Once this email connects via
+// any backend, `devUnlocked` is set in chrome.storage.local and stays set —
+// a one-way ratchet, never cleared on disconnect — so Options can offer the
+// Local dev radio from then on. Real end users' accounts never match this,
+// so they never see it.
+const DEV_EMAIL = 'artyrbelski@gmail.com';
+
 async function getSettings() {
   const { token = null, backendEnv = 'prod' } = await chrome.storage.local.get(['token', 'backendEnv']);
   const base = BACKEND_URLS[backendEnv] || BACKEND_URLS.prod;
@@ -92,21 +102,38 @@ function getLists() {
   return apiFetch('/api/me/word-lists');
 }
 
+// Used by the popup's stats line (GET /api/me/stats already exists and is
+// already tested — same endpoint the dashboard's StatsBar.tsx uses).
+function getStats() {
+  return apiFetch('/api/me/stats');
+}
+
+// Used by the popup's level pill/progress bar. GET /api/admin/settings/
+// cefr-thresholds is itself public despite the /admin/ path (see
+// backend/routers/admin.py) — but apiFetch() above still gates on a stored
+// token before firing any request at all, so in practice this is only ever
+// called once the popup already knows the user is connected.
+function getCefrThresholds() {
+  return apiFetch('/api/admin/settings/cefr-thresholds');
+}
+
 // Combines quota + profile into one status object the UI needs.
 async function getStatus() {
   const { token, backendEnv, base } = await getSettings();
+  const { devUnlocked = false } = await chrome.storage.local.get('devUnlocked');
   if (!token) {
-    return { connected: false, backendEnv, base };
+    return { connected: false, backendEnv, base, devUnlocked };
   }
   const quota = await apiFetch('/api/me/quota');
   if (!quota.ok) {
-    return { connected: false, backendEnv, base };
+    return { connected: false, backendEnv, base, devUnlocked };
   }
   const me = await apiFetch('/api/auth/me');
   return {
     connected: true,
     backendEnv,
     base,
+    devUnlocked,
     email: me.ok ? me.data.email : null,
     isPremium: !!quota.data.premium_active,
     isAdmin: !!quota.data.is_admin,
@@ -152,6 +179,10 @@ async function connect() {
       await chrome.storage.local.set({ token });
       const check = await apiFetch('/api/me/quota');
       if (check.ok) {
+        const me = await apiFetch('/api/auth/me');
+        if (me.ok && (me.data.email || '').toLowerCase() === DEV_EMAIL) {
+          await chrome.storage.local.set({ devUnlocked: true });
+        }
         return { ok: true };
       }
       // The grabbed value may be an expired token from a previous session —
@@ -179,6 +210,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         break;
       case 'getLists':
         sendResponse(await getLists());
+        break;
+      case 'getStats':
+        sendResponse(await getStats());
+        break;
+      case 'getCefrThresholds':
+        sendResponse(await getCefrThresholds());
         break;
       case 'connect':
         sendResponse(await connect());

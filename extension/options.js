@@ -5,12 +5,18 @@
 const envRadios = document.querySelectorAll('input[name="env"]');
 const langRadios = document.querySelectorAll('input[name="lang"]');
 const note = document.getElementById('note');
+const backendSection = document.getElementById('backend-section');
+
+document.getElementById('header-mark').innerHTML = takBareSVG(24);
 
 async function load() {
-  const { backendEnv = 'prod', translationLang = 'en' } = await chrome.storage.local.get([
+  const { backendEnv = 'prod', translationLang = 'en', devUnlocked = false } = await chrome.storage.local.get([
     'backendEnv',
     'translationLang',
+    'devUnlocked',
   ]);
+  // Dev-only section — see background.js's DEV_EMAIL for how this gets set.
+  backendSection.hidden = !devUnlocked;
   envRadios.forEach((r) => {
     r.checked = r.value === backendEnv;
   });

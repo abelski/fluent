@@ -15,16 +15,26 @@ calls happen in `background.js`; the content script only draws UI.
 3. Click **Load unpacked** and select this `extension/` folder.
 4. Pin the Fluent icon to the toolbar if you'd like quick access to the popup.
 
-## Dev toggle (Production vs Local dev)
+## Dev toggle (Production vs Local dev) — developer-only
 
-Right-click the extension icon → **Options** (or open it from the popup's
-"Backend settings" link) and choose:
+The whole "which backend" section of **Options**, and the small env label at
+the top of the popup, are hidden for everyone except the developer's own
+account. There's no Chrome Web Store build to gate on (see distribution note
+above — everyone loads the same unpacked code), so the real signal is the
+connected account: `background.js`'s `connect()` checks the email against a
+hardcoded `DEV_EMAIL` and, on a match, sets `devUnlocked` in
+`chrome.storage.local` — a one-way flag, never cleared automatically (not
+even on disconnect). Once set, Options shows:
 
 - **Production** — `https://fluent.lt` (default)
 - **Local dev** — `http://localhost:8000`
 
 Switching clears the saved connection, because production and local dev use
 different JWT secrets — a token from one is rejected by the other.
+
+**On a fresh profile/clone**, `devUnlocked` isn't set yet, so connect via
+Production with the developer's account first — that one connection unlocks
+Local dev in Options from then on.
 
 The same **Options** page also has a **Translation language** setting
 (English / Russian / Both, default English) controlling which language(s)

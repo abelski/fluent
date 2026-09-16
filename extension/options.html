@@ -3,36 +3,56 @@
 <head>
 <meta charset="utf-8">
 <title>Fluent — Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;800&display=swap" rel="stylesheet">
 <style>
+  /* Tokens below are literal copies of extension/theme.js's FLUENT_THEME — a
+     <style> block can't reference the JS constants directly, so the values
+     are kept identical by hand; theme.js remains the single source of truth
+     used everywhere colors are set from script. Palette + 0px radius pixel-
+     match `temp_files/redesign extention/Fluent Extension.dc.html` (Plan #35). */
+  * { box-sizing: border-box; }
   body {
-    font-family: system-ui, -apple-system, sans-serif;
-    color: #111827;
+    font-family: 'Archivo', system-ui, sans-serif;
+    font-weight: 400;
+    color: #201e1d; /* text */
+    background: #f3f2f2; /* bg */
     max-width: 420px;
     margin: 32px auto;
     padding: 0 16px;
   }
-  h1 { font-size: 18px; margin-bottom: 4px; }
-  p.hint { color: #6b7280; font-size: 13px; margin-top: 0; }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  h1 { font-size: 18px; font-weight: 800; margin: 0; }
+  p.hint { color: color-mix(in srgb, #201e1d 55%, transparent); font-size: 13px; margin-top: 0; } /* text-muted */
   label {
     display: block;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    background: #fff;
+    border: 2px solid #201e1d; /* text */
     padding: 12px 14px;
     margin-bottom: 10px;
     cursor: pointer;
     font-size: 14px;
   }
-  label span.title { font-weight: 600; display: block; }
-  label span.sub { color: #6b7280; font-size: 12px; }
-  input[type="radio"] { margin-right: 8px; }
-  #note { font-size: 13px; color: #006A44; min-height: 18px; }
+  label span.title { font-weight: 800; display: block; }
+  label span.sub { color: color-mix(in srgb, #201e1d 55%, transparent); font-size: 12px; } /* text-muted */
+  input[type="radio"] { margin-right: 8px; accent-color: #ec3013; /* accent */ }
+  #note { font-size: 13px; color: #ec3013; min-height: 18px; } /* accent */
   fieldset { border: none; padding: 0; margin: 0 0 24px 0; }
-  h1 { margin-bottom: 4px; }
 </style>
 </head>
 <body>
-  <fieldset>
-    <h1>Fluent — Backend</h1>
+  <div class="header"><span id="header-mark"></span><h1>Fluent — Settings</h1></div>
+
+  <!-- Dev-only: which backend to talk to. Hidden entirely for anyone but the
+       developer's own account (see background.js's DEV_EMAIL/devUnlocked) —
+       a real user only ever has one backend, so showing "Production" as if
+       it were a real choice is just confusing chrome for them. -->
+  <fieldset id="backend-section" hidden>
     <p class="hint">Choose which backend the extension talks to. Switching clears your saved connection (each environment uses a different login).</p>
 
     <label>
@@ -68,6 +88,7 @@
     </label>
   </fieldset>
 
+  <script src="theme.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

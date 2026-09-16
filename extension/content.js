@@ -1,10 +1,13 @@
-// Content script — draws a small floating icon + translation card next to a
+// Content script — draws a small floating pill + "Add card" next to a
 // selected word. Everything lives inside a CLOSED shadow root with inline
 // styles so host-page CSS/CSP can neither style nor read our UI, and our UI
 // can never leak layout/class names into the host page.
 //
 // No network calls happen here — all backend access goes through
 // background.js via chrome.runtime.sendMessage.
+//
+// Visual values below pixel-match `temp_files/redesign extention/Fluent
+// Extension.dc.html` (Plan #35) via extension/theme.js's FLUENT_THEME.
 
 (() => {
   let hostEl = null;
@@ -12,6 +15,7 @@
   let iconEl = null;
   let cardEl = null;
   let lastRect = null;
+  let lastWord = null;
 
   // ── Selection validation ────────────────────────────────────────────────
 
@@ -56,6 +60,45 @@
     hostEl.style.zIndex = '2147483647';
     document.documentElement.appendChild(hostEl);
     shadow = hostEl.attachShadow({ mode: 'closed' });
+
+    // Bundled Archivo fonts — only content.js has chrome.runtime.getURL(),
+    // so the @font-face declarations (and the src url()s they need) live
+    // here, injected into the shadow root's own <style>, never the host
+    // page's <head>. popup.html/options.html instead load Archivo from
+    // Google Fonts directly (see Plan #35 Design tokens: font delivery
+    // differs by context, not by look). manifest.json's
+    // web_accessible_resources makes fonts/*.woff2 reachable via this URL
+    // even from inside a closed shadow root.
+    const style = document.createElement('style');
+    const fontLatin = chrome.runtime.getURL('fonts/archivo-latin.woff2');
+    const fontLatinExt = chrome.runtime.getURL('fonts/archivo-latin-ext.woff2');
+    style.textContent = `
+      @font-face {
+        font-family: 'Archivo';
+        src: url('${fontLatin}') format('woff2');
+        font-weight: 400 800;
+        font-style: normal;
+        font-display: swap;
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: 'Archivo';
+        src: url('${fontLatinExt}') format('woff2');
+        font-weight: 400 800;
+        font-style: normal;
+        font-display: swap;
+        unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+      @keyframes tak-float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-5px) rotate(-2deg); }
+      }
+      @keyframes tak-nod {
+        0%, 100% { transform: rotate(-3deg); }
+        50% { transform: rotate(3deg); }
+      }
+    `;
+    shadow.appendChild(style);
     return shadow;
   }
 
@@ -76,43 +119,130 @@
     removeCard();
   }
 
-  // ── Floating icon ────────────────────────────────────────────────────────
+  // ── Small style helpers (mirror the mockup's .btn/.input classes) ───────
+
+  function styleButton(btn, variant) {
+    Object.assign(btn.style, {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: variant === 'ghost' ? 'flex-start' : 'center',
+      gap: '6px',
+      width: '100%',
+      fontFamily: FLUENT_THEME.fontFamily,
+      fontWeight: '800',
+      fontSize: '14px',
+      padding: variant === 'ghost' ? '8px 4px' : '8px 14px',
+      border: variant === 'secondary' ? `1px solid ${FLUENT_THEME.divider}` : '1px solid transparent',
+      cursor: 'pointer',
+      background: variant === 'primary' ? FLUENT_THEME.accent : variant === 'secondary' ? '#fff' : 'transparent',
+      color: variant === 'primary' ? FLUENT_THEME.bg : variant === 'ghost' ? FLUENT_THEME.accent : FLUENT_THEME.text,
+    });
+    return btn;
+  }
+
+  function makeButton(label, variant) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = label;
+    return styleButton(btn, variant);
+  }
+
+  function styleInput(el) {
+    Object.assign(el.style, {
+      display: 'block',
+      width: '100%',
+      minHeight: '36px',
+      padding: '6px 10px',
+      fontFamily: FLUENT_THEME.fontFamily,
+      fontSize: '14px',
+      color: FLUENT_THEME.text,
+      background: FLUENT_THEME.surface,
+      border: `1px solid ${FLUENT_THEME.divider}`,
+      boxSizing: 'border-box',
+    });
+    return el;
+  }
+
+  // English ordinal suffix (1st, 2nd, 3rd, 4th, 11th, 21st, …) — used for the
+  // saved-confirmation view's "Nth word saved".
+  function ordinal(n) {
+    const rem100 = n % 100;
+    if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+    switch (n % 10) {
+      case 1: return `${n}st`;
+      case 2: return `${n}nd`;
+      case 3: return `${n}rd`;
+      default: return `${n}th`;
+    }
+  }
+
+  // ── Collapsed selection pill ─────────────────────────────────────────────
 
   function showIcon(rect, word) {
     removeAll();
     const sh = ensureHost();
-    const icon = document.createElement('div');
-    icon.textContent = 'f.';
-    const { x, y } = clamp(rect.right, rect.bottom + 4, 24, 24);
-    Object.assign(icon.style, {
+    const pill = document.createElement('div');
+    const { x, y } = clamp(rect.right - 200, rect.bottom + 4, 200, 56);
+    Object.assign(pill.style, {
       position: 'fixed',
       left: `${x}px`,
       top: `${y}px`,
-      width: '24px',
-      height: '24px',
-      borderRadius: '50%',
-      background: '#006A44',
-      color: '#fff',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      fontSize: '11px',
-      fontWeight: '700',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
+      gap: '12px',
+      background: '#fff',
+      border: `2px solid ${FLUENT_THEME.divider}`,
+      padding: '10px 14px',
+      fontFamily: FLUENT_THEME.fontFamily,
       cursor: 'pointer',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
       userSelect: 'none',
     });
-    icon.addEventListener('mousedown', (e) => e.stopPropagation());
-    icon.addEventListener('click', (e) => {
+
+    const iconWrap = document.createElement('span');
+    iconWrap.innerHTML = takBareSVG(20);
+    Object.assign(iconWrap.style, {
+      display: 'inline-flex',
+      flexShrink: '0',
+      // Bare mark + a CSS nod animation on this wrapper — mirrors the
+      // mockup's `takNod` keyframe applied to the icon's own <g>, without
+      // needing a third theme.js pose helper for it.
+      animation: 'tak-nod 1.8s ease-in-out infinite',
+      transformOrigin: '50% 60%',
+    });
+    pill.appendChild(iconWrap);
+
+    const label = document.createElement('span');
+    // "Add", not "Save" — matches the expanded card's own "Add to learn" /
+    // "Add "word"" button wording one click later in the same flow.
+    label.textContent = 'Add';
+    Object.assign(label.style, {
+      fontWeight: '800',
+      fontSize: '13px',
+      letterSpacing: '0.06em',
+      textTransform: 'uppercase',
+      color: FLUENT_THEME.text,
+    });
+    pill.appendChild(label);
+
+    const hint = document.createElement('span');
+    hint.textContent = '⌥S';
+    Object.assign(hint.style, {
+      marginLeft: 'auto',
+      fontSize: '12px',
+      color: FLUENT_THEME.muted,
+    });
+    pill.appendChild(hint);
+
+    pill.addEventListener('mousedown', (e) => e.stopPropagation());
+    pill.addEventListener('click', (e) => {
       e.stopPropagation();
       showCard(rect, word);
     });
-    sh.appendChild(icon);
-    iconEl = icon;
+    sh.appendChild(pill);
+    iconEl = pill;
   }
 
-  // ── Translation card ─────────────────────────────────────────────────────
+  // ── Add card ──────────────────────────────────────────────────────────────
 
   function sendMessage(message) {
     return new Promise((resolve) => {
@@ -131,45 +261,62 @@
 
     const card = document.createElement('div');
     // Height is an estimate for viewport-clamping only (the card's real
-    // height is content-driven) — kept generous since an enriched card with
-    // a grammar line + senses runs taller than the old translation-only card.
-    const { x, y } = clamp(rect.left, rect.bottom + 8, 260, 200);
+    // height is content-driven).
+    const { x, y } = clamp(rect.left, rect.bottom + 8, 300, 260);
     Object.assign(card.style, {
       position: 'fixed',
       left: `${x}px`,
       top: `${y}px`,
-      width: '260px',
-      background: '#ffffff',
-      color: '#111827',
-      border: '1px solid #e5e7eb',
-      borderRadius: '10px',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-      padding: '12px 14px',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      width: '300px',
+      background: '#fff',
+      color: FLUENT_THEME.text,
+      border: `2px solid ${FLUENT_THEME.text}`,
+      boxShadow: FLUENT_THEME.shadowLg,
+      fontFamily: FLUENT_THEME.fontFamily,
       fontSize: '13px',
       lineHeight: '1.4',
     });
     card.addEventListener('mousedown', (e) => e.stopPropagation());
 
+    const header = document.createElement('div');
+    Object.assign(header.style, {
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '12px',
+      padding: '16px',
+      borderBottom: `2px solid ${FLUENT_THEME.text}`,
+    });
+    const iconWrap = document.createElement('span');
+    iconWrap.innerHTML = takFloatSVG(38);
+    Object.assign(iconWrap.style, { display: 'inline-flex', flexShrink: '0' });
+    header.appendChild(iconWrap);
+
+    const titleCol = document.createElement('div');
     const title = document.createElement('div');
     title.textContent = word;
     Object.assign(title.style, {
-      fontWeight: '700',
-      fontSize: '15px',
-      marginBottom: '6px',
-      color: '#006A44',
+      fontWeight: '800',
+      fontSize: '22px',
+      lineHeight: '1.1',
       wordBreak: 'break-word',
     });
-    card.appendChild(title);
+    titleCol.appendChild(title);
+    header.appendChild(titleCol);
+    card.appendChild(header);
+
+    const contentWrap = document.createElement('div');
+    Object.assign(contentWrap.style, { padding: '16px', display: 'grid', gap: '12px' });
 
     const body = document.createElement('div');
     body.textContent = 'Translating…';
-    body.style.color = '#6b7280';
-    card.appendChild(body);
+    body.style.color = FLUENT_THEME.muted;
+    contentWrap.appendChild(body);
 
     const footer = document.createElement('div');
-    footer.style.marginTop = '10px';
-    card.appendChild(footer);
+    Object.assign(footer.style, { display: 'grid', gap: '8px' });
+    contentWrap.appendChild(footer);
+
+    card.appendChild(contentWrap);
 
     sh.appendChild(card);
     cardEl = card;
@@ -206,7 +353,7 @@
     const glossInputs = { en: null, ru: null };
 
     if (!translated.ok) {
-      body.style.color = '#6b7280';
+      body.style.color = FLUENT_THEME.muted;
       if (translated.status === 401 || translated.error === 'not_connected') {
         body.textContent = 'Connect Fluent to see translations.';
       } else if (translated.status === 404) {
@@ -223,7 +370,7 @@
         t.base_form.toLowerCase() !== word.toLowerCase() &&
         (t.base_translation_en || t.base_translation_ru)
       );
-      body.style.color = '#111827';
+      body.style.color = FLUENT_THEME.text;
       body.textContent = '';
       // The gloss must match whichever form is shown as the headword: the
       // base form's own translation when the headword was upgraded to it,
@@ -254,24 +401,26 @@
         const grammarLine = document.createElement('div');
         grammarLine.textContent = [t.part_of_speech, t.grammar_note].filter(Boolean).join(' · ');
         Object.assign(grammarLine.style, {
-          fontStyle: 'italic',
-          fontSize: '11px',
-          color: '#6b7280',
+          fontSize: '12px',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: FLUENT_THEME.muted,
           marginTop: '2px',
-          marginBottom: '4px',
         });
-        card.insertBefore(grammarLine, body);
+        // Part of the header's title column in the mockup (icon | title +
+        // grammar note), not a separate row in the body below.
+        titleCol.appendChild(grammarLine);
       }
       if (Array.isArray(t.senses) && t.senses.length > 0) {
         const sensesBox = document.createElement('div');
-        sensesBox.style.marginTop = '6px';
+        sensesBox.style.marginTop = '2px';
         t.senses.forEach((sense, i) => {
           const line = document.createElement('div');
           line.textContent = `${i + 1}. ${sense}`;
-          Object.assign(line.style, { fontSize: '12px', color: '#374151', marginTop: '2px' });
+          Object.assign(line.style, { fontSize: '12px', color: FLUENT_THEME.text, marginTop: '2px' });
           sensesBox.appendChild(line);
         });
-        card.insertBefore(sensesBox, footer);
+        contentWrap.insertBefore(sensesBox, footer);
       }
     }
 
@@ -287,19 +436,11 @@
     const input = document.createElement('input');
     input.type = 'text';
     input.value = value || '';
-    Object.assign(input.style, {
-      display: 'block',
-      width: '100%',
-      marginTop: '2px',
-      padding: '4px 6px',
-      border: '1px solid #d1d5db',
-      borderRadius: '4px',
-      fontSize: '13px',
-      fontFamily: 'inherit',
-      color: '#111827',
-      background: '#fff',
-      boxSizing: 'border-box',
-    });
+    styleInput(input);
+    input.style.marginTop = '2px';
+    input.style.minHeight = '';
+    input.style.padding = '4px 6px';
+    input.style.background = '#fff';
     return input;
   }
 
@@ -321,9 +462,10 @@
         const strong = document.createElement('strong');
         strong.textContent = part;
         Object.assign(strong.style, {
+          color: FLUENT_THEME.accent,
           textDecoration: 'underline',
-          textDecorationColor: '#10b981',
-          textDecorationThickness: '2px',
+          textDecorationColor: FLUENT_THEME.accent,
+          textDecorationThickness: '3px',
         });
         el.appendChild(strong);
       } else if (part) {
@@ -332,30 +474,12 @@
     });
   }
 
-  function makeButton(label, bg, color) {
-    const btn = document.createElement('button');
-    btn.textContent = label;
-    Object.assign(btn.style, {
-      width: '100%',
-      padding: '8px 10px',
-      borderRadius: '6px',
-      border: 'none',
-      cursor: 'pointer',
-      fontSize: '12px',
-      fontWeight: '600',
-      fontFamily: 'inherit',
-      background: bg,
-      color,
-    });
-    return btn;
-  }
-
   async function renderFooter(footer, status, word, translated, hasBaseForm, glossInputs, listsResp) {
     footer.innerHTML = '';
     const base = (status && status.base) || 'https://fluent.lt';
 
     if (!status || !status.connected) {
-      const btn = makeButton('Connect Fluent', '#006A44', '#fff');
+      const btn = makeButton('Connect Fluent', 'primary');
       btn.addEventListener('click', async () => {
         btn.disabled = true;
         btn.textContent = 'Opening fluent.lt…';
@@ -373,7 +497,7 @@
     }
 
     if (!status.isPremium && !status.isAdmin) {
-      const btn = makeButton('Upgrade to add', '#FFB81C', '#111827');
+      const btn = makeButton('Upgrade to add', 'primary');
       btn.addEventListener('click', () => {
         window.open(`${base}/dashboard`, '_blank', 'noopener');
       });
@@ -392,17 +516,7 @@
 
     if (listsResp && listsResp.ok && Array.isArray(listsResp.data)) {
       selectEl = document.createElement('select');
-      Object.assign(selectEl.style, {
-        width: '100%',
-        marginBottom: '8px',
-        padding: '6px 8px',
-        borderRadius: '6px',
-        border: '1px solid #d1d5db',
-        fontSize: '12px',
-        fontFamily: 'inherit',
-        background: '#fff',
-        color: '#111827',
-      });
+      styleInput(selectEl);
 
       const defaultOpt = document.createElement('option');
       defaultOpt.value = '';
@@ -450,7 +564,7 @@
 
     const btn = makeButton(
       basePayload ? `Add "${activePayload.lithuanian}"` : 'Add to learn',
-      '#C1272D', '#fff'
+      'primary'
     );
     if (!activePayload) {
       btn.disabled = true;
@@ -458,22 +572,8 @@
 
     let toggleLink = null;
     if (basePayload && selectedPayload) {
-      toggleLink = document.createElement('button');
-      toggleLink.type = 'button';
-      toggleLink.textContent = `add "${selectedPayload.lithuanian}" instead`;
-      Object.assign(toggleLink.style, {
-        display: 'block',
-        width: '100%',
-        marginTop: '6px',
-        padding: '2px 0',
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        fontSize: '11px',
-        color: '#6b7280',
-        textDecoration: 'underline',
-        fontFamily: 'inherit',
-      });
+      toggleLink = makeButton(`add "${selectedPayload.lithuanian}" instead`, 'ghost');
+      toggleLink.style.fontSize = '12px';
       toggleLink.addEventListener('click', () => {
         const showingBase = activePayload === basePayload;
         activePayload = showingBase ? selectedPayload : basePayload;
@@ -511,13 +611,8 @@
       });
       if (!cardEl) return;
       if (res.ok) {
-        if (res.data.already_added) {
-          btn.textContent = res.data.location ? `Already in "${res.data.location}"` : 'Already in your list';
-        } else {
-          btn.textContent = 'Added!';
-        }
-        if (toggleLink) toggleLink.remove();
         await chrome.storage.local.set({ lastListId: listId });
+        await showSaved(res.data, status);
       } else if (res.error === 'premium') {
         btn.textContent = 'Upgrade to add';
         btn.disabled = false;
@@ -528,6 +623,75 @@
     });
     footer.appendChild(btn);
     if (toggleLink) footer.appendChild(toggleLink);
+  }
+
+  // ── Saved — confirmation state ───────────────────────────────────────────
+  // Replaces the whole card (not a button-text swap): one shape for both a
+  // genuinely new word (real ordinal, re-read from /me/stats) and an
+  // already-added word (its saved location, no ordinal claim) — single
+  // "Open list" button, no Undo (Plan #35 — both are the user's explicit
+  // call, dropping the mockup's Undo button and its "repeats tomorrow" line,
+  // which has no backing data: adding a word creates no review schedule).
+  async function showSaved(data, status) {
+    if (!cardEl) return;
+    const card = cardEl;
+
+    let subtitleText;
+    if (data.already_added) {
+      subtitleText = data.location ? `Already saved · in "${data.location}"` : 'Already saved';
+    } else {
+      // NOT getStats' known+learning: adding a word here only creates a
+      // WordListItem, never a UserWordProgress row (see
+      // backend/routers/extension.py's add_extension_word), so known+learning
+      // wouldn't have moved yet and would show a stale ordinal. getLists'
+      // per-list word_count is unfiltered by study status and already
+      // includes the word this call just added, so it's summed instead.
+      const listsResp = await sendMessage({ type: 'getLists' });
+      if (cardEl !== card) return; // dismissed or replaced while waiting
+      const total = (listsResp && listsResp.ok && Array.isArray(listsResp.data))
+        ? listsResp.data.reduce((sum, wl) => sum + (wl.word_count || 0), 0)
+        : null;
+      subtitleText = total ? `${ordinal(total)} word saved` : 'Word saved';
+    }
+    if (cardEl !== card) return;
+
+    card.innerHTML = '';
+
+    const header = document.createElement('div');
+    Object.assign(header.style, {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '16px',
+      padding: '16px',
+      borderBottom: `2px solid ${FLUENT_THEME.text}`,
+    });
+    const iconWrap = document.createElement('span');
+    iconWrap.innerHTML = takWaveSVG(54);
+    Object.assign(iconWrap.style, { display: 'inline-flex', flexShrink: '0' });
+    header.appendChild(iconWrap);
+
+    const textCol = document.createElement('div');
+    const title = document.createElement('div');
+    title.textContent = 'Saved!';
+    Object.assign(title.style, { fontWeight: '800', fontSize: '18px' });
+    textCol.appendChild(title);
+
+    const subtitle = document.createElement('div');
+    subtitle.textContent = subtitleText;
+    Object.assign(subtitle.style, { fontSize: '13px', color: FLUENT_THEME.muted });
+    textCol.appendChild(subtitle);
+    header.appendChild(textCol);
+    card.appendChild(header);
+
+    const footer = document.createElement('div');
+    Object.assign(footer.style, { padding: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' });
+    const openBtn = makeButton('Open list', 'secondary');
+    openBtn.style.width = 'auto';
+    openBtn.addEventListener('click', () => {
+      window.open(`${status.base}/dashboard/vocabulary`, '_blank', 'noopener');
+    });
+    footer.appendChild(openBtn);
+    card.appendChild(footer);
   }
 
   // ── Event wiring ─────────────────────────────────────────────────────────
@@ -542,6 +706,7 @@
         return;
       }
       lastRect = info.rect;
+      lastWord = info.text;
       showIcon(info.rect, info.text);
     }, 0);
   });
@@ -553,6 +718,7 @@
       const info = getSelectionInfo();
       if (!info || !isCandidateWord(info.text)) return;
       lastRect = info.rect;
+      lastWord = info.text;
       showCard(info.rect, info.text);
     }, 0);
   });
@@ -562,7 +728,18 @@
     removeAll();
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') removeAll();
+    if (e.key === 'Escape') {
+      removeAll();
+      return;
+    }
+    // Real "⌥S" shortcut hint on the collapsed pill: while it's showing (a
+    // valid selection is active), Alt+S opens the Add card directly, same as
+    // clicking the pill. `e.code` (the physical key) rather than `e.key` —
+    // on macOS, Option+S types 'ß', not 's'.
+    if (e.altKey && e.code === 'KeyS' && iconEl && lastRect && lastWord) {
+      e.preventDefault();
+      showCard(lastRect, lastWord);
+    }
   });
   window.addEventListener('scroll', () => removeAll(), true);
   window.addEventListener('blur', () => removeAll());

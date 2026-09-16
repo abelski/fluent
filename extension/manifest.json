@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Fluent — Lithuanian Word Helper",
-  "version": "1.2.0",
+  "version": "1.5.0",
   "description": "Select a Lithuanian word on any page to see its translation and add it to your Fluent vocabulary.",
   "permissions": ["storage", "scripting", "tabs"],
   "host_permissions": [
@@ -15,8 +15,14 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["theme.js", "content.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["fonts/*.woff2"],
+      "matches": ["<all_urls>"]
     }
   ],
   "action": {
