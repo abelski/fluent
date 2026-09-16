@@ -83,3 +83,47 @@ def build_leaderboard_score_joins(
             ) x ON x.user_id = u.id
     """
     return sql, params
+
+
+# --- Weekly reward entitlement (#31) --------------------------------------
+# Rank → days of Premium granted when the reward email is sent.
+#
+# Tiered rather than a flat week for all three. A weekly grant of N days covers
+# N/7 of the calendar, so only N = 7 keeps pace with the week — at 4 and 2 days
+# the 2nd- and 3rd-place winners meet the paywall 3 and 5 days a week instead of
+# never. Measured before the change: 48 grants had gone to 12 users, 4 of whom
+# took 36 of them, and none of the 12 had ever paid.
+REWARD_DAYS = {1: 7, 2: 4, 3: 2}
+
+
+def grant_reward_premium(user, rank: int, now: datetime | None = None) -> int:
+    """Roll `user`'s Premium window out to `now + REWARD_DAYS[rank]`. Returns days granted.
+
+    Deliberately **not** additive. The previous `premium_until += 7 days` let repeat
+    winners bank Premium: the top-3 set is near-stable week to week, so the same few
+    accounts accrued faster than the calendar burned and never saw the paywall at all.
+    Rolling to a fixed window instead means a winner is covered for exactly their prize
+    and no longer.
+
+    This is the opposite of `billing._extend_premium`, which uses max() so a *paid*
+    renewal never moves the date backwards, and the two must stay separate: paid time is
+    bought, reward time is granted. A user who is already covered past the new window
+    keeps the later date and gains nothing — correct for a Stripe subscriber who also
+    wins, who is not owed a second entitlement.
+
+    Returns 0 for an unrewarded rank, and for a user on an unlimited grant
+    (`is_premium` with `premium_until IS NULL`) — writing a date there would *downgrade*
+    an admin's permanent grant to a few days.
+    """
+    days = REWARD_DAYS.get(rank, 0)
+    if not days:
+        return 0
+    if user.is_premium and user.premium_until is None:
+        return 0
+    if now is None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+    window_end = now + timedelta(days=days)
+    if user.premium_until is None or user.premium_until < window_end:
+        user.premium_until = window_end
+    user.is_premium = True
+    return days

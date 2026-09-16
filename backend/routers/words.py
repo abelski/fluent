@@ -484,6 +484,24 @@ def get_list(
 DEFAULT_SESSION_SIZE = 10
 DEFAULT_NEW_RATIO = 0.7  # 70% new words, 30% review
 
+# Review-first (#31). When a list holds more due words than fit in one session, the study
+# page offers a screen with two buttons before the session starts. "Повторить" comes back
+# here with mode=review; "Учить новое" comes back with no mode at all.
+#
+# There is deliberately no *silent* clamp. An earlier draft quietly capped the new-word
+# share at 0.2 whenever the backlog was large, which meant a button labelled "learn new"
+# would not have done what it said. The threshold is a **count**, not a percentage of the
+# user's words: 20% of 20 scheduled words is 4 (nothing), 20% of 1000 is 200 (ten days of
+# work). What matters is whether due reviews can fill today's session on their own.
+STUDY_MODES = ("review",)
+
+
+def session_new_ratio(user, mode: Optional[str]) -> float:
+    """New-word share for this session: 0 when the user asked for review, else their own."""
+    if mode == "review":
+        return 0.0
+    return user.new_words_ratio if user.new_words_ratio is not None else DEFAULT_NEW_RATIO
+
 
 
 @router.get("/lists/{list_id}/study")
@@ -491,6 +509,10 @@ def get_study_words(
     list_id: int,
     star_level: int = Query(default=1, ge=1, le=3),
     include_known: bool = Query(default=False),
+    # #31: set to "review" when the user picked «Повторить» on the review-first screen.
+    # Absent means the ordinary mix — including when they picked «Учить новое», which must
+    # behave exactly as if the screen had never appeared.
+    mode: Optional[str] = Query(default=None, pattern="^review$"),
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
@@ -514,6 +536,11 @@ def get_study_words(
     wl = session.get(WordList, list_id)
     if not wl or wl.archived:
         raise HTTPException(status_code=404, detail="List not found")
+
+    # #31: set only on the authenticated path below; the anonymous branch never
+    # clamps (no progress rows, so nothing is due) and must still reach the return.
+    due_count = 0
+    review_first = False
 
     # Try to get authenticated user for progress-based prioritization.
     # Auth is optional here — unauthenticated users still get a study session.
@@ -609,7 +636,11 @@ def get_study_words(
         review_words = learning_words + known_words
 
         total = user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE
-        new_ratio = user.new_words_ratio if user.new_words_ratio is not None else DEFAULT_NEW_RATIO
+        # Words already waiting in *this* list — the only ones this session could show.
+        # A global backlog count would clamp a list whose own words are all fresh.
+        due_count = len(learning_words) + len(due_known)
+        review_first = due_count > total
+        new_ratio = session_new_ratio(user, mode)
         new_count = round(total * new_ratio)
         review_count = total - new_count
 
@@ -675,6 +706,9 @@ def get_study_words(
         "distractors": distractors,
         "more_new_at_higher_level": more_new_at_higher_level,
         "new_words_at_higher_level": new_words_at_higher_level,
+        # #31: non-null only when the new-word share was actually clamped, so the
+        # frontend can render its one line without re-deriving the rule.
+        "review_first": {"due": due_count} if review_first else None,
     }
 
 
@@ -700,11 +734,23 @@ def get_list_progress(
     status_map = {p.word_id: p.status for p in progress_records}
     known = sum(1 for wid in word_ids if status_map.get(wid) == "known")
     learning = sum(1 for wid in word_ids if status_map.get(wid) == "learning")
+    # #31: how many words in this list are waiting for review. The study page reads it to
+    # decide whether to offer the review-first screen, and asks *here* rather than from
+    # /study because /study charges a daily session — offering the choice must not cost one.
+    today = datetime.now(timezone.utc).date()
+    due_map = {p.word_id: p.next_review for p in progress_records}
+    due = sum(
+        1 for wid in word_ids
+        if status_map.get(wid) == "learning"
+        or (status_map.get(wid) == "known" and (due_map.get(wid) is None or due_map[wid] <= today))
+    )
     return {
         "total": len(word_ids),
         "known": known,
         "learning": learning,
         "new": len(word_ids) - known - learning,
+        "due": due,
+        "session_size": user.words_per_session if user.words_per_session is not None else DEFAULT_SESSION_SIZE,
     }
 
 

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useT } from '../../../lib/useT';
+import PremiumOfferCard from './PremiumOfferCard';
 
 interface QuotaLike {
   premium_active: boolean;
@@ -51,26 +52,15 @@ export default function DailyLimitBanner({ quota }: DailyLimitBannerProps) {
   }
 
   // Out of sessions — the only moment the user actually feels the limit, so this
-  // is where the offer goes: what it costs, what it unlocks, one real button.
+  // is where the offer goes. Shape, button and price line come from the shared
+  // PremiumOfferCard (#32); only the copy is specific to hitting the daily wall.
   return (
-    <div className="border border-line rounded-[14px] px-5 py-5 mb-6" data-testid="daily-limit-banner">
-      <p className="text-[15px] font-semibold text-ink mb-1">{tr.lists.wallTitle}</p>
-      <p className="text-[13.5px] text-muted mb-4">{tr.lists.wallSubtitle}</p>
-      <ul className="flex flex-col gap-1.5 mb-5">
-        {tr.lists.wallPerks.map((perk) => (
-          <li key={perk} className="flex items-start gap-2 text-[13.5px] text-ink">
-            <span className="text-emerald-600 leading-5">✓</span>
-            {perk}
-          </li>
-        ))}
-      </ul>
-      <Link
-        href="/pricing"
-        data-testid="daily-limit-cta"
-        className="inline-block px-5 py-2.5 text-center text-[14px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors"
-      >
-        {tr.lists.wallCta.replace('{price}', tr.pricing.premiumPrice)}
-      </Link>
-    </div>
+    <PremiumOfferCard
+      testId="daily-limit-banner"
+      className="mb-6"
+      title={tr.lists.wallTitle}
+      subtitle={tr.lists.wallSubtitle}
+      perks={tr.lists.wallPerks}
+    />
   );
 }

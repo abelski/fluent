@@ -61,7 +61,9 @@ nudge): that user can still study, so a full upsell there is an interruption, no
 
 The card is the existing banner grown — same `border border-line rounded-[14px]`, no shadow,
 `emerald-600` accent — so it introduces no new component-library pattern. It keeps
-`data-testid="daily-limit-banner"`; the button is `daily-limit-cta`.
+`data-testid="daily-limit-banner"`; the button and price line are `daily-limit-banner-cta` and
+`daily-limit-banner-price` — #32 moved the card into the shared `PremiumOfferCard`, which derives
+both from its root id, so every surface that sells Premium names them the same way.
 
 The perk list is its own copy key (`lists.wallPerks`), **not** a slice of
 `pricing.premiumFeatures`. That array leads with items the free tier also has ("All dictionaries
@@ -82,3 +84,65 @@ screen and have no reason to.
 Fixing it means making the weekly reward something that is not the paid product (a badge, a streak
 freeze, a cosmetic), and grandfathering current holders so nobody feels robbed. Deferred — the
 user chose the wall work first.
+
+## The weekly leaderboard reward (#31, 2026-09-16)
+
+### What it was giving away
+
+Measured from `prepared_message` where `message_type = 'reward'`: **48 grants, 12 distinct
+winners, and 4 of those users took 36 of the 48.** `norpus1` won 11 of roughly 17 weeks. None of
+the 12 had ever reached Stripe. Five of the ten most active users in the previous 30 days held
+Premium and had never paid.
+
+Two mechanisms caused it:
+
+1. **A flat 7 days for all three places.** A weekly grant of N days covers N/7 of the calendar, so
+   7 days a week is *continuous* Premium for anyone who holds a top-3 spot — and the top 3 is a
+   near-stable set.
+2. **The grant was additive** (`premium_until += 7 days`). Repeat winners banked runway on top of
+   coverage they already had, so they drifted further from the paywall every week.
+
+### What it does now
+
+`leaderboard_service.REWARD_DAYS = {1: 7, 2: 4, 3: 2}` is the single source of the number, read by
+both the grant and the email copy so the promise cannot drift from the entitlement.
+
+`leaderboard_service.grant_reward_premium()` rolls `premium_until` out to `now + days` and never
+further — a window, not a running total. Both send paths use it (`scheduler.send_weekly_rewards`
+and `admin.send_prepared_message`), so the manual and automatic paths cannot diverge.
+
+**This is deliberately the opposite of `billing._extend_premium`**, which uses `max()` so a paid
+Stripe renewal never moves the date backwards. Paid time is bought and must be honoured; reward
+time is granted and must expire. Keep the two functions separate — merging them would either let
+rewards bank again or let a renewal shorten a subscription.
+
+One guard worth knowing: a user with `is_premium` and `premium_until IS NULL` holds an admin's
+*unlimited* grant. `grant_reward_premium` returns 0 and touches nothing there — writing a 7-day
+date would silently downgrade a permanent grant to a week.
+
+At 7 days, first place is still continuously covered for as long as they hold the spot. That was a
+deliberate product call (2026-09-16), not an oversight; 5 days was proposed and rejected.
+
+### The double-grant
+
+On 2026-09-14 all three winners received **two** reward rows each, created 0.6s apart at exactly
+10:00. `norpus1` and `Satti Preetham` were granted 14 days instead of 7. Two app instances ran the
+weekly job together — Render overlaps instances during a deploy, and each runs its own APScheduler.
+`generate_weekly_reward_messages`'s `already_generated` check is a read-then-write race: both
+instances read an empty set and both inserted.
+
+The fix is a partial UNIQUE index on `(user_id, message_type, rewarded_week)`, declared both in the
+migration and in `PreparedMessage.__table_args__` (`database.py` builds the schema from model
+metadata via `create_all()`, so a migration-only index would be missing from a fresh DB and from
+the test suite). The generator wraps its insert in a savepoint and skips on `IntegrityError`, so
+the loser of the race drops its row without poisoning the batch.
+
+Historical rows were left with `rewarded_week` NULL rather than backfilled, and the two
+over-granted users were **not** clawed back — a decision, not an oversight.
+
+### Reading the numbers
+
+Track `subscription_status = 'active'`. **Never** `is_premium`: it is never reset when a grant
+lapses (`billing.py` has no expiry job by design — `is_premium_active()` lapses users at read
+time), so it counts expired rewards as subscribers. On 2026-09-16 the admin panel showed 15
+Premium users; 3 had ever reached Stripe and **2 were paying**.

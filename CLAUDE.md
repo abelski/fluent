@@ -75,6 +75,24 @@
 - When you hit a non-obvious gotcha, constraint, or piece of investigative context (a broken/missing tool, an undocumented quirk, a workaround, "why this isn't just X") — write it down in `documentation/` instead of letting it live only in conversation. Re-deriving the same finding by re-exploring the codebase in a future session burns tokens for nothing; a short note prevents that.
 - Document architecture decisions too, not just gotchas: whenever you choose one approach over a plausible alternative for a non-obvious reason (a tradeoff, a constraint from hosting/DB/auth, a rejected simpler option), write the decision and its "why" into `documentation/` next to the related feature. Future sessions should be able to tell *why* something is built the way it is without re-deriving it from the diff.
 - Only ever run one local dev server per side (one `uvicorn`/backend process, one `next dev`/frontend process) at a time. Before starting a server, check whether one is already running (e.g. `ps aux | grep -E "uvicorn|next dev"` or the listening port) and reuse/restart it instead of spawning a duplicate — stale extra instances cause confusing port conflicts and stale-code symptoms.
+- **Every plan's `## Definition of Done` must include, for any user-facing change, three explicit
+  checks: both languages (RU + EN), mobile at 375px, and screenshots proving each.** Not "verify the
+  UI" — name the three. A plan whose Definition of Done omits them is not finished being written,
+  and `ralph-implement` gates on that section, so anything missing there never gets checked at all.
+- **Any change that touches what a user sees ships with evidence screenshots.** Not optional and
+  not only when asked: take them before declaring the work done, look at them yourself, and say
+  what they show. Cover every state the change can produce (empty, populated, error), both
+  languages (RU + EN) and both widths (desktop and 375px) — a layout that works at 1280px often
+  breaks on a phone, and Russian and English strings differ enough in length to break different
+  things. Drive them with Playwright against the local server and mock the API, so a shot never
+  depends on live data and never spends a real user's quota. **Mock any endpoint whose value
+  differs locally from production** (e.g. `/api/billing/config` returns `{"enabled": true}` in
+  production but false locally without a Stripe key) — a screenshot of a state users never see is
+  worse than no screenshot.
+- Screenshots go in `temp_files/screenshots/<plan-name>/` — a subfolder named after the plan the
+  shot belongs to (e.g. `temp_files/screenshots/plan_31_review-first-and-premium-leaks/`). Never
+  drop them loose in `temp_files/` or in the repo root: loose shots from different changes pile up
+  with no way to tell which belongs to what, and they get committed by accident.
 - Give every feature or notable change a sequential number so change order stays legible across sessions (plan files, commits, and `documentation/` notes referencing it). Track the running counter and log in `documentation/CHANGELOG.md` — append an entry (`#N — date — short description`) whenever a feature/change is completed, and reuse that number when naming its plan file (e.g. `plans/improvements/active/plan_<N>_<slug>.md`).
 
 # Design System — ALWAYS consult before writing UI

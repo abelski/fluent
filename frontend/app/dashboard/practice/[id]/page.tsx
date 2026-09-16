@@ -9,6 +9,7 @@ import { BACKEND_URL, getToken, resolvePracticeId } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import PageMascot from '../../../../components/PageMascot';
 import TakChevron from '../../../../components/TakChevron';
+import PremiumOfferCard from '../../components/PremiumOfferCard';
 
 // --- Dialogue rendering helpers ---
 
@@ -155,6 +156,10 @@ export default function PracticeCategoryPage() {
   const [view, setView] = useState<PageView>('tests');
   const [activeTest, setActiveTest] = useState<ActiveTest | null>(null);
   const [pendingTest, setPendingTest] = useState<PracticeTest | null>(null);
+  // #32: shown in place of this list when a free user opens a Premium test. It used to
+  // push to /dashboard/premium, which said "this test" about a test no longer on screen,
+  // offered no way back to it, and sold via `mailto:` while Stripe was already live.
+  const [premiumWall, setPremiumWall] = useState(false);
   const [examLoading, setExamLoading] = useState(false);
   const [examError, setExamError] = useState('');
 
@@ -246,7 +251,7 @@ export default function PracticeCategoryPage() {
   function startTest(test: PracticeTest) {
     if (test.is_locked) return;
     if (test.is_premium && !isPremiumUser) {
-      router.push('/dashboard/premium');
+      setPremiumWall(true);
       return;
     }
     if (test.lesson_text_lt) {
@@ -341,6 +346,16 @@ export default function PracticeCategoryPage() {
                 }
               </div>
             </div>
+
+            {premiumWall && (
+              <PremiumOfferCard
+                testId="practice-premium-wall"
+                className="mb-6"
+                title={t.premiumWallTitle}
+                subtitle={t.premiumWallSubtitle}
+                perks={t.premiumWallPerks}
+              />
+            )}
 
             {/* Source URL callout (e.g. constitution link) */}
             {sourceUrl && (

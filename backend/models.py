@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, date, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field
-from sqlalchemy import Index, UniqueConstraint
+from sqlalchemy import Index, UniqueConstraint, text
 
 
 def _utcnow() -> datetime:
@@ -468,6 +468,15 @@ class PreparedMessage(SQLModel, table=True):
     Created by the daily scheduler for users with no login for 30+ days.
     Admins can edit subject/body and send via SMTP."""
     __tablename__ = "prepared_message"
+    # Declared here as well as in the migration because `database.py` builds the schema
+    # from this metadata via create_all() — an index that lives only in the migration
+    # would be missing from a fresh DB and from the test suite. `postgresql_where` is
+    # ignored on SQLite, which simply makes it a plain unique index there; NULL
+    # rewarded_week (every reengagement row) stays non-colliding on both engines.
+    __table_args__ = (
+        Index("uq_prepared_message_user_type_week", "user_id", "message_type", "rewarded_week",
+              unique=True, postgresql_where=text("rewarded_week IS NOT NULL")),
+    )
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="user.id", index=True)
     user_email: str                          # denormalized for display after user deletion
@@ -480,6 +489,18 @@ class PreparedMessage(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_utcnow)
     sent_at: Optional[datetime] = None
     inactive_since: Optional[datetime] = None  # last_login value when message was generated
+    # Leaderboard reward/notice only (NULL for reengagement). `reward_rank` is the
+    # finishing position, and drives how many days of Premium the send grants — see
+    # leaderboard_service.REWARD_DAYS. `rewarded_week` is the Monday of the scored week;
+    # together with user_id/message_type it carries a partial UNIQUE index, so two app
+    # instances racing the weekly job (#31) can't both insert and double-grant.
+    #
+    # NOT named `rank`: Postgres reads `prepared_message.rank` as the functional-notation
+    # call `rank(prepared_message)` and fails with "WITHIN GROUP is required for
+    # ordered-set aggregate rank". SQLite has no such function, so the whole test suite
+    # stayed green while every real SELECT of this table 500'd.
+    reward_rank: Optional[int] = None
+    rewarded_week: Optional[date] = None
 
 
 import json as _json

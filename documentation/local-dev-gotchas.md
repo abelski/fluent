@@ -113,3 +113,30 @@ expected day with `date.today()` (local time, EEST = UTC+3) expects tomorrow's d
 after local midnight. `tests/test_streak.py`'s two activity-calendar tests did exactly that and
 failed every night in that window — found while validating #26. Fix: build expected dates with
 `datetime.now(timezone.utc).date()`, never `date.today()`.
+
+## Alembic: the head is not the last file in `ls`
+
+`ls migrations/versions/ | tail` gives you *alphabetical* order, which has nothing to do with the
+revision chain. The revision ids in this repo are hand-written hex-looking strings
+(`a1b2c3d4e5f6`, `f6a7b8c9d0e1`, …) that sort in an order unrelated to when they were created, so
+the alphabetically-last file is usually **not** the head. Picking a parent that way silently
+creates a branch, and `alembic upgrade head` then fails with "Multiple head revisions are present"
+— on deploy, not locally.
+
+Two things to check before writing a new migration (this bit once, in #31):
+
+```bash
+cd backend && .venv/bin/alembic heads     # the real head, if DATABASE_URL is set
+```
+
+With no DB handy, walk the files instead — parse `revision` / `down_revision` out of every file,
+and the head is the revision that appears as nobody's `down_revision`:
+
+```bash
+grep -H "^revision: str\|^down_revision" migrations/versions/*.py
+```
+
+Also **check the new revision id is not already taken.** The ids are chosen by hand, so collisions
+are easy: #31 first shipped `a7b8c9d0e1f2`, which `a7b8c9d0e1f2_add_verb_forms_to_word.py` already
+used. Two files with the same `revision` makes the graph ambiguous and alembic reports a duplicate
+head.

@@ -41,14 +41,39 @@ def generate_reengagement_email(name: str, days_inactive: int, lang: str) -> tup
     return subject, body
 
 
+def _ru_days(n: int) -> str:
+    """Russian day count with the right plural form: 1 день, 2-4 дня, 5+ дней."""
+    if n % 10 == 1 and n % 100 != 11:
+        return f"{n} день"
+    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+        return f"{n} дня"
+    return f"{n} дней"
+
+
+def _tier_line(lang: str) -> str:
+    """One line listing what each of the top 3 places wins. Built from REWARD_DAYS so the
+    promise in the email can never drift from what the grant actually does."""
+    from leaderboard_service import REWARD_DAYS
+    if lang == "ru":
+        parts = ", ".join(f"{r} место — {_ru_days(d)}" for r, d in sorted(REWARD_DAYS.items()))
+        return f"Premium каждую неделю получают трое: {parts}."
+    parts = ", ".join(f"#{r} — {d} day{'s' if d != 1 else ''}" for r, d in sorted(REWARD_DAYS.items()))
+    return f"Premium goes to the top 3 every week: {parts}."
+
+
 def generate_reward_email(name: str, rank: int, lang: str) -> tuple[str, str]:
-    """Return (subject, body) for a weekly leaderboard top-3 reward email (1 week premium)."""
+    """Return (subject, body) for a weekly leaderboard top-3 reward email.
+
+    Days granted follow the finishing rank (leaderboard_service.REWARD_DAYS) — the email
+    reads its number from the same dict the grant does, so the two cannot disagree."""
+    from leaderboard_service import REWARD_DAYS
+    days = REWARD_DAYS.get(rank, 0)
     if lang == "ru":
         subject = f"🏆 Вы #{rank} в рейтинге Fluent — вам начислен Premium!"
         body = (
             f"Привет, {name}!\n\n"
             f"Поздравляем — на прошлой неделе вы заняли #{rank} место в рейтинге Fluent! 🎉\n\n"
-            f"В знак признания вашего прогресса мы начисляем вам 1 неделю Fluent Premium.\n"
+            f"В знак признания вашего прогресса мы начисляем вам {_ru_days(days)} Fluent Premium.\n"
             f"Это уже активировано в вашем аккаунте — просто зайдите и пользуйтесь:\n"
             f"👉 https://fluent.lt/dashboard\n\n"
             f"Продолжайте учить литовский — вы на верном пути! 🇱🇹\n\n"
@@ -60,7 +85,7 @@ def generate_reward_email(name: str, rank: int, lang: str) -> tuple[str, str]:
         body = (
             f"Hi {name},\n\n"
             f"Congratulations — you ranked #{rank} on the Fluent leaderboard last week! 🎉\n\n"
-            f"As a reward for your progress, we've granted you 1 week of Fluent Premium.\n"
+            f"As a reward for your progress, we've granted you {days} day{'s' if days != 1 else ''} of Fluent Premium.\n"
             f"It's already active on your account — just log in and enjoy:\n"
             f"👉 https://fluent.lt/dashboard\n\n"
             f"Keep learning Lithuanian — you're doing great! 🇱🇹\n\n"
@@ -78,7 +103,7 @@ def generate_notice_email(name: str, rank: int, lang: str) -> tuple[str, str]:
             f"Привет, {name}!\n\n"
             f"Отличная работа — на прошлой неделе вы заняли #{rank} место в рейтинге Fluent! 💪\n\n"
             f"Хотите получить Fluent Premium бесплатно? Войдите в топ-3 в следующий раз!\n"
-            f"Три лучших пользователя каждой недели получают 1 неделю Premium в подарок.\n\n"
+            f"{_tier_line('ru')}\n\n"
             f"Продолжайте практиковаться:\n"
             f"👉 https://fluent.lt/dashboard\n\n"
             f"С уважением,\n"
@@ -90,7 +115,7 @@ def generate_notice_email(name: str, rank: int, lang: str) -> tuple[str, str]:
             f"Hi {name},\n\n"
             f"Great work — you ranked #{rank} on the Fluent leaderboard last week! 💪\n\n"
             f"Want to earn Fluent Premium for free? Reach the top 3 next time!\n"
-            f"Each week's top 3 users receive 1 week of Premium as a gift.\n\n"
+            f"{_tier_line('en')}\n\n"
             f"Keep practising:\n"
             f"👉 https://fluent.lt/dashboard\n\n"
             f"Best regards,\n"

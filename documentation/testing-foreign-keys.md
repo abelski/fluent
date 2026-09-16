@@ -68,3 +68,33 @@ Because `models.py` has no `relationship()` declarations, **SQLAlchemy never kno
 order for any pair of tables in this app.** Any multi-table delete is a candidate for this bug.
 Either flush between the steps, or delete through explicit statements in dependency order — and
 cover it with a test that has foreign keys switched on.
+
+---
+
+# Column names: `rank` is a trap in Postgres, invisible in SQLite
+
+Same shape of gap as the foreign keys above — the SQLite test DB accepts something Postgres
+rejects, so the suite stays green while production 500s.
+
+#31 first named a column `rank` on `prepared_message`. Every backend test passed. Against Neon,
+**every** select of that table failed:
+
+```
+psycopg.errors.WrongObjectType: WITHIN GROUP is required for ordered-set aggregate rank
+```
+
+The cause is Postgres' *functional notation*: `x.f` and `f(x)` are equivalent, so the perfectly
+ordinary SQLAlchemy output `SELECT prepared_message.rank FROM prepared_message` is parsed as a call
+to the built-in ordered-set aggregate `rank()` with the row as its argument. Qualifying the column
+does not help — qualifying is what triggers it. SQLite has no `rank` function, so the same SQL is
+just a column read there and the whole suite passed.
+
+The column is now `reward_rank`.
+
+**Rule:** don't name a column after a Postgres function, even a non-reserved one. The usual
+suspects are `rank`, `row_number`, `value`, `time`, `user`, `name`, `left`, `right`, `degrees`,
+`length`. When in doubt, prefix it with what it belongs to (`reward_rank`, not `rank`).
+
+**Why no test guards this.** It cannot be caught on SQLite, and the suite has no Postgres target.
+The cheap check is to hit the affected endpoint once against the real DB before deploying — which
+is how this one was found, not by the 571 green tests.

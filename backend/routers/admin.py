@@ -319,15 +319,11 @@ def send_prepared_message(
         session.commit()
         raise HTTPException(status_code=500, detail=str(exc))
 
-    # Grant 1 week of premium when a reward email is sent
+    # Grant Premium by finishing rank when a reward email is sent. Same helper the
+    # scheduler's auto-send uses, so the manual and automatic paths can't drift.
     if msg.message_type == "reward" and target:
-        now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
-        from quota import is_premium_active as _check_premium
-        if _check_premium(target) and target.premium_until is not None:
-            target.premium_until = target.premium_until + timedelta(days=7)
-        else:
-            target.is_premium = True
-            target.premium_until = now_naive + timedelta(days=7)
+        from leaderboard_service import grant_reward_premium
+        grant_reward_premium(target, msg.reward_rank or 0, datetime.now(timezone.utc).replace(tzinfo=None))
         session.add(target)
 
     session.add(msg)

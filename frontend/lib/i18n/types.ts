@@ -106,7 +106,8 @@ export interface Translations {
     wallTitle: string;
     wallSubtitle: string;
     wallPerks: string[];
-    wallCta: string; // {price} interpolated from pricing.premiumPrice
+    wallCta: string; // #32: the action only — the price lives in wallPriceNote below it
+    wallPriceNote: string;
     sessionsToday: string; // {count}/{limit}
     getPremium: string;
     premiumUntil: string; // date interpolated by caller
@@ -159,6 +160,12 @@ export interface Translations {
     advanceToLevel: string;
     studyAgain: string;
     moreNewAtHigherLevel: string; // banner shown when session fell back to review because new words are gated behind a higher star_level (issue #168)
+    reviewFirst: PluralForms; // #31: shown when due reviews already fill a session, so the new-word share was capped
+    reviewFirstTitle: string; // #31: heading of the review-first screen shown before a session
+    reviewFirstBody: PluralForms;
+    reviewFirstCta: PluralForms; // primary button — starts a review-only session
+    reviewFirstSkip: string; // secondary button — proceeds with the ordinary mix
+    reviewFirstWhy: string; // link label to the evidence article
   };
   grammar: {
     title: string;
@@ -219,6 +226,9 @@ export interface Translations {
     backToCategories: string;
     backToTests: string;
     premiumBadge: string;
+    premiumWallTitle: string; // #32: inline offer shown in place of navigating away to a paywall page
+    premiumWallSubtitle: string;
+    premiumWallPerks: readonly string[]; // surface-specific: the user hit a practice test, so practice leads
     premiumLocked: string;
     startBtn: string;
     noTests: string;
@@ -312,6 +322,9 @@ export interface Translations {
     fieldCategoryDescRu: string;
     fieldIsPremium: string;
     premiumBadge: string;
+    premiumWallTitle: string; // #32: inline offer shown in place of navigating away to a paywall page
+    premiumWallSubtitle: string;
+    premiumWallPerks: readonly string[]; // surface-specific: the user hit a practice test, so practice leads
     comingSoon: string;
     testsCount: string;
     // issue #23 — admin panel i18n wiring

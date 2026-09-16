@@ -60,9 +60,14 @@ test.describe('Daily-limit banner — /dashboard/lists', () => {
     await expect(banner).toBeVisible();
     await expect(banner).toContainText('Бесплатные сессии на сегодня закончились');
     await expect(banner).toContainText('Неограниченные учебные сессии');
-    const cta = page.getByTestId('daily-limit-cta');
+    const cta = page.getByTestId('daily-limit-banner-cta');
     await expect(cta).toBeVisible();
-    await expect(cta).toContainText('4,50 €');
+    // #32 moved the price off the button label — the button names the action, the line
+    // under it carries the terms. The price must still be on the card before the click:
+    // #25 measured 28 users hitting a priceless wall and none of them reaching Checkout.
+    await expect(cta).toContainText('Оформить Premium');
+    await expect(cta).not.toContainText('4,50');
+    await expect(page.getByTestId('daily-limit-banner-price')).toContainText('4,50 €');
     // trailingSlash: true — the exported href carries the slash.
     await expect(cta).toHaveAttribute('href', '/pricing/');
   });
@@ -92,6 +97,6 @@ test.describe('Daily-limit banner — /dashboard/phrases', () => {
     const banner = page.getByTestId('daily-limit-banner');
     await expect(banner).toBeVisible();
     await expect(banner).toContainText('Бесплатные сессии на сегодня закончились');
-    await expect(page.getByTestId('daily-limit-cta')).toHaveAttribute('href', '/pricing/');
+    await expect(page.getByTestId('daily-limit-banner-cta')).toHaveAttribute('href', '/pricing/');
   });
 });

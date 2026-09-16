@@ -9,6 +9,9 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from sqlalchemy.exc import IntegrityError
+
+from leaderboard_service import grant_reward_premium
 from sqlmodel import Session, select, text
 
 from database import engine
@@ -203,9 +206,25 @@ def generate_weekly_reward_messages(session: Session) -> list[int]:
             body=body,
             status="draft",
             message_type=msg_type,
+            reward_rank=rank,
+            rewarded_week=week_start.date(),
         )
-        session.add(msg)
-        session.flush()  # populate msg.id
+        # `already_generated` above only catches a *sequential* re-run: two app instances
+        # hitting 10:00 together both read an empty set and both insert. That is what
+        # happened on 2026-09-14 — the whole batch was written twice, 0.6s apart, and two
+        # winners were granted 14 days instead of 7. The partial UNIQUE index on
+        # (user_id, message_type, rewarded_week) is the actual guard; the savepoint lets
+        # the loser of the race skip its row without poisoning the whole transaction.
+        try:
+            with session.begin_nested():
+                session.add(msg)
+                session.flush()  # populate msg.id
+        except IntegrityError:
+            logger.info(
+                "Scheduler: %s for user %s week %s already exists — another instance won the race",
+                msg_type, row.id, week_start.date(),
+            )
+            continue
         new_ids.append(msg.id)
 
     session.commit()
@@ -216,7 +235,8 @@ def send_weekly_rewards() -> None:
     """Weekly job: generate leaderboard reward/notice drafts and send them.
 
     Skips users who have not consented to emails (email_consent=False).
-    Grants 1 week of premium to reward recipients, same as the manual send endpoint.
+    Grants Premium by finishing rank (leaderboard_service.REWARD_DAYS), same as the
+    manual send endpoint.
     """
     with Session(engine) as session:
         if not _is_auto_send_enabled(session, "auto_send_weekly_rewards"):
@@ -248,12 +268,11 @@ def send_weekly_rewards() -> None:
                 msg.sent_at = _utcnow()
 
                 if msg.message_type == "reward" and target:
-                    from quota import is_premium_active as _check_premium
-                    if _check_premium(target) and target.premium_until is not None:
-                        target.premium_until = target.premium_until + timedelta(days=7)
-                    else:
-                        target.is_premium = True
-                        target.premium_until = _utcnow() + timedelta(days=7)
+                    granted = grant_reward_premium(target, msg.reward_rank or 0, _utcnow())
+                    logger.info(
+                        "Scheduler: granted %d days Premium to %s (rank %s)",
+                        granted, msg.user_id, msg.reward_rank,
+                    )
                     session.add(target)
 
                 # Same inbox mirror the manual send does (#23) — shared helper so the

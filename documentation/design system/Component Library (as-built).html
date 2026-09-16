@@ -748,6 +748,113 @@
     </p>
   </div>
 
+  <h2>Study notice strip — one line above a session</h2>
+  <div class="card">
+    <p>
+      A single flat strip rendered <i>above</i> <code>QuizSession</code> on the list-study page, for
+      telling the learner one thing about the session they are about to start. Two instances exist
+      and they must stay identical: <code>data-testid="more-new-at-higher-level-banner"</code>
+      (issue #168 — new words are gated behind a higher star level) and
+      <code>data-testid="review-first-banner"</code> (#31 — due reviews already fill the session, so
+      the new-word share was capped).
+    </p>
+    <p>
+      Markup is the standard flat card, wrapped to the session's own width:<br>
+      <code>&lt;div class="max-w-2xl mx-auto px-6 pt-4"&gt;</code> around
+      <code>flex flex-wrap items-center justify-between gap-3 border border-line rounded-[14px] px-5 py-3.5 mb-2</code>.
+      Left side is <code>text-[13.5px] text-ink</code>; right side is one
+      <code>text-[13px] font-semibold text-emerald-600 hover:text-emerald-700</code> action —
+      a <code>button</code> when it changes the session in place, a <code>Link</code> when it
+      navigates away, with a <code>TakChevron</code> in the link form only.
+    </p>
+    <p>
+      <b>It is a notice, not a modal and not a gate.</b> It never blocks the session, never carries a
+      price or a Premium CTA, and states no claim it cannot back — #31's strip links out to the
+      evidence article rather than asserting research findings inline. Anything that needs to
+      interrupt the learner belongs in the daily-limit banner instead (see <i>Shell &amp; layout</i>).
+    </p>
+    <p>
+      <b>Wrap the strips in <code>&lt;div class="bg-slate-50"&gt;</code>.</b> <code>QuizSession</code>
+      paints <code>bg-slate-50</code> over the body's green gradient (<code>globals.css</code>)
+      starting at its own top, so a strip sitting above it shows the gradient instead and reads as a
+      coloured band seamed against the session. One wrapper around all strips fixes it; an empty
+      wrapper is 0px tall, so it costs nothing when no strip is showing.
+    </p>
+  </div>
+
+  <h2>PremiumOfferCard — the one Premium offer</h2>
+  <div class="card">
+    <p>
+      <b>Everything that sells Premium renders this component</b>
+      (<code>app/dashboard/components/PremiumOfferCard.tsx</code>). Before #32 there were four
+      different-looking upsells for one product: a flat green-button card on
+      <code>/dashboard/lists</code>, an amber gradient card with an orange pill beside it, a
+      dark-button screen behind the 429, and <code>/dashboard/premium</code> selling via
+      <code>mailto:</code>. Only two of them named the price.
+    </p>
+    <p>
+      Flat card, <code>border border-line rounded-[14px] px-5 py-5</code>, no shadow. Inside:
+      title <code>text-[15px] font-semibold text-ink</code> → subtitle
+      <code>text-[13.5px] text-muted</code> → perks (<code>✓</code> in
+      <code>text-emerald-600</code>) → one <code>bg-emerald-600</code> button → price line
+      <code>text-[12.5px] text-faint</code>. <code>data-testid</code> is the root id and the
+      button and price derive from it (<code>…-cta</code>, <code>…-price</code>).
+    </p>
+    <p>
+      <b>Copy varies, shape does not.</b> Title, subtitle and perks are props, because what the
+      user just ran into differs by surface — the practice paywall leads with "все практические
+      тесты", the daily wall with sessions. The button label, the price line and the card itself
+      are fixed.
+    </p>
+    <p>
+      <b>The price goes under the button, never inside it.</b> It has to be on the card before the
+      click — #25 measured 28 users hitting a wall that showed no price, none of whom reached
+      Checkout — but a button should name the action, not carry the terms as well, and
+      "Оформить Premium — 4,50 € / месяц" wrapped at 375px.
+    </p>
+    <p>
+      <b>Offer in place; do not navigate away.</b> #32 deleted <code>/dashboard/premium</code>
+      precisely because it took the user off the page: it then said "этот тест" about a test no
+      longer on screen and its back link went somewhere else. The card renders above whatever the
+      user was looking at, which stays visible.
+    </p>
+  </div>
+
+  <h2>Pre-session choice screen</h2>
+  <div class="card">
+    <p>
+      A full-screen state on the list-study page, shown <i>before</i> a session is fetched, when the
+      learner should be offered a different session than the one they were heading for. First
+      instance: #31's review-first offer (<code>data-testid="review-first-title"</code>,
+      <code>review-first-accept</code>, <code>review-first-skip</code>).
+    </p>
+    <p>
+      Structure is the page's existing <code>allKnown</code> / <code>limitReached</code> states —
+      <code>&lt;main class="flex-1 … items-center justify-center px-8 pt-5 pb-20"&gt;</code>, inner
+      <code>max-w-sm w-full gap-5</code>, then <code>PageMascot</code> → <code>h1</code>
+      (<code>text-[26px] font-bold</code>) → <code>p.text-[15px].text-muted</code> → one
+      <code>text-[13.5px]</code> explainer link → buttons. The link sits <i>above</i> the buttons:
+      it is context for the decision, so it belongs before the choice, not as a footnote after it. Primary button <code>bg-emerald-600</code>, secondary
+      <code>border border-[#ddd] bg-white</code>, both <code>w-full py-3.5 rounded-[10px]</code>.
+    </p>
+    <p>
+      <b>Give <code>PageMascot</code> no <code>mood</code>.</b> At any non-neutral mood it replaces
+      the page's own phrase with a canned reaction ("Šaunu!", "Puiku!"). These screens are nudges,
+      not celebrations — <code>allKnown</code> is the one that has earned a mood.
+    </p>
+    <p>
+      <b>Always two ways out.</b> A single button makes this a gate, and a gate here lands hardest on
+      someone returning after a break. The recommended action is primary, continuing is secondary —
+      and whatever the secondary says, the session must then do exactly that, with no quiet
+      adjustment behind it.
+    </p>
+    <p>
+      <b>Read the numbers from an endpoint that does not charge a session.</b> #31 reads
+      <code>GET /lists/{id}/progress</code>, never <code>/study</code>, so being shown a
+      recommendation never costs one of a free user's five daily sessions.
+    </p>
+  </div>
+
   <h2>Emoji &amp; arrow policy</h2>
   <div class="card">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 12px;">
