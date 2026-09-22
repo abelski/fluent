@@ -21,3 +21,25 @@ How production is actually built and started. Confirmed 2026-09-22 from the depl
 - **Python on Render is 3.14** (the runtime default), not the local `.venv` version.
 - **Schema:** no migrations run. `create_all()` on startup creates new tables, never new columns.
 - **Rollback:** Events → a previous "Deploy live" → **Rollback** redeploys that commit.
+
+## Pinned Python dependencies (#41, 2026-09-22)
+
+`backend/requirements.txt` used to say `sqlmodel>=0.0.22`, `fastapi>=…` and so on, so **every
+Render build installed whatever was newest that day**, while the local `.venv` (and so the test
+suite) stayed on old versions. On 2026-09-22 the deploy of `c405090` pulled `sqlmodel` 0.0.46,
+which:
+
+- rejects naive datetimes on write ("Datetime values must have timezone information…"), so the
+  OAuth callback failed on `user.last_login = now` and **nobody could log in**;
+- returns aware (UTC) datetimes from `timestamp without time zone` columns, so
+  `is_premium_active` crashed comparing them with naive `now` (`GET /api/me/stats` → 500).
+
+Fixed by a Render rollback, then pinning every direct dependency to the versions the 2026-09-17
+build ran (`sqlmodel==0.0.42`). Rules now:
+
+- **Bump a dependency on purpose, never by accident.** Change the pin, `pip install -r
+  requirements.txt` locally, run the full suite, then deploy.
+- **The local `.venv` must match the pins** (`pip install -r backend/requirements.txt`), or the
+  tests prove nothing about production.
+- Upgrading `sqlmodel` past 0.0.42 means moving the app to timezone-aware datetimes first (or
+  annotating fields as `NaiveDatetime`): the codebase stores naive UTC everywhere.
