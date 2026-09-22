@@ -602,7 +602,10 @@ blocks the Definition of Done.
      compare them with the model;
    - on a mismatch, drop the stale table (it holds only regenerable clips), with the user's OK;
    - then deploy. `create_all()` creates it if it is missing.
-2. Prod smoke as admin: a word plays; a second play is a 304; `audio_clip` has rows.
+2. [x] Deployed 2026-09-22 (`d49a0a1`). Prod smoke as admin: words play in a lesson and
+   `audio_clip` grew from 9 to 18 rows. Note: the first attempt (`c405090`) had to be rolled
+   back because unpinned `sqlmodel` 0.0.46 broke login; see CHANGELOG #41 and
+   `documentation/deploy-render.md`.
 3. Publish the article (import the `.md` via the admin Articles page, or flip `published`), **then
    deploy again**. Article pages are pre-rendered only at build time; until the next build Google
    gets a client-rendered placeholder with a generic title (`documentation/articles-seo.md`).
