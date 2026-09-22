@@ -8,6 +8,7 @@ import { useT } from '../../../../lib/useT';
 import { renderAccented } from '../../../../lib/renderAccented';
 import PageMascot from '../../../../components/PageMascot';
 import TakChevron from '../../../../components/TakChevron';
+import SpeakButton from '../../components/SpeakButton';
 
 interface Word {
   id: number;
@@ -37,6 +38,9 @@ export default function ListDetailPage() {
 
   const [list, setList] = useState<WordListDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  // #38 prototype — listen buttons are Premium/admin only (the server enforces it too).
+  // Click-only here: no prefetch, a long list would burn the TTS quota on words nobody plays.
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
   function handleStudyClick() {
     if (!getToken()) {
@@ -55,6 +59,12 @@ export default function ListDetailPage() {
       .then(setList)
       .catch(() => setList(null))
       .finally(() => setLoading(false));
+    if (token) {
+      fetch(`${BACKEND_URL}/api/me/quota`, { headers })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((q) => setAudioEnabled(q?.premium_active === true || q?.is_admin === true || q?.is_superadmin === true))
+        .catch(() => setAudioEnabled(false));
+    }
   }, [id]);
 
   if (loading) {
@@ -106,7 +116,7 @@ export default function ListDetailPage() {
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 border-b border-gray-100">
+          <div className="grid grid-cols-[1.5fr_1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto_auto] text-xs text-gray-400 uppercase tracking-wider px-4 sm:px-6 py-3 gap-3 sm:gap-4 border-b border-gray-100">
             <span>{tr.detail.columnLithuanian}</span>
             <span>{tr.detail.columnTranslation}</span>
             <span className="hidden sm:block">{tr.detail.columnNote}</span>
@@ -116,11 +126,14 @@ export default function ListDetailPage() {
           {list.words.map((word, i) => (
             <div
               key={word.id}
-              className={`grid grid-cols-[1fr_1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto_auto] px-4 sm:px-6 py-3.5 gap-4 items-center ${
+              className={`grid grid-cols-[1.5fr_1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto_auto] px-4 sm:px-6 py-3.5 gap-3 sm:gap-4 items-center ${
                 i < list.words.length - 1 ? 'border-b border-gray-100' : ''
               }`}
             >
-              <span className="font-medium text-gray-900">{renderAccented(word.accented || word.lithuanian)}</span>
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="min-w-0 font-medium text-gray-900 [overflow-wrap:anywhere]">{renderAccented(word.accented || word.lithuanian)}</span>
+                {audioEnabled && <SpeakButton text={word.lithuanian} size="sm" />}
+              </span>
               <span className="text-gray-500 text-sm">{lang === 'en' ? (word.translation_en || word.translation_ru) : word.translation_ru}</span>
               <span className="text-gray-300 text-xs hidden sm:block">{word.hint ?? ''}</span>
               <span className="text-gray-300 text-xs">{'★'.repeat(word.star ?? 1)}</span>

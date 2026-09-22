@@ -7,6 +7,7 @@ import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
+import SpeakButton from '../components/SpeakButton';
 
 interface KnownWord {
   id: number;
@@ -30,6 +31,9 @@ export default function VocabularyPage() {
   const [query, setQuery] = useState('');
   const [memoryFilter, setMemoryFilter] = useState<'all' | 'ok' | 'fading' | 'due'>('all');
   const [page, setPage] = useState(1);
+  // #38 prototype — Premium/admin listen buttons (the server enforces it too). Click-only,
+  // no prefetch: this page can list hundreds of words.
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
   const fetchWords = () => {
     const token = getToken();
@@ -46,6 +50,13 @@ export default function VocabularyPage() {
 
   useEffect(() => {
     fetchWords();
+    const token = getToken();
+    if (token) {
+      fetch(`${BACKEND_URL}/api/me/quota`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((q) => setAudioEnabled(q?.premium_active === true || q?.is_admin === true || q?.is_superadmin === true))
+        .catch(() => setAudioEnabled(false));
+    }
     const onVisible = () => { if (document.visibilityState === 'visible') fetchWords(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
@@ -193,7 +204,10 @@ export default function VocabularyPage() {
                       className={`border-b border-gray-100 last:border-0 ${i % 2 === 0 ? '' : 'bg-gray-50/50'}`}
                     >
                       <td className="px-5 py-3 font-medium text-gray-900">
-                        {w.lithuanian}
+                        <span className="inline-flex items-center gap-2 align-middle">
+                          {w.lithuanian}
+                          {audioEnabled && <SpeakButton text={w.lithuanian} size="sm" />}
+                        </span>
                         {w.hint && <span className="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-normal">{w.hint}</span>}
                       </td>
                       <td className="px-5 py-3 text-gray-600">{translation ?? '—'}</td>

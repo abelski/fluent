@@ -16,6 +16,7 @@ import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
 import { useNumberKeys } from '../../../lib/useNumberKeys';
+import SpeakButton, { AutoplayToggle, playAudio, prefetchAudio } from './SpeakButton';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -259,6 +260,16 @@ export default function QuizSession({
   // exempt from the daily session quota itself.
   const [premiumActive, setPremiumActive] = useState<boolean | null>(null);
   const [isAdminUser, setIsAdminUser] = useState(false);
+  // Plan #38 (prototype, local only) — word audio. See documentation/audio.md.
+  const audioEnabled = premiumActive === true || isAdminUser;
+  // Autoplay defaults to ON (#38): only an explicit 'false' in localStorage turns it off.
+  const [audioAutoplay, setAudioAutoplay] = useState(false);
+  // In-card toggle writes the same key as the Settings checkbox. Turning it on replays the
+  // current card on its own: the autoplay effect below depends on `audioAutoplay`.
+  const toggleAudioAutoplay = (on: boolean) => {
+    setAudioAutoplay(on);
+    localStorage.setItem('fluent_audio_autoplay', String(on));
+  };
 
   const learnedWordIdsRef   = useRef<Set<number>>(new Set());
   const mistakeWordIdsRef   = useRef<Set<number>>(new Set());
@@ -340,6 +351,9 @@ export default function QuizSession({
   useEffect(() => {
     const stored = localStorage.getItem('fluent_complexity') as Complexity | null;
     if (stored === 'easy' || stored === 'medium' || stored === 'hard') setComplexity(stored);
+    // Plan #38 (prototype) — same localStorage pattern as fluent_complexity; the
+    // production plan moves this server-side.
+    setAudioAutoplay(localStorage.getItem('fluent_audio_autoplay') !== 'false');
     getSettings().then((s: Awaited<ReturnType<typeof getSettings>>) => {
       setLessonMode(s.lesson_mode);
       setUseTimer(s.use_question_timer);
@@ -360,6 +374,15 @@ export default function QuizSession({
       })
       .catch(() => setPremiumActive(false));
   }, []);
+
+  // Plan #38 — prefetch this lesson's audio clips (one at a time, in lesson order)
+  // once the word list and premium state are both known, so the first press/autoplay
+  // is usually instant. Free users never fetch anything.
+  useEffect(() => {
+    if (words.length === 0 || premiumActive === null) return;
+    if (!audioEnabled) return;
+    prefetchAudio(words.map((w) => w.lithuanian));
+  }, [words, premiumActive, audioEnabled]);
 
   // ── Recompute options/blank when front card changes ─────────────────────────
   // Depend only on the front card's identity so that queue insertions (retry cards,
@@ -397,6 +420,18 @@ export default function QuizSession({
   // words/distractors are static per session; new session always changes frontWordId.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frontWordId, frontStage, lang]);
+
+  // Plan #38 — autoplay as the card appears, stage 1 and stage 2 ("what does it
+  // mean?") only. The stages that ask the user to *produce* Lithuanian autoplay
+  // after grading instead (in their own handlers below), so it never gives the
+  // answer away.
+  useEffect(() => {
+    if (!audioAutoplay || !audioEnabled) return;
+    if (frontStage !== 1 && frontStage !== 2) return;
+    const w = queue[0]?.word;
+    if (w) playAudio(w.lithuanian);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frontWordId, frontStage, audioAutoplay, audioEnabled]);
 
   // ── finishSession ───────────────────────────────────────────────────────────
   const finishSession = useCallback(async (early = false) => {
@@ -632,6 +667,9 @@ export default function QuizSession({
     setSelectedOption(index);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     recordAnswer(isCorrect);
+    // Plan #38 — this stage asks the user to *produce* Lithuanian, so autoplay only
+    // fires after grading, never before (it would give the answer away).
+    if (audioAutoplay && audioEnabled) playAudio(card.word.lithuanian);
 
     if (!isCorrect) {
       if (!mistakeWordIdsRef.current.has(card.word.id)) {
@@ -681,6 +719,7 @@ export default function QuizSession({
     const isCorrect = normalizeLt(attempt) === normalizeLt(assembly.target);
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     recordAnswer(isCorrect);
+    if (audioAutoplay && audioEnabled) playAudio(card.word.lithuanian);
 
     if (!isCorrect) {
       if (!mistakeWordIdsRef.current.has(card.word.id)) {
@@ -734,6 +773,7 @@ export default function QuizSession({
 
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     recordAnswer(isCorrect);
+    if (audioAutoplay && audioEnabled) playAudio(card.word.lithuanian);
     if (!isCorrect) {
       // Block the window keydown dismiss listener from firing on the same Enter event
       blockUntilRef.current = Date.now() + 300;
@@ -787,6 +827,7 @@ export default function QuizSession({
     setShownAnswer(target);
     setAnswerState('wrong');
     recordAnswer(false);
+    if (audioAutoplay && audioEnabled) playAudio(card.word.lithuanian);
     if (!mistakeWordIdsRef.current.has(card.word.id)) {
       mistakeWordIdsRef.current.add(card.word.id);
       setMistakeWordCount((c) => c + 1);
@@ -830,6 +871,7 @@ export default function QuizSession({
       syllableTyped.trim().toLowerCase() === syllable.trim().toLowerCase();
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     recordAnswer(isCorrect);
+    if (audioAutoplay && audioEnabled) playAudio(card.word.lithuanian);
     if (!isCorrect) {
       blockUntilRef.current = Date.now() + 300;
       setShownAnswer(syllable);
@@ -1055,11 +1097,19 @@ export default function QuizSession({
         {/* ── Stage 1: Flashcard + self-evaluation ── */}
         {stage === 1 && (
           <div className="flex flex-col items-center flex-1 gap-4 sm:gap-6 pt-4 sm:pt-6">
-            <div className="w-full max-w-[420px] bg-white border border-gray-100 rounded-2xl p-5 sm:py-9 sm:px-12 text-center">
+            <div className="relative w-full max-w-[420px] bg-white border border-gray-100 rounded-2xl p-5 sm:py-9 sm:px-12 text-center">
+              {audioEnabled && (
+                <div className="absolute top-3 right-3">
+                  <AutoplayToggle on={audioAutoplay} onChange={toggleAudioAutoplay} />
+                </div>
+              )}
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-4 sm:mb-6">
                 {(sessionMode === 'review' || word.status === 'known' || word.status === 'learning') ? tr.common.review : tr.common.newWord}
               </p>
-              <p className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">{renderAccented(word.accented || word.lithuanian)}</p>
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <p className="text-3xl sm:text-5xl font-bold tracking-tight">{renderAccented(word.accented || word.lithuanian)}</p>
+                {audioEnabled && <SpeakButton text={word.lithuanian} />}
+              </div>
               {digit && <p className="text-5xl sm:text-7xl font-bold text-emerald-600 mb-4" data-testid="number-digit">{digit}</p>}
               {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mb-4">{word.hint}</p>}
               <div className="h-px bg-gray-100 mb-4" />
@@ -1081,7 +1131,10 @@ export default function QuizSession({
           <div className="flex flex-col items-center flex-1 gap-4 sm:gap-8 pt-4 sm:pt-6">
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.whatMeans}</p>
-              <p className="text-2xl sm:text-4xl font-bold tracking-tight">{renderAccented(word.accented || word.lithuanian)}</p>
+              <div className="flex items-center justify-center gap-3">
+                <p className="text-2xl sm:text-4xl font-bold tracking-tight">{renderAccented(word.accented || word.lithuanian)}</p>
+                {audioEnabled && <SpeakButton text={word.lithuanian} />}
+              </div>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
               {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{word.hint}</p>}
             </div>

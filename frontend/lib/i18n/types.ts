@@ -1125,4 +1125,10 @@ export interface Translations {
     fromInternetNote: string;
     viewListsLink: string;
   };
+  audio: {
+    listen: string;
+    autoplayLabel: string;
+    autoplayHint: string;
+    premiumBadge: string;
+  };
 }

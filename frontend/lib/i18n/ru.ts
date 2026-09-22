@@ -1164,6 +1164,12 @@ const ru: Translations = {
     fromInternetNote: 'По умолчанию добавленные слова попадают в список «From internet».',
     viewListsLink: 'Открыть Мои списки',
   },
+  audio: {
+    listen: 'Послушать',
+    autoplayLabel: 'Автоматически проигрывать произношение',
+    autoplayHint: 'Слово звучит само, как только появляется на экране. Если слово нужно написать — после ответа.',
+    premiumBadge: 'Premium',
+  },
 };
 
 export default ru;

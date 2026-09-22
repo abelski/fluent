@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken, getSettings, updateSettings, getPhrasesSettings, updatePhrasesSettings, getContinueSettings, updateContinueSettings, type UserSettings, type PhrasesSettings, type ContinueSettings } from '../../../lib/api';
+import { BACKEND_URL, getToken, getSettings, updateSettings, getPhrasesSettings, updatePhrasesSettings, getContinueSettings, updateContinueSettings, type UserSettings, type PhrasesSettings, type ContinueSettings } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import PageMascot from '../../../components/PageMascot';
 
@@ -30,9 +30,13 @@ export default function SettingsPage() {
   });
   const [continueSaving, setContinueSaving] = useState(false);
   const [continueSaved, setContinueSaved] = useState(false);
+  // Plan #38 (prototype, local only) — word audio autoplay. See documentation/audio.md.
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioAutoplay, setAudioAutoplay] = useState(false);
 
   useEffect(() => {
-    if (!getToken()) {
+    const token = getToken();
+    if (!token) {
       router.replace('/login');
       return;
     }
@@ -40,6 +44,11 @@ export default function SettingsPage() {
     if (stored === 'easy' || stored === 'medium' || stored === 'hard') {
       setComplexity(stored);
     }
+    setAudioAutoplay(localStorage.getItem('fluent_audio_autoplay') !== 'false');
+    fetch(`${BACKEND_URL}/api/me/quota`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setAudioEnabled(data?.premium_active === true || data?.is_admin === true || data?.is_superadmin === true))
+      .catch(() => setAudioEnabled(false));
     Promise.all([
       getSettings(),
       getPhrasesSettings(),
@@ -49,6 +58,11 @@ export default function SettingsPage() {
       .catch(() => setError(tr.settings.loadError))
       .finally(() => setLoading(false));
   }, [router]);
+
+  function handleAudioAutoplayChange(value: boolean) {
+    setAudioAutoplay(value);
+    localStorage.setItem('fluent_audio_autoplay', String(value));
+  }
 
   async function handlePhrasesSave() {
     setPhrasesSaving(true);
@@ -316,6 +330,29 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Plan #38 (prototype, local only) — audio autoplay. Premium/admin only;
+                the value lives in localStorage, not the /api/me/settings payload
+                (see documentation/audio.md for why). */}
+            <div className="flex flex-col gap-1.5">
+              <label className={`flex items-center gap-3 select-none ${audioEnabled ? 'cursor-pointer' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={audioAutoplay}
+                  disabled={!audioEnabled}
+                  onChange={(e) => handleAudioAutoplayChange(e.target.checked)}
+                  data-testid="audio-autoplay-checkbox"
+                  className="w-4 h-4 accent-emerald-600"
+                />
+                <span className={`text-sm font-medium ${audioEnabled ? 'text-gray-900' : 'text-muted'}`}>{tr.audio.autoplayLabel}</span>
+                {!audioEnabled && (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600" data-testid="audio-autoplay-premium-tag">
+                    {tr.audio.premiumBadge}
+                  </span>
+                )}
+              </label>
+              <p className="text-xs text-gray-500 pl-7">{tr.audio.autoplayHint}</p>
             </div>
 
             {error && <p className="text-red-600 text-sm">{error}</p>}

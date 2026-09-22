@@ -1,0 +1,10 @@
+{
+  "about": "Pronunciation fixes for word audio (#38). Each fix respells a word for the TTS voice only; the word on screen never changes. 'from' is matched case-insensitively as a substring, after stress marks are stripped, longest first, in one pass. It also matches inside longer words (siųsti fixes išsiųsti), so use whole words or roots, never a bare letter pair. Editing this file takes effect on the next request (no restart) and regenerates the affected clips. See documentation/audio.md.",
+  "fixes": [
+    {
+      "from": "siųsti",
+      "to": "sjūsti",
+      "note": "Leonas misreads it; should sound like «сюсти»"
+    }
+  ]
+}

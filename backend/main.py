@@ -32,6 +32,7 @@ from routers.extension import router as extension_router
 from routers.continue_session import router as continue_session_router
 from routers.billing import router as billing_router
 from routers.inbox import router as inbox_router
+from routers.audio import router as audio_router
 from database import create_db_and_tables, get_session
 from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage, InboxMessage, InboxDelivery, UserAchievement  # noqa: F401 — registers table
 from data.grammar.lessons import LESSON_CONFIG
@@ -135,6 +136,7 @@ app.include_router(extension_router, prefix="/api")
 app.include_router(continue_session_router, prefix="/api")
 app.include_router(billing_router, prefix="/api")
 app.include_router(inbox_router, prefix="/api")
+app.include_router(audio_router, prefix="/api")
 
 
 @app.get("/health")

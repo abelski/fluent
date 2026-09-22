@@ -46,3 +46,6 @@ backend/test-results/
 .mcp.json
 .playwright-mcp/
 
+# Local audio prototype cache
+backend/.audio_cache/
+

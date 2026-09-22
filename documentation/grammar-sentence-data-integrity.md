@@ -45,8 +45,12 @@ truncated or corrupted stems. Implemented as `_sentence_invariant_holds()` in
 
 ## Data ownership: DB vs. `words.txt`
 
-- `grammar_sentence` (cases 1–14, the sentence exercises) has **no seed file**. `render.yaml`'s
-  `scripts/seed.py` only seeds `Word`/`WordList`/`WordListItem`; `backend/main.py` startup only
+- `grammar_sentence` (cases 1–14, the sentence exercises) has **no seed file**. (The old
+  `scripts/seed.py`, which only seeded `Word`/`WordList`/`WordListItem`, was deleted on
+  2026-09-22. It *wiped* all `UserWordProgress`, words and lists before reseeding, pointed at the
+  production DB through `api/.env → backend/.env`, and survived only because one of its imports,
+  `api/data/vocabulary.py`, no longer existed. Render never ran it: the live Build Command is
+  `pip install -r requirements.txt`, not `render.yaml`'s.) `backend/main.py` startup only
   runs `create_all` (schema, not data); `backend/scripts/seed_numbers_grammar.py` is scoped to
   number cases 15–20 and run manually. **The production database is authoritative** for
   `grammar_sentence` rows — fix bad data with a guarded `UPDATE` against production, not a
@@ -86,9 +90,9 @@ The rule cards shown above each grammar exercise live in the `grammar_case_rule`
 
 - there is no seed file for them; `backend/scripts/seed_numbers_grammar.py` writes `GrammarCaseRule`
   rows but is scoped to the **numbers program, cases 15–20**, and is run manually;
-- `api/data/grammar/rules.py` (`CASE_RULES`) is **dead code** from the pre-refactor `api/` app — both
-  `render.yaml` and the root `main.py` boot `backend/main.py`, and that copy has no `transform`
-  field at all. Do not edit it and do not treat it as a seed to keep in lockstep;
+- the pre-refactor `api/` app, including its `api/data/grammar/rules.py` (`CASE_RULES`) copy, was
+  **deleted on 2026-09-22** as dead code (#40). The root `main.py` and `start.sh` boot
+  `backend/main.py`. There is no in-repo copy of the rule cards left to keep in lockstep;
 - migrations are schema-only.
 
 So a wrong rule card is fixed with a guarded `UPDATE` against production, same as a wrong sentence.

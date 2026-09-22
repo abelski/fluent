@@ -1164,6 +1164,12 @@ const en: Translations = {
     fromInternetNote: 'By default, added words land in a list called "From internet".',
     viewListsLink: 'Open My lists',
   },
+  audio: {
+    listen: 'Listen',
+    autoplayLabel: 'Play pronunciation automatically',
+    autoplayHint: 'The word plays as soon as it appears. When you have to type it, it plays after you answer.',
+    premiumBadge: 'Premium',
+  },
 };
 
 export default en;
