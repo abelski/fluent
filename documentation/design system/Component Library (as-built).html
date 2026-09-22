@@ -823,6 +823,62 @@
     </p>
   </div>
 
+  <h2>Word audio — SpeakButton, AutoplayToggle, LockedSpeakButton, AudioPremiumPill (#38/#39)</h2>
+  <div class="card">
+    <p>
+      All four live in <code>app/dashboard/components/SpeakButton.tsx</code>. They appear in the same
+      three places: the lesson card (<code>QuizSession</code> stage&nbsp;1 and stage&nbsp;2 "what does it
+      mean"), the word-list page (<code>/dashboard/lists/[id]</code>) and <code>/dashboard/vocabulary</code>.
+      Which set renders is decided by one tri-state from <code>/api/me/quota</code>
+      (<code>audioStateFromQuota</code> / <code>useAudioState</code>): <code>'on'</code> for Premium/admin,
+      <code>'locked'</code> for a known free user, and <code>null</code> (nothing at all) while loading or when
+      the quota fetch fails, so a paying user never sees the lock because of a network error.
+    </p>
+    <div class="size-row" style="margin:18px 0 6px">
+      <div class="size-item"><span style="display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid #d9d9d9;background:#fff;color:#8a8f98;width:40px;height:40px"><svg width="24" height="24" viewBox="2 2 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></span><span class="size-label">SpeakButton md<br>(lesson card)</span></div>
+      <div class="size-item"><span style="display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid #d9d9d9;background:#fff;color:#8a8f98;width:28px;height:28px"><svg width="16" height="16" viewBox="2 2 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></span><span class="size-label">SpeakButton sm<br>(list rows)</span></div>
+      <div class="size-item"><span style="display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid #0f9d68;background:#e9f6ee;color:#0f9d68;width:40px;height:40px"><svg width="24" height="24" viewBox="2 2 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></span><span class="size-label">playing</span></div>
+      <div class="size-item"><span style="display:inline-flex;background:#f2f3f3;border-radius:999px;padding:3px"><span style="display:flex;padding:4px 8px;border-radius:999px;background:#fff;color:#16181c"><svg width="14" height="14" viewBox="2 2 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></span><span style="display:flex;padding:4px 8px;color:#9a9fa6"><svg width="14" height="14" viewBox="2 2 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/><path d="m16 9 5 5"/><path d="m21 9-5 5"/></svg></span></span><span class="size-label">AutoplayToggle<br>(on)</span></div>
+      <div class="size-item"><span style="display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid #f1f1f1;background:#fff;color:#b0b4ba;width:40px;height:40px"><svg width="24" height="24" viewBox="2 2 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></span><span class="size-label">LockedSpeakButton md</span></div>
+      <div class="size-item"><span style="display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid #f1f1f1;background:#fff;color:#b0b4ba;width:28px;height:28px"><svg width="16" height="16" viewBox="2 2 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></span><span class="size-label">LockedSpeakButton sm</span></div>
+      <div class="size-item"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;line-height:16px;font-weight:600;padding:2px 8px;border-radius:999px;background:#fffbeb;border:1px solid #fcd34d;color:#b45309;white-space:nowrap"><svg width="12" height="12" viewBox="2 2 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>Послушать в Premium</span><span class="size-label">AudioPremiumPill</span></div>
+    </div>
+    <table>
+      <tr><th>Component</th><th>What and why</th></tr>
+      <tr><td><code>SpeakButton</code> (<code>size="md" | "sm"</code>)</td><td>Round <code>border-line</code>
+        button, <code>text-muted</code> icon, <code>w-10 h-10</code> beside the big word on the lesson card,
+        <code>w-7 h-7</code> in list rows. While playing it turns <code>bg-emerald-50 border-emerald-600
+        text-emerald-600</code> and gains a second wave. Hides itself if the clip fails. Lesson words are
+        prefetched one at a time (shared promise cache, so a click joins the in-flight request); list pages are
+        click-only, because a long list would synthesize words nobody plays. <code>data-testid="speak-btn"</code>.</td></tr>
+      <tr><td><code>AutoplayToggle</code></td><td>Top-right of the stage-1 card, and at the right edge of the
+        mascot row on every other lesson stage (not the header row: the review label leaves no room at 375px).
+        Premium/admin only. A mini copy of
+        the header's RU/EN segmented pill: 🔊 on / 🔇 off. Same <code>fluent_audio_autoplay</code> localStorage
+        key as the Settings checkbox, default on. <code>data-testid="autoplay-toggle"</code>.</td></tr>
+      <tr><td><code>LockedSpeakButton</code> (<code>size</code>, <code>newTab</code>)</td><td>Free users' version:
+        same shape and place, disabled look (<code>border-line-strong</code>, <code>text-faint</code> icon), and a
+        <code>Link href="/pricing"</code> (the user: "redirect to the plans"). A lock glyph was rejected: it says
+        "no" without saying why. <code>aria-label</code> = <code>tr.audio.lockedLabel</code>.
+        <code>data-testid="speak-btn-locked"</code>.</td></tr>
+      <tr><td><code>AudioPremiumPill</code> (<code>newTab</code>)</td><td>«🔊 Послушать в Premium» / "Listen with
+        Premium", the call to action the grey button lacks on its own. Lesson card only, stage&nbsp;1 only, placed
+        by the parent at <code>absolute bottom-full right-0 mb-1.5</code> inside the <code>relative</code> card
+        wrapper, i.e. 6px above the card's top-right edge. Inside the card it competed with the word, and in the
+        card's corner it collided with «НОВОЕ СЛОВО» at 375px. Colours are the practice page's Premium badge
+        (<code>bg-amber-50 border-amber-300 text-amber-700</code>, <code>hover:bg-amber-100</code>) at 11px with a
+        12px icon. The <code>Link</code> is the 44px mobile tap area (<code>min-h-[44px] sm:min-h-0</code>, items
+        bottom-aligned so the 6px gap holds) and the inner span is the visual pill. Not on list pages: a pill per row
+        would be hundreds of them. <code>data-testid="audio-premium-pill"</code>.</td></tr>
+    </table>
+    <p>
+      <b>In a lesson the locked controls open <code>/pricing</code> in a new tab</b>
+      (<code>newTab</code> → <code>target="_blank" rel="noopener"</code>): the free user has already spent one of
+      their daily sessions on it, and navigating away would lose it. The list pages navigate normally. The
+      Settings autoplay checkbox's «Premium» tag is the same amber practice-badge <code>Link href="/pricing"</code>.
+    </p>
+  </div>
+
   <h2>Pre-session choice screen</h2>
   <div class="card">
     <p>
@@ -986,6 +1042,10 @@
         via screenshot). Dropped <code>flex-wrap</code> for <code>overflow-x-auto</code> +
         <code>.no-scrollbar</code> (globals.css) instead, keeping the pill shape intact everywhere it's used rather
         than introducing a wrap-only variant of the recipe.</td></tr>
+      <tr><td>Amber Premium badges are outlined (<code>border-amber-300</code>), not borderless</td><td>The
+        practice page's locked-test Premium badge shipped with a border, and the #39 audio pill and the Settings
+        autoplay tag copy it as-is, so every "this is Premium" marker on a free user's screen looks the same rather than
+        introducing a second, borderless amber variant.</td></tr>
       <tr><td>Mobile hamburger menu kept</td><td>The original mockups had no hamburger, but they were only ever drawn at desktop width — their silence isn't a decision about mobile.</td></tr>
       <tr><td>Hamburger breakpoint moved from Tailwind's <code>sm</code> (640px) to <code>1000px</code></td><td>
         <code>Header.tsx</code> switched between the hamburger and the full tab strip at 640px, but from

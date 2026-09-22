@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken, getSettings, updateSettings, getPhrasesSettings, updatePhrasesSettings, getContinueSettings, updateContinueSettings, type UserSettings, type PhrasesSettings, type ContinueSettings } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
@@ -30,7 +31,7 @@ export default function SettingsPage() {
   });
   const [continueSaving, setContinueSaving] = useState(false);
   const [continueSaved, setContinueSaved] = useState(false);
-  // Plan #38 (prototype, local only) — word audio autoplay. See documentation/audio.md.
+  // Plan #38/#39 — word audio autoplay. See documentation/audio.md.
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [audioAutoplay, setAudioAutoplay] = useState(false);
 
@@ -332,7 +333,7 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* Plan #38 (prototype, local only) — audio autoplay. Premium/admin only;
+            {/* Plan #38/#39 — audio autoplay. Premium/admin only;
                 the value lives in localStorage, not the /api/me/settings payload
                 (see documentation/audio.md for why). */}
             <div className="flex flex-col gap-1.5">
@@ -347,9 +348,13 @@ export default function SettingsPage() {
                 />
                 <span className={`text-sm font-medium ${audioEnabled ? 'text-gray-900' : 'text-muted'}`}>{tr.audio.autoplayLabel}</span>
                 {!audioEnabled && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600" data-testid="audio-autoplay-premium-tag">
+                  <Link
+                    href="/pricing"
+                    data-testid="audio-autoplay-premium-tag"
+                    className="text-[10px] px-2 py-0.5 bg-amber-50 border border-amber-300 text-amber-700 rounded-full font-semibold cursor-pointer hover:bg-amber-100 transition-colors"
+                  >
                     {tr.audio.premiumBadge}
-                  </span>
+                  </Link>
                 )}
               </label>
               <p className="text-xs text-gray-500 pl-7">{tr.audio.autoplayHint}</p>

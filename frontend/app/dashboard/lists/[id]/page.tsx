@@ -8,7 +8,7 @@ import { useT } from '../../../../lib/useT';
 import { renderAccented } from '../../../../lib/renderAccented';
 import PageMascot from '../../../../components/PageMascot';
 import TakChevron from '../../../../components/TakChevron';
-import SpeakButton from '../../components/SpeakButton';
+import SpeakButton, { LockedSpeakButton, useAudioState } from '../../components/SpeakButton';
 
 interface Word {
   id: number;
@@ -38,9 +38,10 @@ export default function ListDetailPage() {
 
   const [list, setList] = useState<WordListDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  // #38 prototype — listen buttons are Premium/admin only (the server enforces it too).
-  // Click-only here: no prefetch, a long list would burn the TTS quota on words nobody plays.
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  // #38/#39 — listen buttons are Premium/admin only (the server enforces it too); free users get
+  // the locked button → /pricing. Click-only here: no prefetch, a long list would burn the TTS
+  // quota on words nobody plays.
+  const audioState = useAudioState();
 
   function handleStudyClick() {
     if (!getToken()) {
@@ -59,12 +60,6 @@ export default function ListDetailPage() {
       .then(setList)
       .catch(() => setList(null))
       .finally(() => setLoading(false));
-    if (token) {
-      fetch(`${BACKEND_URL}/api/me/quota`, { headers })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((q) => setAudioEnabled(q?.premium_active === true || q?.is_admin === true || q?.is_superadmin === true))
-        .catch(() => setAudioEnabled(false));
-    }
   }, [id]);
 
   if (loading) {
@@ -132,7 +127,8 @@ export default function ListDetailPage() {
             >
               <span className="flex items-center gap-2 min-w-0">
                 <span className="min-w-0 font-medium text-gray-900 [overflow-wrap:anywhere]">{renderAccented(word.accented || word.lithuanian)}</span>
-                {audioEnabled && <SpeakButton text={word.lithuanian} size="sm" />}
+                {audioState === 'on' && <SpeakButton text={word.lithuanian} size="sm" />}
+                {audioState === 'locked' && <LockedSpeakButton size="sm" />}
               </span>
               <span className="text-gray-500 text-sm">{lang === 'en' ? (word.translation_en || word.translation_ru) : word.translation_ru}</span>
               <span className="text-gray-300 text-xs hidden sm:block">{word.hint ?? ''}</span>

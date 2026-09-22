@@ -1130,5 +1130,7 @@ export interface Translations {
     autoplayLabel: string;
     autoplayHint: string;
     premiumBadge: string;
+    listenPremium: string;
+    lockedLabel: string;
   };
 }

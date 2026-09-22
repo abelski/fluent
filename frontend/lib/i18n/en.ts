@@ -98,6 +98,7 @@ const en: Translations = {
     ],
     premiumFeatures: [
       'Unlimited sessions',
+      'Pronunciation of every word',
       'All dictionaries and topics',
       'Progress tracking',
       'Grammar lessons',
@@ -116,6 +117,7 @@ const en: Translations = {
       'Unlimited study sessions',
       'Your own word and phrase lists',
       'Grammar lessons in any order',
+      'Pronunciation of every word',
     ],
     wallCta: 'Get Premium',
     wallPriceNote: '{price} a month, cancel any time',
@@ -1169,6 +1171,8 @@ const en: Translations = {
     autoplayLabel: 'Play pronunciation automatically',
     autoplayHint: 'The word plays as soon as it appears. When you have to type it, it plays after you answer.',
     premiumBadge: 'Premium',
+    listenPremium: 'Listen with Premium',
+    lockedLabel: 'Pronunciation is part of Premium',
   },
 };
 

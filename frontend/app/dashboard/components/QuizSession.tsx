@@ -16,7 +16,8 @@ import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
 import { useNumberKeys } from '../../../lib/useNumberKeys';
-import SpeakButton, { AutoplayToggle, playAudio, prefetchAudio } from './SpeakButton';
+import SpeakButton, { AudioPremiumPill, AutoplayToggle, LockedSpeakButton, audioStateFromQuota, playAudio, prefetchAudio } from './SpeakButton';
+import type { AudioState } from './SpeakButton';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -260,8 +261,10 @@ export default function QuizSession({
   // exempt from the daily session quota itself.
   const [premiumActive, setPremiumActive] = useState<boolean | null>(null);
   const [isAdminUser, setIsAdminUser] = useState(false);
-  // Plan #38 (prototype, local only) — word audio. See documentation/audio.md.
-  const audioEnabled = premiumActive === true || isAdminUser;
+  // Plan #38/#39 — word audio. See documentation/audio.md. 'on' = Premium/admin, 'locked' = free
+  // (locked speaker + pill → /pricing), null = unknown or the quota fetch failed (render nothing).
+  const [audioState, setAudioState] = useState<AudioState>(null);
+  const audioEnabled = audioState === 'on';
   // Autoplay defaults to ON (#38): only an explicit 'false' in localStorage turns it off.
   const [audioAutoplay, setAudioAutoplay] = useState(false);
   // In-card toggle writes the same key as the Settings checkbox. Turning it on replays the
@@ -351,8 +354,8 @@ export default function QuizSession({
   useEffect(() => {
     const stored = localStorage.getItem('fluent_complexity') as Complexity | null;
     if (stored === 'easy' || stored === 'medium' || stored === 'hard') setComplexity(stored);
-    // Plan #38 (prototype) — same localStorage pattern as fluent_complexity; the
-    // production plan moves this server-side.
+    // Plan #38/#39 — same localStorage pattern as fluent_complexity; kept client-side by
+    // decision (#39), see documentation/audio.md.
     setAudioAutoplay(localStorage.getItem('fluent_audio_autoplay') !== 'false');
     getSettings().then((s: Awaited<ReturnType<typeof getSettings>>) => {
       setLessonMode(s.lesson_mode);
@@ -365,12 +368,13 @@ export default function QuizSession({
   // card (mirrors PricingClient.tsx's fetchQuota pattern).
   useEffect(() => {
     const token = getToken();
-    if (!token) { setPremiumActive(false); return; }
+    if (!token) { setPremiumActive(false); setAudioState('locked'); return; }
     fetch(`${BACKEND_URL}/api/me/quota`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         setPremiumActive(data?.premium_active === true);
         setIsAdminUser(data?.is_admin === true || data?.is_superadmin === true);
+        setAudioState(audioStateFromQuota(data));
       })
       .catch(() => setPremiumActive(false));
   }, []);
@@ -379,10 +383,9 @@ export default function QuizSession({
   // once the word list and premium state are both known, so the first press/autoplay
   // is usually instant. Free users never fetch anything.
   useEffect(() => {
-    if (words.length === 0 || premiumActive === null) return;
-    if (!audioEnabled) return;
+    if (words.length === 0 || !audioEnabled) return;
     prefetchAudio(words.map((w) => w.lithuanian));
-  }, [words, premiumActive, audioEnabled]);
+  }, [words, audioEnabled]);
 
   // ── Recompute options/blank when front card changes ─────────────────────────
   // Depend only on the front card's identity so that queue insertions (retry cards,
@@ -1049,16 +1052,18 @@ export default function QuizSession({
       <div className="relative z-10 max-w-lg w-full mx-auto flex flex-col flex-1">
         {/* Header */}
         <div className="flex justify-between items-center mb-4 sm:mb-8">
-          <Link href={backHref} className="text-gray-400 hover:text-gray-900 text-sm transition-colors">
+          {/* nowrap on the link and counters: with the long review label at 375px they used to
+              break mid-phrase ("0 /" over "1"). Only the label may wrap. */}
+          <Link href={backHref} className="shrink-0 whitespace-nowrap text-gray-400 hover:text-gray-900 text-sm transition-colors">
             <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.study.backToLists}
           </Link>
-          <div className="flex items-center gap-3">
-            <span className="text-[#5b6067] text-xs uppercase tracking-wider">
+          <div className="flex items-center gap-3 min-w-0 ml-3">
+            <span className="text-[#5b6067] text-xs uppercase tracking-wider text-right">
               {headerLabel ? `${headerLabel} · ${stageLabel}` : stageLabel}
             </span>
-            <span className="text-gray-400 text-sm">{wordsDone} / {totalWords}</span>
+            <span className="shrink-0 whitespace-nowrap text-gray-400 text-sm">{wordsDone} / {totalWords}</span>
             {mistakeWordCount > 0 && (
-              <span className="text-amber-500 text-sm">{mistakeWordCount} ✗</span>
+              <span className="shrink-0 whitespace-nowrap text-amber-500 text-sm">{mistakeWordCount} ✗</span>
             )}
           </div>
         </div>
@@ -1085,7 +1090,16 @@ export default function QuizSession({
             them ("duoti – duoda – davė") instead of the usual prompt — same
             single bubble, same neutral-mood-only visibility rule the prompt
             already had. */}
-        <div className="flex justify-center pt-6 sm:pt-10">
+        <div className="relative flex justify-center pt-6 sm:pt-10">
+          {/* Stage 1 has the toggle on its card; every other stage needs it too, or turning sound
+              off mid-lesson means leaving for Settings. Not in the header row: with the review
+              label ("Повторение выученных · Пишу") it no longer fits at 375px. Safe on the
+              answer-hiding stages: the autoplay effect only fires on stages 1-2. */}
+          {audioEnabled && stage !== 1 && (
+            <div className="absolute right-0 top-6 sm:top-10">
+              <AutoplayToggle on={audioAutoplay} onChange={toggleAudioAutoplay} />
+            </div>
+          )}
           <PageMascot
             phrase={showVerbForms && verbForms ? verbForms : (stage === 1 ? 'Prisimeni?' : 'Pagalvok!')}
             phraseTestId={showVerbForms ? 'verb-forms' : undefined}
@@ -1103,12 +1117,18 @@ export default function QuizSession({
                   <AutoplayToggle on={audioAutoplay} onChange={toggleAudioAutoplay} />
                 </div>
               )}
+              {audioState === 'locked' && (
+                <div className="absolute bottom-full right-0 mb-1.5">
+                  <AudioPremiumPill newTab />
+                </div>
+              )}
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-4 sm:mb-6">
                 {(sessionMode === 'review' || word.status === 'known' || word.status === 'learning') ? tr.common.review : tr.common.newWord}
               </p>
               <div className="flex items-center justify-center gap-3 mb-4">
                 <p className="text-3xl sm:text-5xl font-bold tracking-tight">{renderAccented(word.accented || word.lithuanian)}</p>
                 {audioEnabled && <SpeakButton text={word.lithuanian} />}
+                {audioState === 'locked' && <LockedSpeakButton newTab />}
               </div>
               {digit && <p className="text-5xl sm:text-7xl font-bold text-emerald-600 mb-4" data-testid="number-digit">{digit}</p>}
               {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mb-4">{word.hint}</p>}
@@ -1134,6 +1154,7 @@ export default function QuizSession({
               <div className="flex items-center justify-center gap-3">
                 <p className="text-2xl sm:text-4xl font-bold tracking-tight">{renderAccented(word.accented || word.lithuanian)}</p>
                 {audioEnabled && <SpeakButton text={word.lithuanian} />}
+                {audioState === 'locked' && <LockedSpeakButton newTab />}
               </div>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
               {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{word.hint}</p>}

@@ -7,7 +7,7 @@ import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
-import SpeakButton from '../components/SpeakButton';
+import SpeakButton, { LockedSpeakButton, useAudioState } from '../components/SpeakButton';
 
 interface KnownWord {
   id: number;
@@ -31,9 +31,9 @@ export default function VocabularyPage() {
   const [query, setQuery] = useState('');
   const [memoryFilter, setMemoryFilter] = useState<'all' | 'ok' | 'fading' | 'due'>('all');
   const [page, setPage] = useState(1);
-  // #38 prototype — Premium/admin listen buttons (the server enforces it too). Click-only,
-  // no prefetch: this page can list hundreds of words.
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  // #38/#39 — Premium/admin listen buttons (the server enforces it too); free users get the
+  // locked button → /pricing. Click-only, no prefetch: this page can list hundreds of words.
+  const audioState = useAudioState();
 
   const fetchWords = () => {
     const token = getToken();
@@ -50,13 +50,6 @@ export default function VocabularyPage() {
 
   useEffect(() => {
     fetchWords();
-    const token = getToken();
-    if (token) {
-      fetch(`${BACKEND_URL}/api/me/quota`, { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((q) => setAudioEnabled(q?.premium_active === true || q?.is_admin === true || q?.is_superadmin === true))
-        .catch(() => setAudioEnabled(false));
-    }
     const onVisible = () => { if (document.visibilityState === 'visible') fetchWords(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
@@ -206,7 +199,8 @@ export default function VocabularyPage() {
                       <td className="px-5 py-3 font-medium text-gray-900">
                         <span className="inline-flex items-center gap-2 align-middle">
                           {w.lithuanian}
-                          {audioEnabled && <SpeakButton text={w.lithuanian} size="sm" />}
+                          {audioState === 'on' && <SpeakButton text={w.lithuanian} size="sm" />}
+                          {audioState === 'locked' && <LockedSpeakButton size="sm" />}
                         </span>
                         {w.hint && <span className="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-normal">{w.hint}</span>}
                       </td>

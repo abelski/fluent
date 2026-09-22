@@ -1,7 +1,9 @@
-# Word audio — local prototype (#38)
+# Word audio — prototype (#38) and production (#39)
 
-> **Prototype only.** Lives on branch `proto/word-audio`, not merged, not deployed. See
-> `plans/improvements/implemented/IMPLEMENTED-plan_38_word-audio-prototype.md` for the full plan and checklist.
+> **#38** was the local prototype (frozen on branch `proto/word-audio`, see
+> `plans/improvements/implemented/IMPLEMENTED-plan_38_word-audio-prototype.md`). **#39** made it
+> production-ready on `feature/word-audio`: see "Production (#39)" at the end of this file, which
+> supersedes the prototype's storage, engine and gating notes below.
 
 ## Decisions
 
@@ -120,6 +122,11 @@ After trying the prototype the user asked for two changes:
 - **A quick switch on the card itself.** It sits in the flashcard's top-right corner, styled as a
   mini copy of the header's RU/EN segmented pill (🔊 / 🔇), and writes the same key as the
   Settings checkbox.
+- **The switch on every stage (#39, 2026-09-22).** On stage 1 alone, a user who changed their mind
+  mid-lesson had to leave for Settings. Every other stage now shows the same switch at the right
+  edge of the mascot row. Not in the header row: with the review label («Повторение выученных ·
+  Пишу») it did not fit at 375px. It is safe on the stages that hide the answer: the autoplay
+  effect fires only on stages 1–2, so switching it on there never plays the word.
 
 Browser autoplay policy: Chrome only lets a page play sound after the user has interacted with
 it. Opening a lesson by clicking a link inside the app counts. Loading a lesson URL cold (typed
@@ -220,3 +227,165 @@ entry therefore misses the old, wrong clip and generates a fresh one. There is n
   already shaped as `from → to` rows.
 - A DB change, so it belongs in the production plan and never goes in from local (local dev hits
   the production DB).
+
+## Production (#39)
+
+Plan: `plans/improvements/active/plan_39_word-audio-production.md`.
+
+### What ships
+
+- **Engine: the official Azure Speech REST API on a paid S0 key**, voice `lt-LT-LeonasNeural`.
+  Commercial use of prebuilt neural voices is explicit only on the paid tier (see "engine switched"
+  above), and S0 costs ~$16/1M chars, so the whole catalogue is under $1. `_generate()` in
+  `backend/routers/audio.py` is one httpx POST to
+  `https://{region}.tts.speech.microsoft.com/cognitiveservices/v1` with SSML, output
+  `audio-24khz-48kbitrate-mono-mp3` (~13 KB/word), timeout 10s. The spoken text is XML-escaped
+  (`xml.sax.saxutils.escape`, `&<>`), which is enough for element content, so no SSML injection.
+  Only HTTP 200 with a non-empty `audio/*` body is accepted; anything else is a 502 and nothing is
+  stored.
+- **Env:** `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION` (e.g. `westus2`), read at call time and never
+  logged. Optional: `AUDIO_MONTHLY_CHAR_CAP` (default `200000`), `AUDIO_MONTHLY_BYTE_CAP`
+  (default `52428800`), `AUDIO_MEM_MAX_BYTES` (default 50 MB).
+- **Lookup order** for `GET /api/audio?text=` (401 without a token, 403 unless Premium/admin,
+  `text` ≤ 60 chars):
+  1. `If-None-Match` equals the ETag (the cache key) → empty 304;
+  2. the in-process byte-capped LRU (50 MB);
+  3. the `audio_clip` row → added to memory;
+  4. miss → Word check (404), key check (503), end the transaction, semaphore (503 "busy"), global
+     lock with a 10s timeout (503 "busy"), re-check + monthly caps (503 "Audio limit reached"),
+     Azure, `INSERT … ON CONFLICT DO NOTHING`, memory.
+- **Logging:** one line per request (`audio <source> user=<id> chars=<n> ms=<n>`); errors log the
+  Azure status code only. Never headers, never the request object, never the key.
+- **Frontend:** Premium/admin as in the prototype. Free users see a locked speaker in the same
+  places and, on the lesson card, the «Послушать в Premium» pill, both → `/pricing` (new tab in a
+  lesson). A failed `/api/me/quota` renders no audio control at all, so a paying user never sees
+  the lock. See the component library's "Word audio" section.
+
+### Why a DB table, created by `create_all()`, and no Alembic
+
+Render's disk is wiped on every deploy, so the prototype's disk cache could not ship. Clips go in a
+new table `audio_clip` (`key` sha1 PK, `spoken_text`, `data` bytea, `created_at`). Nothing runs
+Alembic on Render; `create_all()` runs on every boot and creates **missing tables** (never new
+columns), which is how every table so far got created (e.g. the inbox tables). A new, additive,
+empty table is the established safe path. There is no `voice` column: the key already encodes the
+voice (`sha1("azure:lt-LT-LeonasNeural|" + spoken text)`).
+
+Gotcha: local dev's `DATABASE_URL` is production Neon, so the first local boot with the model
+creates the table in production early, and `uvicorn --reload` re-runs `create_all()` on every save.
+**Stop any local backend before editing the `AudioClip` model**, and compare the production columns
+(`information_schema.columns`) with the model before deploying (the plan's Launch step 1). Local
+runs with the real key write real clips into production; that is fine, they are the same clips
+production would make.
+
+`backend/cache.py` was not used: it deepcopies on every hit and caps by entry count. The
+prototype's byte-capped LRU stayed.
+
+### Why the Word check on the miss path
+
+`?text=` used to accept any string, so a Premium user could make us pay to synthesize anything.
+On a miss the endpoint now requires `text` to equal the `lithuanian` of a non-archived `Word`
+(404 otherwise). It sits on the miss path only, so the frontend's `?text=` contract is unchanged
+and hits cost no extra query. Hits only ever serve clips that were generated from a real word, and
+a private word's clip can only be fetched by someone who already knows its exact text.
+
+This is **not** a money bound on its own: Premium users can add and edit their own words without
+limit, and those are `Word` rows too. The monthly caps are the hard stop.
+
+### Why a monthly cap *and* an Azure budget alert
+
+Pay-as-you-go Azure has **no spending limit**, only budget alerts, and those only email and can lag
+by up to a day. So the app enforces its own hard stop: on a miss, inside the lock and before
+calling Azure, one query sums `LENGTH(spoken_text)` and `LENGTH(data)` over this month's rows
+(UTC). If `chars + len(new text) > AUDIO_MONTHLY_CHAR_CAP` (≈ $3.20 at 200k) or
+`bytes >= AUDIO_MONTHLY_BYTE_CAP` (50 MB), the request is a 503 and Azure is not called. Stored
+clips keep playing; only *new* words stop. The first time a cap trips in a month, Telegram alerts
+the admin once (an in-process flag keyed by `YYYY-MM`; a restart may re-send it once). Both caps
+are env vars, so they can be raised on Render without a deploy. The Azure budget
+(`fluent-speech-budget`, $2, 50%/100%) is the second, independent line: it catches anything the
+app-side approximation misses. `LENGTH(spoken_text)` approximates billed characters and ignores
+per-request SSML overhead; the cap is a safety net, not an invoice.
+
+The byte cap exists because the char cap alone does not protect storage: a script cycling short
+texts through its own words stays under the char cap while filling Neon Free's ~0.5 GB, and a full
+DB fails every write app-wide.
+
+### Storage and transfer numbers (2026-09-22)
+
+- Production DB: **22 MB** in total.
+- Full catalogue as clips: **≈ 52 MB** (4,392 words × ~13 KB, measured on the prototype's clips).
+  Lazy generation means only words someone actually studies get stored.
+- Neon Free storage: **≈ 0.5 GB**.
+- Each clip is read from Neon once per process, then served from memory; a repeat play in the
+  browser is an empty 304.
+
+### Security & architecture audit
+
+Two passes before approval: A1 (the plan author's) and A2 (an independent cold audit with access
+to the plan and the code only). Accepted fixes:
+
+- **A1-1 / A2-1 — the announcement email logs to no DB table.** `PreparedMessage` is read by
+  `scheduler.py` (skips re-engagement for anyone with a `draft`/`sent` row of any type) and
+  `routers/admin.py` (flags `deletion_warning` for a `sent` row 7+ days old). A new FK table would
+  break user deletion: `_delete_user_data` deletes from a hand-written table list, so Postgres would
+  reject deleting any recipient (SQLite tests don't enforce FKs). The one-off send uses an
+  append-only local ledger file instead (`backend/.announcements/audio_2026_09.sent`, gitignored).
+- **A1-2 / A2-5 — no starvation while generating.** The DB pool is 5+10 and sync endpoints share
+  FastAPI's 40-thread pool. The request commits (ends its transaction) before waiting, so no pooled
+  connection is held; a non-blocking `BoundedSemaphore(4)` returns 503 at once when 4 generations
+  are already in flight or waiting; the lock waits at most 10s; the Azure timeout is 10s.
+  `user_id` is captured before the commit, since `expire_on_commit` would re-SELECT it.
+- **A1-3 / A2-3 — schema drift** from local boots creating the table early: stop the local backend
+  before editing the model, check the production columns before deploy, and the purge query below.
+- **A1-4 — `max_length` 60**, not 200: the catalogue max is 42 chars and p99 is 28.
+- **A1-5 — store only real audio** (200, non-empty, `audio/*`), otherwise 502 and nothing stored.
+- **A2-2 — the monthly byte cap** next to the char cap (see above).
+- **A2-4 — concurrent insert of the same key.** Local dev and prod, or two Render instances during a
+  deploy, share the DB but not the lock: `INSERT … ON CONFLICT DO NOTHING` (the dialect switch from
+  `inbox_service._record_keys`).
+- **A2-7 — tests can never spend money or send mail.** Autouse guards in `backend/conftest.py`
+  unset the Azure env and replace `email_service.send_email` with a spy (`_email_spy`).
+- **A2-8 — test isolation.** The audio test fixture deletes `audio_clip` rows and seeds real `Word`
+  rows.
+- **A2-9 — a failed quota fetch never shows the lock to a paying user** (the frontend tri-state).
+- **A2-10 — the locked controls in a lesson open `/pricing` in a new tab**, so a free user doesn't
+  lose the session they spent one of their daily sessions on.
+- **A2-11 — email content:** Premium/admin recipients get a no-upsell variant, every email carries
+  a reply-to-unsubscribe line (`email_consent` defaults to True), and consent is re-read
+  (`session.refresh(user)`) right before each send.
+- **A2-12 — plan fixes:** the missing-key 503 is on the miss path only (stored clips play without
+  a key); `escape()` (`&<>`) is enough for element content; no `voice` column; the old "never log
+  the word text" rule was dropped (uvicorn's access log already records `?text=`, and the text is
+  not secret; the key is what must never be logged).
+
+Deferred, deliberately:
+- **A per-user generation limit and an `AudioClip.created_by` column.** There are 4 paying Premium
+  users. Money is bounded by the char cap and storage by the byte cap, the Telegram alert says when
+  either trips, both caps can be raised without a deploy, and the log line carries the user id, so
+  an abuser is identifiable for free. Revisit if a cap ever trips from one account.
+- **A negative cache for failed words and an in-process "chars sent" counter.** Azure errors are
+  not billed; only a rare "synthesized, then timed out" is, and the cap has margin for that.
+- **The existence oracle.** A Premium user can learn whether *some* `Word` has an exact text (404
+  vs 200). It reveals near nothing, and closing it costs a list-membership join per miss.
+
+### Purging bad clips
+
+Clips are regenerable, so deleting rows is always safe: the next play regenerates them (and counts
+against this month's caps again). Use it when a local branch stored clips that production should not
+serve, e.g. from an experimental `spoken_text()` or voice change that never shipped (A1-3):
+
+```sql
+DELETE FROM audio_clip WHERE created_at >= :t;  -- :t = when the local experiment started (UTC)
+```
+
+A pronunciation fix does **not** need a purge: it changes the spoken text and therefore the key,
+so the old clip is simply never looked up again (it stays as a dead row, ~13 KB). Restart the
+backend (or wait for LRU eviction) after a purge if the purged clips may still be in a process's
+memory cache.
+
+### Removed from the prototype
+
+- `edge-tts` (unofficial endpoint; it was never in `requirements.txt`, only in the local venv).
+- The ElevenLabs path, `AUDIO_TTS` and the `ELEVENLABS_*` env vars (the code no longer reads them;
+  `backend/.env` may still hold the two unused keys, which can be deleted by hand).
+- The disk cache `backend/.audio_cache/`, `AUDIO_CACHE_DIR`, and its `.gitignore` entry.
+- The up-front 503 check for a missing key (now on the miss path only).

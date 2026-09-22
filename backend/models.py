@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, date, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field
-from sqlalchemy import Index, UniqueConstraint, text
+from sqlalchemy import Column, Index, LargeBinary, UniqueConstraint, text
 
 
 def _utcnow() -> datetime:
@@ -675,3 +675,17 @@ class Verb(SQLModel, table=True):
     programs: str = Field(default="[]")        # JSON list of vocab program keys e.g. ["sekmes"]
     freq_rank: Optional[int] = Field(default=None)  # 1 = most common; used to sort within theme groups
     theme: Optional[str] = Field(default=None)       # e.g. "essential", "communication", "motion"
+
+
+class AudioClip(SQLModel, table=True):
+    """One synthesized word clip (#39, see documentation/audio.md).
+
+    A new, additive table so startup's create_all() creates it (no Alembic on Render).
+    `key` = sha1("azure:<voice>|" + spoken text), so the voice is encoded in the key and
+    needs no column of its own. Generated lazily, once per spoken text, ever.
+    """
+    __tablename__ = "audio_clip"
+    key: str = Field(primary_key=True)           # sha1 hex
+    spoken_text: str                             # what was sent to Azure (for the monthly char cap)
+    data: bytes = Field(sa_column=Column(LargeBinary, nullable=False))  # mp3
+    created_at: datetime = Field(default_factory=_utcnow, index=True)  # monthly caps filter on it

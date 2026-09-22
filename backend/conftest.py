@@ -156,6 +156,26 @@ def _telegram_spy(monkeypatch):
     return sent
 
 
+# ── 5b. No test ever bills Azure or sends real mail (#39, A2-7) ──────────────
+# backend/.env may hold a REAL paid AZURE_SPEECH_KEY and real SMTP_* credentials, and
+# `database.load_dotenv()` puts them in os.environ. Unsetting the Azure env makes any
+# un-mocked audio miss a 503 instead of a billed call; audio tests that need a "configured"
+# key set a fake one themselves. `send_email` becomes a spy: tests that assert on mail read
+# the captured (to, subject, body) tuples by depending on `_email_spy` by name.
+@pytest.fixture(autouse=True)
+def _no_real_azure(monkeypatch):
+    monkeypatch.delenv("AZURE_SPEECH_KEY", raising=False)
+    monkeypatch.delenv("AZURE_SPEECH_REGION", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _email_spy(monkeypatch):
+    import email_service
+    sent: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(email_service, "send_email", lambda to, subject, body: sent.append((to, subject, body)))
+    return sent
+
+
 # ── 6. No test ever scrapes the real Wiktionary for verb forms ───────────────
 # `verb_lookup.enrich_verb_forms` (called from add_my_word, the extension's
 # translate/save endpoints) falls back to a real HTTPS fetch of Wiktionary's

@@ -271,6 +271,22 @@ client actually made rather than returning a constant.
 - `mature` is decided server-side and only rendered by the client — never re-derive it from SM-2
   fields in the frontend.
 
+## Word audio (#38/#39)
+
+| Thing | File |
+|---|---|
+| `SpeakButton`, `AutoplayToggle`, `LockedSpeakButton`, `AudioPremiumPill` | `frontend/app/dashboard/components/SpeakButton.tsx` |
+| Audio tri-state (`'on' \| 'locked' \| null`) from `/api/me/quota` | `audioStateFromQuota` / `useAudioState` in the same file |
+| Lesson card placement (pill `absolute bottom-full right-0 mb-1.5`, `newTab`) | `frontend/app/dashboard/components/QuizSession.tsx` |
+| List-page placement (`size="sm"`, same tab) | `frontend/app/dashboard/lists/[id]/page.tsx`, `frontend/app/dashboard/vocabulary/page.tsx` |
+| Settings autoplay checkbox + amber «Premium» tag → `/pricing` | `frontend/app/dashboard/settings/page.tsx` |
+| Strings | `tr.audio.*`, plus the perk in `tr.pricing.premiumFeatures` / `tr.lists.wallPerks` |
+| Endpoint, storage, caps | `GET /api/audio` — `backend/routers/audio.py`, table `audio_clip`; prose in `documentation/audio.md` |
+
+- Amber badge classes are the practice page's (`bg-amber-50 border border-amber-300 text-amber-700`,
+  `hover:bg-amber-100`); there is no amber token.
+- Locked button: `border-line-strong` + `text-faint` (the disabled look), hover `border-line` + `text-muted`.
+
 ## Conventions worth keeping
 
 - Cards are flat: `border border-line rounded-[14px]`, **no drop shadow**, no accent-colored border.

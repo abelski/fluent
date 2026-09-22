@@ -1,14 +1,60 @@
 'use client';
 
-// Speaker button for the word audio prototype (#38). Local only — see documentation/audio.md.
+// Word audio (#38 prototype → #39 production) — see documentation/audio.md.
+//
+// Premium/admin users get `SpeakButton` (+ `AutoplayToggle` on the lesson card); free users get
+// the same-shaped `LockedSpeakButton` (and, on the lesson card, `AudioPremiumPill`), both linking
+// to /pricing. `useAudioState` / `audioStateFromQuota` decide which, from `/api/me/quota`.
 //
 // One module-level `Map<text, objectURL>` is shared by the button and the lesson prefetch
 // (`prefetchAudio`, called once per session from QuizSession) so a prefetched word plays
 // instantly on click instead of re-fetching.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+
+/** `'on'` = Premium/admin, `'locked'` = known free user (or no token), `null` = unknown yet or the
+ * quota fetch failed — render nothing audio-related, so a paying user never sees the lock (A2-9). */
+export type AudioState = 'on' | 'locked' | null;
+
+type QuotaFlags = { premium_active?: boolean; is_admin?: boolean; is_superadmin?: boolean } | null;
+
+/** Map a `/api/me/quota` body (null = non-2xx) to an AudioState. */
+export function audioStateFromQuota(q: QuotaFlags): AudioState {
+  if (!q) return null;
+  if (q.premium_active === true || q.is_admin === true || q.is_superadmin === true) return 'on';
+  return q.premium_active === false ? 'locked' : null;
+}
+
+/** Own `/api/me/quota` fetch for pages that need nothing else from it (the list pages). */
+export function useAudioState(): AudioState {
+  const [state, setState] = useState<AudioState>(null);
+  useEffect(() => {
+    const token = getToken();
+    if (!token) { setState('locked'); return; }
+    fetch(`${BACKEND_URL}/api/me/quota`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((q) => setState(audioStateFromQuota(q)))
+      .catch(() => setState(null));
+  }, []);
+  return state;
+}
+
+function SpeakerIcon({ size, waves }: { size: number; waves: 1 | 2 }) {
+  return (
+    <svg width={size} height={size} viewBox="2 2 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      {waves === 2 && <path d="M18.5 5.5a9 9 0 0 1 0 13" />}
+    </svg>
+  );
+}
+
+// In a lesson, /pricing opens in a new tab so a free user doesn't lose the session they already
+// spent one of their daily sessions on (A2-10). The list pages navigate normally.
+const newTabProps = { target: '_blank', rel: 'noopener' } as const;
 
 // Caches the *promise*, not the finished URL, so a click or autoplay that lands while the
 // prefetch for the same word is still in flight joins that request instead of sending a
@@ -92,12 +138,47 @@ export default function SpeakButton({ text, size = 'md' }: { text: string; size?
         playing ? 'bg-emerald-50 border-emerald-600 text-emerald-600' : 'bg-white border-line text-muted hover:text-ink'
       }`}
     >
-      <svg width={size === 'sm' ? 16 : 24} height={size === 'sm' ? 16 : 24} viewBox="2 2 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none" />
-        <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-        {playing && <path d="M18.5 5.5a9 9 0 0 1 0 13" />}
-      </svg>
+      <SpeakerIcon size={size === 'sm' ? 16 : 24} waves={playing ? 2 : 1} />
     </button>
+  );
+}
+
+/** Free users' version of SpeakButton: same shape and place, disabled look (faint icon, light
+ * border), links to /pricing. `newTab` is for the lesson card only (A2-10). */
+export function LockedSpeakButton({ size = 'md', newTab = false }: { size?: 'sm' | 'md'; newTab?: boolean }) {
+  const { tr } = useT();
+  return (
+    <Link
+      href="/pricing"
+      {...(newTab ? newTabProps : {})}
+      aria-label={tr.audio.lockedLabel}
+      title={tr.audio.lockedLabel}
+      data-testid="speak-btn-locked"
+      className={`relative shrink-0 inline-flex items-center justify-center rounded-full border bg-white border-line-strong text-faint hover:border-line hover:text-muted transition-colors ${size === 'sm' ? 'w-7 h-7' : 'w-10 h-10'}`}
+    >
+      <SpeakerIcon size={size === 'sm' ? 16 : 24} waves={1} />
+    </Link>
+  );
+}
+
+/** «🔊 Послушать в Premium» — the call to action the grey locked button lacks on its own. Sits 6px
+ * above the lesson card's top-right edge (the parent positions it). Same amber as the practice
+ * page's Premium badge. The link is the 44px mobile tap area; the inner span is the visual pill,
+ * bottom-aligned so the 6px gap to the card holds. */
+export function AudioPremiumPill({ newTab = false }: { newTab?: boolean }) {
+  const { tr } = useT();
+  return (
+    <Link
+      href="/pricing"
+      {...(newTab ? newTabProps : {})}
+      data-testid="audio-premium-pill"
+      className="group flex items-end min-h-[44px] sm:min-h-0"
+    >
+      <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] leading-4 px-2 py-0.5 bg-amber-50 border border-amber-300 text-amber-700 rounded-full font-semibold group-hover:bg-amber-100 transition-colors">
+        <SpeakerIcon size={12} waves={1} />
+        {tr.audio.listenPremium}
+      </span>
+    </Link>
   );
 }
 

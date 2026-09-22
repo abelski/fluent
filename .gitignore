@@ -46,6 +46,7 @@ backend/test-results/
 .mcp.json
 .playwright-mcp/
 
-# Local audio prototype cache
-backend/.audio_cache/
 
+
+# One-off announcement send ledgers (#39) — local, never committed
+backend/.announcements/

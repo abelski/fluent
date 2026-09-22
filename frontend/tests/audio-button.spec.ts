@@ -3,10 +3,18 @@ import path from 'path';
 import { test, expect, type Page } from '@playwright/test';
 import { mockStudy, type MockWord } from './helpers/studyFlow';
 
-// Plan #38 (local prototype, not deployed) — the speaker button in a word study
-// session and the autoplay checkbox in Settings → Vocabulary. See documentation/audio.md.
+// Plan #38 (prototype) → #39 (production) — the speaker button in a word study session, on the
+// list pages and the autoplay checkbox in Settings → Vocabulary; for free users the locked
+// speaker + "Listen with Premium" pill → /pricing, and the pricing perk. See documentation/audio.md.
 
-const SCREENSHOT_DIR = path.resolve(__dirname, '../../temp_files/screenshots/plan_38_word-audio-prototype');
+const SCREENSHOT_DIR = path.resolve(__dirname, '../../temp_files/screenshots/plan_39_word-audio-production');
+
+// Copy the free-user surfaces must show, per language (lib/i18n ru.ts / en.ts).
+const LISTEN_PREMIUM = { ru: 'Послушать в Premium', en: 'Listen with Premium' } as const;
+const LOCKED_LABEL = { ru: 'Произношение — в Premium', en: 'Pronunciation is part of Premium' } as const;
+const PERK = { ru: 'Произношение каждого слова', en: 'Pronunciation of every word' } as const;
+// trailingSlash: true — exported hrefs carry the slash.
+const PRICING_HREF = '/pricing/';
 
 const WORD: MockWord = { id: 1, lithuanian: 'šeštadienis', accented: null, translation_ru: 'суббота', translation_en: 'Saturday', hint: null, status: 'new', mature: false };
 const WORD2: MockWord = { id: 2, lithuanian: 'pirmadienis', accented: null, translation_ru: 'понедельник', translation_en: 'Monday', hint: null, status: 'new', mature: false };
@@ -158,6 +166,52 @@ test.describe('SpeakButton — word study session', () => {
     expect(audioRequests).toBe(0);
   });
 
+  for (const lang of ['ru', 'en'] as const) {
+    test(`free user (${lang}): locked speaker + pill on stage 1, locked speaker on stage 2, all → /pricing in a new tab`, async ({ page }) => {
+      let audioRequests = 0;
+      await boot(page, { lang, premium: false });
+      await mockStudy(page, [WORD], { distractors: DISTRACTORS });
+      await page.route('**/api/audio*', async (route) => { audioRequests += 1; await route.abort(); });
+      await page.goto('/dashboard/lists/_/study');
+
+      const locked = page.getByTestId('speak-btn-locked');
+      await expect(locked).toBeVisible();
+      await expect(locked).toHaveAttribute('href', PRICING_HREF);
+      await expect(locked).toHaveAttribute('aria-label', LOCKED_LABEL[lang]);
+      // A lesson must survive the click (A2-10): new tab, not a navigation away.
+      await expect(locked).toHaveAttribute('target', '_blank');
+      await expect(locked).toHaveAttribute('rel', 'noopener');
+      const pill = page.getByTestId('audio-premium-pill');
+      await expect(pill).toBeVisible();
+      await expect(pill).toHaveText(LISTEN_PREMIUM[lang]);
+      await expect(pill).toHaveAttribute('href', PRICING_HREF);
+      await expect(pill).toHaveAttribute('target', '_blank');
+      await expect(page.getByTestId('speak-btn')).toHaveCount(0);
+      await expect(page.getByTestId('autoplay-toggle')).toHaveCount(0);
+
+      await gotoStage2WhatMeans(page, lang);
+      await expect(page.getByTestId('speak-btn-locked')).toBeVisible();
+      await expect(page.getByTestId('speak-btn-locked')).toHaveAttribute('target', '_blank');
+      await expect(page.getByTestId('audio-premium-pill')).toHaveCount(0); // stage 1 only
+      await expect(page.getByTestId('speak-btn')).toHaveCount(0);
+      await page.waitForTimeout(400);
+      expect(audioRequests).toBe(0);
+    });
+  }
+
+  test('a failed quota fetch shows no audio control at all (never the lock to a paying user)', async ({ page }) => {
+    await boot(page, { premium: true });
+    await page.route('**/api/me/quota', (r) => r.fulfill({ status: 500, body: 'boom' }));
+    await mockStudy(page, [WORD], { distractors: DISTRACTORS });
+    await page.goto('/dashboard/lists/_/study');
+
+    await expect(page.getByText(WORD.lithuanian, { exact: true }).first()).toBeVisible();
+    await page.waitForTimeout(400);
+    await expect(page.getByTestId('speak-btn')).toHaveCount(0);
+    await expect(page.getByTestId('speak-btn-locked')).toHaveCount(0);
+    await expect(page.getByTestId('audio-premium-pill')).toHaveCount(0);
+  });
+
   test('autoplay on: stage 1 plays the clip without a click', async ({ page }) => {
     await boot(page, { premium: true, autoplay: true });
     await mockStudy(page, [WORD], { distractors: DISTRACTORS });
@@ -236,6 +290,46 @@ test.describe('SpeakButton — word study session', () => {
     await input.press('Enter');
     await expect.poll(() => playCallCount(page)).toBeGreaterThan(before);
   });
+
+  test('typed stage: the toggle turns autoplay off mid-lesson, and turning it on never plays the hidden answer', async ({ page }) => {
+    await boot(page, { premium: true, autoplay: true });
+    await mockStudy(page, [WORD], { distractors: DISTRACTORS });
+    await page.route('**/api/audio*', (r) => r.fulfill({ body: TINY_MP3, contentType: 'audio/mpeg' }));
+    await page.goto('/dashboard/lists/_/study');
+    await page.getByRole('button', { name: EASY.ru, exact: true }).click();
+    const input = page.locator('input[type="text"]');
+    await input.waitFor({ timeout: 7000 });
+
+    const toggle = page.getByTestId('autoplay-toggle');
+    await expect(toggle).toHaveCount(1);
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    const before = await playCallCount(page);
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    expect(await page.evaluate(() => localStorage.getItem('fluent_audio_autoplay'))).toBe('false');
+    // Back on while the answer is still hidden: must not play it.
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await page.waitForTimeout(400);
+    expect(await playCallCount(page)).toBe(before);
+
+    // Off again, then answer: autoplay stays silent.
+    await toggle.click();
+    await input.fill(WORD.lithuanian);
+    await input.press('Enter');
+    await page.waitForTimeout(400);
+    expect(await playCallCount(page)).toBe(before);
+  });
+
+  test('free user on the typed stage: no autoplay toggle', async ({ page }) => {
+    await boot(page, { premium: false });
+    await mockStudy(page, [WORD], { distractors: DISTRACTORS });
+    await page.goto('/dashboard/lists/_/study');
+    await page.getByRole('button', { name: EASY.ru, exact: true }).click();
+    await page.locator('input[type="text"]').waitFor({ timeout: 7000 });
+    await expect(page.getByTestId('autoplay-toggle')).toHaveCount(0);
+  });
 });
 
 test.describe('Settings — autoplay checkbox', () => {
@@ -267,6 +361,18 @@ test.describe('Settings — autoplay checkbox', () => {
     await expect(checkbox).toBeDisabled();
     await expect(page.getByTestId('audio-autoplay-premium-tag')).toBeVisible();
   });
+
+  for (const lang of ['ru', 'en'] as const) {
+    test(`free (${lang}): the Premium tag links to /pricing`, async ({ page }) => {
+      await boot(page, { lang, premium: false });
+      await mockSettingsRoutes(page);
+      await page.goto('/dashboard/settings');
+      const tag = page.getByTestId('audio-autoplay-premium-tag');
+      await expect(tag).toBeVisible();
+      await expect(tag).toHaveAttribute('href', PRICING_HREF);
+      await expect(tag).toHaveText('Premium');
+    });
+  }
 });
 
 // ── RU/EN × 1280/375 evidence screenshots (CLAUDE.md: user-facing changes ship with these) ──
@@ -301,6 +407,30 @@ test.describe('Screenshots — RU/EN × 1280/375, no horizontal scroll at 375', 
         await expect(page.getByTestId('speak-btn')).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
         await page.screenshot({ path: path.join(SCREENSHOT_DIR, `select-premium-${lang}-${width}.png`) });
+      });
+
+      test(`typed stage: autoplay toggle beside the mascot, ${lang} @ ${width}px`, async ({ page }) => {
+        await boot(page, { lang, width, premium: true, autoplay: true });
+        await mockStudy(page, [WORD], { distractors: DISTRACTORS });
+        await page.route('**/api/audio*', (r) => r.fulfill({ body: TINY_MP3, contentType: 'audio/mpeg' }));
+        await page.goto('/dashboard/lists/_/study');
+        await page.getByRole('button', { name: EASY[lang], exact: true }).click();
+        await page.locator('input[type="text"]').waitFor({ timeout: 7000 });
+        await expect(page.getByTestId('autoplay-toggle')).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, `typed-toggle-${lang}-${width}.png`) });
+      });
+
+      // The longest header there is ("Повторение выученных · Пишу"): nothing may squeeze it.
+      test(`review typing card: toggle with the longest header label, ${lang} @ ${width}px`, async ({ page }) => {
+        await boot(page, { lang, width, premium: true, autoplay: true });
+        await mockStudy(page, [{ ...WORD, status: 'known', mature: true }], { review: true });
+        await page.route('**/api/audio*', (r) => r.fulfill({ body: TINY_MP3, contentType: 'audio/mpeg' }));
+        await page.goto('/dashboard/review');
+        await page.locator('input[type="text"]').waitFor({ timeout: 7000 });
+        await expect(page.getByTestId('autoplay-toggle')).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, `review-typed-toggle-${lang}-${width}.png`) });
       });
 
       test(`settings autoplay checkbox, ${lang} @ ${width}px`, async ({ page }) => {
@@ -368,6 +498,35 @@ test.describe('Word-list page — listen buttons', () => {
   });
 
   for (const lang of ['ru', 'en'] as const) {
+    test(`free (${lang}): a locked button per word → /pricing, same tab, no pill`, async ({ page }) => {
+      let audioRequests = 0;
+      await boot(page, { lang, premium: false });
+      await page.route('**/api/audio*', (r) => { audioRequests += 1; return r.abort(); });
+      await gotoList(page);
+
+      const locked = page.getByTestId('speak-btn-locked');
+      await expect(locked).toHaveCount(LIST.words.length);
+      await expect(locked.first()).toBeVisible();
+      await expect(locked.first()).toHaveAttribute('href', PRICING_HREF);
+      await expect(locked.first()).toHaveAttribute('aria-label', LOCKED_LABEL[lang]);
+      await expect(locked.first()).not.toHaveAttribute('target', /.*/); // normal navigation (A2-10)
+      await expect(page.getByTestId('audio-premium-pill')).toHaveCount(0);
+      await expect(page.getByTestId('speak-btn')).toHaveCount(0);
+      await page.waitForTimeout(400);
+      expect(audioRequests).toBe(0);
+    });
+  }
+
+  test('a failed quota fetch shows no audio control', async ({ page }) => {
+    await boot(page, { premium: true });
+    await page.route('**/api/me/quota', (r) => r.fulfill({ status: 500, body: 'boom' }));
+    await gotoList(page);
+    await page.waitForTimeout(400);
+    await expect(page.getByTestId('speak-btn')).toHaveCount(0);
+    await expect(page.getByTestId('speak-btn-locked')).toHaveCount(0);
+  });
+
+  for (const lang of ['ru', 'en'] as const) {
     for (const width of [1280, 375] as const) {
       test(`screenshot: list with listen buttons, ${lang} @ ${width}px`, async ({ page }) => {
         await boot(page, { lang, width, premium: true });
@@ -420,6 +579,35 @@ test.describe('Vocabulary page — listen buttons', () => {
   });
 
   for (const lang of ['ru', 'en'] as const) {
+    test(`free (${lang}): a locked button per word → /pricing, same tab, no pill`, async ({ page }) => {
+      let audioRequests = 0;
+      await boot(page, { lang, premium: false });
+      await page.route('**/api/audio*', (r) => { audioRequests += 1; return r.abort(); });
+      await gotoVocabulary(page);
+
+      const locked = page.getByTestId('speak-btn-locked');
+      await expect(locked).toHaveCount(KNOWN.length);
+      await expect(locked.first()).toBeVisible();
+      await expect(locked.first()).toHaveAttribute('href', PRICING_HREF);
+      await expect(locked.first()).toHaveAttribute('aria-label', LOCKED_LABEL[lang]);
+      await expect(locked.first()).not.toHaveAttribute('target', /.*/);
+      await expect(page.getByTestId('audio-premium-pill')).toHaveCount(0);
+      await expect(page.getByTestId('speak-btn')).toHaveCount(0);
+      await page.waitForTimeout(400);
+      expect(audioRequests).toBe(0);
+    });
+  }
+
+  test('a failed quota fetch shows no audio control', async ({ page }) => {
+    await boot(page, { premium: true });
+    await page.route('**/api/me/quota', (r) => r.fulfill({ status: 500, body: 'boom' }));
+    await gotoVocabulary(page);
+    await page.waitForTimeout(400);
+    await expect(page.getByTestId('speak-btn')).toHaveCount(0);
+    await expect(page.getByTestId('speak-btn-locked')).toHaveCount(0);
+  });
+
+  for (const lang of ['ru', 'en'] as const) {
     for (const width of [1280, 375] as const) {
       test(`screenshot: vocabulary with listen buttons, ${lang} @ ${width}px`, async ({ page }) => {
         await boot(page, { lang, width, premium: true });
@@ -428,6 +616,69 @@ test.describe('Vocabulary page — listen buttons', () => {
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
         fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
         await page.screenshot({ path: path.join(SCREENSHOT_DIR, `vocabulary-premium-${lang}-${width}.png`), fullPage: true });
+      });
+    }
+  }
+});
+
+// ── Free-user evidence (#39): locked card + pill, stage 2, list, vocabulary, pricing ──
+// RU/EN × 1280/375. At 375 the pill and the locked buttons must be visible with no horizontal
+// scroll. /api/billing/config is mocked to production's `enabled: true` (locally it is false
+// without a Stripe key), so the pricing shot shows the state users actually see.
+
+async function noHorizontalScroll(page: Page, width: number) {
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+}
+
+test.describe('Free-user screenshots — RU/EN × 1280/375', () => {
+  test.beforeAll(() => {
+    fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+  });
+
+  for (const lang of ['ru', 'en'] as const) {
+    for (const width of [1280, 375] as const) {
+      test(`lesson card + stage 2 (free), ${lang} @ ${width}px`, async ({ page }) => {
+        await boot(page, { lang, width, premium: false });
+        await mockStudy(page, [WORD], { distractors: DISTRACTORS });
+        await page.goto('/dashboard/lists/_/study');
+        await expect(page.getByTestId('speak-btn-locked')).toBeVisible();
+        await expect(page.getByTestId('audio-premium-pill')).toBeVisible();
+        await expect(page.getByTestId('audio-premium-pill')).toHaveText(LISTEN_PREMIUM[lang]);
+        await noHorizontalScroll(page, width);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, `free-card-${lang}-${width}.png`) });
+
+        await gotoStage2WhatMeans(page, lang);
+        await expect(page.getByRole('button', { name: lang === 'ru' ? WORD.translation_ru : WORD.translation_en })).toBeVisible();
+        await expect(page.getByTestId('speak-btn-locked')).toBeVisible();
+        await noHorizontalScroll(page, width);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, `free-select-${lang}-${width}.png`) });
+      });
+
+      test(`list page (free), ${lang} @ ${width}px`, async ({ page }) => {
+        await boot(page, { lang, width, premium: false });
+        await gotoList(page);
+        await expect(page.getByTestId('speak-btn-locked').first()).toBeVisible();
+        await noHorizontalScroll(page, width);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, `free-list-${lang}-${width}.png`) });
+      });
+
+      test(`vocabulary page (free), ${lang} @ ${width}px`, async ({ page }) => {
+        await boot(page, { lang, width, premium: false });
+        await gotoVocabulary(page);
+        await expect(page.getByTestId('speak-btn-locked').first()).toBeVisible();
+        await noHorizontalScroll(page, width);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, `free-vocabulary-${lang}-${width}.png`), fullPage: true });
+      });
+
+      test(`pricing lists the pronunciation perk, ${lang} @ ${width}px`, async ({ page }) => {
+        await boot(page, { lang, width, premium: false });
+        await page.route('**/api/billing/config', (r) => r.fulfill({ json: { enabled: true } }));
+        await page.goto('/pricing');
+        const perk = page.getByText(PERK[lang], { exact: true });
+        await expect(perk).toBeVisible();
+        await noHorizontalScroll(page, width);
+        await perk.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, `pricing-${lang}-${width}.png`), fullPage: true });
       });
     }
   }

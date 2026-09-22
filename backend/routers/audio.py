@@ -1,11 +1,12 @@
-# Word audio prototype (#38, local only — see documentation/audio.md).
+# Word audio (#38 prototype → #39 production, see documentation/audio.md).
 #
-# Lazy, per-word text-to-speech via ElevenLabs. Clips are cached on local disk
-# (backend/.audio_cache/, gitignored) rather than in the DB: local dev's DATABASE_URL
-# points at the production Neon DB, so a new table here would be created in production
-# the moment the local server boots. Premium/admin only, per the study session gate.
+# Lazy, per-word text-to-speech via the official Azure Speech REST API (paid S0 key,
+# voice lt-LT-LeonasNeural). Each clip is generated once ever and stored in the DB
+# (`audio_clip`), with a byte-capped in-memory LRU in front. Premium/admin only.
+#
+# Only the text of an existing, non-archived `Word` is ever synthesized, and monthly
+# char/byte caps are the hard stop on the Azure bill and on DB storage.
 
-import asyncio
 import hashlib
 import json
 import logging
@@ -15,27 +16,34 @@ import threading
 import time
 import unicodedata
 from collections import OrderedDict
+from datetime import datetime
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import Response
-from sqlmodel import Session
+from sqlalchemy import func
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlmodel import Session, select
 
+import telegram_service
 from auth import require_user
 from database import get_session
+from models import AudioClip, Word, _utcnow
 from quota import is_premium_active
 
 # A child of uvicorn's logger so the hit/miss timing lines actually print: the app never
-# configures logging, and a plain getLogger(__name__) drops INFO. ponytail: prototype-only.
+# configures logging, and a plain getLogger(__name__) drops INFO.
+# Never log the Azure key: no request headers, no request/response objects.
 logger = logging.getLogger("uvicorn.error.audio")
 
 router = APIRouter()
 
-_DEFAULT_CACHE_DIR = Path(__file__).resolve().parent.parent / ".audio_cache"
 _SEPARATOR_RE = re.compile(r"[,/]")
 # Stress marks some entries carry in the plain text ("jaũsti", "nãmas"): grave, acute, tilde.
-# They are not Lithuanian letters, and ElevenLabs mispronounces them ("jaũsti" should sound
+# They are not Lithuanian letters, and TTS engines mispronounce them ("jaũsti" should sound
 # like "яусти"). Real Lithuanian diacritics are different code points and survive:
 # ogonek ą ę į ų (U+0328), caron č š ž (U+030C), dot ė (U+0307), macron ū (U+0304).
 _STRESS_MARKS = {"\u0300", "\u0301", "\u0303"}
@@ -74,36 +82,30 @@ def _respell(text: str) -> str:
     return re.sub(pattern, lambda m: fixes[m.group(0).lower()], text, flags=re.IGNORECASE)
 
 
-_ELEVENLABS_MODEL = "eleven_v3"
-# Engine: Azure `lt-LT-LeonasNeural` by default — the user picked it over ElevenLabs after
-# ElevenLabs read "jausti" as «джаусти» (English j); Azure's native lt-LT voice says «яусти».
-# Locally it goes through `edge-tts` (same voice, no key, unofficial endpoint — prototype only);
-# production must call the official Azure Speech API on a *paid* S0 key (see audio.md).
-# AUDIO_TTS=elevenlabs switches back for comparison.
+# Azure's native lt-LT voice: the user picked it over ElevenLabs, which read "jausti" as
+# «джаусти» (English j); Leonas says «яусти». Paid S0 key only — commercial use of prebuilt
+# neural voices is explicit on the paid tier (see audio.md).
 _AZURE_VOICE = "lt-LT-LeonasNeural"
-
-
-def _provider() -> str:
-    return os.getenv("AUDIO_TTS", "azure")
-
-
-def _voice_tag() -> str:
-    if _provider() == "elevenlabs":
-        return f"elevenlabs:{os.getenv('ELEVENLABS_VOICE_ID', '')}"
-    return f"azure:{_AZURE_VOICE}"
+_AZURE_TIMEOUT = 10.0  # typical is ~1s
 
 # ponytail: one global lock serializes every generation across all words/users;
-# fine for a single local prototype user, switch to per-text locks if concurrent
-# users make it a bottleneck.
+# fine at a handful of Premium users with one generation per word ever, switch to
+# per-text locks if concurrent misses make it a bottleneck.
 _GENERATION_LOCK = threading.Lock()
+_LOCK_TIMEOUT = 10.0
+# At most 4 requests in flight or waiting for the lock; a 5th gets an immediate 503 instead
+# of pinning one of FastAPI's 40 sync threads (A2-5).
+_GENERATION_SLOTS = threading.BoundedSemaphore(4)
 
-# In-memory LRU in front of the disk cache. The disk stands in for the production DB (Neon),
-# so every disk read here is what would be Neon network transfer there. Capped by *bytes*,
-# not entries — memory (512 MB on Render) is the real constraint. See documentation/audio.md.
+# In-memory LRU in front of the DB: every DB read is Neon network transfer. Capped by
+# *bytes*, not entries — memory (512 MB on Render) is the real constraint.
 _MEM_MAX_BYTES = int(os.getenv("AUDIO_MEM_MAX_BYTES", str(50 * 1024 * 1024)))
 _mem: "OrderedDict[str, bytes]" = OrderedDict()
 _mem_bytes = 0
 _mem_lock = threading.Lock()
+
+# `YYYY-MM` of the last monthly-cap Telegram alert. In-process only: a restart may re-send once.
+_cap_alerted_month: str | None = None
 
 
 def _mem_get(key: str) -> bytes | None:
@@ -134,18 +136,6 @@ def _mem_clear() -> None:
         _mem_bytes = 0
 
 
-def _cache_dir() -> Path:
-    return Path(os.getenv("AUDIO_CACHE_DIR", str(_DEFAULT_CACHE_DIR)))
-
-
-def _cache_path(text: str) -> Path:
-    # Keyed on what is *spoken*, not what is displayed: "jaũsti" and "jausti" share one clip,
-    # and a fix to spoken_text() automatically misses the old (wrongly spoken) clip.
-    # The engine+voice is part of the key, so switching engines never serves the other one's clip.
-    digest = hashlib.sha1(f"{_voice_tag()}|{spoken_text(text)}".encode("utf-8")).hexdigest()
-    return _cache_dir() / f"{digest}.mp3"
-
-
 def spoken_text(text: str) -> str:
     """Turn a `word.lithuanian` entry into what should be spoken.
 
@@ -158,47 +148,93 @@ def spoken_text(text: str) -> str:
     return ", ".join(parts) if parts else text.strip()
 
 
-def _generate(text: str) -> bytes:
-    """Synthesize `text` with the configured engine. Raises on any failure."""
-    if _provider() == "elevenlabs":
-        return _generate_elevenlabs(text)
-    return _generate_azure_edge(text)
+def _clip_key(spoken: str) -> str:
+    # Keyed on what is *spoken*, not what is displayed: "jaũsti" and "jausti" share one clip,
+    # and a fix to spoken_text() automatically misses the old (wrongly spoken) clip.
+    # The engine+voice is part of the key, so a voice change never serves the old clip.
+    return hashlib.sha1(f"azure:{_AZURE_VOICE}|{spoken}".encode("utf-8")).hexdigest()
 
 
-def _generate_azure_edge(text: str) -> bytes:
-    import edge_tts  # local-prototype dependency only, deliberately not in requirements.txt
-
-    async def run() -> bytes:
-        audio = bytearray()
-        async for chunk in edge_tts.Communicate(spoken_text(text), _AZURE_VOICE).stream():
-            if chunk["type"] == "audio":
-                audio += chunk["data"]
-        return bytes(audio)
-
-    data = asyncio.run(run())  # sync endpoint → runs in FastAPI's threadpool, no loop there
-    if not data:
-        raise RuntimeError("edge-tts returned no audio")
-    return data
-
-
-def _generate_elevenlabs(text: str) -> bytes:
-    """Call ElevenLabs TTS for `text`. Raises on any non-2xx or network error."""
-    api_key = os.getenv("ELEVENLABS_API_KEY")
-    voice_id = os.getenv("ELEVENLABS_VOICE_ID")
-    resp = httpx.post(
-        f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
-        params={"output_format": "mp3_22050_32"},
-        headers={"xi-api-key": api_key},
-        json={"text": spoken_text(text), "model_id": _ELEVENLABS_MODEL, "language_code": "lt"},
-        timeout=60.0,
+def _ssml(spoken: str) -> str:
+    # escape() covers &<> — enough for element content, so no SSML injection.
+    return (
+        f"<speak version='1.0' xml:lang='lt-LT'><voice name='{_AZURE_VOICE}'>"
+        f"{escape(spoken)}</voice></speak>"
     )
-    resp.raise_for_status()
+
+
+class _GenerationFailed(Exception):
+    def __init__(self, status: int | None):
+        self.status = status
+
+
+def _generate(spoken: str) -> bytes:
+    """Synthesize `spoken` with Azure. Accepts only HTTP 200 + a non-empty audio/* body (A1-5)."""
+    region = os.getenv("AZURE_SPEECH_REGION")
+    try:
+        resp = httpx.post(
+            f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1",
+            content=_ssml(spoken).encode("utf-8"),
+            headers={
+                "Ocp-Apim-Subscription-Key": os.getenv("AZURE_SPEECH_KEY", ""),
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
+                "User-Agent": "fluent",
+            },
+            timeout=_AZURE_TIMEOUT,
+        )
+    except httpx.HTTPError:
+        raise _GenerationFailed(None)
+    if resp.status_code != 200 or not resp.content or not resp.headers.get("content-type", "").startswith("audio/"):
+        raise _GenerationFailed(resp.status_code)
     return resp.content
+
+
+def _month_start() -> datetime:
+    return _utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
+def _cap_reached(session: Session, spoken: str) -> bool:
+    """Monthly hard stop for the Azure bill (chars) and DB storage (bytes), read at call time.
+
+    ponytail: LENGTH(spoken_text) approximates billed characters; per-request SSML overhead is
+    ignored. The cap is a safety net, not an invoice.
+    """
+    global _cap_alerted_month
+    char_cap = int(os.getenv("AUDIO_MONTHLY_CHAR_CAP", "200000"))
+    byte_cap = int(os.getenv("AUDIO_MONTHLY_BYTE_CAP", str(50 * 1024 * 1024)))
+    chars, nbytes = session.exec(
+        select(
+            func.coalesce(func.sum(func.length(AudioClip.spoken_text)), 0),
+            func.coalesce(func.sum(func.length(AudioClip.data)), 0),
+        ).where(AudioClip.created_at >= _month_start())
+    ).one()
+    if chars + len(spoken) <= char_cap and nbytes < byte_cap:
+        return False
+    month = _utcnow().strftime("%Y-%m")
+    if _cap_alerted_month != month:
+        _cap_alerted_month = month
+        telegram_service.send_telegram(
+            f"audio monthly cap reached: chars {chars}/{char_cap}, bytes {nbytes}/{byte_cap}"
+        )
+    return True
+
+
+def _insert_clip(session: Session, key: str, spoken: str, data: bytes) -> None:
+    """`INSERT … ON CONFLICT DO NOTHING`: local dev and prod (or two Render instances during a
+    deploy) share the DB but not the lock, so a concurrent insert of the same key is fine (A2-4)."""
+    insert = pg_insert if session.get_bind().dialect.name == "postgresql" else sqlite_insert
+    session.execute(
+        insert(AudioClip.__table__)
+        .values(key=key, spoken_text=spoken, data=data, created_at=_utcnow())
+        .on_conflict_do_nothing(index_elements=["key"])
+    )
+    session.commit()
 
 
 @router.get("/audio")
 def get_audio(
-    text: str = Query(..., min_length=1),
+    text: str = Query(..., min_length=1, max_length=60),
     authorization: str | None = Header(None),
     if_none_match: str | None = Header(None),
     session: Session = Depends(get_session),
@@ -206,16 +242,15 @@ def get_audio(
     user = require_user(authorization, session)
     if not (user.is_admin or is_premium_active(user)):
         raise HTTPException(status_code=403, detail="Audio is available on Premium.")
+    # Captured before any commit: expire_on_commit would otherwise re-SELECT it (A1-2).
+    user_id = user.id
 
-    if _provider() == "elevenlabs" and not os.getenv("ELEVENLABS_API_KEY"):
-        raise HTTPException(status_code=503, detail="Audio is not configured.")
-
-    cache_path = _cache_path(text)
-    key = cache_path.name
+    spoken = spoken_text(text)
+    key = _clip_key(spoken)
     # The URL is the display text but the clip follows the *spoken* text, which a pronunciation
     # fix changes. So the browser keeps the clip but revalidates every time (no-cache): the ETag
     # is the cache key, a match costs an empty 304 and no clip read, a fix is heard immediately.
-    etag = f'"{cache_path.stem}"'
+    etag = f'"{key}"'
     resp_headers = {"Cache-Control": "private, no-cache", "ETag": etag}
     if if_none_match == etag:
         return Response(status_code=304, headers=resp_headers)
@@ -223,8 +258,8 @@ def get_audio(
 
     def served(data: bytes, source: str) -> Response:
         logger.info(
-            "audio %-10s chars=%d ms=%d | mem: %d clips, %.1f MB",
-            source, len(text), int((time.monotonic() - start) * 1000), len(_mem), _mem_bytes / 1048576,
+            "audio %-5s user=%s chars=%d ms=%d | mem: %d clips, %.1f MB",
+            source, user_id, len(text), int((time.monotonic() - start) * 1000), len(_mem), _mem_bytes / 1048576,
         )
         return Response(content=data, media_type="audio/mpeg", headers=resp_headers)
 
@@ -232,27 +267,58 @@ def get_audio(
     if data is not None:
         return served(data, "mem")
 
-    if cache_path.exists():
-        data = cache_path.read_bytes()  # in production: one Neon read
-        _mem_put(key, data)
-        return served(data, "disk")
+    clip = session.get(AudioClip, key)
+    if clip is not None:
+        _mem_put(key, clip.data)
+        return served(clip.data, "db")
 
-    with _GENERATION_LOCK:
-        # Re-check inside the lock: a prefetch and a click on the same word (or two
-        # concurrent prefetches) must not both pay for generation.
-        if cache_path.exists():
-            data = cache_path.read_bytes()
-            _mem_put(key, data)
-            return served(data, "disk")
+    # ── Miss ──
+    # Only the text of a real, non-archived word is ever synthesized.
+    word_exists = session.exec(
+        select(Word.id).where(Word.lithuanian == text, Word.archived == False).limit(1)  # noqa: E712
+    ).first()
+    if word_exists is None:
+        raise HTTPException(status_code=404, detail="Not a word.")
+    # Checked here only, so stored clips keep playing without a key (A2-12).
+    if not (os.getenv("AZURE_SPEECH_KEY") and os.getenv("AZURE_SPEECH_REGION")):
+        raise HTTPException(status_code=503, detail="Audio is not configured.")
 
+    # End the transaction: no pooled connection is held while waiting or generating (A1-2).
+    session.commit()
+
+    if not _GENERATION_SLOTS.acquire(blocking=False):
+        raise HTTPException(status_code=503, detail="Audio is busy, try again.")
+    try:
+        if not _GENERATION_LOCK.acquire(timeout=_LOCK_TIMEOUT):
+            raise HTTPException(status_code=503, detail="Audio is busy, try again.")
         try:
-            data = _generate(text)
-        except Exception:
-            logger.warning("audio error chars=%d ms=%d", len(text), int((time.monotonic() - start) * 1000))
-            raise HTTPException(status_code=502, detail="Audio generation failed.")
+            # Re-check inside the lock: a prefetch and a click on the same word (or two
+            # concurrent prefetches) must not both pay for generation.
+            clip = session.get(AudioClip, key)
+            if clip is not None:
+                data = clip.data
+                session.commit()
+                _mem_put(key, data)
+                return served(data, "db")
+            capped = _cap_reached(session, spoken)
+            session.commit()
+            if capped:
+                raise HTTPException(status_code=503, detail="Audio limit reached.")
 
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_bytes(data)
-        _mem_put(key, data)
+            try:
+                data = _generate(spoken)
+            except Exception as e:  # anything else is a 502 too, never a 500; log the status only
+                logger.warning(
+                    "audio error status=%s user=%s chars=%d ms=%d",
+                    getattr(e, "status", None), user_id, len(text), int((time.monotonic() - start) * 1000),
+                )
+                raise HTTPException(status_code=502, detail="Audio generation failed.")
 
-    return served(data, _provider())
+            _insert_clip(session, key, spoken, data)
+            _mem_put(key, data)
+        finally:
+            _GENERATION_LOCK.release()
+    finally:
+        _GENERATION_SLOTS.release()
+
+    return served(data, "azure")

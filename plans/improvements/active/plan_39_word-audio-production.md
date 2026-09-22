@@ -1,12 +1,12 @@
 ---
 kind: feature
-status: draft
-iteration: 0
+status: done
+iteration: 1
 max_iterations: 30
 suggested_model: opus
 suggested_effort: medium
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: opus
+confirmed_effort: medium
 ---
 
 # #39 — Word audio in production
@@ -404,14 +404,14 @@ described, look for it by meaning.
 > The article is **not** in this checklist. `ralph-implementer` has no web
 > access to verify DOIs, so it is written in the main session: see "Main-session tasks" below.
 
-- [ ] 1. `backend/models.py` — `AudioClip` table per Requirements. No `voice` column, and no
+- [x] 1. `backend/models.py` — `AudioClip` table per Requirements. No `voice` column, and no
   other new table.
   - **Stop any running local backend before editing `models.py`.** `--reload` re-runs
     `create_all()` against production on every save (A1-3).
   - `backend/conftest.py` gets autouse guards next to `_telegram_spy` (A2-7):
     - `monkeypatch.delenv` of `AZURE_SPEECH_KEY` / `AZURE_SPEECH_REGION`;
     - `email_service.send_email` replaced by a spy, so no test can ever bill Azure or send mail.
-- [ ] 2. `backend/routers/audio.py` — production rewrite per Requirements:
+- [x] 2. `backend/routers/audio.py` — production rewrite per Requirements:
   - `_generate()` becomes the Azure REST httpx call with escaped SSML. It accepts only HTTP 200
     with a non-empty `audio/*` body;
   - the disk read/write becomes `session.get(AudioClip, key)` and an `ON CONFLICT DO NOTHING`
@@ -430,7 +430,7 @@ described, look for it by meaning.
   - delete the edge-tts, ElevenLabs and disk code, and the up-front 503 check;
   - keep: stress stripping, the pronunciation config, the memory LRU, the ETag, `served()`, and
     the lock's `ponytail:` note.
-- [ ] 3. `backend/tests/test_audio.py` — replace the disk/ElevenLabs cases with DB ones.
+- [x] 3. `backend/tests/test_audio.py` — replace the disk/ElevenLabs cases with DB ones.
   - `_generate` (or its HTTP layer) is monkeypatched. The autouse fixture clears memory and
     deletes `audio_clip` rows, and the tests seed `Word` rows (A2-8).
   - Cases:
@@ -458,7 +458,7 @@ described, look for it by meaning.
       - the Telegram alert fires once per month (`send_telegram` monkeypatched);
     - the SSML body escapes `&<>` (a unit test on the payload builder);
     - keep the respell, stress-mark, ETag/304 and 401/403 cases.
-- [ ] 4. `frontend/app/dashboard/components/SpeakButton.tsx`:
+- [x] 4. `frontend/app/dashboard/components/SpeakButton.tsx`:
   - `export function LockedSpeakButton({ size })`: a `Link href="/pricing"` shaped like
     SpeakButton, with a faint icon and light border,
     `aria-label={tr.audio.lockedLabel}`, `data-testid="speak-btn-locked"`;
@@ -468,7 +468,7 @@ described, look for it by meaning.
   - both take an optional `newTab` prop (`target="_blank" rel="noopener"`), used in the lesson
     only (A2-10);
   - update the header comment (production, not the prototype).
-- [ ] 5. `QuizSession.tsx`:
+- [x] 5. `QuizSession.tsx`:
   - derive `audioState: 'on' | 'locked' | null` per Requirements. It is `null` while loading
     and on any quota fetch error (A2-9);
   - `'locked'`:
@@ -479,19 +479,19 @@ described, look for it by meaning.
       the session isn't lost (A2-10);
     - no autoplay toggle, no prefetch, no autoplay.
   - `'on'` stays exactly as in the prototype.
-- [ ] 6. `lists/[id]/page.tsx`, `vocabulary/page.tsx` — the same tri-state (`null` on a fetch
+- [x] 6. `lists/[id]/page.tsx`, `vocabulary/page.tsx` — the same tri-state (`null` on a fetch
   error). `'locked'` renders `<LockedSpeakButton size="sm"/>` per word: no pill, and normal
   navigation (no new tab).
-- [ ] 7. `settings/page.tsx` — the autoplay Premium tag becomes the amber practice-badge
+- [x] 7. `settings/page.tsx` — the autoplay Premium tag becomes the amber practice-badge
   `Link href="/pricing"` (was an emerald span).
-- [ ] 8. i18n `types.ts` / `ru.ts` / `en.ts`:
+- [x] 8. i18n `types.ts` / `ru.ts` / `en.ts`:
   - `audio.listenPremium`: «Послушать в Premium» / "Listen with Premium";
   - `audio.lockedLabel`: «Произношение — в Premium» / "Pronunciation is part of Premium";
   - add «Произношение каждого слова» / "Pronunciation of every word" as a new entry:
     - in `pricing.premiumFeatures`, inserted as the 2nd item;
     - in `lists.wallPerks`, appended;
     - existing strings stay untouched (the specs match them by text).
-- [ ] 9. `frontend/tests/audio-button.spec.ts`:
+- [x] 9. `frontend/tests/audio-button.spec.ts`:
   - free users in each surface: `speak-btn-locked` is visible and its `href` is `/pricing`;
     `audio-premium-pill` is visible on stage 1 only, not on list pages; zero `/api/audio`
     requests; `speak-btn` and `autoplay-toggle` counts stay 0;
@@ -503,10 +503,10 @@ described, look for it by meaning.
   - screenshots of the free states `free-card-*`, `free-select-*`, `free-list-*`,
     `free-vocabulary-*`, `pricing-*`, RU/EN × 1280/375, with no horizontal scroll at 375;
   - screenshots go to `temp_files/screenshots/plan_39_word-audio-production/`.
-- [ ] 10. `documentation/design system/Component Library (as-built).html` — a new section after
+- [x] 10. `documentation/design system/Component Library (as-built).html` — a new section after
   PremiumOfferCard (line ~824): SpeakButton (md/sm, playing), AutoplayToggle, LockedSpeakButton,
   AudioPremiumPill, each with why and where. Map them in `documentation/IMPLEMENTATION.md`.
-- [ ] 11. `documentation/audio.md` — a "Production (#39)" section covering:
+- [x] 11. `documentation/audio.md` — a "Production (#39)" section covering:
   - Azure S0 and why;
   - DB table via `create_all()`, and why no Alembic;
   - the Word-exists check on the miss path, and why;
@@ -519,7 +519,7 @@ described, look for it by meaning.
     `DELETE FROM audio_clip WHERE created_at >= :t` (A1-3), plus when to use it;
   - what was removed.
   - Also remove `backend/.audio_cache/` from `.gitignore`.
-- [ ] 12. `backend/scripts/send_audio_announcement.py` — per Requirements. Add
+- [x] 12. `backend/scripts/send_audio_announcement.py` — per Requirements. Add
   `backend/.announcements/` to `.gitignore`.
   - Subject and body RU/EN × free/premium in the `email_templates.py` style: a greeting, then 3–4
     short lines on what's new, then a link to the article.
@@ -537,16 +537,19 @@ described, look for it by meaning.
       skipped, thanks to `refresh`;
     - an SMTP failure writes no ledger line, and a rerun retries it;
     - ru/en by `user.lang`; the premium variant has no `/pricing` link.
-- [ ] 13. `documentation/CHANGELOG.md` — append `#39`.
+- [x] 13. `documentation/CHANGELOG.md` — append `#39`.
 
 ## Main-session tasks (not for ralph)
 
 Done by Claude in the main session, which has web access, after the ralph pass. None of these
 blocks the Definition of Done.
 
-- Article draft `temp_files/articles/listening-and-pronunciation.md`:
+- Article draft `temp_files/articles/lithuanian-pronunciation.md`. Retargeted on 2026-09-22 at the
+  search query «литовское произношение» so it can bring Google traffic: a practical guide (letters,
+  vowel length, stress, pitch accent), then the research, then the feature. See
+  `documentation/articles-seo.md`.
   - importer format:
-    - frontmatter `slug: listening-and-pronunciation`, `title_ru`, `title_en` (the importer
+    - frontmatter `slug: lithuanian-pronunciation`, `title_ru`, `title_en` (the importer
       requires both, `articles.py:357-366`), `category: learning_materials`, `published: false`;
     - RU body, `---EN---`, EN body;
   - Fluent's plain style, with no claims beyond the sources;
@@ -565,14 +568,14 @@ blocks the Definition of Done.
 
 ## Validation
 
-- [ ] Backend audio: `cd backend && .venv/bin/python -m pytest -q tests/test_audio.py tests/test_audio_announcement.py`
-- [ ] Backend full suite: `cd backend && .venv/bin/python -m pytest -q`
-- [ ] Types: `cd frontend && npx tsc --noEmit`
-- [ ] Playwright: `cd frontend && PW_BASE_URL=http://localhost:3000 npx playwright test tests/audio-button.spec.ts tests/quota.spec.ts tests/daily-limit-banner.spec.ts tests/extension-page.spec.ts --reporter=list`
-- [ ] Design system parity: `cd frontend && PW_BASE_URL=http://localhost:3000 npx playwright test tests/design-system-parity.spec.ts --reporter=list`
-- [ ] Screenshots in `temp_files/screenshots/plan_39_word-audio-production/` looked at and
+- [x] Backend audio: `cd backend && .venv/bin/python -m pytest -q tests/test_audio.py tests/test_audio_announcement.py`
+- [x] Backend full suite: `cd backend && .venv/bin/python -m pytest -q`
+- [x] Types: `cd frontend && npx tsc --noEmit`
+- [x] Playwright: `cd frontend && PW_BASE_URL=http://localhost:3000 npx playwright test tests/audio-button.spec.ts tests/quota.spec.ts tests/daily-limit-banner.spec.ts tests/extension-page.spec.ts --reporter=list`
+- [x] Design system parity: `cd frontend && PW_BASE_URL=http://localhost:3000 npx playwright test tests/design-system-parity.spec.ts --reporter=list`
+- [x] Screenshots in `temp_files/screenshots/plan_39_word-audio-production/` looked at and
   described (free locked card + pill, stage 2, list, vocabulary, pricing; RU + EN; 1280 + 375).
-- [ ] **Manual, with the real Azure key** (needs the Prerequisite done; local; check for
+- [x] **Manual, with the real Azure key** (needs the Prerequisite done; local; check for
   running servers first):
   - as admin, open a lesson and hear several words;
   - confirm new rows in `audio_clip` and the timings in the backend log;
@@ -596,12 +599,20 @@ blocks the Definition of Done.
    - on a mismatch, drop the stale table (it holds only regenerable clips), with the user's OK;
    - then deploy. `create_all()` creates it if it is missing.
 2. Prod smoke as admin: a word plays; a second play is a 304; `audio_clip` has rows.
-3. Publish the article (import the `.md` via the admin Articles page, or flip `published`).
-4. Inbox broadcast: `/dashboard/admin` composer, audience `all`, CTA → `/dashboard/articles/listening-and-pronunciation/`.
+3. Publish the article (import the `.md` via the admin Articles page, or flip `published`), **then
+   deploy again**. Article pages are pre-rendered only at build time; until the next build Google
+   gets a client-rendered placeholder with a generic title (`documentation/articles-seo.md`).
+4. Inbox broadcast: `/dashboard/admin` composer, audience `all`, CTA → `/dashboard/articles/lithuanian-pronunciation/`.
    Dry run first for the count.
 5. Email: `cd backend && .venv/bin/python scripts/send_audio_announcement.py` (dry run), then
    `--send`.
 6. News post via `/news-writer`. Move this plan to `implemented/`.
+
+Deferred by the user (2026-09-22), not part of this plan:
+- The live article `lithuanian-for-russian-speakers` says «ą | долгое носовое «а»». Modern standard
+  Lithuanian ą is not nasal (found by the cold article review).
+- Add links from `lithuanian-for-russian-speakers` and `is-lithuanian-hard-to-learn` to
+  `lithuanian-pronunciation`: inbound links from indexed pages help the new page rank.
 
 ## Definition of Done
 
