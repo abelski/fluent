@@ -590,9 +590,13 @@ blocks the Definition of Done.
 0. **Prerequisites:**
    - the Azure Prerequisite is done, and `AZURE_SPEECH_KEY` / `AZURE_SPEECH_REGION` are set on
      Render;
-   - **how Render builds the frontend is confirmed.** The live Build Command is only
-     `pip install -r requirements.txt`, and `backend/out` in git is a symlink to a local path, so
-     the frontend deploy path is unknown until the Start Command is checked.
+   - [x] **how Render builds the frontend is confirmed** (deploy log of `9718f38`, 2026-09-22):
+     Build Command `npm --prefix frontend install && npm --prefix frontend run build && pip install -r requirements.txt`,
+     Start Command `uvicorn main:app --host 0.0.0.0 --port $PORT` (the root `main.py`), auto-deploy
+     from `main`. The dashboard field showed only the tail of the build command. No reference to
+     `api/` or `scripts/seed.py`.
+   - [x] `audio_clip` already exists in production with the model's 4 columns (created by the local
+     boot, checked 2026-09-22), so Launch step 1 is done.
 1. **Schema check before deploy (A1-3):**
    - read the `audio_clip` columns in production (read-only `information_schema.columns`) and
      compare them with the model;

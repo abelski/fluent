@@ -49,8 +49,8 @@ truncated or corrupted stems. Implemented as `_sentence_invariant_holds()` in
   `scripts/seed.py`, which only seeded `Word`/`WordList`/`WordListItem`, was deleted on
   2026-09-22. It *wiped* all `UserWordProgress`, words and lists before reseeding, pointed at the
   production DB through `api/.env → backend/.env`, and survived only because one of its imports,
-  `api/data/vocabulary.py`, no longer existed. Render never ran it: the live Build Command is
-  `pip install -r requirements.txt`, not `render.yaml`'s.) `backend/main.py` startup only
+  `api/data/vocabulary.py`, no longer existed. Render never ran it: the live Build Command (deploy log, 2026-09-17) is
+  `npm --prefix frontend install && npm --prefix frontend run build && pip install -r requirements.txt`, not `render.yaml`'s.) `backend/main.py` startup only
   runs `create_all` (schema, not data); `backend/scripts/seed_numbers_grammar.py` is scoped to
   number cases 15–20 and run manually. **The production database is authoritative** for
   `grammar_sentence` rows — fix bad data with a guarded `UPDATE` against production, not a
