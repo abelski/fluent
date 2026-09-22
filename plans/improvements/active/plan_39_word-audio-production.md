@@ -609,10 +609,13 @@ blocks the Definition of Done.
 3. [x] Published 2026-09-22 as article id 35 (inserted straight into `article` with the parsed
    `.md`, since the import endpoint needs an admin token for production), **then deployed again**. Article pages are pre-rendered only at build time; until the next build Google
    gets a client-rendered placeholder with a generic title (`documentation/articles-seo.md`).
-4. Inbox broadcast: `/dashboard/admin` composer, audience `all`, CTA → `/dashboard/articles/lithuanian-pronunciation/`.
-   Dry run first for the count.
-5. Email: `cd backend && .venv/bin/python scripts/send_audio_announcement.py` (dry run), then
-   `--send`.
+4. [x] Inbox broadcast sent 2026-09-22: message id 31, audience `all`, 156 recipients, CTA →
+   `/dashboard/articles/lithuanian-pronunciation/`. Run from the local venv against the production
+   DB through `routers.inbox._resolve_recipients` + `inbox_service.send` (the admin endpoint needs
+   a production admin token).
+5. [x] Email sent 2026-09-22: 150 of 151 consented users. One failure retried and delivered on the
+   second run (the ledger did its job); one address is unsendable because that user's `email`
+   column holds a 36-character string with no `@`.
 6. News post via `/news-writer`. Move this plan to `implemented/`.
 
 Deferred by the user (2026-09-22), not part of this plan:
