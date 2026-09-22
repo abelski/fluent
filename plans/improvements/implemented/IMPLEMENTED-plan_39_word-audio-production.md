@@ -581,9 +581,9 @@ blocks the Definition of Done.
   - confirm new rows in `audio_clip` and the timings in the backend log;
   - restart the backend and confirm a repeat comes from the DB, not Azure;
   - a free test user sees the locked speaker and the pill, and both open `/pricing`.
-- [ ] Article: every reference's DOI/URL was opened and supports its sentence; the user approved
-  the RU + EN text.
-- [ ] Email script dry run shown to the user (count + RU/EN samples); the user approved the text.
+- [x] Article: every reference's DOI/URL was opened and supports its sentence (twice: author, then
+  an independent cold review); the user approved the RU + EN text.
+- [x] Email script dry run shown to the user (count + RU/EN samples); the user approved the text.
 
 ## Launch (human-gated, after the user explicitly says to merge/deploy; not for ralph)
 
@@ -616,7 +616,8 @@ blocks the Definition of Done.
 5. [x] Email sent 2026-09-22: 150 of 151 consented users. One failure retried and delivered on the
    second run (the ledger did its job); one address is unsendable because that user's `email`
    column holds a 36-character string with no `@`.
-6. News post via `/news-writer`. Move this plan to `implemented/`.
+6. [x] News post published 2026-09-22 (`news_post` id 24, «Слова теперь звучат»). Plan moved to
+   `implemented/`. Still open: submit the article URL in Google Search Console.
 
 Deferred by the user (2026-09-22), not part of this plan:
 - The live article `lithuanian-for-russian-speakers` says «ą | долгое носовое «а»». Modern standard
