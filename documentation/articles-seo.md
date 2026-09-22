@@ -17,6 +17,13 @@ can bring organic traffic. Checked 2026-09-22 against the live `why-review-beats
 
 ## Gotchas
 
+- **Publishing needs the deploy *after* the next one.** The build calls the **live** site's
+  `/api/articles` to know which pages to pre-render, and that list is cached in the running
+  instance (`backend/cache.py`). A write through the API invalidates that cache; a direct SQL
+  insert does not, and even an API write is only picked up by a build that starts after it.
+  The running instance's cache is cleared when the deploy restarts it, so the *first* deploy
+  after publishing still builds without the article and the *second* one pre-renders it
+  (2026-09-22, `lithuanian-pronunciation`).
 - **Publishing is not enough: redeploy after it.** An article published after the last build has
   no HTML file of its own. It is served through the `_` placeholder, which renders on the client
   with the generic title «Статьи о литовском языке», no description and no JSON-LD. So the order is:
