@@ -12,8 +12,17 @@ confirmed_effort: null
 # #39 — Word audio in production
 
 > Builds on the finished local prototype #38: `documentation/audio.md` and
-> `plans/improvements/implemented/IMPLEMENTED-plan_38_word-audio-prototype.md`. The code is on
-> branch `proto/word-audio`, uncommitted. Continue on that branch.
+> `plans/improvements/implemented/IMPLEMENTED-plan_38_word-audio-prototype.md`.
+>
+> **Branches:**
+> - `proto/word-audio` is the frozen prototype snapshot (commit `ff62278`). Do not add work
+>   there.
+> - Implement #39 on **`feature/word-audio`**, branched from it. That is the one branch to merge
+>   into `main` later.
+> - Nothing is pushed without the user's explicit directive.
+>
+> `ff62278` also carries the dead-code cleanup #40 (`api/` and `scripts/seed.py` deleted), so it
+> reaches `main` with this branch.
 
 ## Context
 
