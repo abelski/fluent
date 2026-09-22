@@ -606,8 +606,8 @@ blocks the Definition of Done.
    `audio_clip` grew from 9 to 18 rows. Note: the first attempt (`c405090`) had to be rolled
    back because unpinned `sqlmodel` 0.0.46 broke login; see CHANGELOG #41 and
    `documentation/deploy-render.md`.
-3. Publish the article (import the `.md` via the admin Articles page, or flip `published`), **then
-   deploy again**. Article pages are pre-rendered only at build time; until the next build Google
+3. [x] Published 2026-09-22 as article id 35 (inserted straight into `article` with the parsed
+   `.md`, since the import endpoint needs an admin token for production), **then deployed again**. Article pages are pre-rendered only at build time; until the next build Google
    gets a client-rendered placeholder with a generic title (`documentation/articles-seo.md`).
 4. Inbox broadcast: `/dashboard/admin` composer, audience `all`, CTA → `/dashboard/articles/lithuanian-pronunciation/`.
    Dry run first for the count.
