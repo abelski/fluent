@@ -15,14 +15,32 @@ the design reasoning from scratch.
 ## End-to-end flow
 
 **Feature:**
-1. `/feature-analyst "<request>"` — clarify (AskUserQuestion) → write a PRD-shaped plan to
-   `plans/improvements/active/plan_<slug>.md` (frontmatter + Context/Goals/Non-Goals/
-   Requirements/Implementation/Validation/Definition of Done) → user approves → `status:
-   approved`.
-2. `Skill(ralph-implement, args: <path>)` — implements, validates, retries, gates on Definition
-   of Done. Reports `done` or `blocked`.
-3. On `done`: feature-analyst moves the file to `plans/improvements/implemented/IMPLEMENTED-...`
-   and runs `/news-writer`. On `blocked`: relays the `## Blocked` section to the user.
+1. `/brainstorm "<idea>"` — assign change number `N`, search `plans/*/implemented/` + CHANGELOG
+   for precedents, run `/grilling` with the precedents as default answers, write
+   `plans/ideas/idea_<N>_<slug>.md` (problem, outcome, scope, decisions, precedents, success
+   check). User confirms → `status: confirmed`.
+2. `/feature-analyst <idea file>` — write `plans/improvements/active/plan_<N>_<slug>.md`
+   (frontmatter + Context/Goals/Non-Goals/Requirements/Implementation/Validation/Definition of
+   Done). A **cold** `general-purpose` agent reviews it, given only the two file paths — no
+   conversation, no summary — so it catches what the author's own context hides. Valid findings
+   get fixed; user approves → `status: approved`.
+3. Branch `feat/<N>-<slug>` from `main`; the uncommitted idea + plan files carry over and get
+   committed first. `Skill(ralph-implement, args: <path>)` — implements, validates, retries,
+   gates on Definition of Done. Reports `done` or `blocked`.
+4. On `done`: commit, user tests locally → "Request changes" (new plan items, re-run
+   ralph-implement) or "Confirm".
+5. On confirm: plan → `plans/improvements/implemented/IMPLEMENTED-...`, idea →
+   `plans/ideas/implemented/`, CHANGELOG entry, `git merge --no-ff` into `main`. Never pushed —
+   the user pushes. Then ask whether to run `/news-writer`.
+
+**Why idea and plan files are written on `main`, not the branch (#47):** the user chose to create
+the branch only at implementation, so an idea that's dropped or parked never leaves a dead branch
+behind. The files stay uncommitted on `main` until then and ride into the branch on
+`git checkout -b`.
+
+**Why a separate idea file (#47):** business context (why, for whom, what's out of scope) used to
+live only in the chat that ran `/feature-analyst`. The plan is about *how*; the idea file keeps the
+*what/why* so the cold reviewer and later sessions can check the plan against it.
 
 **Bugfix:**
 1. `/triage` — fans out parallel `Plan` agents over unresolved DB issues, writes the same
@@ -31,9 +49,11 @@ the design reasoning from scratch.
 2. `/fix-issue-from-triage <N>` — locates the plan, flips `draft → approved` (there's no separate
    approval UI here — invoking the skill on a specific issue *is* the approval), delegates to
    `Skill(ralph-implement, args: <path>)`.
+   Before delegating it creates branch `fix/<N>-<slug>` from `main`.
 3. On `done`: fix-issue-from-triage stages the local server, does a browser-based smoke check,
    then asks the user to confirm resolution — only then does it update the DB row, send the
-   reporter notification, and move the file to `plans/triage/implemented/IMPLEMENTED-...`. On
+   reporter notification, and move the file to `plans/triage/implemented/IMPLEMENTED-...`, commit and merge the branch into
+   `main` (never push). On
    `blocked`: relays `## Blocked`.
 
 `ralph-implement` itself never touches the database, never notifies anyone, never publishes a
