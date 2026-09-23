@@ -609,7 +609,7 @@ export default function AdminPage() {
 
   // User search and activity filter
   const [userSearch, setUserSearch] = useState('');
-  type UserActivityFilter = 'all' | 'active' | 'inactive' | 'deletion';
+  type UserActivityFilter = 'all' | 'paid' | 'active' | 'inactive' | 'deletion';
   const [userActivityFilter, setUserActivityFilter] = useState<UserActivityFilter>('all');
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
 
@@ -1585,11 +1585,20 @@ const [practiceQPage, setPracticeQPage] = useState(1);
 
   // Filtered + paginated slices
   const filteredReports = reportFilter === 'all' ? reports : reports.filter((r) => r.status === reportFilter);
+  const paidUsers = users.filter((u) => u.subscription_status === 'active').length;
+  const userFilterLabels: Record<UserActivityFilter, string> = {
+    all: tr.admin.filterAllUsers,
+    paid: tr.admin.filterPaidUsers,
+    active: tr.admin.filterActiveUsers,
+    inactive: tr.admin.filterInactiveUsers,
+    deletion: tr.admin.filterDeletionUsers,
+  };
   const filteredUsers = users.filter((u) => {
     if (userSearch.trim()) {
       const q = userSearch.toLowerCase();
       if (!u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
     }
+    if (userActivityFilter === 'paid') return u.subscription_status === 'active';
     if (userActivityFilter === 'deletion') return !!u.deletion_warning;
     if (userActivityFilter === 'inactive') return !!u.inactive_flag && !u.deletion_warning;
     if (userActivityFilter === 'active') return !u.inactive_flag;
@@ -1785,14 +1794,17 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               onChange={(e) => { setUserSearch(e.target.value); setUsersPage(1); }}
               className="w-full max-w-sm bg-white border border-gray-900 rounded-xl px-4 py-2 text-sm text-gray-900 outline-none placeholder-gray-400 focus:border-gray-600"
             />
-            <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1">
-              {(['all', 'active', 'inactive', 'deletion'] as UserActivityFilter[]).map((f) => (
+            <div className="flex flex-wrap gap-1 bg-white border border-gray-200 rounded-xl p-1">
+              {(['all', 'paid', 'active', 'inactive', 'deletion'] as UserActivityFilter[]).map((f) => (
                 <button
                   key={f}
                   onClick={() => { setUserActivityFilter(f); setUsersPage(1); setSelectedUserIds(new Set()); }}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${userActivityFilter === f ? (f === 'deletion' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-900') : 'text-gray-400 hover:text-gray-900'}`}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${userActivityFilter === f ? (f === 'deletion' ? 'bg-orange-100 text-orange-700' : f === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-900') : 'text-gray-400 hover:text-gray-900'}`}
                 >
-                  {f === 'all' ? tr.admin.filterAllUsers : f === 'active' ? tr.admin.filterActiveUsers : f === 'inactive' ? tr.admin.filterInactiveUsers : tr.admin.filterDeletionUsers}
+                  {userFilterLabels[f]}
+                  {f === 'paid' && paidUsers > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 text-[10px] font-bold bg-emerald-600 text-white rounded-full">{paidUsers}</span>
+                  )}
                 </button>
               ))}
             </div>

@@ -26,7 +26,12 @@ export async function generateMetadata({
     const res = await fetch(`${BACKEND_URL}/api/articles/${params.slug}`);
     if (!res.ok) return {};
     const article: Article = await res.json();
-    const desc = article.body_ru.replace(/[#*`[\]]/g, '').slice(0, 160).trim();
+    const desc = article.body_ru
+      .replace(/^#.*\n+/, '')
+      .replace(/[#*`[\]]/g, '')
+      .replace(/\s+/g, ' ')
+      .slice(0, 160)
+      .trim();
     return {
       title: article.title_ru,
       description: desc,

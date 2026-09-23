@@ -400,6 +400,7 @@ const en: Translations = {
     noticeSentPrefix: 'notice',
     searchPlaceholder: 'Search by name or email...',
     filterAllUsers: 'All',
+    filterPaidUsers: 'Paid',
     filterActiveUsers: 'Active',
     filterInactiveUsers: 'Inactive',
     filterDeletionUsers: '☠️ Deletion',

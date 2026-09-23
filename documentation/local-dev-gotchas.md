@@ -140,3 +140,21 @@ Also **check the new revision id is not already taken.** The ids are chosen by h
 are easy: #31 first shipped `a7b8c9d0e1f2`, which `a7b8c9d0e1f2_add_verb_forms_to_word.py` already
 used. Two files with the same `revision` makes the graph ambiguous and alembic reports a duplicate
 head.
+
+## Screenshots catch mid-transition UI (evidence shots lie)
+
+Every tab/filter chip in the app carries Tailwind's `transition-colors` (150ms). A Playwright
+`page.screenshot()` fired right after a click — even after an assertion that already proved the
+state changed — paints the chip **partway through that fade**: the chip you just clicked shows at
+~3% opacity and the previously-selected one still looks selected. Hit while shooting the admin
+Users filter (#42): the DOM said `bg-emerald-50 text-emerald-700` on the clicked chip and
+`text-gray-400` on the old one, while the PNG showed the opposite, and `getComputedStyle` confirmed
+the in-flight values (`rgba(236, 253, 245, 0.03)`).
+
+Fix: pass `animations: 'disabled'` to `page.screenshot()` — Playwright fast-forwards finite CSS
+transitions to their end state. Do this for **any** evidence screenshot taken right after a click,
+not just this page. A `waitForTimeout` also works but is a slower, flakier version of the same thing.
+
+The trap is that the test still passes: the assertions read the DOM, only the human looking at the
+PNG sees the wrong thing — so a screenshot can disagree with a green test and the screenshot is the
+one that's wrong.

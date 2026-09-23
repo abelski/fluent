@@ -10,8 +10,9 @@ can bring organic traffic. Checked 2026-09-22 against the live `why-review-beats
 - The page is a static export. `frontend/app/dashboard/articles/[slug]/layout.tsx` pre-renders one
   HTML file per article **published at build time** (`generateStaticParams`), with:
   - `<title>` = `title_ru`;
-  - `<meta name="description">` = the **first 160 characters of `body_ru`** (Markdown symbols
-    stripped). There is no separate description field;
+  - `<meta name="description">` = the **first 160 characters of `body_ru`**, with the leading
+    `# Title` line and Markdown symbols stripped first (see `documentation/seo.md` for the
+    H1-eats-the-budget bug this fixed in #37). There is no separate description field;
   - canonical URL, Open Graph, `<html lang="ru">`, and Article JSON-LD (`page.tsx`).
 - The RU body is in the HTML. The EN body is only in the page data, and there is no `hreflang`.
 

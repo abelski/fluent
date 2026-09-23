@@ -198,6 +198,7 @@ def sitemap(session: Session = Depends(get_session)):
         urls.append(
             f"  <url>\n"
             f"    <loc>{base}/programs/{program.key}/</loc>\n"
+            f"    <lastmod>{today}</lastmod>\n"
             f"    <priority>0.7</priority>\n"
             f"    <changefreq>weekly</changefreq>\n"
             f"  </url>"
@@ -211,6 +212,7 @@ def sitemap(session: Session = Depends(get_session)):
         urls.append(
             f"  <url>\n"
             f"    <loc>{base}/dashboard/phrases/{pp.id}/</loc>\n"
+            f"    <lastmod>{today}</lastmod>\n"
             f"    <priority>0.6</priority>\n"
             f"    <changefreq>weekly</changefreq>\n"
             f"  </url>"

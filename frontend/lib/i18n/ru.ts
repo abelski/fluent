@@ -400,6 +400,7 @@ const ru: Translations = {
     noticeSentPrefix: 'уведомление',
     searchPlaceholder: 'Поиск по имени или email...',
     filterAllUsers: 'Все',
+    filterPaidUsers: 'Платные',
     filterActiveUsers: 'Активные',
     filterInactiveUsers: 'Неактивные',
     filterDeletionUsers: '☠️ Удаление',

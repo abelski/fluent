@@ -440,6 +440,7 @@ export interface Translations {
     noticeSentPrefix: string;
     searchPlaceholder: string;
     filterAllUsers: string;
+    filterPaidUsers: string;
     filterActiveUsers: string;
     filterInactiveUsers: string;
     filterDeletionUsers: string;
