@@ -18,6 +18,9 @@ interface PageMascotProps {
    * caller that needs the bubble to state specific content on demand (e.g.
    * a word's verb forms) regardless of the answer streak so far. */
   forcePhrase?: boolean;
+  /** Optional second line under `phrase`, regular weight and dimmed — e.g. the
+   * translation of a Lithuanian word/phrase (#46), so the two read apart. */
+  translation?: string;
 }
 
 /** The one standard mascot size. Every page uses this. */
@@ -32,6 +35,7 @@ export default function PageMascot({
   className,
   phraseTestId,
   forcePhrase = false,
+  translation,
 }: PageMascotProps) {
   // Bubble tail and head overlap are proportional so the bubble keeps pointing
   // at TAK's head if a call site ever scales him.
@@ -42,6 +46,9 @@ export default function PageMascot({
     <div className={className} data-testid="page-mascot" data-mood={mood}>
       <div className="relative bg-white border border-gray-100 rounded-xl px-4 py-2 font-bold text-sm w-fit">
         <span data-testid={phraseTestId}>{forcePhrase ? phrase : moodPhrase(mood, phrase)}</span>
+        {translation && (
+          <span data-testid="mascot-translation" className="block mt-0.5 font-normal text-ink/70">{translation}</span>
+        )}
         <span
           className="absolute -bottom-2 rotate-45 w-3.5 h-3.5 bg-white border-r border-b border-gray-100"
           style={{ left: tailLeft }}

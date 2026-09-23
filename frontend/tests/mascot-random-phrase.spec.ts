@@ -35,13 +35,15 @@ test.describe('Phrases-page mascot random phrase', () => {
   test('RU shows phrase = russian translation', async ({ page }) => {
     await setup(page, 'ru', SHORT);
     await page.goto('/dashboard/phrases');
-    await expect(page.getByTestId('mascot-greeting')).toHaveText('Labas rytas! = Доброе утро!');
+    await expect(page.getByTestId('mascot-greeting')).toHaveText('Labas rytas!');
+    await expect(page.getByTestId('mascot-translation')).toHaveText('Доброе утро!');
   });
 
   test('EN shows phrase = english translation', async ({ page }) => {
     await setup(page, 'en', SHORT);
     await page.goto('/dashboard/phrases');
-    await expect(page.getByTestId('mascot-greeting')).toHaveText('Labas rytas! = Good morning!');
+    await expect(page.getByTestId('mascot-greeting')).toHaveText('Labas rytas!');
+    await expect(page.getByTestId('mascot-translation')).toHaveText('Good morning!');
   });
 
   test('falls back to Sveikas! when the endpoint fails', async ({ page }) => {
@@ -49,6 +51,7 @@ test.describe('Phrases-page mascot random phrase', () => {
     await page.goto('/dashboard/phrases');
     await expect(page.getByTestId('stats-card-phrases')).toBeVisible();
     await expect(page.getByTestId('mascot-greeting')).toHaveText('Sveikas!');
+    await expect(page.getByTestId('mascot-translation')).toHaveCount(0);
   });
 
   for (const lang of ['ru', 'en'] as const) {

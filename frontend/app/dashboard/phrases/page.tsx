@@ -281,7 +281,8 @@ export default function PhrasesPage() {
                 theme="purple"
                 icon={
                   <PageMascot
-                    phrase={greeting ? `${greeting.text} = ${lang === 'en' ? greeting.translation_en || greeting.translation : greeting.translation}` : 'Sveikas!'}
+                    phrase={greeting ? greeting.text : 'Sveikas!'}
+                    translation={greeting ? (lang === 'en' ? greeting.translation_en || greeting.translation : greeting.translation) : undefined}
                     phraseTestId="mascot-greeting"
                     className="shrink-0 max-w-[200px]"
                   />

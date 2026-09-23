@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 // #44 — TAK on /dashboard/lists says a random easy word ("labas = hello")
 // from GET /api/words/random-easy instead of the fixed "Sveikas!".
 
-const SHOTS = '../temp_files/screenshots/plan_44_mascot-random-word';
+const SHOTS = '../temp_files/screenshots/plan_46_phrases-mascot-random-phrase/words';
 
 function makeFakeJwt(name: string): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -34,13 +34,15 @@ test.describe('Lists-page mascot random word', () => {
   test('RU shows lithuanian = russian translation', async ({ page }) => {
     await setup(page, 'ru', SHORT);
     await page.goto('/dashboard/lists');
-    await expect(page.getByTestId('mascot-greeting')).toHaveText('Labas = привет');
+    await expect(page.getByTestId('mascot-greeting')).toHaveText('Labas');
+    await expect(page.getByTestId('mascot-translation')).toHaveText('привет');
   });
 
   test('EN shows lithuanian = english translation', async ({ page }) => {
     await setup(page, 'en', SHORT);
     await page.goto('/dashboard/lists');
-    await expect(page.getByTestId('mascot-greeting')).toHaveText('Labas = hello');
+    await expect(page.getByTestId('mascot-greeting')).toHaveText('Labas');
+    await expect(page.getByTestId('mascot-translation')).toHaveText('hello');
   });
 
   test('falls back to Sveikas! when the endpoint fails', async ({ page }) => {

@@ -174,7 +174,8 @@ export default function StatsBar() {
         theme="emerald"
         icon={
           <PageMascot
-            phrase={greeting ? `${greeting.lithuanian} = ${lang === 'ru' ? greeting.translation_ru : greeting.translation_en}` : 'Sveikas!'}
+            phrase={greeting ? greeting.lithuanian : 'Sveikas!'}
+            translation={greeting ? (lang === 'ru' ? greeting.translation_ru : greeting.translation_en) : undefined}
             phraseTestId="mascot-greeting"
             className="shrink-0 max-w-[200px]"
           />
