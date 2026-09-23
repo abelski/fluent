@@ -69,6 +69,11 @@
 - Keep solutions as simple as possible; avoid over-engineering
 - Think about performance
 - After adding a new feature, add an autotest for it and run autotests to confirm everything works
+- **Every feature or fix gets its own branch, created before the first edit** — never edit on `main`.
+  Name it after the change number: `feat/<N>-<slug>` or `fix/<N>-<slug>` (e.g.
+  `feat/44-mascot-random-word`), branched from an up-to-date `main`. This holds for small "bounded"
+  changes too, including ones that come straight out of brainstorming. Merging into `main` needs an
+  explicit directive from the user, same as pushing.
 - Do not push to git without an explicit directive from the user
 - never use ANTHROPIC_API_KEY (we dont have it in our subscription)
 - Keep `documentation/design system/` updated whenever new UI components or patterns are introduced; treat it as the source of truth for visual/component decisions during development

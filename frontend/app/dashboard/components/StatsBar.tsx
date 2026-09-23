@@ -67,7 +67,9 @@ function getCefrProgress(known: number, levels: CefrLevel[]) {
 }
 
 export default function StatsBar() {
-  const { tr } = useT();
+  const { tr, lang } = useT();
+  // #44 — random easy word for TAK's bubble ("labas = hello"); "Sveikas!" until it loads.
+  const [greeting, setGreeting] = useState<{ lithuanian: string; translation_en: string; translation_ru: string } | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [cefrLevels, setCefrLevels] = useState<CefrLevel[]>(CEFR_LEVELS_DEFAULT);
   // Plan #16 — milestone nudge state. `premiumActive` starts `null` (unresolved)
@@ -102,6 +104,10 @@ export default function StatsBar() {
   };
 
   useEffect(() => {
+    fetch(`${BACKEND_URL}/api/words/random-easy`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.lithuanian) setGreeting(data); })
+      .catch(() => {});
     fetch(`${BACKEND_URL}/api/admin/settings/cefr-thresholds`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (Array.isArray(data) && data.length) setCefrLevels(data); })
@@ -166,7 +172,13 @@ export default function StatsBar() {
     <div className="mb-5">
       <ProgressStatCard
         theme="emerald"
-        icon={<PageMascot phrase="Sveikas!" className="shrink-0" />}
+        icon={
+          <PageMascot
+            phrase={greeting ? `${greeting.lithuanian} = ${lang === 'ru' ? greeting.translation_ru : greeting.translation_en}` : 'Sveikas!'}
+            phraseTestId="mascot-greeting"
+            className="shrink-0 max-w-[200px]"
+          />
+        }
         count={stats.known}
         countBadge={`≈ ${currentLevel === '0' ? 'A0' : currentLevel}`}
         label={tr.stats.wordsLearned}

@@ -1035,6 +1035,19 @@ def get_review_known_random(
     return _dedupe_by_translation(candidates, progress_map)[:limit_size]
 
 
+@router.get("/words/random-easy")
+def get_random_easy_word(session: Session = Depends(get_session)):
+    """One random non-archived star-1 word for the lists-page mascot bubble (#44).
+    Not cached — the point is a different word each load. Returns null if none exist."""
+    word = session.exec(
+        select(Word).where(Word.star == 1, Word.archived == False)  # noqa: E712
+        .order_by(func.random()).limit(1)
+    ).first()
+    if not word:
+        return None
+    return {"lithuanian": word.lithuanian, "translation_en": word.translation_en, "translation_ru": word.translation_ru}
+
+
 @router.get("/review/mistakes")
 def get_review_mistakes(
     authorization: Optional[str] = Header(None),
