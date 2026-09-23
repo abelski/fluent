@@ -103,6 +103,8 @@ export default function PhrasesPage() {
   const [confirmUnenroll, setConfirmUnenroll] = useState<number | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [phraseStats, setPhraseStats] = useState<{ learned: number; due: number } | null>(null);
+  // #46 — random phrase for TAK's bubble ("Labas rytas! = Good morning!"); "Sveikas!" until it loads.
+  const [greeting, setGreeting] = useState<{ text: string; translation: string; translation_en: string | null } | null>(null);
   const [openPrograms, setOpenPrograms] = useState<Set<number>>(new Set());
   const [programDetails, setProgramDetails] = useState<Record<number, ProgramDetail>>({});
   const [loadingDetails, setLoadingDetails] = useState<Set<number>>(new Set());
@@ -116,6 +118,11 @@ export default function PhrasesPage() {
       return;
     }
     setIsLoggedIn(true);
+
+    fetch(`${BACKEND_URL}/api/phrases/random`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.text) setGreeting(data); })
+      .catch(() => {});
 
     getPhrasePrograms()
       .then(setPrograms)
@@ -272,7 +279,13 @@ export default function PhrasesPage() {
             <div className="mb-10">
               <ProgressStatCard
                 theme="purple"
-                icon={<PageMascot phrase="Sveikas!" className="shrink-0" />}
+                icon={
+                  <PageMascot
+                    phrase={greeting ? `${greeting.text} = ${lang === 'en' ? greeting.translation_en || greeting.translation : greeting.translation}` : 'Sveikas!'}
+                    phraseTestId="mascot-greeting"
+                    className="shrink-0 max-w-[200px]"
+                  />
+                }
                 count={phraseStats.learned}
                 label={t.learnedLabel}
                 nextMilestone={m.next !== null ? String(m.next) : null}

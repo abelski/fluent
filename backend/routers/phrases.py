@@ -898,6 +898,21 @@ def _due_phrases_for_review(user: User, session: Session, limit: int) -> list[di
     return _serialize_phrase_batch(session_phrases, progress_map, list(all_phrases))
 
 
+@router.get("/phrases/random")
+def get_random_phrase(session: Session = Depends(get_session)):
+    """One random phrase for the phrases-page mascot bubble (#46).
+    Not cached — the point is a different phrase each load. Returns null if none exist.
+    Only phrases in a public program; users' own phrases (CustomPhrase) are never shown."""
+    phrase = session.exec(
+        select(Phrase).join(PhraseProgram, PhraseProgram.id == Phrase.program_id)
+        .where(PhraseProgram.is_public == True)  # noqa: E712
+        .order_by(func.random()).limit(1)
+    ).first()
+    if not phrase:
+        return None
+    return {"text": phrase.text, "translation": phrase.translation, "translation_en": phrase.translation_en}
+
+
 @router.get("/phrases/review")
 def get_phrase_review_session(
     authorization: Optional[str] = Header(None),
