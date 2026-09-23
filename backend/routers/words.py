@@ -1038,9 +1038,21 @@ def get_review_known_random(
 @router.get("/words/random-easy")
 def get_random_easy_word(session: Session = Depends(get_session)):
     """One random non-archived star-1 word for the lists-page mascot bubble (#44).
-    Not cached — the point is a different word each load. Returns null if none exist."""
+    Not cached — the point is a different word each load. Returns null if none exist.
+    Only words in a public, live list (#45): private user lists are personal, and their
+    words often carry the Russian translation copied into translation_en."""
+    in_public_list = (
+        select(WordListItem.id)
+        .join(WordList, WordList.id == WordListItem.word_list_id)
+        .where(
+            WordListItem.word_id == Word.id,
+            WordList.is_public == True,  # noqa: E712  — never leak private/personal words
+            WordList.archived == False,  # noqa: E712
+        )
+        .exists()
+    )
     word = session.exec(
-        select(Word).where(Word.star == 1, Word.archived == False)  # noqa: E712
+        select(Word).where(Word.star == 1, Word.archived == False, in_public_list)  # noqa: E712
         .order_by(func.random()).limit(1)
     ).first()
     if not word:
