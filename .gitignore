@@ -50,3 +50,6 @@ backend/test-results/
 
 # One-off announcement send ledgers (#39) — local, never committed
 backend/.announcements/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
