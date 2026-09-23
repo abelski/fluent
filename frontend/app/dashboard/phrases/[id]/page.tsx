@@ -7,6 +7,7 @@ import { BACKEND_URL, getToken, resolvePhraseId } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import PageMascot from '../../../../components/PageMascot';
 import TakChevron from '../../../../components/TakChevron';
+import SpeakButton, { LockedSpeakButton, useAudioState } from '../../components/SpeakButton';
 
 interface PhraseRow {
   id: number;
@@ -47,6 +48,7 @@ export default function PhraseProgramDetailPage() {
   const id = resolvePhraseId(_id);
   const router = useRouter();
   const { tr, lang, plural } = useT();
+  const audioState = useAudioState();
 
   const stageLabels: Record<number, string> = {
     0: tr.phraseLists.statusNew,
@@ -245,7 +247,11 @@ export default function PhraseProgramDetailPage() {
                           i < ch.phrases.length - 1 ? 'border-b border-gray-100' : ''
                         }`}
                       >
-                        <span className="font-medium text-gray-900 text-sm">{phrase.text}</span>
+                        <span className="flex items-center gap-2 min-w-0 font-medium text-gray-900 text-sm">
+                          <span className="min-w-0 [overflow-wrap:anywhere]">{phrase.text}</span>
+                          {audioState === 'on' && <SpeakButton text={phrase.text} size="sm" />}
+                          {audioState === 'locked' && <LockedSpeakButton size="sm" />}
+                        </span>
                         <span className="text-gray-500 text-sm" data-testid="phrase-translation">{phraseTranslation(phrase)}</span>
                         <span className={`text-xs font-medium ${STAGE_COLORS[phrase.lesson_stage] ?? 'text-gray-400'}`}>
                           {stageLabels[phrase.lesson_stage] ?? ''}

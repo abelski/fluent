@@ -31,7 +31,7 @@ from sqlmodel import Session, select
 import telegram_service
 from auth import require_user
 from database import get_session
-from models import AudioClip, Word, _utcnow
+from models import AudioClip, CustomPhrase, Phrase, Word, _utcnow
 from quota import is_premium_active
 
 # A child of uvicorn's logger so the hit/miss timing lines actually print: the app never
@@ -54,10 +54,23 @@ def _strip_stress_marks(text: str) -> str:
     return unicodedata.normalize("NFC", "".join(ch for ch in decomposed if ch not in _STRESS_MARKS))
 
 
-# Pronunciation fixes live in a config file, not in code (see documentation/audio.md).
-# Re-read whenever its mtime changes, so an edit applies on the next request without a restart.
+# Pronunciation fixes live in config files, not in code (see documentation/audio.md). Words and
+# phrases are separate features with separate data — a phrase-level fix may need a longer match
+# window than a bare word ever would — so they get their own files, re-read whenever mtime
+# changes so an edit applies on the next request without a restart. Both are merged into one
+# respell pass: they're two curated lists of distinct strings, not two competing rulesets.
 _PRONUNCIATION_FILE = Path(__file__).resolve().parent.parent / "data" / "pronunciation.json"
-_respell_loaded: tuple[float, dict[str, str]] = (-1.0, {})
+_PHRASE_PRONUNCIATION_FILE = Path(__file__).resolve().parent.parent / "data" / "phrase_pronunciation.json"
+_respell_loaded: tuple[float, float, dict[str, str]] = (-1.0, -1.0, {})
+
+
+def _load_fixes(path: Path) -> dict[str, str]:
+    try:
+        fixes = json.loads(path.read_text(encoding="utf-8"))["fixes"]
+    except FileNotFoundError:
+        return {}
+    # Keys normalized the way the text is at match time: stress marks gone, lower-case.
+    return {_strip_stress_marks(f["from"]).lower(): f["to"] for f in fixes}
 
 
 def _respell_map() -> dict[str, str]:
@@ -65,12 +78,15 @@ def _respell_map() -> dict[str, str]:
     try:
         mtime = _PRONUNCIATION_FILE.stat().st_mtime
     except FileNotFoundError:
-        return {}
-    if mtime != _respell_loaded[0]:
-        fixes = json.loads(_PRONUNCIATION_FILE.read_text(encoding="utf-8"))["fixes"]
-        # Keys normalized the way the text is at match time: stress marks gone, lower-case.
-        _respell_loaded = (mtime, {_strip_stress_marks(f["from"]).lower(): f["to"] for f in fixes})
-    return _respell_loaded[1]
+        mtime = -1.0
+    try:
+        phrase_mtime = _PHRASE_PRONUNCIATION_FILE.stat().st_mtime
+    except FileNotFoundError:
+        phrase_mtime = -1.0
+    if (mtime, phrase_mtime) != _respell_loaded[:2]:
+        merged = {**_load_fixes(_PRONUNCIATION_FILE), **_load_fixes(_PHRASE_PRONUNCIATION_FILE)}
+        _respell_loaded = (mtime, phrase_mtime, merged)
+    return _respell_loaded[2]
 
 
 def _respell(text: str) -> str:
@@ -234,7 +250,7 @@ def _insert_clip(session: Session, key: str, spoken: str, data: bytes) -> None:
 
 @router.get("/audio")
 def get_audio(
-    text: str = Query(..., min_length=1, max_length=60),
+    text: str = Query(..., min_length=1, max_length=200),
     authorization: str | None = Header(None),
     if_none_match: str | None = Header(None),
     session: Session = Depends(get_session),
@@ -273,12 +289,17 @@ def get_audio(
         return served(clip.data, "db")
 
     # ── Miss ──
-    # Only the text of a real, non-archived word is ever synthesized.
-    word_exists = session.exec(
-        select(Word.id).where(Word.lithuanian == text, Word.archived == False).limit(1)  # noqa: E712
-    ).first()
-    if word_exists is None:
-        raise HTTPException(status_code=404, detail="Not a word.")
+    # Only the text of something the app actually owns is ever synthesized: a real, non-archived
+    # word, or a phrase (seeded or user-authored custom).
+    recognized = (
+        session.exec(
+            select(Word.id).where(Word.lithuanian == text, Word.archived == False).limit(1)  # noqa: E712
+        ).first()
+        or session.exec(select(Phrase.id).where(Phrase.text == text).limit(1)).first()
+        or session.exec(select(CustomPhrase.id).where(CustomPhrase.text == text).limit(1)).first()
+    )
+    if recognized is None:
+        raise HTTPException(status_code=404, detail="Not recognized text.")
     # Checked here only, so stored clips keep playing without a key (A2-12).
     if not (os.getenv("AZURE_SPEECH_KEY") and os.getenv("AZURE_SPEECH_REGION")):
         raise HTTPException(status_code=503, detail="Audio is not configured.")

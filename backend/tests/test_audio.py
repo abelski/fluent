@@ -16,7 +16,7 @@ from sqlmodel import Session, delete, select
 
 import database
 import routers.audio as audio
-from models import AudioClip, User, Word
+from models import AudioClip, CustomPhrase, CustomPhraseList, Phrase, PhraseProgram, User, Word
 
 JWT_SECRET = "fluent-local-secret-change-in-prod"
 JWT_ALGORITHM = "HS256"
@@ -175,9 +175,65 @@ def test_unknown_or_archived_word_is_404_without_generating(client, gen_calls, t
     assert gen_calls == [] and _clips() == []
 
 
-def test_text_longer_than_60_chars_is_422(client, gen_calls):
+def test_text_longer_than_200_chars_is_422(client, gen_calls):
     h = _make_premium(client, "audio_len@example.com")
-    assert client.get("/api/audio", params={"text": "a" * 61}, headers=h).status_code == 422
+    assert client.get("/api/audio", params={"text": "a" * 201}, headers=h).status_code == 422
+    assert gen_calls == []
+
+
+# ── Phrases share the endpoint with words (#43) ──────────────────────────────
+
+@pytest.fixture
+def phrase_and_custom_phrase():
+    """A real seeded Phrase and a real CustomPhrase, one of them >60 chars (regression
+    guard against the old 60-char cap: max_length is now 200)."""
+    long_text = "Ar galėtumėte man pasakyti, kaip nueiti iki artimiausios autobusų stotelės, prašau?"
+    assert 60 < len(long_text) <= 200
+    with Session(database.engine) as s:
+        program = PhraseProgram(title="Test program")
+        s.add(program)
+        s.commit()
+        s.refresh(program)
+        phrase = Phrase(program_id=program.id, text=long_text, translation="x")
+        custom_list = CustomPhraseList(owner_user_id="whatever", title="Test list")
+        s.add_all([phrase, custom_list])
+        s.commit()
+        s.refresh(phrase)
+        s.refresh(custom_list)
+        custom_phrase = CustomPhrase(list_id=custom_list.id, text="Kur yra artimiausia parduotuvė?", translation="x")
+        s.add(custom_phrase)
+        s.commit()
+        ids = (program.id, phrase.id, custom_list.id, custom_phrase.id)
+    yield long_text, "Kur yra artimiausia parduotuvė?"
+    with Session(database.engine) as s:
+        s.exec(delete(CustomPhrase).where(CustomPhrase.id == ids[3]))
+        s.exec(delete(CustomPhraseList).where(CustomPhraseList.id == ids[2]))
+        s.exec(delete(Phrase).where(Phrase.id == ids[1]))
+        s.exec(delete(PhraseProgram).where(PhraseProgram.id == ids[0]))
+        s.commit()
+
+
+def test_real_phrase_text_is_synthesized(client, gen_calls, phrase_and_custom_phrase):
+    long_text, _ = phrase_and_custom_phrase
+    h = _make_premium(client, "audio_phrase@example.com")
+    r = client.get("/api/audio", params={"text": long_text}, headers=h)
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("audio/mpeg")
+    assert gen_calls == [audio.spoken_text(long_text)]
+
+
+def test_real_custom_phrase_text_is_synthesized(client, gen_calls, phrase_and_custom_phrase):
+    _, custom_text = phrase_and_custom_phrase
+    h = _make_premium(client, "audio_customphrase@example.com")
+    r = client.get("/api/audio", params={"text": custom_text}, headers=h)
+    assert r.status_code == 200
+    assert gen_calls == [custom_text]
+
+
+def test_unrecognized_phrase_text_is_404(client, gen_calls, phrase_and_custom_phrase):
+    h = _make_premium(client, "audio_phrase404@example.com")
+    r = client.get("/api/audio", params={"text": "This is not a real phrase in the DB"}, headers=h)
+    assert r.status_code == 404
     assert gen_calls == []
 
 
@@ -464,6 +520,17 @@ def test_the_shipped_config_is_valid():
     data = json.loads(audio._PRONUNCIATION_FILE.read_text(encoding="utf-8"))
     for fix in data["fixes"]:
         assert fix["from"].strip() and fix["to"].strip(), fix
+
+
+def test_the_shipped_phrase_config_is_valid():
+    data = json.loads(audio._PHRASE_PRONUNCIATION_FILE.read_text(encoding="utf-8"))
+    for fix in data["fixes"]:
+        assert fix["from"].strip() and fix["to"].strip(), fix
+
+
+def test_sumustinio_fix_applies_to_all_inflected_forms():
+    for form in ["sumuštinis", "sumuštinio", "sumuštinį", "sumuštiniai"]:
+        assert "sumu štin" in audio.spoken_text(form)
 
 
 def test_etag_revalidation_returns_304_until_the_spoken_text_changes(client, gen_calls, monkeypatch, tmp_path):

@@ -38,6 +38,7 @@ import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
 import { useNumberKeys } from '../../../lib/useNumberKeys';
+import SpeakButton, { AudioPremiumPill, AutoplayToggle, LockedSpeakButton, playAudio, useAudioState } from './SpeakButton';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -243,6 +244,13 @@ export default function PhraseSession({
     : firstStage1Step(item.phrase);
 
   // ── Settings ────────────────────────────────────────────────────────────────
+  const audioState = useAudioState();
+  const audioEnabled = audioState === 'on';
+  const [audioAutoplay, setAudioAutoplay] = useState(false);
+  const toggleAudioAutoplay = (on: boolean) => {
+    setAudioAutoplay(on);
+    localStorage.setItem('fluent_audio_autoplay', String(on));
+  };
   const [complexity, setComplexity] = useState<Complexity>('medium');
   const [lessonMode, setLessonMode] = useState<'thorough' | 'quick'>('thorough');
   const [useTimer, setUseTimer] = useState(false);
@@ -251,6 +259,7 @@ export default function PhraseSession({
   useEffect(() => {
     const stored = localStorage.getItem('fluent_complexity') as Complexity | null;
     if (stored === 'easy' || stored === 'medium' || stored === 'hard') setComplexity(stored);
+    setAudioAutoplay(localStorage.getItem('fluent_audio_autoplay') !== 'false'); // defaults ON
     getSettings().then((s) => {
       setLessonMode(s.lesson_mode);
       setUseTimer(s.use_question_timer);
@@ -299,6 +308,12 @@ export default function PhraseSession({
   const current = queue[currentIdx];
   const stage   = current?.phrase.lesson_stage;
 
+  // Autoplay the new-phrase card, same trigger as the word lesson (QuizSession).
+  useEffect(() => {
+    if (stage === 0 && audioAutoplay && audioEnabled && current) playAudio(current.phrase.text);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.phrase.id, stage]);
+
   // Memoize MCQ options so they don't reshuffle on every re-render (e.g. timer ticks)
   const mcqOptions = useMemo(() => {
     if (!current || (current.phrase.lesson_stage !== 1 && current.mode !== 'stage2_retry')) return [];
@@ -313,6 +328,7 @@ export default function PhraseSession({
     const correct = word.toLowerCase() === current.phrase.blank_word.toLowerCase();
     setMcqResult(correct ? 'correct' : 'wrong');
     recordAnswer(correct);
+    if (audioAutoplay && audioEnabled) playAudio(current.phrase.text);
     if (correct) {
       setTimeout(() => setStage1Step('type'), 700);
     }
@@ -835,9 +851,23 @@ export default function PhraseSession({
           <Header />
           <ProgressBars />
 
-          <div className="bg-white rounded-2xl border border-line p-8 text-center mb-6">
+          <div className="relative bg-white rounded-2xl border border-line p-8 text-center mb-6">
+            {audioEnabled && (
+              <div className="absolute top-3 right-3">
+                <AutoplayToggle on={audioAutoplay} onChange={toggleAudioAutoplay} />
+              </div>
+            )}
+            {audioState === 'locked' && (
+              <div className="absolute bottom-full right-0 mb-1.5">
+                <AudioPremiumPill />
+              </div>
+            )}
             <p className="text-xs text-emerald-600 font-medium mb-4 uppercase tracking-wider">{tr.phraseSession.newPhrase}</p>
-            <p className="text-2xl font-bold text-gray-900 mb-3">{phrase.text}</p>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <p className="text-2xl font-bold text-gray-900">{phrase.text}</p>
+              {audioState === 'on' && <SpeakButton text={phrase.text} size="sm" />}
+              {audioState === 'locked' && <LockedSpeakButton size="sm" />}
+            </div>
             <p className="text-gray-500 text-lg">{getTranslation(phrase)}</p>
           </div>
 
@@ -909,6 +939,7 @@ export default function PhraseSession({
         const correct = checkPhrase(attempt, target, 'hard', fromLt ? null : phrase.alt_texts);
         setAssembleResult(correct ? 'correct' : 'wrong');
         recordAnswer(correct);
+        if (audioAutoplay && audioEnabled) playAudio(phrase.text);
         if (correct) {
           setTimeout(() => {
             blockUntilRef.current = Date.now() + 300;
@@ -933,6 +964,11 @@ export default function PhraseSession({
           data-testid={fromLt ? 'phrase-session-stage1-assemble-from-lt' : 'phrase-session-stage1-assemble-to-lt'}
         >
           <div className="relative z-10 w-full max-w-[420px]">
+            {audioEnabled && (
+              <div className="absolute right-0 top-6 sm:top-10">
+                <AutoplayToggle on={audioAutoplay} onChange={toggleAudioAutoplay} />
+              </div>
+            )}
             <Header />
             <ProgressBars />
 
@@ -1013,6 +1049,11 @@ export default function PhraseSession({
       return (
         <main className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20" data-testid="phrase-session-stage1-mcq">
           <div className="relative z-10 w-full max-w-[420px]">
+            {audioEnabled && (
+              <div className="absolute right-0 top-6 sm:top-10">
+                <AutoplayToggle on={audioAutoplay} onChange={toggleAudioAutoplay} />
+              </div>
+            )}
             <Header />
             <ProgressBars />
 
@@ -1077,6 +1118,7 @@ export default function PhraseSession({
       const correct = checkWord(typeInput.trim(), phrase.blank_word, complexity);
       setTypeResult(correct ? 'correct' : 'wrong');
       recordAnswer(correct);
+      if (audioAutoplay && audioEnabled) playAudio(phrase.text);
       if (!correct && current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
         mistakePhraseIdsRef.current.add(current.phrase.id);
         setMistakeCount((c) => c + 1);
@@ -1086,6 +1128,7 @@ export default function PhraseSession({
     const handleForgotWord = () => {
       setTypeResult('wrong');
       recordAnswer(false);
+      if (audioAutoplay && audioEnabled) playAudio(phrase.text);
       if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
         mistakePhraseIdsRef.current.add(current.phrase.id);
         setMistakeCount((c) => c + 1);
@@ -1095,6 +1138,11 @@ export default function PhraseSession({
     return (
       <main className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20" data-testid="phrase-session-stage1-type">
         <div className="relative z-10 w-full max-w-[420px]">
+          {audioEnabled && (
+            <div className="absolute right-0 top-6 sm:top-10">
+              <AutoplayToggle on={audioAutoplay} onChange={toggleAudioAutoplay} />
+            </div>
+          )}
           <Header />
           <ProgressBars />
 
@@ -1193,6 +1241,7 @@ export default function PhraseSession({
     const correct = checkPhrase(typeInput.trim(), phrase.text, complexity, phrase.alt_texts);
     setTypeResult(correct ? 'correct' : 'wrong');
     recordAnswer(correct);
+    if (audioAutoplay && audioEnabled) playAudio(phrase.text);
     if (!correct && current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
       mistakePhraseIdsRef.current.add(current.phrase.id);
       setMistakeCount((c) => c + 1);
@@ -1202,6 +1251,7 @@ export default function PhraseSession({
   const handleForgotPhrase = () => {
     setTypeResult('wrong');
     recordAnswer(false);
+    if (audioAutoplay && audioEnabled) playAudio(phrase.text);
     if (current && !mistakePhraseIdsRef.current.has(current.phrase.id)) {
       mistakePhraseIdsRef.current.add(current.phrase.id);
       setMistakeCount((c) => c + 1);
@@ -1211,6 +1261,11 @@ export default function PhraseSession({
   return (
     <main className="flex-1 flex flex-col items-center justify-center gap-5 px-4 sm:px-8 pt-5 pb-20" data-testid="phrase-session-stage2">
       <div className="relative z-10 w-full max-w-[420px]">
+        {audioEnabled && (
+          <div className="absolute right-0 top-6 sm:top-10">
+            <AutoplayToggle on={audioAutoplay} onChange={toggleAudioAutoplay} />
+          </div>
+        )}
         <Header />
         <ProgressBars />
 
@@ -1239,7 +1294,12 @@ export default function PhraseSession({
             />
             <div className="flex gap-2">
               <button
-                onClick={() => setShowAnswer((s) => !s)}
+                onClick={() => {
+                  setShowAnswer((s) => {
+                    if (!s && audioAutoplay && audioEnabled) playAudio(phrase.text);
+                    return !s;
+                  });
+                }}
                 className="flex-1 py-4 rounded-xl text-sm text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
               >
                 {showAnswer ? tr.phraseSession.hideAnswer : tr.phraseSession.showAnswer}

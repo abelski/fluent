@@ -1,0 +1,10 @@
+{
+  "about": "Pronunciation fixes for phrase audio (#43), same shape and matching rules as pronunciation.json (see documentation/audio.md) but kept separate: phrase-level fixes are expected to diverge from word-level fixes over time. 'from' is matched case-insensitively as a substring, after stress marks are stripped, longest first, in one pass. Key on the root, not a bare letter pair.",
+  "fixes": [
+    {
+      "from": "sumuštin",
+      "to": "sumu štin",
+      "note": "Leonas misreads it; split after the stressed syllable fixes it — verified against sumuštinis/-io/-į"
+    }
+  ]
+}

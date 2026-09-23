@@ -34,6 +34,34 @@ With `DEV` set, `http://localhost:8000/` answers `307` and redirects to `http://
   `http://localhost:8000/api/...`.
 - Verifying the real static export (what production serves) requires unsetting `DEV` and rebuilding.
 
+### In DEV mode the Playwright suite fails ~9 tests that look like real bugs
+
+The nastier symptom, because nothing errors out: the suite runs fine and **708 of 717 pass**, while
+a handful fail on an assertion like
+
+```
+Expected pattern: /localhost:8000\/?$/
+Received string:  "http://localhost:3000/"
+```
+
+Affected (2026-09-23): `auth.spec.ts:55`, `user-settings.spec.ts:83`, `custom-programs.spec.ts:192`,
+three `seo-public-pages.spec.ts:43` cases, `tak-mascot.spec.ts:59`, `review-first.spec.ts:82`, plus
+`lists-progress-parallel.spec.ts:22` flaking under the load.
+
+The redirect under test *works* — the app correctly sends a logged-out visitor to the landing page.
+But `:8000` first 307s to `:3000`, so the final URL carries the dev-server origin and the origin
+assertion fails. It reads like a batch of broken auth guards; it is one env var.
+
+**Do not "fix" those tests to accept `:3000`** — that would delete the only check that the redirect
+lands where it should. Instead run the suite the way it is written: `npm run build`, then start
+uvicorn with `DEV=false` (pass it as an env var — `DEV=false .venv/bin/python -m uvicorn main:app
+--port 8000` — rather than editing `backend/.env`, so the normal dev setup is left alone). With the
+static export actually being served, the same suite goes **717 passed, 0 failed**.
+
+Corollary when reviewing someone's "pre-existing failures": before concluding a test is broken,
+check `curl -s -o /dev/null -w "%{http_code} %{redirect_url}" http://localhost:8000/dashboard`. A
+`307 → localhost:3000` means the environment is lying to you, not the test.
+
 ## `PW_BASE_URL=http://127.0.0.1:8000` breaks specs that fetch the live API
 
 `frontend/playwright.config.ts` offers `PW_BASE_URL` to pin the address family, and it is the right

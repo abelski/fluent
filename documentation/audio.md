@@ -389,3 +389,57 @@ memory cache.
   `backend/.env` may still hold the two unused keys, which can be deleted by hand).
 - The disk cache `backend/.audio_cache/`, `AUDIO_CACHE_DIR`, and its `.gitignore` entry.
 - The up-front 503 check for a missing key (now on the miss path only).
+
+## Phrase audio (#43)
+
+Plan: `plans/improvements/active/plan_43_phrase-audio.md`.
+
+Phrases now share `/api/audio` and the respell mechanism with words — it is the same pipeline, a
+phrase is just a longer string:
+
+- **`max_length` raised 60 → 200.** The word catalogue's max was 42 chars, but a full Lithuanian
+  sentence with punctuation regularly exceeds 60.
+- **The miss-path existence guard** now accepts `Word.lithuanian` OR `Phrase.text` OR
+  `CustomPhrase.text` (previously words only), still 404 on anything else — so a Premium user still
+  can't make the app synthesize arbitrary text, only text the app actually owns (a seeded `Phrase`
+  or a user's own `CustomPhrase` counts equally; the respell step doesn't know or care which table
+  matched).
+- **A separate `backend/data/phrase_pronunciation.json`**, not merged into `pronunciation.json`.
+  Same shape (`about` + `fixes`), same matching rules (case-insensitive substring, longest-first,
+  stress marks stripped before matching), loaded and merged into one respell pass by
+  `_respell_map()`, re-read on mtime change like the word file. Kept separate because phrase-level
+  fixes are expected to diverge from word-level fixes over time (a phrase-only fix could otherwise
+  accidentally start matching inside an unrelated word).
+- **Frontend:** `SpeakButton`/`LockedSpeakButton` on each phrase row
+  (`frontend/app/dashboard/phrases/[id]/page.tsx`), and on every stage of `PhraseSession` (shared by
+  `/dashboard/phrases/[id]/study` and `/dashboard/phrases/review`): `AutoplayToggle` on all 5 render
+  paths (stage 0 intro, assemble-from-LT, assemble-to-LT, MCQ, type-word, stage 2 full-phrase type),
+  `AudioPremiumPill` + manual `SpeakButton` on stage 0 only — same pattern as the word lesson
+  (`QuizSession.tsx`), reusing the existing components with no new pattern. Autoplay only fires once
+  an answer/attempt is revealed (`setMcqResult`/`setTypeResult`/`setAssembleResult`/show-answer),
+  never before, so it can't spoil a fill-in-the-blank exercise.
+
+### The "sumuštinio" fix and what actually works on this voice
+
+Reported: `Leonas` (the Azure `lt-LT-LeonasNeural` voice) misreads "sumuštinis" (sandwich) and its
+case forms. A/B testing against the unmodified baseline found **stress diacritics (acute ú, grave
+ù, tilde, macron ū) have no audible effect on this voice at all** — the existing
+`_strip_stress_marks()` step already discards them before the TTS call, and re-adding one made no
+difference either way. Do not spend a tuning round on diacritics.
+
+What worked: a real respelling — inserting a space to split the word after the stressed syllable,
+`"sumuštin"` → `"sumu štin"`. Keyed on the root (`sumuštin`), not a bare letter pair and not the
+full inflected form, so one entry fixes `sumuštinis`/`sumuštinio`/`sumuštinį`/etc. at once — the
+same "root, not bare letter pair" rule the existing `siųsti` word-level fix already follows.
+
+### `/tune-pronunciation` skill
+
+Manually finding the "sumuštinio" fix (A/B testing candidates, learning diacritics don't work, generating
+several rounds, playing each with `afplay`) took most of a session. `.claude/skills/tune-pronunciation/SKILL.md`
+turns that into a repeatable, guided loop for the next mispronunciation report: look up whether the
+text is a `Word` or a `Phrase`/`CustomPhrase` (and thus which JSON file to edit), generate 3–4
+candidate respellings plus the unmodified baseline via the same Azure REST endpoint
+`routers/audio.py` uses, play them, have a human pick the winner (Claude cannot hear audio), and
+write the winning `{"from", "to", "note"}` entry to the correct file. No restart or cache purge is
+needed afterward — `_respell_map()` re-reads on mtime change, and the `AudioClip` cache key already
+follows the *spoken* text, so a changed respelling just misses the old clip and regenerates.
