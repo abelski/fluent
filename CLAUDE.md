@@ -69,11 +69,21 @@
 - Keep solutions as simple as possible; avoid over-engineering
 - Think about performance
 - After adding a new feature, add an autotest for it and run autotests to confirm everything works
-- **Every feature or fix gets its own branch, created before the first edit** — never edit on `main`.
-  Name it after the change number: `feat/<N>-<slug>` or `fix/<N>-<slug>` (e.g.
-  `feat/44-mascot-random-word`), branched from an up-to-date `main`. This holds for small "bounded"
-  changes too, including ones that come straight out of brainstorming. Merging into `main` needs an
-  explicit directive from the user, same as pushing.
+- **Feature workflow** (details: `documentation/plan-implement-workflow.md`):
+  1. `/brainstorm` — find precedents in past plans, grill the user, write
+     `plans/ideas/idea_<N>_<slug>.md` with all business context. User confirms.
+  2. `/feature-analyst <idea file>` — write `plans/improvements/active/plan_<N>_<slug>.md`, a cold
+     agent (no access to prior reasoning) reviews it, user approves.
+  3. Implement via `ralph-implement` on branch `feat/<N>-<slug>`.
+  4. User tests locally, asks for changes or confirms.
+  5. On confirm: plan → `implemented/`, CHANGELOG entry, merge to `main`. User pushes manually.
+  Bugfixes: `/triage` → `/fix-issue-from-triage` → branch `fix/<N>-<slug>` → user confirms → merge.
+- **Every feature or fix gets its own branch, created before the first code edit** — never edit code
+  on `main`. Only idea and plan files are written on `main`; they carry into the branch when it's
+  created. Name it `feat/<N>-<slug>` or `fix/<N>-<slug>` (e.g. `feat/44-mascot-random-word`),
+  branched from an up-to-date `main`. This holds for small "bounded" changes too. The user's
+  confirmation at the end of the workflow is the directive to merge into `main`; outside that flow,
+  merging needs an explicit directive, same as pushing.
 - Do not push to git without an explicit directive from the user
 - never use ANTHROPIC_API_KEY (we dont have it in our subscription)
 - Keep `documentation/design system/` updated whenever new UI components or patterns are introduced; treat it as the source of truth for visual/component decisions during development

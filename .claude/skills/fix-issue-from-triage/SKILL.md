@@ -17,7 +17,16 @@ skill on a specific issue *is* the approval. If the located plan's `status` is s
 flip it to `approved` now, before delegating in Step 2 (this is what lets `ralph-implement`
 proceed instead of bouncing it back as unapproved).
 
-## Step 2 — Delegate the fix and tests
+## Step 2 — Branch, then delegate the fix and tests
+
+Create the fix branch before the first edit (the plan file carries over uncommitted):
+
+```bash
+git checkout main && git pull --ff-only   # never push
+git checkout -b fix/<N>-<slug>            # N = issue number, slug from the plan filename
+```
+
+If `main` has unrelated uncommitted changes, stop and ask the user.
 
 ```
 Skill(skill: "ralph-implement", args: "plans/triage/active/issue-<N>-*.md")
@@ -99,9 +108,11 @@ If the user selects **Yes**:
    ```bash
    mv plans/triage/active/issue-<N>-*.md plans/triage/implemented/IMPLEMENTED-issue-<N>-*.md
    ```
-3. Report: "Issue #<N> marked resolved. Plan moved to `implemented/`."
+3. Commit on the branch (`fix(<area>): <summary> (issue #<N>)`), then
+   `git checkout main && git merge --no-ff fix/<N>-<slug>`. On conflict, resolve and say what.
+4. Report: "Issue #<N> resolved, merged to main. Push when ready: `git push`". **Never push.**
 
-If the user selects **No**, ask a follow-up `AskUserQuestion`: "What still looks wrong?" and investigate.
+If the user selects **No**, ask a follow-up `AskUserQuestion`: "What still looks wrong?", fix it on the same branch, and ask again.
 
 ## Notes
 
@@ -113,7 +124,7 @@ If the user selects **No**, ask a follow-up `AskUserQuestion`: "What still looks
 - DATABASE_URL is in `backend/.env` — read it fresh every time, never hard-code it. (SQL-fix
   checklist items inside `ralph-implement`'s delegated pass follow the same rule — see the
   `ralph-implementer` agent definition.)
-- Do not push to git.
+- Never push. Merge to `main` only after the user says Yes in Step 5.
 - For destructive SQL (DELETE without WHERE, DROP, TRUNCATE) ask the user to confirm first.
 - Triage plan files live in `plans/triage/active/`. Resolved files go to `plans/triage/implemented/` with the `IMPLEMENTED-` prefix. Blocked files live in `plans/triage/hold/` (this is the DB-driven `hold` state from `/triage`, separate from a plan's own `status: blocked` frontmatter field, which means the implementation loop hit its retry budget — check both meanings if a plan seems stuck).
 - The plan may reference optional steps (e.g. "Option B — add a new word row"). Only do these if the plan explicitly marks them as required, or the user asks.

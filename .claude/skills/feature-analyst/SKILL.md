@@ -1,25 +1,26 @@
 ---
 name: feature-analyst
-description: Plan a feature before implementing it — clarify requirements via AskUserQuestion dialogs, write a PRD-compatible plan to plans/improvements/active/, get user approval, then hand off implementation to the ralph-implement loop.
+description: Plan a feature from a confirmed idea file (plans/ideas/) — write a PRD-compatible plan to plans/improvements/active/, have a cold agent review it, get user approval, implement on a feat/<N>-<slug> branch via ralph-implement, let the user test locally, then merge to main on their confirmation.
 ---
 
 You are a feature analyst. Your job is to plan before writing any code. Follow these phases strictly.
 
-## Phase 1 — Clarify requirements
+## Phase 1 — Load the idea
 
-Before planning, identify any ambiguities in the feature request in `$ARGUMENTS`.
+`$ARGUMENTS` should be a confirmed idea file, `plans/ideas/idea_<N>_<slug>.md`. It holds all the
+business context (problem, scope, decisions, precedents) — don't re-ask what it already settles.
 
-- If anything is unclear (scope, edge cases, affected routes, DB changes, UI behaviour, etc.), use the `AskUserQuestion` tool to ask clarifying questions. Group related questions into a single call (up to 4 questions).
-
-Wait for the user to answer before proceeding. Do not guess.
-
-- If the request is clear enough, skip directly to Phase 2.
+- No idea file given, or `status` isn't `confirmed` → stop and run
+  `Skill(skill: "brainstorm", args: <the request>)` instead. Every feature starts there.
+- Reuse the idea's `N` and `slug` for everything below. Read its precedent plans; mirror their
+  structure where they fit.
+- Only technical ambiguities the idea can't answer (and the code can't) go to `AskUserQuestion`.
 
 ## Phase 2 — Write the plan (in planning mode)
 
 Call the `EnterPlanMode` tool to enter planning mode, then explore the codebase thoroughly to understand the affected files, existing patterns, and dependencies.
 
-Create the plan file at `plans/improvements/active/plan_<feature-slug>.md` (create `plans/improvements/active/` and `plans/improvements/implemented/` if they don't exist).
+Create the plan file at `plans/improvements/active/plan_<N>_<slug>.md` (create `plans/improvements/active/` and `plans/improvements/implemented/` if they don't exist).
 
 The plan MUST start with YAML frontmatter:
 
@@ -47,7 +48,7 @@ confirmed_effort: null
 Then these sections, in order:
 
 ### Context
-Why this is being built, current behaviour, relevant existing files/patterns found during
+Link the idea file (`Idea: plans/ideas/idea_<N>_<slug>.md`) first. Why this is being built, current behaviour, relevant existing files/patterns found during
 exploration. Include your one-line `suggested_model`/`suggested_effort` rationale here.
 
 ### Goals
@@ -106,9 +107,29 @@ cd frontend && npx playwright test --reporter=list
 ​```
 ```
 
-After writing the file, show the user the full plan content in chat, then use the `AskUserQuestion` tool to ask:
+### Cold review
 
-- Question: "Plan saved to `plans/improvements/active/plan_<slug>.md`. Ready to proceed?"
+After writing the file, spawn a **fresh** reviewer that sees none of your reasoning — only the
+files:
+
+```
+Agent(subagent_type: "general-purpose", description: "Cold plan review", run_in_background: false,
+  prompt: "Review the plan plans/improvements/active/plan_<N>_<slug>.md against its idea file
+  plans/ideas/idea_<N>_<slug>.md and the repo rules in CLAUDE.md. Read the code the plan touches.
+  Report, ranked: (1) idea requirements the plan misses or contradicts, (2) wrong file/function
+  names or steps that won't work against the real code, (3) missing tests or Definition-of-Done
+  checks (RU+EN, 375px, screenshots for UI), (4) over-engineering — anything simpler that does the
+  job. Do not edit files. Be concrete: file, line, what to change.")
+```
+
+Do not pass it your conversation, summaries or reasoning — the point is a reader with no
+context. Fix what's valid in the plan; list what you rejected and why.
+
+### Approval
+
+Show the user the full plan content in chat plus the review findings (fixed / rejected), then use the `AskUserQuestion` tool to ask:
+
+- Question: "Plan saved to `plans/improvements/active/plan_<N>_<slug>.md`. Ready to proceed?"
 - Options: "Approve — start implementation", "Revise — I have corrections"
 
 If the user selects "Revise", ask a follow-up `AskUserQuestion` for their corrections, update the plan file, show the revised plan, and ask for approval again. Repeat until approved. Stay in planning mode throughout all revisions.
@@ -126,12 +147,24 @@ When the user approves the plan:
 
 If the user selects "No", stop and use `AskUserQuestion` to ask what they want to change.
 
+On "Yes", create the feature branch **before the first code edit**. The idea and plan files were
+written on `main` and are still uncommitted — they carry into the branch:
+
+```bash
+git checkout main && git pull --ff-only   # skip pull if no remote access; never push
+git checkout -b feat/<N>-<slug>
+git add plans/ideas/idea_<N>_<slug>.md plans/improvements/active/plan_<N>_<slug>.md
+git commit -m "plan: #<N> <slug>"
+```
+
+If `main` has unrelated uncommitted changes, stop and ask the user — don't carry them along.
+
 ## Phase 4 — Implement via ralph-implement
 
 Delegate implementation entirely to the shared implementer loop:
 
 ```
-Skill(skill: "ralph-implement", args: "plans/improvements/active/plan_<slug>.md")
+Skill(skill: "ralph-implement", args: "plans/improvements/active/plan_<N>_<slug>.md")
 ```
 
 `ralph-implement` owns all further checkbox flipping, validation retries, iteration/blocked-state bookkeeping, and the final Definition-of-Done gate. Do not duplicate any of that logic here.
@@ -139,18 +172,37 @@ Skill(skill: "ralph-implement", args: "plans/improvements/active/plan_<slug>.md"
 - If it reports `status: done` — proceed to Phase 5.
 - If it reports `status: blocked` — relay its `## Blocked` section to the user verbatim and stop. Do not attempt to silently finish the plan yourself.
 
-## Phase 5 — Move to implemented/ and publish a news post
+## Phase 5 — User tests locally
 
 Once `ralph-implement` reports the plan done:
 
-1. Move the file: `plans/improvements/active/plan_<slug>.md` → `plans/improvements/implemented/IMPLEMENTED-plan_<slug>.md`.
-2. Always run `/news-writer` to write and publish a news post announcing the new feature. This is a required step for every feature — do not skip it.
+1. Commit the work on the branch (`feat(<area>): <summary> (#<N>)`).
+2. Make sure the local server is up (one instance per side — check before starting) and tell the
+   user the URLs to try, plus the screenshots path.
+3. `AskUserQuestion`: "#<N> is ready on `feat/<N>-<slug>`. Test it locally. Result?" — options
+   "Confirm — merge to main", "Request changes".
+4. On "Request changes": ask what, add the changes as new unchecked items to the plan's
+   `## Implementation` / `## Validation`, set `status: in_progress`, re-run
+   `Skill(skill: "ralph-implement", args: <plan path>)`, commit, and ask again. Repeat until confirmed.
 
-This is a required step of the feature-analyst flow, executed here rather than inside `ralph-implement` — `ralph-implement` is pipeline-agnostic and is also callable standalone, so it never publishes anything or moves files itself; that stays the caller's responsibility so a bare `/ralph-implement` invocation never auto-publishes outside this flow.
+## Phase 6 — Close out and merge (only after the user confirms)
+
+1. Move files:
+   - `plans/improvements/active/plan_<N>_<slug>.md` → `plans/improvements/implemented/IMPLEMENTED-plan_<N>_<slug>.md`
+   - `plans/ideas/idea_<N>_<slug>.md` → `plans/ideas/implemented/idea_<N>_<slug>.md`
+2. Append the `#<N>` entry to `documentation/CHANGELOG.md`. Commit.
+3. Merge: `git checkout main && git merge --no-ff feat/<N>-<slug>`. On conflict, resolve (the
+   CHANGELOG is the usual one — keep both rows) and tell the user what you resolved.
+4. **Never push.** Tell the user: "Merged to main. Push when ready: `git push`".
+5. `AskUserQuestion`: "Publish a news post about #<N>?" — "Yes" runs `/news-writer`, "No" skips.
+   Skip the question for internal-only changes (tooling, refactors, docs).
+
+These steps live here, not in `ralph-implement` — that skill is pipeline-agnostic and callable
+standalone, so it never commits, merges, publishes or moves files.
 
 ## Notes
 
 - All validation must be server-side (never frontend-only)
 - Keep solutions simple — no over-engineering
 - Follow existing code conventions in this repo (FastAPI + Next.js static export, JWT auth, SQLModel ORM)
-- Do not push to git without an explicit directive from the user
+- Never push. Merge to `main` only after the user confirms in Phase 5.
