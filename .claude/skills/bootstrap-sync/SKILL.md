@@ -1,16 +1,16 @@
 ---
 name: bootstrap-sync
-description: Check github.com/abelski/claude_bootstrap for skills, agents, hooks, and output-styles, then let the user pick which ones to pull into this project's .claude/ directory. Use when the user asks to sync/update/pull from claude_bootstrap, or wants to check for new bootstrap skills/agents/workflows.
+description: Check github.com/abelski/moonlight_ai for skills, agents, hooks, and output-styles, then let the user pick which ones to pull into this project's .claude/ directory. Use when the user asks to sync/update/pull from moonlight_ai (formerly claude_bootstrap), or wants to check for new bootstrap skills/agents/workflows.
 ---
 
-Pull selected parts of `https://github.com/abelski/claude_bootstrap` into this repo's `.claude/`.
+Pull selected parts of `https://github.com/abelski/moonlight_ai` into this repo's `.claude/`.
 Runs fresh every time — the source repo changes over time, so never rely on a cached list.
 
 ## 1. Fetch the current source tree
 
 ```bash
-DEFAULT_BRANCH=$(curl -s https://api.github.com/repos/abelski/claude_bootstrap | python3 -c "import sys,json; print(json.load(sys.stdin)['default_branch'])")
-curl -s "https://api.github.com/repos/abelski/claude_bootstrap/git/trees/$DEFAULT_BRANCH?recursive=1"
+DEFAULT_BRANCH=$(curl -sL https://api.github.com/repos/abelski/moonlight_ai | python3 -c "import sys,json; print(json.load(sys.stdin)['default_branch'])")
+curl -sL "https://api.github.com/repos/abelski/moonlight_ai/git/trees/$DEFAULT_BRANCH?recursive=1"
 ```
 
 Keep only blobs under these prefixes — these are the pullable categories:
@@ -32,7 +32,7 @@ specifically asks about one of those, handle it separately by hand; don't includ
 For each candidate file, fetch its raw content to get a one-line description:
 
 ```bash
-curl -s "https://raw.githubusercontent.com/abelski/claude_bootstrap/$DEFAULT_BRANCH/<path>"
+curl -s "https://raw.githubusercontent.com/abelski/moonlight_ai/$DEFAULT_BRANCH/<path>"
 ```
 
 - Skill/agent/output-style files: read the frontmatter `description:` field.
@@ -40,6 +40,12 @@ curl -s "https://raw.githubusercontent.com/abelski/claude_bootstrap/$DEFAULT_BRA
 - Commands (plain `.md`, no frontmatter): first non-empty line.
 
 Check whether each local target path already exists in this repo, and mark it accordingly.
+
+**Local copies are merged, not mirrors.** Since #49 (2026-09-24) the SDLC skills and the
+`sdlc-ralph-implementer` agent here are the template text *plus* Fluent specifics (plan dirs
+`plans/improvements/active/`, RU+EN/375px/screenshot DoD, Neon/`mistake_report` triage, "user
+commits, Claude merges", news post). So a `DIFF` on those is expected. Diff the template's *own*
+changes since the last sync and port them in by hand — never overwrite those files wholesale.
 
 Print a numbered list grouped by category, e.g.:
 
@@ -70,7 +76,7 @@ Just ask in plain text: "Which numbers do you want to pull? (comma-separated, `a
 ## 4. Pull the selected items
 
 For each selected item:
-- Fetch raw content from `raw.githubusercontent.com/abelski/claude_bootstrap/$DEFAULT_BRANCH/<path>`.
+- Fetch raw content from `raw.githubusercontent.com/abelski/moonlight_ai/$DEFAULT_BRANCH/<path>`.
 - For a skill directory, also fetch any sibling files under that same `.claude/skills/<name>/` prefix
   from the tree (not just `SKILL.md`) so bundled resources come along.
 - If the local target already exists and differs, show a short diff and confirm before overwriting

@@ -57,7 +57,7 @@
 - Whenever plan mode (`EnterPlanMode`) is used in this repo, always persist the resulting plan into
   this project's `plans/` folder (e.g. `plans/improvements/active/plan_<slug>.md`), not just the
   harness's own scratch plan file — that scratch copy lives outside the repo and isn't visible to
-  future sessions or other tools (like `ralph-implement`) that read plans from `plans/`.
+  future sessions or other tools (like `sdlc-ralph-implement`) that read plans from `plans/`.
 - All pages must be visually consistent. In particular, the 5 top-nav dashboard pages — Слова
   (`/dashboard/lists`), Фразы (`/dashboard/phrases`), Грамматика (`/dashboard/grammar`), Практика
   (`/dashboard/practice`), Статьи (`/dashboard/articles`) — are one product surface, not five
@@ -70,14 +70,14 @@
 - Think about performance
 - After adding a new feature, add an autotest for it and run autotests to confirm everything works
 - **Feature workflow** (details: `documentation/plan-implement-workflow.md`):
-  1. `/brainstorm` — find precedents in past plans, grill the user, write
+  1. `/sdlc-brainstorm` — find precedents in past plans, grill the user, write
      `plans/ideas/idea_<N>_<slug>.md` with all business context. User confirms.
-  2. `/feature-analyst <idea file>` — write `plans/improvements/active/plan_<N>_<slug>.md`, a cold
+  2. `/sdlc-feature-analyst <idea file>` — write `plans/improvements/active/plan_<N>_<slug>.md`, a cold
      agent (no access to prior reasoning) reviews it, user approves.
-  3. Implement via `ralph-implement` on branch `feat/<N>-<slug>`.
+  3. Implement via `sdlc-ralph-implement` on branch `feat/<N>-<slug>`.
   4. User tests locally, asks for changes or confirms.
   5. On confirm: plan → `implemented/`, CHANGELOG entry, merge to `main`. User pushes manually.
-  Bugfixes: `/triage` → `/fix-issue-from-triage` → branch `fix/<N>-<slug>` → user confirms → merge.
+  Bugfixes: `/sdlc-triage` → `/sdlc-fix-issue-from-triage` → branch `fix/<N>-<slug>` → user confirms → merge.
 - **Every feature or fix gets its own branch, created before the first code edit** — never edit code
   on `main`. Only idea and plan files are written on `main`; they carry into the branch when it's
   created. Name it `feat/<N>-<slug>` or `fix/<N>-<slug>` (e.g. `feat/44-mascot-random-word`),
@@ -93,7 +93,7 @@
 - **Every plan's `## Definition of Done` must include, for any user-facing change, three explicit
   checks: both languages (RU + EN), mobile at 375px, and screenshots proving each.** Not "verify the
   UI" — name the three. A plan whose Definition of Done omits them is not finished being written,
-  and `ralph-implement` gates on that section, so anything missing there never gets checked at all.
+  and `sdlc-ralph-implement` gates on that section, so anything missing there never gets checked at all.
 - **Any change that touches what a user sees ships with evidence screenshots.** Not optional and
   not only when asked: take them before declaring the work done, look at them yourself, and say
   what they show. Cover every state the change can produce (empty, populated, error), both
