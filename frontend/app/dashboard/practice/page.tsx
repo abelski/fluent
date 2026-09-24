@@ -15,6 +15,7 @@ interface EnrolledCategory {
   name_ru: string;
   name_en: string | null;
   description_ru: string | null;
+  description_en?: string | null;
   test_count: number;
   tests_passed: number;
   tests_total: number;
@@ -110,8 +111,8 @@ export default function PracticePage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900">{name}</p>
-                        {cat.description_ru && lang !== 'en' && (
-                          <p className="text-sm text-gray-400 mt-0.5">{cat.description_ru}</p>
+                        {cat.description_ru && (
+                          <p className="text-sm text-gray-400 mt-0.5">{(lang === 'en' && cat.description_en) || cat.description_ru}</p>
                         )}
                       </div>
                       <TakChevron size={12} className="shrink-0" />

@@ -108,6 +108,7 @@ interface PracticeCategoryRow {
   name_ru: string;
   name_en: string | null;
   description_ru: string | null;
+  description_en: string | null;
   sort_order: number;
   total_tests: number;
   published_tests: number;
@@ -495,7 +496,7 @@ export default function AdminPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [editingCategory, setEditingCategory] = useState<PracticeCategoryRow | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name_ru: '', name_en: '', description_ru: '', sort_order: 0 });
+  const [newCategory, setNewCategory] = useState({ name_ru: '', name_en: '', description_ru: '', description_en: '', sort_order: 0 });
   const [categorySaving, setCategorySaving] = useState(false);
   const [practiceTests, setPracticeTests] = useState<PracticeTestRow[]>([]);
   const [selectedTestId, setSelectedTestId] = useState<number | null>(null);
@@ -1350,7 +1351,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       body: JSON.stringify({ ...newCategory, name_ru: newCategory.name_ru.trim() }),
     }).catch(() => null);
     setCategorySaving(false);
-    if (res?.ok) { setAddingCategory(false); setNewCategory({ name_ru: '', name_en: '', description_ru: '', sort_order: 0 }); loadPracticeCategories(); }
+    if (res?.ok) { setAddingCategory(false); setNewCategory({ name_ru: '', name_en: '', description_ru: '', description_en: '', sort_order: 0 }); loadPracticeCategories(); }
   }
 
   async function saveEditCategory() {
@@ -1359,7 +1360,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
     const res = await fetch(`${BACKEND_URL}/api/admin/practice/categories/${editingCategory.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify({ name_ru: editingCategory.name_ru, name_en: editingCategory.name_en || null, description_ru: editingCategory.description_ru || null }),
+      body: JSON.stringify({ name_ru: editingCategory.name_ru, name_en: editingCategory.name_en || null, description_ru: editingCategory.description_ru || null, description_en: editingCategory.description_en ?? '' }),
     }).catch(() => null);
     setCategorySaving(false);
     if (res?.ok) { setEditingCategory(null); loadPracticeCategories(); }
@@ -3277,7 +3278,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <h2 className="font-headline font-semibold text-gray-900">{tr.adminPractice.tabLabel}</h2>
                   <button
-                    onClick={() => { setAddingCategory(true); setNewCategory({ name_ru: '', name_en: '', description_ru: '', sort_order: 0 }); }}
+                    onClick={() => { setAddingCategory(true); setNewCategory({ name_ru: '', name_en: '', description_ru: '', description_en: '', sort_order: 0 }); }}
                     className="text-sm px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
                   >
                     {tr.adminPractice.addCategory}
@@ -3298,6 +3299,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       <div className="flex flex-col gap-1 sm:col-span-2">
                         <label className="text-xs text-gray-400">{tr.adminPractice.fieldCategoryDescRu}</label>
                         <input value={newCategory.description_ru} onChange={(e) => setNewCategory((p) => ({ ...p, description_ru: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                      </div>
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <label className="text-xs text-gray-400">{tr.adminPractice.fieldCategoryDescEn}</label>
+                        <input value={newCategory.description_en} onChange={(e) => setNewCategory((p) => ({ ...p, description_en: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                       </div>
                     </div>
                     <div className="flex gap-2 justify-end">
@@ -3326,6 +3331,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                               <div className="flex flex-col gap-1 sm:col-span-2">
                                 <label className="text-xs text-gray-400">{tr.adminPractice.fieldCategoryDescRu}</label>
                                 <input value={editingCategory.description_ru ?? ''} onChange={(e) => setEditingCategory((p) => p ? { ...p, description_ru: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                              </div>
+                              <div className="flex flex-col gap-1 sm:col-span-2">
+                                <label className="text-xs text-gray-400">{tr.adminPractice.fieldCategoryDescEn}</label>
+                                <input value={editingCategory.description_en ?? ''} onChange={(e) => setEditingCategory((p) => p ? { ...p, description_en: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                               </div>
                             </div>
                             <div className="flex gap-2 justify-end">

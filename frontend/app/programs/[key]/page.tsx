@@ -237,7 +237,7 @@ export default function ProgramDetailPage() {
             {stacks.map((stack) => {
               const state = stackStates[stack.id];
               const isExpanded = state?.expanded ?? false;
-              const stackName = (lang === 'en' ? stack.title_en : stack.title) ?? `Stack ${stack.id}`;
+              const stackName = (lang === 'en' && stack.title_en) || stack.title || `Stack ${stack.id}`;
               return (
                 <div key={stack.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                   <button

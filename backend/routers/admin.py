@@ -30,6 +30,11 @@ _VALID_CASE_INDICES: frozenset[int] = frozenset(
 router = APIRouter()
 
 
+def _en_or_none(value: Optional[str]) -> Optional[str]:
+    """EN twin fields (#48b): strip, and store an empty string as NULL (= fall back to RU)."""
+    return value.strip() or None if value else None
+
+
 def _require_admin(authorization: Optional[str], session: Session) -> User:
     user = _decode_user(authorization, session)
     if not user.is_admin:
@@ -817,7 +822,9 @@ def update_word_list_meta(
         stripped = body.title_ru.strip()
         if stripped:
             wl.title = stripped
-    wl.title_en = body.title_en.strip() if body.title_en and body.title_en.strip() else None
+    # #48b — only touch title_en when the caller sent it; omitting it used to wipe it
+    if "title_en" in body.model_fields_set:
+        wl.title_en = _en_or_none(body.title_en)
     session.add(wl)
     session.commit()
     return {"ok": True}
@@ -1020,6 +1027,7 @@ def list_grammar_sentences(
             "answer_ending": s.answer_ending,
             "full_word": s.full_word,
             "russian": s.russian,
+            "english": s.english,
             "archived": s.archived,
             "use_in_basic": s.use_in_basic,
             "use_in_advanced": s.use_in_advanced,
@@ -1035,6 +1043,7 @@ class GrammarSentenceCreate(BaseModel):
     answer_ending: str
     full_word: str
     russian: str
+    english: Optional[str] = None
     use_in_basic: bool = True
     use_in_advanced: bool = True
     use_in_practice: bool = True
@@ -1079,6 +1088,7 @@ def create_grammar_sentence(
         answer_ending=body.answer_ending.strip(),
         full_word=body.full_word.strip(),
         russian=body.russian.strip(),
+        english=_en_or_none(body.english),
         use_in_basic=body.use_in_basic,
         use_in_advanced=body.use_in_advanced,
         use_in_practice=body.use_in_practice,
@@ -1094,6 +1104,7 @@ class GrammarSentenceUpdate(BaseModel):
     answer_ending: str
     full_word: str
     russian: str
+    english: Optional[str] = None
     use_in_basic: bool = True
     use_in_advanced: bool = True
     use_in_practice: bool = True
@@ -1138,6 +1149,8 @@ def update_grammar_sentence(
     sentence.answer_ending = body.answer_ending.strip()
     sentence.full_word = body.full_word.strip()
     sentence.russian = body.russian.strip()
+    if "english" in body.model_fields_set:  # #48b — the level toggle omits it; don't wipe
+        sentence.english = _en_or_none(body.english)
     sentence.use_in_basic = body.use_in_basic
     sentence.use_in_advanced = body.use_in_advanced
     sentence.use_in_practice = body.use_in_practice
@@ -1179,6 +1192,7 @@ def list_grammar_rules(
             "case_index": r.case_index,
             "name_ru": r.name_ru,
             "question": r.question,
+            "question_en": r.question_en,
             "usage": r.usage,
             "endings_sg": r.endings_sg,
             "endings_pl": r.endings_pl,
@@ -1325,6 +1339,13 @@ class GrammarRuleUpdate(BaseModel):
     endings_pl: str
     transform: str
     article_slug: Optional[str] = None
+    # EN twins (#48b) — no admin editor; set via this PATCH only when sent
+    name_en: Optional[str] = None
+    question_en: Optional[str] = None
+    usage_en: Optional[str] = None
+    endings_sg_en: Optional[str] = None
+    endings_pl_en: Optional[str] = None
+    transform_en: Optional[str] = None
 
 
 @router.patch("/grammar/rules/{rule_id}")
@@ -1353,6 +1374,9 @@ def update_grammar_rule(
     rule.endings_pl = body.endings_pl.strip()
     rule.transform = body.transform.strip()
     rule.article_slug = slug
+    for field in ("name_en", "question_en", "usage_en", "endings_sg_en", "endings_pl_en", "transform_en"):
+        if field in body.model_fields_set:
+            setattr(rule, field, _en_or_none(getattr(body, field)))
     session.add(rule)
     session.commit()
     return {"ok": True}
@@ -1375,6 +1399,7 @@ def list_grammar_programs_admin(
             "title": p.title,
             "title_en": p.title_en,
             "description": p.description,
+            "description_en": p.description_en,
             "difficulty": p.difficulty,
             "is_public": p.is_public,
             "lesson_filter": p.lesson_filter,
@@ -1387,6 +1412,7 @@ class GrammarProgramCreate(BaseModel):
     title: str
     title_en: Optional[str] = None
     description: Optional[str] = None
+    description_en: Optional[str] = None
     difficulty: int = 1
     is_public: bool = True
     lesson_filter: Optional[str] = None  # JSON array of group names
@@ -1408,6 +1434,7 @@ def create_grammar_program(
         title=body.title.strip(),
         title_en=body.title_en.strip() if body.title_en else None,
         description=body.description.strip() if body.description else None,
+        description_en=_en_or_none(body.description_en),
         difficulty=body.difficulty,
         is_public=body.is_public,
         lesson_filter=body.lesson_filter,
@@ -1422,6 +1449,7 @@ class GrammarProgramUpdate(BaseModel):
     title: str
     title_en: Optional[str] = None
     description: Optional[str] = None
+    description_en: Optional[str] = None
     difficulty: int = 1
     is_public: bool = True
     lesson_filter: Optional[str] = None  # JSON array of group names
@@ -1446,6 +1474,8 @@ def update_grammar_program(
     program.title = body.title.strip()
     program.title_en = body.title_en.strip() if body.title_en else None
     program.description = body.description.strip() if body.description else None
+    if "description_en" in body.model_fields_set:  # #48b — don't wipe when omitted
+        program.description_en = _en_or_none(body.description_en)
     program.difficulty = body.difficulty
     program.is_public = body.is_public
     program.lesson_filter = body.lesson_filter

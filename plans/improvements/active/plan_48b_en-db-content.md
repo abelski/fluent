@@ -1,12 +1,12 @@
 ---
 kind: feature
-status: approved
-iteration: 0
+status: done
+iteration: 1
 max_iterations: 30
 suggested_model: opus
 suggested_effort: high
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: opus
+confirmed_effort: high
 ---
 
 # #48b — English coverage, part 2: DB content
@@ -126,23 +126,23 @@ semantics, and translation quality.
 - Add autotest coverage for the new feature and run the relevant suite(s) as part of Validation.
 
 ## Implementation
-- [ ] 1. `backend/migrations/versions/<id>_add_en_content_columns.py` + `backend/models.py` (Requirement 1). **Stop and ask the user to approve** `cd backend && .venv/bin/python -m alembic upgrade head` against the shared (prod) DB. Nothing below runs until that is done.
-- [ ] 2. Baseline: save the list of failing Playwright specs on the branch to `temp_files/screenshots/plan_48b_en-db-content/baseline-failures.txt`.
-- [ ] 3. API builders (Requirement 2).
-- [ ] 4. Admin writes, the wipe-bug fix and the admin EN inputs (Requirement 3).
-- [ ] 5. Frontend display (Requirement 4).
-- [ ] 6. Seed sources (Requirement 5): `data/constitution/program_data.json` + `seed_constitution_program.py`; `_SEED_PROGRAMS` and `seed_verbs_grammar.py`; `CASE_RULES` and `SENTENCES` in `seed_numbers_grammar.py`; the category-2 rename in the seed scripts (Requirement 8). Optionally add EN to `data/numbers/program_data.json`, so a future numbers seed doesn't bring the leak back.
-- [ ] 7. `backend/data/en_content/*.json` — Claude writes EN for all DB-only rows, following Requirement 6.
-- [ ] 8. `backend/scripts/apply_en_content.py` (Requirements 5 and 7).
-- [ ] 9. `documentation/en-content.md` — the column convention, seed file vs. `en_content`, the match keys and why ids are never used (`--reset` re-inserts rows), "re-run `apply_en_content.py` after any re-seed", the deferred `case_governance`, and why translations are committed files.
-- [ ] 10. `backend/tests/test_en_content.py` (SQLite test DB; it doesn't enforce FKs, per memory). It covers:
+- [x] 1. `backend/migrations/versions/<id>_add_en_content_columns.py` + `backend/models.py` (Requirement 1). **Stop and ask the user to approve** `cd backend && .venv/bin/python -m alembic upgrade head` against the shared (prod) DB. Nothing below runs until that is done.
+- [x] 2. Baseline: save the list of failing Playwright specs on the branch to `temp_files/screenshots/plan_48b_en-db-content/baseline-failures.txt`.
+- [x] 3. API builders (Requirement 2).
+- [x] 4. Admin writes, the wipe-bug fix and the admin EN inputs (Requirement 3).
+- [x] 5. Frontend display (Requirement 4).
+- [x] 6. Seed sources (Requirement 5): `data/constitution/program_data.json` + `seed_constitution_program.py`; `_SEED_PROGRAMS` and `seed_verbs_grammar.py`; `CASE_RULES` and `SENTENCES` in `seed_numbers_grammar.py`; the category-2 rename in the seed scripts (Requirement 8). Optionally add EN to `data/numbers/program_data.json`, so a future numbers seed doesn't bring the leak back.
+- [x] 7. `backend/data/en_content/*.json` — Claude writes EN for all DB-only rows, following Requirement 6.
+- [x] 8. `backend/scripts/apply_en_content.py` (Requirements 5 and 7).
+- [x] 9. `documentation/en-content.md` — the column convention, seed file vs. `en_content`, the match keys and why ids are never used (`--reset` re-inserts rows), "re-run `apply_en_content.py` after any re-seed", the deferred `case_governance`, and why translations are committed files.
+- [x] 10. `backend/tests/test_en_content.py` (SQLite test DB; it doesn't enforce FKs, per memory). It covers:
   - EN twins are served by every builder listed in Requirement 2.
   - Each new EN field survives a PATCH that omits it (sentence level toggle, program and category PATCH).
   - A word-list meta PATCH without `title_en` keeps the existing value.
   - `apply_en_content` fills only empty fields, a second run makes 0 changes, and an unknown key fails.
   - The verb key normalisation matches `dìrbti` → `dirbti` and splits `reñgti` by `translation_ru`.
   - No `*_en` value in `en_content/*.json` contains Cyrillic.
-- [ ] 11. `frontend/tests/plan48b-screenshots.spec.ts` — RU and EN × 1280 and 375, into `temp_files/screenshots/plan_48b_en-db-content/`, for:
+- [x] 11. `frontend/tests/plan48b-screenshots.spec.ts` — RU and EN × 1280 and 375, into `temp_files/screenshots/plan_48b_en-db-content/`, for:
   - the grammar rule card with endings
   - a sentence task and a verb task
   - the practice category description and a test description
@@ -150,17 +150,17 @@ semantics, and translation quality.
   - the admin category, program and sentence edit forms
 
   Mock the APIs with EN-complete fixtures.
-- [ ] 12. **Review gate** — run `apply_en_content.py --dry-run`, then **stop and ask the user** to review `review.html` (Requirement 7). *(manual)*
-- [ ] 13. **Prod apply** — `apply_en_content.py --apply`, only with explicit user approval. Report counts per table. Cached reads refresh within 10 minutes (`documentation/caching.md`). *(manual)*
+- [x] 12. **Review gate** — run `apply_en_content.py --dry-run`, then **stop and ask the user** to review `review.html` (Requirement 7). *(manual)*
+- [x] 13. **Prod apply** — `apply_en_content.py --apply`, only with explicit user approval. Report counts per table. Cached reads refresh within 10 minutes (`documentation/caching.md`). *(manual)*
 
 ## Validation
-- [ ] Backend: `cd backend && .venv/bin/python -m pytest -q`
-- [ ] Types: `cd frontend && npx tsc --noEmit`
-- [ ] The 48a guard still passes: `cd frontend && npx playwright test tests/no-hardcoded-russian.spec.ts --reporter=list`
-- [ ] Parity: `cd frontend && npx playwright test tests/design-system-parity.spec.ts --reporter=list`
-- [ ] Screenshots: `cd frontend && npx playwright test tests/plan48b-screenshots.spec.ts --reporter=list`, then look at every shot *(looking is manual)*
-- [ ] Full suite: no new failures vs `baseline-failures.txt`
-- [ ] After apply (manual, read-only): `apply_en_content.py --dry-run` reports 0 fields to fill
+- [x] Backend: `cd backend && .venv/bin/python -m pytest -q`
+- [x] Types: `cd frontend && npx tsc --noEmit`
+- [x] The 48a guard still passes: `cd frontend && npx playwright test tests/no-hardcoded-russian.spec.ts --reporter=list`
+- [x] Parity: `cd frontend && npx playwright test tests/design-system-parity.spec.ts --reporter=list`
+- [x] Screenshots: `cd frontend && npx playwright test tests/plan48b-screenshots.spec.ts --reporter=list`, then look at every shot *(looking is manual)*
+- [x] Full suite: no new failures vs `baseline-failures.txt`
+- [x] After apply (manual, read-only): `apply_en_content.py --dry-run` reports 0 fields to fill
 
 ## Definition of Done
 
@@ -175,3 +175,7 @@ in `temp_files/screenshots/plan_48b_en-db-content/`. The review gate is passed, 
 apply is confirmed by you.
 
 ## Notes
+- Cold risk review (2026-09-24): low risk for apply and deploy. Fixed before apply: skolinti → "to lend", privalėti/turėti "to must" → "must"/"to have to", žaibuoti → "to flash (of lightning)".
+- Decided with the user: EN falls back to RU for practice descriptions when `_en` is empty (not hidden).
+- Applied to prod: 956 fields + category 2 rename; follow-up dry-run reports 0.
+- Found, out of scope: admin sentence-edit save re-enables all three `use_in_*` levels; admin grammar page shows program/case names in RU in EN mode.

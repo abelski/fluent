@@ -28,6 +28,13 @@ export interface GrammarRule {
   endings_sg: string;
   endings_pl: string;
   transform?: string;
+  // EN twins (#48b) — null until translated; fall back to the RU field
+  question_en?: string | null;
+  name_en?: string | null;
+  usage_en?: string | null;
+  endings_sg_en?: string | null;
+  endings_pl_en?: string | null;
+  transform_en?: string | null;
   article_slug?: string;
   article_title_ru?: string;
   article_title_en?: string;
@@ -54,6 +61,7 @@ export interface SentenceTask {
   answer: string;
   full_answer: string;
   translation_ru: string;
+  translation_en?: string | null;
   base_lt?: string;
 }
 
@@ -61,6 +69,7 @@ export interface VerbConjugationTask {
   type: 'verb_conjugation';
   verb_infinitive: string;
   translation_ru: string;
+  translation_en?: string | null;
   tense_label: string;
   tense_label_en: string;
   person_label: string;
@@ -71,6 +80,7 @@ export interface VerbCaseTask {
   type: 'verb_case';
   verb_infinitive: string;
   translation_ru: string;
+  translation_en?: string | null;
   example_lt: string;
   example_ru: string;
   answer: string;
@@ -155,7 +165,9 @@ export function InlineSentenceInput({
 }
 
 export function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collapsible: boolean }) {
-  const { tr } = useT();
+  const { tr, lang } = useT();
+  // EN twin when in EN mode and filled, else the RU field (#48b)
+  const pick = (ru: string, en?: string | null) => (lang === 'en' && en) || ru;
   const [open, setOpen] = useState(!collapsible);
 
   if (rules.length === 0) return null;
@@ -183,15 +195,24 @@ export function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; 
 
       {open && (
         <div className={`px-5 py-4 flex flex-col gap-4 ${collapsible ? 'border-t border-line' : ''}`}>
-          {rules.map((rule, i) => (
+          {rules.map((r, i) => {
+            const rule = {
+              name: pick(r.name_ru, r.name_en),
+              question: pick(r.question, r.question_en),
+              usage: pick(r.usage, r.usage_en),
+              transform: r.transform && pick(r.transform, r.transform_en),
+              endings_sg: pick(r.endings_sg, r.endings_sg_en),
+              endings_pl: pick(r.endings_pl, r.endings_pl_en),
+            };
+            return (
             <div key={i} className={rules.length > 1 ? 'pb-4 border-b border-line last:border-0 last:pb-0' : ''}>
-              <p className="text-teal-700 text-sm font-semibold mb-1">{rule.name_ru}</p>
+              <p className="text-teal-700 text-sm font-semibold mb-1">{rule.name}</p>
               <p className="text-gray-500 text-xs mb-2">{rule.question}</p>
               <p className="text-gray-600 text-sm mb-2 leading-relaxed">{rule.usage}</p>
               {rule.transform && (
                 <p className="text-gray-500 text-xs mb-3 leading-relaxed font-mono bg-white/60 rounded px-2 py-1">{rule.transform}</p>
               )}
-              {rule.endings_sg !== '—' && (
+              {r.endings_sg !== '—' && (
                 <div className="flex flex-wrap gap-3 text-xs">
                   <div>
                     <span className="text-gray-400">{tr.grammar.singular} </span>
@@ -203,14 +224,15 @@ export function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; 
                   </div>
                 </div>
               )}
-              {rule.endings_sg === '—' && (
+              {r.endings_sg === '—' && (
                 <div className="text-xs">
                   <span className="text-gray-400">{tr.grammar.plural} </span>
                   <span className="text-gray-500 font-mono">{rule.endings_pl}</span>
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -438,7 +460,7 @@ export default function GrammarTaskRunner({
                   inputRef={inputRef}
                 />
               </div>
-              <p className="text-gray-500 text-base">{task.translation_ru}</p>
+              <p className="text-gray-500 text-base">{(lang === 'en' && task.translation_en) || task.translation_ru}</p>
             </div>
           )}
 
@@ -457,14 +479,14 @@ export default function GrammarTaskRunner({
                   placeholder={tr.grammar.verbConjugationPlaceholder}
                 />
               </div>
-              <p className="text-gray-500 text-base">{task.translation_ru}</p>
+              <p className="text-gray-500 text-base">{(lang === 'en' && task.translation_en) || task.translation_ru}</p>
             </div>
           )}
 
           {task.type === 'verb_case' && (
             <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">
-                {task.verb_infinitive} — {task.translation_ru}
+                {task.verb_infinitive} — {(lang === 'en' && task.translation_en) || task.translation_ru}
               </p>
               <p className="text-lg sm:text-xl font-medium text-gray-900 mb-2">{task.example_lt}</p>
               <p className="text-gray-500 text-base mb-5">{task.example_ru}</p>

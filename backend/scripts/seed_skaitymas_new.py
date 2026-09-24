@@ -506,7 +506,7 @@ def main():
     with Session(engine) as session:
         # Check if already seeded
         existing = session.exec(
-            select(PracticeCategory).where(PracticeCategory.name_en == "Skaitymas")
+            select(PracticeCategory).where(PracticeCategory.name_en.in_(["Reading", "Skaitymas"]))  # "Skaitymas" = pre-#48b name
         ).first()
         if existing:
             print(f"Skaitymas category already exists (id={existing.id}). Skipping.")
@@ -515,7 +515,7 @@ def main():
         # Create category
         cat = PracticeCategory(
             name_ru="Чтение",
-            name_en="Skaitymas",
+            name_en="Reading",
             sort_order=10,
         )
         session.add(cat)

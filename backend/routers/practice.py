@@ -116,6 +116,7 @@ def list_categories(
             "name_ru": c.name_ru,
             "name_en": c.name_en,
             "description_ru": c.description_ru,
+            "description_en": c.description_en,
             "source_url": c.source_url,
             "sort_order": c.sort_order,
             "test_count": test_counts.get(c.id, 0),
@@ -182,6 +183,7 @@ def list_enrolled_categories(
             "name_ru": c.name_ru,
             "name_en": c.name_en,
             "description_ru": c.description_ru,
+            "description_en": c.description_en,
             "sort_order": c.sort_order,
             "test_count": tests_total,
             "tests_passed": tests_passed,
@@ -459,6 +461,7 @@ def admin_list_categories(
             "name_ru": c.name_ru,
             "name_en": c.name_en,
             "description_ru": c.description_ru,
+            "description_en": c.description_en,
             "source_url": c.source_url,
             "sort_order": c.sort_order,
             "total_tests": total_counts.get(c.id, 0),
@@ -468,10 +471,16 @@ def admin_list_categories(
     ]
 
 
+def _en_or_none(value: Optional[str]) -> Optional[str]:
+    """EN twin fields (#48b): strip, and store an empty string as NULL (= fall back to RU)."""
+    return value.strip() or None if value else None
+
+
 class CategoryIn(BaseModel):
     name_ru: str
     name_en: Optional[str] = None
     description_ru: Optional[str] = None
+    description_en: Optional[str] = None
     source_url: Optional[str] = None
     sort_order: int = 0
 
@@ -489,6 +498,7 @@ def admin_create_category(
         name_ru=body.name_ru.strip(),
         name_en=body.name_en,
         description_ru=body.description_ru,
+        description_en=_en_or_none(body.description_en),
         source_url=body.source_url,
         sort_order=body.sort_order,
     )
@@ -502,6 +512,7 @@ class CategoryUpdate(BaseModel):
     name_ru: Optional[str] = None
     name_en: Optional[str] = None
     description_ru: Optional[str] = None
+    description_en: Optional[str] = None
     source_url: Optional[str] = None
     sort_order: Optional[int] = None
 
@@ -523,6 +534,8 @@ def admin_update_category(
         c.name_en = body.name_en
     if body.description_ru is not None:
         c.description_ru = body.description_ru
+    if "description_en" in body.model_fields_set:  # #48b — only when sent; "" clears
+        c.description_en = _en_or_none(body.description_en)
     if body.source_url is not None:
         c.source_url = body.source_url
     if body.sort_order is not None:

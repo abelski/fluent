@@ -1,0 +1,147 @@
+[
+  {
+    "subcategory": "regitra",
+    "title": "Регитра 1: Структура экзамена",
+    "description_en": "Basic terminology for the Regitra practical driving exam."
+  },
+  {
+    "subcategory": "regitra",
+    "title": "Регитра 2: Части автомобиля (20 вопросов)",
+    "description_en": "The \"20 questions before Regitra\": the examiner asks 3 of them at random. Failing to show one is a critical mistake."
+  },
+  {
+    "subcategory": "regitra",
+    "title": "Регитра 3: Жидкости и техобслуживание",
+    "description_en": "Half of the \"20 questions\" are about fluids. The examiner opens the hood and asks you to point them out."
+  },
+  {
+    "subcategory": "regitra",
+    "title": "Регитра 4: Системы безопасности",
+    "description_en": "An unfastened seat belt = a critical mistake = the exam is over."
+  },
+  {
+    "subcategory": "regitra",
+    "title": "Регитра 5: Манёвры",
+    "description_en": "Special category B maneuvers on the Regitra test ground."
+  },
+  {
+    "subcategory": "regitra",
+    "title": "Регитра 6: Команды экзаменатора",
+    "description_en": "~90% of what the examiner will say in 90 minutes. The highest-payoff block."
+  },
+  {
+    "subcategory": "regitra",
+    "title": "Регитра 7: Дорожное движение и знаки",
+    "description_en": "Basic traffic-rules vocabulary (KET)."
+  },
+  {
+    "subcategory": "regitra",
+    "title": "Регитра 8: Критические ошибки",
+    "description_en": "One mistake like this and the exam is over. A small block with a huge payoff."
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Koks jūsų vardas?",
+    "title_en": "What's your name?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Čia mano draugas",
+    "title_en": "This is my friend"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Koks tavo adresas?",
+    "title_en": "What's your address?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Kada ir kur susitinkame?",
+    "title_en": "When and where do we meet?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Čia mano šeima",
+    "title_en": "This is my family"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Mano sesers vardas yra Lina",
+    "title_en": "My sister's name is Lina"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Labai skanu!",
+    "title_en": "Very tasty!"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Šiandien eisiu į turgų",
+    "title_en": "Today I'm going to the market"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Norėčiau kavos",
+    "title_en": "I'd like some coffee"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Kaip nuvažiuoti į universitetą?",
+    "title_en": "How do I get to the university?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Geros kelionės!",
+    "title_en": "Have a good trip!"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Koks jaukus butas!",
+    "title_en": "What a cozy apartment!"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Reikia meistro!",
+    "title_en": "We need a repairman!"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Važiuojame apsipirkti?",
+    "title_en": "Shall we go shopping?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Kada galėsiu atsiimti?",
+    "title_en": "When can I pick it up?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Kada dirba šeimos gydytojas?",
+    "title_en": "When does the family doctor see patients?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Prašom duoti vaistų nuo skausmo!",
+    "title_en": "Painkillers, please!"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Kur jūs dirbate?",
+    "title_en": "Where do you work?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Ką tu studijuoji?",
+    "title_en": "What do you study?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Ką mėgsti veikti laisvalaikiu?",
+    "title_en": "What do you like doing in your free time?"
+  },
+  {
+    "subcategory": "sekmes",
+    "title": "Su gimtadieniu!",
+    "title_en": "Happy birthday!"
+  }
+]

@@ -105,6 +105,7 @@ def build_program(articles: dict[int, str]) -> list[dict]:
             "title_ru": entry["title_ru"],
             "title_en": entry.get("title_en", ""),
             "description_ru": entry.get("description_ru", ""),
+            "description_en": entry.get("description_en"),
             "lesson_text_lt": lesson_text,
             "question_count": entry["question_count"],
             "pass_threshold": entry["pass_threshold"],

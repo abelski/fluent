@@ -2,7 +2,7 @@
   {
     "sort_order": 1, "lesson_type": "lesson",
     "title_ru": "1 pamoka: Valstybiniai pagrindai (1–6 str.)",
-    "title_en": "Lesson 1: Art. 1–6", "description_ru": "Perskaitykite 1–6 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 1: Art. 1–6", "description_ru": "Perskaitykite 1–6 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 1–6 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [1,2,3,4,5,6],
     "questions": [
       {"q":"Kokia valstybė yra Lietuva pagal Konstitucijos 1 straipsnį?","a":"Prezidentinė respublika","b":"Nepriklausoma demokratinė respublika","c":"Konstitucinė monarchija","d":"Federalinė respublika","correct":"b"},
@@ -20,7 +20,7 @@
   {
     "sort_order": 2, "lesson_type": "lesson",
     "title_ru": "2 pamoka: Įstatymai, teritorija, pilietybė (7–12 str.)",
-    "title_en": "Lesson 2: Art. 7–12", "description_ru": "Perskaitykite 7–12 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 2: Art. 7–12", "description_ru": "Perskaitykite 7–12 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 7–12 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [7,8,9,10,11,12],
     "questions": [
       {"q":"Kiek piliečių gali inicijuoti referendumą?","a":"100 000","b":"200 000","c":"300 000","d":"500 000","correct":"c"},
@@ -38,7 +38,7 @@
   {
     "sort_order": 3, "lesson_type": "lesson",
     "title_ru": "3 pamoka: Kalba, simboliai, sostinė (13–17 str.)",
-    "title_en": "Lesson 3: Art. 13–17", "description_ru": "Perskaitykite 13–17 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 3: Art. 13–17", "description_ru": "Perskaitykite 13–17 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 13–17 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [13,14,15,16,17],
     "questions": [
       {"q":"Kokia kalba yra valstybinė Lietuvoje?","a":"Lenkų","b":"Rusų","c":"Lietuvių","d":"Latvių","correct":"c"},
@@ -56,7 +56,7 @@
   {
     "sort_order": 4, "lesson_type": "lesson",
     "title_ru": "4 pamoka: Gyvybė, laisvė, orumas, nuosavybė (18–24 str.)",
-    "title_en": "Lesson 4: Art. 18–24", "description_ru": "Perskaitykite 18–24 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 4: Art. 18–24", "description_ru": "Perskaitykite 18–24 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 18–24 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [18,19,20,21,22,23,24],
     "questions": [
       {"q":"Kaip Konstitucija apibūdina žmogaus teises ir laisves?","a":"Jos suteikiamos valstybės","b":"Jos yra prigimtinės","c":"Jos nustatomos įstatymu","d":"Jas suteikia Seimas","correct":"b"},
@@ -74,7 +74,7 @@
   {
     "sort_order": 5, "lesson_type": "lesson",
     "title_ru": "5 pamoka: Saviraiška, tikėjimas, lygybė, nekaltumo prezumpcija (25–31 str.)",
-    "title_en": "Lesson 5: Art. 25–31", "description_ru": "Perskaitykite 25–31 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 5: Art. 25–31", "description_ru": "Perskaitykite 25–31 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 25–31 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [25,26,27,28,29,30,31],
     "questions": [
       {"q":"Ką Konstitucija sako apie žodžio laisvę?","a":"Ji yra absoliuti ir neribojama","b":"Ji garantuota, tačiau gali būti ribojama įstatymu","c":"Ji gali būti ribojama Vyriausybės nutarimu","d":"Ji ribojama tik karo metu","correct":"b"},
@@ -92,7 +92,7 @@
   {
     "sort_order": 6, "lesson_type": "review",
     "title_ru": "Kartojimas 1: 1–5 pamokos (1–31 str.)",
-    "title_en": "Review 1: Lessons 1–5", "description_ru": "Pakartokite 1–31 straipsnius.",
+    "title_en": "Review 1: Lessons 1–5", "description_ru": "Pakartokite 1–31 straipsnius.", "description_en": "Review Articles 1–31.",
     "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
     "questions": [
       {"q":"Kokia Lietuvos valstybės santvarka?","a":"Monarchija","b":"Federacija","c":"Nepriklausoma demokratinė respublika","d":"Konfederacija","correct":"c"},
@@ -110,7 +110,7 @@
   {
     "sort_order": 7, "lesson_type": "lesson",
     "title_ru": "6 pamoka: Judėjimas, dalyvavimas, rinkimai, susirinkimai (32–37 str.)",
-    "title_en": "Lesson 6: Art. 32–37", "description_ru": "Perskaitykite 32–37 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 6: Art. 32–37", "description_ru": "Perskaitykite 32–37 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 32–37 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [32,33,34,35,36,37],
     "questions": [
       {"q":"Nuo kokio amžiaus piliečiai turi rinkimų teisę?","a":"Nuo 16 metų","b":"Nuo 18 metų","c":"Nuo 20 metų","d":"Nuo 21 metų","correct":"b"},
@@ -128,7 +128,7 @@
   {
     "sort_order": 8, "lesson_type": "lesson",
     "title_ru": "7 pamoka: Šeima, vaikai, švietimas (38–41 str.)",
-    "title_en": "Lesson 7: Art. 38–41", "description_ru": "Perskaitykite 38–41 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 7: Art. 38–41", "description_ru": "Perskaitykite 38–41 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 38–41 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [38,39,40,41],
     "questions": [
       {"q":"Kuo šeima laikoma pagal Konstituciją?","a":"Ūkio vienetu","b":"Visuomenės ir valstybės pagrindu","c":"Privačia institucija","d":"Socialinės apsaugos objektu","correct":"b"},
@@ -146,7 +146,7 @@
   {
     "sort_order": 9, "lesson_type": "lesson",
     "title_ru": "8 pamoka: Kultūra, religija, žiniasklaida (42–45 str.)",
-    "title_en": "Lesson 8: Art. 42–45", "description_ru": "Perskaitykite 42–45 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 8: Art. 42–45", "description_ru": "Perskaitykite 42–45 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 42–45 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [42,43,44,45],
     "questions": [
       {"q":"Ką draudžia Konstitucijos 44 straipsnis?","a":"Religinę veiklą","b":"Žiniasklaidos cenzūrą ir monopolizavimą","c":"Užsienio žiniasklaidą","d":"Politinę reklamą","correct":"b"},
@@ -164,7 +164,7 @@
   {
     "sort_order": 10, "lesson_type": "lesson",
     "title_ru": "9 pamoka: Ekonomika, nuosavybė, darbas (46–51 str.)",
-    "title_en": "Lesson 9: Art. 46–51", "description_ru": "Perskaitykite 46–51 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 9: Art. 46–51", "description_ru": "Perskaitykite 46–51 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 46–51 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [46,47,48,49,50,51],
     "questions": [
       {"q":"Kokia ekonominė sistema įtvirtinta Lietuvos Konstitucijoje?","a":"Valstybinė ekonomika","b":"Privati nuosavybė ir ekonominė laisvė","c":"Mišri ekonomika","d":"Kooperatinė ekonomika","correct":"b"},
@@ -182,7 +182,7 @@
   {
     "sort_order": 11, "lesson_type": "lesson",
     "title_ru": "10 pamoka: Socialinė apsauga, sveikata, aplinka (52–54 str.)",
-    "title_en": "Lesson 10: Art. 52–54", "description_ru": "Perskaitykite 52–54 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 10: Art. 52–54", "description_ru": "Perskaitykite 52–54 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 52–54 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [52,53,54],
     "questions": [
       {"q":"Ką valstybė garantuoja seniems piliečiams?","a":"Nemokamą būstą","b":"Pensiją","c":"Nemokamą transportą","d":"Nemokamą maistą","correct":"b"},
@@ -200,7 +200,7 @@
   {
     "sort_order": 12, "lesson_type": "review",
     "title_ru": "Kartojimas 2: 6–10 pamokos (32–54 str.)",
-    "title_en": "Review 2: Lessons 6–10", "description_ru": "Pakartokite 32–54 straipsnius.",
+    "title_en": "Review 2: Lessons 6–10", "description_ru": "Pakartokite 32–54 straipsnius.", "description_en": "Review Articles 32–54.",
     "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
     "questions": [
       {"q":"Nuo kokio amžiaus piliečiai turi teisę balsuoti?","a":"16 metų","b":"18 metų","c":"20 metų","d":"21 metų","correct":"b"},
@@ -218,7 +218,7 @@
   {
     "sort_order": 13, "lesson_type": "lesson",
     "title_ru": "11 pamoka: Seimas – sudėtis, rinkimai (55–60 str.)",
-    "title_en": "Lesson 11: Art. 55–60", "description_ru": "Perskaitykite 55–60 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 11: Art. 55–60", "description_ru": "Perskaitykite 55–60 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 55–60 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [55,56,57,58,59,60],
     "questions": [
       {"q":"Kiek narių yra Seime?","a":"100","b":"121","c":"141","d":"160","correct":"c"},
@@ -236,7 +236,7 @@
   {
     "sort_order": 14, "lesson_type": "lesson",
     "title_ru": "12 pamoka: Seimas – imunitetas, sesijos (61–66 str.)",
-    "title_en": "Lesson 12: Art. 61–66", "description_ru": "Perskaitykite 61–66 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 12: Art. 61–66", "description_ru": "Perskaitykite 61–66 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 61–66 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [61,62,63,64,65,66],
     "questions": [
       {"q":"Kada vyksta Seimo pavasario sesija?","a":"Vasario 16 – gegužės 31","b":"Kovo 10 – birželio 30","c":"Balandžio 1 – liepos 1","d":"Kovo 1 – birželio 1","correct":"b"},
@@ -254,7 +254,7 @@
   {
     "sort_order": 15, "lesson_type": "lesson",
     "title_ru": "13 pamoka: Seimas – galios, įstatymų leidyba (67–72 str.)",
-    "title_en": "Lesson 13: Art. 67–72", "description_ru": "Perskaitykite 67–72 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 13: Art. 67–72", "description_ru": "Perskaitykite 67–72 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 67–72 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [67,68,69,70,71,72],
     "questions": [
       {"q":"Kiek piliečių gali inicijuoti įstatymą Seime?","a":"10 000","b":"50 000","c":"100 000","d":"300 000","correct":"b"},
@@ -272,7 +272,7 @@
   {
     "sort_order": 16, "lesson_type": "lesson",
     "title_ru": "14 pamoka: Seimas – kontrolė, statutas (73–76 str.)",
-    "title_en": "Lesson 14: Art. 73–76", "description_ru": "Perskaitykite 73–76 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 14: Art. 73–76", "description_ru": "Perskaitykite 73–76 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 73–76 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [73,74,75,76],
     "questions": [
       {"q":"Kas yra ombudsmenas?","a":"Seimo narys","b":"Pareigūnas, tiriantis piliečių skundus dėl valdžios veiksmų","c":"Teisėjas","d":"Ministro pavaduotojas","correct":"b"},
@@ -290,7 +290,7 @@
   {
     "sort_order": 17, "lesson_type": "lesson",
     "title_ru": "15 pamoka: Prezidentas – reikalavimai, rinkimai, priesaika (77–83 str.)",
-    "title_en": "Lesson 15: Art. 77–83", "description_ru": "Perskaitykite 77–83 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 15: Art. 77–83", "description_ru": "Perskaitykite 77–83 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 77–83 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [77,78,79,80,81,82,83],
     "questions": [
       {"q":"Kuo yra Lietuvos Prezidentas?","a":"Vyriausybės vadovas","b":"Valstybės vadovas","c":"Seimo vadovas","d":"Teismų vadovas","correct":"b"},
@@ -308,7 +308,7 @@
   {
     "sort_order": 18, "lesson_type": "review",
     "title_ru": "Kartojimas 3: 11–15 pamokos (55–83 str.)",
-    "title_en": "Review 3: Lessons 11–15", "description_ru": "Pakartokite 55–83 straipsnius.",
+    "title_en": "Review 3: Lessons 11–15", "description_ru": "Pakartokite 55–83 straipsnius.", "description_en": "Review Articles 55–83.",
     "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
     "questions": [
       {"q":"Kiek narių turi Seimas?","a":"100","b":"121","c":"141","d":"160","correct":"c"},
@@ -326,7 +326,7 @@
   {
     "sort_order": 19, "lesson_type": "lesson",
     "title_ru": "16 pamoka: Prezidentas – galios, vakansija (84–90 str.)",
-    "title_en": "Lesson 16: Art. 84–90", "description_ru": "Perskaitykite 84–90 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 16: Art. 84–90", "description_ru": "Perskaitykite 84–90 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 84–90 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [84,85,86,87,88,89,90],
     "questions": [
       {"q":"Kas skiria Ministrą Pirmininką?","a":"Seimas","b":"Prezidentas","c":"Vyriausybė","d":"Konstitucinis Teismas","correct":"b"},
@@ -344,7 +344,7 @@
   {
     "sort_order": 20, "lesson_type": "lesson",
     "title_ru": "17 pamoka: Vyriausybė – sudėtis, pareigos (91–96 str.)",
-    "title_en": "Lesson 17: Art. 91–96", "description_ru": "Perskaitykite 91–96 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 17: Art. 91–96", "description_ru": "Perskaitykite 91–96 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 91–96 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [91,92,93,94,95,96],
     "questions": [
       {"q":"Iš ko sudaryta Lietuvos Vyriausybė?","a":"Tik iš ministrų","b":"Ministro Pirmininko ir ministrų","c":"Prezidento ir ministrų","d":"Seimo narių ir ministrų","correct":"b"},
@@ -362,7 +362,7 @@
   {
     "sort_order": 21, "lesson_type": "lesson",
     "title_ru": "18 pamoka: Vyriausybė – atskaitomybė, atsistatydinimas (97–101 str.)",
-    "title_en": "Lesson 18: Art. 97–101", "description_ru": "Perskaitykite 97–101 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 18: Art. 97–101", "description_ru": "Perskaitykite 97–101 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 97–101 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [97,98,99,100,101],
     "questions": [
       {"q":"Kas atstovauja Vyriausybei ir vadovauja jos veiklai?","a":"Prezidentas","b":"Seimo Pirmininkas","c":"Ministras Pirmininkas","d":"Vyriausybės Pirmininkas","correct":"c"},
@@ -380,7 +380,7 @@
   {
     "sort_order": 22, "lesson_type": "lesson",
     "title_ru": "19 pamoka: Konstitucinis Teismas (102–108 str.)",
-    "title_en": "Lesson 19: Art. 102–108", "description_ru": "Perskaitykite 102–108 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 19: Art. 102–108", "description_ru": "Perskaitykite 102–108 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 102–108 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [102,103,104,105,106,107,108],
     "questions": [
       {"q":"Kiek teisėjų turi Konstitucinis Teismas?","a":"5","b":"7","c":"9","d":"12","correct":"c"},
@@ -398,7 +398,7 @@
   {
     "sort_order": 23, "lesson_type": "lesson",
     "title_ru": "20 pamoka: Teismai – nepriklausomumas, sistema (109–114 str.)",
-    "title_en": "Lesson 20: Art. 109–114", "description_ru": "Perskaitykite 109–114 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 20: Art. 109–114", "description_ru": "Perskaitykite 109–114 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 109–114 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [109,110,111,112,113,114],
     "questions": [
       {"q":"Kas vykdo teisingumą Lietuvoje?","a":"Prokuroras","b":"Tik teismai","c":"Seimas","d":"Prezidentas","correct":"b"},
@@ -416,7 +416,7 @@
   {
     "sort_order": 24, "lesson_type": "review",
     "title_ru": "Kartojimas 4: 16–20 pamokos (84–114 str.)",
-    "title_en": "Review 4: Lessons 16–20", "description_ru": "Pakartokite 84–114 straipsnius.",
+    "title_en": "Review 4: Lessons 16–20", "description_ru": "Pakartokite 84–114 straipsnius.", "description_en": "Review Articles 84–114.",
     "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
     "questions": [
       {"q":"Kas laikinai eina Prezidento pareigas jam nesant?","a":"Ministras Pirmininkas","b":"Seimo Pirmininkas","c":"Vyriausiasis teisėjas","d":"Konstitucinio Teismo Pirmininkas","correct":"b"},
@@ -434,7 +434,7 @@
   {
     "sort_order": 25, "lesson_type": "lesson",
     "title_ru": "21 pamoka: Teismai – atšaukimas, kalba, prokuratūra (115–118 str.)",
-    "title_en": "Lesson 21: Art. 115–118", "description_ru": "Perskaitykite 115–118 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 21: Art. 115–118", "description_ru": "Perskaitykite 115–118 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 115–118 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [115,116,117,118],
     "questions": [
       {"q":"Kokia kalba vyksta teismo procesai?","a":"Anglų","b":"Lietuvių","c":"Lenkų","d":"Bet kuria šalių kalba","correct":"b"},
@@ -452,7 +452,7 @@
   {
     "sort_order": 26, "lesson_type": "lesson",
     "title_ru": "22 pamoka: Savivaldybės (119–124 str.)",
-    "title_en": "Lesson 22: Art. 119–124", "description_ru": "Perskaitykite 119–124 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 22: Art. 119–124", "description_ru": "Perskaitykite 119–124 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 119–124 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [119,120,121,122,123,124],
     "questions": [
       {"q":"Kiek metų renkami savivaldybių tarybos?","a":"3 metus","b":"4 metus","c":"5 metus","d":"6 metus","correct":"b"},
@@ -470,7 +470,7 @@
   {
     "sort_order": 27, "lesson_type": "lesson",
     "title_ru": "23 pamoka: Finansai ir biudžetas (125–132 str.)",
-    "title_en": "Lesson 23: Art. 125–132", "description_ru": "Perskaitykite 125–132 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 23: Art. 125–132", "description_ru": "Perskaitykite 125–132 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 125–132 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [125,126,127,128,129,130,131,132],
     "questions": [
       {"q":"Koks yra Lietuvos biudžetiniai metai?","a":"Nuo balandžio 1 iki kovo 31","b":"Nuo sausio 1 iki gruodžio 31","c":"Nuo liepos 1 iki birželio 30","d":"Nuo rugsėjo 1 iki rugpjūčio 31","correct":"b"},
@@ -488,7 +488,7 @@
   {
     "sort_order": 28, "lesson_type": "lesson",
     "title_ru": "24 pamoka: Valstybės kontrolė, užsienio politika, gynyba (133–140 str.)",
-    "title_en": "Lesson 24: Art. 133–140", "description_ru": "Perskaitykite 133–140 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 24: Art. 133–140", "description_ru": "Perskaitykite 133–140 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 133–140 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [133,134,135,136,137,138,139,140],
     "questions": [
       {"q":"Kas yra Vyriausiasis kariuomenės vadas?","a":"Seimo Pirmininkas","b":"Gynybos ministras","c":"Prezidentas","d":"Kariuomenės vadas","correct":"c"},
@@ -506,7 +506,7 @@
   {
     "sort_order": 29, "lesson_type": "lesson",
     "title_ru": "25 pamoka: Gynyba, nepaprastoji padėtis, Konstitucijos keitimas (141–154 str.)",
-    "title_en": "Lesson 25: Art. 141–154", "description_ru": "Perskaitykite 141–154 straipsnius ir atsakykite į klausimus.",
+    "title_en": "Lesson 25: Art. 141–154", "description_ru": "Perskaitykite 141–154 straipsnius ir atsakykite į klausimus.", "description_en": "Read Articles 141–154 and answer the questions.",
     "question_count": 10, "pass_threshold": 0.6, "article_nums": [141,142,143,144,145,146,147,148,149,150,151,152,153,154],
     "questions": [
       {"q":"Kas skelbia karą?","a":"Prezidentas","b":"Seimas","c":"Vyriausybė","d":"Kariuomenės vadas","correct":"b"},
@@ -524,7 +524,7 @@
   {
     "sort_order": 30, "lesson_type": "review",
     "title_ru": "Kartojimas 5: 21–25 pamokos (115–154 str.)",
-    "title_en": "Review 5: Lessons 21–25", "description_ru": "Pakartokite 115–154 straipsnius.",
+    "title_en": "Review 5: Lessons 21–25", "description_ru": "Pakartokite 115–154 straipsnius.", "description_en": "Review Articles 115–154.",
     "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
     "questions": [
       {"q":"Kokia kalba vyksta teismo procesai Lietuvoje?","a":"Anglų","b":"Lietuvių","c":"Bet kuria kalba","d":"Rusų","correct":"b"},
@@ -542,7 +542,7 @@
   {
     "sort_order": 31, "lesson_type": "dates",
     "title_ru": "Tik skaičiai ir datos",
-    "title_en": "Dates & Numbers Test", "description_ru": "Tik klausimai apie skaičius, terminus ir datas iš visos Konstitucijos.",
+    "title_en": "Dates & Numbers Test", "description_ru": "Tik klausimai apie skaičius, terminus ir datas iš visos Konstitucijos.", "description_en": "Only questions about numbers, time limits and dates from the whole Constitution.",
     "question_count": 10, "pass_threshold": 0.7, "article_nums": [],
     "questions": [
       {"q":"Kiek narių yra Seime?","a":"100","b":"121","c":"141","d":"160","correct":"c"},
@@ -560,7 +560,7 @@
   {
     "sort_order": 32, "lesson_type": "exam",
     "title_ru": "Baigiamasis egzaminas",
-    "title_en": "Final Exam", "description_ru": "Baigiamasis egzaminas pagal visą Konstitucijos turinį (30 klausimų).",
+    "title_en": "Final Exam", "description_ru": "Baigiamasis egzaminas pagal visą Konstitucijos turinį (30 klausimų).", "description_en": "Final exam covering the entire Constitution (30 questions).",
     "question_count": 30, "pass_threshold": 0.75, "article_nums": [],
     "questions": [
       {"q":"Kokia Lietuvos valstybės santvarka?","a":"Monarchija","b":"Federacija","c":"Nepriklausoma demokratinė respublika","d":"Konfederacija","correct":"c"},

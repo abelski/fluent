@@ -22,7 +22,7 @@ const DIFFICULTY_COLORS: Record<number, string> = {
 
 export default function GrammarProgramsPage() {
   const router = useRouter();
-  const { tr } = useT();
+  const { tr, lang } = useT();
   const [programs, setPrograms] = useState<GrammarProgramSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState<Set<number>>(new Set());
@@ -94,7 +94,7 @@ export default function GrammarProgramsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-headline font-semibold text-gray-900 truncate">
-                        {p.title}
+                        {(lang === 'en' && p.title_en) || p.title}
                       </h3>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${DIFFICULTY_COLORS[p.difficulty] ?? 'bg-gray-100 text-gray-500'}`}>
                         {difficultyLabels[p.difficulty] ?? ''}
@@ -106,7 +106,7 @@ export default function GrammarProgramsPage() {
                       )}
                     </div>
                     {p.description && (
-                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{p.description}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{(lang === 'en' && p.description_en) || p.description}</p>
                     )}
                     <p className="text-xs text-gray-400 mt-1">36 {tr.grammar.statsLessonsUnit}</p>
                   </div>

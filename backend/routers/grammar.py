@@ -31,12 +31,14 @@ _SEED_PROGRAMS = [
         "title": "Литовские падежи",
         "title_en": "Lithuanian Cases",
         "description": "Все грамматические падежи литовского языка: единственное и множественное число.",
+        "description_en": "All the grammatical cases of Lithuanian, in the singular and the plural.",
         "difficulty": 1,
     },
     {
         "title": "Числительные",
         "title_en": "Numbers",
         "description": "Количественные и порядковые числительные: согласование с существительными по падежам.",
+        "description_en": "Cardinal and ordinal numbers: agreement with nouns in every case.",
         "difficulty": 1,
     },
 ]
@@ -51,7 +53,8 @@ def _grammar_programs(session: Session) -> list[SimpleNamespace]:
         ("grammar_programs",),
         lambda: [
             SimpleNamespace(id=p.id, title=p.title, title_en=p.title_en,
-                            description=p.description, difficulty=p.difficulty,
+                            description=p.description, description_en=p.description_en,
+                            difficulty=p.difficulty,
                             is_public=p.is_public, lesson_filter=p.lesson_filter,
                             program_type=p.program_type)
             for p in session.exec(select(GrammarProgram)).all()
@@ -358,6 +361,7 @@ def list_grammar_programs(
             "title": p.title,
             "title_en": p.title_en,
             "description": p.description,
+            "description_en": p.description_en,
             "difficulty": p.difficulty,
             "enrolled": p.id in enrolled_ids,
             "lesson_filter": p.lesson_filter,

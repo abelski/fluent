@@ -46,7 +46,7 @@ LESSONS = [
 def main():
     with Session(engine) as session:
         existing = session.exec(
-            select(PracticeCategory).where(PracticeCategory.name_en == "Skaitymas")
+            select(PracticeCategory).where(PracticeCategory.name_en.in_(["Reading", "Skaitymas"]))  # "Skaitymas" = pre-#48b name
         ).first()
         if existing:
             print(f"Category 'Skaitymas' already exists (id={existing.id}). Skipping.")

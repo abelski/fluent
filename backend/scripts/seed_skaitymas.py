@@ -539,7 +539,7 @@ def main():
     with Session(engine) as session:
         # Check if already seeded
         existing = session.exec(
-            select(PracticeCategory).where(PracticeCategory.name_en == "Skaitymas")
+            select(PracticeCategory).where(PracticeCategory.name_en.in_(["Reading", "Skaitymas"]))  # "Skaitymas" = pre-#48b name
         ).first()
         if existing:
             print(f"Category 'Skaitymas' already exists (id={existing.id}). Skipping.")
@@ -548,8 +548,9 @@ def main():
         # Create category
         category = PracticeCategory(
             name_ru="Чтение",
-            name_en="Skaitymas",
+            name_en="Reading",
             description_ru="Тексты для чтения и понимания из учебников «Sėkmės!» 1 и 2. Каждый урок: текст → тест на понимание.",
+            description_en="Reading comprehension texts from the \"Sėkmės!\" 1 and 2 textbooks. Each lesson: a text, then a comprehension test.",
             sort_order=10,
         )
         session.add(category)
