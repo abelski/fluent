@@ -1,6 +1,6 @@
 ---
-name: feature-analyst
-description: Plan a feature from a confirmed idea file (plans/ideas/) — write a PRD-compatible plan to plans/improvements/active/, have a cold agent review it, get user approval, implement on a feat/<N>-<slug> branch via ralph-implement, let the user test locally, then merge to main on their confirmation.
+name: sdlc-feature-analyst
+description: Plan a feature from a confirmed idea file (plans/ideas/) — write a PRD-compatible plan to plans/improvements/active/, have a cold agent review it, get user approval, implement on a feat/<N>-<slug> branch via sdlc-ralph-implement (code review + optional black-box UAT), let the user test locally, then merge to main after they commit.
 ---
 
 You are a feature analyst. Your job is to plan before writing any code. Follow these phases strictly.
@@ -11,7 +11,7 @@ You are a feature analyst. Your job is to plan before writing any code. Follow t
 business context (problem, scope, decisions, precedents) — don't re-ask what it already settles.
 
 - No idea file given, or `status` isn't `confirmed` → stop and run
-  `Skill(skill: "brainstorm", args: <the request>)` instead. Every feature starts there.
+  `Skill(skill: "sdlc-brainstorm", args: <the request>)` instead. Every feature starts there.
 - Reuse the idea's `N` and `slug` for everything below. Read its precedent plans; mirror their
   structure where they fit.
 - Only technical ambiguities the idea can't answer (and the code can't) go to `AskUserQuestion`.
@@ -42,7 +42,7 @@ confirmed_effort: null
   mechanical, well-patterned change (e.g. "mirror an existing router/page for a new one") suggests
   a cheaper/faster tier (`haiku` or `sonnet`, `low`/`medium`); something touching auth, payments,
   DB migrations, or genuinely novel design suggests a stronger tier (`opus`, `high`+). State your
-  one-line reason in the Context section below — `ralph-implement` will show it to the user if it
+  one-line reason in the Context section below — `sdlc-ralph-implement` will show it to the user if it
   needs to reconcile this against their current session settings.
 
 Then these sections, in order:
@@ -107,6 +107,30 @@ cd frontend && npx playwright test --reporter=list
 ​```
 ```
 
+### UAT verification (optional)
+Only add this when the change has user-observable behavior worth testing black-box (a UI flow, an
+API) *and* a tester with zero codebase access can drive it (Playwright against the local server,
+a `curl` against `http://localhost:8000`). Skip it for internal-only changes (a migration, a
+refactor, a backend job).
+
+When included, add `uat_rounds: 0` / `max_uat_rounds: 3` to the frontmatter alongside the other
+keys, and a section:
+
+```markdown
+## UAT verification
+
+**Instrument:** <the exact command/method a tester with zero codebase access can run as-is to
+drive the running app — a Playwright MCP walk of a URL, a `curl` against a local endpoint>
+
+**Scenarios:**
+1. <scripted user input/action>
+2. <next input/action>
+
+**Acceptance criteria:** (observable behavior only — no file, constant, or function name)
+- [ ] <criterion>
+- [ ] <criterion>
+```
+
 ### Cold review
 
 After writing the file, spawn a **fresh** reviewer that sees none of your reasoning — only the
@@ -153,51 +177,74 @@ written on `main` and are still uncommitted — they carry into the branch:
 ```bash
 git checkout main && git pull --ff-only   # skip pull if no remote access; never push
 git checkout -b feat/<N>-<slug>
-git add plans/ideas/idea_<N>_<slug>.md plans/improvements/active/plan_<N>_<slug>.md
-git commit -m "plan: #<N> <slug>"
 ```
 
 If `main` has unrelated uncommitted changes, stop and ask the user — don't carry them along.
+Claude never commits in this repo (a PreToolUse hook blocks `git commit`): the user reviews the
+diff and commits by hand. Merging after they commit is fine.
 
-## Phase 4 — Implement via ralph-implement
+## Phase 4 — Implement via sdlc-ralph-implement
 
 Delegate implementation entirely to the shared implementer loop:
 
 ```
-Skill(skill: "ralph-implement", args: "plans/improvements/active/plan_<N>_<slug>.md")
+Skill(skill: "sdlc-ralph-implement", args: "plans/improvements/active/plan_<N>_<slug>.md")
 ```
 
-`ralph-implement` owns all further checkbox flipping, validation retries, iteration/blocked-state bookkeeping, and the final Definition-of-Done gate. Do not duplicate any of that logic here.
+`sdlc-ralph-implement` owns all further checkbox flipping, the code-review gate, validation retries, iteration/blocked-state bookkeeping, and the final Definition-of-Done gate. Do not duplicate any of that logic here.
 
-- If it reports `status: done` — proceed to Phase 5.
+- If it reports `status: done` — proceed to Phase 4.5 if the plan has a `## UAT verification`
+  section, otherwise straight to Phase 5.
 - If it reports `status: blocked` — relay its `## Blocked` section to the user verbatim and stop. Do not attempt to silently finish the plan yourself.
+
+## Phase 4.5 — Black-box UAT verification (only if the plan defines it)
+
+Tests passing is not proof the behavior is right — they were written by the same mind that wrote
+the code. This loop hands judgment to something that has never seen the code.
+
+1. Spawn a `sdlc-uat-tester` subagent (`Agent(subagent_type: "sdlc-uat-tester")`) with **exactly
+   three things**: the plan's `Instrument`, `Scenarios`, and `Acceptance criteria` — verbatim —
+   plus a verdict path (`plans/improvements/active/plan_<N>_<slug>-uat-round-<n>.md`). Never send
+   it the plan file itself, the diff, the tests, or your theory of the change.
+2. Read the verdict:
+   - **PASS** — proceed to Phase 5.
+   - **FAIL** — bump `uat_rounds` in the plan frontmatter, persist. If `uat_rounds >=
+     max_uat_rounds`: set `status: blocked`, report the verdict to the user, stop. Otherwise hand
+     the tester's transcript and criteria **verbatim** (no diagnosis of your own) to a
+     `sdlc-ralph-implementer` fix pass targeting this plan file, then repeat step 1.
+   - **INCONCLUSIVE** (the instrument never produced a real answer — server down, env issue) —
+     doesn't consume a round; fix the environment and retry step 1.
+3. Never mark the plan done on a FAIL, and never relax a criterion to force a PASS — a criterion is
+   only edited when it was wrong about the desired behavior, and you say so if you do.
 
 ## Phase 5 — User tests locally
 
-Once `ralph-implement` reports the plan done:
+Once `sdlc-ralph-implement` reports the plan done (and UAT passed, if defined):
 
-1. Commit the work on the branch (`feat(<area>): <summary> (#<N>)`).
+1. Leave the work uncommitted. Tell the user which files changed and what to look at.
 2. Make sure the local server is up (one instance per side — check before starting) and tell the
    user the URLs to try, plus the screenshots path.
 3. `AskUserQuestion`: "#<N> is ready on `feat/<N>-<slug>`. Test it locally. Result?" — options
    "Confirm — merge to main", "Request changes".
 4. On "Request changes": ask what, add the changes as new unchecked items to the plan's
    `## Implementation` / `## Validation`, set `status: in_progress`, re-run
-   `Skill(skill: "ralph-implement", args: <plan path>)`, commit, and ask again. Repeat until confirmed.
+   `Skill(skill: "sdlc-ralph-implement", args: <plan path>)`, and ask again. Repeat until confirmed.
 
 ## Phase 6 — Close out and merge (only after the user confirms)
 
 1. Move files:
    - `plans/improvements/active/plan_<N>_<slug>.md` → `plans/improvements/implemented/IMPLEMENTED-plan_<N>_<slug>.md`
    - `plans/ideas/idea_<N>_<slug>.md` → `plans/ideas/implemented/idea_<N>_<slug>.md`
-2. Append the `#<N>` entry to `documentation/CHANGELOG.md`. Commit.
-3. Merge: `git checkout main && git merge --no-ff feat/<N>-<slug>`. On conflict, resolve (the
+2. Append the `#<N>` entry to `documentation/CHANGELOG.md`.
+3. Give the user the commit command (`git add -A && git commit -m "feat(<area>): <summary> (#<N>)"`)
+   and wait for them to say it's committed. Then merge:
+   `git checkout main && git merge --no-ff feat/<N>-<slug>`. On conflict, resolve (the
    CHANGELOG is the usual one — keep both rows) and tell the user what you resolved.
 4. **Never push.** Tell the user: "Merged to main. Push when ready: `git push`".
 5. `AskUserQuestion`: "Publish a news post about #<N>?" — "Yes" runs `/news-writer`, "No" skips.
    Skip the question for internal-only changes (tooling, refactors, docs).
 
-These steps live here, not in `ralph-implement` — that skill is pipeline-agnostic and callable
+These steps live here, not in `sdlc-ralph-implement` — that skill is pipeline-agnostic and callable
 standalone, so it never commits, merges, publishes or moves files.
 
 ## Notes
@@ -205,4 +252,4 @@ standalone, so it never commits, merges, publishes or moves files.
 - All validation must be server-side (never frontend-only)
 - Keep solutions simple — no over-engineering
 - Follow existing code conventions in this repo (FastAPI + Next.js static export, JWT auth, SQLModel ORM)
-- Never push. Merge to `main` only after the user confirms in Phase 5.
+- Never commit, never push. Merge to `main` only after the user confirms in Phase 5 and commits.

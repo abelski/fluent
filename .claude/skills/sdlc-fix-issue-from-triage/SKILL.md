@@ -1,6 +1,6 @@
 ---
-name: fix-issue-from-triage
-description: Fix a triaged issue from plans/triage/active/ — delegate the fix + tests to the ralph-implement loop, smoke test, and leave the local server ready for user validation before confirming resolution.
+name: sdlc-fix-issue-from-triage
+description: Fix a triaged issue from plans/triage/active/ — delegate the fix + tests to the sdlc-ralph-implement loop, smoke test, and leave the local server ready for user validation before confirming resolution.
 ---
 
 Fix a triaged issue by following its pre-written plan from `plans/triage/active/`.
@@ -11,10 +11,10 @@ If `$ARGUMENTS` is provided, treat it as an issue number (e.g. `35`) or partial 
 - Search `plans/triage/active/` (not `implemented/` or `hold/`) for a file matching `issue-<number>` or the given string.
 - If no match is found, list all open plan files and use `AskUserQuestion` to ask which one to fix.
 
-`/triage` always writes plan files with frontmatter `status: draft` — there's no separate
-approval UI for the bugfix pipeline the way `feature-analyst` has one; the user invoking this
+`sdlc-triage` always writes plan files with frontmatter `status: draft` — there's no separate
+approval UI for the bugfix pipeline the way `sdlc-feature-analyst` has one; the user invoking this
 skill on a specific issue *is* the approval. If the located plan's `status` is still `draft`,
-flip it to `approved` now, before delegating in Step 2 (this is what lets `ralph-implement`
+flip it to `approved` now, before delegating in Step 2 (this is what lets `sdlc-ralph-implement`
 proceed instead of bouncing it back as unapproved).
 
 ## Step 2 — Branch, then delegate the fix and tests
@@ -29,19 +29,22 @@ git checkout -b fix/<N>-<slug>            # N = issue number, slug from the plan
 If `main` has unrelated uncommitted changes, stop and ask the user.
 
 ```
-Skill(skill: "ralph-implement", args: "plans/triage/active/issue-<N>-*.md")
+Skill(skill: "sdlc-ralph-implement", args: "plans/triage/active/issue-<N>-*.md")
 ```
 
-`ralph-implement` reads the plan's `## Root cause` and `## Fix plan` checklist, applies each item
+`sdlc-ralph-implement` reads the plan's `## Root cause` and `## Fix plan` checklist, applies each item
 (code fix, data-only fix, or mixed — it handles all three), then works through `## Tests`,
 running real commands and retrying failures up to the plan's `max_iterations` before giving up.
-It owns all checkbox flipping, retry/iteration bookkeeping, and the final `## Definition of Done`
+It owns all checkbox flipping, the code-review gate, retry/iteration bookkeeping, and the final `## Definition of Done`
 gate. Do not duplicate any of that logic here.
 
 - If it reports `status: blocked` — relay its `## Blocked` section to the user verbatim and stop.
   Do not attempt to silently finish the fix yourself.
-- If it reports `status: done` — proceed to Step 3. The plan file is still in `plans/triage/active/`
-  at this point (`ralph-implement` never moves files — that stays this skill's job, see Step 5).
+- If it reports `status: done` and the plan has a `## UAT verification` section — run the same
+  Phase 4.5 black-box loop `sdlc-feature-analyst` uses (spawn `sdlc-uat-tester`, retry via
+  `sdlc-ralph-implementer` up to `max_uat_rounds`, blocked on exhaustion) before Step 3.
+- If it reports `status: done` (no UAT section, or UAT passed) — proceed to Step 3. The plan file
+  is still in `plans/triage/active/` at this point (`sdlc-ralph-implement` never moves files — that stays this skill's job, see Step 5).
 
 ## Step 3 — Ensure local server is running and ready
 
@@ -67,7 +70,7 @@ Navigate to the URL from the plan's header (e.g. `/dashboard/lists/187/study`) u
 2. Take a screenshot.
 3. Verify the specific data fixed in the issue is now correct (e.g. translation shown, word displayed).
 
-(The Playwright autotest suite itself already ran as part of `ralph-implement`'s `## Tests`/
+(The Playwright autotest suite itself already ran as part of `sdlc-ralph-implement`'s `## Tests`/
 `## Definition of Done` pass in Step 2 — this step is the human-facing visual check on top of
 that, not a repeat of it.)
 
@@ -108,23 +111,25 @@ If the user selects **Yes**:
    ```bash
    mv plans/triage/active/issue-<N>-*.md plans/triage/implemented/IMPLEMENTED-issue-<N>-*.md
    ```
-3. Commit on the branch (`fix(<area>): <summary> (issue #<N>)`), then
-   `git checkout main && git merge --no-ff fix/<N>-<slug>`. On conflict, resolve and say what.
+3. Claude never commits (a PreToolUse hook blocks it). Give the user the command —
+   `git add -A && git commit -m "fix(<area>): <summary> (issue #<N>)"` — and wait for them to say
+   it's committed. Then `git checkout main && git merge --no-ff fix/<N>-<slug>`. On conflict,
+   resolve and say what.
 4. Report: "Issue #<N> resolved, merged to main. Push when ready: `git push`". **Never push.**
 
 If the user selects **No**, ask a follow-up `AskUserQuestion`: "What still looks wrong?", fix it on the same branch, and ask again.
 
 ## Notes
 
-- This skill is the pipeline-specific wrapper around `ralph-implement`, not a reimplementation of
+- This skill is the pipeline-specific wrapper around `sdlc-ralph-implement`, not a reimplementation of
   it — it owns issue lookup, the browser-based smoke check, the human resolution gate, DB update,
   notifications, and the `implemented/` move, exactly the parts of this flow that are unique to
-  bugfixes and have no equivalent in the feature pipeline. `ralph-implement` itself never touches
+  bugfixes and have no equivalent in the feature pipeline. `sdlc-ralph-implement` itself never touches
   the DB directly, never notifies anyone, and never moves plan files.
 - DATABASE_URL is in `backend/.env` — read it fresh every time, never hard-code it. (SQL-fix
-  checklist items inside `ralph-implement`'s delegated pass follow the same rule — see the
-  `ralph-implementer` agent definition.)
-- Never push. Merge to `main` only after the user says Yes in Step 5.
+  checklist items inside `sdlc-ralph-implement`'s delegated pass follow the same rule — see the
+  `sdlc-ralph-implementer` agent definition.)
+- Never commit, never push. Merge to `main` only after the user says Yes in Step 5 and commits.
 - For destructive SQL (DELETE without WHERE, DROP, TRUNCATE) ask the user to confirm first.
-- Triage plan files live in `plans/triage/active/`. Resolved files go to `plans/triage/implemented/` with the `IMPLEMENTED-` prefix. Blocked files live in `plans/triage/hold/` (this is the DB-driven `hold` state from `/triage`, separate from a plan's own `status: blocked` frontmatter field, which means the implementation loop hit its retry budget — check both meanings if a plan seems stuck).
+- Triage plan files live in `plans/triage/active/`. Resolved files go to `plans/triage/implemented/` with the `IMPLEMENTED-` prefix. Blocked files live in `plans/triage/hold/` (this is the DB-driven `hold` state from `sdlc-triage`, separate from a plan's own `status: blocked` frontmatter field, which means the implementation loop hit its retry budget — check both meanings if a plan seems stuck).
 - The plan may reference optional steps (e.g. "Option B — add a new word row"). Only do these if the plan explicitly marks them as required, or the user asks.

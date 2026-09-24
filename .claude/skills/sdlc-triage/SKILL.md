@@ -1,3 +1,8 @@
+---
+name: sdlc-triage
+description: Perform a full triage of unresolved user-reported issues (mistake_report) from the production database — filter out spam/test noise by checking each against real data, and draft a bugfix plan per confirmed issue into plans/triage/active/ in the checklist shape sdlc-ralph-implement drives. Pairs with sdlc-fix-issue-from-triage, which executes one drafted plan.
+---
+
 Perform a full triage of unresolved user-reported issues from the production database.
 
 ## Steps
@@ -38,7 +43,7 @@ For each issue, derive a short slug from the description (3-5 words, lowercase, 
 
 Check if a file matching `plans/triage/active/issue-<id>-*.md` or `plans/triage/hold/issue-<id>-*.md` already exists. If it does, skip that issue entirely. Otherwise, write a new file using the slug-based name.
 
-Format each file as (this schema is shared with the feature-planning pipeline — `ralph-implement` drives both from the same frontmatter + checkbox shape):
+Format each file as (this schema is shared with the feature-planning pipeline — `sdlc-ralph-implement` drives both from the same frontmatter + checkbox shape):
 
 ```
 ---
@@ -83,10 +88,12 @@ Only if the user confirms:
 ```
 
 `max_iterations` = `clamp((Fix plan items + Tests items) * 2, 8, 30)`. Set `status: draft` here —
-`fix-issue-from-triage` (via `ralph-implement`) flips it to `approved` and beyond once a human
-starts working the issue; `/triage` itself only ever produces drafts. Frontend rebuild / local
+`sdlc-fix-issue-from-triage` (via `sdlc-ralph-implement`) flips it to `approved` and beyond once a
+human starts working the issue; `sdlc-triage` itself only ever produces drafts. A plan may also
+carry an optional `## UAT verification` section, same convention as `sdlc-feature-analyst`, if the
+fix has user-observable behavior worth black-box testing. Frontend rebuild / local
 server staging is *not* a checklist item here — that's handled procedurally by
-`fix-issue-from-triage` after `ralph-implement` finishes, not authored per-issue.
+`sdlc-fix-issue-from-triage` after `sdlc-ralph-implement` finishes, not authored per-issue.
 
 After saving all files, print the list of created file paths.
 

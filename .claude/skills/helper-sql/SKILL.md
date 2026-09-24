@@ -1,5 +1,5 @@
 ---
-name: sql
+name: helper-sql
 description: Run SQL against the Fluent Neon database. Pass a query as $ARGUMENTS or be prompted for one.
 ---
 

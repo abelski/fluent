@@ -1,15 +1,15 @@
 ---
-name: ralph-implement
-description: Execute a PRD-compatible plan file (feature or bugfix) to completion via a bounded, resumable, self-correcting loop — delegates each pass to a ralph-implementer subagent, flips checkboxes live, retries failed validation commands up to max_iterations (persisted in the plan's own frontmatter so retries survive a session restart), marks the plan blocked rather than falsely done if the budget runs out. Pipeline-agnostic: knows nothing about news posts or issue-resolution notifications — callers own that epilogue.
+name: sdlc-ralph-implement
+description: Execute a checklist plan file (feature or bugfix) to completion via a bounded, resumable, self-correcting loop — delegates each pass to a sdlc-ralph-implementer subagent, flips checkboxes live, retries failed validation commands up to max_iterations (persisted in the plan's own frontmatter so retries survive a session restart), marks the plan blocked rather than falsely done if the budget runs out. Pipeline-agnostic — knows nothing about any caller-specific epilogue (publishing, notifying, moving files); callers own that.
 ---
 
 Execute a plan file's checklist(s) to completion. This skill is deliberately pipeline-agnostic —
-it works identically whether it's called by `feature-analyst` (`kind: feature`,
-`plans/improvements/active/`) or `fix-issue-from-triage` (`kind: bugfix`,
-`plans/triage/active/`), and it never publishes anything or notifies anyone itself. It reports
-`done` or `blocked` back to whoever invoked it; the caller decides what happens next.
+it works identically whether it's called by `sdlc-feature-analyst` (`kind: feature`,
+`plans/improvements/active/`) or `sdlc-fix-issue-from-triage` (`kind: bugfix`,
+`plans/triage/active/`), and it never publishes anything or notifies anyone itself.
+It reports `done` or `blocked` back to whoever invoked it; the caller decides what happens next.
 
-It can also be invoked standalone — `/ralph-implement <path-to-plan-file>` — to resume any
+It can also be invoked standalone — `/sdlc-ralph-implement <path-to-plan-file>` — to resume any
 `in_progress` or `blocked` plan from a cold session. All progress lives in the plan file itself,
 not in conversation memory, so a fresh invocation with zero prior context can pick up exactly
 where a previous one left off.
@@ -35,7 +35,7 @@ Read the file. Extract the YAML frontmatter (`kind`, `status`, `iteration`, `max
   exists under `active/` without frontmatter was clearly already approved by whatever process
   created it).
 - **`status: draft`** — stop. Tell the user this plan hasn't been approved yet; send them back to
-  whichever skill authored it (`feature-analyst` or `/triage`).
+  whichever skill authored it (`sdlc-feature-analyst` or `sdlc-triage`).
 - **`status: done`** — report it's already done, stop. Idempotent no-op.
 - **`approved`, `in_progress`, or `blocked`** — proceed to Step 2.
 
@@ -56,7 +56,9 @@ this already happened, don't re-ask).
   - **If both match**: set `confirmed_model`/`confirmed_effort` to the suggested values, persist,
     proceed silently. Do not ask anything.
   - **If either differs**: ask once, via `AskUserQuestion`:
-    - Question: `"This plan suggests {suggested_model}/{suggested_effort} for implementation ({one-line reason from the plan's Context/Root cause section, if one was given}). Use suggested, keep current session settings, or choose different ones?"`
+    - Question: `"This plan suggests {suggested_model}/{suggested_effort} for implementation
+      ({one-line reason from the plan's Context section}). Use suggested, keep current session
+      settings, or choose different ones?"`
     - Options: `"Use suggested"`, `"Use current session settings"`, `"Choose other"` (if chosen,
       follow up with which model and which effort).
   - Persist the resolved values into `confirmed_model`/`confirmed_effort` immediately. This is
@@ -75,7 +77,7 @@ this already happened, don't re-ask).
 Only runs if the plan's `## Implementation` (feature) or `## Fix plan` (bugfix) section has any
 remaining `- [ ]` boxes.
 
-Spawn **one** `ralph-implementer` subagent (`Agent(subagent_type: "ralph-implementer", model:
+Spawn **one** `sdlc-ralph-implementer` subagent (`Agent(subagent_type: "sdlc-ralph-implementer", model:
 confirmed_model)`) covering the *entire* remaining section in a single pass — not one subagent
 per checklist item. Tell it: the plan file path, that this is an "implementation pass," and the
 `confirmed_effort` level. It writes through checkbox updates to the plan file directly as it
@@ -84,25 +86,56 @@ completes each item; you don't need to re-apply anything from its report.
 When it returns, re-read the plan file's checkbox state (don't trust the subagent's prose summary
 as ground truth — the file is ground truth). If items remain unchecked and the subagent reported
 a genuine blocker (not just "ran out of budget"), treat this the same as a validation failure
-would be treated in Step 5: this is unusual for an implementation pass (real plan history shows
-these normally complete in one go), so surface it to the user directly rather than silently
-retrying indefinitely.
+would be treated in Step 5: surface it to the user directly rather than silently retrying
+indefinitely.
 
-Once every Implementation/Fix-plan box is checked, fall straight into Step 5 in the same turn —
+Once every Implementation/Fix-plan box is checked, fall straight into Step 4.5 in the same turn —
 no need to wait for a new invocation.
+
+## Step 4.5 — Code review gate
+
+Skip if the plan already has a `## Review` section containing `- [x] Code review passed` (a
+resume after the gate already passed).
+
+Loop, starting at round 1:
+
+1. Spawn `sdlc-ralph-reviewer` (`Agent(subagent_type: "sdlc-ralph-reviewer")`). Tell it: the plan
+   file path, `confirmed_effort`, and whether this is the first round or a re-review — on a
+   re-review, also the previous round's findings verbatim plus, for each one the implementer
+   disputed, its stated reason. Relay **nothing else** from the implementer — not its report, its
+   reasoning, or any claim that the work is done; the reviewer's independence is the point.
+2. **No `blocker` and no `should-fix`** → write/replace the plan's `## Review` section with
+   `- [x] Code review passed (round <N>)` followed by any `note` findings as plain bullets
+   (recorded, not acted on). Go to Step 5.
+3. Otherwise bump `iteration` and persist it (same budget as Step 5, same write-before-retry
+   rule). At `iteration >= max_iterations` → Step 7, with the open findings as the blocking item.
+   Else spawn `sdlc-ralph-implementer` for a **"review-fix pass"**, giving it the plan path,
+   `confirmed_effort`, and the `blocker`/`should-fix` findings verbatim. Then loop to the next
+   round as a re-review.
+
+A `should-fix` the implementer disputes and the reviewer then drops no longer counts; one the
+reviewer upholds keeps the loop going. There is no "good enough" exit short of the budget.
+
+**Review ⇄ validation cycle.** Steps 4.5, 5 and 6 form one loop that ends only when a single round
+has a clean review *and* every validation/DoD command passes with no code changed in that round —
+or when `max_iterations` runs out (Step 7). If any Step 5/6 retry changed code, the reviewed diff
+is stale: replace `- [x] Code review passed` with `- [ ] Code review (re-review after validation
+fixes)`, return here for a re-review (tell the reviewer which findings/fixes came from
+validation), and after it passes re-run **every** `## Validation`/`## Tests` command and the
+`## Definition of Done` commands, not just the unchecked ones.
 
 ## Step 5 — Validation / Tests pass with bounded self-correction
 
 For each unchecked item under `## Validation` (feature) or `## Tests` (bugfix), in order:
 
-- **If it names a literal command**: spawn a `ralph-implementer` subagent for a "validation
+- **If it names a literal command**: spawn a `sdlc-ralph-implementer` subagent for a "validation
   retry" pass, telling it the plan file path, the exact command, and `confirmed_effort`.
   - It reports pass → the box is already checked (the subagent writes through) → continue to the
     next item.
   - It reports fail → before it retries again, **you** bump `iteration` in the plan frontmatter
     and persist it immediately (this write must land before the retry, so a crash mid-retry
     resumes with the correct count) → check `iteration >= max_iterations`:
-    - If not yet at the cap: spawn another `ralph-implementer` "validation retry" pass for the
+    - If not yet at the cap: spawn another `sdlc-ralph-implementer` "validation retry" pass for the
       *same* command (it already has the failure context from its own last attempt if this is
       the same subagent conversation; if this is a fresh subagent call, give it the previous
       failure output so it isn't starting blind). Repeat until pass or cap reached.
@@ -121,19 +154,21 @@ Once every mechanical box across both sections is checked (manual items aside):
   anything that regressed between when an individual box was checked and now.
 - All must exit 0 / pass. If one fails here, treat it exactly like a Step 5 validation failure:
   diagnose, fix, retry, bounded by the same `max_iterations`, escalate to Step 7 if exhausted.
+- If any retry in Step 5 or here changed code, do **not** complete: go back to Step 4.5 (see
+  "Review ⇄ validation cycle"). Complete only from a round where nothing needed fixing.
 - If the plan has no `## Definition of Done` section at all (legacy plan): skip this extra gate,
   note in your report that it was missing, and treat "all mechanical boxes checked" as sufficient
   for completion.
 - On success: set `status: done`, persist. **Stop here.** Report completion back to whoever
   invoked this skill (or directly to the user, if invoked standalone), including: what was
   implemented, what validation passed, and any manual/human-only items still left for the user.
-  Do **not** move the file, do **not** publish a news post, do **not** attempt any
-  resolution/notification flow — those are pipeline-specific and owned entirely by the caller
-  (`feature-analyst` Phase 5, or `fix-issue-from-triage` Steps 5-6).
+  Do **not** move the file, do **not** publish or notify anyone, do **not** attempt any epilogue
+  — those are pipeline-specific and owned entirely by the caller.
 
 ## Step 7 — Blocked
 
-`iteration >= max_iterations` reached with mechanical items still unchecked:
+`iteration >= max_iterations` reached with mechanical items still unchecked, open review
+findings, or a review ⇄ validation round that still changed code:
 
 - Set `status: blocked`, persist.
 - Replace any existing `## Blocked` section (don't let it grow across repeated block/resume
@@ -148,7 +183,7 @@ Once every mechanical box across both sections is checked (manual items aside):
   **Remaining:**
   - [ ] <currently-unchecked items, copied>
 
-  **Blocking command:** `<exact failing command>`
+  **Blocking command:** `<exact failing command>` (or, from Step 4.5, the open review blockers)
 
   Last failure output:
   ```
@@ -160,8 +195,8 @@ Once every mechanical box across both sections is checked (manual items aside):
 
   **Suggested next step:** <short actionable note for a human>
   ```
-- Report this to the user, stop. Do not proceed to Step 6. Do not run `/news-writer` or any
-  resolution flow. Never claim success when blocked.
+- Report this to the user, stop. Do not proceed to Step 6. Do not run any epilogue. Never claim
+  success when blocked.
 
 ## Using `/loop` + `ScheduleWakeup`
 
@@ -176,7 +211,7 @@ all. Reach for it only in two specific cases:
   own judgment says this plan is unlikely to finish in one turn.
 
 When used: invoke the `loop` skill with no interval (dynamic self-pacing). Each `ScheduleWakeup`
-call passes the *identical* `/ralph-implement <path>` prompt forward, sets `noop: false` with a
+call passes the *identical* `/sdlc-ralph-implement <path>` prompt forward, sets `noop: false` with a
 `reason` describing the concrete work just done (each firing here does real work, never idle
 polling), and picks `delaySeconds` near the 60-second floor rather than the 20-30 minute idle
 default. Call `stop: true` the instant Step 6 or Step 7 is reached.
@@ -184,16 +219,20 @@ default. Call `stop: true` the instant Step 6 or Step 7 is reached.
 The exact runtime behavior of invoking `/loop` programmatically via the `Skill` tool from inside
 this skill (synchronous vs. background) hasn't been independently verified — if it doesn't behave
 as expected, degrade gracefully: finish the current work inline and tell the user to manually
-re-run `/ralph-implement <path>` later rather than assuming untested behavior worked. Record what
-actually happens in `documentation/plan-implement-workflow.md` once observed.
+re-run `/sdlc-ralph-implement <path>` later rather than assuming untested behavior worked. Record
+what actually happens in `documentation/plan-implement-workflow.md` once observed.
 
 ## Notes
 
 - Never commit or push to git — this skill (and the subagents it spawns) never does, regardless
   of what a plan implies. Progress is tracked entirely via the plan file's own checkboxes and
   frontmatter, not git history.
-- `ralph-implementer` subagents never have `Agent` tool access — they cannot recursively spawn
+- `sdlc-ralph-implementer` subagents never have `Agent` tool access — they cannot recursively spawn
   further loops. All iteration/retry control lives here, in this orchestrator.
-- This skill has zero knowledge of `kind`-specific epilogues (news posts, DB resolution,
-  Telegram/email notifications). If you find yourself about to do one of those, stop — that
-  belongs in the calling skill, not here.
+- This skill has zero knowledge of caller-specific epilogues (publishing, notifications, moving
+  files). If you find yourself about to do one of those, stop — that belongs in the calling
+  skill, not here.
+- The Step 4.5 reviewer (`sdlc-ralph-reviewer`) applies the Standards/Spec axes of the
+  `sdlc-standards-spec-review` skill inline — it can't run that skill itself, since subagents have
+  no `Agent` tool. For a two-sub-agent review from a fresh session, run
+  `/sdlc-standards-spec-review` by hand.

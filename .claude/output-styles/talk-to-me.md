@@ -39,4 +39,4 @@ Before proceeding with the deployment, it would be prudent to consider that this
 
 Good:
 
-Careful: uv run deploy never ran for real yet. First live run is untested code.
+Careful: deploy never ran for real yet. First live run is untested code.
