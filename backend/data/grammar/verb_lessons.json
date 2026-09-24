@@ -86,5 +86,71 @@
         ["возвратные (-tis)", "-kis, -kimės, -kitės"]
       ]
     }
+  },
+  "tense_hints_en": {
+    "indicative_present": {
+      "description": "The action is happening now or repeats regularly: dirbu — I work. The conjugation type shows in the 3rd person: I — -a/-ia (dirba, verkia), II — -i (myli), III — -o (skaito).",
+      "rows": [
+        ["aš (I)", "-u / -iu (I, II); -au (III)"],
+        ["tu (you)", "-i (I, II); -ai (III)"],
+        ["jis / ji / jie / jos", "-a / -ia (I); -i (II); -o (III)"],
+        ["mes (we)", "-ame / -iame (I); -ime (II); -ome (III)"],
+        ["jūs (you, pl.)", "-ate / -iate (I); -ite (II); -ote (III)"],
+        ["reflexive (-tis)", "-uosi, -iesi, -asi, -amės, -atės"]
+      ]
+    },
+    "indicative_past_simple": {
+      "description": "A single completed action in the past: dirbau — I worked (once). The type shows in the 3rd person: -o (dirbo, mylėjo) or -ė (skaitė).",
+      "rows": [
+        ["aš (I)", "-au (type -o); -iau (type -ė)"],
+        ["tu (you)", "-ai (type -o); -ei (type -ė)"],
+        ["jis / ji / jie / jos", "-o / -jo; -ė"],
+        ["mes (we)", "-ome; -ėme"],
+        ["jūs (you, pl.)", "-ote; -ėte"],
+        ["reflexive (-tis)", "-ausi / -iausi, -aisi / -eisi, -osi / -ėsi, -omės / -ėmės, -otės / -ėtės"]
+      ]
+    },
+    "indicative_past_habitual": {
+      "description": "A repeated, habitual action in the past (\"used to do\"): dirbdavau — I used to work. Formed the same way for every verb: infinitive stem + -dav- + ending.",
+      "rows": [
+        ["aš (I)", "-davau"],
+        ["tu (you)", "-davai"],
+        ["jis / ji / jie / jos", "-davo"],
+        ["mes (we)", "-davome"],
+        ["jūs (you, pl.)", "-davote"],
+        ["reflexive (-tis)", "-davausi, -davaisi, -davosi, -davomės, -davotės"]
+      ]
+    },
+    "indicative_future": {
+      "description": "The action will happen in the future: dirbsiu — I will work. Infinitive stem + -s- + ending; after s, š, z, ž the double s merges: nešti → nešiu, neš.",
+      "rows": [
+        ["aš (I)", "-siu"],
+        ["tu (you)", "-si"],
+        ["jis / ji / jie / jos", "-s"],
+        ["mes (we)", "-sime"],
+        ["jūs (you, pl.)", "-site"],
+        ["reflexive (-tis)", "-siuosi, -siesi, -sis, -simės, -sitės"]
+      ]
+    },
+    "conditional": {
+      "description": "A desired, possible or assumed action (\"would do\"): dirbčiau — I would work. Formed from the infinitive stem the same way for every verb.",
+      "rows": [
+        ["aš (I)", "-čiau"],
+        ["tu (you)", "-tum / -tumei"],
+        ["jis / ji / jie / jos", "-tų"],
+        ["mes (we)", "-tume / -tumėme"],
+        ["jūs (you, pl.)", "-tute / -tumėte"],
+        ["reflexive (-tis)", "-čiausi, -tumeisi, -tųsi, -tumėmės, -tumėtės"]
+      ]
+    },
+    "imperative": {
+      "description": "An order, request or call to action: dirbk! — work! Infinitive stem + -k- + ending; negation is the ne- prefix: nedirbk!",
+      "rows": [
+        ["tu (you)", "-k / -ki"],
+        ["mes (we)", "-kime"],
+        ["jūs (you, pl.)", "-kite / -kit"],
+        ["reflexive (-tis)", "-kis, -kimės, -kitės"]
+      ]
+    }
   }
 }

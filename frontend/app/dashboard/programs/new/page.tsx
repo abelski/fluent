@@ -7,12 +7,17 @@ import { BACKEND_URL, getToken, createCustomProgram, type WordPair, type WordSet
 import { translateText } from '../../../../lib/translate';
 import PageMascot from '../../../../components/PageMascot';
 import TakChevron from '../../../../components/TakChevron';
+import { useT } from '../../../../lib/useT';
 
-function emptyWordSet(index: number): WordSet {
-  return { title: `Набор ${index + 1}`, words: [{ front: '', back_ru: '', back_en: '' }] };
+// Title starts empty: the input's placeholder shows the localized "Word set N", and the
+// backend stores its own default for an empty title (displayed via displaySetTitle).
+function emptyWordSet(): WordSet {
+  return { title: '', words: [{ front: '', back_ru: '', back_en: '' }] };
 }
 
 export default function NewProgramPage() {
+  const { tr } = useT();
+  const t = tr.programEdit;
   const router = useRouter();
 
   // Language flags
@@ -26,7 +31,7 @@ export default function NewProgramPage() {
   const [descriptionEn, setDescriptionEn] = useState('');
 
   // Word sets
-  const [wordSets, setWordSets] = useState<WordSet[]>([emptyWordSet(0)]);
+  const [wordSets, setWordSets] = useState<WordSet[]>([emptyWordSet()]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,7 +66,7 @@ export default function NewProgramPage() {
   // ── Word set mutations ────────────────────────────────────────────────────
 
   const addWordSet = useCallback(() => {
-    setWordSets((prev) => [...prev, emptyWordSet(prev.length)]);
+    setWordSets((prev) => [...prev, emptyWordSet()]);
   }, []);
 
   const removeWordSet = useCallback((setIdx: number) => {
@@ -145,12 +150,12 @@ export default function NewProgramPage() {
   async function handleSave() {
     setError('');
     const primaryTitle = langRu ? title : titleEn;
-    if (!primaryTitle.trim()) { setError('Введите название программы'); return; }
-    if (wordSets.length === 0) { setError('Добавьте хотя бы один набор слов'); return; }
+    if (!primaryTitle.trim()) { setError(t.errRequireTitle); return; }
+    if (wordSets.length === 0) { setError(t.errRequireSet); return; }
     const hasWords = wordSets.some((ws) => ws.words.some((wp) =>
       wp.front.trim() || wp.back_ru.trim() || wp.back_en.trim()
     ));
-    if (!hasWords) { setError('Добавьте хотя бы одно слово'); return; }
+    if (!hasWords) { setError(t.errRequireWord); return; }
 
     setSaving(true);
     try {
@@ -166,7 +171,7 @@ export default function NewProgramPage() {
       });
       router.push('/programs?tab=community');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка при сохранении');
+      setError(err instanceof Error ? err.message : t.errSaveFailed);
     } finally {
       setSaving(false);
     }
@@ -186,8 +191,8 @@ export default function NewProgramPage() {
     return (
       <main className="bg-[#F5F5F7] min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Доступ только для редакторов</p>
-          <Link href="/programs" className="text-emerald-600 hover:underline text-sm"><TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Назад</Link>
+          <p className="text-gray-500 mb-4">{t.editorsOnly}</p>
+          <Link href="/programs" className="text-emerald-600 hover:underline text-sm"><TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.login.back}</Link>
         </div>
       </main>
     );
@@ -200,12 +205,12 @@ export default function NewProgramPage() {
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-6">
           <Link href="/programs?tab=community" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Назад к программам
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.phraseSession.backToPrograms}
           </Link>
         </div>
 
         <div className="flex items-start justify-between gap-4 mb-6">
-          <h1 className="font-headline text-2xl font-bold">Создать программу</h1>
+          <h1 className="font-headline text-2xl font-bold">{t.createTitle}</h1>
           <PageMascot phrase="Kuriame!" className="hidden sm:block shrink-0" />
         </div>
 
@@ -214,7 +219,7 @@ export default function NewProgramPage() {
 
           {/* Language checkboxes */}
           <div>
-            <p className="text-sm font-semibold text-gray-700 mb-2">Язык программы</p>
+            <p className="text-sm font-semibold text-gray-700 mb-2">{t.programLangLabel}</p>
             <div className="flex gap-5">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
@@ -223,7 +228,7 @@ export default function NewProgramPage() {
                   onChange={toggleLangRu}
                   className="rounded accent-emerald-600 w-4 h-4"
                 />
-                <span className="text-sm text-gray-700">Русский</span>
+                <span className="text-sm text-gray-700">{t.langRu}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
@@ -232,14 +237,14 @@ export default function NewProgramPage() {
                   onChange={toggleLangEn}
                   className="rounded accent-emerald-600 w-4 h-4"
                 />
-                <span className="text-sm text-gray-700">English</span>
+                <span className="text-sm text-gray-700">{t.langEn}</span>
               </label>
             </div>
             {!bothLangs && (
               <p className="text-xs text-gray-400 mt-1.5">
                 {langRu
-                  ? 'Перевод на английский будет добавлен автоматически при сохранении'
-                  : 'Russian translation will be added automatically on save'}
+                  ? t.autoEnNote
+                  : t.autoRuNote}
               </p>
             )}
           </div>
@@ -248,13 +253,13 @@ export default function NewProgramPage() {
           {langRu && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                {bothLangs ? 'Название (рус.)' : 'Название'} <span className="text-red-500">*</span>
+                {bothLangs ? t.titleRuBoth : t.titleRu} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Например: Литовский для туристов"
+                placeholder="Например: Литовский для туристов" // i18n-allow: example placeholder for the RU content field
                 maxLength={120}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
@@ -263,7 +268,7 @@ export default function NewProgramPage() {
           {langEn && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                {bothLangs ? 'Title (eng.)' : 'Title'} <span className="text-red-500">*</span>
+                {bothLangs ? t.titleEnBoth : t.titleEn} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -280,13 +285,13 @@ export default function NewProgramPage() {
           {langRu && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                {bothLangs ? 'Описание (рус.)' : 'Описание'}{' '}
-                <span className="text-gray-400 font-normal">(необязательно)</span>
+                {bothLangs ? t.descRuBoth : t.descRu}{' '}
+                <span className="text-gray-400 font-normal">{t.optionalRu}</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Краткое описание программы..."
+                placeholder="Краткое описание программы..." // i18n-allow: example placeholder for the RU content field
                 rows={2}
                 maxLength={500}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
@@ -296,8 +301,8 @@ export default function NewProgramPage() {
           {langEn && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                {bothLangs ? 'Description (eng.)' : 'Description'}{' '}
-                <span className="text-gray-400 font-normal">(optional)</span>
+                {bothLangs ? t.descEnBoth : t.descEn}{' '}
+                <span className="text-gray-400 font-normal">{t.optionalEn}</span>
               </label>
               <textarea
                 value={descriptionEn}
@@ -321,7 +326,7 @@ export default function NewProgramPage() {
                   type="text"
                   value={ws.title}
                   onChange={(e) => updateSetTitle(setIdx, e.target.value)}
-                  placeholder={`Набор ${setIdx + 1}`}
+                  placeholder={t.defaultSetTitle.replace('{n}', String(setIdx + 1))}
                   maxLength={100}
                   className="flex-1 bg-transparent text-sm font-semibold text-gray-800 focus:outline-none placeholder:text-gray-400"
                 />
@@ -329,7 +334,7 @@ export default function NewProgramPage() {
                   <button
                     onClick={() => removeWordSet(setIdx)}
                     className="text-gray-400 hover:text-red-500 transition-colors text-lg leading-none"
-                    title="Удалить набор"
+                    title={t.deleteSetTitle}
                   >
                     ×
                   </button>
@@ -340,9 +345,9 @@ export default function NewProgramPage() {
               <div className="divide-y divide-gray-50">
                 {/* Column headers */}
                 <div className={`grid gap-2 px-4 py-2 ${bothLangs ? 'grid-cols-[1fr_1fr_1fr_32px]' : 'grid-cols-[1fr_1fr_32px]'}`}>
-                  <span className="text-xs text-gray-400 font-medium">Литовский</span>
-                  {langRu && <span className="text-xs text-gray-400 font-medium">Перевод (рус.)</span>}
-                  {langEn && <span className="text-xs text-gray-400 font-medium">Translation (eng.)</span>}
+                  <span className="text-xs text-gray-400 font-medium">{t.colLithuanian}</span>
+                  {langRu && <span className="text-xs text-gray-400 font-medium">{t.colTranslationRu}</span>}
+                  {langEn && <span className="text-xs text-gray-400 font-medium">{t.colTranslationEn}</span>}
                   <span />
                 </div>
 
@@ -360,7 +365,7 @@ export default function NewProgramPage() {
                         type="text"
                         value={wp.back_ru}
                         onChange={(e) => updateWord(setIdx, wordIdx, 'back_ru', e.target.value)}
-                        placeholder="привет"
+                        placeholder="привет" // i18n-allow: example RU translation placeholder for the back_ru field
                         className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                     )}
@@ -377,7 +382,7 @@ export default function NewProgramPage() {
                       onClick={() => removeWord(setIdx, wordIdx)}
                       disabled={ws.words.length <= 1}
                       className="text-gray-300 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-lg leading-none"
-                      title="Удалить строку"
+                      title={t.deleteRowTitle}
                     >
                       ×
                     </button>
@@ -391,7 +396,7 @@ export default function NewProgramPage() {
                   onClick={() => addWord(setIdx)}
                   className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
                 >
-                  + Добавить слово
+                  {t.addWordBtn}
                 </button>
               </div>
             </div>
@@ -401,7 +406,7 @@ export default function NewProgramPage() {
             onClick={addWordSet}
             className="w-full py-3 border-2 border-dashed border-gray-200 rounded-2xl text-sm text-gray-400 hover:border-emerald-400 hover:text-emerald-600 transition-colors"
           >
-            + Добавить набор слов
+            {t.addSetBtn}
           </button>
         </div>
 
@@ -412,7 +417,7 @@ export default function NewProgramPage() {
             href="/programs?tab=community"
             className="text-sm text-gray-500 hover:text-gray-800 px-4 py-2 transition-colors"
           >
-            Отмена
+            {tr.common.cancel}
           </Link>
           <button
             onClick={handleSave}
@@ -420,7 +425,7 @@ export default function NewProgramPage() {
             className="text-sm font-semibold px-6 py-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
           >
             {translating && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-            {translating ? 'Перевожу...' : saving ? 'Сохранение...' : 'Создать программу'}
+            {translating ? t.translating : saving ? t.saving : t.createTitle}
           </button>
         </div>
       </div>

@@ -37,6 +37,7 @@ VERB_LESSON_CONFIG: dict[int, tuple] = {
     row[0]: tuple(row) for row in _verb_lessons_data["verb_lessons"]
 }
 _TENSE_HINTS: dict[str, dict] = _verb_lessons_data.get("tense_hints", {})
+_TENSE_HINTS_EN: dict[str, dict] = _verb_lessons_data.get("tense_hints_en", {})
 # Tense keys that exist for each verb (subset of all possible tenses)
 # All possible person labels shown to the student
 _VERB_PERSONS = ["aš", "tu", "jis", "ji", "jie", "jos", "mes", "jūs"]
@@ -59,6 +60,18 @@ _TENSE_LABELS = {
     "indicative_future":        "Будущее время",
     "conditional":              "Условное наклонение",
     "imperative":               "Повелительное наклонение",
+}
+# EN twin of _TENSE_LABELS, plus case_governance (never in _TENSE_LABELS since
+# that lesson type has its own title in VERB_LESSON_CONFIG, not one derived
+# from tense_key). Backs tense_label_en / title_en (plan #48a, Requirement 3).
+_TENSE_LABELS_EN = {
+    "indicative_present":       "Present tense",
+    "indicative_past_simple":   "Past simple (single action)",
+    "indicative_past_habitual": "Past habitual (repeated action)",
+    "indicative_future":        "Future tense",
+    "conditional":              "Conditional mood",
+    "imperative":               "Imperative mood",
+    "case_governance":          "Verb government",
 }
 
 # Load noun declension table from content file.
@@ -285,6 +298,11 @@ def _word_ru(word_entry: list) -> str:
     return word_entry[-1]
 
 
+def _word_en(word_entry: list) -> str:
+    """Return the English translation stored second-to-last in the word entry (plan #48a)."""
+    return word_entry[-2]
+
+
 def _generate_declension_tasks(cases: list[int], count: int) -> list[dict]:
     """Generate declension fill-in tasks by randomly sampling WORDS for the given cases.
 
@@ -312,6 +330,7 @@ def _generate_declension_tasks(cases: list[int], count: int) -> list[dict]:
             "type": "declension",
             "prompt_lt": _word_nominative(word),  # shown to the student in Lithuanian
             "prompt_ru": _word_ru(word),           # Russian hint
+            "prompt_en": _word_en(word),           # English hint
             "case_name": case_name,
             "number": number,                      # singular / plural
             "answer": form,
@@ -452,7 +471,9 @@ def get_verb_lessons(session: Session, program_type: str = "verbs") -> list[dict
             "tense_key": row[2],
             "task_count": row[3],
             "title": row[4],
+            "title_en": _TENSE_LABELS_EN.get(row[2], row[4]),
             "hint": _TENSE_HINTS.get(row[2]),
+            "hint_en": _TENSE_HINTS_EN.get(row[2]),
         }
         for lid, row in VERB_LESSON_CONFIG.items()
         if filter_fn(lid)
@@ -632,6 +653,7 @@ def _generate_verb_conjugation_tasks(
         return []
 
     tense_label = _TENSE_LABELS.get(tense_key, tense_key)
+    tense_label_en = _TENSE_LABELS_EN.get(tense_key, tense_key)
     tasks: list[dict] = []
     attempts = 0
 
@@ -653,6 +675,7 @@ def _generate_verb_conjugation_tasks(
             "verb_infinitive": _clean_form(verb.infinitive),
             "translation_ru": _clean_form(verb.translation_ru),
             "tense_label": tense_label,
+            "tense_label_en": tense_label_en,
             "person_label": person,
             "answer": form,
         })

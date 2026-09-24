@@ -101,7 +101,7 @@ export default function PhrasesVocabularyPage() {
 
   function formatDate(iso: string | null): string {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB', {
+    return new Date(iso).toLocaleDateString(tr.common.dateLocale, {
       day: 'numeric',
       month: 'short',
     });

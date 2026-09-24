@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { BACKEND_URL, resolveListId, getToken } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+import { translateHint } from '../../../../lib/wordHint';
 import { renderAccented } from '../../../../lib/renderAccented';
 import PageMascot from '../../../../components/PageMascot';
 import TakChevron from '../../../../components/TakChevron';
@@ -131,11 +132,11 @@ export default function ListDetailPage() {
                 {audioState === 'locked' && <LockedSpeakButton size="sm" />}
               </span>
               <span className="text-gray-500 text-sm">{lang === 'en' ? (word.translation_en || word.translation_ru) : word.translation_ru}</span>
-              <span className="text-gray-300 text-xs hidden sm:block">{word.hint ?? ''}</span>
+              <span className="text-gray-300 text-xs hidden sm:block">{translateHint(word.hint, lang)}</span>
               <span className="text-gray-300 text-xs">{'★'.repeat(word.star ?? 1)}</span>
               <span className="text-xs w-5 text-center">
-                {word.status === 'known' && <span className="text-emerald-500" title="Выучено">✓</span>}
-                {word.status === 'learning' && <span className="text-amber-400" title="В процессе">●</span>}
+                {word.status === 'known' && <span className="text-emerald-500" title={tr.detail.statusLearned}>✓</span>}
+                {word.status === 'learning' && <span className="text-amber-400" title={tr.detail.statusLearning}>●</span>}
               </span>
             </div>
           ))}

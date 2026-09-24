@@ -87,7 +87,7 @@ export default function ArticleContent({ initialArticle }: { initialArticle: Art
             )}
             <span className="text-gray-400 text-xs">
               {new Date(article.created_at).toLocaleDateString(
-                lang === 'ru' ? 'ru-RU' : 'en-GB',
+                tr.common.dateLocale,
                 { day: 'numeric', month: 'long', year: 'numeric' }
               )}
             </span>

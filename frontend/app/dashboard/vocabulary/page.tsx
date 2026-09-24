@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import { translateHint } from '../../../lib/wordHint';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 import SpeakButton, { LockedSpeakButton, useAudioState } from '../components/SpeakButton';
@@ -103,7 +104,7 @@ export default function VocabularyPage() {
 
   function formatDate(iso: string | null): string {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB', {
+    return new Date(iso).toLocaleDateString(tr.common.dateLocale, {
       day: 'numeric',
       month: 'short',
     });
@@ -202,7 +203,7 @@ export default function VocabularyPage() {
                           {audioState === 'on' && <SpeakButton text={w.lithuanian} size="sm" />}
                           {audioState === 'locked' && <LockedSpeakButton size="sm" />}
                         </span>
-                        {w.hint && <span className="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-normal">{w.hint}</span>}
+                        {w.hint && <span className="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-normal">{translateHint(w.hint, lang)}</span>}
                       </td>
                       <td className="px-5 py-3 text-gray-600">{translation ?? '—'}</td>
                       <td className="px-5 py-3 hidden sm:table-cell">

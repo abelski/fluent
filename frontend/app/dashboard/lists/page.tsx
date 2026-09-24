@@ -260,12 +260,12 @@ export default function ListsPage() {
 
         {isLoggedIn === false && (
           <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-            <p className="text-gray-500 text-lg">Войдите, чтобы получить доступ к словарям</p>
+            <p className="text-gray-500 text-lg">{tr.lists.loginPrompt}</p>
             <a
               href={`${BACKEND_URL}/api/auth/google`}
               className="px-6 py-3 bg-emerald-600 text-white text-sm font-semibold rounded-full hover:bg-emerald-700 transition-colors"
             >
-              Войти с Google
+              {tr.login.signInGoogle}
             </a>
           </div>
         )}
@@ -498,7 +498,7 @@ export default function ListsPage() {
                         <span className="text-gray-400 text-sm">{group.lists.length} {plural(group.lists.length, tr.lists.listsCount)}</span>
                         {meta?.is_published === false && (
                           <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px leading-tight">
-                            В тестировании
+                            {tr.lists.inTestingBadge}
                           </span>
                         )}
                         {meta?.cefr_level && (
@@ -532,7 +532,7 @@ export default function ListsPage() {
                               <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
                                 <path d="M7 1h4v4M11 1L5.5 6.5M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V8" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
-                              {(lang === 'ru' ? meta.article_name_ru : meta.article_name_en) || 'Статья'}
+                              {(lang === 'ru' ? meta.article_name_ru : meta.article_name_en) || tr.grammar.articleFallback}
                             </a>
                           );
                         })()}
@@ -577,12 +577,12 @@ export default function ListsPage() {
                               >
                                 {isDone && (
                                   <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
-                                    {lang === 'en' ? '✓ Done' : '✓ Готово'}
+                                    {tr.lists.doneBadge}
                                   </div>
                                 )}
                                 {isStarLevelDone && (
                                   <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
-                                    {'★'.repeat(starLevel) + (lang === 'en' ? ' Done' : ' Готово')}
+                                    {'★'.repeat(starLevel) + tr.lists.starDoneSuffix}
                                   </div>
                                 )}
                                 <div>
@@ -678,7 +678,7 @@ export default function ListsPage() {
                       <span role="heading" aria-level={2} className="font-semibold text-gray-900">{enrollment.title}</span>
                       <span className="text-gray-400 text-sm whitespace-nowrap">{programLists.length} {plural(programLists.length, tr.lists.listsCount)}</span>
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                        Сообщество
+                        {tr.lists.communityBadge}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -718,12 +718,12 @@ export default function ListsPage() {
                             <div key={list.id} className="relative bg-white border border-line rounded-xl p-5 flex flex-col gap-4">
                               {isDone && (
                                 <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
-                                  {lang === 'en' ? '✓ Done' : '✓ Готово'}
+                                  {tr.lists.doneBadge}
                                 </div>
                               )}
                               {isStarLevelDone && (
                                 <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
-                                  {'★'.repeat(starLevel) + (lang === 'en' ? ' Done' : ' Готово')}
+                                  {'★'.repeat(starLevel) + tr.lists.starDoneSuffix}
                                 </div>
                               )}
                               <div>
@@ -788,18 +788,18 @@ export default function ListsPage() {
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setConfirmCustomId(null)}>
             <div className="bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-[14.5px] font-semibold text-gray-900">Убрать программу «{enrollment?.title}»?</h2>
-              <p className="text-sm text-gray-500">Ваш прогресс сохранится — вы сможете снова записаться в программу в любое время.</p>
+              <h2 className="text-[14.5px] font-semibold text-gray-900">{tr.lists.removeProgramTitle.replace('{label}', enrollment?.title ?? '')}</h2>
+              <p className="text-sm text-gray-500">{tr.lists.removeProgramBody}</p>
               <div className="flex gap-3 justify-end">
                 <button onClick={() => setConfirmCustomId(null)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors">
-                  Отмена
+                  {tr.common.cancel}
                 </button>
                 <button
                   onClick={async () => { const id = confirmCustomId; setConfirmCustomId(null); await handleUnenrollCustom(id); }}
                   disabled={removingCustomIds.has(confirmCustomId)}
                   className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors disabled:opacity-40"
                 >
-                  Убрать
+                  {tr.lists.removeProgramConfirm}
                 </button>
               </div>
             </div>
@@ -821,17 +821,17 @@ export default function ListsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-[14.5px] font-semibold text-gray-900">
-                Убрать программу «{label}»?
+                {tr.lists.removeProgramTitle.replace('{label}', label)}
               </h2>
               <p className="text-sm text-gray-500">
-                Ваш прогресс сохранится — вы сможете снова записаться в программу в любое время.
+                {tr.lists.removeProgramBody}
               </p>
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setConfirmKey(null)}
                   className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-full transition-colors"
                 >
-                  Отмена
+                  {tr.common.cancel}
                 </button>
                 <button
                   onClick={async () => {
@@ -842,7 +842,7 @@ export default function ListsPage() {
                   disabled={removingKeys.has(confirmKey)}
                   className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors disabled:opacity-40"
                 >
-                  Убрать
+                  {tr.lists.removeProgramConfirm}
                 </button>
               </div>
             </div>

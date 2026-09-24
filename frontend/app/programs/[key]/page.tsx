@@ -223,7 +223,7 @@ export default function ProgramDetailPage() {
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-400">
-            <span>{stacks.length} {stacks.length === 1 ? 'набор' : stacks.length < 5 ? 'набора' : 'наборов'}</span>
+            <span>{stacks.length} {plural(stacks.length, tr.programs.setsCount)}</span>
             <span className="mx-1.5 text-gray-200">·</span>
             <span>{stacks.reduce((sum, s) => sum + s.word_count, 0)} {plural(stacks.reduce((sum, s) => sum + s.word_count, 0), tr.programs.wordsCount)}</span>
           </div>
@@ -231,7 +231,7 @@ export default function ProgramDetailPage() {
 
         {/* Stacks list */}
         {stacks.length === 0 ? (
-          <p className="text-gray-400 text-center py-16">Нет наборов в этой программе</p>
+          <p className="text-gray-400 text-center py-16">{tr.programs.noSetsInProgram}</p>
         ) : (
           <div className="flex flex-col gap-3">
             {stacks.map((stack) => {
@@ -271,7 +271,7 @@ export default function ProgramDetailPage() {
                           <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                         </div>
                       ) : (state?.words?.length ?? 0) === 0 ? (
-                        <p className="text-gray-400 text-sm text-center py-6">Нет слов</p>
+                        <p className="text-gray-400 text-sm text-center py-6">{tr.programs.noWords}</p>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">

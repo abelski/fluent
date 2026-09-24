@@ -120,7 +120,7 @@ export default function PricingClient() {
     if (billingEnabled === false) {
       return (
         <a
-          href="mailto:artyrbelski@gmail.com?subject=Fluent Premium&body=Привет! Хочу получить Premium-доступ."
+          href={`mailto:artyrbelski@gmail.com?subject=Fluent Premium&body=${encodeURIComponent(tr.pricing.contactMailBody)}`}
           className={btnClass}
           data-testid="premium-cta-contact"
         >
@@ -161,7 +161,7 @@ export default function PricingClient() {
     if (premiumActive && quota?.premium_until) {
       return tr.pricing.renewsOn.replace(
         '{date}',
-        new Date(quota.premium_until).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB'),
+        new Date(quota.premium_until).toLocaleDateString(tr.common.dateLocale),
       );
     }
     if (billingEnabled === false) return tr.pricing.contactNote;

@@ -6,6 +6,7 @@ export interface PluralForms {
 
 export interface Translations {
   common: {
+    dateLocale: string; // Intl locale for Date formatting: 'ru-RU' / 'en-GB'
     backToLists: string;
     backToLessons: string;
     learn: string;
@@ -46,6 +47,9 @@ export interface Translations {
     premiumUpsellTitle: string;
     premiumUpsellBody: string;
     premiumUpsellButton: string;
+    closeAria: string; // aria-label on generic "×" close buttons
+    close: string;
+    dismissPermanently: string; // WelcomeModal's "Got it, don't show again"
   };
   nav: {
     dictionaries: string;
@@ -78,6 +82,7 @@ export interface Translations {
     startFree: string;
     premiumPrice: string;
     contactUs: string;
+    contactMailBody: string; // mailto: body text asking for Premium access
     contactNote: string;
     freeNote: string;
     betaBanner: string;      // shown while Stripe billing is OFF (payments not accepted)
@@ -127,6 +132,14 @@ export interface Translations {
     starNote: string;
     noWordsAtLevel: string;
     subcategories: Record<string, string>;
+    loginPrompt: string; // shown to logged-out visitors on /dashboard/lists
+    inTestingBadge: string;
+    communityBadge: string;
+    doneBadge: string; // '✓ Done' — whole list mastered
+    starDoneSuffix: string; // appended after repeated ★ when a star level is fully done
+    removeProgramTitle: string; // '{label}' interpolated by caller
+    removeProgramBody: string;
+    removeProgramConfirm: string;
   };
   detail: {
     backToLists: string;
@@ -135,6 +148,8 @@ export interface Translations {
     columnLithuanian: string;
     columnTranslation: string;
     columnNote: string;
+    statusLearned: string; // title on the ✓ icon next to a known word
+    statusLearning: string; // title on the ● icon next to a word being learned
   };
   study: {
     backToLists: string;
@@ -149,6 +164,8 @@ export interface Translations {
     howInLithuanian: string;
     typePlaceholder: string;
     typeEmptyHint: string;
+    practiceSyllable: string;   // stage 3s heading, "Practice the syllable"
+    nowTypeWholeWord: string;   // after a correct syllable, prompts the full-word stage
     didntKnow: string;   // «Забыл» on the typing stage (routed through the wrong-answer path)
     hard: string;        // SM-2 quality = 3
     easy: string;        // SM-2 quality = 5
@@ -173,6 +190,7 @@ export interface Translations {
     charactersNote: string;
     grammarHint: string;
     grammarRule: string;
+    articleFallback: string; // shown when a rule's article link has no title yet
     singular: string;
     plural: string;
     levelsCount: PluralForms;
@@ -258,6 +276,20 @@ export interface Translations {
       noQuestions: string;
       categoryLabels: Record<string, string>;
     };
+    selectTestPrompt: string; // shown instead of a category description
+    readBeforeTestsPrefix: string; // "Before taking the tests, we recommend reading "
+    sourceLinkText: string; // link text for the category's source_url callout
+    textBadge: string; // "📄 Text" badge on a test row that has lesson_text_lt
+    textLabel: string; // plain "Text" badge on the reading view
+    passThresholdSuffix: string; // "{pct}% <suffix>" — e.g. "to pass"
+    goToTestBtn: string; // after the reading view, proceeds to questions
+    finishBtn: string; // last question's "Submit" button label
+    passedLabel: string; // "{pct}" interpolated by caller
+    notPassedLabel: string;
+    nextTestBtn: string;
+    answerReviewTitle: string;
+    testsCount: PluralForms;
+    testsPassedSuffix: string; // "{n} tests <suffix>" — category card progress line
   };
   adminConstitution: {
     tabLabel: string;
@@ -483,6 +515,8 @@ export interface Translations {
     templateVarsIntro: string;
     templateVarsNameConnector: string;
     templateVarsDaysConnector: string;
+    templateLangRu: string; // heading over the RU-content template editor, e.g. "Russian template"
+    templateLangEn: string; // heading over the EN-content template editor
     subjectLabel: string;
     bodyLabel: string;
     savingEllipsis: string;
@@ -807,6 +841,7 @@ export interface Translations {
     sectionTitle: string;
     showMore: string;
     showLess: string;
+    readMore: string;
     noNews: string;
     langRu: string;
     langEn: string;
@@ -896,6 +931,45 @@ export interface Translations {
     emptyStateCta: string;
     seeMore: string;
     details: string;
+    // ── Catalog pages (/programs, /programs/[key], /programs/custom/[token]) ──
+    setsCount: PluralForms;
+    membersCount: PluralForms;
+    noSetsInProgram: string;
+    noWords: string;
+    notFoundOrUnavailable: string;
+    genericError: string;
+    notFound: string;
+    allProgramsLink: string;
+    authorPrefix: string;
+    communityMemberFallback: string;
+    inPlanBadge: string;
+    removeFromPlan: string;
+    addToPlan: string;
+    setsWillAppearPrefix: string; // "...appear in" + link + "your list"
+    yourListSuffix: string;
+    wordsShortUnit: string; // abbreviated "words" unit next to a set's word count, e.g. "12 wds."
+    catalogTab: string;
+    communityTab: string;
+    noProgramsAvailable: string;
+    communitySubtitle: string;
+    createProgramBtn: string;
+    noCommunityPrograms: string;
+    createFirstProgramBtn: string;
+    myBadge: string;
+    authorFallback: string;
+    viewLink: string;
+    copyLinkTitle: string;
+    editTitle: string;
+    deleteTitle: string;
+    deleteConfirmTitle: string;
+    deleteConfirmBody: string; // "{title}" interpolated by caller
+    deleting: string;
+    shareTitle: string;
+    closeAria: string;
+    linkCopied: string;
+    copyLinkBtn: string;
+    deleteError: string;
+    leaveBtn: string; // community-tab enroll toggle when already enrolled — distinct word from removeBtn ("Убрать" vs "Удалить")
   };
   settings: {
     title: string;
@@ -954,6 +1028,7 @@ export interface Translations {
     continueIncludeNewHint: string;
   };
   phraseSession: {
+    submitAria: string; // aria-label on the word-input submit button
     sessionDone: string;
     correctLabel: string;
     errorsLabel: string;
@@ -1055,6 +1130,7 @@ export interface Translations {
     statusInProgress: string;
     statusNew: string;
     starHint: string;
+    backToPhrases: string; // "back to /dashboard/phrases" link on the review error screen
     // Program detail page chrome (issue #148)
     backToPrograms: string;
     studyAll: string;
@@ -1062,6 +1138,11 @@ export interface Translations {
     colPhrase: string;
     colTranslation: string;
     colLevel: string;
+    // /phrase-programs catalog page
+    programsPageTitle: string;
+    programsPageSubtitle: string;
+    programsComingSoon: string;
+    addedBadge: string;
   };
   myWordLists: {
     myLists: string;
@@ -1110,6 +1191,41 @@ export interface Translations {
     statusLearned: string;
     statusInProgress: string;
     statusNew: string;
+  };
+  programEdit: {
+    defaultSetTitle: string; // '{n}' interpolated by caller — default title for a freshly added word set
+    errRequireTitle: string;
+    errRequireSet: string;
+    errRequireWord: string;
+    errSaveFailed: string;
+    createTitle: string; // page heading + save button on /dashboard/programs/new
+    editTitle: string; // page heading on /dashboard/programs/[id]/edit
+    editorsOnly: string; // accessDenied message
+    programLangLabel: string;
+    deleteSetTitle: string; // title= on the delete-set icon button
+    deleteRowTitle: string; // title= on the delete-word icon button
+    addWordBtn: string;
+    addSetBtn: string;
+    saving: string;
+    translating: string;
+    saveBtn: string;
+    langRu: string;
+    langEn: string;
+    autoEnNote: string;
+    autoRuNote: string;
+    titleRu: string;
+    titleRuBoth: string;
+    titleEn: string;
+    titleEnBoth: string;
+    descRu: string;
+    descRuBoth: string;
+    descEn: string;
+    descEnBoth: string;
+    optionalRu: string;
+    optionalEn: string;
+    colLithuanian: string;
+    colTranslationRu: string;
+    colTranslationEn: string;
   };
   extension: {
     title: string;

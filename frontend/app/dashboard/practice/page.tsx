@@ -126,7 +126,7 @@ export default function PracticePage() {
                           />
                         </div>
                         <p className={`text-xs ${allPassed ? 'text-emerald-600 font-medium' : 'text-gray-400'}`}>
-                          {cat.tests_passed}/{cat.tests_total} тест{cat.tests_total === 1 ? '' : cat.tests_total < 5 ? 'а' : 'ов'} пройдено
+                          {cat.tests_passed}/{cat.tests_total} {plural(cat.tests_total, t.testsCount)} {t.testsPassedSuffix}
                         </p>
                       </div>
                     ) : (

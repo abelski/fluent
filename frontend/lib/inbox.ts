@@ -4,6 +4,12 @@
 
 import { BACKEND_URL, getToken } from './api';
 import type { Lang } from './useLang';
+import ru from './i18n/ru';
+import en from './i18n/en';
+
+function localeFor(lang: Lang): string {
+  return lang === 'en' ? en.common.dateLocale : ru.common.dateLocale;
+}
 
 export type InboxKind = 'info' | 'celebration' | 'offer';
 export type InboxSource = 'admin' | 'achievement' | 'leaderboard' | 'report' | 'premium';
@@ -110,7 +116,7 @@ function parseUtc(iso: string): Date {
 /** Gmail's rule: today → time, this year → day+month, older → full numeric date. */
 export function formatInboxDate(iso: string, lang: Lang, now: Date = new Date()): string {
   const date = parseUtc(iso);
-  const locale = lang === 'en' ? 'en-GB' : 'ru-RU';
+  const locale = localeFor(lang);
   if (date.toDateString() === now.toDateString()) {
     return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(date);
   }
@@ -123,7 +129,7 @@ export function formatInboxDate(iso: string, lang: Lang, now: Date = new Date())
 /** Full date + a relative suffix, e.g. "11 сент. 2026 г., 14:03 (2 часа назад)". */
 export function formatFullDate(iso: string, lang: Lang, now: Date = new Date()): string {
   const date = parseUtc(iso);
-  const locale = lang === 'en' ? 'en-GB' : 'ru-RU';
+  const locale = localeFor(lang);
   const absolute = new Intl.DateTimeFormat(locale, {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   }).format(date);

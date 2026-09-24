@@ -97,7 +97,7 @@ function NewsSection({ inline = false }: { inline?: boolean }) {
           const isLong = body.length > 120;
           const expanded = expandedIds.has(post.id);
           const displayBody = isLong && !expanded ? body.slice(0, 120).trimEnd() + '…' : body;
-          const date = new Date(post.published_at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+          const date = new Date(post.published_at).toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
           return (
             <div key={post.id} className="bg-white rounded-[14px] border border-line p-5">
               <p className="font-semibold text-sm text-gray-900 mb-1">{title}</p>
@@ -111,7 +111,7 @@ function NewsSection({ inline = false }: { inline?: boolean }) {
                   })}
                   className="text-xs text-emerald-600 hover:text-emerald-700 font-medium mb-2"
                 >
-                  {expanded ? (lang === 'ru' ? 'Свернуть' : 'Show less') : (lang === 'ru' ? 'Читать далее' : 'Read more')}
+                  {expanded ? t.showLess : t.readMore}
                 </button>
               )}
               <p className="text-xs text-gray-400">{date}</p>

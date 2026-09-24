@@ -250,7 +250,7 @@ export default function ProgramsPage() {
       setCommunityPrograms((prev) => prev.filter((p) => p.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Ошибка удаления');
+      setDeleteError(err instanceof Error ? err.message : tr.programs.deleteError);
     } finally {
       setDeleting(false);
     }
@@ -312,7 +312,7 @@ export default function ProgramsPage() {
                 : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            Каталог
+            {tr.programs.catalogTab}
           </button>
           <button
             onClick={() => setActiveTab('community')}
@@ -322,7 +322,7 @@ export default function ProgramsPage() {
                 : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            Сообщество
+            {tr.programs.communityTab}
           </button>
         </div>
 
@@ -334,7 +334,7 @@ export default function ProgramsPage() {
                 <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : programs.length === 0 ? (
-              <p className="text-gray-400 text-center py-20">Нет доступных программ</p>
+              <p className="text-gray-400 text-center py-20">{tr.programs.noProgramsAvailable}</p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {programs.map((prog) => {
@@ -377,7 +377,7 @@ export default function ProgramsPage() {
                       <div className="flex items-center gap-3 text-sm text-gray-400 flex-wrap">
                         <span>{prog.wordCount} {plural(prog.wordCount, tr.programs.wordsCount)}</span>
                         <span className="text-gray-200">·</span>
-                        <span>{prog.listCount} {prog.listCount === 1 ? 'набор' : prog.listCount < 5 ? 'набора' : 'наборов'}</span>
+                        <span>{prog.listCount} {plural(prog.listCount, tr.programs.setsCount)}</span>
                         {prog.enrollmentCount > 0 && (
                           <>
                             <span className="text-gray-200">·</span>
@@ -436,14 +436,14 @@ export default function ProgramsPage() {
           <>
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-gray-400">
-                Программы, созданные участниками сообщества
+                {tr.programs.communitySubtitle}
               </p>
               {isRedactor && (
                 <Link
                   href="/dashboard/programs/new"
                   className="text-sm font-semibold px-5 py-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm shadow-emerald-600/20 transition-all active:scale-95"
                 >
-                  + Создать программу
+                  {tr.programs.createProgramBtn}
                 </Link>
               )}
             </div>
@@ -454,13 +454,13 @@ export default function ProgramsPage() {
               </div>
             ) : communityPrograms.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-gray-400 mb-4">Пока нет программ от сообщества</p>
+                <p className="text-gray-400 mb-4">{tr.programs.noCommunityPrograms}</p>
                 {isRedactor && (
                   <Link
                     href="/dashboard/programs/new"
                     className="text-sm font-semibold px-6 py-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-all"
                   >
-                    Создать первую программу
+                    {tr.programs.createFirstProgramBtn}
                   </Link>
                 )}
               </div>
@@ -490,12 +490,12 @@ export default function ProgramsPage() {
                             <div className="flex items-center gap-1 shrink-0">
                               {isEnrolled && (
                                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  В плане
+                                  {tr.programs.inPlanBadge}
                                 </span>
                               )}
                               {isOwner && (
                                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                                  Моя
+                                  {tr.programs.myBadge}
                                 </span>
                               )}
                             </div>
@@ -504,19 +504,19 @@ export default function ProgramsPage() {
                             <p className="text-xs text-gray-500 mt-1 line-clamp-2">{prog.description}</p>
                           )}
                           <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                            <UserIcon /> {prog.author_name ?? 'Автор'}
+                            <UserIcon /> {prog.author_name ?? tr.programs.authorFallback}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3 text-sm text-gray-400 flex-wrap">
-                        <span>{prog.list_ids.length} {prog.list_ids.length === 1 ? 'набор' : prog.list_ids.length < 5 ? 'набора' : 'наборов'}</span>
+                        <span>{prog.list_ids.length} {plural(prog.list_ids.length, tr.programs.setsCount)}</span>
                         {prog.enrollment_count > 0 && (
                           <>
                             <span className="text-gray-200">·</span>
                             <span className="flex items-center gap-1">
                               <UserIcon />
-                              {prog.enrollment_count} {prog.enrollment_count === 1 ? 'участник' : prog.enrollment_count < 5 ? 'участника' : 'участников'}
+                              {prog.enrollment_count} {plural(prog.enrollment_count, tr.programs.membersCount)}
                             </span>
                           </>
                         )}
@@ -529,12 +529,12 @@ export default function ProgramsPage() {
                             href={`/programs/custom/${prog.share_token}`}
                             className="text-sm text-gray-400 hover:text-emerald-600 transition-colors font-medium"
                           >
-                            Посмотреть <TakChevron size={10} className="inline-block align-[-1px]" />
+                            {tr.programs.viewLink} <TakChevron size={10} className="inline-block align-[-1px]" />
                           </Link>
                           {/* Share link button */}
                           <button
                             onClick={() => handleCopyShare(prog)}
-                            title="Скопировать ссылку"
+                            title={tr.programs.copyLinkTitle}
                             className="p-2 rounded-full border border-gray-200 text-gray-400 hover:text-emerald-600 hover:border-emerald-300 transition-all"
                           >
                             {copiedToken === prog.share_token ? (
@@ -552,7 +552,7 @@ export default function ProgramsPage() {
                                 <Link
                                   href={`/dashboard/programs/${prog.id}/edit`}
                                   className="p-2 rounded-full border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-300 transition-all"
-                                  title="Редактировать"
+                                  title={tr.programs.editTitle}
                                 >
                                   <PencilIcon />
                                 </Link>
@@ -560,7 +560,7 @@ export default function ProgramsPage() {
                               <button
                                 onClick={() => setDeleteTarget(prog)}
                                 className="p-2 rounded-full border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-300 transition-all"
-                                title="Удалить"
+                                title={tr.programs.deleteTitle}
                               >
                                 <TrashIcon />
                               </button>
@@ -577,7 +577,7 @@ export default function ProgramsPage() {
                               : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm shadow-emerald-600/20'
                           }`}
                         >
-                          {isPending ? '...' : isEnrolled ? 'Убрать' : 'Добавить'}
+                          {isPending ? '...' : isEnrolled ? tr.programs.leaveBtn : tr.programs.addBtn}
                         </button>
                       </div>
                     </div>
@@ -602,9 +602,9 @@ export default function ProgramsPage() {
           onClick={(e) => e.stopPropagation()}
         >
           <div>
-            <h2 className="font-headline text-lg font-bold text-gray-900 mb-1">Удалить программу?</h2>
+            <h2 className="font-headline text-lg font-bold text-gray-900 mb-1">{tr.programs.deleteConfirmTitle}</h2>
             <p className="text-sm text-gray-500 leading-relaxed">
-              «{deleteTarget.title}» будет удалена безвозвратно. Все участники потеряют доступ.
+              {tr.programs.deleteConfirmBody.replace('{title}', deleteTarget.title)}
             </p>
             {deleteError && (
               <p className="text-sm text-red-600 mt-2">{deleteError}</p>
@@ -616,7 +616,7 @@ export default function ProgramsPage() {
               disabled={deleting}
               className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:border-gray-400 transition-colors disabled:opacity-50"
             >
-              Отмена
+              {tr.common.cancel}
             </button>
             <button
               onClick={handleDeleteProgram}
@@ -624,7 +624,7 @@ export default function ProgramsPage() {
               className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {deleting && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-              {deleting ? 'Удаление...' : 'Удалить'}
+              {deleting ? tr.programs.deleting : tr.programs.deleteTitle}
             </button>
           </div>
         </div>
@@ -645,13 +645,13 @@ export default function ProgramsPage() {
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h2 className="font-headline text-lg font-bold text-gray-900 mb-1">Поделиться программой</h2>
+                <h2 className="font-headline text-lg font-bold text-gray-900 mb-1">{tr.programs.shareTitle}</h2>
                 <p className="text-sm text-gray-500">«{shareTarget.title}»</p>
               </div>
               <button
                 onClick={() => setShareTarget(null)}
                 className="text-gray-400 hover:text-gray-700 transition-colors p-1 -mt-1 -mr-1"
-                aria-label="Закрыть"
+                aria-label={tr.programs.closeAria}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -669,7 +669,7 @@ export default function ProgramsPage() {
                 onClick={() => handleCopyShareUrl(shareUrl, shareTarget.share_token)}
                 className="shrink-0 px-4 py-2 text-sm font-semibold rounded-xl transition-colors bg-emerald-600 text-white hover:bg-emerald-700"
               >
-                {copiedToken === shareTarget.share_token ? 'Скопировано!' : 'Копировать'}
+                {copiedToken === shareTarget.share_token ? tr.programs.linkCopied : tr.programs.copyLinkBtn}
               </button>
             </div>
           </div>

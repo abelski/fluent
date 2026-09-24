@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import TakChevron from '../../../../components/TakChevron';
+import { useT } from '../../../../lib/useT';
+import { displaySetTitle } from '../../../../lib/wordHint';
 import {
   BACKEND_URL,
   getToken,
@@ -25,6 +27,7 @@ function resolveToken(): string | null {
 }
 
 export default function CustomProgramPage() {
+  const { tr, plural } = useT();
   const router = useRouter();
   const [program, setProgram] = useState<CustomProgramSummary | null>(null);
   const [wordSets, setWordSets] = useState<WordSetWithId[]>([]);
@@ -55,7 +58,7 @@ export default function CustomProgramPage() {
       setWordSets(sets);
       setIsEnrolled(enrollments.some((e) => e.id === prog.id));
     }).catch(() => {
-      setError('Программа не найдена или недоступна');
+      setError(tr.programs.notFoundOrUnavailable);
     }).finally(() => setLoading(false));
   }, [router]);
 
@@ -71,7 +74,7 @@ export default function CustomProgramPage() {
         setIsEnrolled(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка');
+      setError(err instanceof Error ? err.message : tr.programs.genericError);
     } finally {
       setEnrolling(false);
     }
@@ -89,9 +92,9 @@ export default function CustomProgramPage() {
     return (
       <main className="bg-[#F5F5F7] min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">{error || 'Программа не найдена'}</p>
+          <p className="text-gray-500 mb-4">{error || tr.programs.notFound}</p>
           <Link href="/programs?tab=community" className="text-emerald-600 hover:underline text-sm">
-            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Все программы
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.programs.allProgramsLink}
           </Link>
         </div>
       </main>
@@ -105,7 +108,7 @@ export default function CustomProgramPage() {
       <div className="max-w-2xl mx-auto px-6 py-8">
         <div className="mb-6">
           <Link href="/programs?tab=community" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Сообщество
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.lists.communityBadge}
           </Link>
         </div>
 
@@ -115,12 +118,12 @@ export default function CustomProgramPage() {
             <div>
               <h1 className="font-headline text-2xl font-bold mb-1">{program.title}</h1>
               <p className="text-sm text-gray-400">
-                Автор: <span className="text-gray-600">{program.author_name ?? 'Участник сообщества'}</span>
+                {tr.programs.authorPrefix} <span className="text-gray-600">{program.author_name ?? tr.programs.communityMemberFallback}</span>
               </p>
             </div>
             {isEnrolled && (
               <span className="shrink-0 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                В плане
+                {tr.programs.inPlanBadge}
               </span>
             )}
           </div>
@@ -130,14 +133,14 @@ export default function CustomProgramPage() {
           )}
 
           <div className="flex items-center gap-4 text-sm text-gray-400 mb-5">
-            <span>{wordSets.length} {wordSets.length === 1 ? 'набор' : wordSets.length < 5 ? 'набора' : 'наборов'}</span>
+            <span>{wordSets.length} {plural(wordSets.length, tr.programs.setsCount)}</span>
             <span className="text-gray-200">·</span>
-            <span>{totalWords} {totalWords === 1 ? 'слово' : totalWords < 5 ? 'слова' : 'слов'}</span>
+            <span>{totalWords} {plural(totalWords, tr.detail.wordsCount)}</span>
             {program.enrollment_count > 0 && (
               <>
                 <span className="text-gray-200">·</span>
                 <span>
-                  {program.enrollment_count} {program.enrollment_count === 1 ? 'участник' : program.enrollment_count < 5 ? 'участника' : 'участников'}
+                  {program.enrollment_count} {plural(program.enrollment_count, tr.programs.membersCount)}
                 </span>
               </>
             )}
@@ -152,14 +155,14 @@ export default function CustomProgramPage() {
                 : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
             }`}
           >
-            {enrolling ? '...' : isEnrolled ? 'Убрать из плана' : 'Добавить в план обучения'}
+            {enrolling ? '...' : isEnrolled ? tr.programs.removeFromPlan : tr.programs.addToPlan}
           </button>
 
           {isEnrolled && (
             <p className="text-xs text-center text-gray-400 mt-3">
-              Наборы слов появятся в{' '}
+              {tr.programs.setsWillAppearPrefix}{' '}
               <Link href="/dashboard/lists" className="text-emerald-600 hover:underline">
-                вашем списке
+                {tr.programs.yourListSuffix}
               </Link>
             </p>
           )}
@@ -172,8 +175,8 @@ export default function CustomProgramPage() {
               <div key={ws.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 {/* Set header */}
                 <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-800">{ws.title}</span>
-                  <span className="text-xs text-gray-400">{ws.words.length} сл.</span>
+                  <span className="text-sm font-semibold text-gray-800">{displaySetTitle(ws.title, tr.programEdit.defaultSetTitle)}</span>
+                  <span className="text-xs text-gray-400">{ws.words.length} {tr.programs.wordsShortUnit}</span>
                 </div>
 
                 {/* Word table */}
@@ -181,8 +184,8 @@ export default function CustomProgramPage() {
                   <div className="divide-y divide-gray-50">
                     {/* Column headers */}
                     <div className="grid grid-cols-2 gap-2 px-4 py-2">
-                      <span className="text-xs text-gray-400 font-medium">Литовский</span>
-                      <span className="text-xs text-gray-400 font-medium">Перевод</span>
+                      <span className="text-xs text-gray-400 font-medium">{tr.detail.columnLithuanian}</span>
+                      <span className="text-xs text-gray-400 font-medium">{tr.detail.columnTranslation}</span>
                     </div>
                     {ws.words.map((wp, i) => (
                       <div key={i} className="grid grid-cols-2 gap-2 px-4 py-2.5">
@@ -192,7 +195,7 @@ export default function CustomProgramPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400 px-4 py-4 text-center">Нет слов</p>
+                  <p className="text-sm text-gray-400 px-4 py-4 text-center">{tr.programs.noWords}</p>
                 )}
               </div>
             ))}
