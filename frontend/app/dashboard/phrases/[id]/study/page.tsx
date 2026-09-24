@@ -6,8 +6,10 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getToken, getPhrasesStudy, resolvePhraseId, type PhraseStudyItem } from '../../../../../lib/api';
 import PhraseSession from '../../../components/PhraseSession';
 import TakChevron from '../../../../../components/TakChevron';
+import { useT } from '../../../../../lib/useT';
 
 function PhrasesStudyContent() {
+  const { tr } = useT();
   const { id: _id } = useParams<{ id: string }>();
   const id = resolvePhraseId(_id);
   const router = useRouter();
@@ -25,7 +27,7 @@ function PhrasesStudyContent() {
     getPhrasesStudy(Number(id), chapter)
       .then((data) => {
         if (data.phrases.length === 0) {
-          setError('Нет фраз для повторения.');
+          setError(tr.phraseLists.noPhrasesToReview);
         } else {
           setPhrases(data.phrases);
         }
@@ -34,9 +36,9 @@ function PhrasesStudyContent() {
         if (e.message === 'Not enrolled in this program') {
           router.replace('/dashboard/phrases');
         } else if (e.message === 'No phrases due for review') {
-          setError('Нет фраз для повторения на сегодня. Возвращайтесь завтра!');
+          setError(tr.phraseLists.noPhrasesToday);
         } else {
-          setError(e.message || 'Не удалось загрузить фразы.');
+          setError(e.message || tr.phraseLists.loadError);
         }
       })
       .finally(() => setLoading(false));
@@ -66,7 +68,7 @@ function PhrasesStudyContent() {
           <div className="text-5xl mb-6">💬</div>
           <p className="text-gray-500 mb-8">{error}</p>
           <Link href="/dashboard/phrases" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
-            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Назад к программам
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.phraseLists.backToPrograms}
           </Link>
         </div>
       </main>

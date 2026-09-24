@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function WelcomeModal({ content, onClose, onDismiss }: Props) {
-  const { lang } = useT();
+  const { tr, lang } = useT();
   const [loading, setLoading] = useState(false);
 
   const title = lang === 'ru' ? content.title_ru : content.title_en;
@@ -42,7 +42,7 @@ export default function WelcomeModal({ content, onClose, onDismiss }: Props) {
           <button
             onClick={onClose}
             data-testid="welcome-close"
-            aria-label="Закрыть"
+            aria-label={tr.common.closeAria}
             className="absolute top-4 right-4 sm:top-5 sm:right-5 text-gray-400 hover:text-gray-700 transition-colors p-1"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -78,13 +78,13 @@ export default function WelcomeModal({ content, onClose, onDismiss }: Props) {
             data-testid="welcome-dismiss"
             className="w-full bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white font-semibold rounded-2xl px-6 py-4 text-base transition-colors disabled:opacity-50"
           >
-            {loading ? '...' : lang === 'ru' ? 'Понятно, не показывать снова' : "Got it, don't show again"}
+            {loading ? '...' : tr.common.dismissPermanently}
           </button>
           <button
             onClick={onClose}
             className="w-full text-sm text-gray-400 hover:text-gray-700 py-2 transition-colors"
           >
-            {lang === 'ru' ? 'Закрыть' : 'Close'}
+            {tr.common.close}
           </button>
         </div>
       </div>

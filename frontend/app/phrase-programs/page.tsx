@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import TakChevron from '../../components/TakChevron';
+import { useT } from '../../lib/useT';
 import {
   getToken,
   getPhrasePrograms,
@@ -11,7 +12,6 @@ import {
   type PhraseProgramSummary,
 } from '../../lib/api';
 
-const DIFFICULTY_LABELS: Record<number, string> = { 1: 'Лёгкий', 2: 'Средний', 3: 'Сложный' };
 const DIFFICULTY_COLORS: Record<number, string> = {
   1: 'bg-emerald-100 text-emerald-700',
   2: 'bg-amber-100 text-amber-700',
@@ -19,6 +19,12 @@ const DIFFICULTY_COLORS: Record<number, string> = {
 };
 
 export default function PhraseProgramsPage() {
+  const { tr, plural } = useT();
+  const DIFFICULTY_LABELS: Record<number, string> = {
+    1: tr.phraseLists.easy,
+    2: tr.phraseLists.medium,
+    3: tr.phraseLists.hard,
+  };
   const router = useRouter();
   const [programs, setPrograms] = useState<PhraseProgramSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,18 +64,18 @@ export default function PhraseProgramsPage() {
             href="/dashboard/phrases"
             className="text-gray-400 hover:text-gray-700 transition-colors text-sm"
           >
-            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Фразы
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.nav.phrases}
           </Link>
         </div>
-        <h1 className="font-headline text-3xl font-bold mb-1">Программы фраз</h1>
-        <p className="text-gray-400 mb-8">Выберите программы для изучения литовских фраз</p>
+        <h1 className="font-headline text-3xl font-bold mb-1">{tr.phraseLists.programsPageTitle}</h1>
+        <p className="text-gray-400 mb-8">{tr.phraseLists.programsPageSubtitle}</p>
 
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : programs.length === 0 ? (
-          <p className="text-gray-400 text-center py-12">Программы фраз скоро появятся.</p>
+          <p className="text-gray-400 text-center py-12">{tr.phraseLists.programsComingSoon}</p>
         ) : (
           <div className="space-y-3">
             {programs.map((p) => (
@@ -89,14 +95,14 @@ export default function PhraseProgramsPage() {
                       </span>
                       {p.enrolled && (
                         <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Добавлено
+                          {tr.phraseLists.addedBadge}
                         </span>
                       )}
                     </div>
                     {p.description && (
                       <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{p.description}</p>
                     )}
-                    <p className="text-xs text-gray-400 mt-1">{p.phrase_count} фраз</p>
+                    <p className="text-xs text-gray-400 mt-1">{p.phrase_count} {plural(p.phrase_count, tr.phraseLists.phrasesPlural)}</p>
                   </Link>
 
                   {!p.enrolled && (
@@ -106,7 +112,7 @@ export default function PhraseProgramsPage() {
                       data-testid="enroll-button"
                       className="shrink-0 px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors disabled:opacity-50"
                     >
-                      {enrolling.has(p.id) ? '...' : 'Добавить'}
+                      {enrolling.has(p.id) ? '...' : tr.programs.addBtn}
                     </button>
                   )}
                 </div>

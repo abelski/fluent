@@ -342,7 +342,7 @@ export default function PracticeCategoryPage() {
                 <h1 className="font-headline text-3xl font-bold">{categoryName}</h1>
                 {categoryDescription
                   ? <p className="text-gray-600 mt-1">{categoryDescription}</p>
-                  : <p className="text-gray-400 mt-1">Выберите тест для прохождения</p>
+                  : <p className="text-gray-400 mt-1">{t.selectTestPrompt}</p>
                 }
               </div>
             </div>
@@ -360,14 +360,14 @@ export default function PracticeCategoryPage() {
             {/* Source URL callout (e.g. constitution link) */}
             {sourceUrl && (
               <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
-                Перед прохождением тестов рекомендуем прочитать{' '}
+                {t.readBeforeTestsPrefix}{' '}
                 <a
                   href={sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline font-semibold hover:text-amber-900"
                 >
-                  Конституцию Литвы
+                  {t.sourceLinkText}
                 </a>
                 .
               </div>
@@ -413,13 +413,13 @@ export default function PracticeCategoryPage() {
                           )}
                           {test.lesson_text_lt && (
                             <span className="text-[11px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-semibold">
-                              📄 Текст
+                              {t.textBadge}
                             </span>
                           )}
                         </div>
                         {desc && <p className="text-sm text-gray-400 mt-0.5 truncate">{desc}</p>}
                         <p className="text-xs text-gray-400 mt-1">
-                          {test.active_question_count} {tr.adminPractice.questionsCount} · {Math.round(test.pass_threshold * 100)}% для сдачи
+                          {test.active_question_count} {tr.adminPractice.questionsCount} · {Math.round(test.pass_threshold * 100)}% {t.passThresholdSuffix}
                         </p>
                         {examError && <p className="text-red-500 text-xs mt-1">{examError}</p>}
                       </div>
@@ -470,7 +470,7 @@ export default function PracticeCategoryPage() {
                   {lang === 'en' ? (pendingTest.title_en ?? pendingTest.title_ru) : pendingTest.title_ru}
                 </span>
                 <span className="text-xs px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full font-semibold">
-                  Текст
+                  {t.textLabel}
                 </span>
               </div>
               <div className="px-6 py-5 text-gray-800 leading-relaxed">
@@ -483,7 +483,7 @@ export default function PracticeCategoryPage() {
                 disabled={examLoading}
                 className="px-6 py-2.5 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-40"
               >
-                {examLoading ? '...' : <>Перейти к тесту <TakChevron size={10} className="inline-block align-[-1px]" /></>}
+                {examLoading ? '...' : <>{t.goToTestBtn} <TakChevron size={10} className="inline-block align-[-1px]" /></>}
               </button>
             </div>
           </div>
@@ -578,7 +578,7 @@ export default function PracticeCategoryPage() {
                     onClick={handleNext}
                     className="px-6 py-2.5 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-700 transition-colors"
                   >
-                    {current + 1 >= activeTest.questions.length ? 'Завершить' : <>{t.constitution.nextBtn} <TakChevron size={10} className="inline-block align-[-1px]" /></>}
+                    {current + 1 >= activeTest.questions.length ? t.finishBtn : <>{t.constitution.nextBtn} <TakChevron size={10} className="inline-block align-[-1px]" /></>}
                   </button>
                 )}
               </div>
@@ -606,16 +606,14 @@ export default function PracticeCategoryPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className={`px-3 py-1 rounded-full text-sm font-semibold border border-gray-900 ${passed ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
-                    {passed
-                      ? `✓ Пройден (≥${Math.round(passThreshold * 100)}%)`
-                      : `✗ Не пройден (<${Math.round(passThreshold * 100)}%)`}
+                    {(passed ? t.passedLabel : t.notPassedLabel).replace('{pct}', String(Math.round(passThreshold * 100)))}
                   </span>
                   {nextTest && (
                     <button
                       onClick={() => startTest(nextTest)}
                       className="px-4 py-1.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-500 transition-colors"
                     >
-                      Следующий тест <TakChevron size={10} className="inline-block align-[-1px]" />
+                      {t.nextTestBtn} <TakChevron size={10} className="inline-block align-[-1px]" />
                     </button>
                   )}
                   <button
@@ -630,7 +628,7 @@ export default function PracticeCategoryPage() {
 
             <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white">
               <div className="px-6 py-3 bg-gray-50 border-b border-gray-900">
-                <p className="text-sm font-semibold text-gray-700">Разбор ответов</p>
+                <p className="text-sm font-semibold text-gray-700">{t.answerReviewTitle}</p>
               </div>
               <div className="divide-y divide-gray-100">
                 {activeTest.questions.map((q, i) => {

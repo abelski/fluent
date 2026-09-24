@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation';
 import { getToken, getPhraseReview, type PhraseStudyItem } from '../../../../lib/api';
 import PhraseSession from '../../components/PhraseSession';
 import TakChevron from '../../../../components/TakChevron';
+import { useT } from '../../../../lib/useT';
 
 export default function PhraseReviewPage() {
+  const { tr } = useT();
   const router = useRouter();
   const [phrases, setPhrases] = useState<PhraseStudyItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,16 +21,16 @@ export default function PhraseReviewPage() {
     getPhraseReview()
       .then((data) => {
         if (data.phrases.length === 0) {
-          setError('Нет фраз для повторения.');
+          setError(tr.phraseLists.noPhrasesToReview);
         } else {
           setPhrases(data.phrases);
         }
       })
       .catch((e: Error) => {
         if (e.message === 'No phrases due for review') {
-          setError('Нет фраз для повторения на сегодня. Возвращайтесь завтра!');
+          setError(tr.phraseLists.noPhrasesToday);
         } else {
-          setError(e.message || 'Не удалось загрузить фразы.');
+          setError(e.message || tr.phraseLists.loadError);
         }
       })
       .finally(() => setLoading(false));
@@ -57,7 +59,7 @@ export default function PhraseReviewPage() {
           <div className="text-5xl mb-6">💬</div>
           <p className="text-gray-500 mb-8">{error}</p>
           <Link href="/dashboard/phrases" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
-            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />Назад к фразам
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.phraseLists.backToPhrases}
           </Link>
         </div>
       </main>

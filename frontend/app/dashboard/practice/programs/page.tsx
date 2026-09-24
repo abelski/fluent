@@ -19,7 +19,7 @@ interface Category {
 }
 
 export default function PracticeProgramsPage() {
-  const { tr, lang } = useT();
+  const { tr, lang, plural } = useT();
   const t = tr.practice;
   const router = useRouter();
 
@@ -108,7 +108,7 @@ export default function PracticeProgramsPage() {
                       <p className="text-xs text-gray-400 mt-1">
                         {cat.test_count === 0
                           ? <span className="text-amber-600 font-medium">{t.noTests}</span>
-                          : `${cat.test_count} тест${cat.test_count === 1 ? '' : cat.test_count < 5 ? 'а' : 'ов'}`}
+                          : `${cat.test_count} ${plural(cat.test_count, t.testsCount)}`}
                       </p>
                     </div>
                     <button

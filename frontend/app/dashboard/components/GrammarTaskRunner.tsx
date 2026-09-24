@@ -42,6 +42,7 @@ export interface DeclensionTask {
   type: 'declension';
   prompt_lt: string;
   prompt_ru: string;
+  prompt_en: string;
   case_name: string;
   number: string;
   answer: string;
@@ -61,6 +62,7 @@ export interface VerbConjugationTask {
   verb_infinitive: string;
   translation_ru: string;
   tense_label: string;
+  tense_label_en: string;
   person_label: string;
   answer: string;
 }
@@ -285,7 +287,7 @@ export default function GrammarTaskRunner({
   onExit,
   onFinish,
 }: GrammarTaskRunnerProps) {
-  const { tr } = useT();
+  const { tr, lang } = useT();
 
   const [taskIndex, setTaskIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -402,7 +404,7 @@ export default function GrammarTaskRunner({
                 {task.case_name} · {task.number}
               </p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight mt-4 mb-4 break-words">{task.prompt_lt}</p>
-              <p className="text-gray-500 text-base sm:text-lg mb-5">{task.prompt_ru}</p>
+              <p className="text-gray-500 text-base sm:text-lg mb-5">{lang === 'en' ? task.prompt_en : task.prompt_ru}</p>
               <input
                 ref={inputRef}
                 type="text"
@@ -442,7 +444,7 @@ export default function GrammarTaskRunner({
 
           {task.type === 'verb_conjugation' && (
             <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
-              <p className="text-gray-400 text-xs mb-4">{task.tense_label}</p>
+              <p className="text-gray-400 text-xs mb-4">{lang === 'en' ? task.tense_label_en : task.tense_label}</p>
               <div className="mb-4">
                 <InlineSentenceInput
                   display={`${task.verb_infinitive} — ${task.person_label} ___`}

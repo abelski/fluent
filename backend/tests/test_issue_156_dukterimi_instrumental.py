@@ -43,14 +43,15 @@ class TestWordsTxtInstrumental:
 
 
 class TestWordsTxtStructure:
-    def test_every_row_has_16_tab_separated_fields(self):
+    def test_every_row_has_17_tab_separated_fields(self):
+        # 16 fields (stem + 14 case endings + ru) + 1 en column added in plan #48a.
         bad_lines: list[tuple[int, int]] = []
         for lineno, line in enumerate(_WORDS_PATH.read_text(encoding="utf-8").splitlines(), start=1):
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
             fields = line.rstrip("\n").split("\t")
-            if len(fields) != 16:
+            if len(fields) != 17:
                 bad_lines.append((lineno, len(fields)))
         assert bad_lines == [], f"rows with wrong field count (line, count): {bad_lines}"
 

@@ -128,7 +128,7 @@ function ArticlesListInner({ initialArticles }: { initialArticles: ArticleSummar
                 <div className="mt-auto flex items-center justify-between gap-2 pt-1">
                   <p className="text-gray-400 text-xs">
                     {new Date(article.created_at).toLocaleDateString(
-                      lang === 'ru' ? 'ru-RU' : 'en-GB',
+                      tr.common.dateLocale,
                       { day: 'numeric', month: 'long', year: 'numeric' }
                     )}
                   </p>

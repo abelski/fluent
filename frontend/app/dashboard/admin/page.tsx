@@ -7,11 +7,11 @@ import { BACKEND_URL, getToken, sendEmailToUser, getAdminMessages, updateAdminMe
 import { useT } from '../../../lib/useT';
 
 /** Format a `[week_start, week_end)` ISO pair (Mon 00:00 .. next Mon 00:00) as "10–16 авг" for admin copy. */
-function formatWeekRange(weekStart: string, weekEnd: string): string {
+function formatWeekRange(weekStart: string, weekEnd: string, locale: string): string {
   const start = new Date(weekStart);
   const end = new Date(new Date(weekEnd).getTime() - 24 * 60 * 60 * 1000); // last day of the range, inclusive
-  const startLabel = start.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-  const endLabel = end.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  const startLabel = start.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  const endLabel = end.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
   return `${startLabel}–${endLabel}`;
 }
 
@@ -400,8 +400,8 @@ function UserProgressModal({ userId, userName, onClose }: { userId: string; user
 
               {/* Meta */}
               <div className="flex justify-between text-xs text-gray-400 pt-1 border-t border-gray-100">
-                <span>{tr.adminUserProgress.lastActivePrefix} {data.last_active ? new Date(data.last_active).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
-                <span>{tr.adminUserProgress.memberSincePrefix} {data.member_since ? new Date(data.member_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+                <span>{tr.adminUserProgress.lastActivePrefix} {data.last_active ? new Date(data.last_active).toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+                <span>{tr.adminUserProgress.memberSincePrefix} {data.member_since ? new Date(data.member_since).toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
               </div>
             </div>
           )}
@@ -1877,19 +1877,19 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       {u.deletion_warning && u.deletion_due && (
                         <p className="text-orange-600 text-xs mt-0.5 flex items-center gap-1 font-medium">
                           <span className="text-base leading-none">☠️</span>
-                          {tr.admin.deletionDuePrefix} {new Date(u.deletion_due).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                          {tr.admin.deletionDuePrefix} {new Date(u.deletion_due).toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'short' })}
                         </p>
                       )}
                       {!u.deletion_warning && u.inactive_flag && u.inactive_since && (
                         <p className="text-red-500 text-xs mt-0.5 flex items-center gap-1">
                           <span className="inline-block w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
-                          {tr.admin.inactiveSincePrefix} {new Date(u.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {tr.admin.inactiveSincePrefix} {new Date(u.inactive_since).toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}
                       {u.notice_sent_at && (
                         <p className="text-blue-500 text-xs mt-0.5 flex items-center gap-1">
                           <span>✉</span>
-                          {tr.admin.noticeSentPrefix} {new Date(u.notice_sent_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {tr.admin.noticeSentPrefix} {new Date(u.notice_sent_at).toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       )}
                     </td>
@@ -1941,7 +1941,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                     </td>
                     <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">
                       {u.premium_until
-                        ? new Date(u.premium_until).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
+                        ? new Date(u.premium_until).toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })
                         : u.premium_active ? '∞' : '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">
@@ -1949,7 +1949,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                     </td>
                     <td className="px-4 py-3 text-gray-400 hidden lg:table-cell text-xs">
                       {u.last_login
-                        ? new Date(u.last_login).toLocaleString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        ? new Date(u.last_login).toLocaleString(tr.common.dateLocale, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                         : '—'}
                     </td>
                     <td className="px-4 py-3">
@@ -2072,7 +2072,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       <span className="text-gray-300 text-xs">·</span>
                       <span className="text-xs font-medium text-gray-500 truncate">{r.user_name}</span>
                       <span className="text-gray-300 text-xs">·</span>
-                      <span className="text-gray-400 text-xs">{new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
+                      <span className="text-gray-400 text-xs">{new Date(r.created_at).toLocaleDateString(tr.common.dateLocale)}</span>
                       {r.context && (
                         <>
                           <span className="text-gray-300 text-xs">·</span>
@@ -2148,7 +2148,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   <div key={f.id} className="border border-gray-900 rounded-2xl p-4 flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span className="text-sm font-medium text-gray-900">{f.email}</span>
-                      <span className="text-xs text-gray-400">{new Date(f.created_at).toLocaleString('ru-RU')}</span>
+                      <span className="text-xs text-gray-400">{new Date(f.created_at).toLocaleString(tr.common.dateLocale)}</span>
                     </div>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{f.message}</p>
                     <div className="flex justify-end">
@@ -2237,7 +2237,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         {(['ru', 'en'] as const).map((lang) => (
                           <div key={lang} className="flex flex-col gap-2">
                             <h4 className="font-headline text-xs font-bold text-gray-500 uppercase tracking-wide">
-                              {lang === 'ru' ? 'Русский шаблон' : 'English template'}
+                              {lang === 'ru' ? tr.adminMessages.templateLangRu : tr.adminMessages.templateLangEn}
                             </h4>
                             <label className="text-xs text-gray-500">{tr.adminMessages.subjectLabel}</label>
                             <input
@@ -2297,7 +2297,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   {msg.inactive_since && (
                                     <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1">
                                       <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
-                                      {tr.admin.inactiveSincePrefix} {new Date(msg.inactive_since).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                      {tr.admin.inactiveSincePrefix} {new Date(msg.inactive_since).toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </p>
                                   )}
                                 </div>
@@ -2367,11 +2367,11 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   <p className="text-xs text-gray-400">{msg.subject}</p>
                                   {msg.sent_at && (
                                     <p className="text-xs text-gray-400">
-                                      {tr.adminMessages.sentAtPrefix} {new Date(msg.sent_at).toLocaleString('ru-RU')}
+                                      {tr.adminMessages.sentAtPrefix} {new Date(msg.sent_at).toLocaleString(tr.common.dateLocale)}
                                       {(() => {
                                         const daysAgo = Math.floor((Date.now() - new Date(msg.sent_at).getTime()) / 86400000);
                                         const dueDate = new Date(new Date(msg.sent_at).getTime() + 7 * 86400000);
-                                        if (daysAgo >= 7) return <span className="ml-2 text-orange-600 font-medium">{tr.adminMessages.expiredPrefix} {dueDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>;
+                                        if (daysAgo >= 7) return <span className="ml-2 text-orange-600 font-medium">{tr.adminMessages.expiredPrefix} {dueDate.toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'short' })}</span>;
                                         if (daysAgo >= 5) return <span className="ml-2 text-orange-500 font-medium">{tr.adminMessages.daysLeftSuffix.replace('{n}', String(7 - daysAgo))}</span>;
                                         return null;
                                       })()}
@@ -2398,7 +2398,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <p className="text-sm text-gray-500">
-                    {tr.adminMessages.rewardsInfoPrefix}{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} {tr.adminMessages.rewardsInfoSuffix}
+                    {tr.adminMessages.rewardsInfoPrefix}{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end, tr.common.dateLocale)})` : ''} {tr.adminMessages.rewardsInfoSuffix}
                   </p>
                   <button
                     onClick={handleGenerateRewards}
@@ -2413,7 +2413,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 {/* Current week top 3 */}
                 {top5Loaded && (
                   <div className="flex flex-col gap-2">
-                    <h3 className="font-headline text-sm font-semibold text-gray-900">{tr.adminMessages.rankingTitlePrefix}{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} {tr.adminMessages.rankingTitleSuffix}</h3>
+                    <h3 className="font-headline text-sm font-semibold text-gray-900">{tr.adminMessages.rankingTitlePrefix}{top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end, tr.common.dateLocale)})` : ''} {tr.adminMessages.rankingTitleSuffix}</h3>
                     {top5Users.filter((u) => u.rank <= 3).length === 0 ? (
                       <p className="text-gray-400 text-sm">{tr.adminMessages.noActiveUsersLastWeek}</p>
                     ) : (
@@ -2475,7 +2475,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                 <div>
                                   <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
                                   <p className="text-xs text-gray-400">{msg.subject}</p>
-                                  {msg.sent_at && <p className="text-xs text-gray-400">{tr.adminMessages.sentAtPrefix} {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
+                                  {msg.sent_at && <p className="text-xs text-gray-400">{tr.adminMessages.sentAtPrefix} {new Date(msg.sent_at).toLocaleString(tr.common.dateLocale)}</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? tr.adminMessages.statusSent : tr.adminMessages.statusError}</span>
@@ -2549,7 +2549,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                 <div>
                                   <p className="text-sm text-gray-700 font-medium">{msg.user_name} <span className="text-gray-400 font-normal">— {msg.user_email}</span></p>
                                   <p className="text-xs text-gray-400">{msg.subject}</p>
-                                  {msg.sent_at && <p className="text-xs text-gray-400">{tr.adminMessages.sentAtPrefix} {new Date(msg.sent_at).toLocaleString('ru-RU')}</p>}
+                                  {msg.sent_at && <p className="text-xs text-gray-400">{tr.adminMessages.sentAtPrefix} {new Date(msg.sent_at).toLocaleString(tr.common.dateLocale)}</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${msg.status === 'sent' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{msg.status === 'sent' ? tr.adminMessages.statusSent : tr.adminMessages.statusError}</span>
@@ -2733,7 +2733,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                             <td className="py-2 pr-3 text-gray-500">{row.audience ?? '—'}</td>
                             <td className="py-2 pr-3 text-gray-500">{row.recipients}</td>
                             <td className="py-2 pr-3 text-gray-500">{row.read}</td>
-                            <td className="py-2 pr-3 text-gray-500">{new Date(row.created_at).toLocaleString('ru-RU')}</td>
+                            <td className="py-2 pr-3 text-gray-500">{new Date(row.created_at).toLocaleString(tr.common.dateLocale)}</td>
                             <td className="py-2">
                               <button
                                 onClick={() => handleInboxRetract(row.id)}
@@ -3740,7 +3740,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         {post.published ? tr.articles.published : tr.articles.draft}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{new Date(post.published_at).toLocaleDateString('ru-RU')}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{new Date(post.published_at).toLocaleDateString(tr.common.dateLocale)}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
@@ -3938,7 +3938,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                 <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 mb-4">
                   {([
                     { key: 'auto_send_inactive_emails' as const, label: tr.adminSettings.autoSendInactiveLabel, desc: tr.adminSettings.autoSendInactiveDesc },
-                    { key: 'auto_send_weekly_rewards' as const, label: tr.adminSettings.autoSendRewardsLabel, desc: `${tr.adminSettings.autoSendRewardsDescPrefix}${top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end)})` : ''} ${tr.adminSettings.autoSendRewardsDescSuffix}` },
+                    { key: 'auto_send_weekly_rewards' as const, label: tr.adminSettings.autoSendRewardsLabel, desc: `${tr.adminSettings.autoSendRewardsDescPrefix}${top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end, tr.common.dateLocale)})` : ''} ${tr.adminSettings.autoSendRewardsDescSuffix}` },
                   ] as const).map(({ key, label, desc }) => (
                     <div key={key} className="flex items-center justify-between gap-4 px-4 py-3">
                       <div>

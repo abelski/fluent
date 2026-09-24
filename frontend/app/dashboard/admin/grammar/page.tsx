@@ -68,12 +68,6 @@ interface SentenceForm {
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const GROUP_LABELS: Record<string, string> = {
-  Vienaskaita: 'Единственное число',
-  Daugiskaita: 'Множественное число',
-  Skaičiai:   'Числительные',
-};
-
 const GROUP_ORDER = ['Vienaskaita', 'Daugiskaita', 'Skaičiai'];
 
 const LEVEL_META: Record<string, { label: string; color: string }> = {

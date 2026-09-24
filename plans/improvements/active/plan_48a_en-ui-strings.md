@@ -1,12 +1,12 @@
 ---
 kind: feature
-status: approved
-iteration: 0
+status: done
+iteration: 1
 max_iterations: 24
 suggested_model: sonnet
 suggested_effort: medium
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: sonnet
+confirmed_effort: medium
 ---
 
 # #48a — English coverage, part 1: UI strings, backend labels, leak guard
@@ -94,20 +94,20 @@ any leak cheap to find.
 - Add autotest coverage for the new feature and run the relevant suite(s) as part of Validation.
 
 ## Implementation
-- [ ] 1. Baseline: on the branch start, run the full Playwright suite (:8000, `DEV=false`, fresh `npm run build`) and save the list of failing specs to `temp_files/screenshots/plan_48a_en-ui-strings/baseline-failures.txt`.
-- [ ] 2. `frontend/tests/no-hardcoded-russian.spec.ts` — a static guard, written first so it fails on the current code. It reads every `.ts`/`.tsx` under `app`, `components` and `lib` (skipping `lib/i18n/ru.ts`), strips comments, allows `metadata`/`generateMetadata` blocks and `// i18n-allow` lines, and fails on `[А-Яа-яЁё]` or `'ru-RU'`, listing `file:line`. It runs without a browser page or a server.
-- [ ] 3. `frontend/lib/i18n/{types,ru,en}.ts` — add keys for every leak the guard lists, grouped under the existing sections, with plurals as `PluralForms`.
-- [ ] 4. Replace the leaks file by file until the guard passes. Start with `practice/[id]`, `practice/page.tsx`, the programs pages, `dashboard/lists`, the phrases pages, `QuizSession`, `PhraseSession`, `WelcomeModal`, `Header`, `pricing`, `LandingClient`, then admin (date locales included).
-- [ ] 5. `word.hint` map and «Набор N» display (Requirements 4–5).
-- [ ] 6. `backend/grammar_service.py`, `backend/data/grammar/verb_lessons.json`, `backend/data/grammar/words.txt` — `tense_label_en`, `title_en`, `hint_en`, `prompt_en` (Requirement 3). Update the header comment in `words.txt`, and update `backend/tests/test_issue_156_dukterimi_instrumental.py:46-54` for the new field count. Frontend consumers (`GrammarTaskRunner.tsx`, `dashboard/grammar/page.tsx`) pick by `lang`.
-- [ ] 7. `backend/tests/test_en_labels.py` — the verb-lesson and task endpoints return non-empty `title_en` / `tense_label_en` / `hint_en` / `prompt_en`, with no Cyrillic in any of them.
-- [ ] 8. `frontend/tests/en-smoke.spec.ts` — the EN render smoke, with mocked APIs and `fluent_lang='en'`. It checks that `document.body.innerText` has no Cyrillic on:
+- [x] 1. Baseline: on the branch start, run the full Playwright suite (:8000, `DEV=false`, fresh `npm run build`) and save the list of failing specs to `temp_files/screenshots/plan_48a_en-ui-strings/baseline-failures.txt`.
+- [x] 2. `frontend/tests/no-hardcoded-russian.spec.ts` — a static guard, written first so it fails on the current code. It reads every `.ts`/`.tsx` under `app`, `components` and `lib` (skipping `lib/i18n/ru.ts`), strips comments, allows `metadata`/`generateMetadata` blocks and `// i18n-allow` lines, and fails on `[А-Яа-яЁё]` or `'ru-RU'`, listing `file:line`. It runs without a browser page or a server.
+- [x] 3. `frontend/lib/i18n/{types,ru,en}.ts` — add keys for every leak the guard lists, grouped under the existing sections, with plurals as `PluralForms`.
+- [x] 4. Replace the leaks file by file until the guard passes. Start with `practice/[id]`, `practice/page.tsx`, the programs pages, `dashboard/lists`, the phrases pages, `QuizSession`, `PhraseSession`, `WelcomeModal`, `Header`, `pricing`, `LandingClient`, then admin (date locales included).
+- [x] 5. `word.hint` map and «Набор N» display (Requirements 4–5).
+- [x] 6. `backend/grammar_service.py`, `backend/data/grammar/verb_lessons.json`, `backend/data/grammar/words.txt` — `tense_label_en`, `title_en`, `hint_en`, `prompt_en` (Requirement 3). Update the header comment in `words.txt`, and update `backend/tests/test_issue_156_dukterimi_instrumental.py:46-54` for the new field count. Frontend consumers (`GrammarTaskRunner.tsx`, `dashboard/grammar/page.tsx`) pick by `lang`.
+- [x] 7. `backend/tests/test_en_labels.py` — the verb-lesson and task endpoints return non-empty `title_en` / `tense_label_en` / `hint_en` / `prompt_en`, with no Cyrillic in any of them.
+- [x] 8. `frontend/tests/en-smoke.spec.ts` — the EN render smoke, with mocked APIs and `fluent_lang='en'`. It checks that `document.body.innerText` has no Cyrillic on:
   - the practice result page: a failed result, then the review
   - the grammar sentence runner, with the rule card and hint
   - the admin users tab, with dates
 
   This catches plural and locale wiring that the static guard can't.
-- [ ] 9. `frontend/tests/plan48a-screenshots.spec.ts` — writes RU and EN × 1280 and 375 shots into `temp_files/screenshots/plan_48a_en-ui-strings/` for:
+- [x] 9. `frontend/tests/plan48a-screenshots.spec.ts` — writes RU and EN × 1280 and 375 shots into `temp_files/screenshots/plan_48a_en-ui-strings/` for:
   - the practice intro, question, answered state, result (passed and failed), and empty category
   - `programs/new`
   - `dashboard/lists`
@@ -117,13 +117,13 @@ any leak cheap to find.
   Mock `/api/billing/config` → `{enabled:true}` wherever premium UI shows.
 
 ## Validation
-- [ ] Guard: `cd frontend && npx playwright test tests/no-hardcoded-russian.spec.ts --reporter=list`
-- [ ] Smoke: `cd frontend && npx playwright test tests/en-smoke.spec.ts --reporter=list`
-- [ ] Backend: `cd backend && .venv/bin/python -m pytest -q`
-- [ ] Types: `cd frontend && npx tsc --noEmit`
-- [ ] Parity: `cd frontend && npx playwright test tests/design-system-parity.spec.ts --reporter=list`
-- [ ] Screenshots: `cd frontend && npx playwright test tests/plan48a-screenshots.spec.ts --reporter=list`, then look at every shot and say what it shows *(the looking is manual)*
-- [ ] Full suite: `cd frontend && npx playwright test --reporter=list` shows no new failures vs `baseline-failures.txt`
+- [x] Guard: `cd frontend && npx playwright test tests/no-hardcoded-russian.spec.ts --reporter=list`
+- [x] Smoke: `cd frontend && npx playwright test tests/en-smoke.spec.ts --reporter=list`
+- [x] Backend: `cd backend && .venv/bin/python -m pytest -q`
+- [x] Types: `cd frontend && npx tsc --noEmit`
+- [x] Parity: `cd frontend && npx playwright test tests/design-system-parity.spec.ts --reporter=list`
+- [x] Screenshots: `cd frontend && npx playwright test tests/plan48a-screenshots.spec.ts --reporter=list`, then look at every shot and say what it shows *(the looking is manual)*
+- [x] Full suite: `cd frontend && npx playwright test --reporter=list` shows no new failures vs `baseline-failures.txt`
 
 ## Definition of Done
 

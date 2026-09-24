@@ -16,12 +16,14 @@ import GrammarTaskRunner, { type GrammarRule, type Task, type VerbHint } from '.
 interface Lesson {
   id: number;
   title: string;
+  title_en?: string;         // verb lessons only — grouping stays by the RU title/tense_key
   level: 'basic' | 'advanced' | 'practice';
   cases?: number[];          // noun lessons only
   tense_key?: string;        // verb lessons only
   task_count: number;
   rules?: GrammarRule[];
   hint?: VerbHint;           // verb conjugation lessons only
+  hint_en?: VerbHint;
   is_locked: boolean;
   best_score_pct: number | null;
   status?: string;
@@ -84,11 +86,12 @@ function SubcategoryGroup({
   group,
   onStartLesson,
 }: {
-  group: { title: string; lessons: Lesson[] };
+  group: { title: string; titleEn?: string; lessons: Lesson[] };
   onStartLesson: (lesson: Lesson) => void;
 }) {
   const { tr, plural, lang } = useT();
   const [open, setOpen] = useState(false);
+  const displayTitle = (lang === 'en' && group.titleEn) ? group.titleEn : group.title;
 
   const passedCount = group.lessons.filter(
     (l) => l.best_score_pct !== null && l.best_score_pct !== undefined && l.best_score_pct > 0.75
@@ -115,11 +118,11 @@ function SubcategoryGroup({
         }`}
       >
         <div className="flex items-center gap-2 flex-wrap">
-          <span role="heading" aria-level={3} className="text-[14.5px] font-semibold text-ink">{group.title}</span>
+          <span role="heading" aria-level={3} className="text-[14.5px] font-semibold text-ink">{displayTitle}</span>
           {(() => {
             const rule = group.lessons[0]?.rules?.find((r) => r.article_slug);
             if (!rule?.article_slug) return null;
-            const title = (lang === 'ru' ? rule.article_title_ru : rule.article_title_en) || 'Статья';
+            const title = (lang === 'ru' ? rule.article_title_ru : rule.article_title_en) || tr.grammar.articleFallback;
             return (
               <a
                 href={`/dashboard/articles/${rule.article_slug}`}
@@ -439,13 +442,13 @@ export default function GrammarPage() {
                 const catKey = `program-${program.id}`;
                 const isOpen = openCategories.has(catKey);
 
-                const subcategoryGroups: { title: string; lessons: Lesson[] }[] = [];
+                const subcategoryGroups: { title: string; titleEn?: string; lessons: Lesson[] }[] = [];
                 for (const lesson of programLessons) {
                   const last = subcategoryGroups[subcategoryGroups.length - 1];
                   if (last && last.title === lesson.title) {
                     last.lessons.push(lesson);
                   } else {
-                    subcategoryGroups.push({ title: lesson.title, lessons: [lesson] });
+                    subcategoryGroups.push({ title: lesson.title, titleEn: lesson.title_en, lessons: [lesson] });
                   }
                 }
 
@@ -659,7 +662,7 @@ export default function GrammarPage() {
       tasks={tasks}
       level={activeLesson.level}
       rules={activeLesson.rules}
-      hint={activeLesson.hint}
+      hint={(lang === 'en' && activeLesson.hint_en) ? activeLesson.hint_en : activeLesson.hint}
       onExit={resetToLessons}
       onFinish={(score, total, finalMood) => {
         postResult(activeLesson.id, score, total);
