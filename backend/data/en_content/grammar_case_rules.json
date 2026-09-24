@@ -1,0 +1,110 @@
+[
+  {
+    "case_index": 2,
+    "name_en": "Genitive (Kilmininkas)",
+    "question_en": "of whom? of what? (negation, possession, quantity)",
+    "usage_en": "Negation (nėra + genitive), possession, and after the prepositions iš, be, prie, šalia, iki, pas.",
+    "transform_en": "-as→-o (agurkas→agurko), -is/-ys→-io (maišelis→maišelio, virdulys→virdulio), -a→-os (morka→morkos), -ia→-ios (vyšnia→vyšnios), -ė→-ės (bandelė→bandelės); III f. -is→-ies (naktis→nakties); IV: -us→-aus (lietus→lietaus), -ius→-iaus (vaisius→vaisiaus); V: -uo→-ens (vanduo→vandens), sesuo/duktė→-ers.",
+    "endings_sg_en": "-o, -io, -os, -ios, -ės, -ies, -aus, -iaus, -ens, -ers",
+    "endings_pl_en": "-ų, -ių"
+  },
+  {
+    "case_index": 3,
+    "name_en": "Dative (Naudininkas)",
+    "question_en": "to whom? for whom? (indirect object)",
+    "usage_en": "Indirect object: the person something is given to, meant for, or done for.",
+    "transform_en": "-as→-ui (kaimynas→kaimynui), -ias/-is/-ys→-iui (tėvelis→tėveliui), -a→-ai (padavėja→padavėjai), -ia→-iai (ponia→poniai), -ė→-ei (močiutė→močiutei); III f. -is→-iai (žuvis→žuviai); IV: -us→-ui (muziejus→muziejui), -ius→-iui (direktorius→direktoriui); V: -uo→-eniui (šuo→šuniui), sesuo/duktė→-eriai.",
+    "endings_sg_en": "-ui, -iui, -ai, -iai, -ei, -eniui, -eriai",
+    "endings_pl_en": "-ams, -iams, -oms, -ioms, -ėms, -ims, -ums"
+  },
+  {
+    "case_index": 4,
+    "name_en": "Accusative (Galininkas)",
+    "question_en": "whom? what? (direct object)",
+    "usage_en": "Direct object: the person or thing the action is done to (I see, buy, love whom/what).",
+    "transform_en": "-as→-ą (namas→namą), -ias→-ią (kelias→kelią), -is/-ys→-į (maišelis→maišelį, virdulys→virdulį), -a→-ą (mama→mamą), -ia→-ią (vyšnia→vyšnią), -ė→-ę (kriaušė→kriaušę); III f. -is→-į (pilis→pilį); IV: -us→-ų (muziejus→muziejų), -ius→-ių (vaisius→vaisių); V: -uo→-enį (akmuo→akmenį), sesuo/duktė→-erį.",
+    "endings_sg_en": "-ą, -ią, -į, -ę, -ų, -ių, -enį, -erį",
+    "endings_pl_en": "-us, -ius, -as, -ias, -es, -is"
+  },
+  {
+    "case_index": 5,
+    "name_en": "Instrumental (Įnagininkas)",
+    "question_en": "with whom? with what? by what means?",
+    "usage_en": "An instrument, or being together with someone. Used after the preposition su (with whom/what).",
+    "transform_en": "-as→-u (agurkas→agurku), -ias/-is/-ys→-iu (maišelis→maišeliu, virdulys→virduliu), -a→-a (morka→morka), -ia→-ia (vyšnia→vyšnia), -ė→-e (bandelė→bandele); III f. -is→-imi (žuvis→žuvimi); IV: -us→-umi (medus→medumi), -ius→-iumi (direktorius→direktoriumi); V: -uo→-eniu (vanduo→vandeniu), sesuo/duktė→-erimi.",
+    "endings_sg_en": "-u, -iu, -a, -ia, -e, -imi, -umi, -iumi, -eniu, -erimi",
+    "endings_pl_en": "-ais, -iais, -omis, -iomis, -ėmis, -imis, -umis"
+  },
+  {
+    "case_index": 6,
+    "name_en": "Locative (Vietininkas)",
+    "question_en": "where? in whom? in what?",
+    "usage_en": "Location inside something. Answers the question \"where?\" (in the house, in the city).",
+    "transform_en": "-as→-e (miestas→mieste), -ias→-yje (kelias→kelyje), -is/-ys→-yje (maišelis→maišelyje, rūsys→rūsyje), -a→-oje (knyga→knygoje), -ia→-ioje (giria→girioje), -ė→-ėje (kavinė→kavinėje); III f. -is→-yje (šalis→šalyje); IV: -us→-uje (dangus→danguje); V: -uo→-enyje (vanduo→vandenyje).",
+    "endings_sg_en": "-e, -yje, -oje, -ioje, -ėje, -uje, -enyje",
+    "endings_pl_en": "-uose, -iuose, -ose, -iose, -ėse, -yse"
+  },
+  {
+    "case_index": 7,
+    "name_en": "Vocative (Šauksmininkas)",
+    "question_en": "Hey, ...! (addressing someone)",
+    "usage_en": "Addressing a person or creature directly. Used only in speech.",
+    "transform_en": "-as→-e (namas→name!), -is→-i (maišelis→maišeli!), -ys→-y, -a→-a (knyga→knyga!), -ia→-ia, -ė→-e (gatvė→gatve!); IV: -us→-au (turgus→turgau!), -ius→-iau (vaisius→vaisiau!); III f. -is→-ie (pilis→pilie); V: sesuo→seserie!, vanduo→vandenie!",
+    "endings_sg_en": "-e, -i, -y, -a, -ia, -au, -iau, -ie",
+    "endings_pl_en": "-ai, -iai, -os, -ios, -ės, -ys, -ūs"
+  },
+  {
+    "case_index": 8,
+    "name_en": "Nominative plural (Vardininkas Dgs.)",
+    "question_en": "who? what? (plural subject)",
+    "usage_en": "The subject in the plural: who or what performs the action (Čia yra…, Tie… yra…). The dictionary form, in the plural.",
+    "transform_en": "-as→-ai (namas→namai), -ias→-iai (kelias→keliai), -is/-ys→-iai (maišelis→maišeliai, virdulys→virduliai), -a→-os (mama→mamos), -ia→-ios (vyšnia→vyšnios), -ė→-ės (gatvė→gatvės); III f. -is→-ys (naktis→naktys); IV: -us→-ūs (sūnus→sūnūs), but muziejus→-ai; -ius→-iai (vaisius→vaisiai); V: -uo→-enys (akmuo→akmenys), sesuo/duktė→-erys.",
+    "endings_sg_en": "—",
+    "endings_pl_en": "-ai, -iai, -os, -ios, -ės, -ys, -ūs"
+  },
+  {
+    "case_index": 9,
+    "name_en": "Genitive plural (Kilmininkas Dgs.)",
+    "question_en": "of whom? of what? (plural)",
+    "usage_en": "The genitive plural: negation (čia nėra…), quantity (daug, mažai, keli), possession, and the prepositions iš, be, prie, šalia.",
+    "transform_en": "Hard stems -as/-a/-us→-ų (desertas→desertų, citrina→citrinų, sūnus→sūnų); soft stems -ias/-is/-ys/-ia/-ė/-ius→-ių (maišelis→maišelių, virdulys→virdulių, vyšnia→vyšnių, gatvė→gatvių, vaisius→vaisių); III f. -is→-ių (žuvis→žuvių); V: -uo→-enų (akmuo→akmenų), sesuo/duktė→-erų.",
+    "endings_sg_en": "—",
+    "endings_pl_en": "-ų, -ių"
+  },
+  {
+    "case_index": 10,
+    "name_en": "Dative plural (Naudininkas Dgs.)",
+    "question_en": "to whom? for whom? (plural)",
+    "usage_en": "Indirect object in the plural: who something is given to, who needs something, who it is done for.",
+    "transform_en": "-as→-ams (namas→namams), -ias/-is/-ys→-iams (maišelis→maišeliams, virdulys→virduliams), -a→-oms (knyga→knygoms), -ia→-ioms (vyšnia→vyšnioms), -ė→-ėms (gatvė→gatvėms); III f. -is→-ims (žuvis→žuvims); IV: -us→-ums (turgus→turgums), -ius→-iams (vaisius→vaisiams); V: -uo→-enims (akmuo→akmenims), sesuo/duktė→-erims.",
+    "endings_sg_en": "—",
+    "endings_pl_en": "-ams, -iams, -oms, -ioms, -ėms, -ims, -ums, -enims, -erims"
+  },
+  {
+    "case_index": 11,
+    "name_en": "Accusative plural (Galininkas Dgs.)",
+    "question_en": "whom? what? (plural direct object)",
+    "usage_en": "Direct object in the plural.",
+    "transform_en": "-as→-us (namas→namus), -ias/-is/-ys→-ius (maišelis→maišelius, virdulys→virdulius), -a→-as (mama→mamas), -ia→-ias (vyšnia→vyšnias), -ė→-es (gatvė→gatves); III f. -is→-is (naktis→naktis); IV: -us→-us (turgus→turgus), -ius→-ius (vaisius→vaisius); V: -uo→-enis (akmuo→akmenis), sesuo/duktė→-eris.",
+    "endings_sg_en": "—",
+    "endings_pl_en": "-us, -ius, -as, -ias, -es, -is, -enis, -eris"
+  },
+  {
+    "case_index": 12,
+    "name_en": "Instrumental plural (Įnagininkas Dgs.)",
+    "question_en": "with whom? with what? (plural)",
+    "usage_en": "An instrument, or being together with others, in the plural. Used after the preposition su (with whom? with what?).",
+    "transform_en": "-as→-ais (namas→namais), -ias/-is/-ys→-iais (maišelis→maišeliais, virdulys→virduliais), -a→-omis (mama→mamomis), -ia→-iomis (vyšnia→vyšniomis), -ė→-ėmis (gatvė→gatvėmis); III f. -is→-imis (žuvis→žuvimis); IV: -us→-umis (turgus→turgumis), -ius→-iais (vaisius→vaisiais); V: -uo→-enimis (akmuo→akmenimis), sesuo/duktė→-erimis.",
+    "endings_sg_en": "—",
+    "endings_pl_en": "-ais, -iais, -omis, -iomis, -ėmis, -imis, -umis, -enimis, -erimis"
+  },
+  {
+    "case_index": 13,
+    "name_en": "Locative plural (Vietininkas Dgs.)",
+    "question_en": "where? (plural)",
+    "usage_en": "Location inside something, in the plural.",
+    "transform_en": "-as→-uose (miestas→miestuose), -ias→-iuose (kelias→keliuose), -is/-ys→-iuose (maišelis→maišeliuose, rūsys→rūsiuose), -a→-ose (knyga→knygose), -ia→-iose (giria→giriose), -ė→-ėse (kavinė→kavinėse); III f. -is→-yse (šalis→šalyse); IV: -us→-uose (dangus→danguose); V: -uo→-enyse (vanduo→vandenyse).",
+    "endings_sg_en": "—",
+    "endings_pl_en": "-uose, -iuose, -ose, -iose, -ėse, -yse, -enyse"
+  }
+]

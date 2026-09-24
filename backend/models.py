@@ -195,6 +195,7 @@ class GrammarSentence(SQLModel, table=True):
     answer_ending: str                         # "į"
     full_word: str                             # "brolį"
     russian: str                               # "Лайма видит брата."
+    english: Optional[str] = None              # "Laima sees her brother." (#48b)
     archived: bool = Field(default=False)      # soft-delete: keep row, hide from exercises
     use_in_basic: bool = Field(default=True)    # include in basic lessons
     use_in_advanced: bool = Field(default=True) # include in advanced lessons
@@ -213,6 +214,13 @@ class GrammarCaseRule(SQLModel, table=True):
     endings_sg: str                 # singular endings, e.g. "-ą, -į, -ų"
     endings_pl: str                 # plural endings, e.g. "-us, -ius, -as, -es"
     transform: str                  # transformation rules description
+    # EN twins (#48b) — nullable; the frontend falls back to the RU field when empty
+    name_en: Optional[str] = None
+    question_en: Optional[str] = None
+    usage_en: Optional[str] = None
+    transform_en: Optional[str] = None
+    endings_sg_en: Optional[str] = None
+    endings_pl_en: Optional[str] = None
     status: str = Field(default="testing")  # draft | testing | published (no creator tracking for seeded rules)
     article_slug: Optional[str] = Field(default=None)  # slug of a supporting article for this case
 
@@ -259,6 +267,7 @@ class PracticeCategory(SQLModel, table=True):
     name_ru: str
     name_en: Optional[str] = None
     description_ru: Optional[str] = None
+    description_en: Optional[str] = None  # (#48b)
     source_url: Optional[str] = None
     sort_order: int = Field(default=0)
     created_at: datetime = Field(default_factory=_utcnow)
@@ -588,6 +597,7 @@ class GrammarProgram(SQLModel, table=True):
     title: str
     title_en: Optional[str] = None
     description: Optional[str] = None
+    description_en: Optional[str] = None  # (#48b)
     difficulty: int = Field(default=1)
     is_public: bool = Field(default=True)
     created_at: datetime = Field(default_factory=_utcnow)
@@ -666,6 +676,7 @@ class Verb(SQLModel, table=True):
     present_3p: str                          # 3rd-person present: "kalba"
     past_3p: str                             # 3rd-person past simple: "kalbėjo"
     translation_ru: str                      # Russian translation
+    translation_en: Optional[str] = None     # English translation (#48b)
     is_reflexive: bool = Field(default=False)
     # JSON blobs — see extract_verbs_pdf.py for schema docs
     conjugations: str = Field(default="{}")   # {tense_key: {person: form}}

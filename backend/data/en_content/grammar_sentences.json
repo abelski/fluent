@@ -1,0 +1,1208 @@
+[
+  {
+    "case_index": 2,
+    "display": "Ten nėra nam___.",
+    "russian": "Там нет дома.",
+    "english": "There is no house there."
+  },
+  {
+    "case_index": 2,
+    "display": "Šalia draug___ yra parduotuvė.",
+    "russian": "Рядом с другом есть магазин.",
+    "english": "There is a store near my friend."
+  },
+  {
+    "case_index": 2,
+    "display": "Šalia universitet___ yra kavinė.",
+    "russian": "Рядом с университетом есть кафе.",
+    "english": "There is a café next to the university."
+  },
+  {
+    "case_index": 2,
+    "display": "Ten nėra brol___.",
+    "russian": "Там нет брата.",
+    "english": "My brother isn't there."
+  },
+  {
+    "case_index": 2,
+    "display": "Ten nėra knyg___.",
+    "russian": "Там нет книги.",
+    "english": "There is no book there."
+  },
+  {
+    "case_index": 2,
+    "display": "Rasa ieško draug___.",
+    "russian": "Раса ищет подругу.",
+    "english": "Rasa is looking for her friend."
+  },
+  {
+    "case_index": 2,
+    "display": "Mama ieško sūn___.",
+    "russian": "Мама ищет сына.",
+    "english": "Mom is looking for her son."
+  },
+  {
+    "case_index": 2,
+    "display": "Šalia muziej___ yra kavinė.",
+    "russian": "Рядом с музеем есть кафе.",
+    "english": "There is a café next to the museum."
+  },
+  {
+    "case_index": 2,
+    "display": "Šalia turg___ yra parduotuvė.",
+    "russian": "Рядом с рынком есть магазин.",
+    "english": "There is a store next to the market."
+  },
+  {
+    "case_index": 2,
+    "display": "Šalia katedr___ yra restoranas.",
+    "russian": "Рядом с собором есть ресторан.",
+    "english": "There is a restaurant next to the cathedral."
+  },
+  {
+    "case_index": 2,
+    "display": "Šalia bažnyč___ yra parduotuvė.",
+    "russian": "Рядом с церковью есть магазин.",
+    "english": "There is a store next to the church."
+  },
+  {
+    "case_index": 2,
+    "display": "Šalia aikšt___ yra restoranas.",
+    "russian": "Рядом с площадью есть ресторан.",
+    "english": "There is a restaurant next to the square."
+  },
+  {
+    "case_index": 2,
+    "display": "Šalia stot___ yra viešbutis.",
+    "russian": "Рядом с вокзалом есть гостиница.",
+    "english": "There is a hotel next to the station."
+  },
+  {
+    "case_index": 2,
+    "display": "Ten nėra sod___.",
+    "russian": "Там нет сада.",
+    "english": "There is no garden there."
+  },
+  {
+    "case_index": 2,
+    "display": "Ten nėra obuol___.",
+    "russian": "Там нет яблока.",
+    "english": "There is no apple there."
+  },
+  {
+    "case_index": 2,
+    "display": "Ten nėra profesor___.",
+    "russian": "Там нет профессора.",
+    "english": "The professor isn't there."
+  },
+  {
+    "case_index": 2,
+    "display": "Petras ieško draug___.",
+    "russian": "Пятрас ищет друга.",
+    "english": "Petras is looking for his friend."
+  },
+  {
+    "case_index": 2,
+    "display": "Ten nėra aktor___.",
+    "russian": "Там нет актёра.",
+    "english": "The actor isn't there."
+  },
+  {
+    "case_index": 2,
+    "display": "Ona neturi knyg___.",
+    "russian": "У Оны нет книги.",
+    "english": "Ona doesn't have a book."
+  },
+  {
+    "case_index": 2,
+    "display": "Šalia rotuš___ yra kavinė.",
+    "russian": "Рядом с ратушей есть кафе.",
+    "english": "There is a café next to the town hall."
+  },
+  {
+    "case_index": 2,
+    "display": "Ten nėra draug___.",
+    "russian": "Там нет подруги.",
+    "english": "My friend isn't there."
+  },
+  {
+    "case_index": 2,
+    "display": "Petras ieško sūn___.",
+    "russian": "Пятрас ищет сына.",
+    "english": "Petras is looking for his son."
+  },
+  {
+    "case_index": 3,
+    "display": "Tai reikalinga brol___.",
+    "russian": "Это нужно брату.",
+    "english": "My brother needs this."
+  },
+  {
+    "case_index": 3,
+    "display": "Tai reikalinga draug___.",
+    "russian": "Это нужно другу.",
+    "english": "My friend needs this."
+  },
+  {
+    "case_index": 3,
+    "display": "Tai reikalinga senel___.",
+    "russian": "Это нужно дедушке.",
+    "english": "Grandpa needs this."
+  },
+  {
+    "case_index": 3,
+    "display": "Tai reikalinga sūn___.",
+    "russian": "Это нужно сыну.",
+    "english": "My son needs this."
+  },
+  {
+    "case_index": 3,
+    "display": "Mama duoda knygą brol___.",
+    "russian": "Мама даёт книгу брату.",
+    "english": "Mom gives my brother a book."
+  },
+  {
+    "case_index": 3,
+    "display": "Mama duoda tortą sūn___.",
+    "russian": "Мама даёт торт сыну.",
+    "english": "Mom gives her son a cake."
+  },
+  {
+    "case_index": 3,
+    "display": "Petras davė gėles draug___.",
+    "russian": "Пятрас дал цветы подруге.",
+    "english": "Petras gave flowers to his friend."
+  },
+  {
+    "case_index": 3,
+    "display": "Aš daviau knygą mam___.",
+    "russian": "Я дал(а) книгу маме.",
+    "english": "I gave Mom a book."
+  },
+  {
+    "case_index": 3,
+    "display": "Rasa davė tortą senel___.",
+    "russian": "Раса дала торт дедушке.",
+    "english": "Rasa gave Grandpa a cake."
+  },
+  {
+    "case_index": 3,
+    "display": "Petras padovanojo knygą profesor___.",
+    "russian": "Пятрас подарил книгу профессору.",
+    "english": "Petras gave the professor a book as a gift."
+  },
+  {
+    "case_index": 3,
+    "display": "Tai reikalinga profesor___.",
+    "russian": "Это нужно профессору.",
+    "english": "The professor needs this."
+  },
+  {
+    "case_index": 3,
+    "display": "Mama davė sumuštinį sūn___.",
+    "russian": "Мама дала бутерброд сыну.",
+    "english": "Mom gave her son a sandwich."
+  },
+  {
+    "case_index": 3,
+    "display": "Tai reikalinga aktor___.",
+    "russian": "Это нужно актёру.",
+    "english": "The actor needs this."
+  },
+  {
+    "case_index": 3,
+    "display": "Jonas padovanojo žiedą draug___.",
+    "russian": "Йонас подарил кольцо подруге.",
+    "english": "Jonas gave his girlfriend a ring."
+  },
+  {
+    "case_index": 3,
+    "display": "Tai reikalinga sveč___.",
+    "russian": "Это нужно гостю.",
+    "english": "The guest needs this."
+  },
+  {
+    "case_index": 3,
+    "display": "Mama duoda obuolį senel___.",
+    "russian": "Мама даёт яблоко дедушке.",
+    "english": "Mom gives Grandpa an apple."
+  },
+  {
+    "case_index": 3,
+    "display": "Rasa davė gėles mam___.",
+    "russian": "Раса дала цветы маме.",
+    "english": "Rasa gave Mom flowers."
+  },
+  {
+    "case_index": 4,
+    "display": "Laima mato brol___.",
+    "russian": "Лайма видит брата.",
+    "english": "Laima sees her brother."
+  },
+  {
+    "case_index": 4,
+    "display": "Jonas skaito knyg___.",
+    "russian": "Йонас читает книгу.",
+    "english": "Jonas is reading a book."
+  },
+  {
+    "case_index": 4,
+    "display": "Rasa mato draug___.",
+    "russian": "Раса видит друга.",
+    "english": "Rasa sees her friend."
+  },
+  {
+    "case_index": 4,
+    "display": "Petras mato draug___.",
+    "russian": "Пятрас видит подругу.",
+    "english": "Petras sees his friend."
+  },
+  {
+    "case_index": 4,
+    "display": "Vaikai valgo tort___.",
+    "russian": "Дети едят торт.",
+    "english": "The children are eating cake."
+  },
+  {
+    "case_index": 4,
+    "display": "Aš valgau obuol___.",
+    "russian": "Я ем яблоко.",
+    "english": "I am eating an apple."
+  },
+  {
+    "case_index": 4,
+    "display": "Mama perka mork___.",
+    "russian": "Мама покупает морковь.",
+    "english": "Mom is buying a carrot."
+  },
+  {
+    "case_index": 4,
+    "display": "Jonas valgo sumuštin___.",
+    "russian": "Йонас ест бутерброд.",
+    "english": "Jonas is eating a sandwich."
+  },
+  {
+    "case_index": 4,
+    "display": "Mama myli sūn___.",
+    "russian": "Мама любит сына.",
+    "english": "Mom loves her son."
+  },
+  {
+    "case_index": 4,
+    "display": "Tėvas myli dukt___.",
+    "russian": "Папа любит дочь.",
+    "english": "Dad loves his daughter."
+  },
+  {
+    "case_index": 4,
+    "display": "Rasa neša puodel___.",
+    "russian": "Раса несёт чашку.",
+    "english": "Rasa is carrying a cup."
+  },
+  {
+    "case_index": 4,
+    "display": "Aš geriu vand___.",
+    "russian": "Я пью воду.",
+    "english": "I am drinking water."
+  },
+  {
+    "case_index": 4,
+    "display": "Rasa perka agurk___.",
+    "russian": "Раса покупает огурец.",
+    "english": "Rasa is buying a cucumber."
+  },
+  {
+    "case_index": 4,
+    "display": "Vaikai valgo desert___.",
+    "russian": "Дети едят десерт.",
+    "english": "The children are eating dessert."
+  },
+  {
+    "case_index": 4,
+    "display": "Ona perka spurg___.",
+    "russian": "Она покупает пончик.",
+    "english": "Ona is buying a donut."
+  },
+  {
+    "case_index": 4,
+    "display": "Mama perka citrin___.",
+    "russian": "Мама покупает лимон.",
+    "english": "Mom is buying a lemon."
+  },
+  {
+    "case_index": 4,
+    "display": "Katė mato žuv___.",
+    "russian": "Кошка видит рыбу.",
+    "english": "The cat sees a fish."
+  },
+  {
+    "case_index": 4,
+    "display": "Vaikas valgo bandel___.",
+    "russian": "Ребёнок ест булочку.",
+    "english": "The child is eating a bun."
+  },
+  {
+    "case_index": 4,
+    "display": "Rasa perka slyv___.",
+    "russian": "Раса покупает сливу.",
+    "english": "Rasa is buying a plum."
+  },
+  {
+    "case_index": 4,
+    "display": "Mama perka brašk___.",
+    "russian": "Мама покупает клубнику.",
+    "english": "Mom is buying a strawberry."
+  },
+  {
+    "case_index": 4,
+    "display": "Jonas perka tort___.",
+    "russian": "Йонас покупает торт.",
+    "english": "Jonas is buying a cake."
+  },
+  {
+    "case_index": 4,
+    "display": "Aš turiu ses___.",
+    "russian": "Я имею сестру.",
+    "english": "I have a sister."
+  },
+  {
+    "case_index": 4,
+    "display": "Jonas neša krep___.",
+    "russian": "Йонас несёт сумку.",
+    "english": "Jonas is carrying a bag."
+  },
+  {
+    "case_index": 5,
+    "display": "Jis eina su brol___.",
+    "russian": "Он идёт с братом.",
+    "english": "He is walking with his brother."
+  },
+  {
+    "case_index": 5,
+    "display": "Rasa eina su draug___.",
+    "russian": "Раса идёт с подругой.",
+    "english": "Rasa is walking with her friend."
+  },
+  {
+    "case_index": 5,
+    "display": "Jonas eina su draug___.",
+    "russian": "Йонас идёт с другом.",
+    "english": "Jonas is walking with his friend."
+  },
+  {
+    "case_index": 5,
+    "display": "Petras dirba su profesor___.",
+    "russian": "Пятрас работает с профессором.",
+    "english": "Petras works with the professor."
+  },
+  {
+    "case_index": 5,
+    "display": "Jonas eina su sveč___.",
+    "russian": "Йонас идёт с гостем.",
+    "english": "Jonas is walking with a guest."
+  },
+  {
+    "case_index": 5,
+    "display": "Mama eina su ses___.",
+    "russian": "Мама идёт с сестрой.",
+    "english": "Mom is walking with her sister."
+  },
+  {
+    "case_index": 5,
+    "display": "Mama atėjo su tort___.",
+    "russian": "Мама пришла с тортом.",
+    "english": "Mom came with a cake."
+  },
+  {
+    "case_index": 5,
+    "display": "Rasa atėjo su obuol___.",
+    "russian": "Раса пришла с яблоком.",
+    "english": "Rasa came with an apple."
+  },
+  {
+    "case_index": 5,
+    "display": "Jonas atėjo su knyg___.",
+    "russian": "Йонас пришёл с книгой.",
+    "english": "Jonas came with a book."
+  },
+  {
+    "case_index": 5,
+    "display": "Petras eina su senel___.",
+    "russian": "Пятрас идёт с дедушкой.",
+    "english": "Petras is walking with his grandpa."
+  },
+  {
+    "case_index": 5,
+    "display": "Ona dirba su aktor___.",
+    "russian": "Она работает с актёром.",
+    "english": "Ona works with an actor."
+  },
+  {
+    "case_index": 5,
+    "display": "Petras eina su sūn___.",
+    "russian": "Пятрас идёт с сыном.",
+    "english": "Petras is walking with his son."
+  },
+  {
+    "case_index": 5,
+    "display": "Rasa atėjo su citrin___.",
+    "russian": "Раса пришла с лимоном.",
+    "english": "Rasa came with a lemon."
+  },
+  {
+    "case_index": 5,
+    "display": "Jonas eina su tėvel___.",
+    "russian": "Йонас идёт с папой.",
+    "english": "Jonas is walking with his dad."
+  },
+  {
+    "case_index": 5,
+    "display": "Mama atėjo su pirkin___.",
+    "russian": "Мама пришла с покупкой.",
+    "english": "Mom came with a purchase."
+  },
+  {
+    "case_index": 5,
+    "display": "Mama eina su dukt___.",
+    "russian": "Мама идёт с дочерью.",
+    "english": "Mom is walking with her daughter."
+  },
+  {
+    "case_index": 6,
+    "display": "Mama dirba universitet___.",
+    "russian": "Мама работает в университете.",
+    "english": "Mom works at the university."
+  },
+  {
+    "case_index": 6,
+    "display": "Jie gyvena rajon___.",
+    "russian": "Они живут в районе.",
+    "english": "They live in the neighborhood."
+  },
+  {
+    "case_index": 6,
+    "display": "Mama dirba turg___.",
+    "russian": "Мама работает на рынке.",
+    "english": "Mom works at the market."
+  },
+  {
+    "case_index": 6,
+    "display": "Jie gyvena sodyb___.",
+    "russian": "Они живут в усадьбе.",
+    "english": "They live on a homestead."
+  },
+  {
+    "case_index": 6,
+    "display": "Vaikai žaidžia sod___.",
+    "russian": "Дети играют в саду.",
+    "english": "The children are playing in the garden."
+  },
+  {
+    "case_index": 6,
+    "display": "Mama dirba centr___.",
+    "russian": "Мама работает в центре.",
+    "english": "Mom works in the center."
+  },
+  {
+    "case_index": 6,
+    "display": "Jis gyvena nam___.",
+    "russian": "Он живёт в доме.",
+    "english": "He lives in a house."
+  },
+  {
+    "case_index": 6,
+    "display": "Petras dirba muziej___.",
+    "russian": "Пятрас работает в музее.",
+    "english": "Petras works at the museum."
+  },
+  {
+    "case_index": 6,
+    "display": "Jie susitinka aikšt___.",
+    "russian": "Они встречаются на площади.",
+    "english": "They meet in the square."
+  },
+  {
+    "case_index": 6,
+    "display": "Vaikai žaidžia gatv___.",
+    "russian": "Дети играют на улице.",
+    "english": "The children are playing in the street."
+  },
+  {
+    "case_index": 6,
+    "display": "Mama laukia stot___.",
+    "russian": "Мама ждёт на вокзале.",
+    "english": "Mom is waiting at the station."
+  },
+  {
+    "case_index": 6,
+    "display": "Jonas gyvena pil___.",
+    "russian": "Йонас живёт в замке.",
+    "english": "Jonas lives in a castle."
+  },
+  {
+    "case_index": 6,
+    "display": "Jie susitinka rotuš___.",
+    "russian": "Они встречаются в ратуше.",
+    "english": "They meet at the town hall."
+  },
+  {
+    "case_index": 6,
+    "display": "Vaikai mokosi universitet___.",
+    "russian": "Дети учатся в университете.",
+    "english": "The children study at the university."
+  },
+  {
+    "case_index": 6,
+    "display": "Mama dirba bažnyč___.",
+    "russian": "Мама работает в церкви.",
+    "english": "Mom works at the church."
+  },
+  {
+    "case_index": 6,
+    "display": "Jonas gyvena rajon___.",
+    "russian": "Йонас живёт в районе.",
+    "english": "Jonas lives in the neighborhood."
+  },
+  {
+    "case_index": 6,
+    "display": "Rasa dirba turg___.",
+    "russian": "Раса работает на рынке.",
+    "english": "Rasa works at the market."
+  },
+  {
+    "case_index": 6,
+    "display": "Jie susitinka centr___.",
+    "russian": "Они встречаются в центре.",
+    "english": "They meet in the center."
+  },
+  {
+    "case_index": 6,
+    "display": "Vaikai žaidžia kambar___.",
+    "russian": "Дети играют в комнате.",
+    "english": "The children are playing in the room."
+  },
+  {
+    "case_index": 6,
+    "display": "Petras gyvena sodyb___.",
+    "russian": "Пятрас живёт в усадьбе.",
+    "english": "Petras lives on a homestead."
+  },
+  {
+    "case_index": 7,
+    "display": "Sveiki, brol___!",
+    "russian": "Привет, брат!",
+    "english": "Hello, brother!"
+  },
+  {
+    "case_index": 7,
+    "display": "Ačiū, senel___!",
+    "russian": "Спасибо, дедушка!",
+    "english": "Thank you, Grandpa!"
+  },
+  {
+    "case_index": 7,
+    "display": "Labas, draug___! (draugas)",
+    "russian": "Привет, друг!",
+    "english": "Hi, friend!"
+  },
+  {
+    "case_index": 7,
+    "display": "Sveiki, profesor___!",
+    "russian": "Привет, профессор!",
+    "english": "Hello, professor!"
+  },
+  {
+    "case_index": 7,
+    "display": "Ačiū, aktor___!",
+    "russian": "Спасибо, актёр!",
+    "english": "Thank you, actor!"
+  },
+  {
+    "case_index": 7,
+    "display": "Labas, mam___!",
+    "russian": "Привет, мама!",
+    "english": "Hi, Mom!"
+  },
+  {
+    "case_index": 7,
+    "display": "Sveiki, tėvel___!",
+    "russian": "Привет, папочка!",
+    "english": "Hello, Daddy!"
+  },
+  {
+    "case_index": 7,
+    "display": "Labas, sūn___!",
+    "russian": "Привет, сын!",
+    "english": "Hi, son!"
+  },
+  {
+    "case_index": 7,
+    "display": "Ačiū, dukt___!",
+    "russian": "Спасибо, дочь!",
+    "english": "Thank you, daughter!"
+  },
+  {
+    "case_index": 7,
+    "display": "Sveiki, močiut___!",
+    "russian": "Привет, бабушка!",
+    "english": "Hello, Grandma!"
+  },
+  {
+    "case_index": 7,
+    "display": "Labas, padavėj___!",
+    "russian": "Привет, официантка!",
+    "english": "Hello, waitress!"
+  },
+  {
+    "case_index": 7,
+    "display": "Sveiki, draug___! (draugė)",
+    "russian": "Привет, подруга!",
+    "english": "Hello, friend!"
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra brol___.",
+    "russian": "Здесь есть братья.",
+    "english": "Here are the brothers."
+  },
+  {
+    "case_index": 8,
+    "display": "Tie brol___ yra aukšti.",
+    "russian": "Эти братья высокие.",
+    "english": "Those brothers are tall."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra knyg___.",
+    "russian": "Здесь есть книги.",
+    "english": "Here are the books."
+  },
+  {
+    "case_index": 8,
+    "display": "Tos knyg___ yra įdomios.",
+    "russian": "Эти книги интересные.",
+    "english": "Those books are interesting."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra obuol___.",
+    "russian": "Здесь есть яблоки.",
+    "english": "Here are the apples."
+  },
+  {
+    "case_index": 8,
+    "display": "Tie obuol___ yra saldūs.",
+    "russian": "Эти яблоки сладкие.",
+    "english": "Those apples are sweet."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra agurk___.",
+    "russian": "Здесь есть огурцы.",
+    "english": "Here are the cucumbers."
+  },
+  {
+    "case_index": 8,
+    "display": "Tie agurk___ yra žali.",
+    "russian": "Эти огурцы зелёные.",
+    "english": "Those cucumbers are green."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra tort___.",
+    "russian": "Здесь есть торты.",
+    "english": "Here are the cakes."
+  },
+  {
+    "case_index": 8,
+    "display": "Tie draug___ yra linksmi.",
+    "russian": "Эти друзья веселые.",
+    "english": "Those friends are cheerful."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra draug___.",
+    "russian": "Здесь есть друзья.",
+    "english": "Here are the friends."
+  },
+  {
+    "case_index": 8,
+    "display": "Tos draug___ yra geros.",
+    "russian": "Эти подруги хорошие.",
+    "english": "Those friends are nice."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra sveč___.",
+    "russian": "Здесь есть гости.",
+    "english": "Here are the guests."
+  },
+  {
+    "case_index": 8,
+    "display": "Tos bažnyč___ yra senos.",
+    "russian": "Эти церкви старые.",
+    "english": "Those churches are old."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra muziej___.",
+    "russian": "Здесь есть музеи.",
+    "english": "Here are the museums."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra mork___.",
+    "russian": "Здесь есть морковь.",
+    "english": "Here are the carrots."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra brašk___.",
+    "russian": "Здесь есть клубника.",
+    "english": "Here are the strawberries."
+  },
+  {
+    "case_index": 8,
+    "display": "Tie senel___ yra geri.",
+    "russian": "Эти дедушки хорошие.",
+    "english": "Those grandparents are nice."
+  },
+  {
+    "case_index": 8,
+    "display": "Čia yra profesor___.",
+    "russian": "Здесь есть профессора.",
+    "english": "Here are the professors."
+  },
+  {
+    "case_index": 8,
+    "display": "Tie turg___ yra dideli.",
+    "russian": "Эти рынки большие.",
+    "english": "Those markets are big."
+  },
+  {
+    "case_index": 8,
+    "display": "Tie sod___ yra gražūs.",
+    "russian": "Эти сады красивые.",
+    "english": "Those gardens are beautiful."
+  },
+  {
+    "case_index": 9,
+    "display": "Čia nėra brol___.",
+    "russian": "Здесь нет братьев.",
+    "english": "There are no brothers here."
+  },
+  {
+    "case_index": 9,
+    "display": "Rasa neturi knyg___.",
+    "russian": "У Расы нет книг.",
+    "english": "Rasa has no books."
+  },
+  {
+    "case_index": 9,
+    "display": "Aš turiu daug draug___.",
+    "russian": "У меня много друзей.",
+    "english": "I have a lot of friends."
+  },
+  {
+    "case_index": 9,
+    "display": "Čia nėra obuol___.",
+    "russian": "Здесь нет яблок.",
+    "english": "There are no apples here."
+  },
+  {
+    "case_index": 9,
+    "display": "Jonas neturi draug___.",
+    "russian": "У Йонаса нет друзей.",
+    "english": "Jonas has no friends."
+  },
+  {
+    "case_index": 9,
+    "display": "Aš turiu daug knyg___.",
+    "russian": "У меня много книг.",
+    "english": "I have a lot of books."
+  },
+  {
+    "case_index": 9,
+    "display": "Čia nėra muziej___.",
+    "russian": "Здесь нет музеев.",
+    "english": "There are no museums here."
+  },
+  {
+    "case_index": 9,
+    "display": "Čia nėra agurk___.",
+    "russian": "Здесь нет огурцов.",
+    "english": "There are no cucumbers here."
+  },
+  {
+    "case_index": 9,
+    "display": "Aš turiu daug pirkin___.",
+    "russian": "У меня много покупок.",
+    "english": "I have a lot of purchases."
+  },
+  {
+    "case_index": 9,
+    "display": "Čia nėra brašk___.",
+    "russian": "Здесь нет клубники.",
+    "english": "There are no strawberries here."
+  },
+  {
+    "case_index": 9,
+    "display": "Čia nėra tort___.",
+    "russian": "Здесь нет тортов.",
+    "english": "There are no cakes here."
+  },
+  {
+    "case_index": 9,
+    "display": "Aš turiu daug obuol___.",
+    "russian": "У меня много яблок.",
+    "english": "I have a lot of apples."
+  },
+  {
+    "case_index": 9,
+    "display": "Čia nėra profesor___.",
+    "russian": "Здесь нет профессоров.",
+    "english": "There are no professors here."
+  },
+  {
+    "case_index": 9,
+    "display": "Rasa neturi draug___.",
+    "russian": "У Расы нет подруг.",
+    "english": "Rasa has no female friends."
+  },
+  {
+    "case_index": 9,
+    "display": "Aš turiu daug sveč___.",
+    "russian": "У меня много гостей.",
+    "english": "I have a lot of guests."
+  },
+  {
+    "case_index": 9,
+    "display": "Čia nėra nam___.",
+    "russian": "Здесь нет домов.",
+    "english": "There are no houses here."
+  },
+  {
+    "case_index": 9,
+    "display": "Jonas neturi brol___.",
+    "russian": "У Йонаса нет братьев.",
+    "english": "Jonas has no brothers."
+  },
+  {
+    "case_index": 9,
+    "display": "Aš turiu daug mork___.",
+    "russian": "У меня много моркови.",
+    "english": "I have a lot of carrots."
+  },
+  {
+    "case_index": 9,
+    "display": "Čia nėra sod___.",
+    "russian": "Здесь нет садов.",
+    "english": "There are no gardens here."
+  },
+  {
+    "case_index": 9,
+    "display": "Rasa neturi tort___.",
+    "russian": "У Расы нет тортов.",
+    "english": "Rasa has no cakes."
+  },
+  {
+    "case_index": 10,
+    "display": "Tai reikalinga draug___.",
+    "russian": "Это нужно друзьям.",
+    "english": "My friends need this."
+  },
+  {
+    "case_index": 10,
+    "display": "Petras padovanojo knygas senel___.",
+    "russian": "Пятрас подарил книги дедушкам.",
+    "english": "Petras gave his grandparents books as a gift."
+  },
+  {
+    "case_index": 10,
+    "display": "Tai reikalinga profesor___.",
+    "russian": "Это нужно профессорам.",
+    "english": "The professors need this."
+  },
+  {
+    "case_index": 10,
+    "display": "Mama davė tortą brol___.",
+    "russian": "Мама дала торт братьям.",
+    "english": "Mom gave the brothers a cake."
+  },
+  {
+    "case_index": 10,
+    "display": "Jonas pasakė sveč___.",
+    "russian": "Йонас сказал гостям.",
+    "english": "Jonas told the guests."
+  },
+  {
+    "case_index": 10,
+    "display": "Tai reikalinga aktor___.",
+    "russian": "Это нужно актёрам.",
+    "english": "The actors need this."
+  },
+  {
+    "case_index": 10,
+    "display": "Petras padovanojo gėles draug___.",
+    "russian": "Пятрас подарил цветы подругам.",
+    "english": "Petras gave flowers to his friends."
+  },
+  {
+    "case_index": 10,
+    "display": "Mama davė obuolius brol___.",
+    "russian": "Мама дала яблоки братьям.",
+    "english": "Mom gave the brothers apples."
+  },
+  {
+    "case_index": 10,
+    "display": "Tai reikalinga senel___.",
+    "russian": "Это нужно дедушкам.",
+    "english": "My grandparents need this."
+  },
+  {
+    "case_index": 10,
+    "display": "Rasa davė knygas sūn___.",
+    "russian": "Раса дала книги сыновьям.",
+    "english": "Rasa gave books to her sons."
+  },
+  {
+    "case_index": 10,
+    "display": "Mama duoda tortus senel___.",
+    "russian": "Мама даёт торты дедушкам.",
+    "english": "Mom gives cakes to the grandparents."
+  },
+  {
+    "case_index": 11,
+    "display": "Laima mato brol___.",
+    "russian": "Лайма видит братьев.",
+    "english": "Laima sees her brothers."
+  },
+  {
+    "case_index": 11,
+    "display": "Tėvas perka obuol___.",
+    "russian": "Папа покупает яблоки.",
+    "english": "Dad is buying apples."
+  },
+  {
+    "case_index": 11,
+    "display": "Jonas mato draug___.",
+    "russian": "Йонас видит друзей.",
+    "english": "Jonas sees his friends."
+  },
+  {
+    "case_index": 11,
+    "display": "Rasa perka knyg___.",
+    "russian": "Раса покупает книги.",
+    "english": "Rasa is buying books."
+  },
+  {
+    "case_index": 11,
+    "display": "Mama myli sūn___.",
+    "russian": "Мама любит сыновей.",
+    "english": "Mom loves her sons."
+  },
+  {
+    "case_index": 11,
+    "display": "Vaikai valgo obuol___.",
+    "russian": "Дети едят яблоки.",
+    "english": "The children are eating apples."
+  },
+  {
+    "case_index": 11,
+    "display": "Mama perka agurk___.",
+    "russian": "Мама покупает огурцы.",
+    "english": "Mom is buying cucumbers."
+  },
+  {
+    "case_index": 11,
+    "display": "Mama perka mork___.",
+    "russian": "Мама покупает морковь.",
+    "english": "Mom is buying carrots."
+  },
+  {
+    "case_index": 11,
+    "display": "Tėvas mato draug___.",
+    "russian": "Папа видит подруг.",
+    "english": "Dad sees his friends."
+  },
+  {
+    "case_index": 11,
+    "display": "Aš matau senel___.",
+    "russian": "Я вижу дедушек.",
+    "english": "I see my grandparents."
+  },
+  {
+    "case_index": 11,
+    "display": "Jonas perka tort___.",
+    "russian": "Йонас покупает торты.",
+    "english": "Jonas is buying cakes."
+  },
+  {
+    "case_index": 11,
+    "display": "Rasa perka slyv___.",
+    "russian": "Раса покупает сливы.",
+    "english": "Rasa is buying plums."
+  },
+  {
+    "case_index": 11,
+    "display": "Vaikai mato sveč___.",
+    "russian": "Дети видят гостей.",
+    "english": "The children see the guests."
+  },
+  {
+    "case_index": 11,
+    "display": "Petras mato aktor___.",
+    "russian": "Пятрас видит актёров.",
+    "english": "Petras sees the actors."
+  },
+  {
+    "case_index": 12,
+    "display": "Jis eina su brol___.",
+    "russian": "Он идёт с братьями.",
+    "english": "He is walking with his brothers."
+  },
+  {
+    "case_index": 12,
+    "display": "Rasa eina su draug___.",
+    "russian": "Раса идёт с друзьями.",
+    "english": "Rasa is walking with her friends."
+  },
+  {
+    "case_index": 12,
+    "display": "Mama atėjo su pirkin___.",
+    "russian": "Мама пришла с покупками.",
+    "english": "Mom came with her purchases."
+  },
+  {
+    "case_index": 12,
+    "display": "Jonas atėjo su knyg___.",
+    "russian": "Йонас пришёл с книгами.",
+    "english": "Jonas came with books."
+  },
+  {
+    "case_index": 12,
+    "display": "Petras eina su senel___.",
+    "russian": "Пятрас идёт с дедушками.",
+    "english": "Petras is walking with his grandparents."
+  },
+  {
+    "case_index": 12,
+    "display": "Ona atėjo su obuol___.",
+    "russian": "Она пришла с яблоками.",
+    "english": "Ona came with apples."
+  },
+  {
+    "case_index": 12,
+    "display": "Jie eina su profesor___.",
+    "russian": "Они идут с профессорами.",
+    "english": "They are walking with the professors."
+  },
+  {
+    "case_index": 12,
+    "display": "Rasa atėjo su draug___.",
+    "russian": "Раса пришла с подругами.",
+    "english": "Rasa came with her friends."
+  },
+  {
+    "case_index": 12,
+    "display": "Mama atėjo su tort___.",
+    "russian": "Мама пришла с тортами.",
+    "english": "Mom came with cakes."
+  },
+  {
+    "case_index": 12,
+    "display": "Jie eina su sūn___.",
+    "russian": "Они идут с сыновьями.",
+    "english": "They are walking with their sons."
+  },
+  {
+    "case_index": 12,
+    "display": "Jonas eina su tėvel___.",
+    "russian": "Йонас идёт с родителями.",
+    "english": "Jonas is walking with his parents."
+  },
+  {
+    "case_index": 12,
+    "display": "Rasa atėjo su mork___.",
+    "russian": "Раса пришла с морковью.",
+    "english": "Rasa came with carrots."
+  },
+  {
+    "case_index": 13,
+    "display": "Jie gyvena nam___.",
+    "russian": "Они живут в домах.",
+    "english": "They live in houses."
+  },
+  {
+    "case_index": 13,
+    "display": "Vaikai žaidžia sod___.",
+    "russian": "Дети играют в садах.",
+    "english": "The children play in the gardens."
+  },
+  {
+    "case_index": 13,
+    "display": "Mama dirba muziej___.",
+    "russian": "Мама работает в музеях.",
+    "english": "Mom works in museums."
+  },
+  {
+    "case_index": 13,
+    "display": "Jie gyvena rajon___.",
+    "russian": "Они живут в районах.",
+    "english": "They live in different districts."
+  },
+  {
+    "case_index": 13,
+    "display": "Petras dirba centr___.",
+    "russian": "Пятрас работает в центрах.",
+    "english": "Petras works in the centers."
+  },
+  {
+    "case_index": 13,
+    "display": "Jie gyvena sodyb___.",
+    "russian": "Они живут в усадьбах.",
+    "english": "They live on homesteads."
+  },
+  {
+    "case_index": 13,
+    "display": "Mama susitinka aikšt___.",
+    "russian": "Мама встречается на площадях.",
+    "english": "Mom meets up in the squares."
+  },
+  {
+    "case_index": 13,
+    "display": "Petras dirba turg___.",
+    "russian": "Пятрас работает на рынках.",
+    "english": "Petras works at the markets."
+  },
+  {
+    "case_index": 13,
+    "display": "Jie gyvena pil___.",
+    "russian": "Они живут в замках.",
+    "english": "They live in castles."
+  },
+  {
+    "case_index": 13,
+    "display": "Mama laukia stot___.",
+    "russian": "Мама ждёт на вокзалах.",
+    "english": "Mom waits at the stations."
+  },
+  {
+    "case_index": 13,
+    "display": "Žmonės meldžiasi bažnyč___.",
+    "russian": "Люди молятся в церквях.",
+    "english": "People pray in churches."
+  },
+  {
+    "case_index": 13,
+    "display": "Jie susitinka gatv___.",
+    "russian": "Они встречаются на улицах.",
+    "english": "They meet in the streets."
+  },
+  {
+    "case_index": 13,
+    "display": "Jonas dirba centr___.",
+    "russian": "Йонас работает в центрах.",
+    "english": "Jonas works in the centers."
+  }
+]

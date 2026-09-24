@@ -1160,6 +1160,7 @@ export interface GrammarProgramSummary {
   title: string;
   title_en: string | null;
   description: string | null;
+  description_en?: string | null;
   difficulty: number;
   enrolled: boolean;
   lesson_filter: string | null; // JSON array of CASE_INFO group names, e.g. '["Vienaskaita","Daugiskaita"]'

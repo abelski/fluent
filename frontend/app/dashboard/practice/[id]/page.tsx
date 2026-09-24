@@ -207,12 +207,12 @@ export default function PracticeCategoryPage() {
     // Fetch category name and source_url for the heading
     fetch(`${BACKEND_URL}/api/practice/categories`, { headers })
       .then((r) => (r.ok ? r.json() : []))
-      .then((cats: { id: number; name_ru: string; name_en: string | null; description_ru: string | null; source_url: string | null }[]) => {
+      .then((cats: { id: number; name_ru: string; name_en: string | null; description_ru: string | null; description_en?: string | null; source_url: string | null }[]) => {
         const cat = cats.find((c) => String(c.id) === categoryId);
         if (cat) {
           setCategoryName(lang === 'en' ? (cat.name_en ?? cat.name_ru) : cat.name_ru);
           setSourceUrl(cat.source_url ?? null);
-          setCategoryDescription(cat.description_ru ?? null);
+          setCategoryDescription((lang === 'en' && cat.description_en) || cat.description_ru || null);
         }
       })
       .catch(console.error);
@@ -385,7 +385,7 @@ export default function PracticeCategoryPage() {
               <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white divide-y divide-gray-100">
                 {tests.map((test) => {
                   const title = lang === 'en' ? (test.title_en ?? test.title_ru) : test.title_ru;
-                  const desc = lang !== 'en' ? test.description_ru : null;
+                  const desc = (lang === 'en' && test.description_en) || test.description_ru;
                   const locked = test.is_locked;
                   const scorePct = test.best_score_pct;
                   return (

@@ -27,6 +27,10 @@ PROGRAMS = [
             "Упражнения на спряжение литовских глаголов: настоящее, прошедшее, "
             "будущее время, условное и повелительное наклонение. 12 уроков."
         ),
+        "description_en": (
+            "Lithuanian verb conjugation drills: present, past and future tense, "
+            "conditional and imperative mood. 12 lessons."
+        ),
         "difficulty": 2,
         "program_type": "verbs",
     },
@@ -36,6 +40,10 @@ PROGRAMS = [
         "description": (
             "Отработайте падежи, которыми управляют 365 литовских глаголов. "
             "Примеры из книги «365 глаголов литовского языка»."
+        ),
+        "description_en": (
+            "Practice the cases governed by 365 Lithuanian verbs. "
+            "Examples from the book \"365 Lithuanian Verbs\"."
         ),
         "difficulty": 2,
         "program_type": "verb_cases",

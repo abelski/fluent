@@ -213,6 +213,13 @@ def _load_case_rules(session: Session) -> list[dict]:
             "endings_sg": row.endings_sg,
             "endings_pl": row.endings_pl,
             "transform": row.transform,
+            # EN twins (#48b); the frontend falls back to the RU field when null
+            "question_en": row.question_en,
+            "name_en": row.name_en,
+            "usage_en": row.usage_en,
+            "endings_sg_en": row.endings_sg_en,
+            "endings_pl_en": row.endings_pl_en,
+            "transform_en": row.transform_en,
             "article_slug": row.article_slug,
             "article_title_ru": article_titles.get(row.article_slug, (None, None))[0] if row.article_slug else None,
             "article_title_en": article_titles.get(row.article_slug, (None, None))[1] if row.article_slug else None,
@@ -357,6 +364,7 @@ def _load_sentence_pool(cases: list[int], level: str, session: Session) -> list[
             GrammarSentence.answer_ending,
             GrammarSentence.full_word,
             GrammarSentence.russian,
+            GrammarSentence.english,
         ).where(
             GrammarSentence.case_index.in_(cases),
             GrammarSentence.archived == False,  # noqa: E712
@@ -368,8 +376,8 @@ def _load_sentence_pool(cases: list[int], level: str, session: Session) -> list[
     # (full_word) disagrees with what the grader actually checks (answer_ending)
     return [
         SimpleNamespace(display=display, answer_ending=answer_ending,
-                        full_word=full_word, russian=russian)
-        for display, answer_ending, full_word, russian in rows
+                        full_word=full_word, russian=russian, english=english)
+        for display, answer_ending, full_word, russian, english in rows
         if _sentence_invariant_holds(display, answer_ending, full_word)
     ]
 
@@ -422,6 +430,7 @@ def _generate_sentence_tasks(cases: list[int], count: int, session: Session, lev
             "answer": answer,
             "full_answer": row.full_word,
             "translation_ru": row.russian,
+            "translation_en": row.english,
             "base_lt": base_lt,
         })
     return tasks
@@ -614,13 +623,14 @@ def _verb_pool(session: Session) -> list[SimpleNamespace]:
             SimpleNamespace(
                 infinitive=infinitive,
                 translation_ru=translation_ru,
+                translation_en=translation_en,
                 programs=json.loads(programs),
                 conjugations=json.loads(conjugations),
                 case_governance=json.loads(case_governance),
             )
-            for infinitive, translation_ru, programs, conjugations, case_governance
+            for infinitive, translation_ru, translation_en, programs, conjugations, case_governance
             in session.exec(
-                select(Verb.infinitive, Verb.translation_ru, Verb.programs,
+                select(Verb.infinitive, Verb.translation_ru, Verb.translation_en, Verb.programs,
                        Verb.conjugations, Verb.case_governance)
             ).all()
         ],
@@ -674,6 +684,7 @@ def _generate_verb_conjugation_tasks(
             "type": "verb_conjugation",
             "verb_infinitive": _clean_form(verb.infinitive),
             "translation_ru": _clean_form(verb.translation_ru),
+            "translation_en": _clean_form(verb.translation_en) if verb.translation_en else None,
             "tense_label": tense_label,
             "tense_label_en": tense_label_en,
             "person_label": person,
@@ -711,6 +722,7 @@ def _generate_verb_case_tasks(count: int, session: Session) -> list[dict]:
             "type": "verb_case",
             "verb_infinitive": verb.infinitive,
             "translation_ru": _clean_form(verb.translation_ru),
+            "translation_en": _clean_form(verb.translation_en) if verb.translation_en else None,
             "example_lt": lt_sent,
             "example_ru": ru_sent,
             "answer": entry["question"],

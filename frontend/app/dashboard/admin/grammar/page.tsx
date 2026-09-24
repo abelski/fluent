@@ -13,6 +13,7 @@ interface GrammarProgramRow {
   title: string;
   title_en: string | null;
   description: string | null;
+  description_en: string | null;
   difficulty: number;
   is_public: boolean;
   lesson_filter: string | null;
@@ -38,6 +39,7 @@ interface GrammarSentence {
   answer_ending: string;
   full_word: string;
   russian: string;
+  english: string | null;
   archived: boolean;
   use_in_basic: boolean;
   use_in_advanced: boolean;
@@ -49,6 +51,7 @@ interface GrammarRule {
   case_index: number;
   name_ru: string;
   question: string;
+  question_en: string | null;
   usage: string;
   endings_sg: string;
   endings_pl: string;
@@ -64,6 +67,7 @@ interface SentenceForm {
   answer_ending: string;
   full_word: string;
   russian: string;
+  english: string;
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -150,7 +154,7 @@ export default function GrammarAdminPage() {
 
   // Programs modal state
   const [programModal, setProgramModal] = useState<GrammarProgramRow | 'new' | null>(null);
-  const [programForm, setProgramForm] = useState({ title: '', title_en: '', description: '', difficulty: 1, is_public: true, lesson_filter: '' });
+  const [programForm, setProgramForm] = useState({ title: '', title_en: '', description: '', description_en: '', difficulty: 1, is_public: true, lesson_filter: '' });
   const [programError, setProgramError] = useState('');
 
   // Sentence modal state
@@ -191,9 +195,9 @@ export default function GrammarAdminPage() {
 
   function openProgramModal(p: GrammarProgramRow | 'new') {
     if (p === 'new') {
-      setProgramForm({ title: '', title_en: '', description: '', difficulty: 1, is_public: true, lesson_filter: '' });
+      setProgramForm({ title: '', title_en: '', description: '', description_en: '', difficulty: 1, is_public: true, lesson_filter: '' });
     } else {
-      setProgramForm({ title: p.title, title_en: p.title_en ?? '', description: p.description ?? '', difficulty: p.difficulty, is_public: p.is_public, lesson_filter: p.lesson_filter ?? '' });
+      setProgramForm({ title: p.title, title_en: p.title_en ?? '', description: p.description ?? '', description_en: p.description_en ?? '', difficulty: p.difficulty, is_public: p.is_public, lesson_filter: p.lesson_filter ?? '' });
     }
     setProgramModal(p);
     setProgramError('');
@@ -213,6 +217,7 @@ export default function GrammarAdminPage() {
         title: programForm.title.trim(),
         title_en: programForm.title_en.trim() || null,
         description: programForm.description.trim() || null,
+        description_en: programForm.description_en.trim(),
         difficulty: programForm.difficulty,
         is_public: programForm.is_public,
         lesson_filter: programForm.lesson_filter.trim() || null,
@@ -307,12 +312,12 @@ export default function GrammarAdminPage() {
   }
 
   function openAddSentence(caseIdx: number) {
-    setSentenceModal({ id: null, case_index: caseIdx, display: '', answer_ending: '', full_word: '', russian: '' });
+    setSentenceModal({ id: null, case_index: caseIdx, display: '', answer_ending: '', full_word: '', russian: '', english: '' });
     setFormError('');
   }
 
   function openEditSentence(s: GrammarSentence) {
-    setSentenceModal({ id: s.id, case_index: s.case_index, display: s.display, answer_ending: s.answer_ending, full_word: s.full_word, russian: s.russian });
+    setSentenceModal({ id: s.id, case_index: s.case_index, display: s.display, answer_ending: s.answer_ending, full_word: s.full_word, russian: s.russian, english: s.english ?? '' });
     setFormError('');
   }
 
@@ -334,6 +339,7 @@ export default function GrammarAdminPage() {
         answer_ending: sentenceModal.answer_ending.trim(),
         full_word: sentenceModal.full_word.trim(),
         russian: sentenceModal.russian.trim(),
+        english: sentenceModal.english.trim(),
       }),
     }).catch(() => null);
     setSaving(false);
@@ -501,6 +507,15 @@ export default function GrammarAdminPage() {
                   className="border border-gray-300 focus:border-gray-900 rounded-xl px-3 py-2 text-sm outline-none resize-none transition-colors"
                 />
               </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">{tr.adminGrammar.descEnLabel}</label>
+                <textarea
+                  value={programForm.description_en}
+                  onChange={e => setProgramForm(f => ({ ...f, description_en: e.target.value }))}
+                  rows={2}
+                  className="border border-gray-300 focus:border-gray-900 rounded-xl px-3 py-2 text-sm outline-none resize-none transition-colors"
+                />
+              </div>
               <div className="flex gap-3">
                 <div className="flex flex-col gap-1 flex-1">
                   <label className="text-xs text-gray-500">{tr.adminGrammar.difficultyLabel}</label>
@@ -613,6 +628,15 @@ export default function GrammarAdminPage() {
                   className="bg-white border border-gray-300 focus:border-gray-900 rounded-xl px-3 py-2 text-sm outline-none w-full transition-colors"
                 />
               </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">{tr.adminGrammar.sentenceEnglishLabel}</label>
+                <input
+                  value={sentenceModal.english}
+                  onChange={e => setSentenceModal(d => d ? { ...d, english: e.target.value } : d)}
+                  placeholder={tr.adminGrammar.sentenceEnglishPlaceholder}
+                  className="bg-white border border-gray-300 focus:border-gray-900 rounded-xl px-3 py-2 text-sm outline-none w-full transition-colors"
+                />
+              </div>
             </div>
             {formError && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mt-3">{formError}</p>
@@ -668,7 +692,7 @@ function CaseRow({
   onArchiveSentence: (id: number) => void;
   onToggleLevel: (s: GrammarSentence, level: 'basic' | 'advanced' | 'practice') => void;
 }) {
-  const { tr } = useT();
+  const { tr, lang } = useT();
   const activeCount = sentences.filter(s => !s.archived).length;
   const hasLessons = lessons.length > 0;
   const status = rule?.status ?? 'draft';
@@ -733,7 +757,7 @@ function CaseRow({
           {/* Rule summary */}
           {rule && (rule.usage || rule.endings_sg) && (
             <div className="px-5 py-3 border-b border-gray-100 flex gap-6 text-xs text-gray-500">
-              {rule.question && <span><span className="text-gray-400">{tr.adminGrammar.questionPrefix}</span> {rule.question}</span>}
+              {rule.question && <span><span className="text-gray-400">{tr.adminGrammar.questionPrefix}</span> {(lang === 'en' && rule.question_en) || rule.question}</span>}
               {rule.endings_sg && <span><span className="text-gray-400">{tr.grammar.singular}</span> <span className="font-mono">{rule.endings_sg}</span></span>}
               {rule.endings_pl && <span><span className="text-gray-400">{tr.grammar.plural}</span> <span className="font-mono">{rule.endings_pl}</span></span>}
             </div>

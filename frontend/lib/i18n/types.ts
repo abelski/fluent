@@ -352,6 +352,7 @@ export interface Translations {
     fieldCategoryNameRu: string;
     fieldCategoryNameEn: string;
     fieldCategoryDescRu: string;
+    fieldCategoryDescEn: string;
     fieldIsPremium: string;
     premiumBadge: string;
     premiumWallTitle: string; // #32: inline offer shown in place of navigating away to a paywall page
@@ -682,6 +683,7 @@ export interface Translations {
     nameEnLabel: string;
     nameEnPlaceholder: string;
     descLabel: string;
+    descEnLabel: string;
     difficultyLabel: string;
     publicLabel: string;
     lessonFilterLabel: string;
@@ -700,6 +702,8 @@ export interface Translations {
     sentenceFullWordLabel: string;
     sentenceRussianLabel: string;
     sentenceRussianPlaceholder: string;
+    sentenceEnglishLabel: string;
+    sentenceEnglishPlaceholder: string;
     titleRequiredError: string;
     saveErrorGeneric: string;
     confirmDeleteProgram: string;

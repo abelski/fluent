@@ -14,6 +14,7 @@ interface Category {
   name_ru: string;
   name_en: string | null;
   description_ru: string | null;
+  description_en?: string | null;
   test_count: number;
   enrolled: boolean;
 }
@@ -102,8 +103,8 @@ export default function PracticeProgramsPage() {
                           </span>
                         )}
                       </div>
-                      {cat.description_ru && lang !== 'en' && (
-                        <p className="text-sm text-gray-400 mt-0.5">{cat.description_ru}</p>
+                      {cat.description_ru && (
+                        <p className="text-sm text-gray-400 mt-0.5">{(lang === 'en' && cat.description_en) || cat.description_ru}</p>
                       )}
                       <p className="text-xs text-gray-400 mt-1">
                         {cat.test_count === 0
