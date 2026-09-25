@@ -149,4 +149,36 @@ test.describe('Stripe checkout CTA', () => {
     await expect(page.getByTestId('checkout-activating-slow')).toBeVisible({ timeout: 20000 });
     await expect(page.getByTestId('checkout-activated')).toHaveCount(0);
   });
+
+  test('a failed checkout (502) shows the error and re-enables the button (#180)', async ({ page }) => {
+    await login(page);
+    await stubBilling(page, true);
+    await stubQuota(page, FREE);
+    await page.route('**/api/billing/checkout-session', (route) =>
+      route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ detail: 'Could not start checkout' }) }));
+
+    await page.goto('/pricing/');
+    await page.getByTestId('premium-cta-upgrade').click();
+    await expect(page.getByTestId('checkout-error')).toBeVisible();
+    await expect(page.getByTestId('premium-cta-upgrade')).toBeEnabled();
+  });
+
+  test('a 409 from portal-session re-fetches quota and re-renders the CTA (#180)', async ({ page }) => {
+    await login(page);
+    await stubBilling(page, true);
+    // Same reason as the webhook test: no nth-call counter — flip on the 409 itself.
+    let cleared = false;
+    await page.route('**/api/me/quota', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(cleared ? FREE : SUBSCRIBED) }));
+    await page.route('**/api/billing/portal-session', (route) => {
+      cleared = true;
+      return route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ detail: 'Billing account not found' }) });
+    });
+
+    await page.goto('/pricing/');
+    await page.getByTestId('premium-cta-manage').click();
+    await expect(page.getByTestId('premium-cta-upgrade')).toBeVisible();
+    await expect(page.getByTestId('premium-cta-manage')).toHaveCount(0);
+    await expect(page.getByTestId('checkout-error')).toHaveCount(0);
+  });
 });

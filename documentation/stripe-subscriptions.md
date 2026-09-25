@@ -153,6 +153,26 @@ fails at checkout creation. If the portal was never activated for the mode you a
 `billing_portal.Session.create` raises and `/billing/portal-session` returns 502; there is no
 code-side workaround.
 
+**Local testing with a test key writes test-mode ids into the prod DB (#180).** `backend/.env`
+points at the production Neon DB, so a local checkout with `sk_test_…` saves a test-mode
+`cus_…`/`sub_…` onto a real user row. Live Stripe then answers "No such customer … exists in test
+mode" to every checkout/portal call for that user. The two launch-day accounts (2026-08-29) hit
+exactly this. Both endpoints now log Stripe's `code`/`param`/`request_id`/message and send it to
+Telegram (`_report_stripe_failure` in `routers/billing.py`), so the next case is diagnosed from the
+alert. The fix for an affected user is to clear `stripe_customer_id` (and, if set,
+`stripe_subscription_id`/`subscription_status`); the next checkout creates a fresh live customer.
+Test checkout locally with a throwaway account, never a real one. Safety net: a self-heal in `stripe_service` —
+`_is_missing_customer` spots Stripe's `resource_missing`/`customer` error and `clear_stripe_linkage`
+forgets the stale ids; checkout then retries once with a fresh customer, and the portal endpoint
+clears them and returns 409 so the pricing page re-renders its CTA.
+
+**Clearing is reversible by design.** `clear_stripe_linkage` writes the old
+customer/subscription/status to the `stripe_linkage_audit` table in the same commit, and sends a
+Telegram message with a ready restore `UPDATE`. Why a table and not just the log/Telegram: Render
+logs rotate and `send_telegram` silently no-ops without its env vars, so neither is a reliable
+record. To undo a clear, copy the audit row's values back onto the user (or run the restore
+statement from the alert).
+
 **Stripe moved two fields between API versions; we read both shapes.** `current_period_end` left
 the Subscription object in `2025-03-31.basil` and now lives on each subscription *item*, and
 `invoice.subscription` became `invoice.parent.subscription_details.subscription`. Rather than

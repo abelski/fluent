@@ -700,3 +700,18 @@ class AudioClip(SQLModel, table=True):
     spoken_text: str                             # what was sent to Azure (for the monthly char cap)
     data: bytes = Field(sa_column=Column(LargeBinary, nullable=False))  # mp3
     created_at: datetime = Field(default_factory=_utcnow, index=True)  # monthly caps filter on it
+
+
+class StripeLinkageAudit(SQLModel, table=True):
+    """Stripe ids cleared from a user because Stripe didn't know the customer (#180).
+
+    Clearing is otherwise irreversible, so the old values land here in the same commit.
+    Restore = copy them back onto the user row. Additive table: startup's create_all() creates it.
+    """
+    __tablename__ = "stripe_linkage_audit"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(index=True)
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+    subscription_status: Optional[str] = None
+    created_at: datetime = Field(default_factory=_utcnow)
