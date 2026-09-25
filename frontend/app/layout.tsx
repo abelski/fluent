@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://fluent.lt'),
   verification: {
     google: '-00UmFLXQcYnWqG0atvHSxdW2m5P6s0oHsfw7gZPtgQ',
+    yandex: '6fb16de37a8d946d',
   },
   openGraph: {
     siteName: 'Fluent',
