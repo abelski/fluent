@@ -42,8 +42,19 @@ names (`sdlc-*`, `helper-*`, `productivity-*`) so a sync matches files one-to-on
 are the template text *merged* with Fluent specifics (plan dirs, RU+EN/375px/screenshot DoD,
 Neon `mistake_report` triage, news post, "user commits, Claude merges") — so they will always diff
 against the template. Port template changes in by hand; never overwrite. Skipped from the template:
-`specs/` (the `sdlc-spec-writer` agent was pulled but Fluent keeps behavior docs in
-`documentation/`, so no skill calls it) and its generic `plans/plan_<slug>.md` layout.
+its generic `plans/plan_<slug>.md` layout.
+
+**Why specs are updated at close-out (#50):** `specs/<component>.md` used to have no caller, so
+specs went stale silently (e.g. the admin "paid" filter, 6dd5ef8, never reached `specs/admin.md`).
+Now the spec is part of the contract from the start: every idea file has a `## Proposed spec`
+(Gherkin scenarios marked New/Changed/Removed, per `specs/<component>.md`), and every triage plan a
+`## Spec impact`. Close-out has a spec gate before anything moves to `implemented/`
+(`sdlc-feature-analyst` Phase 6 step 0, `sdlc-fix-issue-from-triage` Step 5.2): `sdlc-spec-writer`
+updates each affected spec from the code, then each proposed scenario is checked against it. If
+what shipped differs from the proposal, the idea is corrected to match. Chosen over "just run the
+spec writer at the end" because a proposal written up front is something to check against — the
+writer alone can only describe the code, not notice that a promised scenario never shipped.
+Changes made outside those flows follow the CLAUDE.md rule instead.
 
 **Why idea and plan files are written on `main`, not the branch (#47):** the user chose to create
 the branch only at implementation, so an idea that's dropped or parked never leaves a dead branch

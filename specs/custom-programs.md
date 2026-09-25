@@ -124,6 +124,31 @@ Scenario: Listing my enrollments skips programs that became unpublished
   Then that enrollment is silently omitted from the response instead of
     erroring or returning a broken entry
 
+Scenario: Author fills in only one content language and the other is auto-translated
+  Given the create/edit form's language checkboxes have only one of RU/EN
+    checked (at least one must always stay checked)
+  When the author clicks save
+  Then the title, description, and each word's translation are machine-
+    translated client-side into the unchecked language before the POST/PUT
+    is sent, so the stored program still has both back_ru and back_en (or a
+    title/title_en pair) populated
+  And when both checkboxes are checked, nothing is auto-translated and
+    exactly what the author typed in each field is sent as-is
+
+Scenario: A word set left untitled gets a language-neutral default
+  Given the create/edit forms start every new word set with an empty title
+    field (placeholder-only, e.g. "Word set 1"/"Набор 1" depending on UI
+    language) rather than pre-filling it
+  When the word set is submitted with a blank title
+  Then the backend stores a fixed Russian default ("Набор {n}", 1-based
+    position) for that WordList's title regardless of the program's content
+    languages or the UI language the form was filled in
+  And any page that later displays that title (the community detail page,
+    the edit form's placeholder) recognizes the "Набор {n}" pattern and
+    renders it through the current UI language's own template instead of
+    showing the stored Russian text verbatim; a title the author actually
+    typed is shown as-is in any language
+
 Scenario: Word content endpoints enforce ownership vs. open access differently
   Given GET /me/custom-programs/{id}/word-sets (creator-only route) versus
     GET /programs/community/{share_token}/word-sets (any authenticated user)

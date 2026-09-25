@@ -31,6 +31,8 @@ recommended answers in Step 3 — don't make the user re-decide something a prec
 who has it, desired outcome, scope and non-goals, free vs. Premium, RU + EN copy, mobile, which
 pages/surfaces, edge cases, how we'll know it worked. Facts from code/DB are yours to look up, not
 questions. Stop when the frontier is empty.
+Read the affected `specs/<component>.md` first, so the Proposed spec builds on what's already
+described instead of restating or contradicting it.
 
 ## Step 4 — Write the idea file
 
@@ -50,6 +52,21 @@ Who has it, what hurts today, why now.
 
 ## Desired outcome
 What the user sees/gets when this is done.
+
+## Proposed spec
+The target behavior, written as the spec it will become. One block per affected
+`specs/<component>.md` (a new file if the component has none), Gherkin scenarios in that spec's
+own style. Mark each scenario **New**, **Changed** (name the current scenario it replaces) or
+**Removed**. This is the contract: close-out checks it landed in `specs/`.
+
+### specs/<component>.md
+**New**
+​```gherkin
+Scenario: ...
+  Given ...
+  When ...
+  Then ...
+​```
 
 ## Scope
 - In: ...

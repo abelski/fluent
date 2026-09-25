@@ -116,6 +116,10 @@ Scenario: admin manages categories
   Then name_ru is required on create, all fields are optional (partial) on update, and
     deleting a category unlinks its tests (sets their category_id to null) rather than
     deleting or cascading to them
+  And description_en is normalized on both create and (when the field is actually sent) update:
+    an empty or whitespace-only string is stored as NULL rather than "", so it keeps falling
+    back to description_ru instead of rendering blank; name_en gets no such normalization, so
+    a saved empty string for name_en is stored and shown as-is, not treated as "no translation"
 ```
 
 ```gherkin
@@ -124,6 +128,19 @@ Scenario: admin manages tests
   When creating, updating, or deleting a test via the /admin/practice/tests endpoints
   Then title_ru is required on create, status must be one of draft/testing/published,
     and deleting a test cascades to delete all of its questions first
+  And title_en and description_en are stored exactly as sent, with no empty-to-null
+    normalization (unlike the category endpoints' description_en)
+```
+
+```gherkin
+Scenario: English UI falls back to Russian content per field
+  Given the dashboard is rendered in English and a category, test title, or test description
+    has no *_en value
+  When that name/title is displayed, it falls back to the *_ru value only when the *_en field
+    is exactly null (`name_en ?? name_ru`, `title_en ?? title_ru`)
+  And a description falls back to *_ru whenever *_en is falsy — null or an empty string
+    (`(lang === 'en' && description_en) || description_ru`) — while the RU UI always shows the
+    *_ru value regardless of what *_en holds
 ```
 
 ```gherkin

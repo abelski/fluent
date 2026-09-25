@@ -3,8 +3,9 @@
 ## Purpose
 Lets anyone — logged in or not — send a free-text message plus a contact email to the Fluent
 team, with no auth required. Admins review submissions in a read-only queue and can permanently
-remove one. Called over REST by a feedback form/modal reachable from the app (any page, since no
-auth is required) and by the admin dashboard.
+remove one. Called over REST by `FeedbackModal`, a form reachable from the site footer on every
+page (so from an unauthenticated visitor too), which is also reused by the dashboard inbox's
+"Reply" action with the message and email fields prefilled, and by the admin dashboard.
 Backed by: `backend/routers/feedback.py` (mounted at `/api`, so routes are `/api/feedback` and
 `/api/admin/feedback/*`).
 

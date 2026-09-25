@@ -52,6 +52,14 @@ Scenario: A student marks all messages read
 ```
 
 ```gherkin
+Scenario: A student clicks "mark all read"
+  Given the inbox list is showing unread messages
+  When they click the mark-all-read link
+  Then every row and the unread count update to read immediately, before the request resolves
+  And if the request fails, the list and count are rolled back and an error snackbar is shown
+```
+
+```gherkin
 Scenario: A student deletes a message
   Given an authenticated user and one or more delivery ids they own
   When they POST /api/me/inbox/actions with action "delete" and those ids
@@ -83,6 +91,39 @@ Scenario: A student's action ids include someone else's message
   When the action executes
   Then that id is silently excluded from the UPDATE (scoped by user_id) and never appears in
     affected_ids — it is not treated as an error
+```
+
+```gherkin
+Scenario: A student's inbox is empty
+  Given an authenticated user with no deliveries
+  When the inbox list page loads
+  Then a mascot illustration and an "empty" message are shown instead of a list
+```
+
+```gherkin
+Scenario: A student's inbox list fails to load
+  Given an authenticated user
+  When GET /api/me/inbox fails
+  Then an error message with a Retry button is shown instead of the list, and Retry re-triggers
+    the same fetch
+```
+
+```gherkin
+Scenario: A student pages through older messages
+  Given a student with more deliveries than fit on one page
+  When they click "Show older"
+  Then the next page (limit=20, offset=items already shown) is appended to the list, and the
+    button disappears once has_more is false
+```
+
+```gherkin
+Scenario: A message arrives while the inbox page is open
+  Given the student has the inbox list open
+  When another browser tab or component (e.g. the header envelope) dispatches the app-wide
+    "inbox changed" event without an explicit detail payload
+  Then the list is reloaded from the server
+  And an event carrying a detail payload (the page's own actions) does not trigger a reload,
+    since the list was already updated locally
 ```
 
 ```gherkin

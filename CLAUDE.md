@@ -84,6 +84,8 @@
   branched from an up-to-date `main`. This holds for small "bounded" changes too. The user's
   confirmation at the end of the workflow is the directive to merge into `main`; outside that flow,
   merging needs an explicit directive, same as pushing.
+- **Specs stay current.** Any change to behavior updates the matching `specs/<component>.md` in the
+  same change — inside the SDLC flow or not. A spec that lags the code is a bug.
 - Do not push to git without an explicit directive from the user
 - never use ANTHROPIC_API_KEY (we dont have it in our subscription)
 - Keep `documentation/design system/` updated whenever new UI components or patterns are introduced; treat it as the source of truth for visual/component decisions during development

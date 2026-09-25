@@ -66,6 +66,11 @@ confirmed_effort: null
 ## Root cause
 ... (include the one-line suggested_model/suggested_effort reason here)
 
+## Spec impact
+Which `specs/<component>.md` describes this behavior, and the scenario that must be true after the
+fix. Either "already described correctly — code drifted from it" (name the scenario) or the
+**New**/**Changed** scenario in Gherkin, same as an idea's Proposed spec.
+
 ## Fix plan
 - [ ] 1. ...
 - [ ] 2. ...

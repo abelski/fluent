@@ -50,18 +50,19 @@ Scenario: A non-admin tries to list or triage reports
 ```
 
 ```gherkin
-Scenario: An admin resolves an open report
-  Given a report in any status and an admin caller
+Scenario: An admin resolves a report
+  Given a report in any status (no prior-status check is enforced) and an admin caller
   When they PATCH /api/admin/reports/{id}/resolve
   Then the report's status is set to "resolved"
   And the reporter receives an in-app inbox message about the status change
-  And if the reporter has email_consent, they also receive an email with a Premium upsell appended
+  And if the reporter has email_consent, they also receive an email with a Premium upsell appended,
+    followed by a Telegram notification recording that the email was sent
   And if email sending fails, or the reporter has no consent, the resolve action still succeeds
 ```
 
 ```gherkin
 Scenario: An admin puts a report on hold
-  Given an open report and an admin caller
+  Given a report in any status (no prior-status check is enforced) and an admin caller
   When they PATCH /api/admin/reports/{id}/hold
   Then the report's status is set to "onhold"
   And the reporter is notified the same way as on resolve
@@ -69,7 +70,7 @@ Scenario: An admin puts a report on hold
 
 ```gherkin
 Scenario: An admin reopens a report
-  Given a report in "onhold" or "resolved" status and an admin caller
+  Given a report in any status (no prior-status check is enforced) and an admin caller
   When they PATCH /api/admin/reports/{id}/reopen
   Then the report's status is set back to "open"
   And the reporter is notified the same way as on resolve

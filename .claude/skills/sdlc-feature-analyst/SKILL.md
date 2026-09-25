@@ -140,7 +140,8 @@ files:
 Agent(subagent_type: "general-purpose", description: "Cold plan review", run_in_background: false,
   prompt: "Review the plan plans/improvements/active/plan_<N>_<slug>.md against its idea file
   plans/ideas/idea_<N>_<slug>.md and the repo rules in CLAUDE.md. Read the code the plan touches.
-  Report, ranked: (1) idea requirements the plan misses or contradicts, (2) wrong file/function
+  Report, ranked: (1) idea requirements the plan misses or contradicts, including any
+  Proposed spec scenario with no implementing step and no test, (2) wrong file/function
   names or steps that won't work against the real code, (3) missing tests or Definition-of-Done
   checks (RU+EN, 375px, screenshots for UI), (4) over-engineering — anything simpler that does the
   job. Do not edit files. Be concrete: file, line, what to change.")
@@ -232,6 +233,14 @@ Once `sdlc-ralph-implement` reports the plan done (and UAT passed, if defined):
 
 ## Phase 6 — Close out and merge (only after the user confirms)
 
+0. **Spec gate — nothing moves to `implemented/` until this passes.** For each spec in the idea's
+   `## Proposed spec`, plus any other `specs/<component>.md` whose component the branch changed
+   (`git diff --name-only main...HEAD`), run the `sdlc-spec-writer` agent with the spec path, the
+   plan path and the idea path. Then check every Proposed spec scenario against the updated spec:
+   each **New**/**Changed** one is described, each **Removed** one is gone. If what shipped differs
+   from what was proposed (changed during user testing, say), show the user the difference and
+   update the idea's Proposed spec to match what shipped — the idea keeps an honest record. Specs
+   ride in the same commit.
 1. Move files:
    - `plans/improvements/active/plan_<N>_<slug>.md` → `plans/improvements/implemented/IMPLEMENTED-plan_<N>_<slug>.md`
    - `plans/ideas/idea_<N>_<slug>.md` → `plans/ideas/implemented/idea_<N>_<slug>.md`

@@ -8,7 +8,8 @@ lessons in sequence, and their pass/fail history unlocks the next lesson. It is 
 Next.js dashboard grammar pages over the REST API; the same endpoints also serve the admin's
 read-only view into draft/testing content (there is no separate admin content-editing router in
 scope here — admin-only behavior below is limited to what `routers/grammar.py` itself branches on).
-Backed by: `backend/routers/grammar.py`, `frontend/app/dashboard/grammar/`.
+Backed by: `backend/routers/grammar.py`, `backend/grammar_service.py`,
+`frontend/app/dashboard/grammar/`, `frontend/app/dashboard/components/GrammarTaskRunner.tsx`.
 
 ## Scenarios
 
@@ -133,6 +134,9 @@ Scenario: public program list
   Then only programs flagged is_public are returned
   And each program includes "enrolled": true/false, which is always false for an
     unauthenticated caller
+  And each program includes title_en and description_en alongside the Russian
+    title/description; the frontend shows the English field only when the UI
+    language is English and that field is non-null, otherwise it shows Russian
 ```
 
 ```gherkin
@@ -177,4 +181,55 @@ Scenario: verb lesson task fetch and result save
     in either verb lesson list returns 404
   And POST /grammar/verb-lessons/{lesson_id}/results validates and stores the attempt
     using the same GrammarLessonResult table and >75% pass rule as noun lessons
+```
+
+```gherkin
+Scenario: grammar rule content has an English twin, falling back to Russian
+  Given a lesson's case rules loaded from the grammar_case_rule table, each of which
+    has RU columns (question, name_ru, usage, endings_sg, endings_pl, transform) and
+    parallel *_en columns that an admin may leave null until translated
+  When GET /grammar/lessons (or /grammar/verb-lessons for case-governance lessons)
+    returns those rules, and later the student's UI language is English
+  Then the API always returns both the RU value and the nullable EN twin for every
+    field, and the frontend shows the EN value only when it is present and the UI
+    language is English, otherwise it shows the RU value
+  And a rule's linked article title works the same way, except when article_title_en
+    is null the frontend shows a generic "article" fallback label instead of the
+    Russian title
+```
+
+```gherkin
+Scenario: verb-lesson titles and hints have an English twin
+  Given the verb lesson config (verb_lessons.json) and its tense_hints/tense_hints_en tables
+  When GET /grammar/verb-lessons is called
+  Then each lesson includes title_en (from a fixed tense-name → English label map,
+    e.g. "Настоящее время" -> "Present tense", or the Russian title itself if the
+    tense key is unmapped) and hint_en (looked up from tense_hints_en, or null if
+    that tense has no English hint yet)
+  And the frontend shows title_en/hint_en only in English UI mode and only when set,
+    otherwise it falls back to the Russian title/hint
+```
+
+```gherkin
+Scenario: generated tasks carry English twins of their Russian prompts
+  Given a lesson or verb-lesson task set is generated (declension, sentence,
+    verb_conjugation, or verb_case)
+  When the tasks are returned to the client
+  Then each task carries an English counterpart of its Russian text where one is
+    stored (prompt_en for declension tasks; translation_en for sentence,
+    verb_conjugation and verb_case tasks; tense_label_en for verb_conjugation tasks)
+  And translation_en/prompt_en may be null if no English translation is stored yet,
+    in which case the frontend shows the Russian text instead
+```
+
+```gherkin
+Scenario: a sentence row whose stored answer disagrees with its displayed word is never served
+  Given a grammar_sentence row where full_word (shown to the student as "the correct
+    answer" on a wrong guess) does not equal stem(display) + answer_ending
+    (what the grader actually checks), case-insensitively
+  When that lesson's sentence tasks are generated
+  Then the row is excluded from the pool entirely, so a student can never see a
+    "wrong" verdict on an answer that matches what the UI itself displays as correct
+  And a row is still accepted when full_word equals stem+answer_ending, or ends with
+    it as a separate leading word (covers ordinal-number prefixes like "dvidešimt")
 ```

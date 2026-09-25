@@ -22,11 +22,13 @@ Scenario: Anonymous visitor browses a public list
 ```
 
 ```gherkin
-Scenario: Student sees only lists from subjects they enrolled in
+Scenario: Non-admin student fetches the list catalogue
   Given a signed-in, non-admin student
   When the client requests the full list catalogue
-  Then only lists whose subcategory is "published" AND the student is enrolled in are returned,
-    grouped and ordered by subcategory sort order then list sort order
+  Then every list whose subcategory is "published" is returned (enrollment is not a server-side
+    filter here), grouped and ordered by subcategory sort order then list sort order; the
+    `/dashboard/lists` page itself narrows this down client-side to only the subcategories the
+    student is enrolled in, using a separate `/me/programs` call
 ```
 
 ```gherkin
@@ -106,8 +108,9 @@ Scenario: Student edits or deletes a word in their own personal list only
 Scenario: Deleting a personal list cascades
   Given the owner of a personal list
   When they delete the list
-  Then its list-item rows, the student's progress rows for its words, and the words themselves
-    are all deleted before the list row, in that order
+  Then the student's progress rows for its words are deleted first, then its list-item rows,
+    then the words themselves, and only then the list row — each step flushed before the next
+    so Postgres's foreign keys never reject an out-of-order delete
 ```
 
 ### Study sessions
@@ -168,9 +171,9 @@ Scenario: Large review backlog offers a review-first choice
 Scenario: Anonymous visitor starts a study session
   Given no Authorization header is sent
   When a study session is requested for a list
-  Then all of the list's words (deduplicated by translation) are returned shuffled, all marked
-    status "new", capped at the default session size, with no per-word prioritization — and no
-    progress can be recorded, since that endpoint requires a signed-in user
+  Then all of the list's words (deduplicated by translation) are returned in their list position
+    order, all marked status "new", capped at the default session size, with no per-word
+    prioritization — and no progress can be recorded, since that endpoint requires a signed-in user
 ```
 
 ```gherkin
@@ -213,6 +216,19 @@ Scenario: A lapsed-premium student can still study their own personal list
     active premium — even though editing, adding, or bulk-adding words to that same list is blocked
 ```
 
+### Mascot greeting
+
+```gherkin
+Scenario: Dashboard header greets the student with a random easy word
+  Given the dashboard's stats bar loads (shown on the lists and grammar pages)
+  When it fetches a random easy word
+  Then one random non-archived star-1 word is returned, restricted to words that belong to at
+    least one public, non-archived, predefined list (one with no owning user) — so a word that
+    only lives in a personal or custom-program list is never surfaced this way — and the response
+    is null (and the mascot bubble stays on its default phrase) if no such word exists; the pick
+    is never cached, so a page reload can show a different word
+```
+
 ### Vocabulary browse
 
 ```gherkin
@@ -223,4 +239,15 @@ Scenario: Student browses all their known words
     list, searchable by Lithuanian text or translation and filterable by a client-computed memory
     bucket (due: no next_review or it has passed; fading: due within 3 days; ok: further out),
     paginated 50 per page
+```
+
+```gherkin
+Scenario: A word's grammatical hint is shown in the reader's UI language
+  Given a word whose `hint` field holds one of a fixed set of Russian grammar labels (e.g.
+    «глагол», «разг.», «ед.ч.», «мн.ч.», «где?», or the plurale-tantum note) — the value seeded in
+    the database — shown on the vocabulary page, the list detail page, or during a study session
+  When the reader's UI language is English
+  Then that fixed label is looked up and shown in English instead; any other hint value (freeform
+    text not in the lookup table) is shown exactly as stored, and Russian-language readers always
+    see the stored value unchanged
 ```

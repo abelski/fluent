@@ -107,15 +107,19 @@ If the user selects **Yes**:
            print('No email sent (no consent or anonymous user)')
    "
    ```
-2. Move the plan file:
+2. **Spec gate — before the plan moves to `implemented/`.** Run the `sdlc-spec-writer` agent on
+   the spec named in the plan's `## Spec impact`, plus any other `specs/<component>.md` whose
+   component the branch changed (`git diff --name-only main...HEAD`). Then check the spec states
+   the scenario from `## Spec impact`. Specs ride in the same commit.
+3. Move the plan file:
    ```bash
    mv plans/triage/active/issue-<N>-*.md plans/triage/implemented/IMPLEMENTED-issue-<N>-*.md
    ```
-3. Claude never commits (a PreToolUse hook blocks it). Give the user the command —
+4. Claude never commits (a PreToolUse hook blocks it). Give the user the command —
    `git add -A && git commit -m "fix(<area>): <summary> (issue #<N>)"` — and wait for them to say
    it's committed. Then `git checkout main && git merge --no-ff fix/<N>-<slug>`. On conflict,
    resolve and say what.
-4. Report: "Issue #<N> resolved, merged to main. Push when ready: `git push`". **Never push.**
+5. Report: "Issue #<N> resolved, merged to main. Push when ready: `git push`". **Never push.**
 
 If the user selects **No**, ask a follow-up `AskUserQuestion`: "What still looks wrong?", fix it on the same branch, and ask again.
 

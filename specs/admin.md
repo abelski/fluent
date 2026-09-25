@@ -54,18 +54,30 @@ Scenario: An admin-but-not-superadmin calls a superadmin-only endpoint
 Scenario: An admin lists all users
   Given an admin caller
   When they GET /api/admin/users
-  Then every user is returned with tier, today's session count vs. daily limit, last login,
-    inactivity flag (30+ days since last activity), and a deletion-warning flag/date computed from
-    whether a "sent" PreparedMessage older than 7 days exists with no login since it was sent
+  Then every user is returned with tier, subscription_status (Stripe billing state, if any), today's
+    session count vs. daily limit, last login, inactivity flag (30+ days since last activity), a
+    deletion-warning flag/date computed from whether a "sent" PreparedMessage older than 7 days
+    exists with no login since it was sent, and the timestamp of the most recent "sent"
+    PreparedMessage of any type (shown as a "notice sent" badge, independent of the deletion
+    warning)
 ```
 
 ```gherkin
 Scenario: An admin searches, filters, and sorts the user table
   Given the loaded user list
-  When the admin types a search term or picks an activity filter (all/active/inactive/deletion) or
-    clicks a sortable column header
+  When the admin types a search term or picks an activity filter (all/paid/active/inactive/deletion)
+    or clicks a sortable column header
   Then filtering, sorting, and pagination (20/page) all happen client-side against the already
     fetched list — no additional API calls
+```
+
+```gherkin
+Scenario: An admin filters to paying subscribers
+  Given the loaded user list
+  When the admin picks the "Paid" filter
+  Then only users with subscription_status "active" (a live Stripe subscription) are shown —
+    Premium granted by an admin or as a leaderboard reward, with no subscription, is excluded
+  Then the "Paid" filter button shows a green count badge of those users, hidden when the count is 0
 ```
 
 ```gherkin
@@ -245,8 +257,9 @@ Scenario: An admin changes a subcategory's visibility status
 Scenario: An admin edits a word list's bilingual title
   Given an admin caller and a list id
   When they PATCH /api/admin/content/word-lists/{id}/meta with title_ru and/or title_en
-  Then the Russian title is only overwritten if the new value is non-blank; the English title is
-    cleared to null if blank
+  Then the Russian title is only overwritten if the new value is non-blank; title_en is only
+    touched if the field was actually included in the request body (so omitting it leaves the
+    existing value alone instead of wiping it), and when included, a blank value clears it to null
 ```
 
 ```gherkin
@@ -282,11 +295,16 @@ Scenario: An admin reorders words within a list
 Scenario: An admin manages fill-in-the-blank grammar sentences
   Given an admin caller
   When they list (optionally by case_index, including/excluding archived), create, edit, or
-    archive (soft-delete) a GrammarSentence via /api/admin/grammar/sentences*
+    archive (soft-delete) a GrammarSentence via /api/admin/grammar/sentences*, including an
+    optional english translation and the use_in_basic/use_in_advanced/use_in_practice flags that
+    control which lesson modes draw on the sentence
   Then creation/edit is rejected if the display text lacks a "___" blank, if answer_ending or
     full_word or russian is blank, if display ends in a parenthetical annotation like "(3, f.)"
     (guards against leaked authoring notes), or if full_word doesn't equal the sentence's blank
     stem plus answer_ending (guards the grader and the display from disagreeing)
+  Then on edit, english is only touched (and blank collapsed to null, falling back to russian) if
+    the field was actually sent — the basic/advanced/practice toggle omits it, so omission never
+    wipes an existing translation
 ```
 
 ```gherkin
@@ -296,14 +314,21 @@ Scenario: An admin manages grammar case rules
     name/question/usage/endings/transform and optional linked article slug
   Then edits require a non-blank name_ru, and a linked article_slug must resolve to an existing
     Article or the request is rejected with 400
+  Then the same PATCH also accepts EN twins (name_en, question_en, usage_en, endings_sg_en,
+    endings_pl_en, transform_en); each is only written (blank collapsed to null) when that field
+    was actually included in the request — there is no dedicated EN editor in the admin UI for
+    rules, only this API-level passthrough
 ```
 
 ```gherkin
 Scenario: An admin manages grammar programs (curated lesson-group bundles)
   Given an admin caller
-  When they list, create, edit, or delete a GrammarProgram via /api/admin/grammar/programs*
+  When they list, create, edit, or delete a GrammarProgram via /api/admin/grammar/programs*,
+    including optional title_en and description_en twins
   Then creation/edit requires a non-blank title and difficulty in {1,2,3}; deleting an unknown
     program id is rejected with 404
+  Then on edit, description_en is only touched if the field was sent in the request (blank
+    collapses to null); title_en has no such guard — an edit that omits it always clears it
 ```
 
 ### Content: practice tests, constitution exam (admin-gated endpoints in other routers)

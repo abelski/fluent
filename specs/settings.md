@@ -4,8 +4,9 @@
 The Settings dashboard page (`/dashboard/settings`) is where a logged-in
 student adjusts their own study preferences: vocabulary session size and
 new/review mix, phrase session size and mix, shared lesson-mode/complexity/
-timer preferences, the combined "continue session" phase sizes, and two
-account-level preferences (server-recorded language, email consent). It has no
+timer/audio-autoplay preferences, the combined "continue session" phase
+sizes, and two account-level preferences (server-recorded language, email
+consent). It has no
 billing or subscription UI of its own — see `specs/billing.md` for where
 premium is bought/managed (`/pricing`) — and the combined-session settings tab
 only sets numbers that `specs/continue-session.md` describes in full; this file
@@ -109,13 +110,34 @@ Scenario: Other tab — email consent
     user at all (checked elsewhere, e.g. before sending a re-engagement or
     admin email)
 
-Scenario: Save feedback and error handling are per-tab
-  Given a save action on any of the three savable tabs
+Scenario: Save feedback uses one flag shared by Vocabulary+Other, and separate
+    flags for Phrases and Combined
+  Given a save action on the Vocabulary, Phrases, Combined, or Other tab
   When it succeeds
-  Then a tab-specific "saved" message is shown for 3 seconds (independent
-    saved-state flags per tab) rather than one shared confirmation
-  When it fails (non-OK response)
-  Then a tab-specific error message is shown and the saving flag clears; no
-    partial state is rolled back client-side since the fields being edited
-    are just left as the user set them
+  Then a "saved" message is shown for 3 seconds; the Vocabulary and Other tabs
+    both read/set the same `saved` state and both call the same `handleSave`
+    (saving one can show a leftover "saved" message on the other if the user
+    switches tabs quickly), while Phrases (`phrasesSaved`) and Combined
+    (`continueSaved`) each have their own independent flag
+
+Scenario: Save errors share a single message across every tab
+  Given a save action on any savable tab fails (non-OK response)
+  Then a tab-appropriate error string (different translation key per tab) is
+    written into one shared `error` state that every tab's block renders —
+    so an error left over from a failed save on one tab is still shown if the
+    user switches to another tab without saving there; no partial state is
+    rolled back client-side since the fields being edited are just left as
+    the user set them
+
+Scenario: Vocabulary tab — audio autoplay toggle, premium/admin-gated
+  Given the page has fetched /api/me/quota and the user is not premium and
+    not an admin/superadmin
+  Then the audio-autoplay checkbox on the Vocabulary tab is disabled, greyed
+    out, and shows a "Premium" badge linking to /pricing
+  Given the same user is premium (or admin/superadmin)
+  Then the checkbox is enabled
+  When it is toggled
+  Then the value is written only to localStorage ("fluent_audio_autoplay",
+    default true) and is never sent to the backend — like complexity, it
+    never round-trips through /me/settings; see documentation/audio.md
 ```

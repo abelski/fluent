@@ -44,7 +44,11 @@ Scenario: Student starts checkout
     student's id as client_reference_id, and the hosted checkout URL is
     returned for the browser to redirect to
   And a student whose premium is already active is rejected with 409
-    "Premium is already active"
+    "Premium is already active", and the frontend responds by re-fetching
+    quota (not showing an error) since its own view was just stale
+  And any other checkout failure is logged with Stripe's diagnosis (error
+    code, param, request id) and a Telegram admin alert, then surfaced to the
+    browser as 502 "Could not start checkout"
 
 Scenario: Student opens the billing portal
   Given a logged-in student who already has a Stripe customer id on file
@@ -52,9 +56,32 @@ Scenario: Student opens the billing portal
   Then a Stripe Customer Portal session is created and its URL returned
   And a student with no stripe_customer_id yet is rejected with 400 "No
     billing account for this user"
-  And a portal-creation failure (e.g. the Customer Portal was never activated
-    in the Stripe dashboard for this mode) is logged and surfaced as 502
-    "Could not open billing portal"
+  And any other portal-creation failure (e.g. the Customer Portal was never
+    activated in the Stripe dashboard for this mode) is logged with Stripe's
+    diagnosis and a Telegram admin alert, then surfaced as 502 "Could not
+    open billing portal"
+  And a stale-customer-id failure instead takes the self-heal path below,
+    surfacing as 409 "Billing account not found"; the frontend responds by
+    re-fetching quota (not showing an error), which then re-renders the CTA
+    from the now-cleared billing state
+
+Scenario: Stripe rejects a stored customer id it doesn't recognize (#180)
+  Given a user's stripe_customer_id was created in a different Stripe mode
+    than the one the backend is currently configured for (e.g. a test-mode id
+    left over in the production database), so Stripe returns a
+    resource_missing error naming the "customer" param
+  When that error surfaces from either checkout or portal creation
+  Then the user's stripe_customer_id, stripe_subscription_id and
+    subscription_status are cleared and the old values are saved to a
+    StripeLinkageAudit row (entitlement — is_premium/premium_until — is left
+    untouched), and a Telegram admin alert with a ready-to-run SQL restore
+    statement is sent so a wrong clear can be undone
+  And for checkout specifically, this clearing happens automatically inside
+    create_checkout_session and checkout is retried once with a freshly
+    created customer, so the student's request still succeeds transparently
+  And for the portal, there is nothing to retry against (there is no new
+    customer yet), so the request itself still fails with 409 as described
+    above; the student must click upgrade again to get a fresh customer
 
 Scenario: Checkout return screen never trusts the browser
   Given the student is redirected back to /pricing/?checkout=success after

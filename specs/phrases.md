@@ -4,10 +4,11 @@
 Admin-curated phrase programs (grouped into chapters) plus each student's own private phrase
 lists, for practicing whole Lithuanian sentences rather than single words. Covers browsing and
 enrolling in programs, running a study session that progresses a phrase through three lesson
-stages, admin CRUD on programs and phrases, and CRUD on personal phrase lists. Called from the
-dashboard UI (`/dashboard/phrases`, `/dashboard/phrases/[id]`, `/dashboard/phrases/[id]/study`,
-`/dashboard/phrases/lists/[id]/edit`, `/dashboard/phrases/lists/[id]/study`,
-`/dashboard/phrases/vocabulary`) over the REST API.
+stages (with tile-assembly and audio-pronunciation sub-steps), a cross-program due-review session,
+admin CRUD on programs and phrases, and CRUD on personal phrase lists. Called from the dashboard UI
+(`/dashboard/phrases`, `/dashboard/phrases/[id]`, `/dashboard/phrases/[id]/study`,
+`/dashboard/phrases/review`, `/dashboard/phrases/lists/[id]/edit`,
+`/dashboard/phrases/lists/[id]/study`, `/dashboard/phrases/vocabulary`) over the REST API.
 Backed by: `backend/routers/phrases.py`, `backend/routers/phrase_lists.py`, `frontend/app/dashboard/phrases/`.
 
 ## Scenarios
@@ -89,6 +90,27 @@ Scenario: Blank-word selection favors the student's known weak spot
 ```
 
 ```gherkin
+Scenario: Stage 1 runs tile-assembly sub-steps before the fill-the-blank exercise
+  Given a phrase entering lesson stage 1, whose text and translation are both longer than 3 words
+  When the frontend renders the exercise
+  Then it first has the student assemble the translation from shuffled word tiles (from-LT), then
+    assemble the Lithuanian text from shuffled word tiles (to-LT) — each sub-step is skipped when
+    its own text is 3 words or fewer — then a 4-option MCQ for the blanked word, then typing the
+    blanked word; a mistake in any sub-step re-queues the card and re-runs the assembly sub-steps
+    (never the MCQ) before landing on typing again, and the specific mistake_word is only recorded
+    from the typing step
+```
+
+```gherkin
+Scenario: A mistake on an already-mastered phrase (stage 2) triggers a full re-drill
+  Given a student typing the full phrase in stage 2 and getting it wrong (quality < 3), with fewer
+    than 2 retries used so far
+  When the exercise re-queues the card
+  Then it re-runs the to-LT tile-assembly sub-step first (if the text is long enough to have tiles)
+    before falling through to the full-phrase typing box again
+```
+
+```gherkin
 Scenario: A phrase's lesson stage only advances on a correct, matching completion
   Given a signed-in student completing a phrase exercise
   When they submit a quality score (0-5) and which stage they just completed
@@ -103,6 +125,40 @@ Scenario: Mistake words are recorded per phrase, not per session
   When progress is recorded with that mistake_word
   Then it is lower-cased, stripped of surrounding punctuation, and its count in the phrase's
     persistent mistake_words_json map is incremented, so future sessions keep blanking it
+```
+
+```gherkin
+Scenario: Phrase pronunciation audio is premium-gated
+  Given a student in a phrase study session
+  When they open stage 0 (intro) or any stage-1 sub-step
+  Then a Premium/admin student sees a working speaker button (and, if autoplay is on, the phrase's
+    Lithuanian audio plays automatically on each new card); a free student sees the same-shaped
+    button locked, linking to the pricing page instead of playing anything
+```
+
+### Cross-program review
+
+```gherkin
+Scenario: Student reviews everything due, across all enrolled programs at once
+  Given a signed-in student enrolled in one or more phrase programs
+  When they open the phrases review session
+  Then phrases due for review (or in-progress, lesson_stage < 2) are pulled from every enrolled
+    program, sorted most-overdue first, capped at the student's phrases_per_session, and served
+    with the same per-phrase shape (blank_word, distractors, tiles) as a per-program study session;
+    a student who has since left every program but still has due phrases is still served them;
+    if nothing is due, the request 404s
+```
+
+### Phrases-page mascot
+
+```gherkin
+Scenario: The phrases page shows a random public-program phrase in the mascot's speech bubble
+  Given any visitor opening the phrases page
+  When the page loads
+  Then it fetches one uncached, randomly-picked phrase (text + translation) from a public program
+    only — a student's own personal-list phrases are never shown this way — and displays it in the
+    mascot's greeting bubble; if none exists or the request fails, the mascot's default greeting is
+    shown instead
 ```
 
 ### Personal phrase lists
