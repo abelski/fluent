@@ -52,3 +52,13 @@ after the page has already loaded — Google's crawler and snippet only ever see
 version. Serving real English search intent would need separate `/en/` article URLs with
 `hreflang` — a real feature, out of scope for a low-effort pass, recorded here so it isn't
 re-discovered from scratch.
+
+## Search engines registered (#51)
+
+- **Google Search Console** — verified via `verification.google` in `frontend/app/layout.tsx`.
+- **Bing Webmaster Tools** — imported from GSC (no tag needed; Bing re-checks GSC ownership via
+  read-only OAuth). Sitemap imported too. Bing's index also feeds ChatGPT search, so this is the
+  cheapest lever for AI-assistant visibility.
+- **Yandex Webmaster** — verified via `verification.yandex` meta tag in `frontend/app/layout.tsx`.
+  Chose the meta tag over DNS TXT because it needs no registrar access. Its "Google Tag" option
+  needs Google Tag Manager, which the site doesn't use (plain GA). Removing the tag un-verifies it.
