@@ -26,7 +26,8 @@ from typing import Any, Optional
 import stripe
 from sqlmodel import Session
 
-from models import User
+import telegram_service
+from models import StripeLinkageAudit, User
 
 logger = logging.getLogger(__name__)
 
@@ -127,20 +128,77 @@ def get_or_create_customer(user: User, session: Session) -> str:
     return user.stripe_customer_id
 
 
-def create_checkout_session(user: User, session: Session, success_url: str, cancel_url: str) -> str:
-    """Create a subscription Checkout Session and return its hosted URL."""
-    customer_id = get_or_create_customer(user, session)
-    _configure()
-    checkout = stripe.checkout.Session.create(
-        mode="subscription",
-        customer=customer_id,
-        client_reference_id=user.id,
-        line_items=[{"price": price_id(), "quantity": 1}],
-        success_url=success_url,
-        cancel_url=cancel_url,
-        allow_promotion_codes=False,
-        subscription_data={"metadata": {"user_id": user.id}},
+def _is_missing_customer(exc: Exception) -> bool:
+    """True when Stripe says the customer id we sent doesn't exist in this mode (#180)."""
+    return (
+        isinstance(exc, stripe.InvalidRequestError)
+        and exc.code == "resource_missing"
+        and getattr(exc, "param", None) == "customer"
     )
+
+
+def clear_stripe_linkage(user: User, session: Session) -> None:
+    """Forget a customer Stripe doesn't know (e.g. a test-mode id in the prod DB, #180).
+
+    A subscription can't outlive its customer, so the sub id and status go too. Entitlement
+    (is_premium / premium_until) is deliberately left alone — only the webhook changes that.
+
+    The old ids are saved to StripeLinkageAudit in the same commit, and the admin gets them in
+    Telegram with a restore statement, so a wrong clear can be undone.
+    """
+    audit = StripeLinkageAudit(
+        user_id=user.id,
+        stripe_customer_id=user.stripe_customer_id,
+        stripe_subscription_id=user.stripe_subscription_id,
+        subscription_status=user.subscription_status,
+    )
+    restore = (
+        f"UPDATE \"user\" SET stripe_customer_id={_sql(audit.stripe_customer_id)}, "
+        f"stripe_subscription_id={_sql(audit.stripe_subscription_id)}, "
+        f"subscription_status={_sql(audit.subscription_status)} WHERE id='{user.id}';"
+    )
+    logger.warning("Clearing unknown Stripe customer for user %s; restore with: %s", user.id, restore)
+    session.add(audit)
+    user.stripe_customer_id = None
+    user.stripe_subscription_id = None
+    user.subscription_status = None
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    telegram_service.send_telegram(f"🧹 Cleared unknown Stripe ids for {user.email}\nRestore:\n{restore}")
+
+
+def _sql(value: Optional[str]) -> str:
+    return "NULL" if value is None else f"'{value}'"
+
+
+def create_checkout_session(user: User, session: Session, success_url: str, cancel_url: str) -> str:
+    """Create a subscription Checkout Session and return its hosted URL.
+
+    A stored customer id Stripe doesn't know is cleared and re-created once; any other
+    error, or a second failure, propagates to the router.
+    """
+    def _create() -> Any:
+        customer_id = get_or_create_customer(user, session)
+        _configure()
+        return stripe.checkout.Session.create(
+            mode="subscription",
+            customer=customer_id,
+            client_reference_id=user.id,
+            line_items=[{"price": price_id(), "quantity": 1}],
+            success_url=success_url,
+            cancel_url=cancel_url,
+            allow_promotion_codes=False,
+            subscription_data={"metadata": {"user_id": user.id}},
+        )
+
+    try:
+        checkout = _create()
+    except Exception as exc:
+        if not _is_missing_customer(exc):
+            raise
+        clear_stripe_linkage(user, session)
+        checkout = _create()
     return checkout["url"]
 
 

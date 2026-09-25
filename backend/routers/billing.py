@@ -29,6 +29,7 @@ import logging
 import os
 from typing import Any, Optional
 
+import stripe
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlmodel import Session, select
 
@@ -62,6 +63,26 @@ def _frontend_url() -> str:
 def _require_configured() -> None:
     if not stripe_service.is_configured():
         raise HTTPException(status_code=503, detail="Billing is not configured")
+
+
+def _report_stripe_failure(what: str, user: User, exc: Exception) -> None:
+    """Log a failed checkout/portal call with Stripe's own diagnosis and ping the admin (#180).
+
+    Stripe errors carry code/param/request_id and a message that names the bad object (e.g.
+    "No such customer … exists in test mode"). Stripe masks keys in its messages, so they are
+    safe to log. Non-Stripe exceptions get the class name only: their str() may echo a DSN.
+    """
+    if isinstance(exc, stripe.StripeError):
+        detail = (
+            f"{type(exc).__name__} code={exc.code} param={getattr(exc, 'param', None)} "
+            f"http={exc.http_status} request={exc.request_id} msg={exc.user_message}"
+        )
+    else:
+        detail = type(exc).__name__
+    logger.error("Stripe %s failed for user %s: %s", what, user.id, detail)
+    telegram_service.send_telegram(
+        f"⚠️ Stripe {what} failed\nUser: {user.email}\nCustomer: {user.stripe_customer_id}\n{detail}"
+    )
 
 
 # ── Entitlement mutations (webhook-only) ─────────────────────────────────────
@@ -148,7 +169,7 @@ def create_checkout_session(
             cancel_url=f"{base}/pricing/?checkout=cancelled",
         )
     except Exception as exc:
-        logger.error("Stripe checkout creation failed for user %s: %s", user.id, type(exc).__name__)
+        _report_stripe_failure("checkout", user, exc)
         raise HTTPException(status_code=502, detail="Could not start checkout")
     return {"url": url}
 
@@ -170,9 +191,14 @@ def create_portal_session(
             user.stripe_customer_id, return_url=f"{_frontend_url()}/pricing/"
         )
     except Exception as exc:
-        # The most likely cause is the Customer Portal never being activated in the Stripe
+        _report_stripe_failure("portal", user, exc)
+        if stripe_service._is_missing_customer(exc):
+            # Stale id (e.g. test-mode id in prod, #180): forget it so the pricing page
+            # re-renders from fresh quota instead of offering a portal that can't open.
+            stripe_service.clear_stripe_linkage(user, session)
+            raise HTTPException(status_code=409, detail="Billing account not found")
+        # Otherwise most likely the Customer Portal was never activated in the Stripe
         # dashboard for this mode — there is no code-side workaround for that.
-        logger.error("Stripe portal creation failed for user %s: %s", user.id, type(exc).__name__)
         raise HTTPException(status_code=502, detail="Could not open billing portal")
     return {"url": url}
 

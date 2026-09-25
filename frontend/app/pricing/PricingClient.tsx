@@ -104,6 +104,9 @@ export default function PricingClient() {
         headers: { Authorization: `Bearer ${token ?? ''}` },
       });
       const data = await r.json().catch(() => ({}));
+      // 409 means our view of the account is stale — checkout: already Premium; portal: stale
+      // billing account cleared (#180). Either way, re-fetch quota so the CTA re-renders.
+      if (r.status === 409) { await fetchQuota(); setBusy(false); return; }
       if (!r.ok || !data.url) { setError(tr.pricing.checkoutError); setBusy(false); return; }
       window.location.href = data.url;
     } catch {
