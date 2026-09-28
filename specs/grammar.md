@@ -8,8 +8,13 @@ lessons in sequence, and their pass/fail history unlocks the next lesson. It is 
 Next.js dashboard grammar pages over the REST API; the same endpoints also serve the admin's
 read-only view into draft/testing content (there is no separate admin content-editing router in
 scope here — admin-only behavior below is limited to what `routers/grammar.py` itself branches on).
+The `/dashboard/grammar` lesson-list screen itself doubles as onboarding: hero card, program
+chips, a featured card + stacked program cards ("bento"), and per-topic cards, letting a visitor
+with no enrolled program preview and enroll without leaving the page.
 Backed by: `backend/routers/grammar.py`, `backend/grammar_service.py`,
-`frontend/app/dashboard/grammar/`, `frontend/app/dashboard/components/GrammarTaskRunner.tsx`.
+`frontend/app/dashboard/grammar/page.tsx`,
+`frontend/app/dashboard/components/GrammarOverview.tsx`,
+`frontend/app/dashboard/components/GrammarTaskRunner.tsx`.
 
 ## Scenarios
 
@@ -232,4 +237,113 @@ Scenario: a sentence row whose stored answer disagrees with its displayed word i
     "wrong" verdict on an answer that matches what the UI itself displays as correct
   And a row is still accepted when full_word equals stem+answer_ending, or ends with
     it as a separate leading word (covers ordinal-number prefixes like "dvidešimt")
+```
+
+```gherkin
+Scenario: grammar page with no enrolled program doubles as onboarding
+  Given a user (logged in or anonymous) enrolled in no grammar program
+  When they open /dashboard/grammar
+  Then the hero shows "0" with no "N из M" badge and an empty progress bar
+  And the hero's primary button reads «Начать с падежей» and calls enroll for the
+    cases program directly (no separate onboarding screen or page navigation)
+  And «Напомни, что я мог забыть» is not shown
+  And the featured card previews the first public program (title, description,
+    lesson and topic counts) with no enroll button of its own
+  And the other public programs are stacked beside it, each with a description and «Добавить»
+  And the topic cards below show that program's topics with level chips but no
+    scores, and all level buttons disabled (no «Убрать» either)
+```
+
+```gherkin
+Scenario: enrolling from the grammar page
+  Given a logged-in user on /dashboard/grammar
+  When they press «Начать с падежей» or a program's «Добавить» (hero, featured card, or stack)
+  Then POST /me/grammar-programs/{id} is called for that program
+  And the page marks it enrolled and re-selects it as the active chip, without navigating away
+```
+
+```gherkin
+Scenario: anonymous visitor tries to enroll
+  Given an anonymous visitor on /dashboard/grammar (no token in local storage)
+  When they press «Начать с падежей» or any «Добавить» button
+  Then no enroll request is sent; they are redirected to /login
+  And because Google OAuth always redirects back to /dashboard, they do not return to
+    the grammar page after signing in
+```
+
+```gherkin
+Scenario: program chips filter the page
+  Given the grammar page is loaded
+  Then there is one chip per public program with its lesson count, plus «Все»
+  And a chip for a program the user is enrolled in carries a dot marker
+  And «Все» counts the union of enrolled programs' lessons (or of every program's
+    lessons when none is enrolled)
+  When a program chip is selected
+  Then the featured card and the topic cards below switch to that program
+```
+
+```gherkin
+Scenario: featured card shows the next lesson
+  Given the user is enrolled in at least one program and chip «Все» is selected
+  Then the featured card shows the first enrolled program (in program list order) that
+    has a lesson which is neither locked nor passed, and the first such lesson in it
+  And for a noun-case lesson (id < 200) the heading is the lesson's own title, which is
+    already Lithuanian (e.g. «Kilmininkas Vns.»); the sub-heading below it is the case's
+    RU/EN name (rules[0].name_ru or name_en), with a trailing "(<the same LT title>)"
+    stripped off (e.g. «Родительный (Kilmininkas)» renders as just «Родительный»),
+    while an unrelated trailing parenthetical such as «(kiek? yra)» is kept
+  And a verb lesson (id >= 200) has no sub-heading and uses its own title (title_en in
+    EN mode, falling back to the Russian title)
+  And the topic's level chips (display only, showing lock state and ✓/score%), the
+    lesson's position within its topic ("урок 2 из 3") and a single «Начать урок ›»
+    button are shown — the level buttons that actually start lessons live on the topic
+    cards below, not on the featured card
+  And the hero's «Продолжить ›» button starts that same lesson
+  And when chip «Все» is selected, the topic cards below show that same program
+```
+
+```gherkin
+Scenario: nothing left to continue
+  Given every unlocked lesson in the user's enrolled programs is passed
+  When the grammar page loads
+  Then the featured card previews the first public program the user is not enrolled
+    in yet, with a «Добавить» button
+  And if the user is enrolled in every public program, the featured card shows a
+    completion message instead, with a /pricing link only if any remaining lesson is
+    still locked (premium-only)
+  And the hero's «Продолжить ›» button is not shown
+```
+
+```gherkin
+Scenario: topic card levels start lessons directly
+  Given the topic cards of the currently selected program (grouped by consecutive
+    lessons sharing the same title)
+  Then each topic card shows its title (Lithuanian for noun-case topics), the case
+    name as a sub-heading, a linked source article when one exists, passed/total, and
+    one button per level (Базовый / Продвинутый / Повторение)
+  And a level button shows ✓ once its best score exceeds 75%, or the best score
+    percentage if attempted but not yet passed, or nothing if never attempted
+  When an unlocked level button is pressed
+  Then that lesson starts immediately (no intermediate confirmation)
+  And a locked level button is disabled and shows a lock icon, with an existing
+    «Открыть Premium» upsell link shown once per card, outside the disabled buttons
+  And every level button is at least 44px tall on a 375px viewport
+```
+
+```gherkin
+Scenario: removing a program from the grammar page
+  Given the user has selected a program they are enrolled in
+  Then a «Убрать» link appears next to the topics heading (hidden for a preview/not-enrolled program)
+  When they press it, a confirmation dialog appears naming the program and no request is sent yet
+  When they confirm
+  Then DELETE /me/grammar-programs/{id} is called and the program is marked not enrolled
+```
+
+```gherkin
+Scenario: enroll or unenroll fails
+  Given a logged-in user on /dashboard/grammar
+  When an enroll or unenroll request returns a non-2xx response
+  Then one line reading "Не получилось — попробуйте ещё раз." in the destructive
+    colour appears under the program chips
+  And it is cleared as soon as the user selects a chip or tries another enroll/unenroll action
 ```

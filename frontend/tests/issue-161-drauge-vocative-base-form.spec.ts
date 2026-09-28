@@ -160,10 +160,7 @@ test.describe('Issue #161 — masculine "drauge" task does not render the "от:
 
   async function openLesson(page: import('@playwright/test').Page) {
     await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
   }
 

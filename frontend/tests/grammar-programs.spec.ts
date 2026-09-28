@@ -42,7 +42,7 @@ test.describe('Grammar programs', () => {
     page.route('**/api/admin/grammar/config', route => route.fulfill({ json: MOCK_CONFIG }));
   }
 
-  test('shows empty state with Смотреть все программы when not enrolled', async ({ page }) => {
+  test('not enrolled: no-programs hero plus Смотреть все программы link', async ({ page }) => {
     await setFakeToken(page);
     setupCommonMocks(page);
 
@@ -55,6 +55,7 @@ test.describe('Grammar programs', () => {
 
     await page.goto('/dashboard/grammar');
     await expect(page.getByTestId('browse-programs-link')).toBeVisible();
+    await expect(page.getByTestId('hero-start-cases')).toBeVisible();
   });
 
   test('shows lesson tree when enrolled', async ({ page }) => {
@@ -73,7 +74,7 @@ test.describe('Grammar programs', () => {
     await expect(page.getByTestId('category-program-1')).toBeVisible();
   });
 
-  test('unenroll hides lesson tree and shows empty state', async ({ page }) => {
+  test('unenroll (after confirm) shows the no-programs hero', async ({ page }) => {
     await setFakeToken(page);
     setupCommonMocks(page);
 
@@ -93,7 +94,10 @@ test.describe('Grammar programs', () => {
     await expect(page.getByTestId('unenroll-button')).toBeVisible();
 
     await page.getByTestId('unenroll-button').click();
-    await expect(page.getByTestId('browse-programs-link')).toBeVisible();
+    await page.getByTestId('unenroll-confirm-button').click();
+    await expect(page.getByTestId('hero-start-cases')).toHaveText('Начать с падежей');
+    await expect(page.getByTestId('grammar-hero-count')).toHaveText('0');
+    await expect(page.getByTestId('unenroll-button')).toHaveCount(0);
   });
 
   test('catalog page shows program card with Добавить button', async ({ page }) => {
