@@ -6,7 +6,8 @@ import { mockStudy, stageOf, stageAfter, answerCorrectly, type MockWord } from '
 //
 // The load-bearing part of this spec is the NEGATIVE half. The line starts with
 // `word.lithuanian`, which is exactly the answer the user is being asked to produce
-// on the reverse MCQ ('2r'), the assemble card ('2a') and the typing card (3) — so
+// on the reverse MCQ ('2r'), the assemble card ('2a'), the typing card (3) and the
+// syllable drill ('3s', which asks for one syllable of it) — so
 // showing it there *before* the user answers leaks the answer. On stage 1
 // (flashcard) and stage 2 (forward MCQ) the Lithuanian word is the prompt, so the
 // line shows straight away; on those other three stages it appears only once the
@@ -33,10 +34,10 @@ async function pinSelectDirection(page: Page, direction: 'forward' | 'reverse') 
   await page.addInitScript((v) => { Math.random = () => v; }, direction === 'forward' ? 0.1 : 0.9);
 }
 
-async function startSession(page: Page, word: MockWord) {
+async function startSession(page: Page, word: MockWord, firstStage: 'card' | 'type' = 'card') {
   await mockStudy(page, [word]);
   await page.goto('/dashboard/lists/_/study');
-  expect(await stageOf(page)).toBe('card');
+  expect(await stageOf(page)).toBe(firstStage);
 }
 
 const verbForms = (page: Page) => page.getByTestId('verb-forms');
@@ -88,6 +89,20 @@ test('stages 2a (assemble) and 3 (type) hide the forms until the answer is given
   await expect(verbForms(page)).toHaveCount(0);
   await answerCorrectly(page, 'type', SUPRASTI);
   await expect(verbForms(page)).toHaveText(FORMS_LINE);
+});
+
+test('stage 3s (syllable drill) hides the forms — the missing syllable is in them', async ({ page }) => {
+  // Fix #54: '3s' shows the word minus one syllable, and that syllable is the
+  // answer — the full forms line gave it away ("duoti – duoda – davė" over "__ti").
+  // Fastest route in: a mature verb opens on typing, «Забыл» → drill.
+  await startSession(page, { ...SUPRASTI, id: 4, status: 'known', mature: true }, 'type');
+  await page.getByTestId('forgot-btn').click();
+  const dismiss = page.getByTestId('dismiss-wrong');
+  await dismiss.waitFor({ timeout: 7000 });
+  await dismiss.click();
+
+  expect(await stageAfter(page, 'type')).toBe('drill');
+  await expect(verbForms(page)).toHaveCount(0);
 });
 
 test('a non-verb word never shows the line', async ({ page }) => {

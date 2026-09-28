@@ -215,14 +215,10 @@ export interface Translations {
     statsCompletion: string;
     statsAttempted: string;
     tipTitle: string;
-    tipBody: string;
-    tipBodyDone: string;
     programsTitle: string;
     programsSubtitle: string;
     programsEmpty: string;
     programsBack: string;
-    emptyState: string;
-    browsePrograms: string;
     browseProgramsLink: string;
     unenrollBtn: string;
     lessonStatusDraft: string;
@@ -236,6 +232,25 @@ export interface Translations {
     lockedTitle: string; // blocked state after a 403 from the tasks endpoint
     lockedBody: string;
     remindHint: string; // shown under the disabled remind button when no practice lesson is passed yet
+    // #53 — hero / chips / bento layout of the lesson list
+    emptySubtitle: string; // hero subtitle when no program is enrolled
+    continue: string; // hero «Продолжить» — starts the featured next lesson
+    startWithCases: string; // hero primary button with no programs — enrolls the cases program
+    continueHere: string; // featured card kicker
+    lessonOf: string; // `{i}` / `{n}` — position of a lesson inside its topic
+    startLesson: string;
+    open: string; // stack card of an enrolled program
+    add: string; // enroll a not-enrolled program
+    program: string; // featured preview kicker
+    insideTitle: string; // topics heading for a not-enrolled program
+    topicsTitle: string; // topics heading for an enrolled program
+    topicsCount: PluralForms;
+    difficulty: Record<number, string>;
+    allChip: string;
+    premiumNext: string; // featured completion card link to /pricing
+    programDone: string; // featured completion card
+    declHouse: string; // translation of «namas» in the hero declension sample
+    actionFailed: string; // enroll/unenroll request failed
   };
   practice: {
     title: string;

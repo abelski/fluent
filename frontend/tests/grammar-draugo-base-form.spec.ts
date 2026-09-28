@@ -83,10 +83,7 @@ test.describe('Issue #25 — grammar base form: draugas vs draugė', () => {
 
   test('masculine sentence shows draugas as base form (not draugė)', async ({ page }) => {
     await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
 
     // Wait for lesson task to load
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
@@ -99,10 +96,7 @@ test.describe('Issue #25 — grammar base form: draugas vs draugė', () => {
 
   test('answer "o" for Petras ieško draug___ is accepted as correct', async ({ page }) => {
     await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
 
@@ -117,10 +111,7 @@ test.describe('Issue #25 — grammar base form: draugas vs draugė', () => {
 
   test('wrong answer for Petras ieško draug___ shows draugo as correct answer', async ({ page }) => {
     await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
 

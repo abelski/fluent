@@ -87,6 +87,7 @@ library's "Deliberate deviations" table.
 | Inbox message list + message view (#23) | `frontend/app/dashboard/inbox/page.tsx`, `MessageView.tsx` |
 | Inbox API client + date formatting + `fluent:inbox-changed` (#23) | `frontend/lib/inbox.ts` |
 | Hero stat card | `frontend/app/dashboard/components/ProgressStatCard.tsx` |
+| Grammar hero / program chips / featured card / program stack / topic cards (#53) | `frontend/app/dashboard/components/GrammarOverview.tsx` (`GrammarHero`, `ProgramChips`, `FeaturedCard`, `ProgramStack`, `TopicsSection`/`TopicCard`) |
 | Complexity selector (chevron-clipped knob) | `frontend/app/dashboard/components/StarLevelToggle.tsx` |
 
 The tab strip scrolls horizontally (mockup `.navtabs`) but stays desktop-only; below `1000px` the
@@ -163,13 +164,13 @@ named "page content is constrained to the 1180px container" and "decorative blur
 
 Two orderings, not one: Слова/Фразы/Практика put the hero `ProgressStatCard` *above* the title
 (card → banner → title+subtitle → content) — guarded by `tests/stats-card-alignment.spec.ts`
-("stats card is rendered above the page title"). Грамматика keeps title+subtitle → banner → hero →
-content instead, because its beta-notice banner reads better directly under the title. Both are
-intentional; don't introduce a third ordering. Every page ends the same way: main content → the
-"browse all" link (`text-emerald-600 hover:text-emerald-700`). The mascot renders inside the hero's
+("stats card is rendered above the page title"). Грамматика (#53) is the exception: its title lives
+inside its own hero (`GrammarHero` in `GrammarOverview.tsx`) → program chips (with the "browse all"
+link) → bento → topic cards — see the deviation below. Don't introduce another ordering. The other
+pages end the same way: main content → the "browse all" link (`text-emerald-600 hover:text-emerald-700`). The mascot renders inside the hero's
 `icon` prop; on
-pages where the hero can be absent in a common state (Грамматика/Практика with no enrolled
-content), the mascot falls back to beside the title so exactly one is always visible. Статьи has no
+pages where the hero can be absent in a common state (Практика with no enrolled
+content; Грамматика only while loading — its #53 hero renders with no programs too), the mascot falls back to beside the title so exactly one is always visible. Статьи has no
 hero at all, so its mascot always sits beside the title.
 
 **Статьи category tab bar** — `Article.category` (backend: `learning_materials` | `adaptation` |
@@ -314,8 +315,12 @@ client actually made rather than returning a constant.
 - **Mood 0 renders `talking`, not `IDLE`** — every page mascot now carries a bubble, so the neutral
   state should look like he is speaking. `idle` is kept for the bubble-less `bare` call sites.
 - **Grammar's 3-card stat grid collapsed into one `ProgressStatCard`** — matches the hero-card
-  pattern Слова/Фразы already used. The standalone "tip" card's encouragement copy moved into the
-  hero's milestone caption rather than being dropped.
+  pattern Слова/Фразы already used. Superseded by #53 below.
+- **Grammar hero / chips / bento (#53)** — Грамматика no longer uses `ProgressStatCard`: its
+  `GrammarHero` carries the page title, an in-place enroll («Начать с падежей») and a static
+  declension sample; «Смотреть все программы» sits in the chips row. The page doubles as onboarding
+  for users with no program, which the count-gated `ProgressStatCard` can't do. Grammar only —
+  the other 4 pages are unchanged. Decisions: `documentation/grammar-bento.md`.
 - **Secondary label contrast** — the original mockup set the stage label / part-of-speech hint at
   `#b0b4ba`, and the app had drifted lighter still to `gray-300` `#d1d5db`. Both were reported
   unreadable, so these labels use `#5b6067` (the design system's own darker secondary, from its

@@ -2,38 +2,21 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BACKEND_URL, getToken, getGrammarPrograms, unenrollGrammarProgram, saveGrammarLessonResult, type GrammarProgramSummary } from '../../../lib/api';
+import { useRouter } from 'next/navigation';
+import { BACKEND_URL, getToken, getGrammarPrograms, enrollGrammarProgram, unenrollGrammarProgram, saveGrammarLessonResult, type GrammarProgramSummary } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 import { MOOD_NEUTRAL } from '../../../lib/mascotMood';
-import ProgressStatCard from '../components/ProgressStatCard';
 import PageShell from '../components/PageShell';
 // The exercise screen itself lives in GrammarTaskRunner so the combined
 // continue-session can reuse it; this page keeps the lesson list and done screen.
-import GrammarTaskRunner, { type GrammarRule, type Task, type VerbHint } from '../components/GrammarTaskRunner';
-
-interface Lesson {
-  id: number;
-  title: string;
-  title_en?: string;         // verb lessons only — grouping stays by the RU title/tense_key
-  level: 'basic' | 'advanced' | 'practice';
-  cases?: number[];          // noun lessons only
-  tense_key?: string;        // verb lessons only
-  task_count: number;
-  rules?: GrammarRule[];
-  hint?: VerbHint;           // verb conjugation lessons only
-  hint_en?: VerbHint;
-  is_locked: boolean;
-  best_score_pct: number | null;
-  status?: string;
-}
-
-const LEVEL_STYLES: Record<string, string> = {
-  basic: 'bg-teal-50 border-line text-teal-600',
-  advanced: 'bg-emerald-50 border-line text-emerald-600',
-  practice: 'bg-amber-50 border-line text-amber-600',
-};
+import GrammarTaskRunner, { type Task } from '../components/GrammarTaskRunner';
+// #53 — the lesson list's hero / chips / bento / topic cards.
+import {
+  GrammarHero, ProgramChips, FeaturedCard, ProgramStack, TopicsSection,
+  featuredFor, isPassed, programTitle, type Lesson, type LessonsByProgram,
+} from '../components/GrammarOverview';
 
 // «Напомни что я мог забыть» (#26) — a pseudo-lesson through the same startLesson
 // flow. id=0 is the sentinel REMIND_LESSON_ID used server-side for the saved
@@ -46,175 +29,6 @@ const REMIND_LESSON: Lesson = {
   is_locked: false,
   best_score_pct: null,
 };
-
-function GrammarStatsBar({
-  lessons,
-  primaryAction,
-}: {
-  lessons: Lesson[];
-  primaryAction: { label: string; onClick: () => void; disabled?: boolean; hint?: string };
-}) {
-  const { tr } = useT();
-  const total = lessons.length;
-  const passed = lessons.filter((l) => l.best_score_pct !== null && l.best_score_pct !== undefined && l.best_score_pct > 0.75).length;
-  const pct = total > 0 ? Math.round((passed / total) * 100) : 0;
-
-  if (total === 0) return null;
-
-  const remaining = total - passed;
-
-  return (
-    <div className="mb-10">
-      <ProgressStatCard
-        theme="emerald"
-        icon={<PageMascot phrase="Sveikas!" className="shrink-0" />}
-        count={passed}
-        label={tr.grammar.statsPassed}
-        countBadge={`${tr.grammar.statsOf} ${total}`}
-        milestone={{
-          pct,
-          caption: remaining > 0 ? tr.grammar.tipBody.replace('{count}', String(remaining)) : tr.grammar.tipBodyDone,
-        }}
-        primaryAction={primaryAction}
-        testId="stats-card-grammar"
-      />
-    </div>
-  );
-}
-
-function SubcategoryGroup({
-  group,
-  onStartLesson,
-}: {
-  group: { title: string; titleEn?: string; lessons: Lesson[] };
-  onStartLesson: (lesson: Lesson) => void;
-}) {
-  const { tr, plural, lang } = useT();
-  const [open, setOpen] = useState(false);
-  const displayTitle = (lang === 'en' && group.titleEn) ? group.titleEn : group.title;
-
-  const passedCount = group.lessons.filter(
-    (l) => l.best_score_pct !== null && l.best_score_pct !== undefined && l.best_score_pct > 0.75
-  ).length;
-  const total = group.lessons.length;
-  const complete = total > 0 && passedCount === total;
-
-  return (
-    <div>
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => setOpen((v) => !v)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setOpen((v) => !v);
-          }
-        }}
-        aria-expanded={open}
-        data-testid="subcategory-toggle"
-        className={`w-full flex items-center justify-between px-6 py-4 bg-white hover:bg-[#fafbfa] transition-colors text-left relative border-l-[3px] flex-wrap gap-y-1 ${
-          complete ? 'border-l-emerald-600' : 'border-l-transparent'
-        }`}
-      >
-        <div className="flex items-center gap-2 flex-wrap">
-          <span role="heading" aria-level={3} className="text-[14.5px] font-semibold text-ink">{displayTitle}</span>
-          {(() => {
-            const rule = group.lessons[0]?.rules?.find((r) => r.article_slug);
-            if (!rule?.article_slug) return null;
-            const title = (lang === 'ru' ? rule.article_title_ru : rule.article_title_en) || tr.grammar.articleFallback;
-            return (
-              <a
-                href={`/dashboard/articles/${rule.article_slug}`}
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-[13px] text-emerald-600 hover:text-emerald-700 ml-2"
-              >
-                <span aria-hidden="true">↗</span>
-                {title}
-              </a>
-            );
-          })()}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-[13.5px] whitespace-nowrap ${complete ? 'text-emerald-600' : 'text-faint'}`}>
-            {passedCount > 0 ? `${passedCount}/${total}` : total}{' '}
-            {plural(total, tr.grammar.levelsCount)}
-            <span
-              aria-hidden="true"
-              className={`ml-1 inline-block transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-            >
-              ▾
-            </span>
-          </span>
-        </div>
-      </div>
-      {open && (
-        <div className="px-5 py-4 bg-white">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {group.lessons.map((lesson) => {
-              const locked = lesson.is_locked ?? false;
-              const scorePct = lesson.best_score_pct;
-              return (
-                <div key={lesson.id} className="flex flex-col">
-                  <button
-                    onClick={() => !locked && onStartLesson(lesson)}
-                    disabled={locked}
-                    data-testid={locked ? 'lesson-locked' : undefined}
-                    className={`flex-1 bg-gray-50 border rounded-2xl p-5 text-left flex flex-col gap-3 transition-colors ${
-                      locked
-                        ? 'border-line opacity-40 cursor-not-allowed'
-                        : 'border-line hover:bg-white cursor-pointer'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {locked && (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 shrink-0">
-                          <path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zm3.1-9H8.9V6a3.1 3.1 0 016.2 0v2z"/>
-                        </svg>
-                      )}
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${LEVEL_STYLES[lesson.level] ?? ''}`}>
-                        {tr.grammar.levels[lesson.level] ?? lesson.level}
-                      </span>
-                      {lesson.status && lesson.status !== 'published' && (
-                        <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-px leading-tight">
-                          {lesson.status === 'draft' ? tr.grammar.lessonStatusDraft : tr.grammar.lessonStatusTesting}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-gray-400 text-xs">{lesson.task_count} {plural(lesson.task_count, tr.grammar.tasksCount)}</div>
-                      {scorePct !== null && scorePct !== undefined && (
-                        <div className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                          scorePct > 0.75
-                            ? 'bg-emerald-50 text-emerald-600'
-                            : 'bg-amber-50 text-amber-600'
-                        }`}>
-                          {Math.round(scorePct * 100)}%
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                  {/* The upsell sits outside the (disabled, dimmed) card button so it stays
-                      clickable and legible. `is_locked` is server-side and already false for
-                      premium/admin, so this only ever renders for free users. */}
-                  {locked && (
-                    <Link
-                      href="/pricing"
-                      data-testid="lesson-locked-upsell"
-                      className="mt-1.5 self-start text-[12px] font-medium text-amber-700 hover:text-amber-600 transition-colors"
-                    >
-                      {tr.grammar.lockedUpsell}
-                    </Link>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // Maps case index → group name using the grammar config endpoint.
 // Cached in module scope so we only fetch once per page load.
@@ -253,22 +67,17 @@ function filterLessonsForProgram(
 }
 
 export default function GrammarPage() {
-  const { tr, plural, lang } = useT();
+  const { tr, lang } = useT();
+  const router = useRouter();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [caseGroups, setCaseGroups] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
-  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const [programs, setPrograms] = useState<GrammarProgramSummary[]>([]);
   const [programsLoading, setProgramsLoading] = useState(true);
-  const [unenrolling, setUnenrolling] = useState(false);
-
-  function toggleCategory(key: string) {
-    setOpenCategories((prev) => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  }
+  const [selected, setSelected] = useState<number | 'all'>('all');
+  const [confirmId, setConfirmId] = useState<number | null>(null);
+  // Enroll/unenroll failure line under the chips; cleared on the next action.
+  const [actionError, setActionError] = useState(false);
 
   // Exercise state — the run itself lives in GrammarTaskRunner; the page only keeps
   // what its own done screen needs (final score and TAK's final mood).
@@ -309,28 +118,36 @@ export default function GrammarPage() {
   }, [fetchLessons]);
 
   useEffect(() => {
+    // Public programs for guests too — the page previews them as onboarding.
     getGrammarPrograms()
-      .then(ps => {
-        setPrograms(ps);
-        // Open all enrolled programs by default
-        const enrolled = ps.filter(p => p.enrolled);
-        if (enrolled.length > 0) {
-          setOpenCategories(new Set(enrolled.map(p => `program-${p.id}`)));
-        }
-      })
+      .then(setPrograms)
       .catch(console.error)
       .finally(() => setProgramsLoading(false));
   }, []);
 
+  async function handleEnroll(programId: number) {
+    // Guests go to sign in; OAuth always lands on /dashboard (no return here).
+    if (!getToken()) { router.push('/login'); return; }
+    setActionError(false);
+    try {
+      await enrollGrammarProgram(programId);
+      setPrograms((prev) => prev.map((p) => p.id === programId ? { ...p, enrolled: true } : p));
+      setSelected(programId);
+      fetchLessons(); // locks change on enroll
+    } catch (e) {
+      console.error(e);
+      setActionError(true);
+    }
+  }
+
   async function handleUnenroll(programId: number) {
-    setUnenrolling(true);
+    setActionError(false);
     try {
       await unenrollGrammarProgram(programId);
       setPrograms((prev) => prev.map((p) => p.id === programId ? { ...p, enrolled: false } : p));
     } catch (e) {
       console.error(e);
-    } finally {
-      setUnenrolling(false);
+      setActionError(true);
     }
   }
 
@@ -385,147 +202,134 @@ export default function GrammarPage() {
 
   // ── Lesson list ────────────────────────────────────────────────────────────
   if (activeLesson === null) {
+    if (programsLoading || loading) {
+      return (
+        <PageShell>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-[32px] font-bold mb-1.5">{tr.grammar.title}</h1>
+            {/* The mascot moves into the hero once it renders — exactly one on screen. */}
+            <PageMascot phrase="Mokomės!" className="hidden sm:block shrink-0" />
+          </div>
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        </PageShell>
+      );
+    }
+
+    const byProgram: LessonsByProgram = {};
+    for (const p of programs) {
+      byProgram[p.id] = filterLessonsForProgram(lessons, p.lesson_filter ?? null, caseGroups, p.program_type ?? 'cases');
+    }
+    const uniqueLessons = (ps: GrammarProgramSummary[]) =>
+      Array.from(new Map(ps.flatMap((p) => byProgram[p.id]).map((l) => [l.id, l])).values());
     const enrolledPrograms = programs.filter((p) => p.enrolled);
-    const isEnrolled = enrolledPrograms.length > 0;
+    const none = enrolledPrograms.length === 0;
+    const enrolledLessons = uniqueLessons(enrolledPrograms);
     // Remind is only offered once at least one «Повторение» lesson has been passed
     // in a program the user is actually enrolled in — same eligibility rule the
     // server enforces at GET /grammar/remind/tasks (404 otherwise).
-    const canRemind = enrolledPrograms.some((program) => {
-      const programLessons = filterLessonsForProgram(lessons, program.lesson_filter ?? null, caseGroups, program.program_type ?? 'cases');
-      return programLessons.some((l) => l.level === 'practice' && (l.best_score_pct ?? 0) > 0.75);
-    });
+    const canRemind = enrolledLessons.some((l) => l.level === 'practice' && isPassed(l));
+    const casesProgram = programs.find((p) => (p.program_type ?? 'cases') === 'cases') ?? programs[0];
+    const heroNext = featuredFor('all', programs, byProgram);
+    const featured = featuredFor(selected, programs, byProgram);
+    const counts: Record<number, number> = {};
+    for (const p of programs) counts[p.id] = byProgram[p.id].length;
+    const confirmProgram = programs.find((p) => p.id === confirmId);
 
     return (
-      <PageShell>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-[32px] font-bold mb-1.5">{tr.grammar.title}</h1>
-              <p className="text-[15px] text-muted mb-1">{tr.grammar.subtitle}</p>
-              <p className="text-[13px] text-muted mb-4">{tr.grammar.charactersNote}</p>
-            </div>
-            {/* The mascot lives in the hero card once it renders (enrolled state);
-                loading/empty states have no hero, so it stays beside the title
-                to keep exactly one mascot on screen at all times. */}
-            {(programsLoading || !isEnrolled) && (
-              <PageMascot phrase="Mokomės!" className="hidden sm:block shrink-0" />
-            )}
-          </div>
-          {programsLoading ? (
-            <div className="flex justify-center py-20">
-              <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : !isEnrolled ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-              <p className="text-gray-500">{tr.grammar.emptyState}</p>
-              <Link
-                href="/dashboard/grammar/programs"
-                className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-medium transition-colors"
-                data-testid="browse-programs-link"
-              >
-                {tr.grammar.browsePrograms}
-              </Link>
-            </div>
-          ) : (
-            <>
-              <GrammarStatsBar
-                lessons={lessons}
-                primaryAction={{
-                  label: tr.stats.remindForgotten,
-                  onClick: () => startLesson(REMIND_LESSON),
-                  disabled: !canRemind,
-                  hint: canRemind ? undefined : tr.grammar.remindHint,
-                }}
-              />
+      <PageShell className="pb-20 flex flex-col gap-5">
+        <GrammarHero
+          passed={enrolledLessons.filter(isPassed).length}
+          total={enrolledLessons.length}
+          none={none}
+          onContinue={heroNext?.kind === 'next' ? () => startLesson(heroNext.lesson) : null}
+          onStartCases={none && casesProgram ? () => handleEnroll(casesProgram.id) : null}
+          remind={none ? null : {
+            onClick: () => startLesson(REMIND_LESSON),
+            disabled: !canRemind,
+            hint: canRemind ? undefined : tr.grammar.remindHint,
+          }}
+        />
 
-              {enrolledPrograms.map((program) => {
-                const programLessons = filterLessonsForProgram(lessons, program.lesson_filter ?? null, caseGroups, program.program_type ?? 'cases');
-                const catKey = `program-${program.id}`;
-                const isOpen = openCategories.has(catKey);
-
-                const subcategoryGroups: { title: string; titleEn?: string; lessons: Lesson[] }[] = [];
-                for (const lesson of programLessons) {
-                  const last = subcategoryGroups[subcategoryGroups.length - 1];
-                  if (last && last.title === lesson.title) {
-                    last.lessons.push(lesson);
-                  } else {
-                    subcategoryGroups.push({ title: lesson.title, titleEn: lesson.title_en, lessons: [lesson] });
-                  }
-                }
-
-                return (
-                  <div key={program.id} className="mb-4">
-                    <div
-                      className="border border-line rounded-[14px] overflow-hidden bg-white"
-                      data-testid={`category-${catKey}`}
-                    >
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => toggleCategory(catKey)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            toggleCategory(catKey);
-                          }
-                        }}
-                        aria-expanded={isOpen}
-                        data-testid={`category-toggle-${catKey}`}
-                        className="w-full flex items-center justify-between px-6 py-[18px] bg-white cursor-pointer transition-colors text-left border-b border-line-strong"
-                      >
-                        <div className="flex items-baseline gap-2.5">
-                          <span role="heading" aria-level={2} className="font-bold text-base text-gray-900">{(lang === 'en' && program.title_en) ? program.title_en : program.title}</span>
-                          {loading ? null : (
-                            <span className="text-faint text-[13px] whitespace-nowrap">{programLessons.length} {plural(programLessons.length, tr.grammar.lessonsCount)}</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleUnenroll(program.id); }}
-                            disabled={unenrolling}
-                            className="text-[13px] text-destructive hover:opacity-70 transition-opacity disabled:opacity-50"
-                            data-testid="unenroll-button"
-                          >
-                            {tr.grammar.unenrollBtn}
-                          </button>
-                          <svg
-                            width="14" height="14" viewBox="0 0 12 12" fill="currentColor"
-                            className={`text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-                          >
-                            <path d="M6 8L1 3h10L6 8z" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {isOpen && (
-                        <div className="divide-y divide-line border-t border-line">
-                          {loading ? (
-                            <div className="flex justify-center py-10">
-                              <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                            </div>
-                          ) : subcategoryGroups.length === 0 ? (
-                            <p className="text-gray-400 text-sm py-8 text-center">{tr.grammar.noLessons}</p>
-                          ) : (
-                            subcategoryGroups.map((group, gi) => (
-                              <SubcategoryGroup key={`${group.title}-${gi}`} group={group} onStartLesson={startLesson} />
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div className="mt-4 text-center">
-                <Link
-                  href="/dashboard/grammar/programs"
-                  className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
-                >
-                  {tr.grammar.browseProgramsLink} <TakChevron size={10} className="inline-block align-[-1px]" />
-                </Link>
-              </div>
-            </>
+        <div>
+          <ProgramChips
+            programs={programs}
+            counts={counts}
+            allCount={(none ? uniqueLessons(programs) : enrolledLessons).length}
+            selected={selected}
+            onSelect={(id) => { setActionError(false); setSelected(id); }}
+          />
+          {actionError && (
+            <p className="mt-2 text-[13px] text-destructive" role="alert" data-testid="grammar-action-error">
+              {tr.grammar.actionFailed}
+            </p>
           )}
+        </div>
+
+        {featured ? (
+          <>
+            <section className="grid gap-4 grid-cols-1 min-[860px]:grid-cols-[1.75fr_1fr]">
+              <FeaturedCard
+                featured={featured}
+                lessons={byProgram[featured.program.id]}
+                hideAddFor={none && casesProgram ? casesProgram.id : null}
+                onStart={startLesson}
+                onAdd={handleEnroll}
+              />
+              <ProgramStack
+                programs={programs.filter((p) => p.id !== featured.program.id)}
+                byProgram={byProgram}
+                onOpen={(id) => { setActionError(false); setSelected(id); }}
+                onAdd={handleEnroll}
+              />
+            </section>
+            <TopicsSection
+              program={featured.program}
+              lessons={byProgram[featured.program.id]}
+              onStart={startLesson}
+              onUnenroll={() => setConfirmId(featured.program.id)}
+            />
+          </>
+        ) : (
+          <p className="text-faint text-sm py-8 text-center">{tr.grammar.programsEmpty}</p>
+        )}
+
+        {/* Confirm remove program — markup copied from lists/page.tsx (two uses, no shared component). */}
+        {confirmProgram && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            onClick={() => setConfirmId(null)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              data-testid="unenroll-confirm"
+              className="bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm flex flex-col gap-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-[14.5px] font-semibold text-ink">
+                {tr.lists.removeProgramTitle.replace('{label}', programTitle(confirmProgram, lang))}
+              </h2>
+              <p className="text-sm text-muted">{tr.lists.removeProgramBody}</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setConfirmId(null)}
+                  className="px-4 py-2 text-sm text-muted hover:text-ink border border-line rounded-full transition-colors"
+                >
+                  {tr.common.cancel}
+                </button>
+                <button
+                  onClick={() => { setConfirmId(null); handleUnenroll(confirmProgram.id); }}
+                  data-testid="unenroll-confirm-button"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-destructive hover:opacity-90 rounded-full transition-opacity"
+                >
+                  {tr.lists.removeProgramConfirm}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </PageShell>
     );
   }

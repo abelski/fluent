@@ -187,6 +187,15 @@ Scenario: A mature word starts the session by being typed, not shown
 ```
 
 ```gherkin
+Scenario: A verb's principal forms never give away the answer
+  Given a verb word with all three principal forms known (e.g. "duoti – duoda – davė")
+  When it is on a step where the Lithuanian word is the prompt (flashcard, forward multiple choice)
+  Then the mascot's bubble shows the three forms straight away
+  But on a step that asks the student to produce the word or part of it (reverse multiple choice,
+    assemble, type, syllable drill) the forms appear only after the answer has been submitted
+```
+
+```gherkin
 Scenario: Recording an answer updates progress and, optionally, the SM-2 schedule
   Given a signed-in student answering a word during a session
   When the client posts a status ("learning" or "known"), whether it was a mistake, and optionally

@@ -60,10 +60,7 @@ test.describe('Issue #137 — muziejai is the correct nominative plural (not muz
 
   test('answer "ai" for Čia yra muziej___ is accepted as correct', async ({ page }) => {
     await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
     await page.locator('input[type="text"]').fill('ai');
@@ -75,10 +72,7 @@ test.describe('Issue #137 — muziejai is the correct nominative plural (not muz
 
   test('wrong answer shows muziejai as correct (not muziejūs)', async ({ page }) => {
     await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
     await page.locator('input[type="text"]').fill('as');

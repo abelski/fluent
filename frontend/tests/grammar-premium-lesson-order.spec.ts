@@ -57,9 +57,7 @@ async function openLessonCards(page: Page, lessons: unknown[]) {
     await route.fulfill({ json: [] });
   });
   await page.goto('/dashboard/grammar');
-  await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-  await page.locator('[data-testid="subcategory-toggle"]').first().click();
-  await page.waitForSelector('.grid button', { timeout: 5000 });
+  await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
 }
 
 test.describe('Grammar lesson order — free user', () => {
@@ -94,7 +92,7 @@ test.describe('Grammar lesson order — premium user', () => {
     await openLessonCards(page, PREMIUM_LESSONS);
 
     // Second lesson — the one a free user would still have locked.
-    await page.locator('.grid button').nth(1).click();
+    await page.locator('[data-testid="topic-card"] button').nth(1).click();
     await expect(page.getByText('К урокам')).toBeVisible({ timeout: 8000 });
   });
 });
@@ -106,7 +104,7 @@ test.describe('Grammar lesson order — blocked responses', () => {
     });
     await openLessonCards(page, FREE_LESSONS);
 
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
 
     const blocked = page.locator('[data-testid="grammar-blocked-locked"]');
     await expect(blocked).toBeVisible({ timeout: 8000 });
@@ -121,7 +119,7 @@ test.describe('Grammar lesson order — blocked responses', () => {
     });
     await openLessonCards(page, FREE_LESSONS);
 
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
 
     const blocked = page.locator('[data-testid="grammar-blocked-quota"]');
     await expect(blocked).toBeVisible({ timeout: 8000 });
@@ -134,10 +132,10 @@ test.describe('Grammar lesson order — blocked responses', () => {
     });
     await openLessonCards(page, FREE_LESSONS);
 
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
     await expect(page.locator('[data-testid="grammar-blocked-locked"]')).toBeVisible({ timeout: 8000 });
 
     await page.getByRole('button', { name: /К урокам/ }).click();
-    await expect(page.locator('[data-testid="category-toggle-program-1"]')).toBeVisible();
+    await expect(page.locator('[data-testid="category-program-1"]')).toBeVisible();
   });
 });

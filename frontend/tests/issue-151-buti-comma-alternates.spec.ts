@@ -39,12 +39,7 @@ const TASK = {
 async function openLesson(page: import('@playwright/test').Page) {
   await page.goto('/dashboard/grammar');
 
-  const toggle = page.getByTestId('subcategory-toggle').first();
-  await toggle.click();
-
-  // The lesson cards render in the panel that follows the toggle. Matching by title
-  // instead would also match the toggle itself — which would just collapse it again.
-  await page.locator('[data-testid="subcategory-toggle"] + div button').first().click();
+  await page.getByTestId('level-button').first().click();
 
   await expect(page.getByText('bū́ti', { exact: false }).first()).toBeVisible({ timeout: 8000 });
 }

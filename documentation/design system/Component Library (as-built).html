@@ -575,6 +575,51 @@
     </div>
   </div>
 
+  <h2>Grammar hero / chips / bento (#53)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/app/dashboard/components/GrammarOverview.tsx</code> &mdash; the Грамматика lesson list only
+      (the other 4 top-nav pages keep <code>ProgressStatCard</code>). Presentational; the page owns fetching and state.
+      Top to bottom:
+    </p>
+    <table>
+      <tr><th>Piece</th><th>Spec</th></tr>
+      <tr><td><code>GrammarHero</code></td><td>Flat card (<code>border-line</code>, 14px, no shadow),
+        <code>data-testid="stats-card-grammar"</code>. Carries the page <code>h1</code> (32px/700/&minus;0.02em;
+        28px below 420px), subtitle, <code>charactersNote</code>, stat row identical to <code>ProgressStatCard</code>
+        (30px count, <code>bg-emerald-50 text-emerald-600</code> &laquo;из M&raquo; badge, 13px muted label), 6px
+        bar (<code>bg-gray-100</code> track, <code>bg-emerald-600</code> fill, max 440px). Buttons: ink
+        <code>bg-ink text-white rounded-[10px]</code> &laquo;Продолжить ›&raquo; (or &laquo;Начать с падежей&raquo; with no
+        programs, same slot) + soft <code>bg-emerald-50 text-emerald-600</code> remind. Right side: static
+        declension sample (namas/namo/namui/namą, endings <code>text-emerald-600</code>, hidden below 860px) and
+        <code>PageMascot phrase="Mokomės!"</code> at 128px &mdash; above the text on mobile, like
+        <code>ProgressStatCard</code>'s stacked layout.</td></tr>
+      <tr><td><code>ProgramChips</code></td><td>Pill chips <code>rounded-full border border-line bg-white px-3.5 py-2
+        text-sm font-semibold</code>, count in 12px <code>text-muted</code>; active <code>bg-ink border-ink
+        text-white</code>. A 6px <code>bg-emerald-600</code> dot marks enrolled programs. Wrap on mobile, 44px tall
+        below 860px. &laquo;Смотреть все программы ›&raquo; (<code>text-emerald-600</code>) sits at the right end of the
+        row (own line on mobile). Enroll/unenroll errors: one 13px <code>text-destructive</code> line under the row.
+        Not the Статьи segmented-pill track: these are free-standing filter chips with counts.</td></tr>
+      <tr><td><code>FeaturedCard</code></td><td>Left bento column (<code>grid-cols-[1.75fr_1fr]</code> from 860px).
+        Kicker 12px/600 uppercase <code>text-muted</code>; heading 32px/700/&minus;0.02em <code>text-ink</code> (lesson
+        title &mdash; already Lithuanian for noun cases &mdash; or program title); 20px case-name sub-heading; muted meta
+        line; display-only level chips; ink &laquo;Начать урок ›&raquo;. Three kinds: <code>next</code>, <code>preview</code>
+        (description + counts, &laquo;Добавить&raquo; unless the hero already offers the same enroll), <code>done</code>
+        (summary + amber &laquo;Дальше — с Premium ›&raquo; to <code>/pricing</code> when locked lessons remain).</td></tr>
+      <tr><td><code>ProgramStack</code></td><td>Right column cards, <code>px-[22px] py-5</code>, 17px/700 title. Enrolled:
+        whole card is a button &mdash; <code>d/n</code>, 6px bar, emerald &laquo;Открыть ›&raquo;. Not enrolled: lesson count,
+        13px muted description, soft &laquo;Добавить&raquo;.</td></tr>
+      <tr><td><code>TopicsSection</code> / <code>TopicCard</code></td><td>Heading &laquo;Темы: X&raquo; / &laquo;Что внутри: X&raquo;
+        (20px/700) + lesson count + <code>text-destructive</code> &laquo;Убрать&raquo; (confirm dialog). Grid 3 cols &rarr; 2
+        below 1200px &rarr; 1 below 860px. Card: 14.5px/600 title (LT for noun cases, <code>lang="lt"</code>), 12.5px
+        muted case name, &uarr; article link, <code>passed/total</code> (emerald when complete), one level button per
+        lesson using the level tints (<code>bg-teal-50</code> / <code>bg-emerald-50</code> / <code>bg-amber-50</code>,
+        <code>border-line</code>, <code>rounded-full</code>), &laquo;✓&raquo; when passed, best % when attempted, locked
+        = <code>opacity-40</code> + lock icon + one amber &laquo;Открыть с Premium&raquo; link under the row. 44px tall below
+        860px. Preview (not enrolled): no scores, buttons disabled.</td></tr>
+    </table>
+  </div>
+
   <h2>PageShell — the shared top-nav page shell</h2>
   <div class="card">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
@@ -595,14 +640,14 @@
       <b>Page order inside the shell — two sub-patterns, not one:</b> Слова, Фразы and Практика put the hero
       <code>ProgressStatCard</code> <i>above</i> the title (card → banner → title+subtitle → content), guarded by
       <code>tests/stats-card-alignment.spec.ts</code> ("stats card is rendered above the page title"). Грамматика
-      is the one exception — its beta-notice banner reads better directly under the title, so it keeps
-      title+subtitle → banner → hero → content. Both are fine; what must not happen is a <i>third</i> ordering.
-      Every page ends the same way: main content (accordion / grid) → "browse all" link
-      (<code>text-emerald-600 hover:text-emerald-700</code>).
+      is the one exception (#53): the title lives <i>inside</i> its own hero card (hero → chips → bento → topics)
+      and its "browse all" link sits in the chips row &mdash; see "Grammar hero / chips / bento" and
+      "Deliberate deviations". No page should add a further ordering. The other pages end the same way: main
+      content (accordion / grid) → "browse all" link (<code>text-emerald-600 hover:text-emerald-700</code>).
     </p>
     <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0;">
       <b>Mascot placement:</b> lives inside the hero card's <code>icon</code> prop when a hero renders. On the
-      states where a hero can't render yet — loading, or no enrolled content (Грамматика, Практика) — it falls back
+      states where a hero can't render yet — loading, or no enrolled content (Практика; Грамматика only while loading, since its #53 hero also renders with no programs) — it falls back
       to beside the title, so exactly one mascot is always on screen. Статьи has no hero at all (no progress concept
       for reading), so its mascot always sits beside the title. This is <i>not</i> a settled bug: Фразы' hero is
       gated on a stats-fetch that rarely fails, so its title carries no such fallback — a known, accepted gap, not a
@@ -1147,6 +1192,14 @@
         <code>app/dashboard/review/page.tsx</code>/<code>QuizSession</code>/<code>PhraseSession</code> instead —
         centered <code>min-h-screen</code> states on the <code>bg-slate-50</code> wash. Adding it to
         <code>NAV_PAGES</code> in <code>design-system-parity.spec.ts</code> would be wrong for the same reason.</td></tr>
+      <tr><td>Грамматика's hero is <code>GrammarHero</code>, not <code>ProgressStatCard</code>; the page title lives
+        inside it; &laquo;Смотреть все программы ›&raquo; sits in the chips row, not at the page end (#53)</td><td>The page
+        doubles as onboarding: the hero must enroll in place (&laquo;Начать с падежей&raquo;) and show a declension sample,
+        which <code>ProgressStatCard</code> (count-gated action row, no title) can't. Putting the title in the hero
+        keeps one mascot and one card at the top instead of a title row above a second card &mdash; a third page
+        ordering, accepted for grammar only. The browse link moved next to the program chips because it is the
+        chips' "more" affordance; at the page end it would sit under a long topic grid. The other 4 pages keep
+        <code>ProgressStatCard</code> and their order.</td></tr>
     </table>
   </div>
 

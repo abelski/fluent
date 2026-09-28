@@ -1033,14 +1033,14 @@ export default function QuizSession({
   const cloveText   = cloveForms.map((f, i) => i === blankIndex ? '______' : f).join(' / ');
   const digit       = getDigit(word);
   const verbForms   = getVerbForms(word);
-  // Stages 1/2/'3s' already show the Lithuanian word as the prompt (or, on
-  // '3s', everywhere except one syllable), so the forms are safe immediately.
-  // Stages '2r'/'2a'/3 ask the user to produce word.lithuanian themselves —
-  // showing it there before they've answered would hand them the answer, so
-  // it only appears once answerState leaves 'unanswered' and the correct
-  // answer is already on screen.
+  // Stages 1/2 already show the Lithuanian word as the prompt, so the forms are
+  // safe immediately. Stages '2r'/'2a'/3/'3s' ask the user to produce
+  // word.lithuanian (or, on '3s', its missing syllable) themselves — showing it
+  // there before they've answered would hand them the answer, so it only
+  // appears once answerState leaves 'unanswered' and the correct answer is
+  // already on screen.
   const showVerbForms = !!verbForms && (
-    stage === 1 || stage === 2 || stage === '3s' ||
+    stage === 1 || stage === 2 ||
     (answerState !== 'unanswered' && answerState !== 'empty')
   );
 

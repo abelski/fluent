@@ -120,10 +120,7 @@ test.describe('Issue #156 — dukterimi is the correct instrumental (not dukteri
 
   test('answer "erimi" for Mama eina su dukt___ is accepted as correct', async ({ page }) => {
     await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
     await page.locator('input[type="text"]').fill('erimi');
@@ -135,10 +132,7 @@ test.describe('Issue #156 — dukterimi is the correct instrumental (not dukteri
 
   test('wrong answer "eria" shows dukterimi as correct (not dukteri/dukteria)', async ({ page }) => {
     await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
     await page.locator('input[type="text"]').fill('eria');

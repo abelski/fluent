@@ -61,32 +61,35 @@ test.describe('Navigation', () => {
 
 
 test.describe('Grammar page — categories', () => {
-  test('shows Падежи category expanded by default', async ({ page }) => {
+  test('enrolled program has a chip with the enrolled dot; «Все» is selected by default', async ({ page }) => {
     await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.goto('/dashboard/grammar');
-    // Category toggle uses program id: program id=1 → data-testid="category-toggle-program-1"
-    const toggle = page.locator('[data-testid="category-toggle-program-1"]');
-    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    // Program chip uses program id: program id=1 → data-testid="category-program-1"
+    const chip = page.locator('[data-testid="category-program-1"]');
+    await expect(chip).toBeVisible({ timeout: 5000 });
+    await expect(chip.getByTestId('enrolled-dot')).toBeVisible();
+    await expect(page.getByTestId('category-all')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('Падежи category can be collapsed and re-expanded', async ({ page }) => {
+  test('Падежи chip can be selected and deselected via «Все»', async ({ page }) => {
     await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.goto('/dashboard/grammar');
-    const toggle = page.locator('[data-testid="category-toggle-program-1"]');
-    await expect(toggle).toBeVisible({ timeout: 5000 });
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const chip = page.locator('[data-testid="category-program-1"]');
+    await expect(chip).toBeVisible({ timeout: 5000 });
+    await chip.click();
+    await expect(chip).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('topics-section')).toContainText('Литовские падежи');
+    await page.getByTestId('category-all').click();
+    await expect(chip).toHaveAttribute('aria-pressed', 'false');
   });
 
 });
 
 test.describe('Grammar page — lesson levels', () => {
   // Helper: click the first lesson card of the given level label.
-  // Lessons are inside collapsible subcategories — expand the first one first.
+  // Lessons are level buttons on the topic cards.
   async function startFirstLessonOfLevel(page: import('@playwright/test').Page, levelLabel: string) {
     await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
@@ -95,13 +98,8 @@ test.describe('Grammar page — lesson levels', () => {
       await route.fulfill({ json: [] });
     });
     await page.goto('/dashboard/grammar');
-    // Wait for subcategory toggles to load (Падежи is open by default)
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    // Expand the first subcategory so lesson cards become visible
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    // Now find the lesson card with the matching level label
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    const card = page.locator('.grid button').filter({ hasText: levelLabel }).first();
+    await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
+    const card = page.locator('[data-testid="topic-card"] button').filter({ hasText: levelLabel }).first();
     await card.click();
     // Wait for exercise screen: "К урокам" back button is unique to exercise view
     await expect(page.getByText('К урокам')).toBeVisible({ timeout: 8000 });
@@ -149,10 +147,7 @@ test.describe('Grammar progression — locking', () => {
       await route.fulfill({ json: [] });
     });
     await page.goto('/dashboard/grammar');
-    // Expand the subcategory to see lesson cards
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
 
     // Second lesson should have data-testid="lesson-locked" and be disabled
     const lockedCard = page.locator('[data-testid="lesson-locked"]').first();
@@ -170,13 +165,10 @@ test.describe('Grammar progression — locking', () => {
       await route.fulfill({ json: [] });
     });
     await page.goto('/dashboard/grammar');
-    // Expand first subcategory to see the unlocked lesson
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
 
     // First lesson is unlocked — should NOT have lesson-locked testid
-    const cards = page.locator('.grid button');
+    const cards = page.locator('[data-testid="topic-card"] button');
     await expect(cards.first()).not.toBeDisabled();
     await expect(cards.first()).not.toHaveAttribute('data-testid', 'lesson-locked');
   });
@@ -210,13 +202,10 @@ test.describe('Grammar progression — locking', () => {
     });
 
     await page.goto('/dashboard/grammar');
-    // Expand first subcategory to see lesson cards
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
+    await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
 
     // Start lesson 1
-    await page.locator('.grid button').first().click();
+    await page.locator('[data-testid="topic-card"] button').first().click();
     await expect(page.getByText('К урокам')).toBeVisible({ timeout: 5000 });
 
     // Answer both tasks correctly
@@ -254,11 +243,7 @@ test.describe('Grammar progression — locking', () => {
     });
 
     await page.goto('/dashboard/grammar');
-    // Expand first subcategory to see lesson cards
-    await page.waitForSelector('[data-testid="subcategory-toggle"]', { timeout: 5000 });
-    await page.locator('[data-testid="subcategory-toggle"]').first().click();
-    await page.waitForSelector('.grid button', { timeout: 5000 });
-    await page.locator('.grid button').first().click();
+    await page.getByTestId('level-button').first().click();
     await expect(page.getByText('К урокам')).toBeVisible({ timeout: 5000 });
 
     // Answer both tasks wrong, then dismiss each (wrong answers no longer auto-advance)
