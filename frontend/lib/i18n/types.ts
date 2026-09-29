@@ -674,6 +674,8 @@ export interface Translations {
     autoSendRewardsLabel: string;
     autoSendRewardsDescPrefix: string;
     autoSendRewardsDescSuffix: string;
+    autoSendBalanceLabel: string;
+    autoSendBalanceDesc: string;
     loadingEllipsis: string;
     welcomeTitle: string;
     welcomeDesc: string;
@@ -903,6 +905,7 @@ export interface Translations {
     effortSame: string; // {a} {p}
     effortShift: string; // {a} {p} {b} {q}
     effortAllOnly: string; // {a} {p}
+    effortInfo: string; // #57 info button label
   };
   news: {
     sectionTitle: string;
@@ -976,6 +979,7 @@ export interface Translations {
       leaderboard: string;
       report: string;
       premium: string;
+      balance: string;
     };
     kinds: {
       celebration: string;
@@ -1080,6 +1084,8 @@ export interface Translations {
     langRu: string;
     emailConsentLabel: string;
     emailConsentHint: string;
+    balanceTipsLabel: string;
+    balanceTipsHint: string;
     phrasesSessionSizeLabel: string;
     phrasesSessionSizeHint: string;
     loadError: string;

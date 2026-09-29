@@ -35,3 +35,10 @@ Plan: `plans/improvements/active/plan_55-56_bento-effort-radar.md` (Part B). Cod
   the others the home page already makes.
 - **Card hidden** without a token, while loading, on error, or when all-time points are all zero — an
   empty radar teaches nothing. No week points → all-time layer only, plus a note.
+
+## Info button (#57)
+
+An "i" link at the right of the card title opens the balance article
+(`/dashboard/articles/how-to-learn-lithuanian-order/`, same tab). It has no switch — it goes live with
+the deploy, so the article must be published first. The daily balance tips that use the same data
+are described in `documentation/balance-tips.md`.

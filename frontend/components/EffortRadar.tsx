@@ -14,6 +14,8 @@ const AXES = [
   { key: 'grammar', href: '/dashboard/grammar' },
 ] as const;
 type AxisKey = (typeof AXES)[number]['key'];
+// #57 — the research-backed article on how to split effort (see documentation/balance-tips.md).
+const INFO_HREF = '/dashboard/articles/how-to-learn-lithuanian-order/';
 
 // Series colours: tokens emerald-700 (this week) and effort-all (all time), via classes.
 const WEEK = { fill: 'fill-emerald-700', stroke: 'stroke-emerald-700', bg: 'bg-emerald-700', text: 'text-emerald-700' };
@@ -77,7 +79,23 @@ export default function EffortRadar() {
 
   return (
     <section data-testid="effort-radar" className="relative bg-white rounded-[14px] border border-line p-5 flex flex-col gap-3" aria-labelledby="effort-title">
-      <p id="effort-title" className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t.effortTitle}</p>
+      <div className="flex items-center justify-between">
+        <p id="effort-title" className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t.effortTitle}</p>
+        {/* #57: 44×44 tap target via min size; negative margin keeps the header row 16px tall. */}
+        <a
+          href={INFO_HREF}
+          data-testid="effort-info"
+          aria-label={t.effortInfo}
+          title={t.effortInfo}
+          className="min-w-11 min-h-11 -my-3.5 -mr-3 flex items-center justify-center text-muted hover:text-emerald-700"
+        >
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="10" cy="10" r="8.5" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M10 9v5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            <circle cx="10" cy="6.2" r="1.1" fill="currentColor" />
+          </svg>
+        </a>
+      </div>
       <p data-testid="effort-insight" className="text-sm leading-snug text-ink"><Bold text={insight} /></p>
       {noWeek && (
         <p data-testid="effort-empty-week" className="text-[13px] text-muted bg-[#f2f3f3] rounded-[10px] px-3 py-2">{t.effortEmptyWeek}</p>

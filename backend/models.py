@@ -628,7 +628,7 @@ class InboxMessage(SQLModel, table=True):
     __tablename__ = "inbox_message"
     id: Optional[int] = Field(default=None, primary_key=True)
     kind: str = Field(default="info")        # info | celebration | offer
-    source: str = Field(default="admin")     # admin | achievement | leaderboard | report | premium
+    source: str = Field(default="admin")     # admin | achievement | leaderboard | report | premium | balance
     title_ru: str
     title_en: str
     body_ru: str = Field(default="")
@@ -718,4 +718,34 @@ class StripeLinkageAudit(SQLModel, table=True):
     stripe_customer_id: Optional[str] = None
     stripe_subscription_id: Optional[str] = None
     subscription_status: Optional[str] = None
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class BalanceTip(SQLModel, table=True):
+    """One balance tip sent to a user (#57, see documentation/balance-tips.md).
+
+    Doubles as the claim: `UNIQUE(user_id, sent_on)` is the cross-instance race guard,
+    and the 14-day cooldown reads `sent_on`. Additive table: startup's create_all() creates it.
+    """
+    __tablename__ = "balance_tip"
+    __table_args__ = (UniqueConstraint("user_id", "sent_on"),)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    sent_on: date
+    created_at: datetime = Field(default_factory=_utcnow)
+    reasons: str                                # comma list, e.g. 'grammar,phrases'
+    words_pct: int = 0
+    phrases_pct: int = 0
+    grammar_pct: int = 0
+    emailed: bool = False
+
+
+class BalanceTipOptOut(SQLModel, table=True):
+    """Row present = the user turned balance tips off (#57).
+
+    A table, not a `User` column: a new column needs a hand-run Alembic migration on
+    production, while a new table is created by create_all() on boot.
+    """
+    __tablename__ = "balance_tip_opt_out"
+    user_id: str = Field(foreign_key="user.id", primary_key=True)
     created_at: datetime = Field(default_factory=_utcnow)

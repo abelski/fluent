@@ -73,6 +73,7 @@ export interface UserSettings {
   question_timer_seconds: number;  // 5–30
   email_consent: boolean;  // default: true
   lang: 'en' | 'ru';
+  balance_tips: boolean;  // #57, default: true (server stores opt-outs)
 }
 
 export async function getSettings(): Promise<UserSettings> {

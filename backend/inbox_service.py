@@ -33,7 +33,7 @@ from quota import is_premium_active
 logger = logging.getLogger(__name__)
 
 KINDS = ("info", "celebration", "offer")
-SOURCES = ("admin", "achievement", "leaderboard", "report", "premium")
+SOURCES = ("admin", "achievement", "leaderboard", "report", "premium", "balance")
 
 SNIPPET_CHARS = 120
 DELIVERIES_TTL = 300          # 5 min safety net; every write is tagged for its user

@@ -26,6 +26,27 @@ const KIND_CHIP: Record<string, string> = {
   offer: 'bg-[#fdf6e3] text-[#8a6d1d]',
 };
 
+// #57: fluent.lt URLs in a body become in-app links (origin stripped, so they work on
+// localhost too). Trailing sentence punctuation stays outside the link.
+const SITE = 'https://fluent.lt';
+const SITE_URL = /(https:\/\/fluent\.lt\/\S*?)(?=[.,;:!?)»”]*(?:\s|$))/;
+
+function Linkified({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(SITE_URL).map((part, i) =>
+        i % 2 ? (
+          <Link key={i} href={part.slice(SITE.length)} data-testid="inbox-body-link" className="text-emerald-600 hover:text-emerald-700 underline break-all">
+            {part}
+          </Link>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 /** One opened message. Gmail's reading pane: it replaces the list rather than splitting it. */
 export default function MessageView({ deliveryId, onBack, onRead, onDeleted, onActionError, onReply }: Props) {
   const { tr, lang } = useT();
@@ -137,7 +158,7 @@ export default function MessageView({ deliveryId, onBack, onRead, onDeleted, onA
         </div>
 
         <p className="text-[14.5px] leading-[1.75] text-ink whitespace-pre-line">
-          {lang === 'en' ? item.body_en : item.body_ru}
+          <Linkified text={lang === 'en' ? item.body_en : item.body_ru} />
         </p>
 
         {item.cta_url && ctaLabel && (

@@ -5,8 +5,8 @@ The Settings dashboard page (`/dashboard/settings`) is where a logged-in
 student adjusts their own study preferences: vocabulary session size and
 new/review mix, phrase session size and mix, shared lesson-mode/complexity/
 timer/audio-autoplay preferences, the combined "continue session" phase
-sizes, and two account-level preferences (server-recorded language, email
-consent). It has no
+sizes, and three account-level preferences (server-recorded language, email
+consent, balance tips). It has no
 billing or subscription UI of its own — see `specs/billing.md` for where
 premium is bought/managed (`/pricing`) — and the combined-session settings tab
 only sets numbers that `specs/continue-session.md` describes in full; this file
@@ -109,6 +109,23 @@ Scenario: Other tab — email consent
     the language field, gating whether the backend is allowed to email this
     user at all (checked elsewhere, e.g. before sending a re-engagement or
     admin email)
+
+Scenario: Other tab — balance tips toggle (#57)
+  Given the Other tab
+  Then a checkbox "Study balance tips" / «Советы по балансу занятий» sits
+    directly under the email-consent checkbox, checked by default for new
+    and existing users
+  When it is toggled and saved
+  Then it is persisted through the same PATCH /me/settings call (field
+    `balance_tips`) as a row in balance_tip_opt_out (row present = off)
+  And a PATCH that omits `balance_tips` leaves it unchanged
+  And while it is off the user receives neither the balance-tip email nor
+    the inbox message (see specs/balance-nudge.md)
+
+Scenario: ?tab=other opens the Other tab directly (#57)
+  Given the URL /dashboard/settings/?tab=other (the link in every balance tip)
+  When the page mounts
+  Then the Other tab is active instead of Vocabulary
 
 Scenario: Save feedback uses one flag shared by Vocabulary+Other, and separate
     flags for Phrases and Combined

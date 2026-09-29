@@ -116,4 +116,29 @@ test.describe('Effort radar', () => {
     await expect(page.getByTestId('effort-insight')).toHaveText("This week most of it went to Grammar (70%). Usually it's Words (81%).");
     await expect(page.getByTestId('effort-table')).toContainText('55 pts');
   });
+
+  // #57 — info button beside the title → balance article, same tab.
+  for (const [lang, label] of [['ru', 'Как держать баланс'], ['en', 'How to keep the balance']] as const) {
+    for (const width of [1280, 375]) {
+      test(`info button ${lang} ${width}: href, label, 44×44 target`, async ({ page }) => {
+        await mockHome(page, USUAL, { lang, width });
+        await page.goto('/');
+        const info = page.getByTestId('effort-info');
+        await expect(info).toBeVisible();
+        await expect(info).toHaveAttribute('href', '/dashboard/articles/how-to-learn-lithuanian-order/');
+        await expect(info).toHaveAttribute('aria-label', label);
+        await expect(info).toHaveAttribute('title', label);
+        expect(await info.getAttribute('target')).toBeNull();
+        const box = (await info.boundingBox())!;
+        expect(box.width).toBeGreaterThanOrEqual(44);
+        expect(box.height).toBeGreaterThanOrEqual(44);
+        // Sits on the title row, right of the title, inside the card.
+        const title = (await page.locator('#effort-title').boundingBox())!;
+        const card = (await page.getByTestId('effort-radar').boundingBox())!;
+        expect(box.x).toBeGreaterThan(title.x);
+        expect(box.x + box.width).toBeLessThanOrEqual(card.x + card.width);
+        expect(Math.abs((box.y + box.height / 2) - (title.y + title.height / 2))).toBeLessThanOrEqual(4);
+      });
+    }
+  }
 });
