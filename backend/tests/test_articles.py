@@ -168,3 +168,36 @@ def test_admin_import_article_defaults_category_when_missing(client):
 
     r = client.get("/api/admin/articles/art-import-no-cat", headers=_auth(ADMIN_TOKEN))
     assert r.json()["category"] == "blog"
+
+
+# ── #55: article theme ────────────────────────────────────────────────────────
+
+def test_admin_article_theme_saved_and_listed(client):
+    body = {**_article_body("art-theme-1", "learning_materials"), "theme": "verbs"}
+    assert client.post("/api/admin/articles", json=body, headers=_auth(ADMIN_TOKEN)).status_code == 200
+    assert client.get("/api/admin/articles/art-theme-1", headers=_auth(ADMIN_TOKEN)).json()["theme"] == "verbs"
+    listed = {a["slug"]: a for a in client.get("/api/articles").json()}
+    assert listed["art-theme-1"]["theme"] == "verbs"
+    admin_listed = {a["slug"]: a for a in client.get("/api/admin/articles", headers=_auth(ADMIN_TOKEN)).json()}
+    assert admin_listed["art-theme-1"]["theme"] == "verbs"
+
+
+def test_admin_article_invalid_theme_422(client):
+    body = {**_article_body("art-theme-bad", "blog"), "theme": "sports"}
+    assert client.post("/api/admin/articles", json=body, headers=_auth(ADMIN_TOKEN)).status_code == 422
+    client.post("/api/admin/articles", json=_article_body("art-theme-bad", "blog"), headers=_auth(ADMIN_TOKEN))
+    r = client.put("/api/admin/articles/art-theme-bad", json=body, headers=_auth(ADMIN_TOKEN))
+    assert r.status_code == 422
+
+
+def test_admin_article_put_without_theme_clears_it(client):
+    """PUT is a full replace — documented; the admin editor always sends the current theme."""
+    body = {**_article_body("art-theme-put", "blog"), "theme": "life"}
+    client.post("/api/admin/articles", json=body, headers=_auth(ADMIN_TOKEN))
+    r = client.put("/api/admin/articles/art-theme-put", json=_article_body("art-theme-put", "blog"),
+                   headers=_auth(ADMIN_TOKEN))
+    assert r.status_code == 200
+    assert client.get("/api/admin/articles/art-theme-put", headers=_auth(ADMIN_TOKEN)).json()["theme"] is None
+    # Sending it back keeps it.
+    client.put("/api/admin/articles/art-theme-put", json=body, headers=_auth(ADMIN_TOKEN))
+    assert client.get("/api/admin/articles/art-theme-put", headers=_auth(ADMIN_TOKEN)).json()["theme"] == "life"

@@ -578,9 +578,14 @@
   <h2>Grammar hero / chips / bento (#53)</h2>
   <div class="card" style="margin-bottom:20px;">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
-      <code>frontend/app/dashboard/components/GrammarOverview.tsx</code> &mdash; the Грамматика lesson list only
-      (the other 4 top-nav pages keep <code>ProgressStatCard</code>). Presentational; the page owns fetching and state.
-      Top to bottom:
+      <code>frontend/app/dashboard/components/GrammarOverview.tsx</code> &mdash; the Грамматика lesson list.
+      Since #55 the same layout is shared by <b>three</b> pages &mdash; Грамматика, Практика and Статьи; Слова and
+      Фразы keep <code>ProgressStatCard</code>. The shared markup lives in
+      <code>frontend/app/dashboard/components/BentoParts.tsx</code> (<code>BentoHero</code>, <code>BentoChips</code>,
+      <code>StackProgressCard</code>, <code>StackAddCard</code>, <code>SectionHeading</code>, <code>ConfirmDialog</code>,
+      <code>ErrorLine</code>, and the <code>FEATURED_SHELL</code>/<code>FEATURED_HEADING</code>/<code>BENTO_GRID</code>/<code>CARD_GRID</code>
+      class constants); each page keeps its own data, states and copy. Presentational; the page owns fetching and state.
+      Top to bottom (grammar):
     </p>
     <table>
       <tr><th>Piece</th><th>Spec</th></tr>
@@ -618,6 +623,70 @@
         = <code>opacity-40</code> + lock icon + one amber &laquo;Открыть с Premium&raquo; link under the row. 44px tall below
         860px. Preview (not enrolled): no scores, buttons disabled.</td></tr>
     </table>
+    <h3 style="margin-top:20px;">Практика (#55) &mdash; <code>PracticeOverview.tsx</code></h3>
+    <table>
+      <tr><th>Piece</th><th>Spec</th></tr>
+      <tr><td><code>PracticeHero</code></td><td><code>BentoHero</code>, <code>data-testid="stats-card-practice"</code>: «N из M тестов пройдено» +
+        bar over enrolled categories; ink &laquo;Продолжить ›&raquo; (opens the next test via <code>?test=</code>) or
+        &laquo;Начать с Конституции&raquo; with no categories / for guests (guests → <code>/login</code>). Right side: static sample
+        question (<i lang="lt">Kokia yra Lietuvos sostinė?</i>, Vilnius ✓ in <code>text-emerald-600</code>, other options
+        <code>#5b6067</code>, 230px, hidden below 860px) + <code>PageMascot phrase="Pasirinkime!"</code>.</td></tr>
+      <tr><td>Chips</td><td><code>BentoChips</code>: «Все» + one per category (test count, enrolled dot) + &laquo;Смотреть все программы ›&raquo;.</td></tr>
+      <tr><td><code>PracticeFeaturedCard</code></td><td><code>next</code>: kicker «Продолжить отсюда · category», heading = test title
+        in the UI language, sub-heading = the other title when it differs (Constitution RU titles are Lithuanian), meta
+        «10 вопросов · проходной балл 60%», amber best-score pill, ink &laquo;Начать тест ›&raquo;. <code>preview</code>:
+        category description + test count + «Добавить». <code>done</code>: «Все тесты сданы» + count.</td></tr>
+      <tr><td><code>PracticeStack</code></td><td>Other categories (<code>StackProgressCard</code> / <code>StackAddCard</code>) + a
+        «Итоговый экзамен» card (17px/700, ∑, LT title · questions · pass %, emerald &laquo;Сдать ›&raquo;) for the
+        <code>is_final</code> test of each enrolled category; locked → <code>faint</code> text + lock, disabled.</td></tr>
+      <tr><td><code>PracticeSections</code></td><td>Heading «Темы / Что внутри: X» + «Убрать» (confirm dialog). Cards group tests by
+        admin <code>section_ru</code>, ordered by each card's <i>last</i> test; a test without a section is its own card
+        (title + other title, one «Начать» button). Test button: <code>rounded-[10px] border-line</code>, 13px/600,
+        number in section, <code>bg-emerald-50 text-emerald-600</code> + ✓ when passed, <code>bg-amber-50 text-amber-600</code>
+        + % when attempted, lock + <code>opacity-40</code> when locked, small amber «Premium» for a free user,
+        <code>min-h-11</code> below 860px (<code>min-h-9</code> above). Guest / not enrolled: disabled, no scores.</td></tr>
+    </table>
+    <h3 style="margin-top:20px;">Статьи (#55) &mdash; <code>ArticlesList.tsx</code></h3>
+    <table>
+      <tr><th>Piece</th><th>Spec</th></tr>
+      <tr><td>Hero</td><td><code>BentoHero</code> without a bar: article count + emerald «N учебных» badge + «в библиотеке», ink
+        &laquo;Читать новую ›&raquo; (newest article). Right side: «Популярные темы» card (320px, hidden below 860px) with
+        <code>bg-emerald-50 text-emerald-700</code> theme pills + counts; a pill scrolls to its theme card. Mascot
+        <code>Paskaitykime!</code>.</td></tr>
+      <tr><td>Chips</td><td><code>BentoChips</code> «Все / Учебные материалы / Адаптация / Блог» with counts, <code>?category=</code>.
+        Replaces the old segmented pill track.</td></tr>
+      <tr><td>Bento</td><td>Featured = newest in the selected category (kicker «Новое · category», 32px title, date, theme pill
+        <code>bg-[#f2f3f3] text-[#5b6067]</code>, ink «Читать ›»); stack = next three as link cards.</td></tr>
+      <tr><td>Theme cards</td><td>«По темам» + count; cards in fixed theme order (verbs, numbers, cases, words, life, start),
+        «Другое» last; each lists its articles as links separated by <code>border-line-soft</code>.</td></tr>
+    </table>
+  </div>
+
+  <h2>Effort radar (#56)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/components/EffortRadar.tsx</code> &mdash; «Куда уходят усилия» on the signed-in home, directly under
+      <code>Leaderboard</code> in the 420px right column (and directly under it on mobile). Flat card
+      <code>bg-white rounded-[14px] border border-line p-5</code>, title in the leaderboard's small uppercase label style.
+      Data: <code>GET /api/me/effort</code> (leaderboard points per section, this week vs all time; practice excluded).
+    </p>
+    <table>
+      <tr><th>Piece</th><th>Spec</th></tr>
+      <tr><td>Colours</td><td>This week = <code>emerald-700</code> <code>#0c7d54</code> (fill 22%, 2px stroke); all time =
+        <code>effort-all</code> <code>#5cbf8f</code> (fill 28%, 2px stroke, drawn underneath). Pair checked with the dataviz
+        palette validator on white &mdash; contrast WARN on the light green, so every value is also printed as text.
+        Grid rings/spokes <code>line-strong</code>, ring labels <code>faint</code>, axis labels <code>#5b6067</code>.</td></tr>
+      <tr><td>Radar</td><td>viewBox <code>-170 -140 340 250</code>, 3 axes from the top (Слова, Фразы, Грамматика), R&nbsp;=&nbsp;110,
+        <b>square-root radius</b> <code>r = R·√(share/100)</code> (word points dominate; linear squashes the rest into the
+        centre), rings at 10/25/50/100 with labels on 25/50/100, 4.5px markers with a 2px white ring. Axis labels are
+        links to the three sections. <code>role="img"</code> + summary <code>aria-label</code>.</td></tr>
+      <tr><td>Tooltip</td><td>Invisible wedge per axis (<code>tabIndex=0</code>, <code>aria-label</code>): hover, keyboard focus and tap show an
+        <code>bg-ink</code> tooltip with section, week % · pts, all-time % · pts.</td></tr>
+      <tr><td>Text</td><td>Insight line (same / shift / all-only template, section names bold), legend, then a table
+        (section link · week % · pts · all-time % · pts, <code>tabular-nums</code>).</td></tr>
+      <tr><td>States</td><td>No week points → <code>bg-[#f2f3f3]</code> note, all-time layer + one legend item, no week column.
+        No points at all, no token, loading or error → card not rendered.</td></tr>
+    </table>
   </div>
 
   <h2>PageShell — the shared top-nav page shell</h2>
@@ -637,25 +706,26 @@
       hover:shadow-md</code> on cards). That generation is retired; do not reintroduce it on a new page.
     </p>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
-      <b>Page order inside the shell — two sub-patterns, not one:</b> Слова, Фразы and Практика put the hero
+      <b>Page order inside the shell — two sub-patterns, not one:</b> Слова and Фразы put the hero
       <code>ProgressStatCard</code> <i>above</i> the title (card → banner → title+subtitle → content), guarded by
-      <code>tests/stats-card-alignment.spec.ts</code> ("stats card is rendered above the page title"). Грамматика
-      is the one exception (#53): the title lives <i>inside</i> its own hero card (hero → chips → bento → topics)
-      and its "browse all" link sits in the chips row &mdash; see "Grammar hero / chips / bento" and
+      <code>tests/stats-card-alignment.spec.ts</code> ("stats card is rendered above the page title"). Грамматика (#53),
+      Практика and Статьи (#55) use the bento order: the title lives <i>inside</i> the page's own hero card
+      (hero → chips → bento → cards) and the "browse all" link sits in the chips row &mdash; see "Grammar hero / chips / bento" and
       "Deliberate deviations". No page should add a further ordering. The other pages end the same way: main
       content (accordion / grid) → "browse all" link (<code>text-emerald-600 hover:text-emerald-700</code>).
     </p>
     <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0;">
       <b>Mascot placement:</b> lives inside the hero card's <code>icon</code> prop when a hero renders. On the
-      states where a hero can't render yet — loading, or no enrolled content (Практика; Грамматика only while loading, since its #53 hero also renders with no programs) — it falls back
-      to beside the title, so exactly one mascot is always on screen. Статьи has no hero at all (no progress concept
-      for reading), so its mascot always sits beside the title. This is <i>not</i> a settled bug: Фразы' hero is
+      states where a hero can't render yet — loading only, for Грамматика and Практика (their bento heroes also render
+      with nothing enrolled) — it falls back to beside the title, so exactly one mascot is always on screen. Статьи'
+      #55 hero always renders (from the build-time list), so its mascot lives in the hero. This is <i>not</i> a settled bug: Фразы' hero is
       gated on a stats-fetch that rarely fails, so its title carries no such fallback — a known, accepted gap, not a
       pattern to copy for a page whose hero is normally absent.
     </p>
     <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:12px 0 0;">
-      <b>Category tab bar (Статьи):</b> <code>frontend/app/dashboard/articles/ArticlesList.tsx</code> — sits
-      directly under the title/subtitle+mascot row and above the article card grid. Reuses the same visual
+      <b>Category tab bar (Статьи) &mdash; retired in #55</b>, replaced by <code>BentoChips</code> (see "Grammar hero /
+      chips / bento"). Kept for history: it sat
+      directly under the title/subtitle+mascot row and above the article card grid. Reused the same visual
       recipe as the header's "Nav tab pills" (<code>bg-[#f2f3f3] rounded-full p-1 gap-1</code> track;
       <code>px-4 py-2 text-sm rounded-full</code> items; active <code>bg-white font-semibold text-ink
       shadow-[0_1px_2px_rgba(0,0,0,0.06)]</code>; inactive <code>text-muted</code>) rather than inventing a new
@@ -1084,7 +1154,7 @@
   <div class="card">
     <table>
       <tr><th>Deviation</th><th>Why</th></tr>
-      <tr><td>Статьи' category filter (<code>rounded-full</code> pill track) scrolls horizontally on mobile instead
+      <tr><td>(Superseded by #55 &mdash; Статьи now uses wrapping <code>BentoChips</code>.) Статьи' category filter (<code>rounded-full</code> pill track) scrolls horizontally on mobile instead
         of wrapping</td><td>The shared segmented-pill recipe (<code>bg-[#f2f3f3] rounded-full p-1</code>, also used
         for nav tabs and the RU/EN switch) assumes one row — wrapping the 4 category pills to 2 rows on a 375px
         viewport turned the <code>rounded-full</code> container into a tall, oddly-rounded stadium shape (confirmed
@@ -1141,7 +1211,7 @@
         <code>Учить</code>; at 1000px (container ≈936px, ~300px/card) the extra button wrapped the word-count label
         onto two lines. 1200px keeps every card ≥~350px wide. Applies to <code>app/dashboard/lists/page.tsx</code>
         (all three list grids) and <code>app/dashboard/phrases/page.tsx</code> (both list/chapter grids).</td></tr>
-      <tr><td>Статьи moved from a single-column list to a card grid (<code>sm:grid-cols-2 lg:grid-cols-3</code>)</td><td>
+      <tr><td>(Superseded by #55 &mdash; theme cards in the bento layout.) Статьи moved from a single-column list to a card grid (<code>sm:grid-cols-2 lg:grid-cols-3</code>)</td><td>
         27+ articles as full-width rows left most of each row empty and made the page mostly a long scroll. Cards
         stack title → tags → date/"Читать →" footer (<code>mt-auto</code>) instead of the old left-text/right-link
         row, so uneven title lengths still align at the bottom across a row. Uses Tailwind's default
@@ -1197,9 +1267,12 @@
         doubles as onboarding: the hero must enroll in place (&laquo;Начать с падежей&raquo;) and show a declension sample,
         which <code>ProgressStatCard</code> (count-gated action row, no title) can't. Putting the title in the hero
         keeps one mascot and one card at the top instead of a title row above a second card &mdash; a third page
-        ordering, accepted for grammar only. The browse link moved next to the program chips because it is the
-        chips' "more" affordance; at the page end it would sit under a long topic grid. The other 4 pages keep
-        <code>ProgressStatCard</code> and their order.</td></tr>
+        ordering. The browse link moved next to the program chips because it is the
+        chips' "more" affordance; at the page end it would sit under a long topic grid. <b>#55</b> extended it to
+        Практика (same onboarding need: guests and users with no category see a preview with an in-place
+        «Начать с Конституции») and Статьи (hero without a bar &mdash; reading is not tracked), sharing
+        <code>BentoParts.tsx</code> so the three pages cannot drift; Слова and Фразы keep <code>ProgressStatCard</code> and
+        their order.</td></tr>
     </table>
   </div>
 

@@ -17,6 +17,7 @@ import {
   GrammarHero, ProgramChips, FeaturedCard, ProgramStack, TopicsSection,
   featuredFor, isPassed, programTitle, type Lesson, type LessonsByProgram,
 } from '../components/GrammarOverview';
+import { BENTO_GRID, ConfirmDialog, ErrorLine } from '../components/BentoParts';
 
 // «Напомни что я мог забыть» (#26) — a pseudo-lesson through the same startLesson
 // flow. id=0 is the sentinel REMIND_LESSON_ID used server-side for the saved
@@ -261,15 +262,13 @@ export default function GrammarPage() {
             onSelect={(id) => { setActionError(false); setSelected(id); }}
           />
           {actionError && (
-            <p className="mt-2 text-[13px] text-destructive" role="alert" data-testid="grammar-action-error">
-              {tr.grammar.actionFailed}
-            </p>
+            <ErrorLine testId="grammar-action-error">{tr.grammar.actionFailed}</ErrorLine>
           )}
         </div>
 
         {featured ? (
           <>
-            <section className="grid gap-4 grid-cols-1 min-[860px]:grid-cols-[1.75fr_1fr]">
+            <section className={BENTO_GRID}>
               <FeaturedCard
                 featured={featured}
                 lessons={byProgram[featured.program.id]}
@@ -295,40 +294,15 @@ export default function GrammarPage() {
           <p className="text-faint text-sm py-8 text-center">{tr.grammar.programsEmpty}</p>
         )}
 
-        {/* Confirm remove program — markup copied from lists/page.tsx (two uses, no shared component). */}
         {confirmProgram && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={() => setConfirmId(null)}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              data-testid="unenroll-confirm"
-              className="bg-white rounded-2xl shadow-xl p-6 mx-4 w-full max-w-sm flex flex-col gap-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-[14.5px] font-semibold text-ink">
-                {tr.lists.removeProgramTitle.replace('{label}', programTitle(confirmProgram, lang))}
-              </h2>
-              <p className="text-sm text-muted">{tr.lists.removeProgramBody}</p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setConfirmId(null)}
-                  className="px-4 py-2 text-sm text-muted hover:text-ink border border-line rounded-full transition-colors"
-                >
-                  {tr.common.cancel}
-                </button>
-                <button
-                  onClick={() => { setConfirmId(null); handleUnenroll(confirmProgram.id); }}
-                  data-testid="unenroll-confirm-button"
-                  className="px-4 py-2 text-sm font-semibold text-white bg-destructive hover:opacity-90 rounded-full transition-opacity"
-                >
-                  {tr.lists.removeProgramConfirm}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ConfirmDialog
+            title={tr.lists.removeProgramTitle.replace('{label}', programTitle(confirmProgram, lang))}
+            body={tr.lists.removeProgramBody}
+            cancelLabel={tr.common.cancel}
+            confirmLabel={tr.lists.removeProgramConfirm}
+            onCancel={() => setConfirmId(null)}
+            onConfirm={() => { setConfirmId(null); handleUnenroll(confirmProgram.id); }}
+          />
         )}
       </PageShell>
     );

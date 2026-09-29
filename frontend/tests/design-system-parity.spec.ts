@@ -53,14 +53,14 @@ test.describe('Design-system parity', () => {
   });
 
   // All 5 top-nav dashboard pages (Слова, Фразы, Грамматика, Практика, Статьи) share this
-  // shell (`PageShell.tsx`) — see "PageShell" in the component library. Practice and phrases
-  // require a token: practice isn't in the public-prefix allowlist (redirects to `/` without
-  // one), and phrases shows a separate login-prompt screen instead of the `.page` shell.
+  // shell (`PageShell.tsx`) — see "PageShell" in the component library. Phrases requires a
+  // token: it shows a separate login-prompt screen instead of the `.page` shell. Practice is
+  // public since #55 (guests see the onboarding preview).
   const NAV_PAGES = [
     { url: '/dashboard/lists', needsAuth: false },
     { url: '/dashboard/phrases', needsAuth: true },
     { url: '/dashboard/grammar', needsAuth: false },
-    { url: '/dashboard/practice', needsAuth: true },
+    { url: '/dashboard/practice', needsAuth: false },
     { url: '/dashboard/articles', needsAuth: false },
   ];
 

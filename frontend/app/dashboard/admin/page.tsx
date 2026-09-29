@@ -126,6 +126,9 @@ interface PracticeTestRow {
   pass_threshold: number;
   status: string;
   is_premium: boolean;
+  section_ru: string | null; // #55
+  section_en: string | null;
+  is_final: boolean;
   created_by: string | null;
   sort_order: number;
   total_questions: number;
@@ -169,6 +172,9 @@ const BLANK_TEST: Omit<PracticeTestRow, 'id' | 'total_questions' | 'active_quest
   pass_threshold: 0.75,
   status: 'draft',
   is_premium: false,
+  section_ru: null,
+  section_en: null,
+  is_final: false,
   created_by: null,
   sort_order: 0,
 };
@@ -1412,6 +1418,9 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         pass_threshold: editingTest.pass_threshold,
         status: editingTest.status,
         is_premium: editingTest.is_premium,
+        section_ru: editingTest.section_ru ?? '', // "" clears; the server strips + validates (≤120)
+        section_en: editingTest.section_en ?? '',
+        is_final: editingTest.is_final,
       }),
     }).catch(() => null);
     setPracticeSaving(false);
@@ -3453,6 +3462,14 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   <label className="text-xs text-gray-400">{tr.adminPractice.lessonTextLabel}</label>
                                   <textarea rows={8} value={editingTest.lesson_text_lt ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, lesson_text_lt: e.target.value || null } : p)} placeholder={tr.adminPractice.lessonTextPlaceholder} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none font-mono resize-y" />
                                 </div>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.fieldSectionRu}</label>
+                                  <input data-testid="admin-test-section-ru" maxLength={120} value={editingTest.section_ru ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, section_ru: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.fieldSectionEn}</label>
+                                  <input data-testid="admin-test-section-en" maxLength={120} value={editingTest.section_en ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, section_en: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                                </div>
                                 <div className="grid grid-cols-2 gap-2">
                                   <div className="flex flex-col gap-1">
                                     <label className="text-xs text-gray-400">{tr.adminPractice.fieldQuestionCount}</label>
@@ -3477,6 +3494,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   <label className="text-xs text-gray-400">{tr.adminPractice.fieldIsPremium}</label>
                                   <input type="checkbox" checked={editingTest.is_premium} onChange={(e) => setEditingTest((p) => p ? { ...p, is_premium: e.target.checked } : p)} className="w-4 h-4" />
                                 </div>
+                                <div className="flex items-center gap-2">
+                                  <label htmlFor="admin-test-is-final" className="text-xs text-gray-400">{tr.adminPractice.fieldIsFinal}</label>
+                                  <input id="admin-test-is-final" data-testid="admin-test-is-final" type="checkbox" checked={editingTest.is_final} onChange={(e) => setEditingTest((p) => p ? { ...p, is_final: e.target.checked } : p)} className="w-4 h-4" />
+                                </div>
                               </div>
                               <div className="flex gap-2 justify-end">
                                 <button onClick={() => setEditingTest(null)} className="text-xs text-gray-400 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminPractice.cancel}</button>
@@ -3491,6 +3512,9 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   {t.is_premium && <span className="text-[10px] px-1.5 py-0.5 bg-amber-50 border border-amber-300 text-amber-700 rounded font-medium">{tr.adminPractice.premiumBadge}</span>}
                                 </div>
                                 {t.title_en && <p className="text-xs text-gray-400">{t.title_en}</p>}
+                                {(t.section_ru || t.is_final) && (
+                                  <p className="text-xs text-gray-500">{[t.section_ru, t.is_final ? tr.adminPractice.fieldIsFinal : null].filter(Boolean).join(' · ')}</p>
+                                )}
                                 <p className="text-xs text-gray-400 mt-0.5">
                                   {t.active_questions}/{t.total_questions} {tr.adminPractice.questionsCount} · {Math.round(t.pass_threshold * 100)}% · {t.question_count} {tr.adminPractice.examCountSuffix}
                                   {t.status === 'draft' && <span className="ml-2 text-gray-500 font-medium">{tr.adminPractice.statusDraftSuffix}</span>}

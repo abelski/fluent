@@ -1482,6 +1482,48 @@ def get_leaderboard(
     return LeaderboardResponse(entries=entries, me=MeEntry(rank=my_rank, score=my_score))
 
 
+class EffortPoints(BaseModel):
+    words: int
+    phrases: int
+    grammar: int
+
+
+class EffortResponse(BaseModel):
+    week: EffortPoints
+    all: EffortPoints
+
+
+@router.get("/me/effort", response_model=EffortResponse)
+def get_my_effort(
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session),
+):
+    """Leaderboard points per source (words / phrases / grammar) for the current user,
+    this week and all time (#56 effort radar). Same joins as /leaderboard's `me` score,
+    one round trip (UNION ALL). Practice is not an axis. Never cached: progress, now-relative.
+    """
+    user = _require_user(authorization, session)
+    week_joins, week_params = build_leaderboard_score_joins(current_week_bounds())
+    all_joins, all_params = build_leaderboard_score_joins(None)
+    sql = """
+        SELECT '{period}' AS period, COALESCE(w.pts, 0) AS words, COALESCE(p.pts, 0) AS phrases,
+               COALESCE(g.pts, 0) AS grammar
+        FROM "user" u
+        {joins}
+        WHERE u.id = :uid
+    """
+    rows = session.execute(
+        text(sql.format(period="week", joins=week_joins)
+             + " UNION ALL "
+             + sql.format(period="all", joins=all_joins)),
+        {**week_params, **all_params, "uid": user.id},
+    ).all()
+    by_period = {r.period: EffortPoints(words=int(r.words), phrases=int(r.phrases), grammar=int(r.grammar))
+                 for r in rows}
+    zero = EffortPoints(words=0, phrases=0, grammar=0)
+    return EffortResponse(week=by_period.get("week", zero), all=by_period.get("all", zero))
+
+
 @router.get("/me/known-words")
 def get_known_words(
     authorization: Optional[str] = Header(None),

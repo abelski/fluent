@@ -11,7 +11,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlmodel import Session, select
 
 import cache
@@ -22,6 +22,10 @@ from models import Article, User
 router = APIRouter()
 
 _VALID_CATEGORIES = {"learning_materials", "adaptation", "blog"}
+
+# Fixed article themes for the /dashboard/articles theme cards (#55). The
+# frontend owns the RU/EN labels per key; None renders as «Другое».
+ARTICLE_THEMES = ("verbs", "numbers", "cases", "words", "life", "start")
 
 
 def _utcnow() -> datetime:
@@ -46,7 +50,7 @@ def _load_article_index(category: Optional[str], session: Session) -> list[dict]
     just to render a list of titles (#24, row 11)."""
     query = (
         select(Article.slug, Article.title_ru, Article.title_en,
-               Article.tags, Article.category, Article.created_at)
+               Article.tags, Article.category, Article.theme, Article.created_at)
         .where(Article.published == True)  # noqa: E712
         .where(Article.show_in_footer == False)  # noqa: E712
     )
@@ -59,9 +63,10 @@ def _load_article_index(category: Optional[str], session: Session) -> list[dict]
             "title_en": title_en,
             "tags": _tags_list(tags),
             "category": cat,
+            "theme": theme,
             "created_at": created_at,
         }
-        for slug, title_ru, title_en, tags, cat, created_at
+        for slug, title_ru, title_en, tags, cat, theme, created_at
         in session.exec(query.order_by(Article.created_at.desc())).all()
     ]
 
@@ -172,6 +177,7 @@ def admin_list_articles(
             "title_en": a.title_en,
             "tags": _tags_list(a.tags),
             "category": a.category,
+            "theme": a.theme,
             "published": a.published,
             "show_in_footer": a.show_in_footer,
             "created_at": a.created_at,
@@ -201,6 +207,7 @@ def admin_get_article(
         "body_en": article.body_en,
         "tags": article.tags,
         "category": article.category,
+        "theme": article.theme,
         "published": article.published,
         "show_in_footer": article.show_in_footer,
         "created_at": article.created_at,
@@ -218,6 +225,15 @@ class ArticleBody(BaseModel):
     category: str
     published: bool = True
     show_in_footer: bool = False
+    # Full-replace on PUT: omitting theme clears it, so the editor always sends it.
+    theme: Optional[str] = None
+
+    @field_validator("theme")
+    @classmethod
+    def _theme_known(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ARTICLE_THEMES:
+            raise ValueError(f"theme must be one of {ARTICLE_THEMES}")
+        return v
 
 
 @router.post("/admin/articles")
@@ -245,6 +261,7 @@ def create_article(
         category=body.category,
         published=body.published,
         show_in_footer=body.show_in_footer,
+        theme=body.theme,
     )
     session.add(article)
     session.commit()
@@ -280,6 +297,7 @@ def update_article(
     article.category = body.category
     article.published = body.published
     article.show_in_footer = body.show_in_footer
+    article.theme = body.theme
     article.updated_at = _utcnow()
     session.add(article)
     session.commit()

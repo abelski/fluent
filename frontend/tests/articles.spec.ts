@@ -107,9 +107,10 @@ test.describe('Articles list page', () => {
       await route.fulfill({ json: MOCK_ARTICLES });
     });
     await page.goto('/dashboard/articles');
-    await expect(page.getByText('Как подготовиться к экзамену A2')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('.bg-emerald-50', { hasText: 'exam' })).toBeVisible();
-    await expect(page.locator('.bg-emerald-50', { hasText: 'a2' })).toBeVisible();
+    // #55: the bento layout shows the article in the featured card and its theme card;
+    // tag pills were replaced by the theme label (see articles-bento.spec.ts).
+    await expect(page.getByTestId('featured-heading')).toHaveText('Как подготовиться к экзамену A2', { timeout: 5000 });
+    await expect(page.getByTestId('theme-section').getByText('Как подготовиться к экзамену A2')).toBeVisible();
   });
 
   test('article card links to detail page', async ({ page }) => {
@@ -118,7 +119,7 @@ test.describe('Articles list page', () => {
       await route.fulfill({ json: MOCK_ARTICLES });
     });
     await page.goto('/dashboard/articles');
-    const link = page.getByRole('link', { name: /Как подготовиться/ });
+    const link = page.getByTestId('theme-section').getByRole('link', { name: /Как подготовиться/ });
     await expect(link).toHaveAttribute('href', /prepare-for-lithuanian-a2/);
   });
 });
@@ -229,28 +230,30 @@ test.describe('Article category tabs', () => {
       await route.fulfill({ json: MOCK_CATEGORY_ARTICLES });
     });
     await page.goto('/dashboard/articles');
+    // #55: the theme cards list every article of the selected category exactly once.
+    const grid = page.getByTestId('theme-section');
 
     // All 3 articles visible by default.
-    await expect(page.getByText('Введение в глаголы')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('Как подготовиться к экзамену A2')).toBeVisible();
-    await expect(page.getByText('Добро пожаловать')).toBeVisible();
+    await expect(grid.getByText('Введение в глаголы')).toBeVisible({ timeout: 5000 });
+    await expect(grid.getByText('Как подготовиться к экзамену A2')).toBeVisible();
+    await expect(grid.getByText('Добро пожаловать')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Учебные материалы' }).click();
+    await page.getByRole('button', { name: /^Учебные материалы/ }).click();
     await expect(page).toHaveURL(/category=learning_materials/);
-    await expect(page.getByText('Введение в глаголы')).toBeVisible();
-    await expect(page.getByText('Как подготовиться к экзамену A2')).not.toBeVisible();
-    await expect(page.getByText('Добро пожаловать')).not.toBeVisible();
+    await expect(grid.getByText('Введение в глаголы')).toBeVisible();
+    await expect(grid.getByText('Как подготовиться к экзамену A2')).not.toBeVisible();
+    await expect(grid.getByText('Добро пожаловать')).not.toBeVisible();
 
-    await page.getByRole('button', { name: 'Адаптация в Литве' }).click();
+    await page.getByRole('button', { name: /^Адаптация в Литве/ }).click();
     await expect(page).toHaveURL(/category=adaptation/);
-    await expect(page.getByText('Как подготовиться к экзамену A2')).toBeVisible();
-    await expect(page.getByText('Введение в глаголы')).not.toBeVisible();
+    await expect(grid.getByText('Как подготовиться к экзамену A2')).toBeVisible();
+    await expect(grid.getByText('Введение в глаголы')).not.toBeVisible();
 
-    await page.getByRole('button', { name: 'Все' }).click();
+    await page.getByRole('button', { name: /^Все/ }).click();
     await expect(page).not.toHaveURL(/category=/);
-    await expect(page.getByText('Введение в глаголы')).toBeVisible();
-    await expect(page.getByText('Как подготовиться к экзамену A2')).toBeVisible();
-    await expect(page.getByText('Добро пожаловать')).toBeVisible();
+    await expect(grid.getByText('Введение в глаголы')).toBeVisible();
+    await expect(grid.getByText('Как подготовиться к экзамену A2')).toBeVisible();
+    await expect(grid.getByText('Добро пожаловать')).toBeVisible();
   });
 
   test('existing slug URL /dashboard/articles/verb-intro still loads unchanged', async ({ page, baseURL }) => {
