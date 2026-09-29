@@ -627,6 +627,8 @@ const en: Translations = {
     autoSendRewardsLabel: 'Leaderboard rewards and notices',
     autoSendRewardsDescPrefix: 'Mondays at 10:00 UTC — last week\'s top 3',
     autoSendRewardsDescSuffix: 'get Premium, 4th–5th place get a notice',
+    autoSendBalanceLabel: 'Balance tips (email + inbox)',
+    autoSendBalanceDesc: 'Daily at 09:30 UTC — learners who fully dropped words, phrases or grammar over 14 days. Off by default',
     loadingEllipsis: 'Loading…',
     welcomeTitle: 'Welcome screen',
     welcomeDesc: 'The text a user sees on first login. Edited as an article with the slug',
@@ -887,6 +889,7 @@ const en: Translations = {
     effortSame: "Same as usual: most of it goes to **{a}** ({p}% of this week's points).",
     effortShift: "This week most of it went to **{a}** ({p}%). Usually it's **{b}** ({q}%).",
     effortAllOnly: 'Over all time most of it goes to **{a}** ({p}%).',
+    effortInfo: 'How to keep the balance',
   },
   news: {
     sectionTitle: 'News',
@@ -958,6 +961,7 @@ const en: Translations = {
       leaderboard: 'Leaderboard',
       report: 'Reports',
       premium: 'Premium',
+      balance: 'Balance',
     },
     kinds: {
       celebration: 'Achievement',
@@ -1061,6 +1065,8 @@ const en: Translations = {
     langRu: 'Russian',
     emailConsentLabel: 'Receive emails from Fluent',
     emailConsentHint: 'We will send useful notifications about updates and new content',
+    balanceTipsLabel: 'Study balance tips',
+    balanceTipsHint: "Every two weeks at most, if you've fully dropped words, phrases or grammar",
     phrasesSessionSizeLabel: 'Phrases per session',
     phrasesSessionSizeHint: 'How many phrases to show in one study session',
     loadError: 'Failed to load settings',

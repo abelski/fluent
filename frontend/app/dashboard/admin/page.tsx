@@ -533,7 +533,7 @@ export default function AdminPage() {
   const [cefrMsg, setCefrMsg] = useState('');
 
   // Auto-send scheduler toggles
-  const [autoSend, setAutoSend] = useState<{ auto_send_inactive_emails: boolean; auto_send_weekly_rewards: boolean } | null>(null);
+  const [autoSend, setAutoSend] = useState<{ auto_send_inactive_emails: boolean; auto_send_weekly_rewards: boolean; auto_send_balance_tips: boolean } | null>(null);
   const [autoSendSaving, setAutoSendSaving] = useState(false);
   const [autoSendMsg, setAutoSendMsg] = useState('');
 
@@ -3964,7 +3964,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               </div>
             </div>
 
-            <div>
+            <div data-testid="autosend-block">
               <h2 className="font-headline font-semibold text-gray-900 mb-1">{tr.adminSettings.autoSendTitle}</h2>
               <p className="text-sm text-gray-500 mb-4">{tr.adminSettings.autoSendSubtitle}</p>
               {autoSend ? (
@@ -3972,6 +3972,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                   {([
                     { key: 'auto_send_inactive_emails' as const, label: tr.adminSettings.autoSendInactiveLabel, desc: tr.adminSettings.autoSendInactiveDesc },
                     { key: 'auto_send_weekly_rewards' as const, label: tr.adminSettings.autoSendRewardsLabel, desc: `${tr.adminSettings.autoSendRewardsDescPrefix}${top5WeekRange ? ` (${formatWeekRange(top5WeekRange.start, top5WeekRange.end, tr.common.dateLocale)})` : ''} ${tr.adminSettings.autoSendRewardsDescSuffix}` },
+                    { key: 'auto_send_balance_tips' as const, label: tr.adminSettings.autoSendBalanceLabel, desc: tr.adminSettings.autoSendBalanceDesc },
                   ] as const).map(({ key, label, desc }) => (
                     <div key={key} className="flex items-center justify-between gap-4 px-4 py-3">
                       <div>
@@ -3983,6 +3984,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${autoSend[key] ? 'bg-emerald-500' : 'bg-gray-200'}`}
                         role="switch"
                         aria-checked={autoSend[key]}
+                        data-testid={`autosend-${key}`}
                       >
                         <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${autoSend[key] ? 'translate-x-5' : 'translate-x-0'}`} />
                       </button>
@@ -3995,6 +3997,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
               <div className="flex items-center gap-3">
                 <button
                   onClick={saveAutoSend}
+                  data-testid="autosend-save"
                   disabled={autoSendSaving || !autoSend}
                   className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
                 >

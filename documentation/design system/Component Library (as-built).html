@@ -689,6 +689,24 @@
     </table>
   </div>
 
+  <h2>Card info button (#57)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      A small "i" link at the right end of a card's title row that opens an explanatory article.
+      First use: <code>EffortRadar.tsx</code> (<code>data-testid="effort-info"</code>) &rarr;
+      <code>/dashboard/articles/how-to-learn-lithuanian-order/</code>, same tab.
+    </p>
+    <table>
+      <tr><th>Piece</th><th>Spec</th></tr>
+      <tr><td>Markup</td><td>Title row <code>flex items-center justify-between</code>; the link is an <code>&lt;a&gt;</code> (it navigates),
+        not a button. Inline SVG (no icon library in the repo): 18px, circle stroke 1.5 + "i" stem and dot in <code>currentColor</code>, <code>aria-hidden</code>.</td></tr>
+      <tr><td>Label</td><td><code>aria-label</code> and <code>title</code> both carry the text (RU «Как держать баланс» / EN "How to keep the balance") — icon-only, so the label is the accessible name and the hover tooltip.</td></tr>
+      <tr><td>Size</td><td><code>min-w-11 min-h-11 flex items-center justify-center</code> (44&times;44, per Principles) with
+        <code>-my-3.5 -mr-3</code> so the 16px-tall title row does not grow and the glyph lines up with the card's padding edge.</td></tr>
+      <tr><td>Colour</td><td><code>text-muted</code> &rarr; <code>hover:text-emerald-700</code> (hover goes darker). No background, no border.</td></tr>
+    </table>
+  </div>
+
   <h2>PageShell — the shared top-nav page shell</h2>
   <div class="card">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
@@ -1057,7 +1075,9 @@
       <code>frontend/components/InboxMenu.tsx</code> — a 44&times;44 envelope button rendered in
       <code>Header.tsx</code> immediately before the RU/EN switch, only when logged in. Opens a
       dropdown preview; "All messages" links to <code>frontend/app/dashboard/inbox/page.tsx</code>,
-      a minimal Gmail-style message list. See <code>documentation/inbox.md</code> for the backend
+      a minimal Gmail-style message list. Message bodies are plain text (<code>whitespace-pre-line</code>); since #57 any
+      <code>https://fluent.lt/&lt;path&gt;</code> in a body renders as an in-app <code>&lt;Link&gt;</code> to <code>/&lt;path&gt;</code>
+      (<code>text-emerald-600 hover:text-emerald-700 underline break-all</code>), other text unchanged. See <code>documentation/inbox.md</code> for the backend
       and caching design behind it.
     </p>
     <h3 style="margin-bottom:12px;">Unread badge</h3>

@@ -1,6 +1,8 @@
 """Background jobs for Fluent.
 
 Daily at 09:00 UTC  — generate re-engagement drafts for inactive users.
+Daily at 09:30 UTC  — send balance tips to learners who dropped a direction (#57,
+                      off unless the admin switch `auto_send_balance_tips` is on).
 Weekly on Monday 10:00 UTC — generate leaderboard reward/notice drafts and
                               send all pending reward/notice drafts automatically.
 """
@@ -21,6 +23,7 @@ from email_templates import (
     generate_reward_email,
     generate_notice_email,
 )
+import balance_service
 import email_service
 import inbox_service
 import telegram_service
@@ -52,12 +55,12 @@ def previous_week_bounds(now: datetime | None = None) -> tuple[datetime, datetim
     return prev_week_start, this_week_start
 
 
-def _is_auto_send_enabled(session: Session, key: str) -> bool:
-    """Return the boolean value of an auto-send toggle setting (default True if not set)."""
+def _is_auto_send_enabled(session: Session, key: str, default: bool = True) -> bool:
+    """Return the boolean value of an auto-send toggle setting (`default` if not set)."""
     import json as _json
     row = session.exec(select(AppSetting).where(AppSetting.key == key)).first()
     if row is None:
-        return True
+        return default
     return bool(_json.loads(row.value))
 
 
@@ -294,6 +297,16 @@ def send_weekly_rewards() -> None:
         )
 
 
+def send_balance_tips_job() -> None:
+    """Daily job: balance tips (#57). Off by default — the admin turns it on after
+    reviewing the copy, so an unset key must not mean "on" like the older switches."""
+    with Session(engine) as session:
+        if not _is_auto_send_enabled(session, "auto_send_balance_tips", default=False):
+            logger.info("Scheduler: balance tips auto-send is disabled, skipping")
+            return
+        balance_service.send_balance_tips(session)
+
+
 def purge_deleted_inbox_deliveries() -> None:
     """Daily job: hard-delete inbox rows soft-deleted more than 24h ago (#23).
 
@@ -315,10 +328,14 @@ def start_scheduler() -> BackgroundScheduler:
         send_weekly_rewards, "cron", day_of_week="mon", hour=10, minute=0,
         misfire_grace_time=3600, coalesce=True,
     )
+    scheduler.add_job(
+        send_balance_tips_job, "cron", hour=9, minute=30,
+        misfire_grace_time=3600, coalesce=True,
+    )
     scheduler.add_job(purge_deleted_inbox_deliveries, "cron", hour=4, minute=0)
     scheduler.start()
     logger.info(
-        "Scheduler started — inactive-user job daily 09:00 UTC, "
+        "Scheduler started — inactive-user job daily 09:00 UTC, balance tips daily 09:30 UTC, "
         "weekly rewards job Mondays 10:00 UTC, inbox purge daily 04:00 UTC"
     )
     return scheduler

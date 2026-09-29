@@ -627,6 +627,8 @@ const ru: Translations = {
     autoSendRewardsLabel: 'Награды и уведомления лидерборда',
     autoSendRewardsDescPrefix: 'По понедельникам в 10:00 UTC — топ-3 прошлой недели',
     autoSendRewardsDescSuffix: 'получают Premium, топ 4–5 получают уведомление',
+    autoSendBalanceLabel: 'Советы по балансу (письмо + входящие)',
+    autoSendBalanceDesc: 'Ежедневно в 09:30 UTC — тем, кто за 14 дней совсем забросил слова, фразы или грамматику. По умолчанию выключено',
     loadingEllipsis: 'Загрузка…',
     welcomeTitle: 'Приветственный экран',
     welcomeDesc: 'Текст, который видит пользователь при первом входе. Редактируется как статья со слагом',
@@ -887,6 +889,7 @@ const ru: Translations = {
     effortSame: 'Как обычно: больше всего — **{a}** ({p}% очков недели).',
     effortShift: 'На этой неделе больше всего — **{a}** ({p}%). Обычно — **{b}** ({q}%).',
     effortAllOnly: 'За всё время больше всего — **{a}** ({p}%).',
+    effortInfo: 'Как держать баланс',
   },
   news: {
     sectionTitle: 'Новости',
@@ -958,6 +961,7 @@ const ru: Translations = {
       leaderboard: 'Рейтинг',
       report: 'Отчёты',
       premium: 'Premium',
+      balance: 'Баланс',
     },
     kinds: {
       celebration: 'Достижение',
@@ -1061,6 +1065,8 @@ const ru: Translations = {
     langRu: 'Русский',
     emailConsentLabel: 'Получать письма от Fluent',
     emailConsentHint: 'Мы будем отправлять полезные уведомления об обновлениях и новых материалах',
+    balanceTipsLabel: 'Советы по балансу занятий',
+    balanceTipsHint: 'Раз в две недели, если вы совсем забросили слова, фразы или грамматику',
     phrasesSessionSizeLabel: 'Фраз за сессию',
     phrasesSessionSizeHint: 'Сколько фраз показывать в одной сессии изучения',
     loadError: 'Не удалось загрузить настройки',

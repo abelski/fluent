@@ -105,6 +105,14 @@ Scenario: effort radar renders under the leaderboard
   And hovering, focusing (keyboard tab), or tapping an axis's invisible wedge shows a tooltip
     with that axis's week and all-time share and point count
 
+Scenario: effort radar info button opens the balance article (#57)
+  Given the effort radar card is rendered
+  Then an "i" icon link sits at the right end of the card's title row
+  And its aria-label and title read "How to keep the balance" (RU «Как держать баланс»)
+  And its tap target is at least 44x44px while the title row keeps its height (negative margin)
+  When it is clicked
+  Then the browser navigates in the same tab to /dashboard/articles/how-to-learn-lithuanian-order/
+
 Scenario: no study this week
   Given the user has all-time points but the week's totals are all zero
   Then only the all-time polygon/markers are drawn (no week layer, no week legend swatch, no

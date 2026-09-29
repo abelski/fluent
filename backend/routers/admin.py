@@ -13,7 +13,7 @@ import cache
 import inbox_service
 from auth import require_user as _decode_user
 from database import get_session
-from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage, UserProgram, UserPracticeCategoryEnrollment, ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment, UserPhraseProgress, UserGrammarProgram, CustomProgram, CustomPhraseList, CustomPhrase, UserCustomPhraseProgress, InboxDelivery, UserAchievement
+from models import User, DailyStudySession, WordList, SubcategoryMeta, Word, WordListItem, GrammarSentence, GrammarCaseRule, UserWordProgress, MistakeReport, GrammarLessonResult, PracticeExamResult, Article, AppSetting, GrammarProgram, PreparedMessage, UserProgram, UserPracticeCategoryEnrollment, ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment, UserPhraseProgress, UserGrammarProgram, CustomProgram, CustomPhraseList, CustomPhrase, UserCustomPhraseProgress, InboxDelivery, UserAchievement, BalanceTip, BalanceTipOptOut
 from sqlalchemy import text, delete as sa_delete, update as sa_update
 from constants import DAILY_LIMIT
 from quota import is_premium_active as _is_premium_active
@@ -559,6 +559,7 @@ def _delete_user_data(user_id: str, session: Session) -> None:
         ConstitutionExamResult, UserCustomProgramEnrollment, UserPhraseProgramEnrollment,
         PreparedMessage, UserPhraseProgress, UserGrammarProgram,
         UserCustomPhraseProgress, InboxDelivery, UserAchievement,
+        BalanceTip, BalanceTipOptOut,
     ]
     for model in _tables_with_user_id:
         session.exec(sa_delete(model).where(model.user_id == user_id))
@@ -1288,7 +1289,12 @@ def update_cefr_thresholds(
 # Auto-send scheduler toggles
 # ---------------------------------------------------------------------------
 
-_AUTO_SEND_KEYS = ("auto_send_inactive_emails", "auto_send_weekly_rewards")
+# key → default when unset. Balance tips (#57) default off: the admin reviews the copy first.
+_AUTO_SEND_KEYS = {
+    "auto_send_inactive_emails": True,
+    "auto_send_weekly_rewards": True,
+    "auto_send_balance_tips": False,
+}
 
 
 @router.get("/settings/auto-send")
@@ -1299,15 +1305,16 @@ def get_auto_send_settings(
     """Return current auto-send toggle values. Superadmin-only."""
     _require_superadmin(authorization, session)
     result = {}
-    for key in _AUTO_SEND_KEYS:
+    for key, default in _AUTO_SEND_KEYS.items():
         row = session.exec(select(AppSetting).where(AppSetting.key == key)).first()
-        result[key] = _json.loads(row.value) if row else True  # default on
+        result[key] = _json.loads(row.value) if row else default
     return result
 
 
 class AutoSendBody(BaseModel):
     auto_send_inactive_emails: bool
     auto_send_weekly_rewards: bool
+    auto_send_balance_tips: bool = False
 
 
 @router.patch("/settings/auto-send")
@@ -1321,6 +1328,7 @@ def update_auto_send_settings(
     for key, value in (
         ("auto_send_inactive_emails", body.auto_send_inactive_emails),
         ("auto_send_weekly_rewards", body.auto_send_weekly_rewards),
+        ("auto_send_balance_tips", body.auto_send_balance_tips),
     ):
         row = session.exec(select(AppSetting).where(AppSetting.key == key)).first()
         if row:

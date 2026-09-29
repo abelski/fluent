@@ -93,6 +93,7 @@ library's "Deliberate deviations" table.
 | Practice hero / featured test / category stack + final-exam card / section cards (#55) | `frontend/app/dashboard/components/PracticeOverview.tsx` (`PracticeHero`, `PracticeFeaturedCard`, `PracticeStack`, `PracticeSections`); data + state in `app/dashboard/practice/page.tsx` |
 | Articles hero / category chips / newest + stack / theme cards (#55) | `frontend/app/dashboard/articles/ArticlesList.tsx` (`ArticlesBento`); theme keys `ARTICLE_THEMES` in `articles/types.ts` |
 | Effort radar card on the signed-in home (#56) | `frontend/components/EffortRadar.tsx` |
+| Card info button — "i" link in a card's title row (#57, first use: effort radar → balance article) | `frontend/components/EffortRadar.tsx` |
 | Complexity selector (chevron-clipped knob) | `frontend/app/dashboard/components/StarLevelToggle.tsx` |
 
 The tab strip scrolls horizontally (mockup `.navtabs`) but stays desktop-only; below `1000px` the

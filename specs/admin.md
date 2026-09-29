@@ -441,7 +441,22 @@ Scenario: A superadmin toggles automatic sending
     auto_send_weekly_rewards
   Then the two booleans are read from (defaulting to true if unset) or written to AppSetting rows,
     controlling whether the nightly scheduler sends dismissal emails and generates weekly reward
-    drafts without a human trigger
+    drafts without a human trigger — a third key, auto_send_balance_tips, lives in the same
+    endpoint and defaults to false instead of true (see below)
+```
+
+```gherkin
+Scenario: admin switch for balance tips
+  Given the admin Content → Settings auto-send block
+  Then a third switch "Balance tips (email + inbox)" / «Советы по балансу (письмо + входящие)»
+    is shown, off by default (GET returns auto_send_balance_tips=false while the key is unset)
+  And PATCH /api/admin/settings/auto-send writes it (field optional, defaulting to false)
+  When it is off the daily balance job sends nothing (see specs/balance-nudge.md)
+
+Scenario: deleting a user removes their balance-tip rows
+  Given a user with balance_tip and balance_tip_opt_out rows
+  When a superadmin deletes the user
+  Then both are deleted before the user row, so Postgres foreign keys hold
 ```
 
 ### Scattered admin bypasses in student-facing routers (not full admin CRUD — a role escape hatch)

@@ -16,7 +16,7 @@ const CONTINUE_COUNT_MAX = 20;
 export default function SettingsPage() {
   const router = useRouter();
   const { tr } = useT();
-  const [settings, setSettings] = useState<UserSettings>({ words_per_session: 10, new_words_ratio: 0.7, lesson_mode: 'thorough', use_question_timer: false, question_timer_seconds: 5, email_consent: true, lang: 'en' });
+  const [settings, setSettings] = useState<UserSettings>({ words_per_session: 10, new_words_ratio: 0.7, lesson_mode: 'thorough', use_question_timer: false, question_timer_seconds: 5, email_consent: true, lang: 'en', balance_tips: true });
   const [complexity, setComplexity] = useState<Complexity>('medium');
   const [activeTab, setActiveTab] = useState<Tab>('vocabulary');
   const [loading, setLoading] = useState(true);
@@ -41,6 +41,8 @@ export default function SettingsPage() {
       router.replace('/login');
       return;
     }
+    // #57: balance-tip emails link to ?tab=other (the tab is local state, not in the URL).
+    if (new URLSearchParams(window.location.search).get('tab') === 'other') setActiveTab('other');
     const stored = localStorage.getItem('fluent_complexity') as Complexity | null;
     if (stored === 'easy' || stored === 'medium' || stored === 'hard') {
       setComplexity(stored);
@@ -681,8 +683,8 @@ export default function SettingsPage() {
               </select>
             </div>
 
-            {/* Email consent */}
-            <div>
+            {/* Email consent + balance tips (#57) */}
+            <div className="flex flex-col gap-4">
               <label className="flex items-start gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -694,6 +696,19 @@ export default function SettingsPage() {
                 <span>
                   <span className="block text-sm font-medium text-gray-900">{tr.settings.emailConsentLabel}</span>
                   <span className="block text-xs text-gray-400 mt-0.5">{tr.settings.emailConsentHint}</span>
+                </span>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={settings.balance_tips}
+                  onChange={(e) => setSettings((prev) => ({ ...prev, balance_tips: e.target.checked }))}
+                  data-testid="balance-tips-checkbox"
+                  className="mt-0.5 w-4 h-4 accent-emerald-600"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-900">{tr.settings.balanceTipsLabel}</span>
+                  <span className="block text-xs text-gray-400 mt-0.5">{tr.settings.balanceTipsHint}</span>
                 </span>
               </label>
             </div>

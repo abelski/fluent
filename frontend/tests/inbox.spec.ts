@@ -328,4 +328,25 @@ test.describe('Message view', () => {
     await expect(page.getByTestId('feedback-message')).toHaveValue(/^Re: Сообщение 7/);
     await expect(page.getByTestId('feedback-email')).toHaveValue('test@test.com');
   });
+
+  // #57 — fluent.lt URLs in a body render as in-app relative links; other text unchanged.
+  test('a fluent.lt URL in the body renders as a relative link', async ({ page }) => {
+    await setFakeToken(page);
+    await mockListsPage(page);
+    await mockInbox(page, {
+      items: [item(8, { source: 'balance' })],
+      detail: {
+        source: 'balance',
+        body_ru: 'За 14 дней: слова 100%.\n\nПочему баланс важен: https://fluent.lt/dashboard/articles/how-to-learn-lithuanian-order/\n\nОтключить в настройках: https://fluent.lt/dashboard/settings/?tab=other',
+      },
+    });
+    await page.goto('/dashboard/inbox?m=8');
+    const links = page.getByTestId('inbox-body-link');
+    await expect(links).toHaveCount(2);
+    await expect(links.nth(0)).toHaveAttribute('href', '/dashboard/articles/how-to-learn-lithuanian-order/');
+    await expect(links.nth(1)).toHaveAttribute('href', /^\/dashboard\/settings\/?\?tab=other$/);
+    await expect(links.nth(0)).toHaveText('https://fluent.lt/dashboard/articles/how-to-learn-lithuanian-order/');
+    await expect(page.getByText('За 14 дней: слова 100%.', { exact: false })).toBeVisible();
+    await expect(page.getByText('Баланс', { exact: false }).first()).toBeVisible();
+  });
 });

@@ -2,9 +2,9 @@
 
 ## Purpose
 A per-user message inbox inside the app (separate from email) that other features write into —
-milestone achievements, leaderboard rewards/notices, mistake-report status changes, and Premium
-welcome — plus a superadmin composer that can broadcast a one-off bilingual message to a chosen
-audience. Students read, mark-read, delete, and undelete their own messages; superadmins compose,
+milestone achievements, leaderboard rewards/notices, mistake-report status changes, Premium
+welcome, and balance tips (source "balance") — plus a superadmin composer that can broadcast a
+one-off bilingual message to a chosen audience. Students read, mark-read, delete, and undelete their own messages; superadmins compose,
 review send history, and retract a broadcast. Called over REST by the dashboard inbox page
 (student reading) and by the admin dashboard's inbox composer (superadmin authoring). Reads are
 cached per user/message so a warm request issues no database statements.
@@ -33,6 +33,16 @@ Scenario: A student opens one message
   When they GET /api/me/inbox/{delivery_id}
   Then the full message content is returned if that delivery belongs to them and isn't deleted
   Then a 404 is returned if the delivery belongs to someone else, doesn't exist, or was deleted
+```
+
+```gherkin
+Scenario: fluent.lt URLs in a message body are clickable
+  Given a message body containing https://fluent.lt/<path> (e.g. a balance tip's article and
+    settings links)
+  When MessageView renders it
+  Then each such URL is an in-app link to /<path> (origin stripped, so it works on localhost too),
+    with trailing sentence punctuation left outside the link
+  And all other body text, including other URLs, renders unchanged as plain text
 ```
 
 ```gherkin

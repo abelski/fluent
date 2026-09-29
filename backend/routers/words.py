@@ -14,7 +14,7 @@ from sqlmodel import Session, select, col, func
 import cache
 import inbox_service
 from database import get_session
-from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress, UserCustomPhraseProgress, Article
+from models import User, Word, WordList, WordListItem, UserWordProgress, DailyStudySession, SubcategoryMeta, GrammarLessonResult, PracticeExamResult, UserProgram, UserCustomProgramEnrollment, CustomProgramList, UserPhraseProgress, UserCustomPhraseProgress, Article, BalanceTipOptOut
 from constants import DAILY_LIMIT, MATURE_WORD_REPS
 from auth import require_user as _require_user, try_get_user as _try_get_user
 from grammar_service import REMIND_LESSON_ID
@@ -762,6 +762,8 @@ class UserSettingsUpdate(BaseModel):
     question_timer_seconds: int = 5
     email_consent: bool = True
     lang: str = 'en'
+    # #57: None = leave unchanged, so a client that omits it can't flip it either way.
+    balance_tips: Optional[bool] = None
 
 
 @router.get("/me/settings")
@@ -779,6 +781,7 @@ def get_user_settings(
         "question_timer_seconds": user.question_timer_seconds,
         "email_consent": user.email_consent,
         "lang": user.lang,
+        "balance_tips": session.get(BalanceTipOptOut, user.id) is None,
     }
 
 
@@ -808,6 +811,12 @@ def update_user_settings(
     user.email_consent = body.email_consent
     user.lang = body.lang
     session.add(user)
+    opt_out = session.get(BalanceTipOptOut, user.id)
+    if body.balance_tips is True and opt_out is not None:
+        session.delete(opt_out)
+    elif body.balance_tips is False and opt_out is None:
+        session.add(BalanceTipOptOut(user_id=user.id))
+    balance_tips = body.balance_tips if body.balance_tips is not None else opt_out is None
     session.commit()
     return {
         "words_per_session": user.words_per_session,
@@ -817,6 +826,7 @@ def update_user_settings(
         "question_timer_seconds": user.question_timer_seconds,
         "email_consent": user.email_consent,
         "lang": user.lang,
+        "balance_tips": balance_tips,
     }
 
 

@@ -180,4 +180,36 @@ test.describe('User settings page', () => {
       continue_include_new: false,
     });
   });
+
+  // #57 — balance tips checkbox under email consent in the Other tab.
+  test('balance tips: checked by default, PATCH carries balance_tips:false after uncheck', async ({ page }) => {
+    let patched: Record<string, unknown> | null = null;
+    await page.route('**/api/me/settings', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ json: { ...DEFAULT_SETTINGS, email_consent: true, lang: 'en', balance_tips: true } });
+      } else {
+        patched = JSON.parse(route.request().postData() ?? '{}');
+        await route.fulfill({ json: patched });
+      }
+    });
+    await page.goto('/dashboard/settings');
+    await page.locator('[data-testid="tab-other"]').click();
+    const box = page.getByTestId('balance-tips-checkbox');
+    await expect(box).toBeChecked();
+    // Directly under the email-consent checkbox.
+    const consent = (await page.getByTestId('email-consent-checkbox').boundingBox())!;
+    const tips = (await box.boundingBox())!;
+    expect(tips.y).toBeGreaterThan(consent.y);
+    await box.uncheck();
+    await page.getByTestId('save-settings-btn').click();
+    await expect(page.getByTestId('saved-message')).toBeVisible();
+    expect(patched).toMatchObject({ balance_tips: false });
+    await expect(box).not.toBeChecked();
+  });
+
+  test('?tab=other opens the Other tab directly', async ({ page }) => {
+    await page.goto('/dashboard/settings/?tab=other');
+    await expect(page.getByTestId('balance-tips-checkbox')).toBeVisible();
+    await expect(page.getByTestId('email-consent-checkbox')).toBeVisible();
+  });
 });
