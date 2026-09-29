@@ -3,21 +3,28 @@
 ## Purpose
 The Practice function hosts multiple-choice knowledge tests organized into categories (e.g. a
 category might bundle several tests on one topic, optionally with a linked source URL and an
-optional short reading passage shown before a test). Students enroll in categories, then work
-through that category's tests in order; a test unlocks once the previous test in the category is
-passed at its own pass threshold. Admins author categories, tests and questions, and can export or
-import a test (with all its questions) as JSON. It is called by the Next.js dashboard practice pages
-over the REST API, plus the admin panel's practice-content editor.
-Backed by: `backend/routers/practice.py`, `frontend/app/dashboard/practice/`.
+optional short reading passage shown before a test). Anyone, including a signed-out visitor, can
+browse categories and their tests; only signed-in users can enroll, track progress, and sit an
+exam. Once enrolled, a student works through a category's tests in order; a test unlocks once the
+previous test in the category is passed at its own pass threshold. `/dashboard/practice` presents
+this as a hero (overall progress) → category chips → a bento pair (a featured "next test" or
+category-preview card plus a stack of other categories and any final-exam card) → section cards
+grouping that category's tests for direct start. Admins author categories, tests and questions,
+group tests into named sections, flag one test per category as the final exam, and can export or
+import a test (with all its questions) as JSON. It is called by the Next.js dashboard practice
+pages over the REST API, plus the admin panel's practice-content editor.
+Backed by: `backend/routers/practice.py`, `frontend/app/dashboard/practice/`,
+`frontend/app/dashboard/components/PracticeOverview.tsx`.
 
 ## Scenarios
 
 ```gherkin
-Scenario: student lists practice categories
-  Given an authenticated, non-admin user
+Scenario: anyone lists practice categories
+  Given any caller, authenticated or not
   When GET /practice/categories is called
-  Then every category is returned with a published-test count and an "enrolled" flag
-  And tests with status "testing" or "draft" are not counted for this user
+  Then every category is returned with a published-test count
+  And "enrolled" is false for an anonymous caller
+  And tests with status "testing" or "draft" are not counted unless the caller is an admin
 ```
 
 ```gherkin
@@ -26,6 +33,7 @@ Scenario: admin lists practice categories
   When GET /practice/categories is called
   Then tests with status "testing" or "draft" (from any admin, not just the caller) are
     also counted toward each category's test_count
+  And "enrolled" reflects the admin's own enrollments, same as any signed-in user
 ```
 
 ```gherkin
@@ -51,12 +59,15 @@ Scenario: enrolling and unenrolling in a category
 
 ```gherkin
 Scenario: listing tests within a category with sequential lock
-  Given an authenticated user viewing a category's test list
+  Given any caller viewing a category's test list
   When GET /practice/categories/{category_id}/tests is called
-  Then the first test in sort order is always unlocked
-  And each later test is locked until the student's best score on the immediately
-    preceding test meets or exceeds that preceding test's own pass_threshold
-    (thresholds can differ per test, unlike grammar's fixed 75%)
+  Then each test carries its section_ru, section_en and is_final alongside the fields below
+  And for an authenticated user the first test in sort order is always unlocked, each later
+    test is locked until the student's best score on the immediately preceding test meets or
+    exceeds that preceding test's own pass_threshold (thresholds can differ per test, unlike
+    grammar's fixed 75%), and best_score_pct reflects that user's best attempt
+  And for an anonymous caller only published tests are returned, every one unlocked, and
+    best_score_pct is null for all of them
   And a non-existent category_id returns 404
 ```
 
@@ -81,12 +92,100 @@ Scenario: starting an exam
 ```
 
 ```gherkin
-Scenario: premium gating on a test is enforced only by the frontend
-  Given a test flagged is_premium = true and a free (non-premium) authenticated user
-  When that user calls GET /practice/tests/{test_id}/exam directly for that test_id
-  Then the exam questions are returned normally — the endpoint does not check is_premium
-    or consume any quota; the dashboard UI is what shows a "premium wall" card and
-    withholds the Start button for such tests before this call is ever made
+Scenario: premium gating on a test is enforced by the server
+  Given a test flagged is_premium = true and an authenticated, non-admin user without
+    active premium
+  When GET /practice/tests/{test_id}/exam is called for that test_id
+  Then the response is 403 with code "premium_required" and no questions are returned
+  And the dashboard reacts to that 403 by returning to the test list and showing the
+    Premium wall, rather than showing it pre-emptively before the call
+  And an admin, or a user with active premium, gets the exam questions as before
+  And no quota is consumed either way — this endpoint never did
+```
+
+```gherkin
+Scenario: practice page doubles as onboarding for a user in no category
+  Given a signed-in user enrolled in zero categories, or a signed-out visitor
+  When they open /dashboard/practice
+  Then they are not redirected to /login
+  And the hero shows 0 passed with an empty progress bar and a "start with the first
+    category" action instead of "continue"
+  And the featured card previews the first category (name, description, test count) with
+    an "add" button
+  And the other categories are stacked as add-cards
+  And the section cards under the featured category show its tests as preview buttons,
+    disabled, with no lock/score state
+  When an anonymous visitor presses the featured "add" button or a stack "add" button
+  Then they are sent to /login (no enrollment call is made without a token)
+```
+
+```gherkin
+Scenario: practice featured card shows the next test to continue
+  Given the user is enrolled in at least one category
+  Then when the "Все" chip is selected, the featured card shows the first not-yet-passed,
+    unlocked test (in sort order) of the first enrolled category that has one
+  And its heading is that test's title in the current UI language (falling back to the
+    other language's title per the usual *_en ?? *_ru rule — not always the Lithuanian
+    title), with the title in the *other* language shown as a sub-heading when it differs,
+    the question count, the pass mark, the best score badge if attempted, and a "start
+    test" button
+  And the hero's "continue" action opens the same test
+  And when a selected category has nothing left to continue, its featured card instead
+    shows a category preview (if not yet enrolled) or a "all done" summary (if enrolled and
+    every test passed)
+```
+
+```gherkin
+Scenario: practice tests grouped into section cards
+  Given a category's visible tests
+  Then tests sharing the same section_ru are grouped into one card, in test sort order,
+    titled with the section label (section_en when the UI is English and set, else
+    section_ru), and cards are ordered by the position of their last test in the list
+  And a test with no section_ru gets its own single-test card, titled with that test's own
+    title (and sub-heading), instead of a section label
+  And within a card, each test renders as a button: numbered when the card groups several
+    tests, otherwise a single "start" label; it shows a checkmark when passed, the best
+    percentage when attempted but not passed, a lock icon and disabled state when locked,
+    and a "Premium" tag when the test is premium and the viewer has no active premium
+  And for an unenrolled category (preview) every button is disabled regardless of lock state
+  When an unlocked, non-preview test button is pressed
+  Then the app navigates to /dashboard/practice/{category_id}?test={test_id}, which starts
+    that test immediately once the category's test list has loaded (reading screen first if
+    the test has lesson_text_lt), skipping the intermediate test-list screen
+  And from that test's reading/question/result screens, "back" returns to
+    /dashboard/practice instead of the category's test list, because it was opened via
+    ?test=
+```
+
+```gherkin
+Scenario: final exam card
+  Given an enrolled category has a test flagged is_final
+  Then the stack includes a dedicated final-exam card for it, showing a fixed title, the
+    test's own title, its question count and pass mark, and a lock icon plus disabled state
+    when that test is still locked
+  When it is pressed while unlocked
+  Then it opens and starts that test the same way a section-card button does
+```
+
+```gherkin
+Scenario: admin sets a practice test's section and final flag
+  Given an authenticated admin creating or updating a practice test
+  Then they can set section_ru and section_en (each optional free text) and is_final
+    (boolean, default false)
+  And a section value is trimmed, an empty/whitespace-only value is stored as NULL, and a
+    value over 120 characters is rejected with 422
+  And on update, section_ru/section_en/is_final are only touched when the request actually
+    sends that field (unset fields are left alone; sending "" or null explicitly clears a
+    section)
+```
+
+```gherkin
+Scenario: removing a practice category from the practice page
+  Given the user has an enrolled category open (its featured or stacked card selected)
+  Then an "unenroll" control appears next to the section-cards heading for that category
+  When it is pressed and the confirmation dialog is accepted
+  Then DELETE /me/practice-categories/{id} is called and that category's cards switch to
+    the not-enrolled (preview/add) state without a full page reload
 ```
 
 ```gherkin

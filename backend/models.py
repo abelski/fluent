@@ -239,6 +239,7 @@ class Article(SQLModel, table=True):
     category: str = Field(default="blog")               # learning_materials | adaptation | blog
     published: bool = Field(default=True)
     show_in_footer: bool = Field(default=False)        # show in footer nav (hidden from main articles list)
+    theme: Optional[str] = Field(default=None, max_length=20)  # one of articles.ARTICLE_THEMES (#55)
     created_at: datetime = Field(default_factory=_utcnow)
     updated_at: datetime = Field(default_factory=_utcnow)
 
@@ -290,6 +291,9 @@ class PracticeTest(SQLModel, table=True):
     created_by: Optional[str] = Field(default=None, foreign_key="user.id")  # admin who created
     lesson_text_lt: Optional[str] = None
     sort_order: int = Field(default=0)
+    section_ru: Optional[str] = Field(default=None, max_length=120)  # section card grouping (#55)
+    section_en: Optional[str] = Field(default=None, max_length=120)
+    is_final: bool = Field(default=False, sa_column_kwargs={"server_default": text("false")})  # «Итоговый экзамен» card (#55)
     created_at: datetime = Field(default_factory=_utcnow)
 
 

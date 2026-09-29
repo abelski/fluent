@@ -11,6 +11,8 @@ const PUBLIC_PREFIXES = [
   '/dashboard/grammar',
   '/dashboard/lists',
   '/dashboard/phrases',
+  // #55 — guests preview practice; [id] and /programs keep their own auth guards.
+  '/dashboard/practice',
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

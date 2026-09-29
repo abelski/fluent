@@ -3,11 +3,13 @@
 ## Purpose
 The Articles function serves bilingual (RU/EN) reading content — learning materials, adaptation
 guides, and blog posts — authored and edited by admins as Markdown. Public visitors and students
-browse a filterable list and read individual articles; a subset of published articles can also be
-pinned to the site-wide footer navigation, which is fetched independently of the articles dashboard
-page on every page load. Admins get full CRUD plus Markdown export/import for moving articles
-between environments. It is called by the Next.js dashboard articles pages and the global Footer
-component over the REST API, plus the admin panel's article editor.
+browse a hero → category chips → bento (newest + next 3) → theme-grouped card layout and read
+individual articles; a subset of published articles can also be pinned to the site-wide footer
+navigation, which is fetched independently of the articles dashboard page on every page load.
+Admins get full CRUD plus Markdown export/import for moving articles between environments, and can
+tag each article with a fixed theme used to group the dashboard's theme cards. It is called by the
+Next.js dashboard articles pages and the global Footer component over the REST API, plus the admin
+panel's article editor.
 Backed by: `backend/routers/articles.py`, `frontend/app/dashboard/articles/`.
 
 ## Scenarios
@@ -106,11 +108,44 @@ Scenario: admin imports an article from Markdown
 Scenario: dashboard article list renders with SEO-friendly initial content
   Given a visitor loads /dashboard/articles
   When the static-exported page is served
-  Then the article list embedded at build time is shown immediately (for crawlers
-    and first paint), then replaced by a fresh client-side fetch of /api/articles
-  And the category tabs (Все/all, learning_materials, adaptation, blog) filter the
+  Then the hero, featured card, stack and theme cards are rendered from the article list
+    embedded at build time (real links for crawlers), then refreshed by a client-side
+    fetch of /api/articles once the browser runs
+  And the category chips (Все, learning_materials, adaptation, blog) filter the
     already-loaded list client-side via a ?category= URL query parameter, with no
-    extra network request per tab switch
+    extra network request per chip switch
+```
+
+```gherkin
+Scenario: dashboard articles layout
+  Given the article list (build-time or refreshed) and a selected category
+  Then the hero shows the total article count, a badge with the learning_materials
+    count (hidden when zero), and a «Читать новую ›» link to the single newest
+    article overall
+  And within the selected category, the newest article is the featured card (title,
+    date, theme chip, «Читать далее ›») and the next three form the stack
+  And below that, articles in the selected category are grouped into one card per
+    theme (fixed order: verbs, numbers, cases, words, life, start), with themeless
+    or unrecognized-theme articles grouped under «Другое»; a theme with no articles
+    in the selected category gets no card
+  And an empty selected category (loading finished, no articles) shows a
+    "no articles" message instead of the bento/theme sections
+  And the hero's "Популярные темy" panel lists every non-empty theme across all
+    categories with its count; clicking one switches to the «Все» chip and smooth-
+    scrolls to that theme's card
+```
+
+```gherkin
+Scenario: admin sets an article theme
+  Given an authenticated admin editing an article in the admin editor
+  When they pick one of verbs/numbers/cases/words/life/start from the theme dropdown,
+    or leave it unset, and save
+  Then PUT /admin/articles/{slug} carries that theme (or null) and GET /articles and
+    GET /admin/articles/{slug} return it back
+  And because the update endpoint replaces the full article body, omitting theme on a
+    PUT clears a previously-set one; the editor always resubmits the currently loaded
+    value
+  And a theme value outside the fixed set is rejected with 422 on both create and update
 ```
 
 ```gherkin

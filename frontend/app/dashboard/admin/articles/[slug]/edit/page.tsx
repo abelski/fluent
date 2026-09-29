@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../../../../../../lib/api';
 import { useT } from '../../../../../../lib/useT';
+import { ARTICLE_THEMES } from '../../../../articles/types';
 
 // @uiw/react-md-editor uses browser APIs — must be loaded client-side only
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false });
@@ -22,6 +23,7 @@ interface ArticleForm {
   category: string;
   published: boolean;
   show_in_footer: boolean;
+  theme: string | null; // #55 — PUT is a full replace, so the loaded theme is always sent back
 }
 
 const EMPTY: ArticleForm = {
@@ -34,6 +36,7 @@ const EMPTY: ArticleForm = {
   category: 'blog',
   published: true,
   show_in_footer: false,
+  theme: null,
 };
 
 function resolveSlug(): string {
@@ -81,6 +84,7 @@ export default function ArticleEditorPage() {
             category: data.category ?? 'blog',
             published: data.published,
             show_in_footer: data.show_in_footer ?? false,
+            theme: data.theme ?? null,
           });
         }
       })
@@ -200,6 +204,23 @@ export default function ArticleEditorPage() {
                 <option value="learning_materials">{tr.articles.categoryLearning}</option>
                 <option value="adaptation">{tr.articles.categoryAdaptation}</option>
                 <option value="blog">{tr.articles.categoryBlog}</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <label htmlFor="article-theme" className="block text-xs font-medium text-gray-500 mb-1">
+                {tr.articles.themeLabel}
+              </label>
+              <select
+                id="article-theme"
+                data-testid="article-theme-select"
+                value={form.theme ?? ''}
+                onChange={(e) => setForm((f) => ({ ...f, theme: e.target.value || null }))}
+                className="w-full bg-white border border-gray-900 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-emerald-500"
+              >
+                <option value="">{tr.articles.themeNone}</option>
+                {ARTICLE_THEMES.map((k) => (
+                  <option key={k} value={k}>{tr.articles.themes[k]}</option>
+                ))}
               </select>
             </div>
             <div className="flex flex-col gap-2 mb-2">

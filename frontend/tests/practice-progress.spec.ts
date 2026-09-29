@@ -56,17 +56,20 @@ const MOCK_TEST_LOCKED = {
 test.describe('Practice progress', () => {
   test('shows per-category progress bar and count on the list page', async ({ page }) => {
     await setFakeToken(page);
-
-    await page.route('**/api/me/practice-categories', (route) =>
-      route.fulfill({ json: [MOCK_CATEGORY] })
+    // #55: the bento page reads /practice/categories + /tests and derives progress itself.
+    await page.route('**/api/practice/categories', (route) =>
+      route.fulfill({ json: [{ ...MOCK_CATEGORY, source_url: null, enrolled: true }] })
+    );
+    await page.route('**/api/practice/categories/2/tests', (route) =>
+      route.fulfill({ json: [MOCK_TEST_UNLOCKED, MOCK_TEST_LOCKED].map((t) => ({ ...t, section_ru: null, section_en: null, is_final: false })) })
     );
 
     await page.goto('/dashboard/practice');
 
-    // progress count visible
-    await expect(page.getByText('1/2')).toBeVisible();
-    // progress bar rendered (non-zero width)
-    const bar = page.locator('.bg-amber-400, .bg-emerald-500').first();
+    // hero count "1 из 2" and the bar (non-zero width)
+    await expect(page.getByTestId('practice-hero-count')).toHaveText('1');
+    await expect(page.getByTestId('stats-card-practice')).toContainText('из 2');
+    const bar = page.getByTestId('stats-card-practice').locator('.bg-emerald-600').first();
     await expect(bar).toBeVisible();
   });
 

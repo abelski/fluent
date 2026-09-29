@@ -1138,19 +1138,73 @@ export function resolvePracticeId(_id: string): string {
 export async function enrollPracticeCategory(categoryId: number): Promise<void> {
   const token = getToken();
   if (!token) return;
-  await fetch(`${BACKEND_URL}/api/me/practice-categories/${categoryId}`, {
+  const r = await fetch(`${BACKEND_URL}/api/me/practice-categories/${categoryId}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
+  if (!r.ok) throw new Error('Failed to enroll');
 }
 
 export async function unenrollPracticeCategory(categoryId: number): Promise<void> {
   const token = getToken();
   if (!token) return;
-  await fetch(`${BACKEND_URL}/api/me/practice-categories/${categoryId}`, {
+  const r = await fetch(`${BACKEND_URL}/api/me/practice-categories/${categoryId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
+  // 404 = already not enrolled — the goal state, so not an error (#55).
+  if (!r.ok && r.status !== 404) throw new Error('Failed to unenroll');
+}
+
+// ── Practice (#55) ────────────────────────────────────────────────────────────
+
+export interface PracticeCategorySummary {
+  id: number;
+  name_ru: string;
+  name_en: string | null;
+  description_ru: string | null;
+  description_en?: string | null;
+  source_url: string | null;
+  sort_order: number;
+  test_count: number;
+  enrolled: boolean; // always false for guests
+}
+
+export interface PracticeTestSummary {
+  id: number;
+  title_ru: string;
+  title_en: string | null;
+  description_ru: string | null;
+  description_en: string | null;
+  lesson_text_lt: string | null;
+  question_count: number;
+  pass_threshold: number;
+  is_premium: boolean;
+  section_ru: string | null;
+  section_en: string | null;
+  is_final: boolean;
+  active_question_count: number;
+  is_locked: boolean;           // always false for guests
+  best_score_pct: number | null; // always null for guests
+}
+
+function authHeaders(): HeadersInit {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** Optional auth: guests get published categories with enrolled=false. */
+export async function getPracticeCategories(): Promise<PracticeCategorySummary[]> {
+  const r = await fetch(`${BACKEND_URL}/api/practice/categories`, { headers: authHeaders() });
+  if (!r.ok) throw new Error('Failed to load practice categories');
+  return r.json();
+}
+
+/** Optional auth: guests get published tests, unlocked, without scores. */
+export async function getPracticeCategoryTests(categoryId: number): Promise<PracticeTestSummary[]> {
+  const r = await fetch(`${BACKEND_URL}/api/practice/categories/${categoryId}/tests`, { headers: authHeaders() });
+  if (!r.ok) throw new Error('Failed to load practice tests');
+  return r.json();
 }
 
 // ── Grammar programs feature ──────────────────────────────────────────────────
@@ -1223,4 +1277,27 @@ export async function dismissWelcome(): Promise<void> {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!r.ok) throw new Error('Failed to dismiss welcome');
+}
+
+// ── Effort radar (#56) ────────────────────────────────────────────────────────
+
+export interface EffortPoints {
+  words: number;
+  phrases: number;
+  grammar: number;
+}
+
+/** Leaderboard points per source, this week (Mon–Sun UTC) and all time. */
+export interface EffortBreakdown {
+  week: EffortPoints;
+  all: EffortPoints;
+}
+
+export async function getEffort(): Promise<EffortBreakdown> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/effort`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!r.ok) throw new Error('Failed to load effort');
+  return r.json();
 }

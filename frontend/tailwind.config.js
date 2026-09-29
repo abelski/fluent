@@ -22,6 +22,10 @@ module.exports = {
         'muted-nav': '#9a9fa6',
         faint: '#b0b4ba',
         destructive: '#c2504a',
+        // #56 effort radar "all time" layer; "this week" uses emerald-700. The pair was checked
+        // with the dataviz palette validator on a white surface — contrast WARN on this lighter
+        // green, so every value is also shown as text (legend, table, tooltip).
+        'effort-all': '#5cbf8f',
       },
     },
   },

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { BACKEND_URL, getToken, resolvePracticeId } from '../../../../lib/api';
+import { BACKEND_URL, getToken, resolvePracticeId, type PracticeTestSummary } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
 import PageMascot from '../../../../components/PageMascot';
 import TakChevron from '../../../../components/TakChevron';
@@ -95,20 +95,7 @@ function DialogueText({ text }: { text: string }) {
   );
 }
 
-interface PracticeTest {
-  id: number;
-  title_ru: string;
-  title_en: string | null;
-  description_ru: string | null;
-  description_en: string | null;
-  lesson_text_lt: string | null;
-  question_count: number;
-  pass_threshold: number;
-  is_premium: boolean;
-  active_question_count: number;
-  is_locked: boolean;
-  best_score_pct: number | null;
-}
+type PracticeTest = PracticeTestSummary;
 
 interface Question {
   id: number;
@@ -168,6 +155,15 @@ export default function PracticeCategoryPage() {
   const [selected, setSelected] = useState<Option | null>(null);
   const [answered, setAnswered] = useState(false);
   const [answers, setAnswers] = useState<(Option | null)[]>([]);
+
+  // #55 — `?test={id}` (from a /dashboard/practice test button) starts that test as soon
+  // as the list loads; «Назад» then returns to /dashboard/practice, not to this list.
+  const [directTestId] = useState<number | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const v = new URLSearchParams(window.location.search).get('test');
+    return v && /^\d+$/.test(v) ? Number(v) : null;
+  });
+  const directStarted = useRef(false);
 
   const fetchTests = useCallback(() => {
     const token = getToken();
@@ -231,6 +227,12 @@ export default function PracticeCategoryPage() {
       headers: { Authorization: `Bearer ${token}` },
     }).catch(() => null);
     setExamLoading(false);
+    // #55 — the server refuses a Premium test to a free user; show the same wall.
+    if (res?.status === 403) {
+      backToTests();
+      setPremiumWall(true);
+      return;
+    }
     if (!res || !res.ok) {
       setExamError(t.constitution.noQuestions);
       return;
@@ -261,6 +263,14 @@ export default function PracticeCategoryPage() {
       startExam(test);
     }
   }
+
+  useEffect(() => {
+    if (testsLoading || directStarted.current || directTestId === null) return;
+    directStarted.current = true;
+    const test = tests.find((x) => x.id === directTestId);
+    if (test && !test.is_locked) startTest(test); // locked/unknown → stay on the list
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testsLoading]);
 
   function handleSubmit() {
     if (!selected || answered) return;
@@ -300,6 +310,11 @@ export default function PracticeCategoryPage() {
     if (test) startTest(test);
   }
 
+  function goBack() {
+    if (directTestId !== null) { router.push('/dashboard/practice'); return; }
+    backToTests();
+  }
+
   function backToTests() {
     setView('tests');
     setActiveTest(null);
@@ -328,8 +343,8 @@ export default function PracticeCategoryPage() {
           </Link>
         )}
         {(view === 'reading' || view === 'question' || view === 'result') && (
-          <button onClick={backToTests} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{t.backToTests}
+          <button onClick={goBack} className="text-sm text-gray-400 hover:text-gray-700 transition-colors" data-testid="practice-back">
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{directTestId !== null ? t.backToCategories : t.backToTests}
           </button>
         )}
 

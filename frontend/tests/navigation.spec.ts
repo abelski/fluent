@@ -264,8 +264,9 @@ test.describe('Practice page', () => {
   test('shows Практика heading and category prompt', async ({ page }) => {
     await setFakeToken(page);
     await page.goto('/dashboard/practice');
-    await expect(page.getByRole('heading', { name: 'Практика' })).toBeVisible();
-    await expect(page.getByText('Выберите категорию для начала практики')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Практика', exact: true })).toBeVisible();
+    // #55: the category prompt became the hero subtitle (no categories mocked → onboarding copy).
+    await expect(page.getByTestId('stats-card-practice')).toContainText('Добавь программу');
   });
 });
 

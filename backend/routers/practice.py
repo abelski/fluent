@@ -10,12 +10,13 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import func
 from sqlmodel import Session, select
 
 import cache
 from auth import require_user as _require_user, try_get_user as _try_get_user
+from quota import is_premium_active as _is_premium_active
 from database import get_session
 from models import PracticeTest, PracticeQuestion, PracticeExamResult, PracticeCategory, User, UserPracticeCategoryEnrollment
 
@@ -89,9 +90,13 @@ def list_categories(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """List all practice categories with published test counts."""
-    user = _require_user(authorization, session)
-    is_admin = user.is_admin
+    """List all practice categories with published test counts.
+
+    Optional auth (#55): anonymous callers get published counts and enrolled=false,
+    so the practice page can double as a guest preview.
+    """
+    user = _try_get_user(authorization, session)
+    is_admin = bool(user and user.is_admin)
 
     meta = _practice_meta(session)
     categories = meta["categories"]
@@ -108,7 +113,7 @@ def list_categories(
         if _visible(t) and t.category_id is not None:
             test_counts[t.category_id] = test_counts.get(t.category_id, 0) + 1
 
-    enrolled_ids = _enrolled_category_ids(user, session)
+    enrolled_ids = _enrolled_category_ids(user, session) if user else set()
 
     return [
         {
@@ -242,9 +247,13 @@ def list_category_tests(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """List visible tests in a category with lock/progress state per user."""
-    user = _require_user(authorization, session)
-    is_admin = user.is_admin
+    """List visible tests in a category with lock/progress state per user.
+
+    Optional auth (#55): anonymous callers see published tests only, all
+    unlocked, best_score_pct null.
+    """
+    user = _try_get_user(authorization, session)
+    is_admin = bool(user and user.is_admin)
 
     meta = _practice_meta(session)
     if not any(c.id == category_id for c in meta["categories"]):
@@ -263,7 +272,7 @@ def list_category_tests(
     # Compute best score per test for this user
     test_ids = [t.id for t in tests]
     best_scores: dict[int, float] = {}
-    if test_ids:
+    if test_ids and user:
         results = session.exec(
             select(PracticeExamResult)
             .where(PracticeExamResult.user_id == user.id, PracticeExamResult.test_id.in_(test_ids))
@@ -275,7 +284,7 @@ def list_category_tests(
 
     output = []
     for i, t in enumerate(tests):
-        if i == 0:
+        if i == 0 or user is None:
             is_locked = False
         else:
             prev = tests[i - 1]
@@ -290,6 +299,9 @@ def list_category_tests(
             "question_count": t.question_count,
             "pass_threshold": t.pass_threshold,
             "is_premium": t.is_premium,
+            "section_ru": t.section_ru,
+            "section_en": t.section_en,
+            "is_final": t.is_final,
             "active_question_count": active_counts.get(t.id, 0),
             "is_locked": is_locked,
             "best_score_pct": best_scores.get(t.id),
@@ -367,6 +379,9 @@ def get_exam_questions(
         )
     ):
         raise HTTPException(status_code=404, detail="Test not found")
+    # Premium is enforced here, not only by the frontend wall (#55).
+    if test["is_premium"] and not (user.is_admin or _is_premium_active(user)):
+        raise HTTPException(status_code=403, detail={"code": "premium_required"})
     active = exam["questions"]
     count = min(test["question_count"], len(active))
     chosen = random.sample(active, count) if len(active) >= count else list(active)
@@ -605,6 +620,9 @@ def admin_list_category_tests(
             "pass_threshold": t.pass_threshold,
             "status": t.status,
             "is_premium": t.is_premium,
+            "section_ru": t.section_ru,
+            "section_en": t.section_en,
+            "is_final": t.is_final,
             "created_by": t.created_by,
             "sort_order": t.sort_order,
             "total_questions": total_counts.get(t.id, 0),
@@ -645,6 +663,9 @@ def admin_list_tests(
             "pass_threshold": t.pass_threshold,
             "status": t.status,
             "is_premium": t.is_premium,
+            "section_ru": t.section_ru,
+            "section_en": t.section_en,
+            "is_final": t.is_final,
             "created_by": t.created_by,
             "sort_order": t.sort_order,
             "total_questions": total_counts.get(t.id, 0),
@@ -652,6 +673,17 @@ def admin_list_tests(
         }
         for t in tests
     ]
+
+
+_SECTION_MAX = 120
+
+
+def _clean_section(v: Optional[str]) -> Optional[str]:
+    """Section label (#55): strip, empty → None, over 120 chars → 422."""
+    v = v.strip() if v else None
+    if v and len(v) > _SECTION_MAX:
+        raise ValueError(f"section must be at most {_SECTION_MAX} characters")
+    return v or None
 
 
 class TestIn(BaseModel):
@@ -666,6 +698,11 @@ class TestIn(BaseModel):
     is_premium: bool = False
     category_id: Optional[int] = None
     sort_order: int = 0
+    section_ru: Optional[str] = None
+    section_en: Optional[str] = None
+    is_final: bool = False
+
+    _sections = field_validator("section_ru", "section_en")(_clean_section)
 
 
 @router.post("/admin/practice/tests")
@@ -692,6 +729,9 @@ def admin_create_test(
         category_id=body.category_id,
         created_by=admin.id,
         sort_order=body.sort_order,
+        section_ru=body.section_ru,
+        section_en=body.section_en,
+        is_final=body.is_final,
     )
     session.add(t)
     session.commit()
@@ -711,6 +751,11 @@ class TestUpdate(BaseModel):
     is_premium: Optional[bool] = None
     category_id: Optional[int] = None
     sort_order: Optional[int] = None
+    section_ru: Optional[str] = None
+    section_en: Optional[str] = None
+    is_final: Optional[bool] = None
+
+    _sections = field_validator("section_ru", "section_en")(_clean_section)
 
 
 @router.patch("/admin/practice/tests/{test_id}")
@@ -748,6 +793,12 @@ def admin_update_test(
         t.is_premium = body.is_premium
     if body.category_id is not None:
         t.category_id = body.category_id
+    # #55 — only fields actually sent (the #48b rule); "" / null clears a section.
+    for field in ("section_ru", "section_en"):
+        if field in body.model_fields_set:
+            setattr(t, field, getattr(body, field))
+    if "is_final" in body.model_fields_set and body.is_final is not None:
+        t.is_final = body.is_final
     session.add(t)
     session.commit()
     return {"ok": True}

@@ -151,7 +151,11 @@ for (const lang of LANGS) {
 
     test(`practice category description — ${lang} ${wname}`, async ({ page }) => {
       await setup(page, lang, width, makeFakeJwt('practice@test.com'));
-      await page.route('**/api/me/practice-categories', (r) => r.fulfill({ json: [CATEGORY] }));
+      // #55: the bento page shows a category's description on its «Добавить» stack card (not enrolled).
+      await page.route('**/api/practice/categories', (r) => r.fulfill({ json: [
+        { ...CATEGORY, id: 2, name_ru: 'Чтение', name_en: 'Reading', description_ru: null, description_en: null },
+        { ...CATEGORY, enrolled: false }] }));
+      await page.route('**/api/practice/categories/*/tests*', (r) => r.fulfill({ json: [PRACTICE_TEST] }));
       await page.goto('/dashboard/practice');
       await expect(page.getByText(pick(lang, CATEGORY.description_ru, CATEGORY.description_en))).toBeVisible();
       await shot(page, 'practice-category', lang, width);

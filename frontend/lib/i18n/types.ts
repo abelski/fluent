@@ -305,6 +305,29 @@ export interface Translations {
     answerReviewTitle: string;
     testsCount: PluralForms;
     testsPassedSuffix: string; // "{n} tests <suffix>" — category card progress line
+    // #55 — hero / chips / bento layout of /dashboard/practice
+    heroSubtitle: string;
+    heroEmptySubtitle: string; // no category enrolled, or a guest
+    continue: string; // hero «Продолжить» — opens the next test
+    startWithConstitution: string; // hero primary button with no categories — enrolls the first one
+    sampleLabel: string; // heading of the static sample question
+    allChip: string;
+    continueHere: string; // featured card kicker
+    program: string; // featured preview kicker
+    startTest: string;
+    questionsCount: PluralForms;
+    passMark: string; // "{pct}"
+    bestScore: string; // "{pct}"
+    add: string;
+    open: string;
+    topicsTitle: string; // sections heading, enrolled
+    insideTitle: string; // sections heading, not enrolled / guest
+    startSingle: string; // the one button of a test that has no section
+    finalTitle: string; // «Итоговый экзамен» stack card
+    finalGo: string;
+    allDone: string; // featured completion summary
+    unenroll: string;
+    actionFailed: string;
   };
   adminConstitution: {
     tabLabel: string;
@@ -382,6 +405,9 @@ export interface Translations {
     examCountSuffix: string;
     statusDraftSuffix: string;
     statusTestingSuffix: string;
+    fieldSectionRu: string; // #55
+    fieldSectionEn: string;
+    fieldIsFinal: string;
   };
   review: {
     mistakesMode: string;
@@ -758,6 +784,17 @@ export interface Translations {
     categoryLearning: string;
     categoryAdaptation: string;
     categoryBlog: string;
+    // #55 — hero / chips / bento layout of /dashboard/articles
+    heroLabel: string; // "in the library"
+    learningCount: string; // "{n}" study-material articles, hero badge
+    readNewest: string;
+    popularThemes: string;
+    byTheme: string;
+    newest: string; // featured kicker
+    articlesCount: PluralForms;
+    themes: Record<string, string>; // ARTICLE_THEMES keys + "other"
+    themeLabel: string; // admin editor
+    themeNone: string;
     categoryLabel: string;
   };
   vocabulary: {
@@ -855,6 +892,17 @@ export interface Translations {
     leaderboardWeekEmpty: string;
     leaderboardMe: string; // "{rank}", "{score}"
     leaderboardMeNoRank: string; // "{score}"
+    // #56 effort radar
+    effortTitle: string;
+    effortWeek: string;
+    effortAll: string;
+    effortAxes: { words: string; phrases: string; grammar: string };
+    effortColArea: string;
+    effortPts: string;
+    effortEmptyWeek: string;
+    effortSame: string; // {a} {p}
+    effortShift: string; // {a} {p} {b} {q}
+    effortAllOnly: string; // {a} {p}
   };
   news: {
     sectionTitle: string;

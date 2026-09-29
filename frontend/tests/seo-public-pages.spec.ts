@@ -9,9 +9,10 @@ const PUBLIC_PAGES = [
   '/dashboard/grammar',
   '/dashboard/lists',
   '/dashboard/phrases',
+  '/dashboard/practice', // #55 — guests preview practice
 ];
 
-const PRIVATE_PAGES = ['/dashboard', '/dashboard/review', '/dashboard/practice'];
+const PRIVATE_PAGES = ['/dashboard', '/dashboard/review'];
 
 test.describe('Public SEO pages (logged out)', () => {
   for (const path of PUBLIC_PAGES) {
@@ -35,6 +36,10 @@ test.describe('Public SEO pages (logged out)', () => {
     expect(res.ok()).toBeTruthy();
     const html = await res.text();
     expect(html).toContain('href="/dashboard/articles/');
+    // #55: the bento layout is pre-rendered from the build-time list (the Suspense
+    // fallback), so real article links — not just the nav link — are in the HTML.
+    const slugs = new Set(Array.from(html.matchAll(/href="\/dashboard\/articles\/([^"/]+)\/?"/g), (m) => m[1]));
+    expect(slugs.size).toBeGreaterThan(3);
   });
 });
 
