@@ -91,7 +91,8 @@ Scenario: practice featured card shows the next test
   Given the user is enrolled in at least one category and chip «Все» is selected
   Then the featured card shows the first test (in sort order) of the first enrolled category
     that is unlocked and not yet passed
-  And its heading is the test title (LT), with the RU/EN title below it, the question
+  And its heading is the test title in the UI language (RU/EN), with the other title below it when it
+    differs (shipped change: the DB has no separate LT title field), the question
     count, the pass mark, the best score if attempted, and «Начать тест ›»
   And the hero «Продолжить ›» starts the same test
   And when nothing is left to continue, the featured card previews a category the user

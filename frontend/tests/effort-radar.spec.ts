@@ -16,6 +16,21 @@ test.describe('Effort radar', () => {
     await expect(page.getByTestId('effort-legend-item')).toHaveCount(2);
   });
 
+  test('1280px: continue CTA fills the left column beside the radar, no gap under the streak card', async ({ page }) => {
+    await mockHome(page, USUAL);
+    await page.goto('/');
+    const radar = await page.getByTestId('effort-radar').boundingBox();
+    const cta = await page.getByTestId('continue-cta').boundingBox();
+    expect(radar && cta).toBeTruthy();
+    expect(cta!.x + cta!.width).toBeLessThanOrEqual(radar!.x);
+    expect(cta!.y).toBeLessThan(radar!.y + radar!.height);
+    // No dead band between the streak card and the CTA (the grid used to split the right
+    // column's extra height across both rows).
+    const streakCard = await page.getByTestId('continue-cta').evaluate((el) =>
+      el.parentElement!.previousElementSibling!.previousElementSibling!.getBoundingClientRect().bottom);
+    expect(cta!.y - streakCard).toBeLessThanOrEqual(24);
+  });
+
   test('table shares match the points (62/28/20 → 56/25/18%)', async ({ page }) => {
     await mockHome(page, USUAL);
     await page.goto('/');

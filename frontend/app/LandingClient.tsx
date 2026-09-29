@@ -256,11 +256,12 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
   return (
     <main className="min-h-screen text-gray-900">
       <div className="max-w-[1180px] mx-auto px-4 sm:px-8 py-10">
-        {/* Streak card + leaderboard: side by side once there's room for both at their
-            natural width, instead of stacking in a narrow column and leaving the rest
-            of the viewport empty on wide screens. */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-4 items-start">
-          <div className="bg-white rounded-[14px] border border-line overflow-hidden w-full lg:flex-1">
+        {/* Streak card + leaderboard/effort column side by side once there's room. A grid, so the
+            continue/news/Premium block fills the left column under the streak card instead of
+            waiting below the taller right column (#56). Mobile keeps DOM order: streak,
+            leaderboard, effort, continue. */}
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[auto_1fr] lg:items-start">
+          <div className="bg-white rounded-[14px] border border-line overflow-hidden w-full lg:col-start-1 lg:row-start-1">
             <div className="flex">
               {/* Left: month calendar */}
               <div className="flex-1 p-5 border-r border-line-strong min-w-0">
@@ -306,47 +307,47 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
             </div>
           </div>
 
-          <div className="w-full lg:w-[420px] lg:shrink-0">
+          <div className="w-full lg:col-start-2 lg:row-start-1 lg:row-span-2">
             <Leaderboard />
             <EffortRadar />
           </div>
-        </div>
 
-        <div className="max-w-2xl">
-          {(() => {
-            const hasStudied = (stats?.total_studied ?? 0) > 0;
-            return (
-              <Link
-                href={hasStudied ? '/dashboard/continue' : '/dashboard/lists'}
-                className="bg-emerald-600 rounded-2xl p-4 flex items-center gap-3 hover:bg-emerald-700 transition-colors active:scale-[0.98] mb-4"
-                data-testid="continue-cta"
-              >
-                <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
-                  {/* TakChevron's fill is TAK's fixed orange — see the component library. */}
-                  <TakChevron direction="right" size={16} />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm text-white leading-tight">
-                    {hasStudied ? t.continueCta : t.continueCtaNew}
-                  </p>
-                  <p className="text-xs text-emerald-200">
-                    {hasStudied ? t.continueCtaSub : t.continueCtaNewSub}
-                  </p>
-                </div>
+          <div className="w-full max-w-2xl lg:max-w-none lg:col-start-1 lg:row-start-2">
+            {(() => {
+              const hasStudied = (stats?.total_studied ?? 0) > 0;
+              return (
+                <Link
+                  href={hasStudied ? '/dashboard/continue' : '/dashboard/lists'}
+                  className="bg-emerald-600 rounded-2xl p-4 flex items-center gap-3 hover:bg-emerald-700 transition-colors active:scale-[0.98] mb-4"
+                  data-testid="continue-cta"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
+                    {/* TakChevron's fill is TAK's fixed orange — see the component library. */}
+                    <TakChevron direction="right" size={16} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-white leading-tight">
+                      {hasStudied ? t.continueCta : t.continueCtaNew}
+                    </p>
+                    <p className="text-xs text-emerald-200">
+                      {hasStudied ? t.continueCtaSub : t.continueCtaNewSub}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })()}
+
+            <NewsSection inline />
+
+            <div className="bg-white rounded-[14px] border border-line p-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-sm mb-0.5">{t.premiumTitle}</p>
+                <p className="text-xs text-gray-500 leading-relaxed">{t.premiumBody}</p>
+              </div>
+              <Link href="/pricing" className="shrink-0 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors whitespace-nowrap">
+                {t.premiumCta} <TakChevron size={10} className="inline-block align-[-1px]" />
               </Link>
-            );
-          })()}
-
-          <NewsSection inline />
-
-          <div className="bg-white rounded-[14px] border border-line p-5 flex items-center justify-between gap-4">
-            <div>
-              <p className="font-semibold text-sm mb-0.5">{t.premiumTitle}</p>
-              <p className="text-xs text-gray-500 leading-relaxed">{t.premiumBody}</p>
             </div>
-            <Link href="/pricing" className="shrink-0 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors whitespace-nowrap">
-              {t.premiumCta} <TakChevron size={10} className="inline-block align-[-1px]" />
-            </Link>
           </div>
         </div>
       </div>

@@ -6,6 +6,15 @@ Plan: `plans/improvements/active/plan_55-56_bento-effort-radar.md` (Part B). Cod
 
 ## Decisions
 
+- **Home layout is a 2-column grid, not a flex row (found in user testing).** Adding the radar made
+  the right column (leaderboard + radar) much taller than the streak card. With the old flex row,
+  «Продолжить занятие», news and Premium waited below the right column, which left a large empty band
+  under the streak card. `UserHome` is now `lg:grid-cols-[minmax(0,1fr)_420px]` with
+  `lg:grid-rows-[auto_1fr]`. The right column spans both rows and the lower block is in row 2 of the
+  left column. `1fr` on row 2 matters: with `auto auto`, the grid splits the spanning column's extra
+  height across both rows and the band comes back. Mobile keeps the DOM order.
+  Guarded by `effort-radar.spec.ts` (1280px: CTA beside the radar, ≤24px under the streak card).
+
 - **Points, not time.** The card splits the user's *leaderboard points* by section. Time per section is
   not tracked anywhere; points already exist and match what the leaderboard shows. The weights skew to
   words (every word row scores), which is why the radius is square-root (below).
