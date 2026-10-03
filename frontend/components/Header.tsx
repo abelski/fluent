@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { BACKEND_URL, getToken } from '../lib/api';
+import { hasEnTwin, isEnPath, ruPath, useLocalHref } from '../lib/localHref';
 import { useT } from '../lib/useT';
 import { BODY } from './Tak';
 import InboxMenu from './InboxMenu';
@@ -45,6 +46,7 @@ export default function Header() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { tr, lang, setLang } = useT();
+  const localHref = useLocalHref();
 
   useEffect(() => {
     const token = getToken();
@@ -87,12 +89,28 @@ export default function Header() {
     router.push('/');
   }
 
-  const listsActive = pathname.startsWith('/dashboard/lists') || pathname === '/dashboard';
-  const phrasesActive = pathname.startsWith('/dashboard/phrases');
-  const grammarActive = pathname.startsWith('/dashboard/grammar');
-  const practiceActive = pathname.startsWith('/dashboard/practice');
-  const articlesActive = pathname.startsWith('/dashboard/articles');
-  const pricingActive = pathname.startsWith('/pricing');
+  // Active pills compare the RU path, so /en/dashboard/articles lights «Articles» (#48c).
+  const path = ruPath(pathname);
+  const listsActive = path.startsWith('/dashboard/lists') || path === '/dashboard';
+  const phrasesActive = path.startsWith('/dashboard/phrases');
+  const grammarActive = path.startsWith('/dashboard/grammar');
+  const practiceActive = path.startsWith('/dashboard/practice');
+  const articlesActive = path.startsWith('/dashboard/articles');
+  const pricingActive = path.startsWith('/pricing');
+
+  // On a page with an EN twin the toggle goes to the twin URL (RU ↔ EN); elsewhere
+  // it keeps the old reload. An /en/ page always has its RU path to go back to.
+  // Built from window.location so the query string survives.
+  function toggleLang() {
+    const next = lang === 'ru' ? 'en' : 'ru';
+    setLang(next);
+    const ru = ruPath(window.location.pathname);
+    if (isEnPath(window.location.pathname) || hasEnTwin(ru)) {
+      window.location.href = (next === 'en' ? `/en${ru}` : ru) + window.location.search;
+    } else {
+      window.location.reload();
+    }
+  }
 
   const navLinks = (
     <>
@@ -129,7 +147,7 @@ export default function Header() {
         {tr.nav.practice}
       </Link>
       <Link
-        href="/dashboard/articles"
+        href={localHref('/dashboard/articles')}
         className={`px-4 py-2 rounded-full text-sm transition-colors whitespace-nowrap ${
           articlesActive ? 'bg-white shadow-[0_1px_2px_rgba(0,0,0,0.06)] font-semibold text-ink' : 'text-muted-nav hover:text-emerald-600'
         }`}
@@ -180,7 +198,7 @@ export default function Header() {
 
           {/* Language toggle */}
           <button
-            onClick={() => { setLang(lang === 'ru' ? 'en' : 'ru'); window.location.reload(); }}
+            onClick={toggleLang}
             data-testid="lang-toggle"
             className="flex items-center bg-[#f2f3f3] rounded-full p-[3px] text-[12.5px] font-semibold transition-colors"
           >

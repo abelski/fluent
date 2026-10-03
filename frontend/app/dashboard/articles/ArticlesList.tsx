@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BACKEND_URL } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
+import { useLocalHref } from '../../../lib/localHref';
 import { ARTICLE_THEMES as THEMES, type ArticleSummary } from './types';
 import TakChevron from '../../../components/TakChevron';
 import PageShell from '../components/PageShell';
@@ -36,6 +37,7 @@ export default function ArticlesList({ initialArticles }: { initialArticles: Art
 
 function ArticlesListInner({ initialArticles }: { initialArticles: ArticleSummary[] }) {
   const router = useRouter();
+  const localHref = useLocalHref();
   const searchParams = useSearchParams();
   const [articles, setArticles] = useState<ArticleSummary[]>(initialArticles);
   const [loading, setLoading] = useState(initialArticles.length === 0);
@@ -57,7 +59,7 @@ function ArticlesListInner({ initialArticles }: { initialArticles: ArticleSummar
     if (next === 'all') params.delete('category');
     else params.set('category', next);
     const qs = params.toString();
-    router.push(qs ? `/dashboard/articles?${qs}` : '/dashboard/articles', { scroll: false });
+    router.push(localHref(qs ? `/dashboard/articles?${qs}` : '/dashboard/articles'), { scroll: false });
   };
 
   return <ArticlesBento articles={articles} loading={loading} category={category} onCategory={onCategory} />;
@@ -75,6 +77,7 @@ function ArticlesBento({
   onCategory?: (c: Category) => void;
 }) {
   const { tr, lang, plural } = useT();
+  const localHref = useLocalHref();
   const t = tr.articles;
   // Theme to scroll to once its card is rendered (a hero theme may sit under another category).
   const [scrollTo, setScrollTo] = useState<string | null>(null);
@@ -98,10 +101,14 @@ function ArticlesBento({
     adaptation: t.categoryAdaptation,
     blog: t.categoryBlog,
   };
-  const title = (a: ArticleSummary) => (lang === 'ru' ? a.title_ru : a.title_en);
+  const title = (a: ArticleSummary) => (lang === 'en' && a.title_en ? a.title_en : a.title_ru);
   const date = (a: ArticleSummary) =>
     new Date(a.created_at).toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
-  const href = (a: ArticleSummary) => `/dashboard/articles/${a.slug}`;
+  // RU-only articles (no `has_en`) have no /en/ twin, so they link RU even from EN pages.
+  const href = (a: ArticleSummary) => {
+    const p = `/dashboard/articles/${a.slug}`;
+    return a.has_en ? localHref(p) : p;
+  };
 
   const newest = articles[0]; // the API sorts newest first
   const learning = articles.filter((a) => a.category === 'learning_materials').length;

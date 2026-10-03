@@ -1,6 +1,8 @@
 # Autotests for public articles listing — covers the `?category=` filter added
 # alongside the Article.category column (learning_materials | adaptation | blog).
 
+from typing import Optional
+
 from jose import jwt
 from sqlmodel import Session
 
@@ -23,18 +25,19 @@ def _auth(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _make_article(slug: str, category: str, published: bool = True) -> None:
+def _make_article(slug: str, category: str, published: bool = True, body_en: str = "Text",
+                  show_in_footer: bool = False, title_en: Optional[str] = None) -> None:
     with Session(database.engine) as s:
         s.add(
             Article(
                 slug=slug,
                 title_ru=f"Заголовок {slug}",
-                title_en=f"Title {slug}",
+                title_en=f"Title {slug}" if title_en is None else title_en,
                 body_ru="Текст",
-                body_en="Text",
+                body_en=body_en,
                 category=category,
                 published=published,
-                show_in_footer=False,
+                show_in_footer=show_in_footer,
             )
         )
         s.commit()
@@ -64,6 +67,26 @@ def test_list_articles_no_category_returns_all(client):
     assert r.status_code == 200
     slugs = {a["slug"] for a in r.json()}
     assert "art-adapt-1" in slugs
+
+
+def test_list_articles_has_en_flag(client):
+    """#48c content gate: EN pages link to /en/ only when the article has an English body."""
+    _make_article("art-en-1", "blog")
+    _make_article("art-ru-only-1", "blog", body_en="  ")
+    flags = {a["slug"]: a["has_en"] for a in client.get("/api/articles").json()}
+    assert flags["art-en-1"] is True
+    assert flags["art-ru-only-1"] is False
+
+
+def test_footer_articles_has_en_flag(client):
+    """Footer links on EN pages go to /en/ only when the article has an English version."""
+    _make_article("ft-en-1", "blog", show_in_footer=True)
+    _make_article("ft-no-body-1", "blog", body_en=" ", show_in_footer=True)
+    _make_article("ft-no-title-1", "blog", title_en="", show_in_footer=True)
+    flags = {a["slug"]: a["has_en"] for a in client.get("/api/footer-articles").json()}
+    assert flags["ft-en-1"] is True
+    assert flags["ft-no-body-1"] is False
+    assert flags["ft-no-title-1"] is False
 
 
 # ── Admin: category required, saved, and round-trips through export/import ─────

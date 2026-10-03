@@ -29,8 +29,12 @@ can bring organic traffic. Checked 2026-09-22 against the live `why-review-beats
   no HTML file of its own. It is served through the `_` placeholder, which renders on the client
   with the generic title «Статьи о литовском языке», no description and no JSON-LD. So the order is:
   publish, then deploy.
-- **Only the Russian version is indexed.** One URL, RU title and description. English readers will
-  not find an article through Google. Separate EN URLs with `hreflang` would be a separate task.
+- **Each article has an English twin (#48c).** `/en/dashboard/articles/<slug>/` is prerendered in
+  English (`title_en`, description from `body_en`), self-canonical, with reciprocal `hreflang` to the
+  RU page (RU is `x-default`). An article whose `title_en` or `body_en` is empty gets **no** EN twin
+  (not built, no `hreflang`, not in the sitemap) — and the EN reader falls back to the RU body. So
+  the first paragraph of `body_en` matters for English search the same way `body_ru` does for
+  Russian. Mechanism and rules: `documentation/seo.md`, "English article twins".
 - **The first paragraph is the search snippet.** Since the description is the first 160 characters
   of `body_ru`, the first paragraph must contain the words people search for (e.g. «литовское
   произношение»), and so must `title_ru`. A title like «Зачем слышать слово» matches no query.

@@ -65,6 +65,7 @@ hurting the RU pages' current rankings.
 - **SEO** — must not break the current RU SEO, but must add English organic traffic. How to do
   that is open (see below).
 - **One idea, three plans** — #48 stays one idea, implemented as `plan_48a_en-ui-strings` → `plan_48b_en-db-content` → `plan_48c_en-seo`, each on its own branch and merged in order. 48c ships as a separate deploy after the 48b content is live in prod.
+- **48c scope: articles only (2026-10-03)** — EN twins only for `/dashboard/articles/` and each article. Other public pages are mostly Lithuanian words, so RU/EN twins are near-duplicates Google might cluster, picking EN as canonical and costing RU traffic. Extend later only if RU traffic holds.
 - **Prod migration timing** — the 48b migration runs on prod (with approval) at the start of 48b. The local DB is prod, and the columns are nullable and additive.
 
 ## Precedents

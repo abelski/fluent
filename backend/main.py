@@ -7,6 +7,7 @@
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -146,6 +147,34 @@ def health():
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 
+def _sitemap_url(loc: str, lastmod: str, priority: str, changefreq: str, links: str = "") -> str:
+    return (
+        f"  <url>\n"
+        f"    <loc>{loc}</loc>\n"
+        f"{links}"
+        f"    <lastmod>{lastmod}</lastmod>\n"
+        f"    <priority>{priority}</priority>\n"
+        f"    <changefreq>{changefreq}</changefreq>\n"
+        f"  </url>"
+    )
+
+
+def _sitemap_pair(ru_loc: str, en_loc: str, lastmod: str, priority: str, changefreq: str) -> list[str]:
+    """Both <url> entries of a RU/EN twin pair (#48c). Each lists all three
+    hreflang links, itself included; RU is x-default."""
+    links = (
+        f'    <xhtml:link rel="alternate" hreflang="ru" href="{ru_loc}"/>\n'
+        f'    <xhtml:link rel="alternate" hreflang="en" href="{en_loc}"/>\n'
+        f'    <xhtml:link rel="alternate" hreflang="x-default" href="{ru_loc}"/>\n'
+    )
+    return [_sitemap_url(loc, lastmod, priority, changefreq, links) for loc in (ru_loc, en_loc)]
+
+
+def _has_en(article: Article) -> bool:
+    """Content gate, same as the frontend build: EN twin only with an English title and body."""
+    return bool((article.title_en or "").strip() and (article.body_en or "").strip())
+
+
 @app.api_route("/sitemap.xml", methods=["GET", "HEAD"], include_in_schema=False)
 def sitemap(session: Session = Depends(get_session)):
     """Dynamically generated sitemap. Includes static pages plus all published
@@ -168,29 +197,23 @@ def sitemap(session: Session = Depends(get_session)):
 
     urls = []
     for loc, priority, changefreq in static_pages:
-        urls.append(
-            f"  <url>\n"
-            f"    <loc>{loc}</loc>\n"
-            f"    <lastmod>{today}</lastmod>\n"
-            f"    <priority>{priority}</priority>\n"
-            f"    <changefreq>{changefreq}</changefreq>\n"
-            f"  </url>"
-        )
+        if loc == f"{base}/dashboard/articles/":
+            urls.extend(_sitemap_pair(loc, f"{base}/en/dashboard/articles/", today, priority, changefreq))
+        else:
+            urls.append(_sitemap_url(loc, today, priority, changefreq))
 
-    # Published articles — individual pages
+    # Published articles — individual pages. The slug is percent-encoded exactly as
+    # Next.js encodes the on-page canonical/hreflang (Lithuanian letters, #48c).
     articles = session.exec(
         select(Article).where(Article.published == True)
     ).all()
     for article in articles:
         lastmod = article.updated_at.strftime("%Y-%m-%d")
-        urls.append(
-            f"  <url>\n"
-            f"    <loc>{base}/dashboard/articles/{article.slug}/</loc>\n"
-            f"    <lastmod>{lastmod}</lastmod>\n"
-            f"    <priority>0.7</priority>\n"
-            f"    <changefreq>monthly</changefreq>\n"
-            f"  </url>"
-        )
+        path = f"/dashboard/articles/{quote(article.slug, safe='')}/"
+        if _has_en(article):
+            urls.extend(_sitemap_pair(f"{base}{path}", f"{base}/en{path}", lastmod, "0.7", "monthly"))
+        else:
+            urls.append(_sitemap_url(f"{base}{path}", lastmod, "0.7", "monthly"))
 
     # Program detail pages — one per published subcategory
     programs = session.exec(select(SubcategoryMeta)).all()
@@ -220,7 +243,8 @@ def sitemap(session: Session = Depends(get_session)):
 
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+        ' xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
         + "\n".join(urls)
         + "\n</urlset>"
     )
