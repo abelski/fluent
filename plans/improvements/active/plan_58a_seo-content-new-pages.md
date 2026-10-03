@@ -1,12 +1,12 @@
 ---
 kind: feature
-status: approved
-iteration: 0
+status: done
+iteration: 2
 max_iterations: 22
 suggested_model: opus
 suggested_effort: medium
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: opus
+confirmed_effort: medium
 ---
 
 # #58a — SEO content gaps, batch 1: greetings + days/months pages
@@ -127,19 +127,19 @@ one prod data script needs care.
 - Add autotest coverage for the new feature and run the relevant suite(s) as part of Validation.
 
 ## Implementation
-- [ ] 1. `temp_files/articles/lithuanian-greetings.md` (Requirement 1).
-- [ ] 2. `temp_files/articles/greetings-program.json` (Requirement 2).
-- [ ] 3. `temp_files/articles/days-and-months.md` (Requirement 3).
-- [ ] 4. `backend/scripts/add_weekdays_to_months_list.py` (Requirement 4).
-- [ ] 5. `backend/scripts/check_article_import.py` (Requirement 5).
-- [ ] 6. `backend/tests/test_add_weekdays_to_months_list.py` — own in-memory engine (`sqlite://` +
+- [x] 1. `temp_files/articles/lithuanian-greetings.md` (Requirement 1).
+- [x] 2. `temp_files/articles/greetings-program.json` (Requirement 2).
+- [x] 3. `temp_files/articles/days-and-months.md` (Requirement 3).
+- [x] 4. `backend/scripts/add_weekdays_to_months_list.py` (Requirement 4).
+- [x] 5. `backend/scripts/check_article_import.py` (Requirement 5).
+- [x] 6. `backend/tests/test_add_weekdays_to_months_list.py` — own in-memory engine (`sqlite://` +
   `StaticPool`, as `tests/test_fill_sections_themes.py`) with `WordList(id=237, subcategory='sekmes')`
   + 12 items and `Word` 3238–3244: first apply adds 7 items at positions 13–19 + renames; second run
   no-op; report-only writes nothing; wrong subcategory / missing word / wrong `lithuanian` aborts
   with no writes.
-- [ ] 7. `backend/tests/test_check_article_import.py` — the checker on small inline fixtures (valid;
+- [x] 7. `backend/tests/test_check_article_import.py` — the checker on small inline fixtures (valid;
   missing `body_en`; meta description cut mid-word) — permanent, doesn't read `temp_files/`.
-- [ ] 8. `frontend/tests/plan58a-screenshots.spec.ts` — mocks built from the files in
+- [x] 8. `frontend/tests/plan58a-screenshots.spec.ts` — mocks built from the files in
   `temp_files/articles/` (route `**/api/articles/<slug>` with the parsed article, `**/api/articles`,
   `**/api/billing/config` → `{enabled:true}`), RU + EN × 1280 / 375, into
   `temp_files/screenshots/plan_58a_seo-content-new-pages/`:
@@ -147,7 +147,7 @@ one prod data script needs care.
   - the phrase program page `/dashboard/phrases/<id>/` mocked from the JSON (chapters, EN translations);
   - `/programs/sekmes/` with list 237 renamed and 19 words (long Lithuanian title at 375).
   Look at every shot.
-- [ ] 9. `documentation/articles-seo.md` — an article's call to action can be a program/list created
+- [x] 9. `documentation/articles-seo.md` — an article's call to action can be a program/list created
   with it (#58a); `import_phrase_programs --in` for one new program (and that its "dry-run" flushes,
   so never against prod from dev); `check_article_import.py` before every import; gotcha: no admin
   endpoint adds existing words to a curated list → data-script pattern.
@@ -160,12 +160,17 @@ Rollout (manual, after the ~24 Oct #48c check)
 - [ ] 14. User imports both articles at `/dashboard/admin/articles`, sets themes (`words`, `numbers`), deploys. View-source the RU and `/en/` pages: if the title is the placeholder «Статьи о литовском языке», deploy again. Check self-canonical + EN title on `/en/`. *(manual)*
 - [ ] 15. `/seo`: request indexing for the 2 RU + 2 EN URLs; log the batch in `documentation/seo-log.md`; in 3–4 weeks recheck positions and program/list enrollments vs step 11. *(manual)*
 
+## Review
+- [x] Code review passed (round 2)
+- Note: Python `meta_description` in `check_article_import.py` mirrors `articleSeo.tsx` by hand; tests cover the Python side only.
+- Note: EN meta of days-and-months ends "Below are all names." — cosmetic.
+
 ## Validation
-- [ ] Content check: `cd backend && .venv/bin/python scripts/check_article_import.py ../temp_files/articles/lithuanian-greetings.md ../temp_files/articles/days-and-months.md`
-- [ ] JSON check: `cd backend && .venv/bin/python -c "import json;p=json.load(open('../temp_files/articles/greetings-program.json'))[0]['phrases'];t=[x['translation'] for x in p];e=[x['translation_en'] for x in p];assert len(set(t))==len(t) and len(set(e))==len(e);print(len(p),'phrases, translations unique')"`
-- [ ] Backend new tests: `cd backend && .venv/bin/python -m pytest tests/test_add_weekdays_to_months_list.py tests/test_check_article_import.py -q`
-- [ ] Backend full: `cd backend && .venv/bin/python -m pytest -q`
-- [ ] Screenshots: `cd frontend && npx playwright test tests/plan58a-screenshots.spec.ts --reporter=list`, then look at every shot *(looking is manual)*
+- [x] Content check: `cd backend && .venv/bin/python scripts/check_article_import.py ../temp_files/articles/lithuanian-greetings.md ../temp_files/articles/days-and-months.md`
+- [x] JSON check: `cd backend && .venv/bin/python -c "import json;p=json.load(open('../temp_files/articles/greetings-program.json'))[0]['phrases'];t=[x['translation'] for x in p];e=[x['translation_en'] for x in p];assert len(set(t))==len(t) and len(set(e))==len(e);print(len(p),'phrases, translations unique')"`
+- [x] Backend new tests: `cd backend && .venv/bin/python -m pytest tests/test_add_weekdays_to_months_list.py tests/test_check_article_import.py -q`
+- [x] Backend full: `cd backend && .venv/bin/python -m pytest -q`
+- [x] Screenshots: `cd frontend && npx playwright test tests/plan58a-screenshots.spec.ts --reporter=list`, then look at every shot *(looking is manual)*
 
 ## Definition of Done
 

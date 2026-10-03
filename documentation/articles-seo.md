@@ -44,6 +44,26 @@ can bring organic traffic. Checked 2026-09-22 against the live `why-review-beats
 - The slug is part of the URL: put the keyword in it (`lithuanian-pronunciation`), and never
   change it after publishing.
 
+## Shipping an article with its own study target (#58a)
+
+- **Check before every import:** `cd backend && .venv/bin/python scripts/check_article_import.py <file.md>…`.
+  Read-only, no DB. It parses with the import parser, requires a valid category and a non-empty
+  English twin, and prints the RU and EN meta descriptions exactly as `articleSeo.tsx` builds them;
+  it fails unless each ends on `.`/`!`/`?`. To make the cut land on a full sentence, the opening
+  sentence(s) must be 159–160 characters long, with no link and no emoji before char 160.
+- **The call to action can be a program or list created with the article.** #58a's greetings
+  article links to a new phrase program; the days/months article to Sėkmės list 237 (extended).
+- **One new phrase program:** author it as a one-element JSON in the `backend/data/phrase_programs.json`
+  shape (kept next to the article in `temp_files/articles/`), then
+  `.venv/bin/python -m scripts.import_phrase_programs --in <json>`. Its `--dry-run` still
+  **flushes INSERTs** before rolling back, so never run it from dev — the local DB is production.
+  The script prints counts only; take the new id from `GET /api/phrase-programs`. Keep `translation`
+  and `translation_en` unique within the program (phrase study has no translation dedupe).
+- **Gotcha: no admin endpoint adds existing words to a curated list.** Use a data script in the
+  `scripts/add_weekdays_to_months_list.py` pattern: `run(session, apply) -> counts`, look up rows by
+  id and verify them (abort with no writes otherwise — SQLite tests don't enforce FKs), append only
+  missing items, report-only by default, `--apply` in one transaction, second run a no-op.
+
 ## Checking results
 
 Google Search Console → Performance → filter by the page URL: impressions and queries appear 2–4
