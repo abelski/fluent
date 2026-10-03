@@ -86,6 +86,10 @@
   merging needs an explicit directive, same as pushing.
 - **Specs stay current.** Any change to behavior updates the matching `specs/<component>.md` in the
   same change — inside the SDLC flow or not. A spec that lags the code is a bug.
+- **Dated follow-ups go in `plans/reminders.md`** (`- YYYY-MM-DD — what to do (#N)`): any "check back
+  in N weeks", "after date X", manual rollout step or later batch. A SessionStart hook
+  (`.claude/hooks/reminders.py`) shows lines due within 3 days at the start of every session —
+  mention them to the user. Delete a line when it's done.
 - Do not push to git without an explicit directive from the user
 - never use ANTHROPIC_API_KEY (we dont have it in our subscription)
 - Keep `documentation/design system/` updated whenever new UI components or patterns are introduced; treat it as the source of truth for visual/component decisions during development
