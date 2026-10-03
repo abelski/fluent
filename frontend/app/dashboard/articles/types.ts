@@ -2,6 +2,7 @@ export interface ArticleSummary {
   slug: string;
   title_ru: string;
   title_en: string;
+  has_en?: boolean; // #48c content gate: an /en/ twin exists
   tags: string[];
   category: string;
   theme?: string | null; // one of ARTICLE_THEMES (#55); missing/null → «Другое»

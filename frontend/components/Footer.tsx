@@ -4,16 +4,19 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BACKEND_URL } from '../lib/api';
 import { useT } from '../lib/useT';
+import { useLocalHref } from '../lib/localHref';
 import FeedbackModal from './FeedbackModal';
 
 interface FooterArticle {
   slug: string;
   title_ru: string;
   title_en: string;
+  has_en: boolean;
 }
 
 export default function Footer() {
   const { tr, lang } = useT();
+  const localHref = useLocalHref();
   const [links, setLinks] = useState<FooterArticle[]>([]);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -33,7 +36,8 @@ export default function Footer() {
           {links.map((a) => (
             <Link
               key={a.slug}
-              href={`/dashboard/articles/${a.slug}`}
+              // RU-only articles (no `has_en`) have no /en/ twin, so they link RU even from EN pages.
+              href={a.has_en ? localHref(`/dashboard/articles/${a.slug}`) : `/dashboard/articles/${a.slug}`}
               className="text-[13px] text-muted-nav hover:text-gray-700 transition-colors whitespace-nowrap"
             >
               {lang === 'en' ? a.title_en : a.title_ru}

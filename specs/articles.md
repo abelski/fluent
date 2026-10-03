@@ -35,8 +35,10 @@ Scenario: footer-pinned articles
   Given any caller, on any page (the footer renders site-wide, not just on the
     articles dashboard page)
   When GET /footer-articles is called
-  Then only published articles flagged show_in_footer are returned (slug + titles
-    only), ordered oldest first
+  Then only published articles flagged show_in_footer are returned (slug, titles
+    and `has_en` only), ordered oldest first
+  And on an EN page the footer links a `has_en` article to its /en/ twin and a
+    RU-only one (no title_en or body_en) to its RU URL
 ```
 
 ```gherkin
@@ -114,6 +116,15 @@ Scenario: dashboard article list renders with SEO-friendly initial content
   And the category chips (Все, learning_materials, adaptation, blog) filter the
     already-loaded list client-side via a ?category= URL query parameter, with no
     extra network request per chip switch
+```
+
+```gherkin
+Scenario: EN pages link only to articles that have an English twin (#48c)
+  Given /api/articles returns has_en per article (true only when title_en and body_en are non-empty)
+  When a visitor is on /en/dashboard/articles/ or an /en/ article
+  Then articles with has_en link to /en/dashboard/articles/<slug>/ and the rest to the RU URL
+  And on an article without an English body the language toggle reloads in place on the RU URL
+    and, from an /en/ URL, goes back to the RU URL — it never sends that article to /en/
 ```
 
 ```gherkin

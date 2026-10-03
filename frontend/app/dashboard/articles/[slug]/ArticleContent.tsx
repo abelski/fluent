@@ -6,17 +6,21 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { BACKEND_URL } from '../../../../lib/api';
 import { useT } from '../../../../lib/useT';
+import { markRuOnly, useLocalHref } from '../../../../lib/localHref';
 import TakChevron from '../../../../components/TakChevron';
 import type { Article } from './types';
 
 function resolveSlug(): string {
   if (typeof window === 'undefined') return '_';
+  // Relative to the 'articles' segment so /en/dashboard/articles/<slug> works too (#48c).
   const parts = window.location.pathname.split('/').filter(Boolean);
-  return parts[2] ?? '_';
+  const i = parts.indexOf('articles');
+  return (i !== -1 && parts[i + 1]) || '_';
 }
 
 export default function ArticleContent({ initialArticle }: { initialArticle: Article | null }) {
   const { tr, lang } = useT();
+  const localHref = useLocalHref();
   const [article, setArticle] = useState<Article | null>(initialArticle);
   const [loading, setLoading] = useState(initialArticle === null);
   const [notFound, setNotFound] = useState(false);
@@ -46,15 +50,18 @@ export default function ArticleContent({ initialArticle }: { initialArticle: Art
     return (
       <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
         <p className="text-gray-400">Article not found.</p>
-        <Link href="/dashboard/articles" className="text-sm text-emerald-600 hover:underline">
+        <Link href={localHref('/dashboard/articles')} className="text-sm text-emerald-600 hover:underline">
           <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.articles.backToArticles}
         </Link>
       </main>
     );
   }
 
-  const title = lang === 'ru' ? article.title_ru : article.title_en;
-  const body = lang === 'ru' ? article.body_ru : article.body_en;
+  // An article without an English version falls back to Russian (#48c content gate).
+  const title = lang === 'en' && article.title_en ? article.title_en : article.title_ru;
+  const body = lang === 'en' && article.body_en ? article.body_en : article.body_ru;
+  // No EN twin: the Header toggle and self-links must not send this slug to /en/.
+  if (!(article.title_en?.trim() && article.body_en?.trim())) markRuOnly(article.slug);
 
   return (
     <main className="bg-slate-50 text-gray-900 min-h-screen">
@@ -64,7 +71,7 @@ export default function ArticleContent({ initialArticle }: { initialArticle: Art
 
       <div className="relative z-10 max-w-3xl mx-auto px-6 py-8">
         <Link
-          href="/dashboard/articles"
+          href={localHref('/dashboard/articles')}
           className="text-sm text-gray-400 hover:text-gray-900 transition-colors mb-6 block"
         >
           <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.articles.backToArticles}
@@ -110,6 +117,8 @@ export default function ArticleContent({ initialArticle }: { initialArticle: Art
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
+              // Links to other articles stay in the reader's language (/en/ twin on EN pages).
+              a: ({ node: _node, href, ...props }) => <a href={href && localHref(href)} {...props} />,
               table: ({ children }) => (
                 <div className="overflow-x-auto w-full my-8">
                   <table>{children}</table>

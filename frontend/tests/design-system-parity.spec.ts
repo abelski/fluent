@@ -62,6 +62,8 @@ test.describe('Design-system parity', () => {
     { url: '/dashboard/grammar', needsAuth: false },
     { url: '/dashboard/practice', needsAuth: false },
     { url: '/dashboard/articles', needsAuth: false },
+    // #48c — the EN twin of Статьи shares the same shell.
+    { url: '/en/dashboard/articles/', needsAuth: false },
   ];
 
   test('page content is constrained to the 1180px container', async ({ page }) => {

@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { getToken } from '../../lib/api';
 
 // Public SEO pages — must stay reachable without a token (kept in sync with
-// the Allow list in backend robots.txt and the sitemap).
+// the Allow list in backend robots.txt and the sitemap). Which of them have an
+// English `/en/` twin is decided by the one rule in lib/localHref.ts (#48c).
 const PUBLIC_PREFIXES = [
   '/dashboard/articles',
   '/dashboard/grammar',

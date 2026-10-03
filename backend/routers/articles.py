@@ -12,7 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, field_validator
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 import cache
 from auth import require_user as _decode_user
@@ -45,12 +45,21 @@ def _tags_list(tags_str: str) -> list[str]:
 
 # ── Public endpoints ──────────────────────────────────────────────────────────
 
+# `has_en` is the #48c content gate (`_has_en` in main.py), body half computed in
+# SQL so the body stays out of the select: EN pages link only articles with a twin.
+_BODY_EN_SET = func.length(func.trim(func.coalesce(Article.body_en, ""))) > 0
+
+
+def _has_en(body_en_set: bool, title_en: Optional[str]) -> bool:
+    return bool(body_en_set and (title_en or "").strip())
+
+
 def _load_article_index(category: Optional[str], session: Session) -> list[dict]:
     """Summary columns only — this used to select whole rows, bodies included,
     just to render a list of titles (#24, row 11)."""
     query = (
         select(Article.slug, Article.title_ru, Article.title_en,
-               Article.tags, Article.category, Article.theme, Article.created_at)
+               Article.tags, Article.category, Article.theme, Article.created_at, _BODY_EN_SET)
         .where(Article.published == True)  # noqa: E712
         .where(Article.show_in_footer == False)  # noqa: E712
     )
@@ -61,12 +70,13 @@ def _load_article_index(category: Optional[str], session: Session) -> list[dict]
             "slug": slug,
             "title_ru": title_ru,
             "title_en": title_en,
+            "has_en": _has_en(en, title_en),
             "tags": _tags_list(tags),
             "category": cat,
             "theme": theme,
             "created_at": created_at,
         }
-        for slug, title_ru, title_en, tags, cat, theme, created_at
+        for slug, title_ru, title_en, tags, cat, theme, created_at, en
         in session.exec(query.order_by(Article.created_at.desc())).all()
     ]
 
@@ -120,7 +130,7 @@ def list_articles(category: Optional[str] = None, session: Session = Depends(get
 
 @router.get("/footer-articles")
 def list_footer_articles(session: Session = Depends(get_session)):
-    """Return published articles pinned to the footer nav (slug + titles only).
+    """Return published articles pinned to the footer nav (slug + titles + `has_en`).
 
     The Footer is in the root layout, so this runs on every full page load —
     anonymous traffic included. Cached (#24, row 12).
@@ -128,9 +138,9 @@ def list_footer_articles(session: Session = Depends(get_session)):
     return cache.get_or_load(
         ("footer_articles",),
         lambda: [
-            {"slug": slug, "title_ru": title_ru, "title_en": title_en}
-            for slug, title_ru, title_en in session.exec(
-                select(Article.slug, Article.title_ru, Article.title_en)
+            {"slug": slug, "title_ru": title_ru, "title_en": title_en, "has_en": _has_en(en, title_en)}
+            for slug, title_ru, title_en, en in session.exec(
+                select(Article.slug, Article.title_ru, Article.title_en, _BODY_EN_SET)
                 .where(Article.published == True)  # noqa: E712
                 .where(Article.show_in_footer == True)  # noqa: E712
                 .order_by(Article.created_at.asc())
