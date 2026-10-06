@@ -364,7 +364,7 @@ export default function ListsPage() {
                               <div className="flex items-center gap-2 flex-wrap pr-2">
                                 <h3 className="text-[14.5px] font-semibold">{lst.title}</h3>
                                 {isDone && (
-                                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white tracking-wide">✓ Done</span>
+                                  <span data-testid="done-badge" className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white tracking-wide">{tr.lists.doneBadge}</span>
                                 )}
                               </div>
                               <button
@@ -576,12 +576,12 @@ export default function ListsPage() {
                                 className="relative bg-white border border-line rounded-xl p-5 flex flex-col gap-4"
                               >
                                 {isDone && (
-                                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
+                                  <div data-testid="done-badge" className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                     {tr.lists.doneBadge}
                                   </div>
                                 )}
                                 {isStarLevelDone && (
-                                  <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
+                                  <div data-testid="star-done-badge" className="absolute top-0 right-0 bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                     {'★'.repeat(starLevel) + tr.lists.starDoneSuffix}
                                   </div>
                                 )}
@@ -717,12 +717,12 @@ export default function ListsPage() {
                           return (
                             <div key={list.id} className="relative bg-white border border-line rounded-xl p-5 flex flex-col gap-4">
                               {isDone && (
-                                <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
+                                <div data-testid="done-badge" className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                   {tr.lists.doneBadge}
                                 </div>
                               )}
                               {isStarLevelDone && (
-                                <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
+                                <div data-testid="star-done-badge" className="absolute top-0 right-0 bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
                                   {'★'.repeat(starLevel) + tr.lists.starDoneSuffix}
                                 </div>
                               )}

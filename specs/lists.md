@@ -63,6 +63,28 @@ Scenario: Custom-program lists bypass subcategory visibility
     published/testing/draft status, as long as the student (or an admin) can access the list
 ```
 
+### Dashboard list cards
+
+```gherkin
+Scenario: A fully learned list shows a blue, localised "Done" badge
+  Given a student has "known" status on every word in a program list or custom-program list
+  When they open /dashboard/lists
+  Then the card shows a corner badge "✓ Готово" (RU) / "✓ Done" (EN) from the localised doneBadge string
+  And the badge is solid blue (blue-600) with white text, distinct from the green progress bar
+
+Scenario: A list complete only at the selected star level shows a light-blue star badge
+  Given every word of the selected star level in a list is known but the whole list is not
+  When the student views the card
+  Then the corner badge reads the selected number of "★" followed by " Готово" (RU) / " Done" (EN)
+  And it uses a light-blue background (blue-50) with blue-700 text
+  And it is hidden once the whole list is done (the solid blue badge replaces it)
+
+Scenario: A fully learned personal list shows the same localised badge
+  Given a student's own word list has every word known
+  When they view "Мои списки" in Russian
+  Then the card title row shows a rounded pill "✓ Готово" (not "✓ Done"), solid blue (blue-600) with white text
+```
+
 ### Personal word lists
 
 ```gherkin

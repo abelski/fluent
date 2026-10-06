@@ -7,6 +7,9 @@ Modes (from `$ARGUMENTS`):
 - *(empty)* or `full` — Steps 1–8.
 - `progress` — Steps 1–4 and 8 only (numbers + issues, no URL inspection).
 - `index` — Steps 5–7 only (URL inspection + indexing requests).
+- Anything else (e.g. a reminder text like "check sitemap + inspect 3 URLs") — do what it asks,
+  **plus Steps 3–4 (Bing + Yandex) every time**. They take ~2 minutes and a narrow run without
+  them leaves the log row half empty.
 
 ## Context
 - **Properties**: GSC `https://fluent.lt/`, Bing `https://fluent.lt/`, Yandex `https:fluent.lt:443`.
@@ -32,6 +35,22 @@ Modes (from `$ARGUMENTS`):
     "Закрыть" before the next URL, or the old dialog's text gives a false OK.
   - Step 5 shortcut: collect example URLs from every Page-indexing reason, diff against the
     sitemap — anything in the sitemap not in those lists is indexed. Inspect only the rest.
+  - (2026-10-06) If an old inspection dialog is still open, its overlay intercepts clicks on the
+    combobox. Press Escape, reload `search-console?resource_id=https://fluent.lt/`, then
+    `locator('input[aria-label^="Проверка всех URL"]').fill(url, { force: true })` + Enter.
+    `getByRole('combobox', { name })` does not match it — use the aria-label selector.
+  - The "/search-console/inspect?resource_id=…" URL without an `id` redirects to Overview.
+- **Bing tricks (learned 2026-10-06):** all pages work as deep links with `?siteUrl=https://fluent.lt/`
+  — `searchperf`, `aiperformance`, `sitemaps`. Read one `browser_run_code_unsafe` call that
+  `goto`s each and returns `document.body.innerText` after ~6 s. In Search Performance click
+  `getByText('30 D', { exact: true })`. Bing also auto-discovered `https://www.fluent.lt/sitemap.xml`
+  — `www` 301s to the apex, so it's harmless, not an issue.
+- **Yandex tricks (learned 2026-10-06):** deep links under
+  `https://webmaster.yandex.com/site/https:fluent.lt:443/` — `dashboard/`, `diagnosis/checklist/`,
+  `indexing/sitemap/` — read the same way (~7 s wait). The dashboard has clicks (last 2 weeks),
+  top queries with shows/clicks, recent search updates (added/removed) and the problems block.
+  It does not show a "pages in search" number directly — get it from Индексирование → Страницы в
+  поиске, or mark it as an estimate in the log.
 
 ---
 
