@@ -256,3 +256,15 @@ def test_no_cyrillic_in_seed_en():
     values += [p["description_en"] for p in aec._literal(_BACKEND / "routers/grammar.py", "_SEED_PROGRAMS")]
     values += [p["description_en"] for p in aec._literal(_BACKEND / "scripts/seed_verbs_grammar.py", "PROGRAMS")]
     assert values and all(v and not _CYRILLIC.search(v) for v in values)
+
+
+def test_no_ona_character_name():
+    """Issue #181: character name Ona was renamed to Rūta to avoid pronoun ambiguity in Russian."""
+    for row in json.loads((_BACKEND / "data/en_content/grammar_sentences.json").read_text(encoding="utf-8")):
+        display = row.get("display", "")
+        english = row.get("english", "")
+        russian = row.get("russian", "")
+        assert not re.search(r"\bOna\b", display), f"Found 'Ona' in display: {display}"
+        assert not re.search(r"\bOna\b", english), f"Found 'Ona' in english: {english}"
+        assert not russian.startswith("Она "), f"Found 'Она ' at start of russian: {russian}"
+        assert "Ону" not in russian and "Оны" not in russian, f"Found Ону/Оны in russian: {russian}"

@@ -109,9 +109,9 @@
   },
   {
     "case_index": 2,
-    "display": "Ona neturi knyg___.",
-    "russian": "У Оны нет книги.",
-    "english": "Ona doesn't have a book."
+    "display": "Rūta neturi knyg___.",
+    "russian": "У Руты нет книги.",
+    "english": "Rūta doesn't have a book."
   },
   {
     "case_index": 2,
@@ -319,9 +319,9 @@
   },
   {
     "case_index": 4,
-    "display": "Ona perka spurg___.",
-    "russian": "Она покупает пончик.",
-    "english": "Ona is buying a donut."
+    "display": "Rūta perka spurg___.",
+    "russian": "Рута покупает пончик.",
+    "english": "Rūta is buying a donut."
   },
   {
     "case_index": 4,
@@ -433,9 +433,9 @@
   },
   {
     "case_index": 5,
-    "display": "Ona dirba su aktor___.",
-    "russian": "Она работает с актёром.",
-    "english": "Ona works with an actor."
+    "display": "Rūta dirba su aktor___.",
+    "russian": "Рута работает с актёром.",
+    "english": "Rūta works with an actor."
   },
   {
     "case_index": 5,
@@ -1087,9 +1087,9 @@
   },
   {
     "case_index": 12,
-    "display": "Ona atėjo su obuol___.",
-    "russian": "Она пришла с яблоками.",
-    "english": "Ona came with apples."
+    "display": "Rūta atėjo su obuol___.",
+    "russian": "Рута пришла с яблоками.",
+    "english": "Rūta came with apples."
   },
   {
     "case_index": 12,

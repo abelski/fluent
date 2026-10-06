@@ -240,6 +240,15 @@ Scenario: a sentence row whose stored answer disagrees with its displayed word i
 ```
 
 ```gherkin
+Scenario: recurring characters have names that can't be read as pronouns
+  Given the grammar exercises use recurring characters Jonas and Rūta
+  When a sentence task about Rūta is shown in RU mode (e.g. "Rūta perka spurg___.")
+  Then its Russian hint names her "Рута" (e.g. "Рута покупает пончик.")
+  And no grammar_sentence uses the name "Ona", whose Russian form "Она" reads as the pronoun "she"
+  And the grammar overview note names the characters "Йонас и Рута" (RU) / "Jonas and Rūta" (EN)
+```
+
+```gherkin
 Scenario: grammar page with no enrolled program doubles as onboarding
   Given a user (logged in or anonymous) enrolled in no grammar program
   When they open /dashboard/grammar
