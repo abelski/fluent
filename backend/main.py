@@ -7,7 +7,11 @@
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import quote
+import logging
+import re
+import threading
+import time
+from urllib.parse import quote, unquote, urlparse
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -38,6 +42,7 @@ from database import create_db_and_tables, get_session
 from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage, InboxMessage, InboxDelivery, UserAchievement  # noqa: F401 — registers table
 from data.grammar.lessons import LESSON_CONFIG
 from scheduler import start_scheduler
+import indexnow
 
 # Resolve the static export directory relative to this file so the path works
 # regardless of where the process is started from.
@@ -68,6 +73,9 @@ def on_startup():
     # Safe to run repeatedly — SQLModel uses CREATE TABLE IF NOT EXISTS.
     create_db_and_tables()
     start_scheduler()
+    if indexnow.enabled():
+        from database import engine as _engine
+        threading.Thread(target=push_indexnow_on_new_build, args=(_engine, OUT_DIR), daemon=True).start()
     # Seed default CEFR thresholds if not already set.
     import json
     from database import engine
@@ -175,6 +183,18 @@ def _has_en(article: Article) -> bool:
     return bool((article.title_en or "").strip() and (article.body_en or "").strip())
 
 
+def _article_locs(base: str, article: Article) -> list[str]:
+    """Sitemap <loc>s of one article: RU, plus the /en/ twin when it has English content.
+    The slug is percent-encoded exactly as Next.js encodes the on-page canonical (#48c)."""
+    path = f"/dashboard/articles/{quote(article.slug, safe='')}/"
+    return [f"{base}{path}", f"{base}/en{path}"] if _has_en(article) else [f"{base}{path}"]
+
+
+def _sitemap_locs(session: Session) -> list[str]:
+    """Every <loc> in sitemap.xml, in sitemap order — parsed from sitemap() so there is one source."""
+    return re.findall(r"<loc>(.*?)</loc>", sitemap(session).body.decode())
+
+
 @app.api_route("/sitemap.xml", methods=["GET", "HEAD"], include_in_schema=False)
 def sitemap(session: Session = Depends(get_session)):
     """Dynamically generated sitemap. Includes static pages plus all published
@@ -209,11 +229,11 @@ def sitemap(session: Session = Depends(get_session)):
     ).all()
     for article in articles:
         lastmod = article.updated_at.strftime("%Y-%m-%d")
-        path = f"/dashboard/articles/{quote(article.slug, safe='')}/"
-        if _has_en(article):
-            urls.extend(_sitemap_pair(f"{base}{path}", f"{base}/en{path}", lastmod, "0.7", "monthly"))
+        locs = _article_locs(base, article)
+        if len(locs) == 2:
+            urls.extend(_sitemap_pair(locs[0], locs[1], lastmod, "0.7", "monthly"))
         else:
-            urls.append(_sitemap_url(f"{base}{path}", lastmod, "0.7", "monthly"))
+            urls.append(_sitemap_url(locs[0], lastmod, "0.7", "monthly"))
 
     # Program detail pages — one per published subcategory
     programs = session.exec(select(SubcategoryMeta)).all()
@@ -249,6 +269,60 @@ def sitemap(session: Session = Depends(get_session)):
         + "\n</urlset>"
     )
     return Response(content=xml, media_type="application/xml")
+
+
+def _in_build(loc: str) -> bool:
+    """True when `next build` prerendered this page (until then it is the `_` placeholder)."""
+    path = unquote(urlparse(loc).path).strip("/")
+    return (OUT_DIR / path / "index.html").is_file() if path else (OUT_DIR / "index.html").is_file()
+
+
+def push_indexnow_on_new_build(engine, out_dir: Path) -> None:
+    """On the first start of a new build, send IndexNow the sitemap URLs that are new or edited
+    since the previous push and whose page is in the build (#59a). Runs in a daemon thread."""
+    import json
+    try:
+        # ponytail: fixed delay so this instance serves the key file before IndexNow fetches it;
+        # poll the key URL instead if 90 s ever proves too short.
+        time.sleep(90)
+        build_file = out_dir.parent / ".next" / "BUILD_ID"
+        if not build_file.is_file():
+            return
+        build_id = build_file.read_text().strip()
+        built_at = datetime.fromtimestamp(build_file.stat().st_mtime, timezone.utc).replace(tzinfo=None)
+        base = FRONTEND_URL.rstrip("/")
+        with Session(engine) as s:
+            row = s.exec(select(AppSetting).where(AppSetting.key == "indexnow_state")).first()
+            prev = json.loads(row.value) if row else None
+            if prev and prev.get("build_id") == build_id:
+                return
+            candidates = [u for u in _sitemap_locs(s) if _in_build(u)]
+            changed: list[str] = []
+            if prev:
+                since = datetime.fromisoformat(prev["built_at"])
+                for a in s.exec(select(Article).where(Article.published == True)).all():  # noqa: E712
+                    if since < a.updated_at <= built_at:
+                        changed += _article_locs(base, a)
+            urls = indexnow.pending_urls(prev["urls"] if prev else None, candidates, changed)
+            if urls and indexnow.submit(base, urls) not in (200, 202):
+                return  # not saved: retried on the next new build
+            state = json.dumps({"build_id": build_id, "built_at": built_at.isoformat(), "urls": candidates})
+            if row:
+                row.value = state
+                s.add(row)
+            else:
+                s.add(AppSetting(key="indexnow_state", value=state))
+            s.commit()
+    except Exception as exc:  # never break startup
+        logging.getLogger(__name__).warning("IndexNow: push skipped: %s", type(exc).__name__)
+
+
+@app.api_route(indexnow.KEY_PATH, methods=["GET", "HEAD"], include_in_schema=False)
+def indexnow_key():
+    k = indexnow.key()
+    if not k:
+        raise HTTPException(status_code=404)
+    return Response(content=k, media_type="text/plain")
 
 
 @app.api_route("/robots.txt", methods=["GET", "HEAD"], include_in_schema=False)
