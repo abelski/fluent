@@ -424,7 +424,7 @@ export default function PhrasesPage() {
                                 </span>
                               )}
                               {isDone && (
-                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white tracking-wide">✓ Done</span>
+                                <span data-testid="done-badge" className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white tracking-wide">{tr.lists.doneBadge}</span>
                               )}
                             </div>
                             <button
@@ -573,8 +573,8 @@ export default function PhrasesPage() {
                             return (
                               <div key={i} className="relative bg-white border border-line rounded-xl p-4 flex flex-col gap-4">
                                 {isDone && (
-                                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
-                                    ✓ Done
+                                  <div data-testid="done-badge" className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl tracking-wide">
+                                    {tr.lists.doneBadge}
                                   </div>
                                 )}
                                 <div>

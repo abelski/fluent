@@ -214,6 +214,17 @@ Scenario: Phrase study sessions are never charged against the daily quota
     looks used up
 ```
 
+### Done badge
+
+```gherkin
+Scenario: A fully mastered chapter or personal phrase list shows a blue, localised badge
+  Given every phrase in a chapter card or in a My phrase list is mastered
+  When the student opens /dashboard/phrases
+  Then the chapter card shows a corner badge and the My phrase list shows a pill beside its title
+  And both read "✓ Готово" (RU) / "✓ Done" (EN) from the localised doneBadge string
+  And both are solid blue (blue-600) with white text
+```
+
 ### Vocabulary browse
 
 ```gherkin

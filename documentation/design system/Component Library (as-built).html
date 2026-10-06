@@ -190,6 +190,9 @@
       Outer cards: <code>rounded-[14px]</code>, <code>border border-line</code> (#d9d9d9), no drop shadow, no gradient fill.<br>
       Inner/nested cards: <code>rounded-xl</code> (12px), same border.<br>
       Pills / badges: <code>rounded-full</code>, borderless filled — never outlined.<br>
+      <b>Done badges (#183):</b> a fully learned list/chapter shows <code>bg-blue-600 text-white</code> (corner tab or
+      <code>rounded-full</code> pill, text <code>tr.lists.doneBadge</code>, <code>data-testid="done-badge"</code>); complete only at
+      the current star level shows <code>bg-blue-50 text-blue-700</code> (<code>data-testid="star-done-badge"</code>).<br>
       Buttons: <code>rounded-[10px]</code>, <code>px-5 py-2.5</code>, <code>text-sm font-semibold</code>, no shadow.
       Primary <code>bg-emerald-600 hover:bg-emerald-700</code>; dark <code>bg-ink</code>; secondary white with <code>border-[#ddd]</code>.<br>
       <b>Scope note:</b> this light-border convention was applied only to the pages actually covered by the mascot redesign
@@ -1174,6 +1177,7 @@
   <div class="card">
     <table>
       <tr><th>Deviation</th><th>Why</th></tr>
+      <tr><td>Done badges on list/phrase cards use stock blue (<code>bg-blue-600</code>, star-level <code>bg-blue-50 text-blue-700</code>), not emerald</td><td>#183: they must not merge with the green progress bar and the green Study button on the same card, and white on <code>emerald-500</code> (~2.5:1) failed WCAG AA; blue-600 and blue-700-on-blue-50 pass.</td></tr>
       <tr><td>(Superseded by #55 &mdash; Статьи now uses wrapping <code>BentoChips</code>.) Статьи' category filter (<code>rounded-full</code> pill track) scrolls horizontally on mobile instead
         of wrapping</td><td>The shared segmented-pill recipe (<code>bg-[#f2f3f3] rounded-full p-1</code>, also used
         for nav tabs and the RU/EN switch) assumes one row — wrapping the 4 category pills to 2 rows on a 375px
