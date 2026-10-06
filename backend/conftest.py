@@ -9,6 +9,7 @@
 #      avoiding repeated startup overhead.
 #   4. Static seed data (admin user + one word list) is inserted once per process.
 
+import os
 import pytest
 from contextlib import contextmanager
 
@@ -24,6 +25,10 @@ import verb_lookup
 # fixture alone is not enough: pytest builds the session-scoped `client` fixture (which runs
 # main.py's startup handler, and that pings Telegram) BEFORE any function-scoped autouse fixture.
 telegram_service.send_telegram = lambda text: None
+
+# Same trap for IndexNow (#59a): startup would push from a thread if these were set in the shell.
+os.environ.pop("INDEXNOW_KEY", None)
+os.environ.pop("RENDER", None)
 
 # Capture the original get_session function reference BEFORE any patching.
 # This reference is used as the FastAPI dependency override key — routers imported

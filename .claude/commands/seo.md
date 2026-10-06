@@ -90,6 +90,7 @@ counts), HTTPS, and any Manual actions / Security issues. Anything non-zero is a
 - **Sitemaps** `https://www.bing.com/webmasters/sitemaps?siteUrl=https://fluent.lt/` — status,
   URLs discovered.
 - **Site Scan / Recommendations** — list any errors/warnings with counts.
+- **IndexNow** (left menu) — URLs received via IndexNow (#59a); record the count in the log Notes.
 
 ---
 
@@ -101,6 +102,7 @@ counts), HTTPS, and any Manual actions / Security issues. Anything non-zero is a
   every problem (fatal / critical / possible / recommendation).
 - **Sitemap** `https://webmaster.yandex.com/site/https:fluent.lt:443/indexing/sitemap/` — status.
 - **Запросы** (Эффективность → Поисковые запросы) — shows, clicks for the last 2 weeks.
+- **IndexNow** (Индексирование → IndexNow) — URLs received (#59a); record the count in the log Notes.
 
 ---
 

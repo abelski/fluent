@@ -107,3 +107,39 @@ How it works:
 - **Yandex Webmaster** — verified via `verification.yandex` meta tag in `frontend/app/layout.tsx`.
   Chose the meta tag over DNS TXT because it needs no registrar access. Its "Google Tag" option
   needs Google Tag Manager, which the site doesn't use (plain GA). Removing the tag un-verifies it.
+
+## IndexNow (#59a)
+
+Bing and Yandex get new/edited URLs pushed to `https://api.indexnow.org/indexnow` (one request,
+up to 10,000 URLs). Code: `backend/indexnow.py` (pure client), `push_indexnow_on_new_build` in
+`backend/main.py`, manual `backend/scripts/indexnow_push_all.py`. Spec: `specs/seo.md`.
+
+- **Deploy-time, not save-time.** Article/program pages are prerendered by `next build`. Until the
+  next deploy a just-published URL is served by the `_` placeholder whose canonical points at the
+  article index (see "alternates-replace trap"), so a save-time ping would send crawlers there.
+  Publishing only makes a URL *pending*; the first start of a new build sends it.
+- **Pending is derived, no queue.** Stored state is `AppSetting` `indexnow_state` =
+  `{build_id, built_at (naive UTC), urls}`. Push = sitemap URLs not in the previous push's `urls`,
+  plus articles whose `updated_at` lies between the previous and current build time (`BUILD_ID`
+  mtime). No state yet = push everything. State is saved only after a 200/202 (or nothing to send).
+- **In-build filter.** Only sitemap URLs whose `out/<path>/index.html` exists are candidates, so a
+  page published mid-deploy is neither sent nor recorded; the next build sends it.
+- **Not detected:** edits to existing word/phrase programs (no `updated_at`) and removals — use
+  `scripts/indexnow_push_all.py --yes` (with `INDEXNOW_KEY` set) for a full push.
+- **Key file** is served at the fixed `/indexnow-key.txt` and sent as `keyLocation` (allowed by
+  IndexNow) instead of `/<key>.txt`, so no dynamic route is needed.
+- **Prod-DB guard.** The local backend talks to the production DB, so pushing needs both
+  `INDEXNOW_KEY` and `RENDER` (set by Render). Never put `INDEXNOW_KEY` in a local `.env`. Tests pop
+  both at module level in `conftest.py` (the session-scoped `client` runs startup first).
+- **90 s delay** before the push, so the new instance already serves the key file when IndexNow
+  fetches it; a fixed delay, poll the key URL if it proves too short.
+- **Rollout:** generate a key (`python3 -c "import secrets;print(secrets.token_hex(16))"`), set
+  `INDEXNOW_KEY` on Render, deploy, `curl https://fluent.lt/indexnow-key.txt`, and look for
+  "IndexNow: pushed N URLs, status 200/202" in the Render log ~2 min later.
+- **Check:** Bing Webmaster → IndexNow, Yandex Webmaster → Индексирование → IndexNow (`/seo` Steps 3–4).
+
+**Phrase program pages are never pushed.** `/dashboard/phrases/<id>/` has no prerendered page —
+only the `_` placeholder, whose canonical is `/dashboard/phrases/`. `_in_build` is false for them,
+which is correct: pushing a URL whose canonical points elsewhere is useless. Open issue (not
+#59a): the sitemap still lists these 3 URLs although they canonicalize to the index — either
+prerender them (`generateStaticParams`) or drop them from the sitemap.
