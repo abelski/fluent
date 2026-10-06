@@ -217,7 +217,7 @@ const ru: Translations = {
   grammar: {
     title: 'Грамматика',
     subtitle: 'Выбери урок для тренировки склонений',
-    charactersNote: 'В упражнениях используются персонажи Йонас и Она.',
+    charactersNote: 'В упражнениях используются персонажи Йонас и Рута.',
     grammarHint: 'Грамматическая подсказка',
     grammarRule: 'Грамматическое правило',
     articleFallback: 'Статья',

@@ -217,7 +217,7 @@ const en: Translations = {
   grammar: {
     title: 'Grammar',
     subtitle: 'Choose a lesson to practise declensions',
-    charactersNote: 'Exercises use two recurring characters, Jonas and Ona.',
+    charactersNote: 'Exercises use two recurring characters, Jonas and Rūta.',
     grammarHint: 'Grammar hint',
     grammarRule: 'Grammar rule',
     articleFallback: 'Article',

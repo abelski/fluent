@@ -26,11 +26,11 @@ async function mockGrammarProgramsEnrolled(page: import('@playwright/test').Page
   });
 }
 
-test.describe('Issue #60 — Jonas/Ona characters note', () => {
-  test('grammar page intro explains Jonas and Ona are recurring characters', async ({ page }) => {
+test.describe('Issue #60 — Jonas/Rūta characters note (renamed from Ona in #181)', () => {
+  test('grammar page intro explains Jonas and Rūta are recurring characters', async ({ page }) => {
     await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.goto('/dashboard/grammar');
-    await expect(page.getByText('В упражнениях используются персонажи Йонас и Она.')).toBeVisible();
+    await expect(page.getByText('В упражнениях используются персонажи Йонас и Рута.')).toBeVisible();
   });
 });
