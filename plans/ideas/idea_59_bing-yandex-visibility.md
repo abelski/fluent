@@ -48,6 +48,14 @@ Scenario: IndexNow key is served
 ```
 
 ```gherkin
+Scenario: first push ever
+  Given no push state is stored yet
+  When a new build starts on production and 90 seconds have passed
+  Then every sitemap URL whose page is in the build is sent in one request, and the state is saved
+  And a restart of the same build sends nothing
+```
+
+```gherkin
 Scenario: a publish or article edit is sent on the next deploy
   Given an article is published or edited (RU, and its /en/ twin where it exists)
   When a new build starts for the first time and the article's page is in the build
