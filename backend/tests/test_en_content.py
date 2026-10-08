@@ -268,3 +268,10 @@ def test_no_ona_character_name():
         assert not re.search(r"\bOna\b", english), f"Found 'Ona' in english: {english}"
         assert not russian.startswith("Она "), f"Found 'Она ' at start of russian: {russian}"
         assert "Ону" not in russian and "Оны" not in russian, f"Found Ону/Оны in russian: {russian}"
+
+
+def test_no_imeti_translations():
+    """Issue #184: turėti translates as 'У меня есть', not the calque 'Я имею'."""
+    for row in json.loads((_BACKEND / "data/en_content/grammar_sentences.json").read_text(encoding="utf-8")):
+        russian = row.get("russian", "")
+        assert not re.search(r"\bимею\b|\bимеет\b", russian, re.IGNORECASE), f"Calque 'имею/имеет' in russian: {russian}"
