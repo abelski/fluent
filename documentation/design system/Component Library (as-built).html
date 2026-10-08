@@ -781,6 +781,18 @@
       <code>mood</code> is handed back so the caller's done screen can carry TAK's final mood over unchanged.
     </p>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <b>Grammar Basic multiple choice + «Повтор» chip (#60).</b> A task carrying <code>options</code> (Basic only,
+      built server-side) renders the <b>same option list as <code>QuizSession</code> stage 2</b> — single column,
+      <code>w-full py-4 px-5 rounded-xl border</code>, number badge, green/red answer states, keys 1–4 via
+      <code>useNumberKeys</code> — in place of the text input and «Проверить»
+      (<code>data-testid="grammar-options"</code>). Sentence and conjugation prompts then show a plain styled blank
+      (<code>SentenceBlank</code>, <code>data-testid="choice-blank"</code>) that fills with the picked word. A task
+      answered wrong is re-queued once at the end of the run and shows a small <b>«Повтор» / «Retry»</b> chip left of
+      the counter: the <code>.badge</code> recipe, <code>text-xs font-semibold px-2 py-0.5 rounded-full
+      bg-emerald-50 text-emerald-600</code> (<code>data-testid="retry-chip"</code>). See
+      <code>documentation/grammar-basic-options.md</code>.
+    </p>
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
       <b>Multi-phase composition — <code>onAdvance</code>:</b>
       <code>QuizSession</code> and <code>PhraseSession</code> take one optional prop. When
       <code>onAdvance</code> is set, this is a non-final phase of a multi-phase session: the match round's
@@ -1297,6 +1309,10 @@
         «Начать с Конституции») and Статьи (hero without a bar &mdash; reading is not tracked), sharing
         <code>BentoParts.tsx</code> so the three pages cannot drift; Слова and Фразы keep <code>ProgressStatCard</code> and
         their order.</td></tr>
+      <tr><td>Grammar Basic options carry raw stock steps (<code>border-gray-900</code>, <code>bg-emerald-100</code>,
+        <code>bg-red-100</code>, <code>text-red-600</code>) (#60)</td><td>They are copied verbatim from the
+        <code>QuizSession</code> stage-2 option list so a choice looks the same on Слова and Грамматика; switching only
+        the grammar copy to tokens would make the two drift. Migrate both together if the quiz pattern is tokenised.</td></tr>
     </table>
   </div>
 

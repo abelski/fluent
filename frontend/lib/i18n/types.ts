@@ -185,6 +185,7 @@ export interface Translations {
     reviewFirstWhy: string; // link label to the evidence article
   };
   grammar: {
+    retry: string;
     title: string;
     subtitle: string;
     charactersNote: string;

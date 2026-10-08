@@ -240,6 +240,65 @@ Scenario: a sentence row whose stored answer disagrees with its displayed word i
 ```
 
 ```gherkin
+Scenario: basic-level tasks carry four same-paradigm options when four forms exist (#60)
+  Given a lesson whose level is "basic"
+  When GET /grammar/lessons/{lesson_id}/tasks or GET /grammar/verb-lessons/{id}/tasks is called
+  Then a task whose answer has at least 4 distinct paradigm forms carries "options":
+    4 distinct full words, exactly one equal to "answer", in shuffled order
+  And "distinct" ignores only case and tone marks, so "ranka" and "ranką" can both appear
+  And the distractors come from the answer's own paradigm:
+    sentence tasks → other forms of the same noun (words.txt) or numeral/pronoun
+      (paradigms_extra.txt); a numeral prefix such as "dvidešimt" stays on every option,
+    verb_conjugation tasks → other persons of the same verb and tense, then the same
+      person in other tenses,
+    verb_case tasks → other questions from a fixed list (ką? ko? kam? kuo? į ką? …),
+      skipping the answer's own question and any list entry sharing a token with it;
+      words before the answer's first question word (e.g. the negation in "nerašyti ko?")
+      are kept as a prefix on every option
+  And a sentence task with options has the stem stripped from "display" and the full
+    word as "answer", like practice
+  And a task without 4 distinct forms (indeclinable numbers, ambiguous forms such as
+    "drauge" that belong to two words, words missing from the tables) has no "options"
+    and keeps today's typing shape, so one basic run can mix choice and typing tasks
+  And a verb_case answer with no question word at all (e.g. "nesišukuoti?") gets no options
+  And a verb_case answer containing a Cyrillic "о" homoglyph has it replaced by Latin "o"
+    in the returned "answer"; any other Cyrillic character means corrupt data and no options
+  And advanced and practice tasks never carry "options"
+```
+
+```gherkin
+Scenario: student answers a basic task by choosing (#60)
+  Given a basic-level run and a task with "options"
+  When the task is shown
+  Then the student sees the options as a single-column list of buttons (≥44px tall at
+    375px; keys 1–4 pick one) instead of the text input and «Проверить»
+  And a task without "options" in the same run shows the text input as before
+  When the student taps an option
+  Then it is graded exactly against "answer"
+  And a correct pick auto-advances after 1s; a wrong pick shows it red, the correct one
+    green, «Правильно: …» and "Понятно, дальше", as on the typed levels
+```
+
+```gherkin
+Scenario: a wrong task comes back once at the end of the run (#60)
+  Given any grammar run (basic, advanced, practice, «Напомнить», «Продолжить занятие»)
+  When the student answers a task wrong
+  Then that task is appended once to the end of the run, marked «Повтор» / «Retry»
+  And the counter total grows by one (e.g. 1 / 11 for 10 tasks + 1 mistake)
+  And a repeat answered wrong again is not appended a second time
+  And a repeat's options are the same set, reshuffled
+```
+
+```gherkin
+Scenario: the score counts first attempts only (#60)
+  Given a run of N tasks with some repeats appended
+  When the run finishes
+  Then the saved result is (first-attempt correct, N) — repeats never change score or total
+  And the >75% unlock threshold is judged on that score, as before
+  And repeats fetch nothing and consume no extra daily session quota
+```
+
+```gherkin
 Scenario: recurring characters have names that can't be read as pronouns
   Given the grammar exercises use recurring characters Jonas and Rūta
   When a sentence task about Rūta is shown in RU mode (e.g. "Rūta perka spurg___.")

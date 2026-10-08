@@ -18,6 +18,7 @@ import { isAnswerMatch } from '../../../lib/normalizeLt';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
+import { useNumberKeys } from '../../../lib/useNumberKeys';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -53,6 +54,10 @@ export interface DeclensionTask {
   case_name: string;
   number: string;
   answer: string;
+  /** Basic level only (#60): 4 full-word choices, one === answer. */
+  options?: string[];
+  /** Set by the runner on a wrong task re-queued at the end of the run (#60). */
+  isRetry?: boolean;
 }
 
 export interface SentenceTask {
@@ -63,6 +68,8 @@ export interface SentenceTask {
   translation_ru: string;
   translation_en?: string | null;
   base_lt?: string;
+  options?: string[];
+  isRetry?: boolean;
 }
 
 export interface VerbConjugationTask {
@@ -74,6 +81,10 @@ export interface VerbConjugationTask {
   tense_label_en: string;
   person_label: string;
   answer: string;
+  /** Basic level only (#60): 4 full-word choices, one === answer. */
+  options?: string[];
+  /** Set by the runner on a wrong task re-queued at the end of the run (#60). */
+  isRetry?: boolean;
 }
 
 export interface VerbCaseTask {
@@ -84,6 +95,10 @@ export interface VerbCaseTask {
   example_lt: string;
   example_ru: string;
   answer: string;
+  /** Basic level only (#60): 4 full-word choices, one === answer. */
+  options?: string[];
+  /** Set by the runner on a wrong task re-queued at the end of the run (#60). */
+  isRetry?: boolean;
 }
 
 export type Task = DeclensionTask | SentenceTask | VerbConjugationTask | VerbCaseTask;
@@ -162,6 +177,46 @@ export function InlineSentenceInput({
       <span>{after}</span>
     </p>
   );
+}
+
+/**
+ * Sentence with a plain styled blank — the choice-mode twin of InlineSentenceInput
+ * (#60). `filled` is the picked option once answered.
+ */
+export function SentenceBlank({
+  display,
+  filled,
+  answerState,
+}: {
+  display: string;
+  filled: string | null;
+  answerState: AnswerState;
+}) {
+  const [before, after] = display.split('___');
+  const color =
+    answerState === 'correct'
+      ? 'text-emerald-700 border-emerald-500 bg-emerald-50'
+      : answerState === 'wrong'
+      ? 'text-red-700 border-red-400 bg-red-50'
+      : 'text-gray-900 border-line';
+  return (
+    <p className="text-lg sm:text-2xl md:text-3xl font-mono tracking-tight leading-relaxed text-center break-words" style={{ overflowWrap: 'break-word' }}>
+      <span>{before}</span>
+      <span data-testid="choice-blank" className={`inline-block min-w-[3ch] border-b-2 transition-colors duration-200 ${color}`}>
+        {filled ?? '\u00a0'}
+      </span>
+      <span>{after}</span>
+    </p>
+  );
+}
+
+function shuffled<T>(items: T[]): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 export function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; collapsible: boolean }) {
@@ -311,9 +366,13 @@ export default function GrammarTaskRunner({
 }: GrammarTaskRunnerProps) {
   const { tr, lang } = useT();
 
+  // #60 — the run: the original tasks, plus each wrong one re-queued once at the end.
+  const [queue, setQueue] = useState<Task[]>(tasks);
   const [taskIndex, setTaskIndex] = useState(0);
+  // First-attempt correct answers only — a retry never scores.
   const [correct, setCorrect] = useState(0);
   const [typed, setTyped] = useState('');
+  const [picked, setPicked] = useState<number | null>(null);
   const [answerState, setAnswerState] = useState<AnswerState>('unanswered');
   const [shownAnswer, setShownAnswer] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -342,13 +401,15 @@ export default function GrammarTaskRunner({
 
   function advanceTask(isCorrect: boolean) {
     const next = taskIndex + 1;
-    if (next >= tasks.length) {
-      const finalCorrect = isCorrect ? correct + 1 : correct;
+    const scores = isCorrect && !queue[taskIndex].isRetry;
+    if (next >= queue.length) {
+      const finalCorrect = scores ? correct + 1 : correct;
       onFinish(finalCorrect, tasks.length, moodRef.current);
     } else {
-      if (isCorrect) setCorrect((c) => c + 1);
+      if (scores) setCorrect((c) => c + 1);
       setTaskIndex(next);
       setTyped('');
+      setPicked(null);
       setAnswerState('unanswered');
       setShownAnswer('');
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -357,12 +418,28 @@ export default function GrammarTaskRunner({
 
   function checkAnswer() {
     if (answerState !== 'unanswered') return;
-    const task = tasks[taskIndex];
-    const isCorrect = isAnswerMatch(typed.trim(), task.answer);
+    const task = queue[taskIndex];
+    grade(task, isAnswerMatch(typed.trim(), task.answer));
+  }
+
+  // Choice grading is exact: the option strings come from the server (#60).
+  function pickOption(i: number) {
+    if (answerState !== 'unanswered') return;
+    const task = queue[taskIndex];
+    if (!task.options) return;
+    setPicked(i);
+    grade(task, task.options[i] === task.answer);
+  }
+
+  function grade(task: Task, isCorrect: boolean) {
     setAnswerState(isCorrect ? 'correct' : 'wrong');
     recordAnswer(isCorrect);
     if (!isCorrect) {
       setShownAnswer(task.type === 'sentence' ? task.full_answer : task.answer);
+      // Re-queue once at the end; a retry answered wrong is not appended again.
+      if (!task.isRetry) {
+        setQueue((q) => [...q, { ...task, isRetry: true, options: task.options && shuffled(task.options) }]);
+      }
     }
 
     if (isCorrect) {
@@ -376,10 +453,14 @@ export default function GrammarTaskRunner({
     advanceTask(false);
   }
 
-  if (tasks.length === 0) return null;
+  const current = queue[taskIndex];
+  const choices = current?.options?.length ? current.options : null;
+  useNumberKeys(choices?.length ?? 0, choices && answerState === 'unanswered' ? pickOption : null);
 
-  const task = tasks[taskIndex];
-  const progressPct = (taskIndex / tasks.length) * 100;
+  if (queue.length === 0) return null;
+
+  const task = current;
+  const progressPct = (taskIndex / queue.length) * 100;
   const showRule = level === 'basic' || level === 'advanced';
   const ruleCollapsible = level === 'advanced';
 
@@ -395,7 +476,12 @@ export default function GrammarTaskRunner({
           >
             <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.grammar.backToLessons}
           </button>
-          <span className="text-gray-400 text-sm">{taskIndex + 1} / {tasks.length}</span>
+          <span className="text-gray-400 text-sm flex items-center gap-2">
+            {task.isRetry && (
+              <span data-testid="retry-chip" className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">{tr.grammar.retry}</span>
+            )}
+            <span data-testid="task-counter">{taskIndex + 1} / {queue.length}</span>
+          </span>
         </div>
 
         {/* Progress bar */}
@@ -450,6 +536,9 @@ export default function GrammarTaskRunner({
                 <p className="text-gray-400 text-xs mb-4">{tr.grammar.sentenceFrom}<span className="font-medium text-gray-500">{task.base_lt}</span></p>
               )}
               <div className="mb-4">
+                {choices ? (
+                  <SentenceBlank display={task.display} filled={picked !== null ? choices[picked] : null} answerState={answerState} />
+                ) : (
                 <InlineSentenceInput
                   display={task.display}
                   value={typed}
@@ -459,6 +548,7 @@ export default function GrammarTaskRunner({
                   answerState={answerState}
                   inputRef={inputRef}
                 />
+                )}
               </div>
               <p className="text-gray-500 text-base">{(lang === 'en' && task.translation_en) || task.translation_ru}</p>
             </div>
@@ -468,6 +558,9 @@ export default function GrammarTaskRunner({
             <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center overflow-hidden">
               <p className="text-gray-400 text-xs mb-4">{lang === 'en' ? task.tense_label_en : task.tense_label}</p>
               <div className="mb-4">
+                {choices ? (
+                  <SentenceBlank display={`${task.verb_infinitive} — ${task.person_label} ___`} filled={picked !== null ? choices[picked] : null} answerState={answerState} />
+                ) : (
                 <InlineSentenceInput
                   display={`${task.verb_infinitive} — ${task.person_label} ___`}
                   value={typed}
@@ -478,6 +571,7 @@ export default function GrammarTaskRunner({
                   inputRef={inputRef}
                   placeholder={tr.grammar.verbConjugationPlaceholder}
                 />
+                )}
               </div>
               <p className="text-gray-500 text-base">{(lang === 'en' && task.translation_en) || task.translation_ru}</p>
             </div>
@@ -491,6 +585,7 @@ export default function GrammarTaskRunner({
               <p className="text-lg sm:text-xl font-medium text-gray-900 mb-2">{task.example_lt}</p>
               <p className="text-gray-500 text-base mb-5">{task.example_ru}</p>
               <p className="text-gray-400 text-xs mb-3">{tr.grammar.verbCaseGovernancePrompt}</p>
+              {!choices && (
               <input
                 ref={inputRef}
                 type="text"
@@ -505,11 +600,35 @@ export default function GrammarTaskRunner({
                     answerState === 'wrong'   ? 'border-red-300 bg-red-50 text-red-600 line-through' :
                     'border-gray-200 bg-gray-50 focus:border-emerald-400 focus:bg-white'}`}
               />
+              )}
             </div>
           )}
 
           <div className="w-full flex flex-col gap-3">
-            {answerState === 'unanswered' && (
+            {/* #60 — Basic multiple choice; same option pattern as QuizSession stage 2. */}
+            {choices && (
+              <div className="w-full grid grid-cols-1 gap-3" data-testid="grammar-options">
+                {choices.map((opt, i) => {
+                  let cls = 'w-full py-4 px-5 rounded-xl font-medium text-left transition-all duration-200 border ';
+                  if (answerState === 'unanswered') {
+                    cls += 'bg-white border-gray-900 hover:bg-gray-100 hover:border-gray-900 text-gray-900';
+                  } else if (opt === task.answer) {
+                    cls += 'bg-emerald-100 border-gray-900 text-emerald-600';
+                  } else if (i === picked) {
+                    cls += 'bg-red-100 border-gray-900 text-red-600';
+                  } else {
+                    cls += 'bg-gray-50 border-gray-900 text-gray-400';
+                  }
+                  return (
+                    <button key={i} onClick={() => pickOption(i)} disabled={answerState !== 'unanswered'} aria-keyshortcuts={String(i + 1)} className={cls}>
+                      <span aria-hidden="true" className="hidden sm:inline-block mr-2 text-[12px] font-normal opacity-50">{i + 1}</span>{opt}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {answerState === 'unanswered' && !choices && (
               <button
                 onClick={checkAnswer}
                 disabled={!typed.trim()}
@@ -519,7 +638,7 @@ export default function GrammarTaskRunner({
               </button>
             )}
 
-            {answerState === 'correct' && (task.type === 'sentence' || task.type === 'verb_conjugation') && (
+            {answerState === 'correct' && (task.type === 'sentence' || task.type === 'verb_conjugation' || choices) && (
               <p className="text-emerald-600 text-sm font-medium text-center">{tr.common.correct}</p>
             )}
 

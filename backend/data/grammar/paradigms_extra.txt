@@ -1,0 +1,49 @@
+# Numeral + personal-pronoun paradigms for grammar Basic multiple choice (#60).
+# Format: one lexeme per line, tab-separated, every form of it (genders x cases x numbers).
+# Order inside a line is irrelevant; duplicates are fine (options dedupe them).
+# A form that appears on two lines is ambiguous and falls back to typing.
+# Indeclinable numerals (dešimt, penkiolika, -dešimt tens) have no line: they stay typing.
+# Cases per gender: nominative, genitive, dative, accusative, instrumental, locative.
+
+vienas	vieno	vienam	vieną	vienu	viename	viena	vienos	vienai	vieną	viena	vienoje	vieni	vienų	vieniems	vienus	vienais	vienuose	vienos	vienų	vienoms	vienas	vienomis	vienose
+du	dviejų	dviem	du	dviem	dviejuose	dvi	dviejų	dviem	dvi	dviem	dviejose
+trys	trijų	trims	tris	trimis	trijuose	trijose
+keturi	keturių	keturiems	keturis	keturiais	keturiuose	keturios	keturių	keturioms	keturias	keturiomis	keturiose
+penki	penkių	penkiems	penkis	penkiais	penkiuose	penkios	penkių	penkioms	penkias	penkiomis	penkiose
+šeši	šešių	šešiems	šešis	šešiais	šešiuose	šešios	šešių	šešioms	šešias	šešiomis	šešiose
+septyni	septynių	septyniems	septynis	septyniais	septyniuose	septynios	septynių	septynioms	septynias	septyniomis	septyniose
+aštuoni	aštuonių	aštuoniems	aštuonis	aštuoniais	aštuoniuose	aštuonios	aštuonių	aštuonioms	aštuonias	aštuoniomis	aštuoniose
+devyni	devynių	devyniems	devynis	devyniais	devyniuose	devynios	devynių	devynioms	devynias	devyniomis	devyniose
+pirmas	pirmo	pirmam	pirmą	pirmu	pirmame	pirma	pirmos	pirmai	pirmą	pirma	pirmoje	pirmi	pirmų	pirmiems	pirmus	pirmais	pirmuose	pirmos	pirmų	pirmoms	pirmas	pirmomis	pirmose
+antras	antro	antram	antrą	antru	antrame	antra	antros	antrai	antrą	antra	antroje	antri	antrų	antriems	antrus	antrais	antruose	antros	antrų	antroms	antras	antromis	antrose
+ketvirtas	ketvirto	ketvirtam	ketvirtą	ketvirtu	ketvirtame	ketvirta	ketvirtos	ketvirtai	ketvirtą	ketvirta	ketvirtoje	ketvirti	ketvirtų	ketvirtiems	ketvirtus	ketvirtais	ketvirtuose	ketvirtos	ketvirtų	ketvirtoms	ketvirtas	ketvirtomis	ketvirtose
+penktas	penkto	penktam	penktą	penktu	penktame	penkta	penktos	penktai	penktą	penkta	penktoje	penkti	penktų	penktiems	penktus	penktais	penktuose	penktos	penktų	penktoms	penktas	penktomis	penktose
+šeštas	šešto	šeštam	šeštą	šeštu	šeštame	šešta	šeštos	šeštai	šeštą	šešta	šeštoje	šešti	šeštų	šeštiems	šeštus	šeštais	šeštuose	šeštos	šeštų	šeštoms	šeštas	šeštomis	šeštose
+septintas	septinto	septintam	septintą	septintu	septintame	septinta	septintos	septintai	septintą	septinta	septintoje	septinti	septintų	septintiems	septintus	septintais	septintuose	septintos	septintų	septintoms	septintas	septintomis	septintose
+aštuntas	aštunto	aštuntam	aštuntą	aštuntu	aštuntame	aštunta	aštuntos	aštuntai	aštuntą	aštunta	aštuntoje	aštunti	aštuntų	aštuntiems	aštuntus	aštuntais	aštuntuose	aštuntos	aštuntų	aštuntoms	aštuntas	aštuntomis	aštuntose
+devintas	devinto	devintam	devintą	devintu	devintame	devinta	devintos	devintai	devintą	devinta	devintoje	devinti	devintų	devintiems	devintus	devintais	devintuose	devintos	devintų	devintoms	devintas	devintomis	devintose
+dešimtas	dešimto	dešimtam	dešimtą	dešimtu	dešimtame	dešimta	dešimtos	dešimtai	dešimtą	dešimta	dešimtoje	dešimti	dešimtų	dešimtiems	dešimtus	dešimtais	dešimtuose	dešimtos	dešimtų	dešimtoms	dešimtas	dešimtomis	dešimtose
+vienuoliktas	vienuolikto	vienuoliktam	vienuoliktą	vienuoliktu	vienuoliktame	vienuolikta	vienuoliktos	vienuoliktai	vienuoliktą	vienuolikta	vienuoliktoje	vienuolikti	vienuoliktų	vienuoliktiems	vienuoliktus	vienuoliktais	vienuoliktuose	vienuoliktos	vienuoliktų	vienuoliktoms	vienuoliktas	vienuoliktomis	vienuoliktose
+dvyliktas	dvylikto	dvyliktam	dvyliktą	dvyliktu	dvyliktame	dvylikta	dvyliktos	dvyliktai	dvyliktą	dvylikta	dvyliktoje	dvylikti	dvyliktų	dvyliktiems	dvyliktus	dvyliktais	dvyliktuose	dvyliktos	dvyliktų	dvyliktoms	dvyliktas	dvyliktomis	dvyliktose
+tryliktas	trylikto	tryliktam	tryliktą	tryliktu	tryliktame	trylikta	tryliktos	tryliktai	tryliktą	trylikta	tryliktoje	trylikti	tryliktų	tryliktiems	tryliktus	tryliktais	tryliktuose	tryliktos	tryliktų	tryliktoms	tryliktas	tryliktomis	tryliktose
+keturioliktas	keturiolikto	keturioliktam	keturioliktą	keturioliktu	keturioliktame	keturiolikta	keturioliktos	keturioliktai	keturioliktą	keturiolikta	keturioliktoje	keturiolikti	keturioliktų	keturioliktiems	keturioliktus	keturioliktais	keturioliktuose	keturioliktos	keturioliktų	keturioliktoms	keturioliktas	keturioliktomis	keturioliktose
+penkioliktas	penkiolikto	penkioliktam	penkioliktą	penkioliktu	penkioliktame	penkiolikta	penkioliktos	penkioliktai	penkioliktą	penkiolikta	penkioliktoje	penkiolikti	penkioliktų	penkioliktiems	penkioliktus	penkioliktais	penkioliktuose	penkioliktos	penkioliktų	penkioliktoms	penkioliktas	penkioliktomis	penkioliktose
+šešioliktas	šešiolikto	šešioliktam	šešioliktą	šešioliktu	šešioliktame	šešiolikta	šešioliktos	šešioliktai	šešioliktą	šešiolikta	šešioliktoje	šešiolikti	šešioliktų	šešioliktiems	šešioliktus	šešioliktais	šešioliktuose	šešioliktos	šešioliktų	šešioliktoms	šešioliktas	šešioliktomis	šešioliktose
+septynioliktas	septyniolikto	septynioliktam	septynioliktą	septynioliktu	septynioliktame	septyniolikta	septynioliktos	septynioliktai	septynioliktą	septyniolikta	septynioliktoje	septyniolikti	septynioliktų	septynioliktiems	septynioliktus	septynioliktais	septynioliktuose	septynioliktos	septynioliktų	septynioliktoms	septynioliktas	septynioliktomis	septynioliktose
+aštuonioliktas	aštuoniolikto	aštuonioliktam	aštuonioliktą	aštuonioliktu	aštuonioliktame	aštuoniolikta	aštuonioliktos	aštuonioliktai	aštuonioliktą	aštuoniolikta	aštuonioliktoje	aštuoniolikti	aštuonioliktų	aštuonioliktiems	aštuonioliktus	aštuonioliktais	aštuonioliktuose	aštuonioliktos	aštuonioliktų	aštuonioliktoms	aštuonioliktas	aštuonioliktomis	aštuonioliktose
+devynioliktas	devyniolikto	devynioliktam	devynioliktą	devynioliktu	devynioliktame	devyniolikta	devynioliktos	devynioliktai	devynioliktą	devyniolikta	devynioliktoje	devyniolikti	devynioliktų	devynioliktiems	devynioliktus	devynioliktais	devynioliktuose	devynioliktos	devynioliktų	devynioliktoms	devynioliktas	devynioliktomis	devynioliktose
+dvidešimtas	dvidešimto	dvidešimtam	dvidešimtą	dvidešimtu	dvidešimtame	dvidešimta	dvidešimtos	dvidešimtai	dvidešimtą	dvidešimta	dvidešimtoje	dvidešimti	dvidešimtų	dvidešimtiems	dvidešimtus	dvidešimtais	dvidešimtuose	dvidešimtos	dvidešimtų	dvidešimtoms	dvidešimtas	dvidešimtomis	dvidešimtose
+trisdešimtas	trisdešimto	trisdešimtam	trisdešimtą	trisdešimtu	trisdešimtame	trisdešimta	trisdešimtos	trisdešimtai	trisdešimtą	trisdešimta	trisdešimtoje	trisdešimti	trisdešimtų	trisdešimtiems	trisdešimtus	trisdešimtais	trisdešimtuose	trisdešimtos	trisdešimtų	trisdešimtoms	trisdešimtas	trisdešimtomis	trisdešimtose
+trečias	trečio	trečiam	trečią	trečiu	trečiame	trečia	trečios	trečiai	trečią	trečia	trečioje	treti	trečių	tretiems	trečius	trečiais	trečiuose	trečios	trečių	trečioms	trečias	trečiomis	trečiose
+dveji	dvejų	dvejiems	dvejus	dvejais	dvejuose	dvejos	dvejų	dvejoms	dvejas	dvejomis	dvejose
+treji	trejų	trejiems	trejus	trejais	trejuose	trejos	trejų	trejoms	trejas	trejomis	trejose
+ketveri	ketverių	ketveriems	ketverius	ketveriais	ketveriuose	ketverios	ketverių	ketverioms	ketverias	ketveriomis	ketveriose
+penkeri	penkerių	penkeriems	penkerius	penkeriais	penkeriuose	penkerios	penkerių	penkerioms	penkerias	penkeriomis	penkeriose
+šešeri	šešerių	šešeriems	šešerius	šešeriais	šešeriuose	šešerios	šešerių	šešerioms	šešerias	šešeriomis	šešeriose
+septyneri	septynerių	septyneriems	septynerius	septyneriais	septyneriuose	septynerios	septynerių	septynerioms	septynerias	septyneriomis	septyneriose
+aštuoneri	aštuonerių	aštuoneriems	aštuonerius	aštuoneriais	aštuoneriuose	aštuonerios	aštuonerių	aštuonerioms	aštuonerias	aštuoneriomis	aštuoneriose
+devyneri	devynerių	devyneriems	devynerius	devyneriais	devyneriuose	devynerios	devynerių	devynerioms	devynerias	devyneriomis	devyneriose
+aš	manęs	man	mane	manimi	manyje
+tu	tavęs	tau	tave	tavimi	tavyje
+jis	jo	jam	jį	juo	jame
+ji	jos	jai	ją	ja	joje
