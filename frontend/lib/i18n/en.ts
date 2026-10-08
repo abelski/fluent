@@ -215,6 +215,7 @@ const en: Translations = {
     reviewFirstWhy: 'Why this matters',
   },
   grammar: {
+    retry: 'Retry',
     title: 'Grammar',
     subtitle: 'Choose a lesson to practise declensions',
     charactersNote: 'Exercises use two recurring characters, Jonas and Rūta.',

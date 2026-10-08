@@ -215,6 +215,7 @@ const ru: Translations = {
     reviewFirstWhy: 'Почему это важно',
   },
   grammar: {
+    retry: 'Повтор',
     title: 'Грамматика',
     subtitle: 'Выбери урок для тренировки склонений',
     charactersNote: 'В упражнениях используются персонажи Йонас и Рута.',

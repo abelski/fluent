@@ -9,3 +9,4 @@ Format: `- YYYY-MM-DD — what to do (#N)`. Delete a line when it's done.
 - 2026-11-14 — write plan_58b (cases/numbers titles, Sėkmės description, Regitra questions, numbers-05 back-link), if #58a went live ~2–3 weeks ago (#58b)
 - 2026-10-24 — plan #59b (home page SSR + /en/ home + Yandex region): /sdlc-feature-analyst on idea_59, after the #48c check (#59)
 - 2026-10-20 — /seo: IndexNow effect — Yandex pages in search > 43, Bing impressions > 2/week, vs seo-log 2026-10-06 (#59a)
+- 2026-10-22 — compare basic-lesson first-attempt pass rate (>75%) 2 weeks before vs after #60 from GrammarLessonResult; date is a placeholder (today + 14d), move it to release date + 14d once #60 ships (#60)

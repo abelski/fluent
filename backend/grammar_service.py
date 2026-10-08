@@ -111,6 +111,7 @@ for _w in WORDS:
 # Originally added for issue #25; the sibling collision above it (_STEM_TO_NOMINATIVE)
 # had the same bug and was only fixed later, for issue #161.
 _FORM_TO_NOMINATIVE: dict[str, str | None] = {}
+_FORM_TO_ROW: dict[str, list | None] = {}
 for _w in WORDS:
     _nom = _w[0] + _w[1]
     for _col in range(1, 15):  # columns 1-14 cover all singular and plural cases
@@ -123,6 +124,27 @@ for _w in WORDS:
                 _FORM_TO_NOMINATIVE[_form] = None  # ambiguous — two words share this form
         else:
             _FORM_TO_NOMINATIVE[_form] = _nom
+        # Same collision rule, but to the whole WORDS row (#60 basic options).
+        if _form in _FORM_TO_ROW:
+            if _FORM_TO_ROW[_form] is not _w:
+                _FORM_TO_ROW[_form] = None
+        else:
+            _FORM_TO_ROW[_form] = _w
+
+# Numeral + personal-pronoun paradigms (#60): lowercase form → every form of its
+# row. A form on two rows is ambiguous → None → that task stays typing.
+_EXTRA_PARADIGMS_PATH = Path(__file__).parent / "data/grammar/paradigms_extra.txt"
+_EXTRA_FORM_TO_FORMS: dict[str, list[str] | None] = {}
+for _line in _EXTRA_PARADIGMS_PATH.read_text(encoding="utf-8").splitlines():
+    if not _line.strip() or _line.startswith("#"):
+        continue
+    _forms = [f.strip() for f in _line.split("\t") if f.strip()]
+    for _form in {f.lower() for f in _forms}:
+        if _form in _EXTRA_FORM_TO_FORMS:
+            if _EXTRA_FORM_TO_FORMS[_form] != _forms:
+                _EXTRA_FORM_TO_FORMS[_form] = None
+        else:
+            _EXTRA_FORM_TO_FORMS[_form] = _forms
 
 # Stems of place/location nouns — used to restrict Vietininkas (locative) basic
 # declension tasks so every prompt makes semantic sense as a location.
@@ -295,6 +317,63 @@ def _word_form(word_entry: list, case_idx: int) -> str | None:
     return word_entry[0] + ending
 
 
+# ── Basic-level multiple choice (#60) ─────────────────────────────────────────
+# See documentation/grammar-basic-options.md.
+# _option_key uses _TONE_MARKS, defined further down (resolved at call time).
+
+def _option_key(text: str) -> str:
+    """Dedupe key for options: lowercase, tone marks dropped, other diacritics kept.
+
+    So "dìrbu"/"dirbu" and "Antru"/"antru" collapse, but "ranka"/"ranką" stay
+    distinct — telling those apart is the point of the exercise.
+    """
+    stripped = "".join(c for c in unicodedata.normalize("NFD", text) if c not in _TONE_MARKS)
+    return unicodedata.normalize("NFC", stripped).lower()
+
+
+def _pick_options(answer: str, forms: list[str]) -> list[str] | None:
+    """4 shuffled options: `answer` + the first 3 distinct forms (by _option_key).
+
+    `forms` is in priority order (callers shuffle within a priority group).
+    Fewer than 3 distinct distractors → None (the task stays typing).
+    """
+    seen = {_option_key(answer)}
+    distractors: list[str] = []
+    for form in forms:
+        key = _option_key(form)
+        if key not in seen:
+            seen.add(key)
+            distractors.append(form)
+            if len(distractors) == 3:
+                options = distractors + [answer]
+                random.shuffle(options)
+                return options
+    return None
+
+
+def _paradigm_forms(word: str) -> list[str]:
+    """Every form of the lexeme `word` belongs to: WORDS first, then the numeral table."""
+    word = word.lower()
+    row = _FORM_TO_ROW.get(word)
+    if row:
+        return [f for i in range(1, 15) if (f := _word_form(row, i))]
+    return list(_EXTRA_FORM_TO_FORMS.get(word) or [])
+
+
+def _sentence_options(full: str) -> list[str] | None:
+    """Options for a basic sentence task whose whole-word answer is `full`.
+
+    Only the last token inflects; a numeral prefix ("dvidešimt vieni") is kept.
+    """
+    prefix, _, last = full.rpartition(" ")
+    prefix = prefix + " " if prefix else ""
+    candidates = [prefix + f for f in _paradigm_forms(last)]
+    if full[:1].isupper():
+        candidates = [c[:1].upper() + c[1:] for c in candidates]
+    random.shuffle(candidates)
+    return _pick_options(full, candidates)
+
+
 def _word_nominative(word_entry: list) -> str:
     """Return the nominative singular form (index 0 + index 1 = stem + nom ending)."""
     return word_entry[0] + word_entry[1]
@@ -412,19 +491,23 @@ def _generate_sentence_tasks(cases: list[int], count: int, session: Session, lev
             after = re.sub(re.escape(row.full_word), '', parts[1], count=1, flags=re.IGNORECASE)
             after = re.sub(r'\s+', ' ', after).strip()
             display = parts[0] + '___' + (' ' + after if after else '')
-        if level == "practice":
-            # Practice level requires typing the whole inflected word: strip the
-            # stem span from display (so the blank stands for the full word, not
-            # just the ending) and grade against stem+answer_ending. Cases 17-19's
+        full = stem + row.answer_ending
+        # #60 — basic: pick the whole word from 4 paradigm forms, when 4 exist.
+        options = _sentence_options(full) if level == "basic" else None
+        if level == "practice" or options:
+            # Practice level requires typing the whole inflected word (basic with
+            # options picks it — same transform, #60): strip the stem span from
+            # display (so the blank stands for the full word, not just the
+            # ending) and grade against stem+answer_ending. Cases 17-19's
             # non-inflecting numeral prefix (e.g. "dvidešimt") was never part of
             # the captured stem, so it's untouched and stays visible as ordinary
             # sentence text before the blank — grading only covers the word the
             # student actually has to type.
             display = _STEM_BLANK_RE.sub('___', display, count=1)
-            answer = stem + row.answer_ending
+            answer = full
         else:
             answer = row.answer_ending
-        tasks.append({
+        task = {
             "type": "sentence",
             "display": display,
             "answer": answer,
@@ -432,7 +515,10 @@ def _generate_sentence_tasks(cases: list[int], count: int, session: Session, lev
             "translation_ru": row.russian,
             "translation_en": row.english,
             "base_lt": base_lt,
-        })
+        }
+        if options:
+            task["options"] = options
+        tasks.append(task)
     return tasks
 
 
@@ -501,8 +587,8 @@ def get_verb_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None
     _lid, _level, tense_key, task_count, _title = config
 
     if tense_key == "case_governance":
-        return _generate_verb_case_tasks(task_count, session)
-    return _generate_verb_conjugation_tasks(tense_key, task_count, session)
+        return _generate_verb_case_tasks(task_count, session, level=_level)
+    return _generate_verb_conjugation_tasks(tense_key, task_count, session, level=_level)
 
 
 # A comma at the very end of a form, allowing for combining accents after it —
@@ -639,7 +725,8 @@ def _verb_pool(session: Session) -> list[SimpleNamespace]:
 
 
 def _generate_verb_conjugation_tasks(
-    tense_key: str, count: int, session: Session, program_key: str | None = "sekmes"
+    tense_key: str, count: int, session: Session, program_key: str | None = "sekmes",
+    level: str = "advanced",
 ) -> list[dict]:
     """Pick random verbs from DB, random person, return verb_conjugation tasks.
 
@@ -680,7 +767,7 @@ def _generate_verb_conjugation_tasks(
         # Skip imperative aš (no form)
         if not _is_usable_form(form, verb.infinitive, tense_key, verb.conjugations):
             continue  # #151/#153 — corrupt extraction, never present it as a question
-        tasks.append({
+        task = {
             "type": "verb_conjugation",
             "verb_infinitive": _clean_form(verb.infinitive),
             "translation_ru": _clean_form(verb.translation_ru),
@@ -689,12 +776,67 @@ def _generate_verb_conjugation_tasks(
             "tense_label_en": tense_label_en,
             "person_label": person,
             "answer": form,
-        })
+        }
+        if level == "basic":
+            options = _pick_options(form, _verb_distractors(verb, tense_key, person))
+            if options:
+                task["options"] = options
+        tasks.append(task)
 
     return tasks
 
 
-def _generate_verb_case_tasks(count: int, session: Session) -> list[dict]:
+def _verb_distractors(verb: SimpleNamespace, tense_key: str, person: str) -> list[str]:
+    """Usable forms in priority order: other persons of this tense, then this
+    person in the other tenses (imperative has only tu/mes/jūs — #60)."""
+    key = _PERSON_KEY.get(person, person)
+    same_tense: list[str] = []
+    other_tenses: list[str] = []
+    for t_key, persons in verb.conjugations.items():
+        if not isinstance(persons, dict):
+            continue
+        for p_key, raw in persons.items():
+            if (t_key == tense_key) == (p_key == key):
+                continue  # the answer itself, or another person in another tense
+            form = _clean_form(raw)
+            if form and _is_usable_form(form, verb.infinitive, t_key, verb.conjugations):
+                (same_tense if t_key == tense_key else other_tenses).append(form)
+    random.shuffle(same_tense)
+    random.shuffle(other_tenses)
+    return same_tense + other_tenses
+
+
+# Clean case questions offered as verb_case distractors (#60). The DB answers
+# themselves are free text and sometimes carry a Cyrillic "о" homoglyph.
+_VERB_CASE_QUESTIONS = ["ką?", "ko?", "kam?", "kuo?", "į ką?", "apie ką?",
+                        "su kuo?", "iš ko?", "ant ko?", "dėl ko?"]
+_CYRILLIC_RE = re.compile("[\u0400-\u04FF]")
+
+
+# Tokens that start the question part of an answer; anything before the first
+# one is a prefix ("nerašýti ko?") kept on every option so it can't give the answer away.
+_VERB_CASE_QUESTION_WORDS = {
+    "kas", "ko", "kam", "ką", "kuo", "kur", "kada", "kaip",
+    "į", "apie", "su", "iš", "ant", "dėl", "už", "nuo", "pas", "prieš", "paskui", "aplink",
+}
+
+
+def _verb_case_options(answer: str) -> list[str] | None:
+    if _CYRILLIC_RE.search(answer):
+        return None
+    tokens = answer.split()
+    i = next((n for n, t in enumerate(tokens) if t.rstrip("?") in _VERB_CASE_QUESTION_WORDS), None)
+    if i is None:  # no question at all ("nesišukúoti?")
+        return None
+    prefix = " ".join(tokens[:i] + [""])
+    question = " ".join(tokens[i:])
+    parts = set(tokens[i:])
+    pool = [prefix + q for q in _VERB_CASE_QUESTIONS if q != question and q not in parts]
+    random.shuffle(pool)
+    return _pick_options(answer, pool)
+
+
+def _generate_verb_case_tasks(count: int, session: Session, level: str = "advanced") -> list[dict]:
     """Pick random verbs with case governance data, return verb_case tasks."""
     eligible = [v for v in _verb_pool(session) if v.case_governance]
     if not eligible:
@@ -718,14 +860,23 @@ def _generate_verb_case_tasks(count: int, session: Session) -> list[dict]:
         ru_sent = sent.get("ru", "")
         if not lt_sent or not ru_sent:
             continue
-        tasks.append({
+        answer = entry["question"]
+        task = {
             "type": "verb_case",
             "verb_infinitive": verb.infinitive,
             "translation_ru": _clean_form(verb.translation_ru),
             "translation_en": _clean_form(verb.translation_en) if verb.translation_en else None,
             "example_lt": lt_sent,
             "example_ru": ru_sent,
-            "answer": entry["question"],
-        })
+            "answer": answer,
+        }
+        if level == "basic":
+            # #60 — Cyrillic "о" homoglyph → Latin; any other Cyrillic is corrupt → typing.
+            answer = answer.replace("\u043e", "o")
+            task["answer"] = answer
+            options = _verb_case_options(answer)
+            if options:
+                task["options"] = options
+        tasks.append(task)
 
     return tasks
