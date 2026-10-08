@@ -44,7 +44,7 @@ function makeFakeJwt(): string {
 
 type Rule = { name_ru: string; transform: string | null; endings_sg: string | null; endings_pl: string | null };
 type Lesson = { id: number; level: string; cases: number[]; rules: Rule[] };
-type Task = { type: string; display: string; answer: string; full_answer: string };
+type Task = { type: string; display: string; answer: string; full_answer: string; options?: string[] };
 
 test.describe('Issue #159 — Dative/Vocative u-stem (declension IV) coverage', () => {
   test('a Dative (case 3) lesson rule states the IV declension mapping, no duplicate -ui', async ({ page }) => {
@@ -125,8 +125,9 @@ test.describe('Issue #159 — Dative/Vocative u-stem (declension IV) coverage', 
       expect(row.full_answer).toBe('dukterie');
       // Plan #8: practice-level sentence tasks strip the stem and grade the whole
       // inflected word (stem+ending), so "dukt" + "erie" is the correct practice-level
-      // answer — only basic/advanced stay ending-only ("erie").
-      const expectedAnswer = row.level === 'practice' ? 'dukterie' : 'erie';
+      // answer. #60 does the same for basic tasks that carry options. The rest stay
+      // ending-only ("erie").
+      const expectedAnswer = row.level === 'practice' || row.options ? 'dukterie' : 'erie';
       expect(row.answer).toBe(expectedAnswer);
     }
   });

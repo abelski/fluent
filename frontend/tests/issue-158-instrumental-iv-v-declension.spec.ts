@@ -45,7 +45,7 @@ function makeFakeJwt(): string {
 
 type Rule = { name_ru: string; transform: string | null; endings_sg: string | null; endings_pl: string | null };
 type Lesson = { id: number; level: string; cases: number[]; rules: Rule[] };
-type Task = { type: string; display: string; answer: string; full_answer: string };
+type Task = { type: string; display: string; answer: string; full_answer: string; options?: string[] };
 
 test.describe('Issue #158 — IV/V declension endings are derivable from the rule card', () => {
   test('lesson 28 instrumental rule states the IV and V declension mappings', async ({ page }) => {
@@ -90,7 +90,8 @@ test.describe('Issue #158 — IV/V declension endings are derivable from the rul
         // lessons are excluded: plan #8 made their `task.answer` the whole inflected word
         // (stem + ending) instead of just the ending, so it won't appear verbatim inside
         // the rule card's ending list even when the underlying ending is fine — the same
-        // rows are also served at basic/advanced, where this check still covers them.
+        // rows are also served at advanced, where this check still covers them. Basic tasks
+        // with `options` (#60) also grade the whole word, so they are skipped below.
         const nounLessons = lessons.filter(
           (l) => l.level !== 'practice' && l.cases.length > 0 && l.cases.every((c) => guarded.includes(c)),
         );
@@ -106,7 +107,7 @@ test.describe('Issue #158 — IV/V declension endings are derivable from the rul
           const tasksRes = await fetch(`${backend}/api/grammar/lessons/${lesson.id}/tasks`);
           const tasks: Task[] = await tasksRes.json();
           for (const task of tasks) {
-            if (task.type !== 'sentence' || !task.answer) continue;
+            if (task.type !== 'sentence' || !task.answer || task.options) continue;
             if (haystack.includes(task.answer.toLowerCase())) continue;
             if (allowlist.some((a) => a.display === task.display && a.answer === task.answer)) continue;
             bad.push({ lesson: lesson.id, display: task.display, answer: task.answer, full: task.full_answer });
@@ -139,7 +140,8 @@ test.describe('Issue #158 — IV/V declension endings are derivable from the rul
     expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) {
       expect(row.full_answer).toBe('seserimi');
-      expect(row.answer).toBe('erimi');
+      // #60: a basic task with options grades the whole word, otherwise just the ending
+      expect(row.answer).toBe(row.options ? 'seserimi' : 'erimi');
     }
   });
 });
