@@ -44,8 +44,8 @@ is needed: this is a data fix.
 
 ## Fix plan
 - [x] 1. In `backend/data/en_content/grammar_sentences.json`, change `"russian": "Я имею сестру."` to `"russian": "У меня есть сестра."`. Keep `english` as `"I have a sister."`.
-- [ ] 2. Hand the prod update to the user. Do not run it from the loop. Preferred route: the admin panel, edit grammar sentence id=37 (this evicts the cache). Fallback: `UPDATE grammar_sentence SET russian='У меня есть сестра.' WHERE id=37 AND russian='Я имею сестру.';` (expect 1 row; the cache clears within 600s).
-- [ ] 3. After the prod update, confirm with `SELECT russian FROM grammar_sentence WHERE id=37;`.
+- [x] 2. Hand the prod update to the user. Do not run it from the loop. Preferred route: the admin panel, edit grammar sentence id=37 (this evicts the cache). Fallback: `UPDATE grammar_sentence SET russian='У меня есть сестра.' WHERE id=37 AND russian='Я имею сестру.';` (expect 1 row; the cache clears within 600s).
+- [x] 3. After the prod update, confirm with `SELECT russian FROM grammar_sentence WHERE id=37;`.
 
 ## Tests
 - [x] Add a pytest to `backend/tests/test_en_content.py`, next to `test_no_ona_character_name`. It loops over `grammar_sentences.json` and asserts that no `russian` value matches `\bимею\b|\bимеет\b` (case-insensitive). Give it a docstring naming #184. (Use a backend pytest, not Playwright: a mocked-API UI test would only test the mock.)
