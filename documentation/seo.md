@@ -136,7 +136,7 @@ up to 10,000 URLs). Code: `backend/indexnow.py` (pure client), `push_indexnow_on
 - **Rollout:** generate a key (`python3 -c "import secrets;print(secrets.token_hex(16))"`), set
   `INDEXNOW_KEY` on Render, deploy, `curl https://fluent.lt/indexnow-key.txt`, and look for
   "IndexNow: pushed N URLs, status 200/202" in the Render log ~2 min later.
-- **Check:** Bing Webmaster → IndexNow, Yandex Webmaster → Индексирование → IndexNow (`/seo` Steps 3–4).
+- **Check:** Bing Webmaster → IndexNow, Yandex has no IndexNow page, so use Статистика обхода → recent changes as a proxy (`/seo` Steps 3–4). First push verified 2026-10-08: Bing 87 URLs received, Yandex crawled new URLs on 10-06/07.
 
 **Phrase program pages are never pushed.** `/dashboard/phrases/<id>/` has no prerendered page —
 only the `_` placeholder, whose canonical is `/dashboard/phrases/`. `_in_build` is false for them,

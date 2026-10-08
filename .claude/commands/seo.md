@@ -102,7 +102,7 @@ counts), HTTPS, and any Manual actions / Security issues. Anything non-zero is a
   every problem (fatal / critical / possible / recommendation).
 - **Sitemap** `https://webmaster.yandex.com/site/https:fluent.lt:443/indexing/sitemap/` — status.
 - **Запросы** (Эффективность → Поисковые запросы) — shows, clicks for the last 2 weeks.
-- **IndexNow** (Индексирование → IndexNow) — URLs received (#59a); record the count in the log Notes.
+- **IndexNow** — Yandex has no IndexNow menu item (checked 2026-10-08). Proxy: Индексирование → Статистика обхода → "Последние 30 изменений", new URLs going "N/a → 200" right after a deploy (#59a). Record it in the log Notes.
 
 ---
 
