@@ -231,7 +231,7 @@ collision rule as `_FORM_TO_NOMINATIVE`, issue #25/#161), so those rows stay typ
 - [x] Playwright shared-runner suites: `cd frontend && npx playwright test tests/grammar-*.spec.ts tests/verbs_grammar.spec.ts tests/issue-50-grammar-case-insensitive.spec.ts tests/continue-session.spec.ts --reporter=list`
 - [x] Design parity: `cd frontend && npx playwright test tests/design-system-parity.spec.ts --reporter=list`
 - [x] Coverage script (item 9) output pasted into the plan.
-- [ ] Numeral table reviewed by the user (Claude can't vouch for every Lithuanian form) — show the
+- [x] Numeral table reviewed by the user (confirmed 2026-10-08) (Claude can't vouch for every Lithuanian form) — show the
   file, user confirms or corrects.
 - [x] Screenshots in `temp_files/screenshots/plan_60_grammar-choice-and-retry/`, API mocked:
   basic noun choice (unanswered, correct, wrong), basic numeral choice, basic verb choice,
