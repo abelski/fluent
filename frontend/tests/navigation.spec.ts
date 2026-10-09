@@ -246,8 +246,9 @@ test.describe('Grammar progression — locking', () => {
     await page.getByTestId('level-button').first().click();
     await expect(page.getByText('К урокам')).toBeVisible({ timeout: 5000 });
 
-    // Answer both tasks wrong, then dismiss each (wrong answers no longer auto-advance)
-    for (let i = 0; i < 2; i++) {
+    // Answer both tasks wrong, then dismiss each (wrong answers no longer auto-advance).
+    // #60 re-queues each wrong task once at the end, so 2 tasks take 4 answers.
+    for (let i = 0; i < 4; i++) {
       const input = page.locator('input[type="text"]');
       await input.fill('wrong');
       await input.press('Enter');
