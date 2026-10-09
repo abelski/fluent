@@ -170,6 +170,7 @@ def test_composition():
             assert t["question_ru"].startswith("RPUB-")  # never premium/testing/Конституция
             assert t["passage_lt"] == "Tekstas *čia*."
             assert t["options"] == ["Teisingas", "Neteisingas"] and t["answer"] == "Teisingas"
+            assert t["instruction_ru"] and t["instruction_en"]
         else:
             assert len(t["options"]) == 4
     idx = _practice_idx(tasks)

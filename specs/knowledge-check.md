@@ -51,4 +51,12 @@ Scenario: close the gaps
   Then free → 403 premium_required, no completed check → 404 no_check, no weak topic → 404 no_gaps
   And otherwise ≤ 10 tasks from the 5 weakest topics (weakest first), practice as an ordered block
   And no enrollment is required; the client saves the run via POST /grammar/lessons/0/results
+
+Scenario: task instruction line (#63)
+  Then every grammar task (lessons, check, gaps run, remind, continue) carries instruction_ru /
+    instruction_en built in grammar_service: «Выбери…»/"Pick…" with options, else «Впиши…»/"Type…",
+    plus the case and number, the numeral case, the verb tense title, or "the right case after the verb"
+  And every check reading task carries «Прочитай текст и выбери: верно или неверно» / "Read the text and choose: true or false"
+  And the runner shows it bold and centred right above the task card, in the UI language
+  And a task without the fields (an old open check) shows no line
 ```

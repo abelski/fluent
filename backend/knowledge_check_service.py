@@ -55,6 +55,8 @@ def _build_choice(exam: dict, count: int) -> list[dict]:
             "question_ru": q["question_ru"] or "",
             "options": options,
             "answer": answer,
+            "instruction_ru": "Прочитай текст и выбери: верно или неверно",
+            "instruction_en": "Read the text and choose: true or false",
         }
         for q, options, answer in random.sample(usable, count)
     ]

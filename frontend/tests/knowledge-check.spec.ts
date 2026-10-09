@@ -204,3 +204,41 @@ for (const lang of ['ru', 'en'] as const) {
     });
   }
 }
+
+// ── #63: server-built instruction line above the task card ─────────────────
+const SHOTS_63 = '../temp_files/screenshots/plan_63_check-task-instructions';
+const INSTR_TASKS = [
+  { name: '01-noun', task: { ...TASKS[0],
+    instruction_ru: 'Выбери правильную форму: родительный падеж, ед. ч.', instruction_en: 'Pick the right form: genitive, singular' } },
+  { name: '02-numeral', task: { type: 'sentence', display: 'Sūnus į mokyklą važiuoja ___ troleibusu.', answer: 'vienuoliktu',
+    full_answer: 'vienuoliktu', translation_ru: 'Сын едет в школу на одиннадцатом троллейбусе.', translation_en: 'The son takes trolleybus 11 to school.',
+    options: ['vienuoliktos', 'vienuolikta', 'vienuoliktu', 'vienuoliktais'],
+    instruction_ru: 'Выбери правильную форму числительного: творительный падеж', instruction_en: 'Pick the right form of the numeral: instrumental' } },
+  { name: '03-verb', task: { type: 'verb_conjugation', verb_infinitive: 'gyventi', translation_ru: 'жить', translation_en: 'to live',
+    tense_label: 'Прошедшее однократное', tense_label_en: 'Past simple (single action)', person_label: 'mes', answer: 'gyvenome',
+    options: ['gyvename', 'gyvenome', 'gyvensime', 'gyvendavome'],
+    instruction_ru: 'Выбери форму глагола: Прошедшее однократное', instruction_en: 'Pick the verb form: Past simple (single action)' } },
+  { name: '04-reading', task: { ...TASKS[1],
+    instruction_ru: 'Прочитай текст и выбери: верно или неверно', instruction_en: 'Read the text and choose: true or false' } },
+];
+
+test('#63 instruction line: shown in the UI language, absent when missing', async ({ page }) => {
+  await checkPage(page, { json: { id: 7, tasks: [INSTR_TASKS[0].task, TASKS[2]] } }, { lang: 'en' });
+  await expect(page.getByTestId('task-instruction')).toHaveText('Pick the right form: genitive, singular');
+  await page.getByRole('button', { name: 'brolio' }).click();
+  await expect(page.getByTestId('reading-task')).toBeVisible();
+  await expect(page.getByTestId('task-instruction')).toHaveCount(0);
+});
+
+for (const lang of ['ru', 'en'] as const) {
+  for (const width of [1280, 375]) {
+    test(`#63 instruction screenshots ${lang} ${width}`, async ({ page }) => {
+      for (const { name, task } of INSTR_TASKS) {
+        await page.unrouteAll({ behavior: 'ignoreErrors' });
+        await checkPage(page, { json: { id: 7, tasks: [task] } }, { lang, width });
+        await expect(page.getByTestId('task-instruction')).toHaveText(lang === 'en' ? task.instruction_en : task.instruction_ru);
+        await page.screenshot({ path: `${SHOTS_63}/${name}-${lang}-${width}.png`, fullPage: true });
+      }
+    });
+  }
+}

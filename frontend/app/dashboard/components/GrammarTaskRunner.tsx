@@ -116,7 +116,13 @@ export interface ReadingTask {
   isRetry?: boolean;
 }
 
-export type Task = DeclensionTask | SentenceTask | VerbConjugationTask | VerbCaseTask | ReadingTask;
+/** Server-built "what to do" line (#63); absent on old stored check tasks. */
+interface TaskInstruction {
+  instruction_ru?: string;
+  instruction_en?: string;
+}
+
+export type Task = (DeclensionTask | SentenceTask | VerbConjugationTask | VerbCaseTask | ReadingTask) & TaskInstruction;
 
 export type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
@@ -529,6 +535,11 @@ export default function GrammarTaskRunner({
         {/* Task card */}
         <div className="flex flex-col items-center justify-center flex-1 gap-12">
           <PageMascot phrase="Pagalvok!" mood={mood} />
+          {task.instruction_ru && (
+            <p data-testid="task-instruction" className="-mb-8 text-sm sm:text-base font-semibold text-ink text-center [text-wrap:balance]">
+              {(lang === 'en' && task.instruction_en) || task.instruction_ru}
+            </p>
+          )}
           {task.type === 'declension' && (
             <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-8 text-center">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">

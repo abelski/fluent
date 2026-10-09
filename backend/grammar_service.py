@@ -543,7 +543,8 @@ def get_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None:
     if config is None:
         return None
     num, level, cases, task_count, title = config
-    return _generate_sentence_tasks(cases, task_count, session, level)
+    tasks = _generate_sentence_tasks(cases, task_count, session, level)
+    return _with_instruction(tasks, "cases", cases)
 
 
 # ── Verb lesson task generators ───────────────────────────────────────────────
@@ -587,8 +588,65 @@ def get_verb_lesson_tasks(lesson_id: int, session: Session) -> list[dict] | None
     _lid, _level, tense_key, task_count, _title = config
 
     if tense_key == "case_governance":
-        return _generate_verb_case_tasks(task_count, session, level=_level)
-    return _generate_verb_conjugation_tasks(tense_key, task_count, session, level=_level)
+        tasks = _generate_verb_case_tasks(task_count, session, level=_level)
+        return _with_instruction(tasks, "verb_case", None)
+    tasks = _generate_verb_conjugation_tasks(tense_key, task_count, session, level=_level)
+    return _with_instruction(tasks, "verb_conjugation", tense_key)
+
+
+# ── Task instruction line (#63) ───────────────────────────────────────────────
+# Keyed by the Lithuanian case names in lessons.json `cases`.
+_CASE_RU = {
+    "Vardininkas": "именительный падеж", "Kilmininkas": "родительный падеж", "Naudininkas": "дательный падеж",
+    "Galininkas": "винительный падеж", "Įnagininkas": "творительный падеж", "Vietininkas": "местный падеж",
+    "Šauksmininkas": "звательный падеж",
+}
+_CASE_EN = {
+    "Vardininkas": "nominative", "Kilmininkas": "genitive", "Naudininkas": "dative",
+    "Galininkas": "accusative", "Įnagininkas": "instrumental", "Vietininkas": "locative",
+    "Šauksmininkas": "vocative",
+}
+_NUMBER_RU = {"Vienaskaita": "ед. ч.", "Daugiskaita": "мн. ч."}
+_NUMBER_EN = {"Vienaskaita": "singular", "Daugiskaita": "plural"}
+
+
+def _instruction(kind: str, detail, has_options: bool) -> tuple[str, str] | None:
+    """(ru, en) instruction for one task, or None when the kind is unknown."""
+    verb_ru, verb_en = ("Выбери", "Pick") if has_options else ("Впиши", "Type")
+    if kind == "verb_case":
+        return f"{verb_ru} правильный падеж после глагола", f"{verb_en} the right case after the verb"
+    if kind == "verb_conjugation":
+        ru = _TENSE_LABELS.get(detail)
+        en = _TENSE_LABELS_EN.get(detail)
+        if not ru or not en:
+            return None
+        return f"{verb_ru} форму глагола: {ru}", f"{verb_en} the verb form: {en}"
+    if kind == "cases":
+        infos = [CASE_INFO[c] for c in detail if c in CASE_INFO]
+        if not infos:
+            return None
+        if all(num == "Skaičiai" for _, num in infos):
+            names = [name.split(": ")[-1] for name, _ in infos]
+            ru_cases = " / ".join(dict.fromkeys(_CASE_RU[n] for n in names if n in _CASE_RU))
+            en_cases = " / ".join(dict.fromkeys(_CASE_EN[n] for n in names if n in _CASE_EN))
+            ru = f"{verb_ru} правильную форму числительного"
+            en = f"{verb_en} the right form of the numeral"
+            return (f"{ru}: {ru_cases}", f"{en}: {en_cases}") if ru_cases else (ru, en)
+        pairs = [(n, num) for n, num in infos if n in _CASE_RU and num in _NUMBER_RU]
+        if not pairs:
+            return None
+        ru = " / ".join(f"{_CASE_RU[n]}, {_NUMBER_RU[num]}" for n, num in pairs)
+        en = " / ".join(f"{_CASE_EN[n]}, {_NUMBER_EN[num]}" for n, num in pairs)
+        return f"{verb_ru} правильную форму: {ru}", f"{verb_en} the right form: {en}"
+    return None
+
+
+def _with_instruction(tasks: list[dict], kind: str, detail) -> list[dict]:
+    for t in tasks:
+        line = _instruction(kind, detail, bool(t.get("options")))
+        if line:
+            t["instruction_ru"], t["instruction_en"] = line
+    return tasks
 
 
 # A comma at the very end of a form, allowing for combining accents after it —
