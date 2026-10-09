@@ -514,14 +514,15 @@ def test_practice_categories_warm_call_hits_no_database(client, db):
 def test_publishing_a_practice_test_updates_the_category_count(client, db):
     category_id, test_id = _practice_test(db, "Cache Publish", status="draft")
 
-    def _count() -> int:
+    def _row():
         rows = client.get("/api/practice/categories", headers=USER).json()
-        return next(c["test_count"] for c in rows if c["id"] == category_id)
+        return next((c for c in rows if c["id"] == category_id), None)
 
-    assert _count() == 0
+    # #62a — a category with only a draft test is hidden from non-admins
+    assert _row() is None
     assert client.patch(f"/api/admin/practice/tests/{test_id}", headers=ADMIN,
                         json={"status": "published"}).status_code == 200
-    assert _count() == 1
+    assert _row()["test_count"] == 1
 
 
 def test_admin_question_edit_is_visible_in_the_exam_pool(client, db):

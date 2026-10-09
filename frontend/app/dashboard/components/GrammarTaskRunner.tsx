@@ -19,6 +19,7 @@ import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 import { useMascotMood } from '../../../lib/mascotMood';
 import { useNumberKeys } from '../../../lib/useNumberKeys';
+import DialogueText from './DialogueText';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -101,7 +102,21 @@ export interface VerbCaseTask {
   isRetry?: boolean;
 }
 
-export type Task = DeclensionTask | SentenceTask | VerbConjugationTask | VerbCaseTask;
+/** Knowledge check (#62a): a Practice question, with its test's passage (may be empty). */
+export interface ReadingTask {
+  type: 'reading';
+  passage_lt: string;
+  passage_title_ru?: string | null;
+  passage_title_en?: string | null;
+  question_lt: string;
+  question_ru: string;
+  /** 2–4 choices, one === answer. */
+  options: string[];
+  answer: string;
+  isRetry?: boolean;
+}
+
+export type Task = DeclensionTask | SentenceTask | VerbConjugationTask | VerbCaseTask | ReadingTask;
 
 export type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
@@ -349,11 +364,15 @@ export interface GrammarTaskRunnerProps {
   hint?: VerbHint;
   /** "Back" in the header — the caller decides where that goes. */
   onExit: () => void;
+  /** Label for the "back" button; defaults to «К урокам». */
+  exitLabel?: string;
   /**
    * Called once, after the last task is answered. `mood` is TAK's final mood so the
    * caller's done screen can carry it over unchanged.
    */
   onFinish: (score: number, total: number, mood: number) => void;
+  /** Fires on the first attempt of each original task (never on a retry) — #62a. */
+  onAnswer?: (index: number, response: string) => void;
 }
 
 export default function GrammarTaskRunner({
@@ -362,7 +381,9 @@ export default function GrammarTaskRunner({
   rules,
   hint,
   onExit,
+  exitLabel,
   onFinish,
+  onAnswer,
 }: GrammarTaskRunnerProps) {
   const { tr, lang } = useT();
 
@@ -419,6 +440,7 @@ export default function GrammarTaskRunner({
   function checkAnswer() {
     if (answerState !== 'unanswered') return;
     const task = queue[taskIndex];
+    if (!task.isRetry) onAnswer?.(taskIndex, typed.trim());
     grade(task, isAnswerMatch(typed.trim(), task.answer));
   }
 
@@ -428,6 +450,7 @@ export default function GrammarTaskRunner({
     const task = queue[taskIndex];
     if (!task.options) return;
     setPicked(i);
+    if (!task.isRetry) onAnswer?.(taskIndex, task.options[i]);
     grade(task, task.options[i] === task.answer);
   }
 
@@ -438,7 +461,7 @@ export default function GrammarTaskRunner({
       setShownAnswer(task.type === 'sentence' ? task.full_answer : task.answer);
       // Re-queue once at the end; a retry answered wrong is not appended again.
       if (!task.isRetry) {
-        setQueue((q) => [...q, { ...task, isRetry: true, options: task.options && shuffled(task.options) }]);
+        setQueue((q) => [...q, { ...task, isRetry: true, options: task.options && shuffled(task.options) } as Task]);
       }
     }
 
@@ -474,7 +497,7 @@ export default function GrammarTaskRunner({
             onClick={onExit}
             className="text-gray-400 hover:text-gray-900 text-sm transition-colors"
           >
-            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.grammar.backToLessons}
+            <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{exitLabel ?? tr.grammar.backToLessons}
           </button>
           <span className="text-gray-400 text-sm flex items-center gap-2">
             {task.isRetry && (
@@ -601,6 +624,32 @@ export default function GrammarTaskRunner({
                     'border-gray-200 bg-gray-50 focus:border-emerald-400 focus:bg-white'}`}
               />
               )}
+            </div>
+          )}
+
+          {task.type === 'reading' && (
+            <div className="w-full flex flex-col gap-4" data-testid="reading-task">
+              {task.passage_lt && (
+                <div data-testid="reading-passage" className="w-full bg-white border border-line rounded-2xl overflow-hidden">
+                  <div className="px-5 py-3 border-b border-line-strong flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-gray-700">
+                      {(lang === 'en' && task.passage_title_en) || task.passage_title_ru}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full font-semibold">
+                      {tr.practice.textLabel}
+                    </span>
+                  </div>
+                  <div className="px-5 py-4 max-h-64 overflow-y-auto">
+                    <DialogueText text={task.passage_lt} />
+                  </div>
+                </div>
+              )}
+              <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-6 text-left">
+                <DialogueText text={task.question_lt || task.question_ru} />
+                {task.question_lt && task.question_ru && task.question_ru !== task.question_lt && (
+                  <p className="text-gray-500 text-sm mt-2">{task.question_ru}</p>
+                )}
+              </div>
             </div>
           )}
 

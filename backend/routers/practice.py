@@ -90,7 +90,10 @@ def list_categories(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """List all practice categories with published test counts.
+    """List practice categories with published test counts.
+
+    Non-admin callers (guests included) only get categories with at least one test
+    they may see (#62a); admins get every category.
 
     Optional auth (#55): anonymous callers get published counts and enrolled=false,
     so the practice page can double as a guest preview.
@@ -128,6 +131,9 @@ def list_categories(
             "enrolled": c.id in enrolled_ids,
         }
         for c in categories
+        # #62a — non-admins never see a category with nothing they may open, so later
+        # plans can seed hidden (`testing`) categories into the shared prod DB.
+        if is_admin or test_counts.get(c.id, 0) > 0
     ]
 
 
@@ -179,6 +185,8 @@ def list_enrolled_categories(
     for c in categories:
         cat_tests = tests_by_category.get(c.id, [])
         tests_total = len(cat_tests)
+        if not cat_tests and not is_admin:
+            continue  # #62a — same rule as list_categories
         tests_passed = sum(
             1 for t in cat_tests
             if best_scores.get(t.id, 0.0) >= t.pass_threshold
