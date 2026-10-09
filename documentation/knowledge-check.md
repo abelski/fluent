@@ -30,6 +30,17 @@ Spec: `specs/knowledge-check.md`. Code: `backend/knowledge_check_service.py` (lo
 - **Empty Practice categories are hidden from non-admins** (`/practice/categories`,
   `/me/practice-categories`) so later plans can seed `testing` categories into the shared prod DB.
 
+## Task instruction line (#63)
+
+Each grammar task carries `instruction_ru` / `instruction_en`, built by `_instruction()` in
+`backend/grammar_service.py` and attached in `get_lesson_tasks` / `get_verb_lesson_tasks`; reading
+tasks get theirs in `knowledge_check_service._build_choice`. Why server-built: the server already
+knows the lesson's cases / tense, which the task payload doesn't carry (the check strips `topic`),
+and a future mobile client gets the same text for free. Why in the generators rather than the check
+only: first scoped to the check + gaps run, widened at the prototype review (2026-10-10) so that
+grammar lessons announce the task too — attaching at generation covers every caller (lessons, check,
+gaps, remind, continue) with one change. Old stored checks lack the fields; the runner just omits the line.
+
 ## Gotcha — the table is created in prod by a local boot
 `KnowledgeCheck` (`knowledge_check`) is a new table created by `create_all()` on startup. Local
 `DATABASE_URL` is production Neon, so the first local uvicorn boot after the model landed created

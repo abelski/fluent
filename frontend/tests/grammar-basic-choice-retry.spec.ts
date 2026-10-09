@@ -175,3 +175,17 @@ test.describe('#60 grammar basic choice + retry', () => {
     expect(overflow).toBeLessThanOrEqual(0);
   });
 });
+
+// #63 — a grammar lesson task shows the instruction line under the rules card.
+for (const lang of ['ru', 'en'] as const) {
+  for (const width of [1280, 375]) {
+    test(`#63 lesson instruction ${lang} ${width}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      const tasks = ADVANCED_TASKS.map((t) => ({ ...t,
+        instruction_ru: 'Впиши правильную форму: винительный падеж, ед. ч.', instruction_en: 'Type the right form: accusative, singular' }));
+      await setup(page, { level: 'advanced', tasks, lang });
+      await expect(page.getByTestId('task-instruction')).toHaveText(lang === 'en' ? 'Type the right form: accusative, singular' : 'Впиши правильную форму: винительный падеж, ед. ч.');
+      await page.screenshot({ path: `../temp_files/screenshots/plan_63_check-task-instructions/05-lesson-${lang}-${width}.png`, fullPage: true });
+    });
+  }
+}
