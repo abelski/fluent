@@ -129,6 +129,32 @@ Scenario: effort radar without a token or before data loads
   Then the component renders nothing (returns null)
 ```
 
+### "Work on mistakes" widget (#62a)
+
+Spec of the check itself: `specs/knowledge-check.md`.
+
+```gherkin
+Scenario: placement
+  Given a signed-in user on /
+  Then the GapWidget card sits in the right column between the leaderboard and the effort radar
+  And it renders even when the radar is hidden; without a token or data it renders nothing
+
+Scenario: no completed check (free or Premium)
+  Then the card shows the title, a pitch with TAK and a "Check my knowledge" CTA → /dashboard/check
+
+Scenario: free user after the check
+  Then the card shows "Checked on <date> · <correct> of <total>", the weak topics as red chips
+    (or a grey "No gaps found" box) and an upsell line linking to /pricing
+  And there is no control to start the check again
+
+Scenario: Premium (or admin) user after the check
+  Then the card shows tabs "Close the gaps" and "Recommendations"
+  And "Close the gaps" lists weak topics with "Start" → /dashboard/check?gaps=1, disabled when there are none
+  And "Recommendations" lists programs/categories with the reason; "Enroll" calls the existing
+    enroll endpoint and turns the row into "Enrolled"
+  And a footer link "Take the check again" → /dashboard/check
+```
+
 ### Continue-session CTA, news, Premium upsell
 
 ```gherkin

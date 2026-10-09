@@ -214,3 +214,50 @@ def test_exam_free_test_ok_for_free_user_and_still_auth_only(client):
     assert client.get(f"/api/practice/tests/{tid}/exam", headers=FREE).status_code == 200
     assert client.get(f"/api/practice/tests/{tid}/exam").status_code == 401
     assert client.get("/api/me/practice-categories").status_code == 401
+
+
+# ── #62a — empty categories are hidden from non-admins ───────────────────────
+
+def _testing_only_category() -> int:
+    with Session(_test_engine) as s:
+        cat = PracticeCategory(name_ru="Скрытая 62a", sort_order=9001)
+        s.add(cat)
+        s.commit()
+        s.refresh(cat)
+        _created["cat"].append(cat.id)
+        t = PracticeTest(category_id=cat.id, title_ru="Hidden", status="testing")
+        s.add(t)
+        s.commit()
+        s.refresh(t)
+        _created["test"].append(t.id)
+        for uid in (_FREE,):
+            s.add(UserPracticeCategoryEnrollment(user_id=uid, category_id=cat.id))
+        s.add(UserPracticeCategoryEnrollment(user_id="admin-test-id", category_id=cat.id))
+        s.commit()
+        return cat.id
+
+
+def _ids(client, url, headers=None) -> set[int]:
+    r = client.get(url, headers=headers or {})
+    assert r.status_code == 200
+    return {c["id"] for c in r.json()}
+
+
+def test_testing_only_category_hidden_from_guest_and_free(client):
+    hidden = _testing_only_category()
+    assert hidden not in _ids(client, "/api/practice/categories")
+    assert hidden not in _ids(client, "/api/practice/categories", FREE)
+    assert hidden not in _ids(client, "/api/me/practice-categories", FREE)
+
+
+def test_testing_only_category_shown_to_admin(client):
+    hidden = _testing_only_category()
+    assert hidden in _ids(client, "/api/practice/categories", ADMIN)
+    assert hidden in _ids(client, "/api/me/practice-categories", ADMIN)
+
+
+def test_category_with_a_published_test_visible_to_everyone(client):
+    client.post(f"/api/me/practice-categories/{_cat_id()}", headers=FREE)
+    assert _cat_id() in _ids(client, "/api/practice/categories")
+    assert _cat_id() in _ids(client, "/api/practice/categories", FREE)
+    assert _cat_id() in _ids(client, "/api/me/practice-categories", FREE)

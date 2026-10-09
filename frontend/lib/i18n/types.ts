@@ -1324,4 +1324,40 @@ export interface Translations {
     listenPremium: string;
     lockedLabel: string;
   };
+  // #62a — knowledge check + "Work on mistakes" home widget
+  knowledgeCheck: {
+    title: string;
+    pitch: string;
+    start: string;
+    checked: string; // {date} {correct} {total}
+    weakLabel: string;
+    noGaps: string;
+    upsell: string;
+    upsellLink: string;
+    tabGaps: string;
+    tabRecs: string;
+    gapsLead: string;
+    go: string;
+    recsLead: string;
+    recsEmpty: string;
+    enroll: string;
+    enrolled: string;
+    because: string;
+    kindGrammar: string;
+    kindPractice: string;
+    again: string;
+    back: string;
+    resultTitle: string;
+    resultScore: string; // {correct} {total}
+    resultSub: string;
+    strong: string;
+    weak: string;
+    weakHeading: string;
+    strongHeading: string;
+    resultUpsell: string;
+    premiumTitle: string;
+    premiumText: string;
+    loadError: string;
+    noGapsError: string;
+  };
 }

@@ -6,6 +6,7 @@ import { BACKEND_URL, getToken } from '../lib/api';
 import { useT } from '../lib/useT';
 import Leaderboard from '../components/Leaderboard';
 import EffortRadar from '../components/EffortRadar';
+import GapWidget from '../components/GapWidget';
 import TakChevron from '../components/TakChevron';
 import Tak from '../components/Tak';
 
@@ -309,6 +310,7 @@ function UserHome({ stats, activityDates }: { stats: Stats | null; activityDates
 
           <div className="w-full lg:col-start-2 lg:row-start-1 lg:row-span-2">
             <Leaderboard />
+            <GapWidget />
             <EffortRadar />
           </div>
 

@@ -94,6 +94,9 @@ library's "Deliberate deviations" table.
 | Articles hero / category chips / newest + stack / theme cards (#55) | `frontend/app/dashboard/articles/ArticlesList.tsx` (`ArticlesBento`); theme keys `ARTICLE_THEMES` in `articles/types.ts` |
 | Effort radar card on the signed-in home (#56) | `frontend/components/EffortRadar.tsx` |
 | Card info button — "i" link in a card's title row (#57, first use: effort radar → balance article) | `frontend/components/EffortRadar.tsx` |
+| "Work on mistakes" widget on the signed-in home (#62a) | `frontend/components/GapWidget.tsx` |
+| Knowledge check page + result screen (#62a) | `frontend/app/dashboard/check/page.tsx` |
+| `reading` runner task / practice passage renderer (#62a) | `frontend/app/dashboard/components/GrammarTaskRunner.tsx`, `frontend/app/dashboard/components/DialogueText.tsx` |
 | Complexity selector (chevron-clipped knob) | `frontend/app/dashboard/components/StarLevelToggle.tsx` |
 
 The tab strip scrolls horizontally (mockup `.navtabs`) but stays desktop-only; below `1000px` the

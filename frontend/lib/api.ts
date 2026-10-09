@@ -1302,3 +1302,72 @@ export async function getEffort(): Promise<EffortBreakdown> {
   if (!r.ok) throw new Error('Failed to load effort');
   return r.json();
 }
+
+// ── Knowledge check + "Work on mistakes" (#62a) ───────────────────────────────
+
+export interface KnowledgeCheckTopic {
+  topic: string;
+  title_ru: string;
+  title_en: string;
+  correct: number;
+  total: number;
+  weak: boolean;
+}
+
+export interface KnowledgeCheckResult {
+  id: number;
+  created_at: string;
+  correct: number;
+  total: number;
+  topics: KnowledgeCheckTopic[];
+}
+
+export interface KnowledgeCheckRecommendation {
+  kind: 'grammar' | 'practice';
+  id: number;
+  title_ru: string;
+  title_en: string;
+  enrolled: boolean;
+  reasons: { title_ru: string; title_en: string }[];
+}
+
+export interface KnowledgeCheckState {
+  latest: KnowledgeCheckResult | null;
+  is_premium: boolean;
+  /** Present for Premium only. */
+  recommendations?: KnowledgeCheckRecommendation[];
+}
+
+/** Error carrying the server's `detail.code` (e.g. `premium_required`, `no_gaps`). */
+export class ApiCodeError extends Error {
+  constructor(public status: number, public code: string | null) {
+    super(code ?? `HTTP ${status}`);
+  }
+}
+
+async function kcFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const r = await fetch(`${BACKEND_URL}/api/me/knowledge-check${path}`, {
+    ...init,
+    headers: {
+      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    const detail = (err as { detail?: { code?: string } }).detail;
+    throw new ApiCodeError(r.status, typeof detail === 'object' && detail ? detail.code ?? null : null);
+  }
+  return r.json();
+}
+
+export const getKnowledgeCheck = () => kcFetch<KnowledgeCheckState>('');
+
+export const startKnowledgeCheck = () =>
+  kcFetch<{ id: number; tasks: GrammarTask[] }>('', { method: 'POST' });
+
+export const submitKnowledgeCheck = (id: number, responses: (string | null)[]) =>
+  kcFetch<KnowledgeCheckResult>(`/${id}/answers`, { method: 'POST', body: JSON.stringify({ responses }) });
+
+export const getGapTasks = () => kcFetch<GrammarTask[]>('/gaps/tasks');

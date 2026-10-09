@@ -90,13 +90,18 @@ test.describe('Effort radar', () => {
     await expect(tip).toContainText('Грамматика');
   });
 
-  test('375px: tap shows the tooltip; card right after the leaderboard; no overflow; labels inside', async ({ page }) => {
+  test('375px: tap shows the tooltip; card right after the leaderboard + gap widget; no overflow; labels inside', async ({ page }) => {
     await mockHome(page, USUAL, { width: 375 });
     await page.goto('/');
     const card = page.getByTestId('effort-radar');
     await expect(card).toBeVisible();
-    const next = await page.getByTestId('leaderboard').evaluate((el) => el.nextElementSibling?.getAttribute('data-testid'));
-    expect(next).toBe('effort-radar');
+    // #62a — the "Work on mistakes" widget sits between the leaderboard and the radar.
+    await expect(page.getByTestId('gap-widget')).toBeVisible();
+    const next = await page.getByTestId('leaderboard').evaluate((el) => [
+      el.nextElementSibling?.getAttribute('data-testid'),
+      el.nextElementSibling?.nextElementSibling?.getAttribute('data-testid'),
+    ]);
+    expect(next).toEqual(['gap-widget', 'effort-radar']);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
     const box = (await card.boundingBox())!;

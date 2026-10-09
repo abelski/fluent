@@ -692,6 +692,28 @@
     </table>
   </div>
 
+  <h2>GapWidget — «Работа над ошибками» (#62a)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      <code>frontend/components/GapWidget.tsx</code> &mdash; signed-in home, right column between <code>Leaderboard</code>
+      and <code>EffortRadar</code> (same order on mobile). Flat card <code>bg-white rounded-[14px] border border-line p-5 mb-4</code>,
+      title in the leaderboard's uppercase label style. Data: <code>GET /api/me/knowledge-check</code>.
+    </p>
+    <table>
+      <tr><th>Piece</th><th>Spec</th></tr>
+      <tr><td>No check</td><td>Pitch with bare TAK 40px; full-width ink CTA <code>rounded-[10px] bg-ink text-white</code> «Проверить знания ›».</td></tr>
+      <tr><td>Weak-topic chip</td><td><code>rounded-full bg-destructive/10 text-destructive px-3 py-1 text-[13px]</code>; «no gaps» = the radar's <code>bg-[#f2f3f3]</code> note box.</td></tr>
+      <tr><td>Free after</td><td>Date + score meta (<code>text-muted</code>), chips, <code>border-line-strong</code> rule, upsell line + green «Узнать о Premium ›».</td></tr>
+      <tr><td>Premium tabs</td><td>The existing pill-tab recipe (Settings / Статьи): <code>bg-[#f2f3f3] rounded-full p-1</code>, active <code>bg-white font-semibold text-ink</code>; equal width.</td></tr>
+      <tr><td>Recommendation row</td><td>Kind label (<code>text-faint</code> uppercase), name, «Из-за: …»; outlined ink «Записаться» → <code>bg-emerald-50 text-emerald-700</code> «✓ Записан» pill. Rows split by <code>border-line-soft</code>.</td></tr>
+    </table>
+    <p style="font-size:13.5px;line-height:1.8;margin:16px 0 0;">
+      Check page <code>/dashboard/check</code>: <code>GrammarTaskRunner</code> with the new <code>reading</code> task (passage card with
+      title + blue «Текст» badge, scrollable <code>max-h-64</code>, rendered by <code>DialogueText</code>; question card below);
+      result screen = TAK «Gerai!», score, weak then strong rows with n/2 and Слабая/Сильная pill, ink «На главную».
+    </p>
+  </div>
+
   <h2>Card info button (#57)</h2>
   <div class="card" style="margin-bottom:20px;">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">

@@ -749,3 +749,19 @@ class BalanceTipOptOut(SQLModel, table=True):
     __tablename__ = "balance_tip_opt_out"
     user_id: str = Field(foreign_key="user.id", primary_key=True)
     created_at: datetime = Field(default_factory=_utcnow)
+
+
+class KnowledgeCheck(SQLModel, table=True):
+    """One knowledge check run (#62a, see documentation/knowledge-check.md).
+
+    `tasks_json` is the server copy of the tasks (incl. `answer` and `topic`) so grading
+    never trusts the client. `result_json` NULL = started, not completed; otherwise a JSON
+    list of `{topic, title_ru, title_en, correct, total, weak}`.
+    Additive table: startup's create_all() creates it.
+    """
+    __tablename__ = "knowledge_check"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    created_at: datetime = Field(default_factory=_utcnow)
+    tasks_json: str
+    result_json: Optional[str] = None

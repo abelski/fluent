@@ -12,7 +12,7 @@ const PUBLIC_PAGES = [
   '/dashboard/practice', // #55 — guests preview practice
 ];
 
-const PRIVATE_PAGES = ['/dashboard', '/dashboard/review'];
+const PRIVATE_PAGES = ['/dashboard', '/dashboard/review', '/dashboard/check'];
 
 test.describe('Public SEO pages (logged out)', () => {
   for (const path of PUBLIC_PAGES) {

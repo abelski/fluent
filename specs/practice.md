@@ -22,7 +22,9 @@ Backed by: `backend/routers/practice.py`, `frontend/app/dashboard/practice/`,
 Scenario: anyone lists practice categories
   Given any caller, authenticated or not
   When GET /practice/categories is called
-  Then every category is returned with a published-test count
+  Then every category with at least one test the caller may see is returned with a
+    published-test count (#62a — a category with nothing visible is omitted for
+    non-admins, guests included; admins get every category)
   And "enrolled" is false for an anonymous caller
   And tests with status "testing" or "draft" are not counted unless the caller is an admin
 ```
@@ -44,6 +46,7 @@ Scenario: student's enrolled-categories view
     tests_total computed from the user's best score per visible test versus that
     test's own pass_threshold
   And a user with no enrollments gets an empty list without querying tests at all
+  And for a non-admin an enrolled category with no visible test is omitted (#62a)
 ```
 
 ```gherkin
