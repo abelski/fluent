@@ -30,7 +30,7 @@ const RECS = [
     reasons: [{ title_ru: 'Чтение', title_en: 'Reading' }] },
 ];
 
-const PASSAGE = '*Lina ir Tomas apie Maiklą:*\n\n— Tomai, ar Maiklas yra tavo draugas?\n— Taip, Lina, Maiklas yra mano draugas.\n— Ar jis kalba lietuviškai?\n— Ne, Maiklas nekalba lietuviškai.';
+const PASSAGE = '*Lina ir Tomas apie Maiklą:*\n\n— Tomai, ar Maiklas yra tavo draugas?\n— Taip, Lina, Maiklas yra mano draugas.\n— Ar jis kalba lietuviškai?\n— Ne, Maiklas nekalba lietuviškai.\n— Kaip jūs, tu ir Maiklas, kalbate? Angliškai?\n— Taip. O tu, Lina, kalbi angliškai?\n— Taip, aš kalbu angliškai ir ispaniškai. Ar Maiklas supranta ispaniškai?\n— Taip, jis labai gerai kalba ispaniškai.\n— O tu, Tomai?\n— Aš nekalbu ispaniškai.';
 const TASKS = [
   { type: 'sentence', display: 'Aš neturiu ___.', answer: 'brolio', full_answer: 'brolio',
     translation_ru: 'У меня нет брата.', translation_en: "I don't have a brother.", options: ['brolis', 'brolio', 'broliui', 'brolį'] },
@@ -135,6 +135,11 @@ test.describe('Check page', () => {
     // reading with a passage
     await expect(page.getByTestId('reading-passage')).toBeVisible();
     await expect(page.getByTestId('reading-passage')).toContainText('Maiklas yra mano draugas');
+    // whole passage visible, no inner scroll box hiding the answer lines
+    await expect(page.getByTestId('reading-passage').getByText('Aš nekalbu ispaniškai.')).toBeVisible();
+    const box = await page.getByTestId('reading-passage').boundingBox();
+    const last = await page.getByTestId('reading-passage').getByText('Aš nekalbu ispaniškai.').boundingBox();
+    expect(last!.y + last!.height).toBeLessThanOrEqual(box!.y + box!.height);
     await page.getByRole('button', { name: 'Neteisingas' }).click();
     // reading without a passage
     await expect(page.getByTestId('reading-task')).toContainText('Tomas kalba ispaniškai');

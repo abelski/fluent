@@ -639,7 +639,7 @@ export default function GrammarTaskRunner({
                       {tr.practice.textLabel}
                     </span>
                   </div>
-                  <div className="px-5 py-4 max-h-64 overflow-y-auto">
+                  <div className="px-5 py-4">
                     <DialogueText text={task.passage_lt} />
                   </div>
                 </div>
