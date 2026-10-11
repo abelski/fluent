@@ -491,7 +491,7 @@ LESSONS = [
             ("lydeka", "щука", "pike"),
             # Meat
             ("mėsa", "мясо", "meat"),
-            ("vištiena", "курятина", "chicken"),
+            ("vištiena", "курятина", "chicken (meat)"),
             ("jautiena", "говядина", "beef"),
             ("kiauliena", "свинина", "pork"),
             ("aviena", "баранина", "lamb/mutton"),

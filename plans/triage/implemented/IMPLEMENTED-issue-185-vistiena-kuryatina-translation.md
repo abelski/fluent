@@ -1,6 +1,6 @@
 ---
 kind: bugfix
-status: in_progress
+status: done
 iteration: 1
 max_iterations: 10
 suggested_model: haiku
@@ -27,13 +27,17 @@ suggested_model haiku / effort low — one-row data update plus a test copied fr
 Data-only fix; no behavior change. Vocabulary spec already expects correct translations — data drifted from it.
 
 ## Fix plan
-- [ ] 1. Check for duplicates: `SELECT id, lithuanian, translation_ru, translation_en FROM word WHERE lithuanian ILIKE '%vištien%' OR lithuanian ILIKE 'višta%' ORDER BY id;`
-- [ ] 2. `UPDATE word SET translation_ru='курятина', translation_en='chicken (meat)' WHERE lithuanian='vištiena';` — leave 6054 `višta` as is.
-- [ ] 3. Fix the same strings in `backend/seed_ne_dienos_2.py` (and any other seed file grep finds).
+- [x] 1. Check for duplicates: `SELECT id, lithuanian, translation_ru, translation_en FROM word WHERE lithuanian ILIKE '%vištien%' OR lithuanian ILIKE 'višta%' ORDER BY id;`
+- [x] 2. `UPDATE word SET translation_ru='курятина', translation_en='chicken (meat)' WHERE lithuanian='vištiena';` — leave 6054 `višta` as is.
+- [x] 3. Fix the same strings in `backend/seed_ne_dienos_2.py` (and any other seed file grep finds).
 
 ## Tests
-- [ ] Write a Playwright test `frontend/tests/issue-185-vistiena-translation.spec.ts` (copy `issue-121-rezervuoti-translation.spec.ts` pattern; mock review API; assert "курятина" shown, not "курица").
-- [ ] Run it: `cd frontend && npx playwright test tests/issue-185-vistiena-translation.spec.ts --reporter=list`
+- [x] Write a Playwright test `frontend/tests/issue-185-vistiena-translation.spec.ts` (copy `issue-121-rezervuoti-translation.spec.ts` pattern; mock review API; assert "курятина" shown, not "курица").
+- [x] Run it: `cd frontend && npx playwright test tests/issue-185-vistiena-translation.spec.ts --reporter=list`
+
+## Review
+
+- [x] Code review passed (round 1 finding fixed: the mocked Playwright spec guards nothing, so `backend/tests/test_issue_185_vistiena_seed.py` now pins the seed tuple)
 
 ## Definition of Done
 
