@@ -1,12 +1,12 @@
 ---
 kind: bugfix
-status: draft
-iteration: 0
+status: done
+iteration: 1
 max_iterations: 14
 suggested_model: haiku
 suggested_effort: low
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: haiku
+confirmed_effort: low
 ---
 
 # Issue #186 — /dashboard/check/
@@ -31,14 +31,18 @@ suggested_model haiku / effort low — one guarded row update plus a JSON edit, 
 Data-only fix. `documentation/grammar-sentence-data-integrity.md` (plausibility invariant) already describes this correctly; the data drifted from it.
 
 ## Fix plan
-- [ ] 1. Confirm `parko` is free: `SELECT id, display FROM grammar_sentence WHERE case_index=2 AND display ILIKE 'Šalia park%' OR (case_index=2 AND lower(<answer col>)='parko');` returns 0 rows. Fallback: `banko` / `teatro`.
-- [ ] 2. Run the guarded update (via `backend/.venv/bin/python` + psycopg). Set display `Šalia park___ yra parduotuvė.`, ending `o`, answer `parko`, RU `Рядом с парком есть магазин.`, EN `There is a store next to the park.`, with `WHERE id=87 AND display='Šalia draug___ yra parduotuvė.'`. Re-SELECT to confirm.
-- [ ] 3. Make the same edit in `backend/data/en_content/grammar_sentences.json`, because `apply_en_content.py` matches on `(case_index, display, russian)`. Grep `backend/` for `draug___` to find other seed copies.
-- [ ] 4. Add #186 to the plausibility section of `documentation/grammar-sentence-data-integrity.md`.
+- [x] 1. Confirm `parko` is free: `SELECT id, display FROM grammar_sentence WHERE case_index=2 AND display ILIKE 'Šalia park%' OR (case_index=2 AND lower(<answer col>)='parko');` returns 0 rows. Fallback: `banko` / `teatro`.
+- [x] 2. Run the guarded update (via `backend/.venv/bin/python` + psycopg). Set display `Šalia park___ yra parduotuvė.`, ending `o`, answer `parko`, RU `Рядом с парком есть магазин.`, EN `There is a store next to the park.`, with `WHERE id=87 AND display='Šalia draug___ yra parduotuvė.'`. Re-SELECT to confirm.
+- [x] 3. Make the same edit in `backend/data/en_content/grammar_sentences.json`, because `apply_en_content.py` matches on `(case_index, display, russian)`. Grep `backend/` for `draug___` to find other seed copies.
+- [x] 4. Add #186 to the plausibility section of `documentation/grammar-sentence-data-integrity.md`.
 
 ## Tests
-- [ ] Write `frontend/tests/issue-186-salia-draugo.spec.ts` (follow the issue-162 spec). Fetch `/api/grammar/lessons/2/tasks` and assert that no task pairs `draug` with `parduotuvė`.
-- [ ] Run it: `cd frontend && npx playwright test tests/issue-186-salia-draugo.spec.ts --reporter=list`
+- [x] Write `frontend/tests/issue-186-salia-draugo.spec.ts` (follow the issue-162 spec). Fetch `/api/grammar/lessons/2/tasks` and assert that no task pairs `draug` with `parduotuvė`.
+- [x] Run it: `cd frontend && npx playwright test tests/issue-186-salia-draugo.spec.ts --reporter=list`
+
+## Review
+
+- [x] Code review passed (orchestrator: dropped a DB pytest that only read the empty SQLite test DB; the Playwright spec now hits lessons 10–12 and matches `full_answer`, not lesson 2 / `display`)
 
 ## Definition of Done
 

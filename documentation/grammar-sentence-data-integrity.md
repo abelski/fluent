@@ -261,6 +261,8 @@ makes semantic sense as a location", and `brol` was deliberately never included 
 hand-written rule-card `transform` text for those same two cases had simply never been held to
 the same standard — this invariant closes that gap for the hand-authored side of the data too.
 
+Issue #186 (reported 2026-10-09) found a similar problem: row 87 (`Šalia draug___ yra parduotuvė.` / "There is a store near my friend") was semantically implausible — a store is a place, not something logically "next to a person". The fix replaced it with `Šalia park___ yra parduotuvė.` (genitive after *šalia*), changing the blank word from `draugo` to `parko` and updating all three fields (`display`, `russian`, `english`) consistently.
+
 **Plan #9 extended the same sense-check past the locative.** Re-picking every card's examples for
 invariant 2 forced a second look at meaning, and the rule generalizes: the example must be
 plausible *for what that case means*, not merely well-formed. A dative example should be a
