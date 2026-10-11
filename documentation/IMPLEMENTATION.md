@@ -299,6 +299,14 @@ client actually made rather than returning a constant.
   `hover:bg-amber-100`); there is no amber token.
 - Locked button: `border-line-strong` + `text-faint` (the disabled look), hover `border-line` + `text-muted`.
 
+## Practice content seed (#62b)
+
+- `backend/scripts/seed_practice_category.py <data.json> [--dry-run]` — generic, insert-only seed for a
+  practice category; JSON lives in `backend/data/practice/` (`tfns.json` first). See
+  `documentation/practice-formats.md`.
+- Collapsible text during questions: `frontend/app/dashboard/practice/[id]/page.tsx`
+  (`data-testid="question-text-block"`).
+
 ## Conventions worth keeping
 
 - Cards are flat: `border border-line rounded-[14px]`, **no drop shadow**, no accent-colored border.

@@ -716,6 +716,19 @@
     </p>
   </div>
 
+  <h2>Practice — collapsible text during questions (#62b)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      <code>frontend/app/dashboard/practice/[id]/page.tsx</code>, question view, when the test has <code>lesson_text_lt</code>:
+      a native <code>&lt;details&gt;</code> above the question card, closed by default.
+      Card <code>border border-line rounded-[14px] bg-white</code>; summary <code>text-sm font-medium text-ink</code> «Текст» / "Text"
+      plus <code>text-muted</code> hint « · показать текст» / " · show text" (hidden when open via <code>group-open:hidden</code>);
+      body rendered by <code>DialogueText</code> in <code>max-h-[40vh] overflow-y-auto</code>, so a long Конституция text scrolls
+      inside the block instead of pushing the question off screen. Token look next to the legacy black-bordered
+      practice cards was approved in the #62b prototype.
+    </p>
+  </div>
+
   <h2>Card info button (#57)</h2>
   <div class="card" style="margin-bottom:20px;">
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">

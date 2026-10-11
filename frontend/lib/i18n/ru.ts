@@ -337,6 +337,7 @@ const ru: Translations = {
     sourceLinkText: 'Конституцию Литвы',
     textBadge: '📄 Текст',
     textLabel: 'Текст',
+    showTextHint: 'показать текст',
     passThresholdSuffix: 'для сдачи',
     goToTestBtn: 'Перейти к тесту',
     finishBtn: 'Завершить',

@@ -1,0 +1,322 @@
+{
+  "format": "tfns",
+  "category": {
+    "name_ru": "Верно / Неверно / Не сказано",
+    "name_en": "True / False / Not stated",
+    "description_ru": "Прочитай короткий текст и реши для каждого утверждения: верно, неверно или в тексте не сказано.",
+    "description_en": "Read a short text and decide for each statement: true, false or not stated in the text.",
+    "sort_order": 11
+  },
+  "tests": [
+    {
+      "title_ru": "Мои соседи",
+      "title_en": "My neighbours",
+      "lesson_text_lt": "Aš gyvenu Kaune, penkiaaukščiame name. Mano butas yra trečiame aukšte. Šalia manęs gyvena pagyvenusi pora – Rūta ir Petras. Jie labai malonūs žmonės. Petras anksčiau dirbo mokytoju, bet dabar jau nedirba – jis pensininkas. Kiekvieną rytą jis vedžioja savo šunį parke. Rūta mėgsta gaminti ir dažnai mane vaišina pyragais. Antrame aukšte gyvena jauna šeima su dviem vaikais. Vaikai kartais vakarais triukšmauja, bet aš nepykstu. Pavasarį mes visi kartu tvarkome kiemą, o vasarą kartais kepame šašlykus.",
+      "questions": [
+        {
+          "question_lt": "Rūta dirba virėja restorane.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Petro šuo yra labai didelis.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Kaimynai iš antro aukšto turi du vaikus.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Pasakotojas gyvena trečiame aukšte.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Petras dabar dirba mokykloje.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Pasakotojas pyksta ant kaimynų vaikų.",
+          "correct_option": "b"
+        }
+      ]
+    },
+    {
+      "title_ru": "Объявление в магазине",
+      "title_en": "A shop notice",
+      "lesson_text_lt": "Mieli pirkėjai! Nuo gegužės 2 dienos keičiasi mūsų parduotuvės „Žalias kampas“ darbo laikas. Darbo dienomis laukiame jūsų nuo 8 iki 21 valandos, šeštadieniais – nuo 9 iki 18 valandos. Sekmadieniais parduotuvė nedirba. Kiekvieną penktadienį visoms daržovėms ir vaisiams taikoma 20 procentų nuolaida. Pirkėjai, kurie turi mūsų nuolaidų kortelę, gauna dovanų puodelį kavos. Nuolaidų kortelę galite gauti prie kasos – reikia tik užpildyti trumpą anketą. Ačiū, kad perkate pas mus!",
+      "questions": [
+        {
+          "question_lt": "Parduotuvėje galima nusipirkti mėsos.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Šeštadieniais parduotuvė užsidaro šeštą valandą vakaro.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Parduotuvė yra miesto centre.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Sekmadieniais parduotuvė dirba trumpiau.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Nuolaidų kortelę galima gauti tik internetu.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Penktadieniais daržovės yra pigesnės.",
+          "correct_option": "a"
+        }
+      ]
+    },
+    {
+      "title_ru": "Письмо подруге",
+      "title_en": "A letter to a friend",
+      "lesson_text_lt": "Labas, Rūta!\n\nKaip tau sekasi? Aš jau dvi savaites gyvenu Vilniuje. Radau darbą nedidelėje kavinėje senamiestyje. Dirbu penkias dienas per savaitę, dažniausiai rytais. Darbas man patinka, nes kolegos draugiški, o klientai mandagūs. Nuomojuosi kambarį kartu su studente iš Klaipėdos. Ji studijuoja mediciną ir beveik visą laiką mokosi. Vakarais aš lankau lietuvių kalbos kursus. Kitą mėnesį planuoju tave aplankyti. Parašyk, kada tau patogu.\n\nApkabinu\nMarija",
+      "questions": [
+        {
+          "question_lt": "Rūta gyvena Kaune.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Marija Vilniuje gyvena jau du mėnesius.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Marija kavinėje uždirba nedaug.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Marija gyvena kartu su klaipėdiete.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Marija dirba kavinėje.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Marija dirba tik vakarais.",
+          "correct_option": "b"
+        }
+      ]
+    },
+    {
+      "title_ru": "День у озера",
+      "title_en": "A day at the lake",
+      "lesson_text_lt": "Praėjusį savaitgalį buvo labai gražus oras, todėl mes su vyru nusprendėme važiuoti prie ežero. Išvažiavome šeštadienį anksti ryte. Kelionė automobiliu truko apie valandą. Prie ežero buvo daug žmonių, bet mes radome ramią vietą po medžiais. Vyras visą dieną žvejojo, o aš skaičiau knygą ir maudžiausi. Pietums valgėme sumuštinius, kuriuos atsivežėme iš namų. Vakare grįžome namo pavargę, bet laimingi. Sekmadienį ilsėjomės namuose ir žiūrėjome filmą.",
+      "questions": [
+        {
+          "question_lt": "Vyras pagavo daug žuvų.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Sekmadienį jie liko namuose.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Prie ežero jie važiavo autobusu.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Jie pietavo kavinėje.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Jie prie šio ežero buvo pirmą kartą.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Šeštadienį oras buvo gražus.",
+          "correct_option": "a"
+        }
+      ]
+    },
+    {
+      "title_ru": "У врача",
+      "title_en": "At the doctor's",
+      "lesson_text_lt": "Vakar Tomas blogai jautėsi: jam skaudėjo galvą ir gerklę. Šiandien ryte jis paskambino į polikliniką ir užsiregistravo pas šeimos gydytoją. Gydytoja jį apžiūrėjo ir pasakė, kad tai paprastas peršalimas. Ji patarė gerti daug šiltos arbatos su medumi ir kelias dienas pabūti namuose. Ji pasakė, kad vaistus nuo temperatūros reikia gerti tik tada, kai temperatūra pakyla virš 38 laipsnių. Gydytoja išrašė Tomui nedarbingumo pažymėjimą trims dienoms. Jei po trijų dienų nebus geriau, Tomas turės vėl ateiti pas gydytoją.",
+      "questions": [
+        {
+          "question_lt": "Gydytoja yra jauna moteris.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Tomui buvo aukšta temperatūra.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Tomas dažnai serga.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Tomas pas gydytoją ėjo be registracijos.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Tomas tris dienas gali nedirbti.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Gydytoja pasakė, kad Tomas serga gripu.",
+          "correct_option": "b"
+        }
+      ]
+    },
+    {
+      "title_ru": "Поездка в Палангу",
+      "title_en": "A trip to Palanga",
+      "lesson_text_lt": "Šią vasarą Lukas su draugais savaitę praleido prie jūros. Į Palangą jie važiavo traukiniu iki Klaipėdos, o iš ten – autobusu. Draugai išsinuomojo nedidelį namelį netoli paplūdimio. Pirmos dvi dienos buvo lietingos, todėl jie lankėsi Gintaro muziejuje ir žaidė stalo žaidimus. Vėliau oras pagerėjo, ir draugai kasdien maudėsi jūroje. Vakarais jie vaikščiojo Basanavičiaus gatve ir valgė ledus. Paskutinę dieną Lukas nupirko mamai gintarinę apyrankę.",
+      "questions": [
+        {
+          "question_lt": "Gintarinę apyrankę Lukas nupirko sau.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Draugai gyveno viešbutyje.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Gintaro muziejus draugams labai patiko.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Kelionės pradžioje oras buvo blogas.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Dalį kelio draugai važiavo traukiniu.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Kelionė draugams kainavo brangiai.",
+          "correct_option": "c"
+        }
+      ]
+    },
+    {
+      "title_ru": "Объявление о работе",
+      "title_en": "A job advert",
+      "lesson_text_lt": "Kepyklai „Rytas“ reikalingas pardavėjas arba pardavėja. Darbas pamainomis: nuo 6 iki 14 arba nuo 14 iki 22 valandos. Ieškome žmogaus, kuris yra mandagus, punktualus ir moka lietuvių kalbą. Patirtis nebūtina – visko išmokysime patys. Siūlome stabilų atlyginimą, nemokamus pietus ir draugišką kolektyvą. Kepykla yra Šiaulių centre, šalia autobusų stoties. Savo gyvenimo aprašymą siųskite el. paštu iki birželio 15 dienos. Jei turite klausimų, skambinkite mums.",
+      "questions": [
+        {
+          "question_lt": "Kepykloje dirba dešimt žmonių.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Darbuotojai gauna nemokamus pietus.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Kepykla ieško tik žmogaus su darbo patirtimi.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Kepykla veikia jau dvidešimt metų.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Kepyklai reikia pardavėjo.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Gyvenimo aprašymą reikia atnešti į kepyklą.",
+          "correct_option": "b"
+        }
+      ]
+    },
+    {
+      "title_ru": "Прогноз погоды",
+      "title_en": "The weather forecast",
+      "lesson_text_lt": "Rytoj, penktadienį, Lietuvoje bus debesuota, daug kur trumpai palis. Dieną temperatūra bus nuo 12 iki 16 laipsnių šilumos, pajūryje – vėsiau, apie 10 laipsnių. Pūs vidutinio stiprumo vakarų vėjas. Naktį lietus baigsis, o rytiniuose rajonuose gali būti rūko. Savaitgalį orai pagerės: šeštadienį ir sekmadienį daugiausia švies saulė, o temperatūra pakils iki 20 laipsnių. Sinoptikai pataria savaitgaliui planuoti išvykas į gamtą.",
+      "questions": [
+        {
+          "question_lt": "Rytoj pūs stiprus rytų vėjas.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Savaitgalį daug žmonių važiuos prie jūros.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Pajūryje rytoj bus šilčiau nei kitur.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Rytoj visoje Lietuvoje bus sausa.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Pirmadienį bus lietinga.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Savaitgalį bus šilčiau nei rytoj.",
+          "correct_option": "a"
+        }
+      ]
+    },
+    {
+      "title_ru": "Моя семья",
+      "title_en": "My family",
+      "lesson_text_lt": "Mano vardas Ieva, man trisdešimt metų. Aš gyvenu Panevėžyje su vyru Mindaugu ir dukra Austėja. Austėjai penkeri metai, ji lanko darželį. Mano vyras dirba sunkvežimio vairuotoju, todėl dažnai būna išvykęs. Aš dirbu bibliotekoje. Mano tėvai gyvena kaime, netoli Panevėžio. Kiekvieną sekmadienį važiuojame pas juos pietų. Austėja labai myli savo senelius ir jų katiną. Mano brolis gyvena Airijoje, bet per Kalėdas visada grįžta namo.",
+      "questions": [
+        {
+          "question_lt": "Ieva turi dukrą.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Austėja nori turėti savo katiną.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Ievos tėvai gyvena netoli dukters.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Ievos vyras dirba bibliotekoje.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Ievos brolis turi vaikų.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Sekmadieniais šeima lanko Ievos tėvus.",
+          "correct_option": "a"
+        }
+      ]
+    },
+    {
+      "title_ru": "Реклама спортклуба",
+      "title_en": "A gym advert",
+      "lesson_text_lt": "Naujas sporto klubas „Judėk“ kviečia visus sportuoti! Klubas atsidarė rugsėjo 1 dieną Alytuje, Vilniaus gatvėje 12. Čia rasite treniruoklių salę, baseiną ir pirtį. Kiekvieną dieną vyksta jogos ir šokių užsiėmimai. Pirmas apsilankymas – nemokamas. Mėnesio abonementas kainuoja 35 eurus, studentams ir senjorams – 25 eurus. Klubas dirba kasdien nuo 7 iki 22 valandos. Registruotis į užsiėmimus galite internetu arba registratūroje.",
+      "questions": [
+        {
+          "question_lt": "Klube dirba patyrę treneriai.",
+          "correct_option": "c"
+        },
+        {
+          "question_lt": "Savaitgaliais klubas nedirba.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Studentai už mėnesio abonementą moka tiek pat, kiek ir kiti.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Klube yra baseinas.",
+          "correct_option": "a"
+        },
+        {
+          "question_lt": "Klubas veikia jau keletą metų.",
+          "correct_option": "b"
+        },
+        {
+          "question_lt": "Pirmą kartą sportuoti galima nemokamai.",
+          "correct_option": "a"
+        }
+      ]
+    }
+  ]
+}

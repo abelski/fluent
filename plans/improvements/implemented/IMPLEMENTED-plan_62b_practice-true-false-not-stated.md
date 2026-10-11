@@ -1,12 +1,12 @@
 ---
 kind: feature
-status: draft
-iteration: 0
+status: done
+iteration: 3
 max_iterations: 30
 suggested_model: opus
 suggested_effort: medium
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: opus
+confirmed_effort: medium
 uat_rounds: 0
 max_uat_rounds: 3
 ---
@@ -80,7 +80,7 @@ unambiguous "not stated" statements need the stronger model.
    decide for each statement: true, false or not stated in the text."), `sort_order` 11 (after
    "Чтение" = 10), no `source_url`.
 2. **Tests** — 10, each: `title_ru`/`title_en` (topic, e.g. «Мои соседи» / "My neighbours"),
-   `lesson_text_lt` 80–150 words of A2 Lithuanian (everyday topics from the exam: home and
+   `lesson_text_lt` 400–1200 chars (~80–150 words) of A2 Lithuanian (everyday topics from the exam: home and
    neighbours, shop or office notice, a letter to a friend, a weekend, work, health, travel, weather,
    family, an advertisement), `question_count` 6, `pass_threshold` 0.7 (same as "Чтение"),
    `is_premium` false, `status` **`testing`** at seed time, no section. Texts are written for Fluent —
@@ -90,7 +90,8 @@ unambiguous "not stated" statements need the stronger model.
    same Lithuanian text (Reading's convention); `option_a` «Tiesa», `option_b` «Netiesa», `option_c`
    «Nepasakyta», `option_d` ""; `correct_option` a/b/c. Every test has at least one of each answer.
    "Nepasakyta" statements must be plausible but neither confirmed nor contradicted by the text.
-4. **Text during questions** — in the question view, when the active test has `lesson_text_lt`,
+4. **Text during questions** — in the question view, when `activeTest.test.lesson_text_lt` is set
+   (not `pendingTest`),
    render it above the question card in a native `<details>` (summary = existing `t.textLabel`
    «Текст» / "Text"), closed by default, body via `DialogueText` inside a block capped at
    `max-h-[40vh]` with `overflow-y-auto`. Applies to every category with texts ("Чтение",
@@ -101,9 +102,10 @@ unambiguous "not stated" statements need the stronger model.
    and prints counts without touching the DB). Insert-only: if a category with the same `name_ru`
    exists, it prints its id and changes nothing; otherwise it inserts the category, tests and
    questions in one transaction and prints the new category id. **No `--reset`** (FK, Context 3);
-   later fixes go through the admin editor. The JSON has a `"format"` key; validators live in
-   `backend/scripts/practice_validators.py` (`VALIDATORS = {"tfns": validate_tfns}`; #62c–#62e add
-   theirs). `validate_tfns`: 10 tests; text length 400–1200 chars; exactly 6 statements per test;
+   later fixes go through the admin editor. The JSON has a `"format"` key; the script dispatches with a plain
+   `if format == "tfns"` to `validate_tfns` defined in the same script (extract to a module when
+   #62c needs a second validator). Imports and `DATABASE_URL` setup follow
+   `seed_skaitymas_new.py`. `validate_tfns`: 10 tests; text length 400–1200 chars; exactly 6 statements per test;
    options exactly as Req 3; each of a/b/c at least once per test; no duplicate statements; RU + EN
    titles present.
 7. **Knowledge check** — nothing to wire: #62a's pool takes every category with a free published
@@ -114,10 +116,10 @@ unambiguous "not stated" statements need the stronger model.
 ### SEO
 - **S1 — Practice stays out of the index** (deliberate, see Context): no change to
   `practice/layout.tsx` robots, the `Disallow`, or the sitemap; the new category adds no indexed URL.
-  The `seo-snapshot` diff must be clean (no RU title/description/canonical change anywhere).
 - **S2 — llms.txt** gains a dynamic `## Exam-format practice` section: every practice category a
   guest can see (#62a's visibility rule), as `- <name_en> (<N> tests)`, plus one line that the formats mirror
-  the A2 exam's reading part. #62c–#62e appear in it automatically.
+  the A2 exam's reading part. #62c–#62e appear in it automatically. No caching: the handler
+  already queries live per request (crawler-only traffic), same as its other sections.
 - **S3 — search traffic** for exam formats comes from the `prepare-for-lithuanian-a2` article update
   in #62e, once all four formats exist (not here).
 
@@ -150,27 +152,39 @@ docs, CHANGELOG.
 _Filled in at step 0 (date + what the user approved or changed). Until then the Requirements stand
 as written; anything the prototype changes is copied into the Requirements before step 1._
 
+- 2026-10-11 — prototype approved as is (https://claude.ai/artifact/Ks4EkyJvzk73xMofjo2F1w): the text
+  block sits above the question card, is closed by default, the summary shows «Текст · показать
+  текст» / "Text · show text" (hint hidden when open), body capped at `max-h-[40vh]` with inner
+  scroll, token look (`border-line`, `rounded-[14px]`) next to the legacy black-bordered cards.
+  No Requirements change.
+
 
 ## Implementation
 
-- [ ] 0. **Prototype** — build `temp_files/prototypes/plan_62b_practice-true-false-not-stated.html` per `## Prototype`, screenshot
+- [x] 0. **Prototype** — build `temp_files/prototypes/plan_62b_practice-true-false-not-stated.html` per `## Prototype`, screenshot
   every state (RU + EN, 1280 + 375) into `temp_files/screenshots/plan_62b_practice-true-false-not-stated-prototype/`, publish it as a
   private artifact. **STOP — user step:** the user reviews; iterate until approved. Record the verdict
   under `### Approved decisions` and copy any change into the Requirements. **No product code before
   approval.**
-- [ ] 1. **SEO baseline** (before any code change, local backend on :8000 running):
-  `cd frontend && rm -rf .next/cache/fetch-cache && npm run build && node scripts/seo-snapshot.mjs --out ../temp_files/seo/plan_62b-baseline.json`.
-- [ ] 2. `backend/data/practice/tfns.json` — `"format": "tfns"`, the category, 10 tests and 60
-  statements (Req 1–3). Keep the language A2: present/past tense, common words, short sentences.
-- [ ] 3. `backend/scripts/seed_practice_category.py` + `backend/scripts/practice_validators.py` — Req 6.
-- [ ] 4. `frontend/app/dashboard/practice/[id]/page.tsx` — Req 4.
-- [ ] 5. `backend/main.py` llms.txt — S2.
-- [ ] 6. Tests:
+- [x] 1. **Precondition check:** confirm #62a's rule is live on `main` — `list_categories` in
+  `backend/routers/practice.py` skips categories with no `_visible` test for non-admins. (No SEO
+  snapshot: no indexed page changes; llms.txt is covered by `test_seo_files.py`.)
+- [x] 2. `backend/data/practice/tfns.json` — `"format": "tfns"`, the category, 10 tests and 60
+  statements (Req 1–3). Keep the language A2: present/past tense, common words, short sentences. Done 2026-10-11:
+  written, reviewed by an Opus max-effort reviewer (fixes applied), question order shuffled, answer
+  split varies 1–3 per option; readable copy in `temp_files/plan_62b/tfns_review.txt`. Do not rewrite it. Each question holds only
+  `question_lt` + `correct_option`; the seed fills `question_ru` = `question_lt` and the option texts
+  (Req 3), so `validate_tfns` checks `correct_option` in a/b/c instead of option strings.
+- [x] 3. `backend/scripts/seed_practice_category.py` — Req 6.
+- [x] 4. `frontend/app/dashboard/practice/[id]/page.tsx` — Req 4.
+- [x] 5. `backend/main.py` llms.txt — S2.
+- [x] 6. Tests:
   - `backend/tests/test_practice_tfns.py` — `validate_tfns` passes on `tfns.json` and fails on broken
     copies (a missing "c" answer, 5 statements, a 4th option); the seed's insert path on the SQLite
     test DB creates 1 category / 10 tests / 60 questions, all `testing`, and a second run inserts
     nothing; right after the seed a guest and a free user don't see the category (#62a's rule);
-    `GET /practice/tests/{id}/exam` returns a 3-option question unchanged (`option_d` "").
+    `GET /practice/tests/{id}/exam` returns each seeded question with exactly 3 non-empty options
+    (`option_d` "") and `correct_option` in a/b/c.
   - `backend/tests/test_seo_files.py` — llms.txt lists a published category and omits a
     `testing`-only one.
   - `backend/tests/test_knowledge_check.py` — the seeded category (all `testing`) is never picked;
@@ -179,44 +193,46 @@ as written; anything the prototype changes is copied into the Requirements befor
   - `frontend/tests/practice-tfns.spec.ts` — Playwright, API mocked (categories, the category's
     tests, the exam with a passage and 3-option questions): 3 options render (no empty 4th row); the
     `<details>` text block exists on the question screen, closed by default, opens on click and
-    scrolls inside its cap with a long text; answer feedback; result screen. Screenshots (Validation).
-- [ ] 7. **STOP — user step.** Ask the user to review `backend/data/practice/tfns.json` (Lithuanian
+    scrolls inside its cap with a long text; answer feedback (correct and wrong); result screen; no horizontal overflow at 375px
+    (`scrollWidth <= clientWidth`); one 2-option "Чтение" case also shows the text block during
+    questions. Screenshots (Validation).
+- [x] 7. **STOP — user step.** (2026-10-11: user approved; seeded to prod, category id=3, guests on localhost and fluent.lt don’t see it.) Ask the user to review `backend/data/practice/tfns.json` (Lithuanian
   quality, "not stated" statements) and run
   `cd backend && .venv/bin/python scripts/seed_practice_category.py data/practice/tfns.json --dry-run`
   then without `--dry-run` (writes to prod; tests land as `testing`, so only admins see them; users
   see nothing because of #62a's rule). Until this plan is deployed, don't open the new tests on
   fluent.lt — the old code shows them without the text block (admins only).
-- [ ] 8. Docs/specs: `specs/practice.md` — the #62b scenarios from the idea (new statement scenario,
+- [x] 8. Docs/specs: `specs/practice.md` — the #62b scenarios from the idea (new statement scenario,
   changed "reading view before a test"); `specs/knowledge-check.md` — the pool will include the
   category once published; `specs/seo.md` — llms.txt lists practice; new
   `documentation/practice-formats.md` — the format, why one statement per screen, why the category is
   separate from "Чтение", the empty-category rule, the insert-only seed and why no `--reset`, the
   staged rollout (seed hidden → deploy → release) and why every step is safe for users, why Practice
   stays noindex (#62c–#62e append to this file); component library — the collapsible text block;
-  `documentation/IMPLEMENTATION.md` — seed script + validators. Close-out: add
+  `documentation/IMPLEMENTATION.md` — seed script. Close-out: add
   `- <today> — release #62b: publish the 10 tests once deployed (#62b)` to `plans/reminders.md`.
 
 ## Validation
 
-- [ ] Backend: `cd backend && .venv/bin/python -m pytest -q tests/test_practice_tfns.py tests/test_practice_bento.py tests/test_seo_files.py tests/test_knowledge_check.py`
-- [ ] Full backend suite green: `cd backend && .venv/bin/python -m pytest -q`
-- [ ] Types: `cd frontend && npx tsc --noEmit`
-- [ ] Playwright: `cd frontend && npx playwright test tests/practice-tfns.spec.ts tests/practice-bento.spec.ts tests/seo-public-pages.spec.ts tests/design-system-parity.spec.ts --reporter=list`
-- [ ] Seed dry-run passes: `cd backend && .venv/bin/python scripts/seed_practice_category.py data/practice/tfns.json --dry-run`
+- [x] Backend: `cd backend && .venv/bin/python -m pytest -q tests/test_practice_tfns.py tests/test_practice_bento.py tests/test_seo_files.py tests/test_knowledge_check.py`
+- [x] Full backend suite green: `cd backend && .venv/bin/python -m pytest -q`
+- [x] Types: `cd frontend && npx tsc --noEmit`
+- [x] Playwright: `cd frontend && npx playwright test tests/practice-tfns.spec.ts tests/practice-bento.spec.ts tests/seo-public-pages.spec.ts tests/design-system-parity.spec.ts --reporter=list`
+- [x] Seed dry-run passes: `cd backend && .venv/bin/python scripts/seed_practice_category.py data/practice/tfns.json --dry-run`
 - [ ] Leak check right after the real seed: on fluent.lt in a private window and as a free test
   user (prod still runs the old code), the Practice page shows nothing new — the new category is invisible.
-- [ ] SEO diff clean (DoD command); `curl localhost:8000/llms.txt` shows the practice section.
+- [x] `curl localhost:8000/llms.txt` shows the practice section.
 - [ ] Smoke (local server, after the user's seed): as admin, open the new category, take one test
   end to end; the text block works during questions. As a free user the category is not listed
   until the user publishes a test.
-- [ ] Screenshots in `temp_files/screenshots/plan_62b_practice-true-false-not-stated/`, looked at and
+- [x] Screenshots in `temp_files/screenshots/plan_62b_practice-true-false-not-stated/`, looked at and
   described: category in the practice list, reading screen, question with the text closed, question
-  with the text open + answer feedback, a Конституция question with its long text open (cap +
+  with the text open + correct answer, wrong answer, a Конституция question with its long text open (cap +
   scroll), result screen — each in **RU and EN**, at **1280px and 375px**.
-- [ ] The built UI matches the approved prototype: the same states side by side
+- [x] The built UI matches the approved prototype: the same states side by side
   (`temp_files/screenshots/plan_62b_practice-true-false-not-stated-prototype/` vs this plan's screenshots); differences only where
   agreed in `### Approved decisions`.
-- [ ] Production comparison: practice page nav, header, footer intact; "Чтение" still works.
+- [ ] Production comparison: practice page nav, header, footer intact; login works; "Чтение" still works.
 - [ ] News post written and published via /news-writer (user's call, after the Release steps).
 
 ## Definition of Done
@@ -226,8 +242,7 @@ cd backend && .venv/bin/python -m pytest -q
 cd backend && .venv/bin/python scripts/seed_practice_category.py data/practice/tfns.json --dry-run
 cd frontend && npx tsc --noEmit
 cd frontend && npx playwright test tests/practice-tfns.spec.ts tests/practice-bento.spec.ts tests/seo-public-pages.spec.ts tests/design-system-parity.spec.ts --reporter=list
-cd frontend && rm -rf .next/cache/fetch-cache && npm run build && node scripts/seo-snapshot.mjs --diff ../temp_files/seo/plan_62b-baseline.json
-ls temp_files/screenshots/plan_62b_practice-true-false-not-stated/ | grep -c png   # expect >= 24 (6 states x RU/EN x 1280/375)
+ls temp_files/screenshots/plan_62b_practice-true-false-not-stated/ | grep -c png   # expect >= 28 (7 states x RU/EN x 1280/375)
 ```
 
 User-facing checks (must be evidenced by the screenshots above): **both languages RU + EN**,
@@ -269,3 +284,8 @@ until these user steps. Every state in between is consistent for users.
 check pool; nothing else changes. **Abandon before release:** leave the category hidden or delete it
 in the admin panel (no results exist yet).
 
+
+## Review
+
+- [x] Code review passed (round 3)
+- note: llms.txt counts published tests by loading rows; GROUP BY if the table grows.

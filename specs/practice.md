@@ -197,7 +197,29 @@ Scenario: reading view before a test
   When the student opens that test in the dashboard
   Then a reading screen renders the lesson text (dialogue lines get speaker styling)
     before the student can proceed to the question screen
+  And during the questions the text stays available in a collapsible block above the question
+    (native <details>, closed by default; the summary shows a chevron, the label «Текст» and a
+    «· показать текст» hint that disappears once open; the body is capped at 40vh with inner scroll)
   And a test with no lesson_text_lt skips straight to the question screen
+```
+
+```gherkin
+Scenario: true / false / not-stated statement 
+  Given a published test in the "Верно / Неверно / Не сказано" category
+  When the student answers one of its statements
+  Then the options are Tiesa / Netiesa / Nepasakyta and exactly one of them is correct
+  And the empty option_d row is not rendered
+```
+
+```gherkin
+Scenario: insert-only category seed 
+  Given backend/scripts/seed_practice_category.py <data.json>
+  When it runs with --dry-run
+  Then it validates the JSON (format "tfns": 10 tests, 400–1200-char texts, 6 statements each,
+    each of a/b/c at least once, no duplicates, RU + EN titles) and touches no database
+  When it runs without --dry-run
+  Then it inserts the category, tests (status testing) and questions in one transaction,
+    or, if a category with the same name_ru exists, prints its id and changes nothing
 ```
 
 ```gherkin
