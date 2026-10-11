@@ -68,3 +68,13 @@ Scenario: a failed push never breaks startup and is retried on the next build
   Then startup is unaffected, the failure is logged, and the push state is not saved
   And the next new build tries again
 ```
+
+```gherkin
+Scenario: llms.txt lists exam-format practice
+  When /llms.txt is requested
+  Then an "## Exam-format practice" section lists every practice category with at least one
+    published test as "- <name_en> (N test)" or "- <name_en> (N tests)", from live data
+  And a category whose tests are all testing/draft is omitted
+  And when no category has a published test the whole section is omitted
+  And /dashboard/practice/ itself stays noindex, disallowed in robots.txt and out of the sitemap
+```

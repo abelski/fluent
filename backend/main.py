@@ -40,7 +40,7 @@ from routers.inbox import router as inbox_router
 from routers.audio import router as audio_router
 from routers.knowledge_check import router as knowledge_check_router
 from database import create_db_and_tables, get_session
-from models import WordList, Article, SubcategoryMeta, AppSetting, PhraseProgram, PreparedMessage, InboxMessage, InboxDelivery, UserAchievement  # noqa: F401 — registers table
+from models import WordList, Article, SubcategoryMeta, AppSetting, PracticeCategory, PracticeTest, PhraseProgram, PreparedMessage, InboxMessage, InboxDelivery, UserAchievement  # noqa: F401 — registers table
 from data.grammar.lessons import LESSON_CONFIG
 from scheduler import start_scheduler
 import indexnow
@@ -381,6 +381,22 @@ def llms_txt(session: Session = Depends(get_session)):
 
     article_lines = [f"- [{a.title_en}]({base}/dashboard/articles/{a.slug}/)" for a in articles]
 
+    # #62b — practice categories a guest can see (#62a rule: at least one published test).
+    published_counts: dict[int, int] = {}
+    for t in session.exec(select(PracticeTest).where(PracticeTest.status == "published")).all():
+        if t.category_id is not None:
+            published_counts[t.category_id] = published_counts.get(t.category_id, 0) + 1
+    practice_cats = session.exec(select(PracticeCategory).order_by(PracticeCategory.sort_order)).all()
+    practice_lines = [
+        f"- {c.name_en or c.name_ru} ({n} test{'' if n == 1 else 's'})"
+        for c in practice_cats if (n := published_counts.get(c.id))
+    ]
+    practice_section = (
+        "\n\n## Exam-format practice\n"
+        "Practice tests in the format of Lithuanian state exams: the A2 language exam and the Constitution exam.\n"
+        + "\n".join(practice_lines)
+    ) if practice_lines else ""
+
     content = (
         f"# Fluent\n\n"
         f"> Free Lithuanian language learning app with spaced repetition flashcards, "
@@ -401,6 +417,7 @@ def llms_txt(session: Session = Depends(get_session)):
         f"Each lesson uses spaced repetition with fill-in-the-gap sentences.\n\n"
         f"## Reading articles ({article_count} texts)\n"
         + "\n".join(article_lines)
+        + practice_section
         + f"\n\n## Who it's for\n"
         f"Beginners to intermediate learners of Lithuanian (A1–B2 level). "
         f"Interface available in English and Russian.\n\n"

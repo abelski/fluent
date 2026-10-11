@@ -427,6 +427,18 @@ export default function PracticeCategoryPage() {
 
           return (
             <div className="flex flex-col gap-4 mt-6">
+              {activeTest.test.lesson_text_lt && (
+                <details data-testid="question-text-block" className="group border border-line rounded-[14px] bg-white overflow-hidden">
+                  <summary className="list-none [&::-webkit-details-marker]:hidden px-6 py-3 cursor-pointer select-none flex items-center gap-2 text-sm font-semibold text-ink hover:bg-line-soft">
+                    <TakChevron size={9} className="transition-transform group-open:rotate-90" />
+                    {t.textLabel}
+                    <span className="text-muted font-normal group-open:hidden">· {t.showTextHint}</span>
+                  </summary>
+                  <div data-testid="question-text-body" className="px-6 py-4 border-t border-line max-h-[40vh] overflow-y-auto text-ink leading-relaxed">
+                    <DialogueText text={activeTest.test.lesson_text_lt} />
+                  </div>
+                </details>
+              )}
               <div className="border border-gray-900 rounded-2xl overflow-hidden bg-white">
                 <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between gap-4">
                   <span className="text-sm font-medium text-gray-700">{title}</span>

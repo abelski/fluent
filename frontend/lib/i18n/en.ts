@@ -337,6 +337,7 @@ const en: Translations = {
     sourceLinkText: 'the Constitution of Lithuania',
     textBadge: '📄 Text',
     textLabel: 'Text',
+    showTextHint: 'show text',
     passThresholdSuffix: 'to pass',
     goToTestBtn: 'Go to the test',
     finishBtn: 'Finish',

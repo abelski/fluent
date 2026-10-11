@@ -369,3 +369,43 @@ def test_recommendations_for_premium(client):
     client.post(f"/api/me/grammar-programs/{_ids['prog']}", headers=PREMIUM)
     recs = client.get(URL, headers=PREMIUM).json()["recommendations"]
     assert next(r for r in recs if r["kind"] == "grammar" and r["id"] == _ids["prog"])["enrolled"] is True
+
+
+def test_seeded_tfns_category_joins_only_when_published():
+    """#62b — the seeded True/False/Not stated category stays out until a test is published,
+    then yields 3-option `reading` tasks with no code change."""
+    import importlib.util
+    import json
+    from pathlib import Path
+
+    backend = Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_file_location("seed_pc", backend / "scripts" / "seed_practice_category.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    data = json.loads((backend / "data" / "practice" / "tfns.json").read_text(encoding="utf-8"))
+
+    with Session(_test_engine) as s:
+        cat_id, created = mod.seed(s, data)
+        assert created
+        _created["cat"].append(cat_id)
+        tests = s.exec(select(PracticeTest).where(PracticeTest.category_id == cat_id)).all()
+        test_ids = [t.id for t in tests]
+        _created["test"].extend(test_ids)
+        # Other pool members out of the way so the new category is the only candidate.
+        r = s.exec(select(PracticeTest).where(PracticeTest.title_ru == "RPUB")).first()
+        r.status = "testing"
+        s.add(r)
+        s.commit()
+    for _ in range(5):
+        assert all(t["topic"] != f"p:{cat_id}" for t in _build())
+
+    with Session(_test_engine) as s:
+        t = s.get(PracticeTest, test_ids[0])
+        t.status = "published"
+        s.add(t)
+        s.commit()
+    tasks = [t for t in _build() if t["topic"] == f"p:{cat_id}"]
+    assert len(tasks) == 2
+    for t in tasks:
+        assert t["type"] == "reading"
+        assert t["options"] == ["Tiesa", "Netiesa", "Nepasakyta"]
