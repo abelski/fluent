@@ -1,12 +1,12 @@
 ---
 kind: bugfix
-status: draft
-iteration: 0
+status: in_progress
+iteration: 1
 max_iterations: 10
 suggested_model: haiku
 suggested_effort: low
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: haiku
+confirmed_effort: low
 ---
 
 # Issue #185 — /dashboard/review/

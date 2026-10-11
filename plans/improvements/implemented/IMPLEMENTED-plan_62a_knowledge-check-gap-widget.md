@@ -342,7 +342,7 @@ docs, CHANGELOG.
   (`temp_files/screenshots/plan_62a_knowledge-check-gap-widget-prototype/` vs this plan's screenshots); differences only where
   agreed in `### Approved decisions`.
 - [ ] Production comparison: nav, header, footer, login intact on home.
-- [ ] News post written and published via /news-writer (user's call at close-out).
+- [x] News post — skipped by the user (2026-10-10).
 
 ## Definition of Done
 
