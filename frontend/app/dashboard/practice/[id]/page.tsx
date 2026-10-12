@@ -9,6 +9,7 @@ import PageMascot from '../../../../components/PageMascot';
 import TakChevron from '../../../../components/TakChevron';
 import PremiumOfferCard from '../../components/PremiumOfferCard';
 import DialogueText from '../../components/DialogueText';
+import GapText from '../../components/GapText';
 
 type PracticeTest = PracticeTestSummary;
 
@@ -83,6 +84,7 @@ export default function PracticeCategoryPage() {
   const [selected, setSelected] = useState<Option | null>(null);
   const [answered, setAnswered] = useState(false);
   const [answers, setAnswers] = useState<(Option | null)[]>([]);
+  const [runId, setRunId] = useState(0); // #62d: remounts GapText (fresh bank shuffle) per run
 
   // #55 — `?test={id}` (from a /dashboard/practice test button) starts that test as soon
   // as the list loads; «Назад» then returns to /dashboard/practice, not to this list.
@@ -171,6 +173,7 @@ export default function PracticeCategoryPage() {
       return;
     }
     setActiveTest(data);
+    setRunId((r) => r + 1);
     setAnswers(new Array(data.questions.length).fill(null));
     setCurrent(0);
     setSelected(null);
@@ -184,7 +187,8 @@ export default function PracticeCategoryPage() {
       setPremiumWall(true);
       return;
     }
-    if (test.lesson_text_lt) {
+    // #62d: a gap text is its own screen — no reading screen with raw {n} markers.
+    if (test.lesson_text_lt && test.kind !== 'gap_text') {
       setPendingTest(test);
       setView('reading');
     } else {
@@ -214,22 +218,26 @@ export default function PracticeCategoryPage() {
       const score = [...answers.slice(0, current), selected].filter(
         (a, i) => a === activeTest.questions[i]?.correct_option
       ).length;
-      const total = activeTest.questions.length;
-      const token = getToken();
-      if (token) {
-        await fetch(`${BACKEND_URL}/api/practice/tests/${activeTest.test.id}/results`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ score, total }),
-        }).catch(console.error);
-        fetchTests(); // refresh lock state for next test
-      }
+      await postResult(score, activeTest.questions.length);
       setView('result');
     } else {
       setCurrent(current + 1);
       setSelected(null);
       setAnswered(false);
     }
+  }
+
+  // Shared by the choice flow and GapText (#62d); the server validates 0 ≤ score ≤ total.
+  async function postResult(score: number, total: number) {
+    if (!activeTest) return;
+    const token = getToken();
+    if (!token) return;
+    await fetch(`${BACKEND_URL}/api/practice/tests/${activeTest.test.id}/results`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ score, total }),
+    }).catch(console.error);
+    fetchTests(); // refresh lock state for next test
   }
 
   function retry() {
@@ -433,7 +441,18 @@ export default function PracticeCategoryPage() {
         )}
 
         {/* ── Question screen ──────────────────────────────────────────────── */}
-        {view === 'question' && activeTest && activeTest.questions.length > 0 && (() => {
+        {view === 'question' && activeTest && activeTest.test.kind === 'gap_text' && (
+          <GapText
+            key={runId}
+            title={lang === 'en' ? (activeTest.test.title_en ?? activeTest.test.title_ru) : activeTest.test.title_ru}
+            text={activeTest.test.lesson_text_lt ?? ''}
+            questions={activeTest.questions}
+            passThreshold={passThreshold}
+            onChecked={postResult}
+            onRetry={retry}
+          />
+        )}
+        {view === 'question' && activeTest && activeTest.test.kind !== 'gap_text' && activeTest.questions.length > 0 && (() => {
           const q = activeTest.questions[current];
           const correct = q.correct_option as Option;
           const title = lang === 'en' ? (activeTest.test.title_en ?? activeTest.test.title_ru) : activeTest.test.title_ru;

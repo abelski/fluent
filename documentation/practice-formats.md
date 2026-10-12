@@ -53,3 +53,26 @@ Formats that mirror the reading part of the Lithuanian A2 exam, each as its own 
 - **«Jūs» is not translated** — it is part of the Lithuanian dialogue content, like the speaker names.
 - **Knowledge check:** `PRACTICE_TASK_BUILDERS["dialogue"]` builds the same transcript as the
   passage, keyed by the test's `kind`; options keep their stored order.
+
+## #62d — "Текст с пропусками" (Gap text)
+
+- **Format.** 8 texts (`backend/data/practice/gap_text.json`, `"format": "gap_text"`), 10 gaps each.
+  `lesson_text_lt` holds markers `{1}`…`{N}`, each once and in order; one question per gap with
+  `question_lt` = `question_ru` = its marker (`"{3}"`) — ties the row to its gap explicitly, not just by
+  order — `option_a` = the correct word, `option_b` = one distractor, `option_c`/`option_d` = `""`,
+  `correct_option` `a`. `validate_gap_text` in the seed enforces all of it, plus: no distractor equals
+  any gap's answer in the same text, text 600–1400 chars.
+- **Bank = every gap's answer + one distractor per gap.** With only the answers, the last gap is
+  always forced and the rest is elimination; one distractor per gap keeps every choice a real choice
+  without turning the bank into a wall of words at 375px.
+- **Tap-to-place, not drag.** Drag and drop is unreliable on phones (scroll vs. drag conflict) and
+  inaccessible from the keyboard; chips and gaps are plain buttons. A per-gap dropdown was also
+  rejected (the idea's non-goal) — it hides the shared-bank exam format.
+- **The client posts the score** to the existing `POST /practice/tests/{id}/results`, as every other
+  practice test does; the server only checks `0 ≤ score ≤ total`. Practice results gate nothing
+  valuable, so server-side regrading was not worth a new endpoint.
+- **Sticky bank needs `overflow-x: clip` on html/body.** `globals.css` had `overflow-x: hidden`, which
+  makes `body` a scroll container and silently disables every `position: sticky`. Changed to `clip`
+  (same clipping, no scroll container).
+- **Knowledge check:** `PRACTICE_TASK_BUILDERS["gap_text"]` — both chosen gaps are blank in each
+  passage (`___` for its own, `(…)` for the other), so one task never answers the other.

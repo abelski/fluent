@@ -480,3 +480,85 @@ def test_dialogue_gaps_block_in_order():
         for _ in range(10):
             tasks = [t for t in kc.gap_tasks(result, s) if t["type"] == "reading"]
             _check_dialogue_tasks(tasks)
+
+
+# ── #62d Gap text ─────────────────────────────────────────────────────────────
+
+_GAP_TEXT = "Aš {1} namie. Jis {2} knygą. Mes {3} kavą! Ar tu {4} čia?"
+_GAP_ANS = ["esu", "skaito", "geriame", "gyveni"]
+_GAP_DIS = ["yra", "skaityti", "gerti", "gyvena"]
+
+
+def _add_gap_text(s, n=4):
+    cat = _add_cat(s, "Пропуски KC")
+    text = _GAP_TEXT if n == 4 else "Aš {1} namie."
+    t = PracticeTest(category_id=cat.id, title_ru="GAP", title_en="GAP EN", kind="gap_text",
+                     status="published", lesson_text_lt=text)
+    s.add(t)
+    s.commit()
+    s.refresh(t)
+    _created["test"].append(t.id)
+    for i in reversed(range(n)):  # inserted out of order: serving follows sort_order
+        s.add(PracticeQuestion(test_id=t.id, question_ru=f"{{{i + 1}}}", question_lt=f"{{{i + 1}}}",
+                               option_a=_GAP_ANS[i], option_b=_GAP_DIS[i], option_c="", option_d="",
+                               correct_option="a", sort_order=i))
+    r = s.exec(select(PracticeTest).where(PracticeTest.title_ru == "RPUB")).first()
+    r.status = "testing"  # the gap-text category is the only practice candidate
+    s.add(r)
+    s.commit()
+    return cat.id
+
+
+def _gap_of(t):
+    return _GAP_ANS.index(t["answer"])
+
+
+def _words(text):
+    import re
+    return {w.lower() for w in re.findall(r"\w+", text)}
+
+
+def _check_gap_tasks(tasks):
+    assert len(tasks) == 2
+    gaps = [_gap_of(t) for t in tasks]
+    assert gaps == sorted(gaps) and gaps[0] != gaps[1]
+    for t, g in zip(tasks, gaps):
+        other = gaps[1] if g == gaps[0] else gaps[0]
+        assert t["type"] == "reading" and t["passage_kind"] is None
+        p = t["passage_lt"]
+        assert p.count("___") == 1 and p.count("(…)") == 1
+        assert "{" not in p
+        assert _GAP_ANS[other] not in _words(p)
+        assert "___" in t["question_lt"] and "(…)" not in t["question_lt"] and t["question_lt"].count(".") <= 1
+        opts = t["options"]
+        assert t["answer"] in opts and len(set(opts)) == len(opts) and 2 <= len(opts) <= 4
+        assert _GAP_DIS[g] in opts
+        assert not (set(o.lower() for o in opts if o != t["answer"]) & _words(p))
+        assert t["instruction_ru"] == "Выберите слово для пропуска"
+        assert t["instruction_en"] == "Choose the word for the gap"
+
+
+def test_gap_text_category_builds_two_ordered_gap_tasks():
+    with Session(_test_engine) as s:
+        cat_id = _add_gap_text(s)
+    for _ in range(20):
+        tasks = _build()
+        block = [t for t in tasks if t["topic"] == f"p:{cat_id}"]
+        _check_gap_tasks(block)
+        idx = _practice_idx(tasks)
+        assert idx == [idx[0], idx[0] + 1]
+
+
+def test_gap_text_gaps_block_in_order():
+    with Session(_test_engine) as s:
+        cat_id = _add_gap_text(s)
+        result = [{"topic": f"p:{cat_id}", "title_ru": "", "title_en": "", "correct": 0, "total": 2, "weak": True}]
+        for _ in range(10):
+            _check_gap_tasks([t for t in kc.gap_tasks(result, s) if t["type"] == "reading"])
+
+
+def test_gap_text_with_too_few_gaps_yields_no_block():
+    with Session(_test_engine) as s:
+        cat_id = _add_gap_text(s, n=1)
+        assert kc._practice_block(cat_id, s) == []
+    assert all(t["topic"] != f"p:{cat_id}" for t in _build())

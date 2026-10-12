@@ -1,0 +1,556 @@
+{
+ "format": "gap_text",
+ "category": {
+  "name_ru": "Текст с пропусками",
+  "name_en": "Gap text",
+  "description_ru": "Прочитайте текст и вставьте в пропуски подходящие слова. В списке есть лишние слова.",
+  "description_en": "Read the text and fill in the gaps with the right words. There are more words than gaps.",
+  "sort_order": 13
+ },
+ "tests": [
+  {
+   "title_ru": "Мой день",
+   "title_en": "My day",
+   "kind": "gap_text",
+   "lesson_text_lt": "Mano vardas – Andrius. Aš gyvenu {1} su žmona ir dviem vaikais. Sūnui dešimt metų, o dukrai – septyneri. Esu programuotojas, dirbu didelėje {2}. Kiekvieną rytą keliuosi septintą valandą. Pirmiausia {3} kavą ir valgau pusryčius. Į darbą važiuoju {4}, nes automobilio neturiu. Darbas prasideda devintą valandą ir baigiasi penktą. Darbe daug laiko praleidžiu prie kompiuterio. Per pietų pertrauką su kolegomis einame į {5} netoli biuro. Ten skanūs ir nebrangūs pietūs. Vakare grįžtu namo ir gaminu {6}. Žmona dirba ligoninėje, todėl kartais grįžta vėlai. Po vakarienės žiūrime {7} arba skaitome knygas. Vaikai {8} pamokas savo kambaryje. Savaitgaliais dažnai važiuojame pas {9} į kaimą. Mano tėvai turi didelį sodą ir mes visada {10} jiems dirbti. Ten būna ramu ir gražu.",
+   "questions": [
+    {
+     "question_lt": "{1}",
+     "option_a": "Vilniuje",
+     "option_b": "Vilniaus",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{2}",
+     "option_a": "įmonėje",
+     "option_b": "įmonė",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{3}",
+     "option_a": "geriu",
+     "option_b": "geria",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{4}",
+     "option_a": "autobusu",
+     "option_b": "autobusą",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{5}",
+     "option_a": "kavinę",
+     "option_b": "kavinė",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{6}",
+     "option_a": "vakarienę",
+     "option_b": "vakarienė",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{7}",
+     "option_a": "televizorių",
+     "option_b": "televizoriaus",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{8}",
+     "option_a": "ruošia",
+     "option_b": "ruošti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{9}",
+     "option_a": "tėvus",
+     "option_b": "tėvų",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{10}",
+     "option_a": "padedame",
+     "option_b": "padeda",
+     "correct_option": "a"
+    }
+   ]
+  },
+  {
+   "title_ru": "В магазине",
+   "title_en": "At the shop",
+   "kind": "gap_text",
+   "lesson_text_lt": "Šeštadienio rytą Rūta nuėjo į {1}. Parduotuvė yra netoli jos namų, todėl ji ėjo pėsčiomis. Ji turėjo pirkinių sąrašą, nes norėjo nusipirkti maisto savaitgaliui. Pirmiausia ji įsidėjo į krepšelį duonos ir {2} pieno. Paskui paėmė {3} ir bananų. Mėsos skyriuje buvo daug žmonių, todėl Rūta ilgai {4} eilėje. Ji paėmė vištienos, nes vakare norėjo {5} sriubą. Prie kasos Rūta prisiminė, kad pamiršo {6}. Ji grįžo ir paėmė kavos pakelį. Kasininkė buvo labai maloni. Ji paklausė, ar Rūta turi {7} kortelę. Rūta turėjo kortelę ir gavo nuolaidą. Iš viso ji sumokėjo trisdešimt {8}. Pirkiniai buvo sunkūs, todėl Rūta {9} taksi. Namie ji sudėjo mėsą ir pieną į {10}, o duoną padėjo ant stalo. Vakare visa šeima valgė skanią sriubą.",
+   "questions": [
+    {
+     "question_lt": "{1}",
+     "option_a": "parduotuvę",
+     "option_b": "parduotuvėje",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{2}",
+     "option_a": "litrą",
+     "option_b": "litro",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{3}",
+     "option_a": "obuolių",
+     "option_b": "obuoliai",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{4}",
+     "option_a": "stovėjo",
+     "option_b": "stovi",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{5}",
+     "option_a": "išvirti",
+     "option_b": "išvirė",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{6}",
+     "option_a": "kavą",
+     "option_b": "kava",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{7}",
+     "option_a": "nuolaidų",
+     "option_b": "nuolaida",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{8}",
+     "option_a": "eurų",
+     "option_b": "euro",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{9}",
+     "option_a": "išsikvietė",
+     "option_b": "išsikviečia",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{10}",
+     "option_a": "šaldytuvą",
+     "option_b": "šaldytuve",
+     "correct_option": "a"
+    }
+   ]
+  },
+  {
+   "title_ru": "Письмо другу",
+   "title_en": "A letter to a friend",
+   "kind": "gap_text",
+   "lesson_text_lt": "Labas, Jonai!\n\nAčiū už tavo {1}. Atsiprašau, kad ilgai neatrašiau. Man viskas gerai. Šį mėnesį daug {2}, nes kolega atostogavo. Be to, dabar lankau lietuvių kalbos {3}. Lietuvių kalba sunki, bet labai graži. Mūsų mokytoja labai {4}, ji puikiai aiškina gramatiką. Pamokos vyksta du kartus per {5}, vakarais. Kartais po darbo būnu labai pavargusi, bet vis tiek einu. Grupėje yra dešimt žmonių iš skirtingų {6}. Po pamokų mes kartais einame {7} kavos. Kitą šeštadienį visi kartu važiuosime į {8}. Aš ten dar niekada nebuvau. Aplankysime pilį ir {9} prie ežero. Kaip sekasi tavo naujame darbe? Ar tu {10} atvažiuoti pas mane vasarą? Būtų smagu! Lauksiu atsakymo!\n\nIki greito!\nMarija",
+   "questions": [
+    {
+     "question_lt": "{1}",
+     "option_a": "laišką",
+     "option_b": "laiško",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{2}",
+     "option_a": "dirbau",
+     "option_b": "dirbti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{3}",
+     "option_a": "kursus",
+     "option_b": "kursuose",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{4}",
+     "option_a": "gera",
+     "option_b": "geras",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{5}",
+     "option_a": "savaitę",
+     "option_b": "savaitės",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{6}",
+     "option_a": "šalių",
+     "option_b": "šalys",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{7}",
+     "option_a": "išgerti",
+     "option_b": "išgeria",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{8}",
+     "option_a": "Trakus",
+     "option_b": "Trakuose",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{9}",
+     "option_a": "pasivaikščiosime",
+     "option_b": "pasivaikščioti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{10}",
+     "option_a": "nori",
+     "option_b": "norėtų",
+     "correct_option": "a"
+    }
+   ]
+  },
+  {
+   "title_ru": "Наша квартира",
+   "title_en": "Our flat",
+   "kind": "gap_text",
+   "lesson_text_lt": "Neseniai mes {1} butą. Jis yra naujame name, ketvirtame {2}. Name yra liftas, todėl nereikia lipti laiptais. Anksčiau gyvenome mažame bute miesto centre. Dabar turime du kambarius, virtuvę ir {3}. Didesniame kambaryje {4} sofa, stalas ir knygų spinta. Mažesnis kambarys yra {5}: ten miega mūsų sūnus ir dukra. Virtuvė nedidelė, bet patogi ir šviesi. Joje telpa stalas keturiems žmonėms. Iš balkono matyti {6} ir upė. Vakare ten labai gražu. Šalia namo yra parduotuvė, mokykla ir {7} stotelė. Netoli yra ir didelis prekybos centras. Į darbą važiuoju tik penkiolika minučių. Kaimynai draugiški ir tylūs. Buto nuoma kainuoja šešis {8} eurų per mėnesį. Tai nemažai, bet mums labai {9} šis butas. Dabar ieškome naujų {10} virtuvei.",
+   "questions": [
+    {
+     "question_lt": "{1}",
+     "option_a": "išsinuomojome",
+     "option_b": "išsinuomojo",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{2}",
+     "option_a": "aukšte",
+     "option_b": "aukštą",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{3}",
+     "option_a": "balkoną",
+     "option_b": "balkonas",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{4}",
+     "option_a": "stovi",
+     "option_b": "stovėti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{5}",
+     "option_a": "vaikų",
+     "option_b": "vaikus",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{6}",
+     "option_a": "parkas",
+     "option_b": "parką",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{7}",
+     "option_a": "autobusų",
+     "option_b": "autobusą",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{8}",
+     "option_a": "šimtus",
+     "option_b": "šimtų",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{9}",
+     "option_a": "patinka",
+     "option_b": "patinkame",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{10}",
+     "option_a": "kėdžių",
+     "option_b": "kėdes",
+     "correct_option": "a"
+    }
+   ]
+  },
+  {
+   "title_ru": "У врача",
+   "title_en": "At the doctor's",
+   "kind": "gap_text",
+   "lesson_text_lt": "Vakar Petras {1} blogai. Jis neturėjo jėgų ir nenorėjo valgyti. Jam skaudėjo galvą ir {2}. Temperatūra buvo trisdešimt aštuoni laipsniai. Šiandien ryte jis paskambino į polikliniką ir užsiregistravo pas šeimos {3}. Poliklinikoje buvo daug žmonių, todėl jis ilgai laukė. Gydytoja jį apžiūrėjo ir paklausė, kiek laiko jis {4}. Petras atsakė, kad karščiuoja jau dvi {5}. Gydytoja pasakė, kad tai peršalimas, ir išrašė {6}. Ji išdavė Petrui nedarbingumo pažymėjimą trims dienoms. Ji patarė gerti daug šiltos {7} ir daugiau ilsėtis. Vaistus reikia gerti tris kartus per {8}. Petras nuėjo į {9} ir juos nusipirko. Vaistininkė viską gerai paaiškino. Žmona jam išvirė sriubos, o kolegos parašė žinutę. Dabar jis guli lovoje ir tikisi, kad greitai {10}.",
+   "questions": [
+    {
+     "question_lt": "{1}",
+     "option_a": "jautėsi",
+     "option_b": "jaučiasi",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{2}",
+     "option_a": "gerklę",
+     "option_b": "gerklės",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{3}",
+     "option_a": "gydytoją",
+     "option_b": "gydytojui",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{4}",
+     "option_a": "serga",
+     "option_b": "sirgti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{5}",
+     "option_a": "dienas",
+     "option_b": "dienų",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{6}",
+     "option_a": "vaistų",
+     "option_b": "vaistai",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{7}",
+     "option_a": "arbatos",
+     "option_b": "arbatą",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{8}",
+     "option_a": "dieną",
+     "option_b": "diena",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{9}",
+     "option_a": "vaistinę",
+     "option_b": "vaistinėje",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{10}",
+     "option_a": "pasveiks",
+     "option_b": "pasveikti",
+     "correct_option": "a"
+    }
+   ]
+  },
+  {
+   "title_ru": "Поездка в Клайпеду",
+   "title_en": "A trip to Klaipėda",
+   "kind": "gap_text",
+   "lesson_text_lt": "Praėjusį penktadienį Ieva {1} į Klaipėdą. Klaipėda yra trečias pagal dydį Lietuvos miestas. Ieva seniai norėjo aplankyti savo draugę. Ji važiavo {2}, nes tai patogiau nei autobusu. Bilietą ji nusipirko internetu prieš savaitę. Traukinys išvyko iš Vilniaus aštuntą {3} ryto. Kelionė truko apie {4} valandas. Traukinyje buvo nedaug žmonių, todėl buvo ramu. Ieva skaitė knygą ir žiūrėjo pro {5}. Klaipėdoje {6} pasitiko draugė Laura. Laura parodė jai savo mėgstamas vietas. Merginos nuėjo pavalgyti į {7} senamiestyje. Jos valgė žuvį ir gėrė arbatą. Po pietų jos ilgai {8} prie jūros. Oras buvo šaltas, bet saulėtas, todėl jos {9} daug nuotraukų. Vakare Ieva grįžo namo į {10} pavargusi, bet laiminga. Kitą vasarą Laura žada atvažiuoti pas ją į sostinę.",
+   "questions": [
+    {
+     "question_lt": "{1}",
+     "option_a": "nuvažiavo",
+     "option_b": "nuvažiuoja",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{2}",
+     "option_a": "traukiniu",
+     "option_b": "traukinį",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{3}",
+     "option_a": "valandą",
+     "option_b": "valandos",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{4}",
+     "option_a": "keturias",
+     "option_b": "keturios",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{5}",
+     "option_a": "langą",
+     "option_b": "lange",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{6}",
+     "option_a": "ją",
+     "option_b": "jai",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{7}",
+     "option_a": "restoraną",
+     "option_b": "restorane",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{8}",
+     "option_a": "vaikščiojo",
+     "option_b": "vaikščioti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{9}",
+     "option_a": "padarė",
+     "option_b": "padaro",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{10}",
+     "option_a": "Vilnių",
+     "option_b": "Vilniuje",
+     "correct_option": "a"
+    }
+   ]
+  },
+  {
+   "title_ru": "Хобби моего друга",
+   "title_en": "My friend's hobbies",
+   "kind": "gap_text",
+   "lesson_text_lt": "Mano draugas Paulius labai mėgsta {1}, ypač krepšinį. Jis žaidžia krepšinį tris kartus per savaitę. Lietuvoje krepšinis yra labai {2} sportas. Jo mėgstamiausia komanda yra Kauno „Žalgiris“. Paulius turi daug draugų, nes yra linksmas ir atviras. Jis taip pat domisi {3} ir dažnai eina į koncertus. Jis groja {4} jau dešimt metų. Savaitgaliais jis su draugais važiuoja prie {5}. Vasarą jie maudosi, o žiemą {6} ant ledo. Aš nesu toks aktyvus kaip jis. Mano mama sako, kad aš per daug sėdžiu namie. Po darbo dažniausiai noriu tiesiog pailsėti. Man labiau patinka skaityti {7} ir gaminti valgyti. Kartais mes kartu einame į {8}, nes abu mėgstame filmus. Kitą mėnesį {9} žiūrėti naujo lietuviško {10}.",
+   "questions": [
+    {
+     "question_lt": "{1}",
+     "option_a": "sportą",
+     "option_b": "sportas",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{2}",
+     "option_a": "populiarus",
+     "option_b": "populiari",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{3}",
+     "option_a": "muzika",
+     "option_b": "muzikos",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{4}",
+     "option_a": "gitara",
+     "option_b": "gitarą",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{5}",
+     "option_a": "ežero",
+     "option_b": "ežere",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{6}",
+     "option_a": "čiuožia",
+     "option_b": "čiuožti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{7}",
+     "option_a": "knygas",
+     "option_b": "knygos",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{8}",
+     "option_a": "kiną",
+     "option_b": "kine",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{9}",
+     "option_a": "eisime",
+     "option_b": "eiti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{10}",
+     "option_a": "filmo",
+     "option_b": "filmų",
+     "correct_option": "a"
+    }
+   ]
+  },
+  {
+   "title_ru": "Времена года",
+   "title_en": "The seasons",
+   "kind": "gap_text",
+   "lesson_text_lt": "Lietuvoje yra keturi metų {1}. Mano mėgstamiausias metų laikas yra {2}. Rugsėjį vaikai vėl eina į {3}, o medžių lapai pamažu tampa geltoni ir {4}. Oras dažnai būna vėsus ir {5}, todėl visada nešiojuosi skėtį. Rudenį mėgstu vaikščioti po parką. Miškuose tada galima rasti daug grybų. Namie geriu karštą {6} ir skaitau. Lauke anksti sutemsta, vakarai būna ilgi. Žiema Lietuvoje būna šalta ir ilga, reikia šiltai rengtis. Gruodį visi laukia {7}. Kartais daug {8} ir vaikai lipdo senį besmegenį. Pavasarį viskas {9}, o vasarą žmonės važiuoja prie jūros. Tada dienos būna ilgos, o naktys trumpos. Aš dažnai maudausi ežere ir važinėju dviračiu. Kiekvienas metų laikas savaip {10}.",
+   "questions": [
+    {
+     "question_lt": "{1}",
+     "option_a": "laikai",
+     "option_b": "laikų",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{2}",
+     "option_a": "ruduo",
+     "option_b": "rudenį",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{3}",
+     "option_a": "mokyklą",
+     "option_b": "mokykloje",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{4}",
+     "option_a": "raudoni",
+     "option_b": "raudona",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{5}",
+     "option_a": "lietingas",
+     "option_b": "lietinga",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{6}",
+     "option_a": "arbatą",
+     "option_b": "arbata",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{7}",
+     "option_a": "Kalėdų",
+     "option_b": "Kalėdos",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{8}",
+     "option_a": "sninga",
+     "option_b": "snigti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{9}",
+     "option_a": "žydi",
+     "option_b": "žydėti",
+     "correct_option": "a"
+    },
+    {
+     "question_lt": "{10}",
+     "option_a": "gražus",
+     "option_b": "graži",
+     "correct_option": "a"
+    }
+   ]
+  }
+ ]
+}

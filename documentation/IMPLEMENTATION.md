@@ -316,6 +316,9 @@ client actually made rather than returning a constant.
   the admin test form (`admin-test-kind` select in `frontend/app/dashboard/admin/page.tsx`) and the
   practice question view (`kind === 'dialogue'` → `data-testid="dialogue-transcript"` via
   `DialogueText`, `frontend/app/dashboard/practice/[id]/page.tsx`).
+- `kind === 'gap_text'` (#62d) → `frontend/app/dashboard/components/GapText.tsx` (gaps, sticky word
+  bank, Check); `startTest()` skips the reading screen for it. Sticky depends on
+  `overflow-x: clip` in `frontend/app/globals.css`.
 
 ## Conventions worth keeping
 

@@ -6,6 +6,7 @@
 
 import math
 import random
+import re
 from typing import Callable, Optional
 
 from sqlmodel import Session
@@ -92,9 +93,57 @@ def _build_dialogue(exam: dict, count: int) -> list[dict]:
     return tasks
 
 
+_GAP_MARKER = re.compile(r"\{(\d+)\}")
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+
+
+def _build_gap_text(exam: dict, count: int) -> list[dict]:
+    """Gap text (#62d): `count` random gaps, in gap order. Each passage fills the unchosen gaps
+    with their answers, shows its own gap as `___` and the other chosen gaps as `(…)`, so no
+    task reveals another's answer. Options: the answer, its distractor and the distractors of
+    2 other gaps (distractors never appear in the text)."""
+    qs = exam["questions"]  # _load_exam orders by (sort_order, id); question_lt is "{n}"
+    if len(qs) < max(count, 3):  # 3 = this gap + 2 others for distractors
+        return []
+    text = exam["test"].get("lesson_text_lt") or ""
+    answers = {q["question_lt"]: q["option_a"] for q in qs}
+    chosen = sorted(random.sample(range(len(qs)), count))
+    chosen_markers = {qs[i]["question_lt"] for i in chosen}
+    tasks = []
+    for idx in chosen:
+        q = qs[idx]
+
+        def fill(m, own=q["question_lt"]):
+            marker = m.group(0)
+            if marker == own:
+                return "___"
+            return "(…)" if marker in chosen_markers else answers.get(marker, marker)
+
+        passage = _GAP_MARKER.sub(fill, text)
+        sentence = next((s for s in _SENTENCE_END.split(passage) if "___" in s), passage)
+        others = random.sample([o for i, o in enumerate(qs) if i != idx], 2)
+        options = list(dict.fromkeys([q["option_a"], q["option_b"]] + [o["option_b"] for o in others]))
+        random.shuffle(options)
+        tasks.append({
+            "type": "reading",
+            "passage_lt": passage,
+            "passage_kind": None,
+            "passage_title_ru": exam["test"].get("title_ru"),
+            "passage_title_en": exam["test"].get("title_en"),
+            "question_lt": sentence,
+            "question_ru": sentence,
+            "options": options,
+            "answer": q["option_a"],
+            "instruction_ru": "Выберите слово для пропуска",
+            "instruction_en": "Choose the word for the gap",
+        })
+    return tasks
+
+
 PRACTICE_TASK_BUILDERS: dict[str, Callable[[dict, int], list[dict]]] = {
     "choice": _build_choice,
     "dialogue": _build_dialogue,
+    "gap_text": _build_gap_text,
 }
 
 

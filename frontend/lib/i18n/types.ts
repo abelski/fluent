@@ -299,6 +299,12 @@ export interface Translations {
     textLabel: string; // plain "Text" badge on the reading view
     dialogueLabel: string; // #62c: passage badge for a dialogue task in the knowledge check
     showTextHint: string; // #62b collapsible text block during questions
+    gapCheckBtn: string; // #62d gap text
+    gapBankLabel: string;
+    gapFilled: string; // "{filled}" / "{total}"
+    gapScore: string; // "{score}" / "{total}"
+    gapEmptyAria: string; // "{n}"
+    gapFilledAria: string; // "{n}" / "{word}"
     passThresholdSuffix: string; // "{pct}% <suffix>" — e.g. "to pass"
     goToTestBtn: string; // after the reading view, proceeds to questions
     finishBtn: string; // last question's "Submit" button label
@@ -414,6 +420,7 @@ export interface Translations {
     fieldKind: string;
     kindChoice: string;
     kindDialogue: string;
+    kindGapText: string;
   };
   review: {
     mistakesMode: string;

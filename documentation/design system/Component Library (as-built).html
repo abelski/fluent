@@ -728,6 +728,24 @@
     </p>
   </div>
 
+  <h2>Practice — gap text: gaps + word-bank chips (#62d)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      <code>frontend/app/dashboard/components/GapText.tsx</code>. Text card = the legacy practice question card
+      (<code>border-gray-900 rounded-2xl</code>, title + «Заполнено N из M», progress bar), body <code>text-[15px] leading-[2.1]</code>.
+      <b>Gap</b> (button, no right margin so no space before punctuation): empty = <code>border-2 border-dashed border-line text-muted</code>
+      box with its number, active empty = <code>border-emerald-600 bg-emerald-50 text-emerald-700</code>; filled =
+      <code>bg-line-soft border-line text-ink</code> chip, active filled adds <code>border-ink ring-2 ring-ink/20</code>.
+      After Check: correct = <code>bg-emerald-50 border-emerald-400 text-emerald-800</code>; wrong = picked word
+      <code>bg-red-50 border-red-300 text-red-700 line-through</code> followed by the correct word in green.
+      <b>Bank</b>: <code>sticky bottom-0</code> strip (full-bleed on mobile) holding a white <code>border-line rounded-[14px]</code>
+      card with a «СЛОВА» / "WORDS" kicker and the filled count; chips <code>rounded-full border-line px-3 py-1.5 text-sm</code>,
+      used chips stay in place <code>bg-line-soft text-faint line-through</code> (chips never jump); chip area
+      <code>max-h-[30vh] overflow-y-auto</code>; the Check button sits in the sticky strip under the card.
+      Sticky works only because <code>html, body</code> use <code>overflow-x: clip</code> (not <code>hidden</code>).
+    </p>
+  </div>
+
   <h2>Practice — collapsible text during questions (#62b)</h2>
   <div class="card" style="margin-bottom:20px;">
     <p style="font-size:13.5px;line-height:1.8;margin:0;">

@@ -129,7 +129,7 @@ interface PracticeTestRow {
   section_ru: string | null; // #55
   section_en: string | null;
   is_final: boolean;
-  kind: string; // #62c: choice | dialogue
+  kind: string; // #62c/#62d: choice | dialogue | gap_text
   created_by: string | null;
   sort_order: number;
   total_questions: number;
@@ -3437,6 +3437,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                         <select data-testid="admin-new-test-kind" value={newTest.kind} onChange={(e) => setNewTest((p) => ({ ...p, kind: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs outline-none">
                           <option value="choice">{tr.adminPractice.kindChoice}</option>
                           <option value="dialogue">{tr.adminPractice.kindDialogue}</option>
+                          <option value="gap_text">{tr.adminPractice.kindGapText}</option>
                         </select>
                       </div>
                       <div className="flex gap-2 justify-end">
@@ -3511,6 +3512,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   <select id="admin-test-kind" data-testid="admin-test-kind" value={editingTest.kind} onChange={(e) => setEditingTest((p) => p ? { ...p, kind: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs outline-none">
                                     <option value="choice">{tr.adminPractice.kindChoice}</option>
                                     <option value="dialogue">{tr.adminPractice.kindDialogue}</option>
+                                    <option value="gap_text">{tr.adminPractice.kindGapText}</option>
                                   </select>
                                 </div>
                               </div>
