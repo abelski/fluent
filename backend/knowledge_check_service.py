@@ -62,8 +62,39 @@ def _build_choice(exam: dict, count: int) -> list[dict]:
     ]
 
 
+def _build_dialogue(exam: dict, count: int) -> list[dict]:
+    """Dialogue test (#62c): `count` random turns, returned in stored order. Each task's passage
+    is the transcript before that turn (earlier lines + their *correct* replies as «Jūs»);
+    options keep their stored order."""
+    qs = exam["questions"]  # _load_exam orders by (sort_order, id)
+    if len(qs) < count:
+        return []
+    tasks = []
+    for idx in sorted(random.sample(range(len(qs)), count)):
+        q = qs[idx]
+        transcript = []
+        for prev in qs[:idx]:
+            reply = prev[f"option_{prev['correct_option']}"]
+            transcript += [prev["question_lt"] or "", f"**Jūs:** {reply}"]
+        tasks.append({
+            "type": "reading",
+            "passage_lt": "\n".join(transcript),
+            "passage_kind": "dialogue",
+            "passage_title_ru": exam["test"].get("title_ru"),
+            "passage_title_en": exam["test"].get("title_en"),
+            "question_lt": q["question_lt"] or "",
+            "question_ru": q["question_ru"] or "",
+            "options": [q[f"option_{k}"] for k in "abcd"],
+            "answer": q[f"option_{q['correct_option']}"],
+            "instruction_ru": "Выберите наиболее подходящую фразу",
+            "instruction_en": "Choose the most suitable phrase",
+        })
+    return tasks
+
+
 PRACTICE_TASK_BUILDERS: dict[str, Callable[[dict, int], list[dict]]] = {
     "choice": _build_choice,
+    "dialogue": _build_dialogue,
 }
 
 

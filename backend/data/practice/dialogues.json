@@ -1,0 +1,652 @@
+{
+ "format": "dialogue",
+ "category": {
+  "name_ru": "Диалоги",
+  "name_en": "Dialogues",
+  "description_ru": "Разговоры из жизни: аптека, магазин, вокзал, кафе. Выберите наиболее подходящую фразу.",
+  "description_en": "Everyday conversations: pharmacy, shop, station, café. Choose the most suitable phrase.",
+  "sort_order": 12
+ },
+ "tests": [
+  {
+   "title_ru": "В аптеке",
+   "title_en": "At the pharmacy",
+   "description_ru": "Фармацевт и покупатель",
+   "description_en": "A pharmacist and a customer",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Vaistininkė:** Laba diena. Kuo galiu jums padėti?",
+     "options": [
+      "Viso gero!",
+      "Mokėsiu kortele.",
+      "Gal turite vaistų nuo kosulio?",
+      "Tris kartus per dieną."
+     ],
+     "correct_option": "c",
+     "source": "tatoeba~9860445,6019894 / reply tatoeba:9801796"
+    },
+    {
+     "question_lt": "**Vaistininkė:** Taip. Ar turite alergiją vaistams?",
+     "options": [
+      "Ne, neturiu.",
+      "Ne, nevairuoju.",
+      "Mokėsiu kortele.",
+      "Ačiū, viso gero!"
+     ],
+     "correct_option": "a",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Vaistininkė:** Šiuos vaistus reikia gerti tris kartus per dieną.",
+     "options": [
+      "Tris dienas.",
+      "Gerai. Kiek kainuoja?",
+      "Viso gero!",
+      "Ne, nevairuoju."
+     ],
+     "correct_option": "b",
+     "source": "own / reply tatoeba~3589725"
+    },
+    {
+     "question_lt": "**Vaistininkė:** Šeši eurai.",
+     "options": [
+      "Prašom, štai penki eurai.",
+      "Tris dienas.",
+      "Ne, nevairuoju.",
+      "Mokėsiu kortele."
+     ],
+     "correct_option": "d",
+     "source": "own / reply tatoeba:2606261"
+    },
+    {
+     "question_lt": "**Vaistininkė:** Ačiū. Viso gero!",
+     "options": [
+      "Ačiū, viso gero!",
+      "Ne, ačiū.",
+      "Taip, prašau.",
+      "Tris dienas."
+     ],
+     "correct_option": "a",
+     "source": "tatoeba~12334137 / reply own"
+    }
+   ]
+  },
+  {
+   "title_ru": "Покупаем подарок",
+   "title_en": "Buying a present",
+   "description_ru": "Продавщица и покупатель",
+   "description_en": "A shop assistant and a customer",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Pardavėja:** Laba diena. Ko ieškote?",
+     "options": [
+      "Man tai per brangu.",
+      "Ieškau dovanos draugui.",
+      "Gerai, imsiu šitą.",
+      "Ačiū, viso gero!"
+     ],
+     "correct_option": "b",
+     "source": "tatoeba~9860445 / reply tatoeba:568852"
+    },
+    {
+     "question_lt": "**Pardavėja:** Gal šis puodelis?",
+     "options": [
+      "Geriau grynais.",
+      "Kiek kainuoja?",
+      "Dvidešimt eurų.",
+      "Ačiū, ir jums!"
+     ],
+     "correct_option": "b",
+     "source": "own / reply tatoeba:3589725"
+    },
+    {
+     "question_lt": "**Pardavėja:** Trisdešimt eurų.",
+     "options": [
+      "Man tai per brangu. Gal turite pigesnį?",
+      "Jam trisdešimt metų.",
+      "Į gimtadienį.",
+      "Gerai, štai dvidešimt eurų."
+     ],
+     "correct_option": "a",
+     "source": "own / reply tatoeba~13314884"
+    },
+    {
+     "question_lt": "**Pardavėja:** Šitas kainuoja dešimt eurų.",
+     "options": [
+      "Į gimtadienį.",
+      "Jam trisdešimt metų.",
+      "Gerai, imsiu šitą.",
+      "Ačiū, ir jums!"
+     ],
+     "correct_option": "c",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Pardavėja:** Kaip mokėsite?",
+     "options": [
+      "Dešimt eurų.",
+      "Norėčiau mokėti grynais.",
+      "Į gimtadienį.",
+      "Ačiū, ir jums!"
+     ],
+     "correct_option": "b",
+     "source": "own / reply tatoeba:567217"
+    }
+   ]
+  },
+  {
+   "title_ru": "У врача",
+   "title_en": "At the doctor's",
+   "description_ru": "Врач и пациент",
+   "description_en": "A doctor and a patient",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Gydytoja:** Laba diena. Prašom sėstis.",
+     "options": [
+      "Ačiū.",
+      "Viso gero!",
+      "Tris dienas.",
+      "Ne, nerūkau."
+     ],
+     "correct_option": "a",
+     "source": "tatoeba~9860445 / reply own"
+    },
+    {
+     "question_lt": "**Gydytoja:** Kur skauda?",
+     "options": [
+      "Tris dienas.",
+      "Ne, nerūkau.",
+      "Man skauda galvą.",
+      "Taip, prašau."
+     ],
+     "correct_option": "c",
+     "source": "tatoeba:568838 / reply tatoeba:2153648"
+    },
+    {
+     "question_lt": "**Gydytoja:** Kiek laiko sergate?",
+     "options": [
+      "Septintą valandą vakaro.",
+      "Tris dienas.",
+      "Trisdešimt aštuoni.",
+      "Tris kartus per dieną."
+     ],
+     "correct_option": "b",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Gydytoja:** Kokia jūsų temperatūra?",
+     "options": [
+      "Trisdešimt metų.",
+      "Trisdešimt aštuoni.",
+      "Tris kartus per dieną.",
+      "Septintą valandą vakaro."
+     ],
+     "correct_option": "b",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Gydytoja:** Jums reikia gulėti lovoje.",
+     "options": [
+      "Ne, nerūkau.",
+      "Prašom!",
+      "Gerai. Ačiū!",
+      "Trisdešimt metų."
+     ],
+     "correct_option": "c",
+     "source": "tatoeba:12131666 / reply own"
+    }
+   ]
+  },
+  {
+   "title_ru": "На вокзале",
+   "title_en": "At the train station",
+   "description_ru": "Кассир и пассажир",
+   "description_en": "A ticket clerk and a passenger",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Kasininkė:** Laba diena.",
+     "options": [
+      "Laba diena. Vieną bilietą į Kauną, prašau.",
+      "Viso gero!",
+      "Iš trečio perono.",
+      "Ačiū!"
+     ],
+     "correct_option": "a",
+     "source": "tatoeba:9860445 / reply tatoeba~9860445"
+    },
+    {
+     "question_lt": "**Kasininkė:** Į vieną pusę ar ten ir atgal?",
+     "options": [
+      "Ne, nesu.",
+      "Mokėsiu kortele.",
+      "Šiandien.",
+      "Į vieną pusę."
+     ],
+     "correct_option": "d",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Kasininkė:** Dvylika eurų. Prašom, jūsų bilietas.",
+     "options": [
+      "Ačiū, jums taip pat!",
+      "Ne, ačiū.",
+      "Ačiū. Iš kurio perono išvyksta traukinys?",
+      "Gero kelio!"
+     ],
+     "correct_option": "c",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Kasininkė:** Iš trečio perono.",
+     "options": [
+      "O kada jis atvyks į Kauną?",
+      "Iš Vilniaus.",
+      "Šiandien.",
+      "Ne, ačiū."
+     ],
+     "correct_option": "a",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Kasininkė:** Pirmą valandą.",
+     "options": [
+      "Ačiū, ir jums!",
+      "Iš Vilniaus.",
+      "Gero kelio!",
+      "Ačiū, viso gero!"
+     ],
+     "correct_option": "d",
+     "source": "own / reply own"
+    }
+   ]
+  },
+  {
+   "title_ru": "В кафе",
+   "title_en": "At the café",
+   "description_ru": "Официант и посетитель",
+   "description_en": "A waiter and a customer",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Padavėjas:** Laba diena. Ko norėtumėte?",
+     "options": [
+      "Sąskaitą, prašom.",
+      "Prašau, duokite meniu.",
+      "Skanaus!",
+      "Ne, ačiū."
+     ],
+     "correct_option": "b",
+     "source": "tatoeba~9860445 / reply tatoeba:13192816"
+    },
+    {
+     "question_lt": "**Padavėjas:** Prašom. Kavos ar arbatos?",
+     "options": [
+      "Norėčiau kavos su pienu.",
+      "Sąskaitą, prašom.",
+      "Skanaus!",
+      "Prie lango."
+     ],
+     "correct_option": "a",
+     "source": "tatoeba~10524013 / reply own"
+    },
+    {
+     "question_lt": "**Padavėjas:** Ar norite pyrago?",
+     "options": [
+      "Skanaus!",
+      "Ačiū, ir jums!",
+      "Prie lango.",
+      "Taip, prašau."
+     ],
+     "correct_option": "d",
+     "source": "tatoeba:13056686 / reply tatoeba:948498"
+    },
+    {
+     "question_lt": "**Padavėjas:** Štai kava ir pyragas. Skanaus!",
+     "options": [
+      "Ne, ačiū.",
+      "Ačiū!",
+      "Į sveikatą!",
+      "Prašom!"
+     ],
+     "correct_option": "b",
+     "source": "tatoeba~3266851 / reply tatoeba:448648"
+    },
+    {
+     "question_lt": "**Padavėjas:** Gal dar kavos?",
+     "options": [
+      "Ne, ačiū. Sąskaitą, prašom.",
+      "Kortele.",
+      "Prie lango.",
+      "Į sveikatą!"
+     ],
+     "correct_option": "a",
+     "source": "own / reply tatoeba~2602375,948444"
+    }
+   ]
+  },
+  {
+   "title_ru": "В отеле",
+   "title_en": "At the hotel",
+   "description_ru": "Администратор и гость",
+   "description_en": "A receptionist and a guest",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Registratorė:** Laba diena.",
+     "options": [
+      "Dvi naktis.",
+      "Laba diena. Ar yra laisvų kambarių?",
+      "Su pusryčiais.",
+      "Ačiū, viso gero!"
+     ],
+     "correct_option": "b",
+     "source": "tatoeba:9860445 / reply tatoeba~9860445,13656097"
+    },
+    {
+     "question_lt": "**Registratorė:** Taip. Kokio kambario jums reikia?",
+     "options": [
+      "Dvi naktis.",
+      "Kazlauskas.",
+      "Man reikia dviviečio kambario.",
+      "Antradienį."
+     ],
+     "correct_option": "c",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Registratorė:** Kiek naktų pasiliksite?",
+     "options": [
+      "Dvi naktis.",
+      "Septintą valandą vakaro.",
+      "Su pusryčiais.",
+      "Dviem žmonėms."
+     ],
+     "correct_option": "a",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Registratorė:** Jūsų pasą, prašom.",
+     "options": [
+      "Vienviečio.",
+      "Ačiū!",
+      "Septintą valandą vakaro.",
+      "Štai, prašom."
+     ],
+     "correct_option": "d",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Registratorė:** Štai raktas.",
+     "options": [
+      "Prašom!",
+      "Ačiū!",
+      "Vienviečio.",
+      "Su pusryčiais."
+     ],
+     "correct_option": "b",
+     "source": "tatoeba:6622073 / reply tatoeba:448648"
+    }
+   ]
+  },
+  {
+   "title_ru": "На почте",
+   "title_en": "At the post office",
+   "description_ru": "Сотрудница почты и клиент",
+   "description_en": "A post office clerk and a customer",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Darbuotoja:** Laba diena. Klausau.",
+     "options": [
+      "Paprastą.",
+      "Geriau grynais.",
+      "Noriu išsiųsti šį laišką į Vokietiją.",
+      "Viso gero!"
+     ],
+     "correct_option": "c",
+     "source": "tatoeba~9860445 / reply own"
+    },
+    {
+     "question_lt": "**Darbuotoja:** Paprastą ar registruotą?",
+     "options": [
+      "Ne, neturiu.",
+      "Geriau grynais.",
+      "Paprastą.",
+      "Du eurai."
+     ],
+     "correct_option": "c",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Darbuotoja:** Du eurai. Dar ko nors?",
+     "options": [
+      "Antradienį.",
+      "Ačiū, ir jums!",
+      "Iki rytojaus!",
+      "Man reikia keleto pašto ženklų."
+     ],
+     "correct_option": "d",
+     "source": "tatoeba~5207326 / reply tatoeba:10865563"
+    },
+    {
+     "question_lt": "**Darbuotoja:** Iš viso septyni eurai. Kaip mokėsite?",
+     "options": [
+      "Penkis.",
+      "Geriau grynais.",
+      "Antradienį.",
+      "Taip, prašau."
+     ],
+     "correct_option": "b",
+     "source": "own / reply tatoeba:8065618"
+    },
+    {
+     "question_lt": "**Darbuotoja:** Ačiū. Gražios dienos!",
+     "options": [
+      "Iki rytojaus!",
+      "Ne, ačiū.",
+      "Ačiū, jums taip pat!",
+      "Taip, prašau."
+     ],
+     "correct_option": "c",
+     "source": "own / reply own"
+    }
+   ]
+  },
+  {
+   "title_ru": "Заказываем столик по телефону",
+   "title_en": "Booking a table by phone",
+   "description_ru": "Администратор ресторана и клиент",
+   "description_en": "A restaurant host and a caller",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Administratorė:** Restoranas „Liepa“, klausau.",
+     "options": [
+      "Laba diena. Norėčiau rezervuoti staliuką šiam vakarui.",
+      "Keturiese.",
+      "Kazlauskas.",
+      "Iki pasimatymo!"
+     ],
+     "correct_option": "a",
+     "source": "own / reply tatoeba~9860445"
+    },
+    {
+     "question_lt": "**Administratorė:** Kiek žmonių bus?",
+     "options": [
+      "Septintą valandą vakaro.",
+      "Kazlauskas.",
+      "Keturiese.",
+      "Dvi valandas."
+     ],
+     "correct_option": "c",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Administratorė:** Kelintą valandą atvyksite?",
+     "options": [
+      "Tomas.",
+      "Dvi valandas.",
+      "Septintą valandą vakaro.",
+      "Kazlauskas."
+     ],
+     "correct_option": "c",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Administratorė:** Kokia jūsų pavardė?",
+     "options": [
+      "Kazlauskas.",
+      "Tomas.",
+      "Šeštadienį.",
+      "Dvi valandas."
+     ],
+     "correct_option": "a",
+     "source": "tatoeba:9822672 / reply own"
+    },
+    {
+     "question_lt": "**Administratorė:** Gerai. Laukiame jūsų!",
+     "options": [
+      "Skanaus!",
+      "Ne, ačiū.",
+      "Tomas.",
+      "Ačiū, iki pasimatymo!"
+     ],
+     "correct_option": "d",
+     "source": "own / reply own"
+    }
+   ]
+  },
+  {
+   "title_ru": "Звоним по объявлению о квартире",
+   "title_en": "Calling about a flat",
+   "description_ru": "Хозяйка квартиры и будущий жилец",
+   "description_en": "A landlady and a would-be tenant",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Šeimininkė:** Alio?",
+     "options": [
+      "Žinoma.",
+      "Gerai, iki rytojaus!",
+      "Iš Kauno.",
+      "Laba diena. Skambinu dėl buto."
+     ],
+     "correct_option": "d",
+     "source": "own / reply tatoeba~9860445"
+    },
+    {
+     "question_lt": "**Šeimininkė:** Taip, butas dar laisvas.",
+     "options": [
+      "Gerai, iki rytojaus!",
+      "Kiek kainuoja nuoma?",
+      "Iš Kauno.",
+      "Šiandien negaliu."
+     ],
+     "correct_option": "b",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Šeimininkė:** Penki šimtai eurų per mėnesį, komunaliniai mokesčiai atskirai.",
+     "options": [
+      "Ar galima su gyvūnais?",
+      "Gerai, iki rytojaus!",
+      "Dviese.",
+      "Šiandien negaliu."
+     ],
+     "correct_option": "a",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Šeimininkė:** Žinoma, galima.",
+     "options": [
+      "Gerai, iki rytojaus!",
+      "Gaila. Ačiū, viso gero!",
+      "Kada galėčiau apžiūrėti butą?",
+      "Šiandien negaliu."
+     ],
+     "correct_option": "c",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Šeimininkė:** Gal rytoj vakare?",
+     "options": [
+      "Gerai, iki rytojaus!",
+      "Šiandien negaliu.",
+      "Iš Kauno.",
+      "Su katinu."
+     ],
+     "correct_option": "a",
+     "source": "own / reply tatoeba:12155496"
+    }
+   ]
+  },
+  {
+   "title_ru": "Договариваемся с другом",
+   "title_en": "Making plans with a friend",
+   "description_ru": "Два друга",
+   "description_en": "Two friends",
+   "kind": "dialogue",
+   "questions": [
+    {
+     "question_lt": "**Jonas:** Labas! Kaip sekasi?",
+     "options": [
+      "Iki!",
+      "Gerai, einam.",
+      "Man viskas gerai. O tau?",
+      "Septintą vakare."
+     ],
+     "correct_option": "c",
+     "source": "tatoeba:2173742 / reply tatoeba:12170136"
+    },
+    {
+     "question_lt": "**Jonas:** Neblogai. Ar šeštadienį dirbi?",
+     "options": [
+      "Ne, nedirbu.",
+      "Gerai, einam.",
+      "Iki šeštadienio!",
+      "Ne, nemėgstu kino."
+     ],
+     "correct_option": "a",
+     "source": "own / reply own"
+    },
+    {
+     "question_lt": "**Jonas:** Einam į kiną?",
+     "options": [
+      "Iki!",
+      "Gerai, einam.",
+      "Aš irgi.",
+      "Ačiū, ir tau!"
+     ],
+     "correct_option": "b",
+     "source": "tatoeba:1607115 / reply tatoeba:12289306"
+    },
+    {
+     "question_lt": "**Jonas:** Septintą vakare?",
+     "options": [
+      "Puiku!",
+      "Ačiū, ir tau!",
+      "Komediją.",
+      "Ne, nemėgstu kino."
+     ],
+     "correct_option": "a",
+     "source": "own / reply tatoeba:6398257"
+    },
+    {
+     "question_lt": "**Jonas:** Iki šeštadienio!",
+     "options": [
+      "Ačiū, ir tau!",
+      "Iki!",
+      "Nieko naujo.",
+      "Iki pirmadienio!"
+     ],
+     "correct_option": "b",
+     "source": "own / reply tatoeba:6003048"
+    }
+   ]
+  }
+ ]
+}

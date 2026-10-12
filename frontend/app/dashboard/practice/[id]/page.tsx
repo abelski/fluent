@@ -25,7 +25,7 @@ interface Question {
 }
 
 interface ActiveTest {
-  test: { id: number; title_ru: string; title_en: string | null; pass_threshold: number; lesson_text_lt: string | null };
+  test: { id: number; title_ru: string; title_en: string | null; pass_threshold: number; lesson_text_lt: string | null; kind: string };
   questions: Question[];
 }
 
@@ -36,6 +36,19 @@ const OPTIONS: Option[] = ['a', 'b', 'c', 'd'];
 
 function getOptionText(q: Question, opt: Option): string {
   return q[`option_${opt}` as keyof Question] as string;
+}
+
+// #62c: every earlier turn's line + its *correct* reply (whatever the student picked,
+// so the story stays coherent), then the current line. «Jūs» is Lithuanian content.
+function dialogueTranscript(questions: Question[], upTo: number): string {
+  const parts: string[] = [];
+  for (let i = 0; i < upTo; i++) {
+    const q = questions[i];
+    parts.push(q.question_lt ?? q.question_ru, `**Jūs:** ${getOptionText(q, q.correct_option as Option)}`);
+  }
+  const cur = questions[upTo];
+  parts.push(cur.question_lt ?? cur.question_ru);
+  return parts.join('\n');
 }
 
 export default function PracticeCategoryPage() {
@@ -460,7 +473,13 @@ export default function PracticeCategoryPage() {
                   />
                 </div>
                 <div className="px-6 py-5">
-                  <p className="text-base font-semibold text-gray-900 leading-snug">{q.question_lt ?? q.question_ru}</p>
+                  {activeTest.test.kind === 'dialogue' ? (
+                    <div data-testid="dialogue-transcript">
+                      <DialogueText text={dialogueTranscript(activeTest.questions, current)} />
+                    </div>
+                  ) : (
+                    <p className="text-base font-semibold text-gray-900 leading-snug">{q.question_lt ?? q.question_ru}</p>
+                  )}
                 </div>
               </div>
 
@@ -584,7 +603,11 @@ export default function PracticeCategoryPage() {
                           {isCorrect ? '✓' : '✗'}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{q.question_lt ?? q.question_ru}</p>
+                          {activeTest.test.kind === 'dialogue' ? (
+                            <DialogueText text={q.question_lt ?? q.question_ru} />
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{q.question_lt ?? q.question_ru}</p>
+                          )}
                           {!isCorrect && (
                             <div className="mt-1.5 flex flex-col gap-0.5">
                               <p className="text-xs text-red-600">

@@ -337,6 +337,7 @@ const ru: Translations = {
     sourceLinkText: 'Конституцию Литвы',
     textBadge: '📄 Текст',
     textLabel: 'Текст',
+    dialogueLabel: 'Диалог',
     showTextHint: 'показать текст',
     passThresholdSuffix: 'для сдачи',
     goToTestBtn: 'Перейти к тесту',
@@ -787,6 +788,9 @@ const ru: Translations = {
     fieldSectionRu: 'Секция (RU)',
     fieldSectionEn: 'Секция (EN)',
     fieldIsFinal: 'Итоговый экзамен (карточка на странице практики)',
+    fieldKind: 'Тип теста',
+    kindChoice: 'Выбор ответа',
+    kindDialogue: 'Диалог',
   },
   vocabulary: {
     title: 'Мой словарь',

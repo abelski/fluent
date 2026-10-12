@@ -30,6 +30,15 @@ def _require_admin(authorization: Optional[str], session: Session) -> User:
     return user
 
 
+# #62c: "choice" tests are sampled and shuffled; any other kind is served whole, in order.
+TEST_KINDS = ("choice", "dialogue")
+
+
+def _check_kind(kind: str) -> None:
+    if kind not in TEST_KINDS:
+        raise HTTPException(status_code=400, detail=f"kind must be one of {', '.join(TEST_KINDS)}")
+
+
 def _valid_option(v: str) -> bool:
     return v in ("a", "b", "c", "d")
 
@@ -310,6 +319,7 @@ def list_category_tests(
             "section_ru": t.section_ru,
             "section_en": t.section_en,
             "is_final": t.is_final,
+            "kind": t.kind,
             "active_question_count": active_counts.get(t.id, 0),
             "is_locked": is_locked,
             "best_score_pct": best_scores.get(t.id),
@@ -391,8 +401,11 @@ def get_exam_questions(
     if test["is_premium"] and not (user.is_admin or _is_premium_active(user)):
         raise HTTPException(status_code=403, detail={"code": "premium_required"})
     active = exam["questions"]
-    count = min(test["question_count"], len(active))
-    chosen = random.sample(active, count) if len(active) >= count else list(active)
+    if test["kind"] == "choice":
+        count = min(test["question_count"], len(active))
+        chosen = random.sample(active, count)
+    else:
+        chosen = list(active)  # dialogue: every turn, in stored order (#62c)
     return {
         "test": {
             "id": test["id"],
@@ -400,6 +413,7 @@ def get_exam_questions(
             "title_en": test["title_en"],
             "pass_threshold": test["pass_threshold"],
             "lesson_text_lt": test["lesson_text_lt"],
+            "kind": test["kind"],
         },
         "questions": chosen,
     }
@@ -426,6 +440,7 @@ def _load_exam(test_id: int, session: Session) -> Optional[dict]:
             for q in session.exec(
                 select(PracticeQuestion)
                 .where(PracticeQuestion.test_id == test_id, PracticeQuestion.is_active == True)  # noqa: E712
+                .order_by(PracticeQuestion.sort_order, PracticeQuestion.id)
             ).all()
         ],
     }
@@ -631,6 +646,7 @@ def admin_list_category_tests(
             "section_ru": t.section_ru,
             "section_en": t.section_en,
             "is_final": t.is_final,
+            "kind": t.kind,
             "created_by": t.created_by,
             "sort_order": t.sort_order,
             "total_questions": total_counts.get(t.id, 0),
@@ -674,6 +690,7 @@ def admin_list_tests(
             "section_ru": t.section_ru,
             "section_en": t.section_en,
             "is_final": t.is_final,
+            "kind": t.kind,
             "created_by": t.created_by,
             "sort_order": t.sort_order,
             "total_questions": total_counts.get(t.id, 0),
@@ -709,6 +726,7 @@ class TestIn(BaseModel):
     section_ru: Optional[str] = None
     section_en: Optional[str] = None
     is_final: bool = False
+    kind: str = "choice"
 
     _sections = field_validator("section_ru", "section_en")(_clean_section)
 
@@ -724,6 +742,7 @@ def admin_create_test(
         raise HTTPException(status_code=400, detail="title_ru required")
     if body.status not in ("draft", "testing", "published"):
         raise HTTPException(status_code=400, detail="status must be draft, testing, or published")
+    _check_kind(body.kind)
     t = PracticeTest(
         title_ru=body.title_ru.strip(),
         title_en=body.title_en,
@@ -740,6 +759,7 @@ def admin_create_test(
         section_ru=body.section_ru,
         section_en=body.section_en,
         is_final=body.is_final,
+        kind=body.kind,
     )
     session.add(t)
     session.commit()
@@ -762,6 +782,7 @@ class TestUpdate(BaseModel):
     section_ru: Optional[str] = None
     section_en: Optional[str] = None
     is_final: Optional[bool] = None
+    kind: Optional[str] = None
 
     _sections = field_validator("section_ru", "section_en")(_clean_section)
 
@@ -807,6 +828,9 @@ def admin_update_test(
             setattr(t, field, getattr(body, field))
     if "is_final" in body.model_fields_set and body.is_final is not None:
         t.is_final = body.is_final
+    if body.kind is not None:
+        _check_kind(body.kind)
+        t.kind = body.kind
     session.add(t)
     session.commit()
     return {"ok": True}
@@ -985,6 +1009,8 @@ def admin_export_test(
         "description_en": t.description_en,
         "question_count": t.question_count,
         "pass_threshold": t.pass_threshold,
+        "kind": t.kind,
+        "lesson_text_lt": t.lesson_text_lt,
         "questions": [
             {
                 "question_ru": q.question_ru,
@@ -1025,12 +1051,16 @@ async def admin_import_test(
     title_ru = data.get("title_ru", "").strip()
     if not title_ru:
         raise HTTPException(status_code=400, detail="title_ru is required in JSON")
+    kind = data.get("kind") or "choice"
+    _check_kind(kind)
 
     t = PracticeTest(
         title_ru=title_ru,
         title_en=data.get("title_en"),
         description_ru=data.get("description_ru"),
         description_en=data.get("description_en"),
+        lesson_text_lt=data.get("lesson_text_lt"),
+        kind=kind,
         question_count=int(data.get("question_count", 20)),
         pass_threshold=float(data.get("pass_threshold", 0.75)),
         status="draft",

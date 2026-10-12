@@ -297,6 +297,7 @@ export interface Translations {
     sourceLinkText: string; // link text for the category's source_url callout
     textBadge: string; // "📄 Text" badge on a test row that has lesson_text_lt
     textLabel: string; // plain "Text" badge on the reading view
+    dialogueLabel: string; // #62c: passage badge for a dialogue task in the knowledge check
     showTextHint: string; // #62b collapsible text block during questions
     passThresholdSuffix: string; // "{pct}% <suffix>" — e.g. "to pass"
     goToTestBtn: string; // after the reading view, proceeds to questions
@@ -410,6 +411,9 @@ export interface Translations {
     fieldSectionRu: string; // #55
     fieldSectionEn: string;
     fieldIsFinal: string;
+    fieldKind: string;
+    kindChoice: string;
+    kindDialogue: string;
   };
   review: {
     mistakesMode: string;

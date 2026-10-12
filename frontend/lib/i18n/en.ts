@@ -337,6 +337,7 @@ const en: Translations = {
     sourceLinkText: 'the Constitution of Lithuania',
     textBadge: '📄 Text',
     textLabel: 'Text',
+    dialogueLabel: 'Dialogue',
     showTextHint: 'show text',
     passThresholdSuffix: 'to pass',
     goToTestBtn: 'Go to the test',
@@ -787,6 +788,9 @@ const en: Translations = {
     fieldSectionRu: 'Section (RU)',
     fieldSectionEn: 'Section (EN)',
     fieldIsFinal: 'Final exam (card on the practice page)',
+    fieldKind: 'Test type',
+    kindChoice: 'Multiple choice',
+    kindDialogue: 'Dialogue',
   },
   vocabulary: {
     title: 'My vocabulary',

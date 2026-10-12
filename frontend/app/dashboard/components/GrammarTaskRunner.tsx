@@ -108,6 +108,8 @@ export interface ReadingTask {
   passage_lt: string;
   passage_title_ru?: string | null;
   passage_title_en?: string | null;
+  /** #62c: 'dialogue' labels the passage card «Диалог» instead of «Текст». */
+  passage_kind?: 'dialogue' | null;
   question_lt: string;
   question_ru: string;
   /** 2–4 choices, one === answer. */
@@ -647,7 +649,7 @@ export default function GrammarTaskRunner({
                       {(lang === 'en' && task.passage_title_en) || task.passage_title_ru}
                     </span>
                     <span className="text-xs px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full font-semibold">
-                      {tr.practice.textLabel}
+                      {task.passage_kind === 'dialogue' ? tr.practice.dialogueLabel : tr.practice.textLabel}
                     </span>
                   </div>
                   <div className="px-5 py-4">

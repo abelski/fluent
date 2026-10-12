@@ -12,6 +12,7 @@ Tests land as `testing` (admins only) — publish them in the admin panel.
 
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -54,10 +55,49 @@ def validate_tfns(data: dict) -> None:
             raise ValueError(f"{where}: no statement answered {sorted(missing)}")
 
 
+_SPEAKER_LINE = re.compile(r"^\*\*[^*]+:\*\* .+")
+
+
+def validate_dialogue(data: dict) -> None:
+    """Raise ValueError if `data` breaks the Dialogues rules (plan #62c Req 4, 7)."""
+    cat = data.get("category") or {}
+    if not cat.get("name_ru") or not cat.get("name_en"):
+        raise ValueError("category needs name_ru and name_en")
+    tests = data.get("tests") or []
+    if len(tests) != 10:
+        raise ValueError(f"expected 10 tests, got {len(tests)}")
+    for i, t in enumerate(tests, 1):
+        where = f"test {i} ({t.get('title_en')!r})"
+        if not t.get("title_ru") or not t.get("title_en"):
+            raise ValueError(f"{where}: title_ru and title_en required")
+        if t.get("kind") != "dialogue":
+            raise ValueError(f"{where}: kind must be 'dialogue'")
+        qs = t.get("questions") or []
+        if not 5 <= len(qs) <= 6:
+            raise ValueError(f"{where}: expected 5–6 turns, got {len(qs)}")
+        for j, q in enumerate(qs, 1):
+            turn = f"{where} turn {j}"
+            if not _SPEAKER_LINE.match(q.get("question_lt") or ""):
+                raise ValueError(f"{turn}: question_lt must look like '**Name:** text'")
+            opts = q.get("options") or []
+            if len(opts) != 4 or any(not str(o).strip() for o in opts):
+                raise ValueError(f"{turn}: needs 4 non-empty options")
+            if len({str(o).strip() for o in opts}) != 4:
+                raise ValueError(f"{turn}: options must be distinct")
+            if q.get("correct_option") not in ("a", "b", "c", "d"):
+                raise ValueError(f"{turn}: correct_option must be a–d, got {q.get('correct_option')!r}")
+            if not (q.get("source") or "").strip():
+                raise ValueError(f"{turn}: source required")
+        if len({q["correct_option"] for q in qs}) == 1:
+            raise ValueError(f"{where}: every turn has the same correct letter")
+
+
 def validate(data: dict) -> None:
     fmt = data.get("format")
     if fmt == "tfns":
         validate_tfns(data)
+    elif fmt == "dialogue":
+        validate_dialogue(data)
     else:
         raise ValueError(f"unknown format {fmt!r}")
 
@@ -79,19 +119,23 @@ def seed(session, data: dict):
     )
     session.add(cat)
     session.flush()
+    dialogue = data["format"] == "dialogue"
     for i, t in enumerate(data["tests"], 1):
         test = PracticeTest(
             category_id=cat.id, title_ru=t["title_ru"], title_en=t["title_en"],
-            lesson_text_lt=t["lesson_text_lt"], question_count=len(t["questions"]),
+            description_ru=t.get("description_ru"), description_en=t.get("description_en"),
+            lesson_text_lt=None if dialogue else t["lesson_text_lt"],
+            kind="dialogue" if dialogue else "choice",
+            question_count=len(t["questions"]),
             pass_threshold=0.7, status="testing", is_premium=False, sort_order=i,
         )
         session.add(test)
         session.flush()
         for j, q in enumerate(t["questions"], 1):
+            opts = q["options"] if dialogue else TFNS_OPTIONS  # dialogue `source` is not stored
             session.add(PracticeQuestion(
                 test_id=test.id, question_lt=q["question_lt"], question_ru=q["question_lt"],
-                option_a=TFNS_OPTIONS[0], option_b=TFNS_OPTIONS[1],
-                option_c=TFNS_OPTIONS[2], option_d=TFNS_OPTIONS[3],
+                option_a=opts[0], option_b=opts[1], option_c=opts[2], option_d=opts[3],
                 correct_option=q["correct_option"], is_active=True, sort_order=j,
             ))
     session.commit()

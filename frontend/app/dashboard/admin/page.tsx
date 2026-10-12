@@ -129,6 +129,7 @@ interface PracticeTestRow {
   section_ru: string | null; // #55
   section_en: string | null;
   is_final: boolean;
+  kind: string; // #62c: choice | dialogue
   created_by: string | null;
   sort_order: number;
   total_questions: number;
@@ -175,6 +176,7 @@ const BLANK_TEST: Omit<PracticeTestRow, 'id' | 'total_questions' | 'active_quest
   section_ru: null,
   section_en: null,
   is_final: false,
+  kind: 'choice',
   created_by: null,
   sort_order: 0,
 };
@@ -1421,6 +1423,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         section_ru: editingTest.section_ru ?? '', // "" clears; the server strips + validates (≤120)
         section_en: editingTest.section_en ?? '',
         is_final: editingTest.is_final,
+        kind: editingTest.kind,
       }),
     }).catch(() => null);
     setPracticeSaving(false);
@@ -3430,6 +3433,11 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                       <div className="flex items-center gap-3">
                         <label className="text-xs text-gray-400">{tr.adminPractice.fieldIsPremium}</label>
                         <input type="checkbox" checked={newTest.is_premium} onChange={(e) => setNewTest((p) => ({ ...p, is_premium: e.target.checked }))} className="w-4 h-4" />
+                        <label className="text-xs text-gray-400">{tr.adminPractice.fieldKind}</label>
+                        <select data-testid="admin-new-test-kind" value={newTest.kind} onChange={(e) => setNewTest((p) => ({ ...p, kind: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs outline-none">
+                          <option value="choice">{tr.adminPractice.kindChoice}</option>
+                          <option value="dialogue">{tr.adminPractice.kindDialogue}</option>
+                        </select>
                       </div>
                       <div className="flex gap-2 justify-end">
                         <button onClick={() => setAddingTest(false)} className="text-xs text-gray-400 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminPractice.cancel}</button>
@@ -3497,6 +3505,13 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                 <div className="flex items-center gap-2">
                                   <label htmlFor="admin-test-is-final" className="text-xs text-gray-400">{tr.adminPractice.fieldIsFinal}</label>
                                   <input id="admin-test-is-final" data-testid="admin-test-is-final" type="checkbox" checked={editingTest.is_final} onChange={(e) => setEditingTest((p) => p ? { ...p, is_final: e.target.checked } : p)} className="w-4 h-4" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label htmlFor="admin-test-kind" className="text-xs text-gray-400">{tr.adminPractice.fieldKind}</label>
+                                  <select id="admin-test-kind" data-testid="admin-test-kind" value={editingTest.kind} onChange={(e) => setEditingTest((p) => p ? { ...p, kind: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-xs outline-none">
+                                    <option value="choice">{tr.adminPractice.kindChoice}</option>
+                                    <option value="dialogue">{tr.adminPractice.kindDialogue}</option>
+                                  </select>
                                 </div>
                               </div>
                               <div className="flex gap-2 justify-end">

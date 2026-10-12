@@ -89,8 +89,12 @@ Scenario: starting an exam
   Given an authenticated user and a test_id that is visible to them (per the same
     published/testing/draft-by-creator rule as the general test list)
   When GET /practice/tests/{test_id}/exam is called
-  Then up to question_count active questions are chosen at random from that test's
-    active question pool, and the test's lesson_text_lt (if any) is returned alongside
+  Then for a test of kind "choice" up to question_count active questions are chosen at random
+    from that test's active question pool, and the test's lesson_text_lt (if any) is returned alongside
+  And for any other kind (#62c: "dialogue") every active question is returned in stored
+    (sort_order, id) order, never sampled or shuffled
+  And the response's test object carries kind, as does every summary from
+    GET /practice/categories/{id}/tests
   And a test_id that doesn't exist, or isn't visible to this user, returns 404
 ```
 
@@ -257,6 +261,28 @@ Scenario: admin manages tests
 ```
 
 ```gherkin
+Scenario: admin sets a test's kind (#62c)
+  Given an authenticated admin
+  When creating or updating a test with kind outside {choice, dialogue}
+  Then the response is 400
+  And both admin test lists return kind, and an update that omits kind keeps the stored one
+  And the admin test form shows a "Тип теста" / "Test type" select, so saving a dialogue
+    never resets it to choice
+```
+
+```gherkin
+Scenario: dialogue test (#62c)
+  Given a test of kind "dialogue" whose questions are the other speaker's lines as
+    "**Name:** text" with 4 candidate replies
+  When a student runs it
+  Then every turn is shown in stored order, one per screen, with the conversation so far
+    rendered by DialogueText above the options: each earlier line followed by
+    "**Jūs:** <its correct reply>" — the correct one even after a wrong pick — then the current line
+  And the result review renders each turn with DialogueText, so no raw "**" is visible
+  And «Jūs» is Lithuanian content, not translated in the English UI
+```
+
+```gherkin
 Scenario: English UI falls back to Russian content per field
   Given the dashboard is rendered in English and a category, test title, or test description
     has no *_en value
@@ -279,11 +305,14 @@ Scenario: admin manages questions
 Scenario: admin exports and imports a test
   Given an authenticated admin
   When GET /admin/practice/tests/{test_id}/export is called
-  Then the test and all its questions are returned as a downloadable JSON file
+  Then the test (including kind and lesson_text_lt) and all its questions are returned as a
+    downloadable JSON file
   When POST /admin/practice/tests/import is called with a JSON file
   Then a brand-new test is always created (status "draft"), never merged into an
     existing test with the same title, and any question in the file whose
     correct_option isn't a/b/c/d is silently skipped rather than rejecting the import
+  And kind and lesson_text_lt are read back; a file without kind imports as "choice", an
+    unknown kind returns 400
 ```
 
 ### Constitution exam — citizenship exam-prep sub-feature (`/practice/constitution/...`)

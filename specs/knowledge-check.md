@@ -27,6 +27,12 @@ Scenario: composition
   And every grammar task carries 4 options; a topic yielding < 2 MC tasks is swapped for another
   And the practice tasks come from one random free published test, share its passage,
     and stay one contiguous block in builder order at a random position
+  And the builder is picked by the test's kind: "choice" as above; "dialogue" (#62c) picks 2
+    random turns returned in stored order, each a `reading` task whose passage_lt is the
+    transcript before that turn (earlier lines + "**Jūs:** <correct reply>", empty for turn 1),
+    question_lt = the turn's line, its 4 replies unshuffled, passage_kind "dialogue" (badge
+    «Диалог» / "Dialogue") and the instruction «Выберите наиболее подходящую фразу» /
+    "Choose the most suitable phrase"; the gaps run keeps the same order
   And with no practice pool a 6th noun topic takes its place
 
 Scenario: start gating
