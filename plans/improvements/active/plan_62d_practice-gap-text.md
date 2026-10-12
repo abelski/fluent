@@ -1,12 +1,12 @@
 ---
 kind: feature
-status: draft
-iteration: 0
+status: done
+iteration: 2
 max_iterations: 30
 suggested_model: opus
 suggested_effort: high
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: opus
+confirmed_effort: high
 uat_rounds: 0
 max_uat_rounds: 3
 ---
@@ -20,8 +20,9 @@ Branch `feat/62d-practice-gap-text`. **Depends on #62a deployed** (empty categor
 before this plan seeds) **and #62b–#62c merged** (#62c's migration already ran on prod) — #62c adds
 `practice_test.kind`, `TEST_KINDS`, ordered whole-test serving for non-`choice` kinds, the admin kind
 select (`frontend/app/dashboard/admin/page.tsx`) and `kind` + `lesson_text_lt` in export/import;
-#62b adds the collapsible text block, hides empty categories and the generic insert-only seed
-(`scripts/seed_practice_category.py` + `scripts/practice_validators.py`); #62a keeps a practice
+#62b adds the collapsible text block and the generic insert-only seed `scripts/seed_practice_category.py`
+(validators live inside it: `validate_tfns`, `validate_dialogue`, `validate()` dispatch; per-format
+`seed()` branch) — #62a hides empty categories; #62a keeps a practice
 topic's tasks as one ordered block.
 
 The A2 exam has a long text with gaps and a shared bank of words to place. The user placed it in
@@ -55,16 +56,19 @@ plus a knowledge-check builder.
 
 ## Requirements
 
-1. **Kind** — add `gap_text` to `TEST_KINDS` (`backend/routers/practice.py`) and to the admin kind
+1. **Kind** — add `gap_text` to `TEST_KINDS` (`backend/routers/practice.py`; update the stale
+   `# dialogue: every turn` comment at the whole-test serving branch, ~:408 — logic already serves it) and to the admin kind
    select in `frontend/app/dashboard/admin/page.tsx` (+ i18n label «Текст с пропусками» / "Gap text").
-2. **Data contract** — one test per text: `kind` `gap_text`; `lesson_text_lt` = the text (120–200
-   words, A2, plain paragraphs, no markdown) with markers `{1}` … `{N}`, each exactly once and in
+2. **Data contract** — one test per text: `kind` `gap_text`; `lesson_text_lt` = the text (~100–130
+   words, A2 — length is enforced only as 600–1400 chars, plain paragraphs, no markdown) with markers `{1}` … `{N}`, each exactly once and in
    order; `question_count` = N; `pass_threshold` 0.7; `is_premium` false; `status` `testing` at seed.
    One question per gap: `question_lt` = `question_ru` = its marker (`"{3}"` — ties the row to its
    gap explicitly, not just by order), `option_a` = the correct word in its correct form, `option_b`
    = one distractor (a wrong form of the same word or a near-synonym), `option_c` = `option_d` = "",
    `correct_option` `a`. Gaps target A2 grammar (case endings, verb forms) and everyday words. Texts
-   are written for Fluent — no openly licensed A2 texts exist (`documentation/content-sources.md`).
+   are written for Fluent — no openly licensed A2 texts exist (`documentation/content-sources.md`);
+   per the user's standing preference, build sentences from attested phrases (Tatoeba / real sites)
+   where they fit and tag each sentence's source in a review copy, as in #62c.
 3. **Start** — `startTest()` goes straight to the gap screen for `kind === 'gap_text'` (no reading
    screen); #62b's text block is not rendered for this kind.
 4. **Gap screen** (new component `frontend/app/dashboard/components/GapText.tsx`, used by the
@@ -89,18 +93,25 @@ plus a knowledge-check builder.
    reveals the other's answer; `question_lt` = the sentence holding `___` (split on `.`, `!`, `?` +
    whitespace); `options` = this gap's `option_a`, its `option_b`, and the `option_b` of 2 other gaps
    (distractors never appear in the text), deduplicated, shuffled — at least 2, at most 4;
-   `answer` = `option_a`. No id to wire: the category joins #62a's pool when its tests are published.
+   `answer` = `option_a`; `passage_kind` `None` (the runner only labels `dialogue`);
+   `instruction_ru`/`instruction_en` «Выберите слово для пропуска» / "Choose the word for the gap".
+   Return `[]` when the text has fewer than 2 gaps or fewer than 2 other gaps for distractors
+   (`_practice_block` requires `len(tasks) == count`). No id to wire: the category joins #62a's pool when its tests are published.
 6. **Seed** — `backend/data/practice/gap_text.json` (`"format": "gap_text"`) through #62b's
-   `seed_practice_category.py`; new `validate_gap_text` in `practice_validators.py`. Category:
+   `seed_practice_category.py`: add `validate_gap_text` next to the other validators and an
+   `elif fmt == "gap_text"` in `validate()`; `seed()` today switches only dialogue vs tfns — make the
+   kind come from the format (`gap_text` → `kind="gap_text"`), keep `lesson_text_lt`, write the gap's
+   own a/b with c/d `""`, `question_ru = question_lt`. Category:
    `name_ru` «Текст с пропусками», `name_en` "Gap text", `sort_order` 13, one-line RU/EN description.
    Validator: 8 tests, all `kind` `gap_text`; 10–12 gaps; markers `{1}`…`{N}` each once, in order,
    no other `{` or `}` in the text; N questions whose `question_lt` is `{n}` for n = 1…N;
    `option_a`/`option_b` non-empty and different; `option_c`/`option_d` empty; `correct_option` `a`;
-   no gap's `option_b` equals any gap's `option_a` in the same text; text 600–1400 chars; RU + EN titles.
+   no gap's `option_b` equals any gap's `option_a` in the same text; text 600–1400 chars (the only
+   length rule); RU + EN titles.
 
 ### SEO
 - Practice stays out of the index (#62b S1): no sitemap entry, no robots/metadata change; the
-  `seo-snapshot` diff must be clean. llms.txt lists the category automatically (#62b S2).
+  llms.txt lists the category automatically once published (#62b S2). No SEO snapshot (as #62b/#62c).
 
 ### Standing constraints
 - All validation must be server-side (never frontend-only).
@@ -131,71 +142,105 @@ docs, CHANGELOG.
 _Filled in at step 0 (date + what the user approved or changed). Until then the Requirements stand
 as written; anything the prototype changes is copied into the Requirements before step 1._
 
+- 2026-10-12 — prototype approved as is ("looks great"): https://claude.ai/artifact/9pSxZqojBrsYQxTwrd8x8p
+  (source `temp_files/prototypes/plan_62d_practice-gap-text.html` — copy its markup/classes).
+  Empty gap = dashed box with its number, active one emerald (`border-emerald-600 bg-emerald-50`);
+  filled gap = grey chip (`bg-line-soft border-line`), active filled gap gets a ring; no right margin
+  on gaps (no space before punctuation). Bank = white card (`border-line rounded-[14px]`) with a
+  «СЛОВА»/"WORDS" kicker and "Заполнено N из M", chips `rounded-full border-line`, used chips stay in
+  place greyed + struck through (not removed — chips don't jump), chip area `max-h-[30vh]` with inner
+  scroll, sticky at the bottom together with the Check button. After Check: correct gap green; wrong
+  gap = the picked word red + struck through, then the correct word green; score card with the
+  passed/not-passed pill and retry. Knowledge check: instruction on top, passage card labelled
+  «Текст», current sentence in its own card, 4 options.
+- 2026-10-12 — content done: `backend/data/practice/gap_text.json` (8 texts × 10 gaps, 674–768
+  chars) after 3 Opus max-effort review rounds (final round: 0 serious key problems, 0 language
+  errors). Readable copy `temp_files/plan_62d/gap_text_review.txt`. All sentences written for Fluent
+  (no Tatoeba tags). Category description: «Прочитайте текст и вставьте в пропуски подходящие слова.
+  В списке есть лишние слова.» / "Read the text and fill in the gaps with the right words. There are
+  more words than gaps." **Do not rewrite the content.** JSON shape per question: `question_lt`
+  "{n}", `option_a`, `option_b`, `correct_option` "a" (the seed fills `question_ru`, c/d "").
+- Implementation continues in a fresh session (user's request): on branch
+  `feat/62d-practice-gap-text`, run `/sdlc-ralph-implement plans/improvements/active/plan_62d_practice-gap-text.md`.
+  Step 9 (seed to prod) needs the user's go-ahead; after seeding restart the local server with
+  `DEV=false` (practice cache).
+
 
 ## Implementation
 
-- [ ] 0. **Prototype** — build `temp_files/prototypes/plan_62d_practice-gap-text.html` per `## Prototype`, screenshot
+- [x] 0. **Prototype** — build `temp_files/prototypes/plan_62d_practice-gap-text.html` per `## Prototype`, screenshot
   every state (RU + EN, 1280 + 375) into `temp_files/screenshots/plan_62d_practice-gap-text-prototype/`, publish it as a
   private artifact. **STOP — user step:** the user reviews; iterate until approved. Record the verdict
   under `### Approved decisions` and copy any change into the Requirements. **No product code before
   approval.**
-- [ ] 1. **SEO baseline** (before any code change, local backend on :8000 running):
-  `cd frontend && rm -rf .next/cache/fetch-cache && npm run build && node scripts/seo-snapshot.mjs --out ../temp_files/seo/plan_62d-baseline.json`.
-- [ ] 2. `backend/routers/practice.py` — Req 1 (`TEST_KINDS` += `gap_text`).
-- [ ] 3. `frontend/app/dashboard/components/GapText.tsx` — Req 4.
-- [ ] 4. `frontend/app/dashboard/practice/[id]/page.tsx` — Req 3 + render `GapText` for the kind;
+- [x] 1. (dropped — no SEO snapshot, see SEO.)
+- [x] 2. `backend/routers/practice.py` — Req 1 (`TEST_KINDS` += `gap_text`).
+- [x] 3. `frontend/app/dashboard/components/GapText.tsx` — Req 4.
+- [x] 4. `frontend/app/dashboard/practice/[id]/page.tsx` — Req 3 + render `GapText` for the kind;
   `frontend/app/dashboard/admin/page.tsx` — the kind select gains the option.
-- [ ] 5. `frontend/lib/i18n/types.ts`, `ru.ts`, `en.ts` — check button, score line, gap aria-labels,
+- [x] 5. `frontend/lib/i18n/types.ts`, `ru.ts`, `en.ts` — check button, score line, gap aria-labels,
   kind label.
-- [ ] 6. `backend/data/practice/gap_text.json` + `validate_gap_text` in
-  `backend/scripts/practice_validators.py` — Req 2, 6.
-- [ ] 7. `backend/knowledge_check_service.py` — Req 5 builder.
-- [ ] 8. Tests:
+- [x] 6. `backend/data/practice/gap_text.json` + `validate_gap_text`, the `validate()` branch and the
+  per-format `seed()` change in `backend/scripts/seed_practice_category.py` — Req 2, 6.
+- [x] 7. `backend/knowledge_check_service.py` — Req 5 builder.
+- [x] 8. Tests:
   - `backend/tests/test_practice_gap_text.py` — `validate_gap_text` passes on `gap_text.json` and
     fails on a missing marker, a duplicated marker, out-of-order markers, a `question_lt` not matching
     its marker, equal `option_a`/`option_b`, a distractor equal to another gap's answer; a `gap_text`
-    test's exam returns all gaps in order; `kind="gap_text"` accepted by create/update/import.
+    test's exam returns all gaps in order; `kind="gap_text"` accepted by create/update/import and an
+    unknown kind still → 400; the seed's gap_text path writes `kind="gap_text"`, `lesson_text_lt`,
+    a/b with c/d `""` and `sort_order`; `test_practice_tfns.py` / `test_practice_dialogues.py` still pass.
   - `backend/tests/test_knowledge_check.py` — a gap-text category in the pool yields 2 `reading`
     tasks in gap order; each passage has exactly one `___` and one `(…)`, and the other chosen gap's
     answer is not written at its place; options hold the answer, are distinct, 2–4 of them, and none
-    of the distractors appears in the passage; the gaps run keeps the pair in order.
+    of the distractors appears in the passage (compare whole words, case-insensitive, on a small
+    fixture — real texts may contain a distractor's form elsewhere, e.g. «Rudenį»); the gaps run keeps the pair in order; the task carries
+    the gap instruction and `passage_kind` None; a text with < 2 usable gaps yields no block.
   - `frontend/tests/practice-gap-text.spec.ts` — Playwright, API mocked: fill gaps by tapping chips;
     tapping a filled gap returns its chip; Check disabled until all filled; after Check correct/wrong
     marks + score; results POST body has the right score; no reading screen and no text block for
-    this kind; a gap `reading` task in the knowledge-check runner. Screenshots (Validation).
-- [ ] 9. **STOP — user step.** Ask the user to review `gap_text.json` (natural Lithuanian; each gap
+    this kind; no horizontal scroll at 375px and the sticky bank never covers the Check button or the
+    last line of text; the admin kind select offers «Текст с пропусками»; a gap `reading` task in the
+    knowledge-check runner. Screenshots (Validation).
+- [x] 9. **STOP — user step.** Ask the user to review `gap_text.json` (natural Lithuanian; each gap
   has one right word in the bank) and run
   `cd backend && .venv/bin/python scripts/seed_practice_category.py data/practice/gap_text.json --dry-run`
-  then without `--dry-run` (prod, `testing`). Users see nothing (#62a hides the category). Until
+  then without `--dry-run` (prod, `testing`), then restart the local server (`DEV=false`): practice
+  meta is cached 10 min and a seed from another process doesn't reset it. Users see nothing (#62a hides the category). Until
   this plan is deployed, don't open or edit the new tests on fluent.lt — the deployed #62c code shows
   raw `{n}` markers and its admin form rejects the `gap_text` kind on save (admins only).
-- [ ] 10. Docs/specs: `specs/practice.md` — the #62d scenario from the idea; `specs/knowledge-check.md`
+- [x] 10. Docs/specs: `specs/practice.md` — the #62d scenario from the idea; `specs/knowledge-check.md`
   — gap builder (both chosen gaps blank, distractor rule); `documentation/practice-formats.md` — the
   `{n}` marker contract, why the bank is correct words + one distractor per gap, why tap-to-place
   instead of drag, why the client posts the score (existing pattern); component library — GapText
   gaps + bank chips; `documentation/IMPLEMENTATION.md` — GapText. Close-out: add
   `- <today> — release #62d: publish the gap texts once deployed (#62d)` to `plans/reminders.md`.
 
+## Review
+
+- [x] Code review passed (round 2)
+- note: GapText with 0 matched markers gives NaN score and posts total=0 (server 400) — malformed admin data only.
+- note: result total = matched gaps, not questions.length — server accepts it.
+
 ## Validation
 
-- [ ] Backend: `cd backend && .venv/bin/python -m pytest -q tests/test_practice_gap_text.py tests/test_practice_dialogues.py tests/test_practice_tfns.py tests/test_knowledge_check.py`
-- [ ] Full backend suite green: `cd backend && .venv/bin/python -m pytest -q`
-- [ ] Types: `cd frontend && npx tsc --noEmit`
-- [ ] Playwright: `cd frontend && npx playwright test tests/practice-gap-text.spec.ts tests/practice-dialogues.spec.ts tests/practice-tfns.spec.ts tests/design-system-parity.spec.ts --reporter=list`
-- [ ] Seed dry-run passes: `cd backend && .venv/bin/python scripts/seed_practice_category.py data/practice/gap_text.json --dry-run`
-- [ ] Leak check right after the real seed: on fluent.lt in a private window and as a free test
+- [x] Backend: `cd backend && .venv/bin/python -m pytest -q tests/test_practice_gap_text.py tests/test_practice_dialogues.py tests/test_practice_tfns.py tests/test_knowledge_check.py`
+- [x] Full backend suite green: `cd backend && .venv/bin/python -m pytest -q`
+- [x] Types: `cd frontend && npx tsc --noEmit`
+- [x] Playwright: `cd frontend && npx playwright test tests/practice-gap-text.spec.ts tests/practice-dialogues.spec.ts tests/practice-tfns.spec.ts tests/design-system-parity.spec.ts --reporter=list`
+- [x] Seed dry-run passes: `cd backend && .venv/bin/python scripts/seed_practice_category.py data/practice/gap_text.json --dry-run`
+- [x] Leak check right after the real seed: on fluent.lt in a private window and as a free test
   user (prod still runs the old code), the Practice page shows nothing new — the new category is invisible.
-- [ ] SEO diff clean (DoD command).
-- [ ] Smoke (local, after the seed): as admin, complete one gap text with two deliberate mistakes;
+- [x] Smoke (local, after the seed and a server restart): as admin, complete one gap text with two deliberate mistakes;
   the score is N−2 and the result is saved.
-- [ ] Screenshots in `temp_files/screenshots/plan_62d_practice-gap-text/`, looked at and described:
+- [x] Screenshots in `temp_files/screenshots/plan_62d_practice-gap-text/`, looked at and described:
   empty start (active gap highlighted), half filled, all filled before Check, after Check with
   mistakes, the bank at 375px while a gap far down the text is active, a gap task in the
   knowledge-check runner — each in **RU and EN**, at **1280px and 375px**.
-- [ ] The built UI matches the approved prototype: the same states side by side
+- [x] The built UI matches the approved prototype: the same states side by side
   (`temp_files/screenshots/plan_62d_practice-gap-text-prototype/` vs this plan's screenshots); differences only where
   agreed in `### Approved decisions`.
-- [ ] Production comparison: practice page nav, header, footer intact.
+- [x] Production comparison: practice page nav, header, footer intact; login works.
 - [ ] News post written and published via /news-writer (user's call, after the Release steps).
 
 ## Definition of Done
@@ -205,7 +250,6 @@ cd backend && .venv/bin/python -m pytest -q
 cd backend && .venv/bin/python scripts/seed_practice_category.py data/practice/gap_text.json --dry-run
 cd frontend && npx tsc --noEmit
 cd frontend && npx playwright test tests/practice-gap-text.spec.ts tests/practice-dialogues.spec.ts tests/practice-tfns.spec.ts tests/design-system-parity.spec.ts --reporter=list
-cd frontend && rm -rf .next/cache/fetch-cache && npm run build && node scripts/seo-snapshot.mjs --diff ../temp_files/seo/plan_62d-baseline.json
 ls temp_files/screenshots/plan_62d_practice-gap-text/ | grep -c png   # expect >= 24 (6 states x RU/EN x 1280/375)
 ```
 
@@ -214,9 +258,10 @@ User-facing checks (must be evidenced by the screenshots above): **both language
 
 ## UAT verification
 
-**Instrument:** Playwright MCP against `http://localhost:3000/dashboard/practice`, logged in as a
-local admin test user (token in `localStorage('fluent_token')`), real local backend on :8000, after
-the user has run the seed.
+**Instrument:** Playwright MCP against `http://localhost:8000/dashboard/practice` (backend with
+`DEV=false` serving the built frontend), logged in as an admin, after the seed and a server restart.
+Note (#62c): a black-box tester can't get a real admin token for the shared prod DB — if none is
+available, the user's local check replaces UAT.
 
 **Scenarios:**
 1. Open Practice → «Текст с пропусками» → the first text.
@@ -241,7 +286,7 @@ is consistent for users.
 
 1. **Preconditions:** this plan is merged, pushed and live on Render; the seed (step 9) has run.
 2. **Publish:** set the 8 gap-text tests to `published`.
-3. **Verify** as a free user at 375px: the category lists 8 texts; one can be filled and checked; a
+3. **Verify** as a free user at 375px (allow 10 min for the practice cache): the category lists 8 texts; one can be filled and checked; a
    new knowledge check can include a gap block.
 4. **Record:** "released YYYY-MM-DD" on the #62d row in `documentation/CHANGELOG.md`, delete the
    reminder, then the news post.

@@ -33,6 +33,13 @@ Scenario: composition
     question_lt = the turn's line, its 4 replies unshuffled, passage_kind "dialogue" (badge
     «Диалог» / "Dialogue") and the instruction «Выберите наиболее подходящую фразу» /
     "Choose the most suitable phrase"; the gaps run keeps the same order
+  And "gap_text" (#62d) picks 2 random gaps returned in gap order, each a `reading` task whose
+    passage_lt is the text with every unchosen gap filled with its answer, its own gap as "___"
+    and the other chosen gap as "(…)" — so neither task reveals the other's answer;
+    question_lt = the sentence holding "___"; options = the answer, its distractor and the
+    distractors of 2 other gaps (distractors never appear in the text), deduplicated and shuffled
+    (2–4); passage_kind null; instruction «Выберите слово для пропуска» / "Choose the word for the gap";
+    a text with fewer than 3 gaps yields no block
   And with no practice pool a 6th noun topic takes its place
 
 Scenario: start gating

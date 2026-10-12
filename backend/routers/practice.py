@@ -31,7 +31,7 @@ def _require_admin(authorization: Optional[str], session: Session) -> User:
 
 
 # #62c: "choice" tests are sampled and shuffled; any other kind is served whole, in order.
-TEST_KINDS = ("choice", "dialogue")
+TEST_KINDS = ("choice", "dialogue", "gap_text")
 
 
 def _check_kind(kind: str) -> None:
@@ -405,7 +405,7 @@ def get_exam_questions(
         count = min(test["question_count"], len(active))
         chosen = random.sample(active, count)
     else:
-        chosen = list(active)  # dialogue: every turn, in stored order (#62c)
+        chosen = list(active)  # dialogue / gap_text: every turn or gap, in stored order (#62c, #62d)
     return {
         "test": {
             "id": test["id"],

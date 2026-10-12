@@ -91,7 +91,7 @@ Scenario: starting an exam
   When GET /practice/tests/{test_id}/exam is called
   Then for a test of kind "choice" up to question_count active questions are chosen at random
     from that test's active question pool, and the test's lesson_text_lt (if any) is returned alongside
-  And for any other kind (#62c: "dialogue") every active question is returned in stored
+  And for any other kind (#62c: "dialogue", #62d: "gap_text") every active question is returned in stored
     (sort_order, id) order, never sampled or shuffled
   And the response's test object carries kind, as does every summary from
     GET /practice/categories/{id}/tests
@@ -263,7 +263,7 @@ Scenario: admin manages tests
 ```gherkin
 Scenario: admin sets a test's kind (#62c)
   Given an authenticated admin
-  When creating or updating a test with kind outside {choice, dialogue}
+  When creating or updating a test with kind outside {choice, dialogue, gap_text}
   Then the response is 400
   And both admin test lists return kind, and an update that omits kind keeps the stored one
   And the admin test form shows a "Тип теста" / "Test type" select, so saving a dialogue
@@ -280,6 +280,23 @@ Scenario: dialogue test (#62c)
     "**Jūs:** <its correct reply>" — the correct one even after a wrong pick — then the current line
   And the result review renders each turn with DialogueText, so no raw "**" is visible
   And «Jūs» is Lithuanian content, not translated in the English UI
+```
+
+```gherkin
+Scenario: gap-text test (#62d)
+  Given a published test of kind "gap_text" whose lesson_text_lt holds markers {1}…{N} and whose
+    N questions are "{n}" with option_a = the gap's word, option_b = its distractor
+  When the student starts it
+  Then there is no reading screen and no collapsible text block — the gap screen opens directly
+  And they see the text with numbered gaps (the first one active) and one shared word bank
+    (every gap's word plus its distractor, shuffled once per run), sticky at the bottom of the screen
+  And tapping a word fills the active gap and the next empty gap becomes active; the used chip
+    stays in place greyed and struck through; tapping a filled gap returns its word to the bank
+    and makes that gap active
+  And "Проверить" / "Check" is enabled only when every gap is filled, and grades every gap at once:
+    correct gaps green, a wrong gap shows the picked word red and struck through, then the right word
+  And the score is the number of correctly filled gaps, posted to POST /practice/tests/{id}/results
+  And each gap is a button with aria-label "Пропуск n, пустой" / "Gap n, empty" or "Пропуск n: word"
 ```
 
 ```gherkin

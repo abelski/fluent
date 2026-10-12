@@ -92,12 +92,61 @@ def validate_dialogue(data: dict) -> None:
             raise ValueError(f"{where}: every turn has the same correct letter")
 
 
+_MARKER = re.compile(r"\{(\d+)\}")
+
+
+def validate_gap_text(data: dict) -> None:
+    """Raise ValueError if `data` breaks the Gap text rules (plan #62d Req 2, 6)."""
+    cat = data.get("category") or {}
+    if not cat.get("name_ru") or not cat.get("name_en"):
+        raise ValueError("category needs name_ru and name_en")
+    tests = data.get("tests") or []
+    if len(tests) != 8:
+        raise ValueError(f"expected 8 tests, got {len(tests)}")
+    for i, t in enumerate(tests, 1):
+        where = f"test {i} ({t.get('title_en')!r})"
+        if not t.get("title_ru") or not t.get("title_en"):
+            raise ValueError(f"{where}: title_ru and title_en required")
+        if t.get("kind") != "gap_text":
+            raise ValueError(f"{where}: kind must be 'gap_text'")
+        text = t.get("lesson_text_lt") or ""
+        if not 600 <= len(text) <= 1400:
+            raise ValueError(f"{where}: text length {len(text)} not in 600–1400")
+        qs = t.get("questions") or []
+        if not 10 <= len(qs) <= 12:
+            raise ValueError(f"{where}: expected 10–12 gaps, got {len(qs)}")
+        markers = [int(m) for m in _MARKER.findall(text)]
+        if markers != list(range(1, len(qs) + 1)):
+            raise ValueError(f"{where}: markers must be {{1}}…{{{len(qs)}}} each once in order, got {markers}")
+        rest = _MARKER.sub("", text)
+        if "{" in rest or "}" in rest:
+            raise ValueError(f"{where}: stray brace in text")
+        answers = set()
+        for n, q in enumerate(qs, 1):
+            gap = f"{where} gap {n}"
+            if q.get("question_lt") != f"{{{n}}}":
+                raise ValueError(f"{gap}: question_lt must be '{{{n}}}'")
+            a, b = (q.get("option_a") or "").strip(), (q.get("option_b") or "").strip()
+            if not a or not b or a == b:
+                raise ValueError(f"{gap}: option_a and option_b must be non-empty and different")
+            if q.get("option_c") or q.get("option_d"):
+                raise ValueError(f"{gap}: option_c/option_d must be empty")
+            if q.get("correct_option") != "a":
+                raise ValueError(f"{gap}: correct_option must be 'a'")
+            answers.add(a)
+        for n, q in enumerate(qs, 1):
+            if q["option_b"].strip() in answers:
+                raise ValueError(f"{where} gap {n}: distractor {q['option_b']!r} is another gap's answer")
+
+
 def validate(data: dict) -> None:
     fmt = data.get("format")
     if fmt == "tfns":
         validate_tfns(data)
     elif fmt == "dialogue":
         validate_dialogue(data)
+    elif fmt == "gap_text":
+        validate_gap_text(data)
     else:
         raise ValueError(f"unknown format {fmt!r}")
 
@@ -119,20 +168,24 @@ def seed(session, data: dict):
     )
     session.add(cat)
     session.flush()
-    dialogue = data["format"] == "dialogue"
+    fmt = data["format"]
+    dialogue = fmt == "dialogue"
     for i, t in enumerate(data["tests"], 1):
         test = PracticeTest(
             category_id=cat.id, title_ru=t["title_ru"], title_en=t["title_en"],
             description_ru=t.get("description_ru"), description_en=t.get("description_en"),
             lesson_text_lt=None if dialogue else t["lesson_text_lt"],
-            kind="dialogue" if dialogue else "choice",
+            kind=fmt if fmt in ("dialogue", "gap_text") else "choice",
             question_count=len(t["questions"]),
             pass_threshold=0.7, status="testing", is_premium=False, sort_order=i,
         )
         session.add(test)
         session.flush()
         for j, q in enumerate(t["questions"], 1):
-            opts = q["options"] if dialogue else TFNS_OPTIONS  # dialogue `source` is not stored
+            if fmt == "gap_text":
+                opts = (q["option_a"], q["option_b"], "", "")
+            else:
+                opts = q["options"] if dialogue else TFNS_OPTIONS  # dialogue `source` is not stored
             session.add(PracticeQuestion(
                 test_id=test.id, question_lt=q["question_lt"], question_ru=q["question_lt"],
                 option_a=opts[0], option_b=opts[1], option_c=opts[2], option_d=opts[3],
