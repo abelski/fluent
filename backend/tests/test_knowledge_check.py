@@ -409,3 +409,74 @@ def test_seeded_tfns_category_joins_only_when_published():
     for t in tasks:
         assert t["type"] == "reading"
         assert t["options"] == ["Tiesa", "Netiesa", "Nepasakyta"]
+
+
+# ── #62c Dialogues ────────────────────────────────────────────────────────────
+
+def _add_dialogue(s, published=True):
+    cat = _add_cat(s, "Диалоги KC")
+    t = PracticeTest(category_id=cat.id, title_ru="DLG", title_en="DLG EN", kind="dialogue",
+                     status="published" if published else "testing", lesson_text_lt=None)
+    s.add(t)
+    s.commit()
+    s.refresh(t)
+    _created["test"].append(t.id)
+    # Stored out of insertion order on purpose: serving must follow sort_order.
+    for i in (2, 0, 4, 1, 3):
+        s.add(PracticeQuestion(test_id=t.id, question_ru=f"**A:** line{i}", question_lt=f"**A:** line{i}",
+                               option_a=f"w{i}a", option_b=f"ok{i}", option_c=f"w{i}c", option_d=f"w{i}d",
+                               correct_option="b", sort_order=i))
+    r = s.exec(select(PracticeTest).where(PracticeTest.title_ru == "RPUB")).first()
+    r.status = "testing"  # the dialogue category is the only practice candidate
+    s.add(r)
+    s.commit()
+    return cat.id, t.id
+
+
+def _turn(t):
+    return int(t["question_lt"].removeprefix("**A:** line"))
+
+
+def _check_dialogue_tasks(tasks):
+    assert len(tasks) == 2
+    turns = [_turn(t) for t in tasks]
+    assert turns == sorted(turns) and turns[0] != turns[1]
+    for t, i in zip(tasks, turns):
+        assert t["type"] == "reading" and t["passage_kind"] == "dialogue"
+        assert t["options"] == [f"w{i}a", f"ok{i}", f"w{i}c", f"w{i}d"] and t["answer"] == f"ok{i}"
+        assert t["passage_lt"] == "\n".join(
+            line for j in range(i) for line in (f"**A:** line{j}", f"**Jūs:** ok{j}"))
+        assert t["instruction_en"] == "Choose the most suitable phrase"
+        assert t["instruction_ru"] == "Выберите наиболее подходящую фразу"
+
+
+def test_dialogue_category_joins_when_published_and_builds_ordered_turns():
+    with Session(_test_engine) as s:
+        cat_id, tid = _add_dialogue(s, published=False)
+    for _ in range(5):
+        assert all(t["topic"] != f"p:{cat_id}" for t in _build())
+    with Session(_test_engine) as s:
+        t = s.get(PracticeTest, tid)
+        t.status = "published"
+        s.add(t)
+        s.commit()
+    saw_first = False
+    for _ in range(30):
+        tasks = _build()
+        block = [t for t in tasks if t["topic"] == f"p:{cat_id}"]
+        _check_dialogue_tasks(block)
+        idx = _practice_idx(tasks)
+        assert idx == [idx[0], idx[0] + 1]
+        if _turn(block[0]) == 0:
+            saw_first = True
+            assert block[0]["passage_lt"] == ""
+    assert saw_first  # P(miss turn 0 in 30 runs) = 0.6**30
+
+
+def test_dialogue_gaps_block_in_order():
+    with Session(_test_engine) as s:
+        cat_id, _ = _add_dialogue(s)
+        result = [{"topic": f"p:{cat_id}", "title_ru": "", "title_en": "", "correct": 0, "total": 2, "weak": True}]
+        for _ in range(10):
+            tasks = [t for t in kc.gap_tasks(result, s) if t["type"] == "reading"]
+            _check_dialogue_tasks(tasks)

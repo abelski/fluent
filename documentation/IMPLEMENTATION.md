@@ -307,6 +307,16 @@ client actually made rather than returning a constant.
 - Collapsible text during questions: `frontend/app/dashboard/practice/[id]/page.tsx`
   (`data-testid="question-text-block"`).
 
+## Practice test kind (#62c)
+
+- Column `practice_test.kind` (`backend/models.py`, migration `b7c8d9e0f1a2`); allowed values
+  `TEST_KINDS` in `backend/routers/practice.py`.
+- Read by: `get_exam_questions` (choice = sample, else whole + ordered), the category test summaries,
+  `_practice_block` in `backend/knowledge_check_service.py` (picks `PRACTICE_TASK_BUILDERS[kind]`),
+  the admin test form (`admin-test-kind` select in `frontend/app/dashboard/admin/page.tsx`) and the
+  practice question view (`kind === 'dialogue'` → `data-testid="dialogue-transcript"` via
+  `DialogueText`, `frontend/app/dashboard/practice/[id]/page.tsx`).
+
 ## Conventions worth keeping
 
 - Cards are flat: `border border-line rounded-[14px]`, **no drop shadow**, no accent-colored border.

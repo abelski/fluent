@@ -294,6 +294,7 @@ class PracticeTest(SQLModel, table=True):
     section_ru: Optional[str] = Field(default=None, max_length=120)  # section card grouping (#55)
     section_en: Optional[str] = Field(default=None, max_length=120)
     is_final: bool = Field(default=False, sa_column_kwargs={"server_default": text("false")})  # «Итоговый экзамен» card (#55)
+    kind: str = Field(default="choice", max_length=20, sa_column_kwargs={"server_default": text("'choice'")})  # choice | dialogue (#62c)
     created_at: datetime = Field(default_factory=_utcnow)
 
 

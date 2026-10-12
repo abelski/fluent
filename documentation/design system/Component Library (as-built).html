@@ -716,6 +716,18 @@
     </p>
   </div>
 
+  <h2>Practice — dialogue transcript (#62c)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      <code>frontend/app/dashboard/practice/[id]/page.tsx</code>, question view, when <code>test.kind === 'dialogue'</code>:
+      the question card body is the conversation so far (<code>data-testid="dialogue-transcript"</code>) rendered by the existing
+      <code>DialogueText</code> — no new component. Every line is left-aligned with its <code>speakerColor</code> badge; «Jūs»
+      gets its own badge like any speaker (no chat-style right alignment). After a wrong pick the transcript continues
+      with the correct reply only. The result review renders dialogue turns with <code>DialogueText</code> too.
+      In the knowledge-check runner a dialogue task's passage card carries the «Диалог» / "Dialogue" badge instead of «Текст».
+    </p>
+  </div>
+
   <h2>Practice — collapsible text during questions (#62b)</h2>
   <div class="card" style="margin-bottom:20px;">
     <p style="font-size:13.5px;line-height:1.8;margin:0;">

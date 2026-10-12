@@ -1184,6 +1184,7 @@ export interface PracticeTestSummary {
   section_ru: string | null;
   section_en: string | null;
   is_final: boolean;
+  kind: string;                 // #62c: 'choice' | 'dialogue'
   active_question_count: number;
   is_locked: boolean;           // always false for guests
   best_score_pct: number | null; // always null for guests

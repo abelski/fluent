@@ -21,7 +21,8 @@ Formats that mirror the reading part of the Lithuanian A2 exam, each as its own 
   Older seeds (`seed_skaitymas_new.py`) had `--reset`, which deletes tests — on Postgres that fails as
   soon as any `practice_exam_result` references them (FK; SQLite tests don't enforce it). Later
   fixes go through the admin editor. The JSON's `"format"` key picks the validator
-  (`validate_tfns`); move validators to a module when #62c adds a second one.
+  (`validate_tfns`, `validate_dialogue` since #62c) and the `seed()` branch; both still live in the
+  one script — two short validators don't earn a module yet.
 - **Staged rollout, safe at every step.** 1) seed into prod: tests are `testing`, so the category is
   hidden from users and out of the knowledge-check pool; 2) deploy this code (text block, llms.txt);
   3) release = publish the tests in the admin panel. Rollback = set them back to `testing`.
@@ -35,3 +36,20 @@ Formats that mirror the reading part of the Lithuanian A2 exam, each as its own 
 ## Gotcha: seed vs. the practice cache
 
 `_practice_meta` is cached in-process (`backend/cache.py`, 10-min TTL). The seed runs as a separate process, so a running server keeps the old category list for up to 10 minutes after a seed — admins don't see the new category. Restart the local server (or wait 10 min; prod catches up by TTL).
+
+## #62c — "Диалоги" (Dialogues)
+
+- **Format.** 10 tests, one scene each (pharmacy, shop, …), 5 turns. A turn = one question:
+  `question_lt` is the other speaker's line as `**Name:** text`, `option_a`–`d` four candidate replies.
+  Content: `backend/data/practice/dialogues.json` (`"format": "dialogue"`, each turn carries a
+  `source` the validator requires and the seed drops).
+- **`practice_test.kind`** (`VARCHAR(20)`, server default `choice`; values in `TEST_KINDS` in
+  `routers/practice.py`). Only `choice` tests are sampled and shuffled by `/exam`; every other kind is
+  served whole, in `(sort_order, id)` order, because a dialogue is a story — a random subset in random
+  order makes no sense. `_load_exam` always orders now; harmless for `choice` (sampled afterwards).
+- **The transcript shows the correct reply**, not the student's pick, so the conversation stays
+  coherent after a mistake; the mistake already shows in the red/green feedback and the result review
+  (approved in the prototype, 2026-10-11).
+- **«Jūs» is not translated** — it is part of the Lithuanian dialogue content, like the speaker names.
+- **Knowledge check:** `PRACTICE_TASK_BUILDERS["dialogue"]` builds the same transcript as the
+  passage, keyed by the test's `kind`; options keep their stored order.
