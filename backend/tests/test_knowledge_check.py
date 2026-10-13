@@ -562,3 +562,43 @@ def test_gap_text_with_too_few_gaps_yields_no_block():
         cat_id = _add_gap_text(s, n=1)
         assert kc._practice_block(cat_id, s) == []
     assert all(t["topic"] != f"p:{cat_id}" for t in _build())
+
+
+# ── #62e Signs and notices ────────────────────────────────────────────────────
+
+
+def _add_signs(s):
+    cat = _add_cat(s, "Вывески KC")
+    t = _add_test(s, cat.id, "SIGNS", passage=None)
+    for q in s.exec(select(PracticeQuestion).where(PracticeQuestion.test_id == t.id)).all():
+        q.image_url, q.image_credit = "/img/signs/a13.webp", "Фото: X, CC BY-SA 3.0"
+        s.add(q)
+    s.commit()
+    return cat.id
+
+
+def _check_sign_tasks(tasks):
+    assert len(tasks) == 2
+    for t in tasks:
+        assert t["image_url"] == "/img/signs/a13.webp"
+        assert t["image_credit"] == "Фото: X, CC BY-SA 3.0"
+        assert t["passage_lt"] == ""
+        assert t["instruction_ru"] == "Посмотри на фото и ответь на вопрос"
+        assert t["instruction_en"] == "Look at the photo and answer the question"
+
+
+def test_sign_question_yields_reading_task_with_photo():
+    with Session(_test_engine) as s:
+        cat_id = _add_signs(s)
+        _check_sign_tasks(kc._practice_block(cat_id, s))
+        # a plain passage question keeps the old instruction and no image
+        plain = kc._practice_block(_ids["reading"], s)
+        assert plain and all(t["image_url"] is None for t in plain)
+        assert plain[0]["instruction_ru"] == "Прочитай текст и выбери: верно или неверно"
+
+
+def test_sign_gaps_block_keeps_image():
+    with Session(_test_engine) as s:
+        cat_id = _add_signs(s)
+        result = [{"topic": f"p:{cat_id}", "title_ru": "", "title_en": "", "correct": 0, "total": 2, "weak": True}]
+        _check_sign_tasks([t for t in kc.gap_tasks(result, s) if t["type"] == "reading"])

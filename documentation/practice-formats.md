@@ -76,3 +76,35 @@ Formats that mirror the reading part of the Lithuanian A2 exam, each as its own 
   (same clipping, no scroll container).
 - **Knowledge check:** `PRACTICE_TASK_BUILDERS["gap_text"]` — both chosen gaps are blank in each
   passage (`___` for its own, `(…)` for the other), so one task never answers the other.
+
+## #62e — "Вывески и объявления" (Signs and notices)
+
+- **Format.** 5 choice tests (`backend/data/practice/signs.json`, `"format": "signs"`), 6/6/5/6/6
+  questions (the parking test has 5 — not enough good parking photos), 3–4 Lithuanian options each.
+  Each question has `image_url` (`/img/signs/<slug>.webp`) and, for non-CC0 photos, `image_credit`.
+  `validate_signs` in the seed checks paths, file existence, size cap, no EXIF, credits, options.
+- **Real photos, all from open sources.** The user can't take photos, so all 29 come from Wikimedia
+  Commons and Flickr under CC0, CC BY or CC BY-SA only — no NC / ND, because we modify them
+  (cropped, resized, re-encoded; faces and licence plates blurred). This is the "changes made"
+  notice the licences require. `source_url` in `signs.json` is the licence record.
+- **Encoding:** `cwebp -metadata none -resize 1200 0` — strips EXIF (phone photos carry GPS) and caps
+  the width; ≤ 200 KB each, in `frontend/public/img/signs/`.
+- **Path rule, no external URLs.** `image_url` must match `^/img/[a-z0-9/_-]+\.(webp|png|jpe?g)$`
+  (server-side, 400 otherwise): no hot-linking, no third-party requests from the exam page, and the
+  image can't vanish when someone else's host changes.
+- **Attribution:** `image_credit` is stored as `"<author>, <licence>"` with no prefix; the UI adds the
+  localized «Фото:» / "Photo:" (`practice.photoCredit`) so the stored text stays language-neutral.
+  CC0 photos carry no credit.
+- **Readability = cropping, not zoom.** The full ferry timetable was unreadable even at 1280px; a tight
+  crop to the part the question needs fixed it. Every photo is cropped that way; a dense photo that
+  can't be cropped readable is dropped. Tap-to-zoom was rejected (Non-Goal) — more UI for a problem
+  cropping solves.
+- **Question rules** (the user: no "a photo of the post office — what is it?"): the correct answer
+  never copies a word visible in the photo (paraphrase / inference, «Avalynė» → «Batus»); distractors
+  come from the same photo (other hours, prices, days) so only reading the right line answers it;
+  ask about an action or a detail, never "what is this place"; a photo that only supports "what is
+  this?" is dropped.
+- **Knowledge check:** `_build_choice` copies `image_url` / `image_credit` into the `reading` task and
+  swaps the instruction to «Посмотри на фото и ответь на вопрос».
+
+- **Fixing seeded question text (#62e):** `seed_practice_category.py <file> --update-text` rewrites text/options/answer of an existing signs category in place, matched by `image_url` (ids kept, so results stay valid). Signs only.

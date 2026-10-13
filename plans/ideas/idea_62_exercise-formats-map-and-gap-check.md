@@ -173,6 +173,7 @@ Scenario: question with an image
   And when image_credit is set, the credit is shown in one line under the image
   And the admin question editor, export and import carry image_url and image_credit, and can clear them
 ```
+Shipped (2026-10-13), beyond the above: `image_url` limited to site paths `/img/…`; credit stored as "<author>, <licence>" with a localized «Фото:» / "Photo:" prefix; image `max-h-[320px]`, cropped not zoomable; questions A2–A2+ (Req 6a); `--update-text` seeder flag. See `specs/practice.md`.
 
 ### specs/grammar.md (#62f / #62g / #62h — new programs)
 **New**
@@ -253,7 +254,7 @@ Scenario: new content joins the knowledge check
   lines start from Tatoeba (CC BY 2.0 FR, RU/EN translations included) and Mozilla Common Voice (CC0),
   adapted to A2 and reviewed by the user; seed data keeps each item's `source` (`tatoeba:<id>`,
   `commonvoice`, `own`); Tatoeba is credited in a «Источники» / "Sources" section of the `about-team`
-  article. Signs and notices are **real photos** — the user's own first, Wikimedia Commons (CC BY /
+  article. Signs and notices are **real photos** — all from open sources (2026-10-13: the user can't take photos; 34 candidates found on Commons + Flickr, see plan_62e), Wikimedia Commons (CC BY /
   BY-SA) where needed with a credit line under each photo, public-domain official road signs from
   Commons. Texts for True/False/Not stated and gap texts are written for Fluent (no open A2 texts
   exist). NŠA exam samples are a format reference only. Details: `documentation/content-sources.md`.
@@ -313,6 +314,5 @@ latest check drives the tabs, "Close the gaps" saves like remind (streak yes, qu
 and the widget shows for brand-new users too.
 
 Still open:
-- **Photos for #62e** — how many of the ~30 the user can take; the rest come from Commons with credits.
 - **`numbers-03-time` table cell** «dvylikta → dvylikos» looks like a typo for «dvyliktos» — the user
   decides during #62h's article update.

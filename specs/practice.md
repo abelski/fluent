@@ -300,6 +300,39 @@ Scenario: gap-text test (#62d)
 ```
 
 ```gherkin
+Scenario: question with an image (#62e — "Вывески и объявления" / "Signs and notices")
+  Given a practice question whose image_url is set
+  When it is shown
+  Then the image is rendered above the question, with the question text as its alt text
+    (natural aspect, max-h-[320px] max-w-full, rounded-[10px] border border-line)
+  And when image_credit is set ("<author>, <licence>"), one centred muted line under the image shows it
+    with the localized prefix «Фото:» / "Photo:" (i18n practice.photoCredit)
+  And the admin question editor, export and import carry image_url and image_credit, and sending
+    "" or null clears them
+  And image_url must be null or a site-relative path matching ^/img/[a-z0-9/_-]+\.(webp|png|jpe?g)$
+    (no external URLs), image_credit ≤ 200 chars — otherwise create / update / import returns 400
+  And the "signs" category has 5 choice tests (6/6/5/6/6 questions — the parking test has 5),
+    each question 3–4 options and no lesson text, at level A2–A2+: a real-life task about the photo
+    (when open, how much, what is forbidden, what to do); "what is this place?" is asked only when the
+    photo does not name the place and it must be inferred
+```
+
+```gherkin
+Scenario: signs seed validation and in-place text update (#62e)
+  Given backend/scripts/seed_practice_category.py <signs.json> (format "signs")
+  When it runs (with or without --dry-run)
+  Then it requires 5 tests of 5–6 questions each, 3–4 distinct non-empty options, a correct_option that
+    points at an option, and an image_url that is unique across the whole category
+  And every image must exist under frontend/public, be ≤ 200 KB and (webp) carry no EXIF; a non-CC0
+    photo needs image_credit and source_url; image_credit must not start with «Фото»/"Photo"
+  And a 3-option question is stored with an empty option_d
+  When it runs with --update-text on an existing signs category
+  Then each stored question is matched by image_url and its text, options and correct answer are
+    rewritten in place (ids and results untouched); an image_url with no stored question aborts with an
+    error, and --update-text on any other format exits with 2
+```
+
+```gherkin
 Scenario: English UI falls back to Russian content per field
   Given the dashboard is rendered in English and a category, test title, or test description
     has no *_en value

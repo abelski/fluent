@@ -56,8 +56,11 @@ def _build_choice(exam: dict, count: int) -> list[dict]:
             "question_ru": q["question_ru"] or "",
             "options": options,
             "answer": answer,
-            "instruction_ru": "Прочитай текст и выбери: верно или неверно",
-            "instruction_en": "Read the text and choose: true or false",
+            # #62e — a sign question carries a photo instead of a passage
+            "image_url": q.get("image_url"),
+            "image_credit": q.get("image_credit"),  # CC BY / BY-SA need the credit wherever the photo shows
+            "instruction_ru": "Посмотри на фото и ответь на вопрос" if q.get("image_url") else "Прочитай текст и выбери: верно или неверно",
+            "instruction_en": "Look at the photo and answer the question" if q.get("image_url") else "Read the text and choose: true or false",
         }
         for q, options, answer in random.sample(usable, count)
     ]

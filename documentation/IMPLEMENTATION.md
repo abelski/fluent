@@ -320,6 +320,15 @@ client actually made rather than returning a constant.
   bank, Check); `startTest()` skips the reading screen for it. Sticky depends on
   `overflow-x: clip` in `frontend/app/globals.css`.
 
+## Practice question image (#62e)
+
+- Columns `practice_question.image_url` / `image_credit` (`backend/models.py`, migration
+  `e3f4a5b6c7d8`); path rule + clearing in `backend/routers/practice.py` (`QuestionIn`,
+  `QuestionUpdate`, import). Rendered in `frontend/app/dashboard/practice/[id]/page.tsx`
+  (`data-testid="question-image"`, credit `question-image-credit`, prefix i18n `practice.photoCredit`)
+  and in the `reading` branch of `GrammarTaskRunner.tsx`; admin fields in `admin/page.tsx`.
+  Files live in `frontend/public/img/signs/`.
+
 ## Conventions worth keeping
 
 - Cards are flat: `border border-line rounded-[14px]`, **no drop shadow**, no accent-colored border.

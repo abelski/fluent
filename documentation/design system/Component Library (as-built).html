@@ -746,6 +746,18 @@
     </p>
   </div>
 
+  <h2>Practice — question image (#62e)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">
+      <code>frontend/app/dashboard/practice/[id]/page.tsx</code> (and the knowledge-check runner's <code>reading</code> branch):
+      when a question has <code>image_url</code>, a <code>&lt;figure&gt;</code> above the question text —
+      <code>&lt;img&gt;</code> at its natural aspect (no letterbox), <code>max-h-[320px] max-w-full w-auto mx-auto rounded-[10px] border border-line</code>,
+      <code>loading="lazy"</code>, alt = the question text. Under it, when set, one centred <code>text-xs text-muted</code>
+      line «Фото: / Photo: &lt;author&gt;, &lt;licence&gt;». Readability comes from cropping the photo, not from a zoom control.
+      Approved in the #62e prototype.
+    </p>
+  </div>
+
   <h2>Practice — collapsible text during questions (#62b)</h2>
   <div class="card" style="margin-bottom:20px;">
     <p style="font-size:13.5px;line-height:1.8;margin:0;">
