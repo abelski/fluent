@@ -241,7 +241,7 @@ as written; anything the prototype changes is copied into the Requirements befor
   (`temp_files/screenshots/plan_62d_practice-gap-text-prototype/` vs this plan's screenshots); differences only where
   agreed in `### Approved decisions`.
 - [x] Production comparison: practice page nav, header, footer intact; login works.
-- [ ] News post written and published via /news-writer (user's call, after the Release steps).
+- [x] News post — skipped, user chose no post (2026-10-13).
 
 ## Definition of Done
 
