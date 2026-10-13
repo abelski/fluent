@@ -297,6 +297,7 @@ export interface Translations {
     sourceLinkText: string; // link text for the category's source_url callout
     textBadge: string; // "📄 Text" badge on a test row that has lesson_text_lt
     textLabel: string; // plain "Text" badge on the reading view
+    photoCredit: string;
     dialogueLabel: string; // #62c: passage badge for a dialogue task in the knowledge check
     showTextHint: string; // #62b collapsible text block during questions
     gapCheckBtn: string; // #62d gap text
@@ -383,6 +384,8 @@ export interface Translations {
     fieldOptionD: string;
     fieldCorrect: string;
     fieldCategory: string;
+    fieldImageUrl: string;
+    fieldImageCredit: string;
     activeLabel: string;
     inactiveLabel: string;
     questionsCount: string;

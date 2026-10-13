@@ -23,6 +23,8 @@ interface Question {
   option_d: string;
   correct_option: string;
   category: string | null;
+  image_url?: string | null;
+  image_credit?: string | null;
 }
 
 interface ActiveTest {
@@ -497,7 +499,23 @@ export default function PracticeCategoryPage() {
                       <DialogueText text={dialogueTranscript(activeTest.questions, current)} />
                     </div>
                   ) : (
-                    <p className="text-base font-semibold text-gray-900 leading-snug">{q.question_lt ?? q.question_ru}</p>
+                    <>
+                      {q.image_url && (
+                        <figure className="mb-4" data-testid="question-image">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={q.image_url}
+                            alt={q.question_lt ?? q.question_ru}
+                            loading="lazy"
+                            className="block max-w-full max-h-[320px] w-auto mx-auto rounded-[10px] border border-line"
+                          />
+                          {q.image_credit && (
+                            <figcaption className="mt-1.5 text-xs text-muted text-center" data-testid="question-image-credit">{t.photoCredit} {q.image_credit}</figcaption>
+                          )}
+                        </figure>
+                      )}
+                      <p className="text-base font-semibold text-gray-900 leading-snug">{q.question_lt ?? q.question_ru}</p>
+                    </>
                   )}
                 </div>
               </div>

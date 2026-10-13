@@ -5,6 +5,7 @@
 
 import json
 import random
+import re
 from types import SimpleNamespace
 from typing import Optional
 
@@ -419,6 +420,20 @@ def get_exam_questions(
     }
 
 
+_IMAGE_URL_RE = re.compile(r"^/img/[a-z0-9/_-]+\.(webp|png|jpe?g)$")
+
+
+def _clean_image(url, credit):
+    """#62e — validate image_url / image_credit; "" or None → None. Site-relative paths only (no hot-linking)."""
+    url = (str(url).strip() if url is not None else "") or None
+    credit = (str(credit).strip() if credit is not None else "") or None
+    if url is not None and (len(url) > 300 or ".." in url or not _IMAGE_URL_RE.match(url)):
+        raise HTTPException(status_code=400, detail="image_url must be a site path like /img/signs/x.webp")
+    if credit is not None and len(credit) > 200:
+        raise HTTPException(status_code=400, detail="image_credit must be at most 200 characters")
+    return url, credit
+
+
 def _load_exam(test_id: int, session: Session) -> Optional[dict]:
     test = session.get(PracticeTest, test_id)
     if not test:
@@ -436,6 +451,8 @@ def _load_exam(test_id: int, session: Session) -> Optional[dict]:
                 "option_d": q.option_d,
                 "correct_option": q.correct_option,
                 "category": q.category,
+                "image_url": q.image_url,
+                "image_credit": q.image_credit,
             }
             for q in session.exec(
                 select(PracticeQuestion)
@@ -882,6 +899,8 @@ def admin_list_questions(
             "option_d": q.option_d,
             "correct_option": q.correct_option,
             "category": q.category,
+            "image_url": q.image_url,
+            "image_credit": q.image_credit,
             "is_active": q.is_active,
             "sort_order": q.sort_order,
         }
@@ -898,6 +917,8 @@ class QuestionIn(BaseModel):
     option_d: str
     correct_option: str
     category: Optional[str] = None
+    image_url: Optional[str] = None
+    image_credit: Optional[str] = None
     is_active: bool = True
     sort_order: int = 0
 
@@ -914,6 +935,7 @@ def admin_create_question(
         raise HTTPException(status_code=404, detail="Test not found")
     if not _valid_option(body.correct_option):
         raise HTTPException(status_code=400, detail="correct_option must be a/b/c/d")
+    image_url, image_credit = _clean_image(body.image_url, body.image_credit)
     q = PracticeQuestion(
         test_id=test_id,
         question_ru=body.question_ru.strip(),
@@ -924,6 +946,8 @@ def admin_create_question(
         option_d=body.option_d.strip(),
         correct_option=body.correct_option,
         category=body.category or None,
+        image_url=image_url,
+        image_credit=image_credit,
         is_active=body.is_active,
         sort_order=body.sort_order,
     )
@@ -942,6 +966,8 @@ class QuestionUpdate(BaseModel):
     option_d: Optional[str] = None
     correct_option: Optional[str] = None
     category: Optional[str] = None
+    image_url: Optional[str] = None
+    image_credit: Optional[str] = None
     is_active: Optional[bool] = None
     sort_order: Optional[int] = None
 
@@ -964,6 +990,12 @@ def admin_update_question(
         val = getattr(body, field)
         if val is not None:
             setattr(q, field, val.strip() if isinstance(val, str) else val)
+    # #62e — image fields: only when sent; "" or null clears (like #48b's description_en)
+    image_url, image_credit = _clean_image(body.image_url, body.image_credit)
+    if "image_url" in body.model_fields_set:
+        q.image_url = image_url
+    if "image_credit" in body.model_fields_set:
+        q.image_credit = image_credit
     session.add(q)
     session.commit()
     return {"ok": True}
@@ -1021,6 +1053,8 @@ def admin_export_test(
                 "option_d": q.option_d,
                 "correct_option": q.correct_option,
                 "category": q.category,
+                "image_url": q.image_url,
+                "image_credit": q.image_credit,
                 "is_active": q.is_active,
                 "sort_order": q.sort_order,
             }
@@ -1053,6 +1087,9 @@ async def admin_import_test(
         raise HTTPException(status_code=400, detail="title_ru is required in JSON")
     kind = data.get("kind") or "choice"
     _check_kind(kind)
+    # #62e — reject bad image fields before anything is written
+    images = [_clean_image(item.get("image_url"), item.get("image_credit"))
+              for item in data.get("questions", [])]
 
     t = PracticeTest(
         title_ru=title_ru,
@@ -1085,6 +1122,8 @@ async def admin_import_test(
             option_d=str(item.get("option_d", "")).strip(),
             correct_option=opt,
             category=item.get("category") or None,
+            image_url=images[i][0],
+            image_credit=images[i][1],
             is_active=bool(item.get("is_active", True)),
             sort_order=int(item.get("sort_order", i)),
         )

@@ -115,6 +115,9 @@ export interface ReadingTask {
   /** 2–4 choices, one === answer. */
   options: string[];
   answer: string;
+  /** #62e: a sign question's photo (site path) and its credit line. */
+  image_url?: string | null;
+  image_credit?: string | null;
   isRetry?: boolean;
 }
 
@@ -658,6 +661,20 @@ export default function GrammarTaskRunner({
                 </div>
               )}
               <div className="w-full bg-white border border-line rounded-2xl p-5 sm:p-6 text-left">
+                {task.image_url && (
+                  <figure className="mb-4" data-testid="reading-image">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={task.image_url}
+                      alt={task.question_lt || task.question_ru}
+                      loading="lazy"
+                      className="block max-w-full max-h-[320px] w-auto mx-auto rounded-[10px] border border-line"
+                    />
+                    {task.image_credit && (
+                      <figcaption className="mt-1.5 text-xs text-muted text-center">{tr.practice.photoCredit} {task.image_credit}</figcaption>
+                    )}
+                  </figure>
+                )}
                 <DialogueText text={task.question_lt || task.question_ru} />
                 {task.question_lt && task.question_ru && task.question_ru !== task.question_lt && (
                   <p className="text-gray-500 text-sm mt-2">{task.question_ru}</p>

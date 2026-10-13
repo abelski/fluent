@@ -73,5 +73,8 @@ Scenario: task instruction line (#63)
     plus the case and number, the numeral case, the verb tense title, or "the right case after the verb"
   And every check reading task carries «Прочитай текст и выбери: верно или неверно» / "Read the text and choose: true or false"
   And the runner shows it bold and centred right above the task card, in the UI language
+  And a reading task from a practice question with image_url (#62e signs) carries image_url and image_credit,
+    its instruction is «Посмотри на фото и ответь на вопрос» / "Look at the photo and answer the question",
+    and the runner renders the photo (with the «Фото:» / "Photo:" credit line) above the question
   And a task without the fields (an old open check) shows no line
 ```

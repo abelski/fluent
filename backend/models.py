@@ -312,6 +312,8 @@ class PracticeQuestion(SQLModel, table=True):
     option_d: str
     correct_option: str                     # 'a' | 'b' | 'c' | 'd'
     category: Optional[str] = None
+    image_url: Optional[str] = Field(default=None, max_length=300)
+    image_credit: Optional[str] = Field(default=None, max_length=200)
     is_active: bool = Field(default=True)
     sort_order: int = Field(default=0)
     created_at: datetime = Field(default_factory=_utcnow)

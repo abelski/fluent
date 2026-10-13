@@ -146,6 +146,8 @@ interface PracticeQuestionRow {
   option_d: string;
   correct_option: string;
   category: string | null;
+  image_url?: string | null;
+  image_credit?: string | null;
   is_active: boolean;
   sort_order: number;
 }
@@ -159,6 +161,8 @@ const BLANK_PRACTICE_QUESTION: Omit<PracticeQuestionRow, 'id' | 'sort_order'> = 
   option_d: '',
   correct_option: 'a',
   category: '',
+  image_url: '',
+  image_credit: '',
   is_active: true,
 };
 
@@ -1464,6 +1468,8 @@ const [practiceQPage, setPracticeQPage] = useState(1);
         option_d: editingPracticeQ.option_d,
         correct_option: editingPracticeQ.correct_option,
         category: editingPracticeQ.category || null,
+        image_url: editingPracticeQ.image_url ?? '',
+        image_credit: editingPracticeQ.image_credit ?? '',
         is_active: editingPracticeQ.is_active,
       }),
     }).catch(() => null);
@@ -3600,6 +3606,16 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           <input type="checkbox" checked={newPracticeQ.is_active} onChange={(e) => setNewPracticeQ((p) => ({ ...p, is_active: e.target.checked }))} className="w-4 h-4" />
                         </div>
                       </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.adminPractice.fieldImageUrl}</label>
+                          <input data-testid="admin-q-image-url" value={newPracticeQ.image_url ?? ''} onChange={(e) => setNewPracticeQ((p) => ({ ...p, image_url: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.adminPractice.fieldImageCredit}</label>
+                          <input data-testid="admin-q-image-credit" value={newPracticeQ.image_credit ?? ''} onChange={(e) => setNewPracticeQ((p) => ({ ...p, image_credit: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                        </div>
+                      </div>
                       <div className="flex gap-2 justify-end">
                         <button onClick={() => setAddingPracticeQ(false)} className="text-xs text-gray-400 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminPractice.cancel}</button>
                         <button onClick={() => saveNewPracticeQ(selectedTestId!)} disabled={practiceSaving} className="text-xs bg-gray-900 text-white px-3 py-1 rounded-lg disabled:opacity-50">{tr.adminPractice.save}</button>
@@ -3646,6 +3662,16 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                   <input type="checkbox" checked={editingPracticeQ.is_active} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, is_active: e.target.checked } : p)} className="w-4 h-4" />
                                 </div>
                               </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs text-gray-400">{tr.adminPractice.fieldImageUrl}</label>
+                                <input data-testid="admin-q-image-url" value={editingPracticeQ.image_url ?? ''} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, image_url: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs text-gray-400">{tr.adminPractice.fieldImageCredit}</label>
+                                <input data-testid="admin-q-image-credit" value={editingPracticeQ.image_credit ?? ''} onChange={(e) => setEditingPracticeQ((p) => p ? { ...p, image_credit: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                              </div>
+                            </div>
                               <div className="flex gap-2 justify-end">
                                 <button onClick={() => setEditingPracticeQ(null)} className="text-xs text-gray-400 px-3 py-1 border border-gray-900 rounded-lg">{tr.adminPractice.cancel}</button>
                                 <button onClick={() => saveEditPracticeQ(selectedTestId!)} disabled={practiceSaving} className="text-xs bg-gray-900 text-white px-3 py-1 rounded-lg disabled:opacity-50">{tr.adminPractice.save}</button>
