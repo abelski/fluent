@@ -16,7 +16,7 @@
         {
           "image_url": "/img/signs/a13.webp",
           "licence": "CC BY-SA 3.0",
-          "question_lt": "Kada parduotuvė nedirba?",
+          "question_lt": "Kurią dieną parduotuvė nedirba?",
           "options": [
             "Sekmadienį",
             "Šeštadienį",
@@ -30,12 +30,12 @@
         {
           "image_url": "/img/signs/a18.webp",
           "licence": "CC BY-SA 2.0",
-          "question_lt": "Kur yra batai?",
+          "question_lt": "Jums reikia naujų batų. Kur eiti?",
           "options": [
-            "Dešinėje",
-            "Kairėje",
-            "Viršuje",
-            "Apačioje"
+            "Į dešinę",
+            "Į kairę",
+            "Tiesiai",
+            "Atgal"
           ],
           "correct_option": "b",
           "image_credit": "Šarūnas Burdulis, CC BY-SA 2.0",
@@ -44,48 +44,47 @@
         {
           "image_url": "/img/signs/b884.webp",
           "licence": "CC0",
-          "question_lt": "Kur jūs esate?",
+          "question_lt": "Sriuba nesūri. Ko jums reikia?",
           "options": [
-            "Bibliotekoje",
-            "Degalinėje",
-            "Parduotuvėje",
-            "Vaistinėje"
+            "Cukraus",
+            "Miltų",
+            "Druskos"
           ],
           "correct_option": "c"
         },
         {
           "image_url": "/img/signs/b1172.webp",
           "licence": "CC0",
-          "question_lt": "Kada turgus sekmadienį užsidaro?",
+          "question_lt": "Šiandien sekmadienis. Iki kada dirba turgus?",
           "options": [
-            "17:00",
-            "7:00",
-            "Sekmadienį nedirba",
-            "15:00"
+            "Iki 17:00",
+            "Iki 7:00",
+            "Šiandien nedirba",
+            "Iki 15:00"
           ],
           "correct_option": "d"
         },
         {
           "image_url": "/img/signs/b1490.webp",
           "licence": "CC0",
-          "question_lt": "Iki kada dirba parduotuvė?",
+          "question_lt": "Kada parduotuvė užsidaro?",
           "options": [
-            "Iki 23:00",
-            "Iki 20:00",
-            "Iki 22:00",
-            "Iki 18:00"
+            "Vėlai vakare",
+            "Ryte",
+            "Per pietus",
+            "Po pietų"
           ],
           "correct_option": "a"
         },
         {
           "image_url": "/img/signs/b1666.webp",
           "licence": "CC BY-SA 4.0",
-          "question_lt": "Kada parduotuvė šeštadienį atsidaro?",
+          "question_lt": "Šiandien sekmadienis. Kada parduotuvė atsidaro?",
           "options": [
             "7:00",
             "8:30",
             "22:00",
-            "Šeštadienį nedirba"
+            "Šiandien nedirba"
           ],
           "correct_option": "b",
           "image_credit": "Algolux, CC BY-SA 4.0",
@@ -101,50 +100,38 @@
         {
           "image_url": "/img/signs/a450.webp",
           "licence": "CC0",
-          "question_lt": "Kada pirmas keltas iš Smiltynės?",
+          "question_lt": "Jūs esate Klaipėdoje ir norite plaukti į Smiltynę. Kada pirmas keltas?",
           "options": [
-            "7:00",
-            "7:30",
             "7:15",
-            "8:15"
+            "7:45",
+            "7:00",
+            "7:30"
           ],
           "correct_option": "c"
         },
         {
-          "image_url": "/img/signs/b109.webp",
-          "licence": "CC0",
-          "question_lt": "Į kurį miestą važiuoja autobusas?",
-          "options": [
-            "Į Rygą",
-            "Į Taliną",
-            "Į Paryžių",
-            "Į Varšuvą"
-          ],
-          "correct_option": "d"
-        },
-        {
           "image_url": "/img/signs/b935.webp",
           "licence": "CC BY 2.0",
-          "question_lt": "Ar liepos 11 d. reikia pirkti bilietą?",
+          "question_lt": "Liepos 11 d. jūs važiuojate autobusu Vilniuje. Kiek mokate?",
           "options": [
-            "Ne",
-            "Taip",
-            "Taip, tik internete",
-            "Taip, tik autobuse"
+            "Visą kainą",
+            "Pusę kainos",
+            "Dvigubai",
+            "Nieko"
           ],
-          "correct_option": "a",
+          "correct_option": "d",
           "image_credit": "dave massie, CC BY 2.0",
           "source_url": "https://commons.wikimedia.org/wiki/File:Z9P_4648_(53110703836).jpg"
         },
         {
           "image_url": "/img/signs/b1810.webp",
           "licence": "CC BY-SA 4.0",
-          "question_lt": "Traukinys išvyksta iš Kauno 12:00. Kada jis atvyksta į Kybartus?",
+          "question_lt": "Jums reikia būti Kybartuose ryte. Kada traukinys išvyksta iš Kauno?",
           "options": [
-            "12:38",
-            "13:22",
-            "9:42",
-            "13:00"
+            "12:00",
+            "08:20",
+            "09:42",
+            "13:22"
           ],
           "correct_option": "b",
           "image_credit": "CD, CC BY-SA 4.0",
@@ -153,12 +140,11 @@
         {
           "image_url": "/img/signs/b1830.webp",
           "licence": "CC BY 2.0",
-          "question_lt": "Kur galima pirkti bilietą?",
+          "question_lt": "Ar traukinyje bilietas kainuoja daugiau?",
           "options": [
-            "Kasoje",
-            "Autobuse",
-            "Traukinyje",
-            "Internete"
+            "Taip, šiek tiek daugiau",
+            "Taip, dvigubai",
+            "Ne, kaina ta pati"
           ],
           "correct_option": "c",
           "image_credit": "Phillip Capper, CC BY 2.0",
@@ -167,12 +153,12 @@
         {
           "image_url": "/img/signs/b116.webp",
           "licence": "CC0",
-          "question_lt": "Kada autobusas važiuoja į Kauną per Vandžiogalą?",
+          "question_lt": "Kurią dieną autobusas į Alytų nevažiuoja?",
           "options": [
-            "8:15",
-            "9:30",
-            "10:05",
-            "9:05 ir 11:50"
+            "Pirmadienį",
+            "Penktadienį",
+            "Sekmadienį",
+            "Antradienį"
           ],
           "correct_option": "d"
         }
@@ -186,12 +172,12 @@
         {
           "image_url": "/img/signs/a651.webp",
           "licence": "CC BY 2.0",
-          "question_lt": "Kiek kilometrų iki Šilutės?",
+          "question_lt": "Jūs važiuojate į Klaipėdą. Kur reikia sukti?",
           "options": [
-            "15",
-            "37",
-            "52",
-            "22"
+            "Į kairę",
+            "Į dešinę",
+            "Tiesiai",
+            "Atgal"
           ],
           "correct_option": "a",
           "image_credit": "dlisbona, CC BY 2.0",
@@ -200,12 +186,12 @@
         {
           "image_url": "/img/signs/b193.webp",
           "licence": "CC BY-SA 4.0",
-          "question_lt": "Kas turi būti atsargus?",
+          "question_lt": "Kas gali atsitikti?",
           "options": [
-            "Vairuotojai",
-            "Dviratininkai",
-            "Pėstieji",
-            "Vaikai"
+            "Galite pavėluoti",
+            "Galite nukristi",
+            "Galite pasiklysti",
+            "Galite sušlapti"
           ],
           "correct_option": "b",
           "image_credit": "Андрей Романенко, CC BY-SA 4.0",
@@ -214,12 +200,12 @@
         {
           "image_url": "/img/signs/b1488.webp",
           "licence": "CC BY-SA 3.0",
-          "question_lt": "Kaip greitai čia galima važiuoti?",
+          "question_lt": "Ką čia reikia daryti?",
           "options": [
-            "Iki 60 km/h",
-            "Iki 20 km/h",
-            "Iki 40 km/h",
-            "Iki 90 km/h"
+            "Verkti",
+            "Bėgti",
+            "Šypsotis",
+            "Miegoti"
           ],
           "correct_option": "c",
           "image_credit": "Wojsyl, CC BY-SA 3.0",
@@ -228,12 +214,12 @@
         {
           "image_url": "/img/signs/b1867.webp",
           "licence": "CC BY 2.0",
-          "question_lt": "Ar sekmadienį reikia mokėti už parkavimą?",
+          "question_lt": "Kada parkuotis galima nemokamai?",
           "options": [
-            "Taip, 8–20",
-            "Taip, visą dieną",
-            "Taip, iki 12:00",
-            "Ne"
+            "Šeštadienį",
+            "Pirmadienį",
+            "Penktadienį",
+            "Sekmadienį"
           ],
           "correct_option": "d",
           "image_credit": "smaedli, CC BY 2.0",
@@ -242,12 +228,12 @@
         {
           "image_url": "/img/signs/b2238.webp",
           "licence": "CC BY 2.0",
-          "question_lt": "Ko čia negalima daryti?",
+          "question_lt": "Jūs pastatėte automobilį prie durų. Kas bus?",
           "options": [
-            "Statyti automobilį prie durų",
-            "Eiti pro duris",
-            "Rūkyti",
-            "Važiuoti dviračiu"
+            "Negalėsite išvažiuoti",
+            "Jums paskambins",
+            "Jums padės",
+            "Nieko nebus"
           ],
           "correct_option": "a",
           "image_credit": "Trojan_Llama, CC BY 2.0",
@@ -263,56 +249,42 @@
         {
           "image_url": "/img/signs/a136.webp",
           "licence": "CC BY-SA 4.0",
-          "question_lt": "Kuriame aukšte galima pirkti bilietą?",
+          "question_lt": "Jūs norite nusipirkti bilietą. Į kurį aukštą eiti?",
           "options": [
-            "Antrame",
-            "Pirmame",
-            "Trečiame",
-            "Rūsyje"
+            "Į antrą",
+            "Į pirmą",
+            "Į trečią",
+            "Į rūsį"
           ],
           "correct_option": "b",
           "image_credit": "Illustr, CC BY-SA 4.0",
           "source_url": "https://commons.wikimedia.org/wiki/File:Lazdynai_swimming_pool_information_board_1.jpg"
         },
         {
-          "image_url": "/img/signs/b923.webp",
-          "licence": "CC BY-SA 4.0",
-          "question_lt": "Kur galima eiti pro šias duris?",
-          "options": [
-            "Į gatvę",
-            "Į laiptinę",
-            "Į tunelį",
-            "Į kabinetą"
-          ],
-          "correct_option": "c",
-          "image_credit": "Vilensija, CC BY-SA 4.0",
-          "source_url": "https://commons.wikimedia.org/wiki/File:Klinik%C5%B3_tunelis,_2.jpg"
-        },
-        {
           "image_url": "/img/signs/b1249.webp",
           "licence": "CC BY-SA 4.0",
-          "question_lt": "Ar vaistinė dirba šeštadienį?",
+          "question_lt": "Kada vaistinė nedirba?",
           "options": [
-            "Taip, 8–18",
-            "Taip, visą dieną",
-            "Taip, iki 12:00",
-            "Ne"
+            "Pirmadienį",
+            "Penktadienį",
+            "Savaitgalį",
+            "Darbo dienomis"
           ],
-          "correct_option": "d",
+          "correct_option": "c",
           "image_credit": "Ziko van Dijk, CC BY-SA 4.0",
           "source_url": "https://commons.wikimedia.org/wiki/File:2025-06-30_Lithuanian_University_of_Health_Sciences_24.jpg"
         },
         {
           "image_url": "/img/signs/b1257.webp",
           "licence": "CC BY-SA 3.0",
-          "question_lt": "Kada senjorams nuolaida?",
+          "question_lt": "Kam antradienį nuolaida?",
           "options": [
-            "Antradienį",
-            "Pirmadienį",
-            "Penktadienį",
-            "Sekmadienį"
+            "Vaikams",
+            "Studentams",
+            "Šeimoms",
+            "Vyresniems žmonėms"
           ],
-          "correct_option": "a",
+          "correct_option": "d",
           "image_credit": "Bearas, CC BY-SA 3.0",
           "source_url": "https://commons.wikimedia.org/wiki/File:Gintarin%C4%97_vaistin%C4%97_senamiestyje._Vilnius.JPG"
         },
@@ -321,26 +293,26 @@
           "licence": "CC BY-SA 4.0",
           "question_lt": "Kada galima paskambinti?",
           "options": [
-            "Tik I–V",
-            "Kasdien 7–21",
-            "Visą parą",
-            "Tik savaitgalį"
+            "Kasdien",
+            "Tik darbo dienomis",
+            "Tik savaitgalį",
+            "Visą parą"
           ],
-          "correct_option": "b",
+          "correct_option": "a",
           "image_credit": "CD, CC BY-SA 4.0",
           "source_url": "https://commons.wikimedia.org/wiki/File:Mauruciai_2023e.jpg"
         },
         {
           "image_url": "/img/signs/b1479.webp",
           "licence": "CC0",
-          "question_lt": "Kur jūs esate?",
+          "question_lt": "Ką jūs atidavėte parduotuvei?",
           "options": [
-            "Bibliotekoje",
-            "Pašte",
-            "Parduotuvėje",
-            "Ligoninėje"
+            "Du butelius",
+            "Skardinę ir butelį",
+            "Dvi skardines",
+            "Du maišelius"
           ],
-          "correct_option": "c"
+          "correct_option": "b"
         }
       ]
     },
@@ -352,84 +324,70 @@
         {
           "image_url": "/img/signs/a28.webp",
           "licence": "CC BY-SA 4.0",
-          "question_lt": "Ko čia negalima daryti?",
+          "question_lt": "Ką čia galima dėvėti?",
           "options": [
-            "Sėdėti",
-            "Gerti vandenį",
-            "Skaityti",
-            "Rūkyti"
+            "Trumpus šortus",
+            "Trumpą sijoną",
+            "Ilgas laisvas kelnes",
+            "Marškinėlius be rankovių"
           ],
-          "correct_option": "d",
+          "correct_option": "c",
           "image_credit": "Maja Mihalik, CC BY-SA 4.0",
           "source_url": "https://commons.wikimedia.org/wiki/File:Raizai_trip_35.JPG"
         },
         {
           "image_url": "/img/signs/a69.webp",
           "licence": "CC BY-SA 4.0",
-          "question_lt": "Ką reikia dėvėti parduotuvėje?",
+          "question_lt": "Ką reikia uždengti parduotuvėje?",
           "options": [
-            "Kaukę",
-            "Pirštines",
-            "Kepurę",
-            "Akinius"
+            "Akis",
+            "Rankas",
+            "Galvą",
+            "Burną ir nosį"
           ],
-          "correct_option": "a",
+          "correct_option": "d",
           "image_credit": "LinasD, CC BY-SA 4.0",
           "source_url": "https://commons.wikimedia.org/wiki/File:Warning_about_mask_requirement_in_a_supermarket_in_Lithuania.jpg"
         },
         {
           "image_url": "/img/signs/b1895.webp",
           "licence": "CC BY-SA 2.0",
-          "question_lt": "Kur jūs esate?",
+          "question_lt": "Jūs suvalgėte ledus. Ką daryti su popieriumi?",
           "options": [
-            "Vaistinėje",
-            "Parke",
-            "Pašte",
-            "Bibliotekoje"
+            "Pasiimti su savimi",
+            "Palikti ant žolės",
+            "Mesti už savęs",
+            "Paslėpti po medžiu"
           ],
-          "correct_option": "b",
+          "correct_option": "a",
           "image_credit": "ritzotencate, CC BY-SA 2.0",
           "source_url": "https://www.flickr.com/photos/24628536@N00/7190295132"
-        },
-        {
-          "image_url": "/img/signs/b1840.webp",
-          "licence": "CC BY-SA 4.0",
-          "question_lt": "Kodėl keičiasi traukinių laikas?",
-          "options": [
-            "Šventės",
-            "Streikas",
-            "Remontuoja kelią",
-            "Žiema"
-          ],
-          "correct_option": "c",
-          "image_credit": "CD, CC BY-SA 4.0",
-          "source_url": "https://commons.wikimedia.org/wiki/File:Voke_2023c.jpg"
         },
         {
           "image_url": "/img/signs/a84.webp",
           "licence": "CC BY-SA 3.0",
           "question_lt": "Ką reikia daryti su šiukšlėmis?",
           "options": [
-            "Palikti čia",
-            "Išmesti miške",
-            "Sudeginti",
-            "Išsivežti"
+            "Palikti jas miške",
+            "Pasiimti jas su savimi",
+            "Išmesti jas į upę",
+            "Sudeginti jas"
           ],
-          "correct_option": "d",
+          "correct_option": "b",
           "image_credit": "Vilensija, CC BY-SA 3.0",
           "source_url": "https://commons.wikimedia.org/wiki/File:Dubravos_apyrub%C4%97._%C4%AEsp%C4%97jimas.JPG"
         },
         {
           "image_url": "/img/signs/b102.webp",
           "licence": "CC BY 2.0",
-          "question_lt": "Kur jūs esate?",
+          "question_lt": "Jūs sėdite prie stalo ir norite kavos. Ką darote?",
           "options": [
-            "Kavinėje",
-            "Vaistinėje",
-            "Pašte",
-            "Degalinėje"
+            "Laukiu padavėjo",
+            "Skambinu padavėjui",
+            "Einu užsisakyti pats",
+            "Rašau žinutę"
           ],
-          "correct_option": "a",
+          "correct_option": "c",
           "image_credit": "Bernt Rostad, CC BY 2.0",
           "source_url": "https://commons.wikimedia.org/wiki/File:On_tap_at_Vilniaus_Alus_(9834991966).jpg"
         }

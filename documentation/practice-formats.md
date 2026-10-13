@@ -107,4 +107,4 @@ Formats that mirror the reading part of the Lithuanian A2 exam, each as its own 
 - **Knowledge check:** `_build_choice` copies `image_url` / `image_credit` into the `reading` task and
   swaps the instruction to «Посмотри на фото и ответь на вопрос».
 
-- **Fixing seeded question text (#62e):** `seed_practice_category.py <file> --update-text` rewrites text/options/answer of an existing signs category in place, matched by `image_url` (ids kept, so results stay valid). Signs only.
+- **Fixing seeded question text (#62e):** `seed_practice_category.py <file> --update-text` rewrites text/options/answer of an existing signs category in place, matched by `image_url` (ids kept, so results stay valid); questions no longer in the file are deactivated (`is_active=false`, never deleted) and each test's `question_count` is synced. Signs only.

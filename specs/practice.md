@@ -328,7 +328,8 @@ Scenario: signs seed validation and in-place text update (#62e)
   And a 3-option question is stored with an empty option_d
   When it runs with --update-text on an existing signs category
   Then each stored question is matched by image_url and its text, options and correct answer are
-    rewritten in place (ids and results untouched); an image_url with no stored question aborts with an
+    rewritten in place (ids and results untouched); stored questions missing from the file are
+    deactivated (never deleted) and each test's question_count is synced; an image_url with no stored question aborts with an
     error, and --update-text on any other format exits with 2
 ```
 
