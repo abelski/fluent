@@ -1,0 +1,2085 @@
+{
+  "format": "adjectives",
+  "program": {
+    "title": "Прилагательные",
+    "title_en": "Adjectives",
+    "description": "Согласование прилагательных с существительными в шести падежах: šiltas paltas, šiltos arbatos, šiltame name.",
+    "description_en": "Adjective–noun agreement in six cases: šiltas paltas, šiltos arbatos, šiltame name.",
+    "difficulty": 2,
+    "lesson_filter": [
+      "Būdvardžiai"
+    ],
+    "program_type": "cases"
+  },
+  "rules": [
+    {
+      "case_index": 21,
+      "name_ru": "Прилагательные: именительный падеж",
+      "name_en": "Adjectives: nominative",
+      "question": "Koks? Kokia? Kokie? Kokios? (Какой? Какая? Какие?)",
+      "question_en": "Koks? Kokia? Kokie? Kokios? (What kind?)",
+      "usage": "Прилагательное стоит в том же роде, числе и падеже, что и существительное. Именительный — у подлежащего и после yra, buvo, tai: Tai mėlynas namas. Namas yra šiltas.",
+      "usage_en": "The adjective takes the gender, number and case of its noun. The nominative goes with the subject and after yra, buvo, tai: Tai mėlynas namas. Namas yra šiltas.",
+      "transform": "geras → gera / geri / geros · žalias → žalia / žali · gražus → graži / gražūs · didelis → didelė / dideli",
+      "transform_en": "geras → gera / geri / geros · žalias → žalia / žali · gražus → graži / gražūs · didelis → didelė / dideli",
+      "endings_sg": "м.р.: ‑as, ‑ias, ‑us, ‑is / ж.р.: ‑a, ‑ia, ‑i, ‑ė",
+      "endings_pl": "м.р.: ‑i, ‑ūs / ж.р.: ‑os, ‑ios, ‑ės",
+      "endings_sg_en": "m.: ‑as, ‑ias, ‑us, ‑is / f.: ‑a, ‑ia, ‑i, ‑ė",
+      "endings_pl_en": "m.: ‑i, ‑ūs / f.: ‑os, ‑ios, ‑ės",
+      "article_slug": "būdvardžiai-linksniavimas"
+    },
+    {
+      "case_index": 22,
+      "name_ru": "Прилагательные: родительный падеж",
+      "name_en": "Adjectives: genitive",
+      "question": "Kokio? Kokios? Kokių? (Какого? Какой? Каких?)",
+      "question_en": "Kokio? Kokios? Kokių? (Of what kind?)",
+      "usage": "Прилагательное стоит в том же роде, числе и падеже, что и существительное. Родительный нужен после nėra, neturiu, reikia, daug, be, iš, prie, po, nuo и при отрицании: Man reikia šiltos striukės.",
+      "usage_en": "The adjective takes the gender, number and case of its noun. The genitive follows nėra, neturiu, reikia, daug, be, iš, prie, po, nuo and negation: Man reikia šiltos striukės.",
+      "transform": "geras → gero / geros · žalias → žalio / žalios · gražus → gražaus / gražios · didelis → didelio / didelės",
+      "transform_en": "geras → gero / geros · žalias → žalio / žalios · gražus → gražaus / gražios · didelis → didelio / didelės",
+      "endings_sg": "м.р.: ‑o, ‑io, ‑aus / ж.р.: ‑os, ‑ios, ‑ės",
+      "endings_pl": "м.р. и ж.р.: ‑ų, ‑ių",
+      "endings_sg_en": "m.: ‑o, ‑io, ‑aus / f.: ‑os, ‑ios, ‑ės",
+      "endings_pl_en": "m. and f.: ‑ų, ‑ių",
+      "article_slug": "būdvardžiai-linksniavimas"
+    },
+    {
+      "case_index": 23,
+      "name_ru": "Прилагательные: дательный падеж",
+      "name_en": "Adjectives: dative",
+      "question": "Kokiam? Kokiai? Kokiems? Kokioms? (Какому? Какой? Каким?)",
+      "question_en": "Kokiam? Kokiai? Kokiems? Kokioms? (To what kind?)",
+      "usage": "Прилагательное стоит в том же роде, числе и падеже, что и существительное. Дательный — кому? для чего?: после duoti, padėti, paskambinti, patikti, tikti, skirtas: Nupirkau dovaną geram draugui.",
+      "usage_en": "The adjective takes the gender, number and case of its noun. The dative answers \"to whom? for what?\": after duoti, padėti, paskambinti, patikti, tikti, skirtas: Nupirkau dovaną geram draugui.",
+      "transform": "geras → geram / gerai · žalias → žaliam / žaliai · gražus → gražiam / gražiai · didelis → dideliam / didelei · platus → plačiam (t→č, d→dž)",
+      "transform_en": "geras → geram / gerai · žalias → žaliam / žaliai · gražus → gražiam / gražiai · didelis → dideliam / didelei · platus → plačiam (t→č, d→dž)",
+      "endings_sg": "м.р.: ‑am, ‑iam / ж.р.: ‑ai, ‑iai, ‑ei",
+      "endings_pl": "м.р.: ‑iems / ж.р.: ‑oms, ‑ioms, ‑ėms",
+      "endings_sg_en": "m.: ‑am, ‑iam / f.: ‑ai, ‑iai, ‑ei",
+      "endings_pl_en": "m.: ‑iems / f.: ‑oms, ‑ioms, ‑ėms",
+      "article_slug": "būdvardžiai-linksniavimas"
+    },
+    {
+      "case_index": 24,
+      "name_ru": "Прилагательные: винительный падеж",
+      "name_en": "Adjectives: accusative",
+      "question": "Kokį? Kokią? Kokius? Kokias? (Какой? Какую? Какие?)",
+      "question_en": "Kokį? Kokią? Kokius? Kokias? (What kind?)",
+      "usage": "Прилагательное стоит в том же роде, числе и падеже, что и существительное. Винительный — прямое дополнение: после turėti, matyti, mėgti, pirkti, valgyti и предлога į: Aš turiu juodą katę.",
+      "usage_en": "The adjective takes the gender, number and case of its noun. The accusative marks the direct object: after turėti, matyti, mėgti, pirkti, valgyti and the preposition į: Aš turiu juodą katę.",
+      "transform": "geras → gerą / gerą · žalias → žalią / žalią · gražus → gražų / gražią · didelis → didelį / didelę",
+      "transform_en": "geras → gerą / gerą · žalias → žalią / žalią · gražus → gražų / gražią · didelis → didelį / didelę",
+      "endings_sg": "м.р.: ‑ą, ‑ią, ‑ų, ‑į / ж.р.: ‑ą, ‑ią, ‑ę",
+      "endings_pl": "м.р.: ‑us, ‑ius / ж.р.: ‑as, ‑ias, ‑es",
+      "endings_sg_en": "m.: ‑ą, ‑ią, ‑ų, ‑į / f.: ‑ą, ‑ią, ‑ę",
+      "endings_pl_en": "m.: ‑us, ‑ius / f.: ‑as, ‑ias, ‑es",
+      "article_slug": "būdvardžiai-linksniavimas"
+    },
+    {
+      "case_index": 25,
+      "name_ru": "Прилагательные: творительный падеж",
+      "name_en": "Adjectives: instrumental",
+      "question": "Kokiu? Kokia? Kokiais? Kokiomis? (Каким? Какой? Какими?)",
+      "question_en": "Kokiu? Kokia? Kokiais? Kokiomis? (With what kind?)",
+      "usage": "Прилагательное стоит в том же роде, числе и падеже, что и существительное. Творительный — с su (с кем? с чем?), чем? кем считают, каким путём: Geriu kavą su šiltu pienu.",
+      "usage_en": "The adjective takes the gender, number and case of its noun. The instrumental goes with su (with whom? with what?), the tool or way, and \"consider someone as\": Geriu kavą su šiltu pienu.",
+      "transform": "geras → geru / gera · žalias → žaliu / žalia · gražus → gražiu / gražia · didelis → dideliu / didele · platus → plačiu (t→č, d→dž)",
+      "transform_en": "geras → geru / gera · žalias → žaliu / žalia · gražus → gražiu / gražia · didelis → dideliu / didele · platus → plačiu (t→č, d→dž)",
+      "endings_sg": "м.р.: ‑u, ‑iu / ж.р.: ‑a, ‑ia, ‑e",
+      "endings_pl": "м.р.: ‑ais, ‑iais / ж.р.: ‑omis, ‑iomis, ‑ėmis",
+      "endings_sg_en": "m.: ‑u, ‑iu / f.: ‑a, ‑ia, ‑e",
+      "endings_pl_en": "m.: ‑ais, ‑iais / f.: ‑omis, ‑iomis, ‑ėmis",
+      "article_slug": "būdvardžiai-linksniavimas"
+    },
+    {
+      "case_index": 26,
+      "name_ru": "Прилагательные: местный падеж",
+      "name_en": "Adjectives: locative",
+      "question": "Kokiame? Kokioje? Kokiuose? Kokiose? (В каком? В какой? В каких?)",
+      "question_en": "Kokiame? Kokioje? Kokiuose? Kokiose? (In what kind?)",
+      "usage": "Прилагательное стоит в том же роде, числе и падеже, что и существительное. Местный — где? в чём?: Aš gyvenu dideliame name.",
+      "usage_en": "The adjective takes the gender, number and case of its noun. The locative answers \"where? in what?\": Aš gyvenu dideliame name.",
+      "transform": "geras → gerame / geroje · žalias → žaliame / žalioje · gražus → gražiame / gražioje · didelis → dideliame / didelėje · platus → plačiame (t→č, d→dž)",
+      "transform_en": "geras → gerame / geroje · žalias → žaliame / žalioje · gražus → gražiame / gražioje · didelis → dideliame / didelėje · platus → plačiame (t→č, d→dž)",
+      "endings_sg": "м.р.: ‑ame, ‑iame / ж.р.: ‑oje, ‑ioje, ‑ėje",
+      "endings_pl": "м.р.: ‑uose, ‑iuose / ж.р.: ‑ose, ‑iose, ‑ėse",
+      "endings_sg_en": "m.: ‑ame, ‑iame / f.: ‑oje, ‑ioje, ‑ėje",
+      "endings_pl_en": "m.: ‑uose, ‑iuose / f.: ‑ose, ‑iose, ‑ėse",
+      "article_slug": "būdvardžiai-linksniavimas"
+    }
+  ],
+  "sentences": [
+    {
+      "case_index": 21,
+      "display": "Tai mėlyn___ namas.",
+      "answer_ending": "as",
+      "full_word": "mėlynas",
+      "russian": "Это синий дом.",
+      "english": "This is a blue house.",
+      "source": "tatoeba:12532151"
+    },
+    {
+      "case_index": 21,
+      "display": "Dangus yra mėlyn___.",
+      "answer_ending": "as",
+      "full_word": "mėlynas",
+      "russian": "Небо голубое.",
+      "english": "The sky is blue.",
+      "source": "tatoeba:571300"
+    },
+    {
+      "case_index": 21,
+      "display": "Medis yra žal___.",
+      "answer_ending": "ias",
+      "full_word": "žalias",
+      "russian": "Дерево зелёное.",
+      "english": "The tree is green.",
+      "source": "tatoeba:2041596"
+    },
+    {
+      "case_index": 21,
+      "display": "Bananai yra gelton___.",
+      "answer_ending": "i",
+      "full_word": "geltoni",
+      "russian": "Бананы жёлтые.",
+      "english": "Bananas are yellow.",
+      "source": "tatoeba:4143049"
+    },
+    {
+      "case_index": 21,
+      "display": "Dabar mėsa brang___.",
+      "answer_ending": "i",
+      "full_word": "brangi",
+      "russian": "Сейчас мясо дорогое.",
+      "english": "Meat is expensive now.",
+      "source": "tatoeba:12932326"
+    },
+    {
+      "case_index": 21,
+      "display": "Ši kėdė labai patog___.",
+      "answer_ending": "i",
+      "full_word": "patogi",
+      "russian": "Этот стул очень удобный.",
+      "english": "This chair is very comfortable.",
+      "source": "tatoeba:2157667"
+    },
+    {
+      "case_index": 21,
+      "display": "Bulvės labai pig___.",
+      "answer_ending": "ios",
+      "full_word": "pigios",
+      "russian": "Картошка очень дешёвая.",
+      "english": "Potatoes are very cheap.",
+      "source": "tatoeba:10676702"
+    },
+    {
+      "case_index": 21,
+      "display": "Vanduo buvo šalt___.",
+      "answer_ending": "as",
+      "full_word": "šaltas",
+      "russian": "Вода была холодной.",
+      "english": "The water was cold.",
+      "source": "tatoeba:12407053"
+    },
+    {
+      "case_index": 21,
+      "display": "Namas yra šilt___.",
+      "answer_ending": "as",
+      "full_word": "šiltas",
+      "russian": "Дом тёплый.",
+      "english": "The house is warm.",
+      "source": "tatoeba:6999351"
+    },
+    {
+      "case_index": 21,
+      "display": "Čia žiemos šalt___.",
+      "answer_ending": "os",
+      "full_word": "šaltos",
+      "russian": "Здесь зимы холодные.",
+      "english": "Winters are cold here.",
+      "source": "tatoeba:11860865"
+    },
+    {
+      "case_index": 21,
+      "display": "Šitos gėlės graž___!",
+      "answer_ending": "ios",
+      "full_word": "gražios",
+      "russian": "Эти цветы красивые!",
+      "english": "These flowers are beautiful!",
+      "source": "tatoeba:6836099"
+    },
+    {
+      "case_index": 21,
+      "display": "Šitie rūmai graž___.",
+      "answer_ending": "ūs",
+      "full_word": "gražūs",
+      "russian": "Этот дворец красивый.",
+      "english": "This palace is beautiful.",
+      "source": "tatoeba:10004954"
+    },
+    {
+      "case_index": 21,
+      "display": "Šie šunys yra didel___.",
+      "answer_ending": "i",
+      "full_word": "dideli",
+      "russian": "Эти собаки большие.",
+      "english": "These dogs are big.",
+      "source": "tatoeba:1677326"
+    },
+    {
+      "case_index": 21,
+      "display": "Knygos yra maž___.",
+      "answer_ending": "os",
+      "full_word": "mažos",
+      "russian": "Книги маленькие.",
+      "english": "The books are small.",
+      "source": "tatoeba:10721295"
+    },
+    {
+      "case_index": 21,
+      "display": "Knyga per brang___.",
+      "answer_ending": "i",
+      "full_word": "brangi",
+      "russian": "Книга слишком дорогая.",
+      "english": "The book is too expensive.",
+      "source": "tatoeba:8755079"
+    },
+    {
+      "case_index": 21,
+      "display": "Mano batai nauj___.",
+      "answer_ending": "i",
+      "full_word": "nauji",
+      "russian": "Мои ботинки новые.",
+      "english": "My shoes are new.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Mano internetas lėt___.",
+      "answer_ending": "as",
+      "full_word": "lėtas",
+      "russian": "Мой интернет медленный.",
+      "english": "My internet is slow.",
+      "source": "tatoeba:6920142"
+    },
+    {
+      "case_index": 21,
+      "display": "Vėžliai yra labai lėt___.",
+      "answer_ending": "i",
+      "full_word": "lėti",
+      "russian": "Черепахи очень медленные.",
+      "english": "Turtles are very slow.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Pakilo juod___ debesys.",
+      "answer_ending": "i",
+      "full_word": "juodi",
+      "russian": "Поднялись чёрные тучи.",
+      "english": "Black clouds rose.",
+      "source": "tatoeba:8096873"
+    },
+    {
+      "case_index": 21,
+      "display": "Jų plaukai ilg___.",
+      "answer_ending": "i",
+      "full_word": "ilgi",
+      "russian": "Их волосы длинные.",
+      "english": "Their hair is long.",
+      "source": "tatoeba:13398144"
+    },
+    {
+      "case_index": 21,
+      "display": "Jos kojos ilg___.",
+      "answer_ending": "os",
+      "full_word": "ilgos",
+      "russian": "Её ноги длинные.",
+      "english": "Her legs are long.",
+      "source": "tatoeba:12311639"
+    },
+    {
+      "case_index": 21,
+      "display": "Šita žuvis pig___, bet skani.",
+      "answer_ending": "i",
+      "full_word": "pigi",
+      "russian": "Эта рыба дешёвая, но вкусная.",
+      "english": "This fish is cheap but tasty.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Upė čia labai plat___.",
+      "answer_ending": "i",
+      "full_word": "plati",
+      "russian": "Река здесь очень широкая.",
+      "english": "The river is very wide here.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Dabar ateina linksm___ dienos.",
+      "answer_ending": "os",
+      "full_word": "linksmos",
+      "russian": "Сейчас наступают весёлые дни.",
+      "english": "Happy days are coming now.",
+      "source": "tatoeba:7957177"
+    },
+    {
+      "case_index": 21,
+      "display": "Vaikai šiandien labai linksm___.",
+      "answer_ending": "i",
+      "full_word": "linksmi",
+      "russian": "Дети сегодня очень весёлые.",
+      "english": "The children are very cheerful today.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Mano tėvai dar jaun___.",
+      "answer_ending": "i",
+      "full_word": "jauni",
+      "russian": "Мои родители ещё молодые.",
+      "english": "My parents are still young.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Šita sriuba labai skan___.",
+      "answer_ending": "i",
+      "full_word": "skani",
+      "russian": "Этот суп очень вкусный.",
+      "english": "This soup is very tasty.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Avietės yra labai skan___.",
+      "answer_ending": "ios",
+      "full_word": "skanios",
+      "russian": "Малина очень вкусная.",
+      "english": "Raspberries are very tasty.",
+      "source": "tatoeba:11725950"
+    },
+    {
+      "case_index": 21,
+      "display": "Mūsų kambarys švar___.",
+      "answer_ending": "us",
+      "full_word": "švarus",
+      "russian": "Наша комната чистая.",
+      "english": "Our room is clean.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Šis lagaminas labai sunk___.",
+      "answer_ending": "us",
+      "full_word": "sunkus",
+      "russian": "Этот чемодан очень тяжёлый.",
+      "english": "This suitcase is very heavy.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Tai lengv___ klausimas.",
+      "answer_ending": "as",
+      "full_word": "lengvas",
+      "russian": "Это лёгкий вопрос.",
+      "english": "That's an easy question.",
+      "source": "tatoeba:9986628"
+    },
+    {
+      "case_index": 21,
+      "display": "Mano senelis jau sen___.",
+      "answer_ending": "as",
+      "full_word": "senas",
+      "russian": "Мой дедушка уже старый.",
+      "english": "My grandfather is already old.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Slaptažodis yra trump___.",
+      "answer_ending": "as",
+      "full_word": "trumpas",
+      "russian": "Пароль короткий.",
+      "english": "The password is short.",
+      "source": "tatoeba:13577590"
+    },
+    {
+      "case_index": 21,
+      "display": "Diržas yra rud___.",
+      "answer_ending": "as",
+      "full_word": "rudas",
+      "russian": "Ремень коричневый.",
+      "english": "The belt is brown.",
+      "source": "tatoeba:571311"
+    },
+    {
+      "case_index": 21,
+      "display": "Dramblys yra pilk___.",
+      "answer_ending": "as",
+      "full_word": "pilkas",
+      "russian": "Слон серый.",
+      "english": "The elephant is grey.",
+      "source": "tatoeba:1603548"
+    },
+    {
+      "case_index": 21,
+      "display": "Šiandien oras graž___.",
+      "answer_ending": "us",
+      "full_word": "gražus",
+      "russian": "Сегодня хорошая погода.",
+      "english": "The weather is nice today.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Ši knyga labai įdom___.",
+      "answer_ending": "i",
+      "full_word": "įdomi",
+      "russian": "Эта книга очень интересная.",
+      "english": "This book is very interesting.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Vyšnios yra raudon___.",
+      "answer_ending": "os",
+      "full_word": "raudonos",
+      "russian": "Вишни красные.",
+      "english": "Cherries are red.",
+      "source": "tatoeba:579248"
+    },
+    {
+      "case_index": 21,
+      "display": "Ši gatvė labai tyl___.",
+      "answer_ending": "i",
+      "full_word": "tyli",
+      "russian": "Эта улица очень тихая.",
+      "english": "This street is very quiet.",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Ar pienas šviež___?",
+      "answer_ending": "ias",
+      "full_word": "šviežias",
+      "russian": "Молоко свежее?",
+      "english": "Is the milk fresh?",
+      "source": "own"
+    },
+    {
+      "case_index": 21,
+      "display": "Mano močiutė sveik___.",
+      "answer_ending": "a",
+      "full_word": "sveika",
+      "russian": "Моя бабушка здорова.",
+      "english": "My grandmother is healthy.",
+      "source": "own"
+    },
+    {
+      "case_index": 22,
+      "display": "Prašau, man taurę balt___ vyno.",
+      "answer_ending": "o",
+      "full_word": "balto",
+      "russian": "Мне бокал белого вина, пожалуйста.",
+      "english": "A glass of white wine for me, please.",
+      "source": "tatoeba:9805073"
+    },
+    {
+      "case_index": 22,
+      "display": "Prašau raudon___ vyno.",
+      "answer_ending": "o",
+      "full_word": "raudono",
+      "russian": "Красного вина, пожалуйста.",
+      "english": "Red wine, please.",
+      "source": "tatoeba:9830159"
+    },
+    {
+      "case_index": 22,
+      "display": "Prašau juod___ arbatos.",
+      "answer_ending": "os",
+      "full_word": "juodos",
+      "russian": "Чёрного чая, пожалуйста.",
+      "english": "Black tea, please.",
+      "source": "tatoeba:8931702"
+    },
+    {
+      "case_index": 22,
+      "display": "Prašau puoduką žal___ arbatos.",
+      "answer_ending": "ios",
+      "full_word": "žalios",
+      "russian": "Чашку зелёного чая, пожалуйста.",
+      "english": "A cup of green tea, please.",
+      "source": "tatoeba:13674433"
+    },
+    {
+      "case_index": 22,
+      "display": "Išgerk karšt___ arbatos.",
+      "answer_ending": "os",
+      "full_word": "karštos",
+      "russian": "Выпей горячего чая.",
+      "english": "Have some hot tea.",
+      "source": "tatoeba:12160055"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš noriu šalt___ vandens.",
+      "answer_ending": "o",
+      "full_word": "šalto",
+      "russian": "Я хочу холодной воды.",
+      "english": "I want some cold water.",
+      "source": "tatoeba:9820328"
+    },
+    {
+      "case_index": 22,
+      "display": "Šiandien nėra karšt___ vandens.",
+      "answer_ending": "o",
+      "full_word": "karšto",
+      "russian": "Сегодня нет горячей воды.",
+      "english": "There's no hot water today.",
+      "source": "tatoeba:9263320"
+    },
+    {
+      "case_index": 22,
+      "display": "Ji nori išgerti šilt___ pieno.",
+      "answer_ending": "o",
+      "full_word": "šilto",
+      "russian": "Она хочет выпить тёплого молока.",
+      "english": "She wants to drink some warm milk.",
+      "source": "tatoeba:1580007"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš nemėgstu šalt___ kavos.",
+      "answer_ending": "os",
+      "full_word": "šaltos",
+      "russian": "Я не люблю холодный кофе.",
+      "english": "I don't like cold coffee.",
+      "source": "tatoeba:12423031"
+    },
+    {
+      "case_index": 22,
+      "display": "Man reikia nauj___ kėdės.",
+      "answer_ending": "os",
+      "full_word": "naujos",
+      "russian": "Мне нужен новый стул.",
+      "english": "I need a new chair.",
+      "source": "tatoeba:11037203"
+    },
+    {
+      "case_index": 22,
+      "display": "Man reikia nauj___ batų.",
+      "answer_ending": "ų",
+      "full_word": "naujų",
+      "russian": "Мне нужны новые ботинки.",
+      "english": "I need new shoes.",
+      "source": "tatoeba:9312603"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš nemėgstu didel___ miestų.",
+      "answer_ending": "ių",
+      "full_word": "didelių",
+      "russian": "Я не люблю большие города.",
+      "english": "I don't like big cities.",
+      "source": "tatoeba:2620307"
+    },
+    {
+      "case_index": 22,
+      "display": "Mes neturime didel___ buto.",
+      "answer_ending": "io",
+      "full_word": "didelio",
+      "russian": "У нас нет большой квартиры.",
+      "english": "We don't have a big flat.",
+      "source": "tatoeba:8989662"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš nemėgstu maž___ šunų.",
+      "answer_ending": "ų",
+      "full_word": "mažų",
+      "russian": "Я не люблю маленьких собак.",
+      "english": "I don't like small dogs.",
+      "source": "tatoeba:8878302"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš nemėgstu liūdn___ filmų.",
+      "answer_ending": "ų",
+      "full_word": "liūdnų",
+      "russian": "Я не люблю грустные фильмы.",
+      "english": "I don't like sad films.",
+      "source": "tatoeba:9008610"
+    },
+    {
+      "case_index": 22,
+      "display": "Jie neturi šilt___ drabužių.",
+      "answer_ending": "ų",
+      "full_word": "šiltų",
+      "russian": "У них нет тёплой одежды.",
+      "english": "They have no warm clothes.",
+      "source": "tatoeba:10164674"
+    },
+    {
+      "case_index": 22,
+      "display": "Mes turime šviež___ daržovių.",
+      "answer_ending": "ių",
+      "full_word": "šviežių",
+      "russian": "У нас есть свежие овощи.",
+      "english": "We have fresh vegetables.",
+      "source": "tatoeba:8923916"
+    },
+    {
+      "case_index": 22,
+      "display": "Darže yra graž___ gėlių.",
+      "answer_ending": "ių",
+      "full_word": "gražių",
+      "russian": "В саду есть красивые цветы.",
+      "english": "There are beautiful flowers in the garden.",
+      "source": "tatoeba:1607408"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš tau linkiu graž___ savaitgalio!",
+      "answer_ending": "aus",
+      "full_word": "gražaus",
+      "russian": "Желаю тебе хороших выходных!",
+      "english": "Have a nice weekend!",
+      "source": "tatoeba:7814833"
+    },
+    {
+      "case_index": 22,
+      "display": "Linkiu tau ger___ dienos!",
+      "answer_ending": "os",
+      "full_word": "geros",
+      "russian": "Желаю тебе хорошего дня!",
+      "english": "Have a good day!",
+      "source": "tatoeba:12206432"
+    },
+    {
+      "case_index": 22,
+      "display": "Linkiu tau ger___ atostogų!",
+      "answer_ending": "ų",
+      "full_word": "gerų",
+      "russian": "Желаю тебе хорошего отпуска!",
+      "english": "Have a good holiday!",
+      "source": "tatoeba:12710361"
+    },
+    {
+      "case_index": 22,
+      "display": "Noriu ger___ žodyno.",
+      "answer_ending": "o",
+      "full_word": "gero",
+      "russian": "Хочу хороший словарь.",
+      "english": "I want a good dictionary.",
+      "source": "tatoeba:1622807"
+    },
+    {
+      "case_index": 22,
+      "display": "Žmonėms reikia švar___ vandens.",
+      "answer_ending": "aus",
+      "full_word": "švaraus",
+      "russian": "Людям нужна чистая вода.",
+      "english": "People need clean water.",
+      "source": "tatoeba:12283584"
+    },
+    {
+      "case_index": 22,
+      "display": "Ten nėra švar___ lėkščių.",
+      "answer_ending": "ių",
+      "full_word": "švarių",
+      "russian": "Там нет чистых тарелок.",
+      "english": "There are no clean plates there.",
+      "source": "tatoeba:8046671"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš nemėgstu saldž___ obuolių.",
+      "answer_ending": "ių",
+      "full_word": "saldžių",
+      "russian": "Я не люблю сладкие яблоки.",
+      "english": "I don't like sweet apples.",
+      "source": "tatoeba:13002035"
+    },
+    {
+      "case_index": 22,
+      "display": "Mergaitė nemėgsta raudon___ batų.",
+      "answer_ending": "ų",
+      "full_word": "raudonų",
+      "russian": "Девочка не любит красные туфли.",
+      "english": "The girl doesn't like red shoes.",
+      "source": "tatoeba:8404668"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš nemėgstu žal___ žirnių.",
+      "answer_ending": "ių",
+      "full_word": "žalių",
+      "russian": "Я не люблю зелёный горошек.",
+      "english": "I don't like green peas.",
+      "source": "tatoeba:9778700"
+    },
+    {
+      "case_index": 22,
+      "display": "Neturiu brang___ telefono.",
+      "answer_ending": "aus",
+      "full_word": "brangaus",
+      "russian": "У меня нет дорогого телефона.",
+      "english": "I don't have an expensive phone.",
+      "source": "own"
+    },
+    {
+      "case_index": 22,
+      "display": "Šiame mieste nėra pig___ parduotuvių.",
+      "answer_ending": "ių",
+      "full_word": "pigių",
+      "russian": "В этом городе нет дешёвых магазинов.",
+      "english": "There are no cheap shops in this town.",
+      "source": "own"
+    },
+    {
+      "case_index": 22,
+      "display": "Buvo daug įdom___ dalykų.",
+      "answer_ending": "ių",
+      "full_word": "įdomių",
+      "russian": "Было много интересного.",
+      "english": "There were many interesting things.",
+      "source": "tatoeba:2151485"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš nemėgstu ilg___ kelionių.",
+      "answer_ending": "ų",
+      "full_word": "ilgų",
+      "russian": "Я не люблю долгие поездки.",
+      "english": "I don't like long trips.",
+      "source": "tatoeba:12452914"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš nemėgstu vilkėti trump___ sijonų.",
+      "answer_ending": "ų",
+      "full_word": "trumpų",
+      "russian": "Я не люблю носить короткие юбки.",
+      "english": "I don't like wearing short skirts.",
+      "source": "tatoeba:3589313"
+    },
+    {
+      "case_index": 22,
+      "display": "Parke buvo daug jaun___ porų.",
+      "answer_ending": "ų",
+      "full_word": "jaunų",
+      "russian": "В парке было много молодых пар.",
+      "english": "There were many young couples in the park.",
+      "source": "tatoeba:7813609"
+    },
+    {
+      "case_index": 22,
+      "display": "Prie sen___ namo auga medis.",
+      "answer_ending": "o",
+      "full_word": "seno",
+      "russian": "У старого дома растёт дерево.",
+      "english": "A tree grows by the old house.",
+      "source": "own"
+    },
+    {
+      "case_index": 22,
+      "display": "Ji stovi prie gelton___ namo.",
+      "answer_ending": "o",
+      "full_word": "geltono",
+      "russian": "Она стоит у жёлтого дома.",
+      "english": "She is standing by the yellow house.",
+      "source": "tatoeba:1572439"
+    },
+    {
+      "case_index": 22,
+      "display": "Jis pasislėpė už juod___ automobilio.",
+      "answer_ending": "o",
+      "full_word": "juodo",
+      "russian": "Он спрятался за чёрной машиной.",
+      "english": "He hid behind the black car.",
+      "source": "tatoeba:1579983"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš ieškau pig___ viešbučio.",
+      "answer_ending": "aus",
+      "full_word": "pigaus",
+      "russian": "Я ищу дешёвую гостиницу.",
+      "english": "I'm looking for a cheap hotel.",
+      "source": "tatoeba:14068190"
+    },
+    {
+      "case_index": 22,
+      "display": "Aš jums linkiu ram___ nakties.",
+      "answer_ending": "ios",
+      "full_word": "ramios",
+      "russian": "Желаю вам спокойной ночи.",
+      "english": "I wish you a peaceful night.",
+      "source": "tatoeba:13731555"
+    },
+    {
+      "case_index": 23,
+      "display": "Tam jaun___ inžinieriui trūko patirties.",
+      "answer_ending": "am",
+      "full_word": "jaunam",
+      "russian": "Тому молодому инженеру не хватало опыта.",
+      "english": "That young engineer lacked experience.",
+      "source": "tatoeba:4760711"
+    },
+    {
+      "case_index": 23,
+      "display": "Ta spinta labai tinka maž___ kambariui.",
+      "answer_ending": "am",
+      "full_word": "mažam",
+      "russian": "Этот шкаф хорошо подходит для маленькой комнаты.",
+      "english": "That wardrobe suits a small room well.",
+      "source": "tatoeba:8839675"
+    },
+    {
+      "case_index": 23,
+      "display": "Jis neturi pinigų nauj___ automobiliui.",
+      "answer_ending": "am",
+      "full_word": "naujam",
+      "russian": "У него нет денег на новую машину.",
+      "english": "He has no money for a new car.",
+      "source": "tatoeba:11986603"
+    },
+    {
+      "case_index": 23,
+      "display": "Jis maž___ vaikams dalina žaislus.",
+      "answer_ending": "iems",
+      "full_word": "mažiems",
+      "russian": "Он раздаёт игрушки маленьким детям.",
+      "english": "He gives out toys to small children.",
+      "source": "tatoeba:10334564"
+    },
+    {
+      "case_index": 23,
+      "display": "Jaunuolis padėjo sen___ moteriai.",
+      "answer_ending": "ai",
+      "full_word": "senai",
+      "russian": "Юноша помог пожилой женщине.",
+      "english": "The young man helped an old woman.",
+      "source": "tatoeba:12543110"
+    },
+    {
+      "case_index": 23,
+      "display": "Pasakiau labas nauj___ kaimynei.",
+      "answer_ending": "ai",
+      "full_word": "naujai",
+      "russian": "Я поздоровался с новой соседкой.",
+      "english": "I said hello to the new neighbour.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Mokytoja paaiškino taisyklę nauj___ mokiniams.",
+      "answer_ending": "iems",
+      "full_word": "naujiems",
+      "russian": "Учительница объяснила правило новым ученикам.",
+      "english": "The teacher explained the rule to the new pupils.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Nupirkau dovaną ger___ draugui.",
+      "answer_ending": "am",
+      "full_word": "geram",
+      "russian": "Я купил подарок хорошему другу.",
+      "english": "I bought a present for a good friend.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Mama skaito pasaką maž___ dukrai.",
+      "answer_ending": "ai",
+      "full_word": "mažai",
+      "russian": "Мама читает сказку маленькой дочке.",
+      "english": "Mum is reading a fairy tale to her little daughter.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Mokytojas padėjo nauj___ mokinei.",
+      "answer_ending": "ai",
+      "full_word": "naujai",
+      "russian": "Учитель помог новой ученице.",
+      "english": "The teacher helped the new pupil.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Paskambinau sen___ draugui.",
+      "answer_ending": "am",
+      "full_word": "senam",
+      "russian": "Я позвонил старому другу.",
+      "english": "I called an old friend.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Parašiau laišką sen___ draugei.",
+      "answer_ending": "ai",
+      "full_word": "senai",
+      "russian": "Я написал письмо старой подруге.",
+      "english": "I wrote a letter to an old friend.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Šis paltas tinka šalt___ žiemai.",
+      "answer_ending": "ai",
+      "full_word": "šaltai",
+      "russian": "Это пальто подходит для холодной зимы.",
+      "english": "This coat is good for a cold winter.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Šie batai netinka ilg___ pasivaikščiojimui.",
+      "answer_ending": "am",
+      "full_word": "ilgam",
+      "russian": "Эти ботинки не подходят для долгой прогулки.",
+      "english": "These shoes aren't good for a long walk.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Mokytoja davė knygų nauj___ mokiniams.",
+      "answer_ending": "iems",
+      "full_word": "naujiems",
+      "russian": "Учительница дала книги новым ученикам.",
+      "english": "The teacher gave books to the new pupils.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Ši vieta patinka jaun___ šeimoms.",
+      "answer_ending": "oms",
+      "full_word": "jaunoms",
+      "russian": "Это место нравится молодым семьям.",
+      "english": "Young families like this place.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Senelė davė saldainių linksm___ vaikams.",
+      "answer_ending": "iems",
+      "full_word": "linksmiems",
+      "russian": "Бабушка дала конфеты весёлым детям.",
+      "english": "Grandma gave sweets to the cheerful children.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Ji paskambino liūdn___ draugei.",
+      "answer_ending": "ai",
+      "full_word": "liūdnai",
+      "russian": "Она позвонила грустной подруге.",
+      "english": "She called her sad friend.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Bute vietos užtenka jaun___ šeimai.",
+      "answer_ending": "ai",
+      "full_word": "jaunai",
+      "russian": "В квартире хватает места для молодой семьи.",
+      "english": "The flat has enough room for a young family.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Kavinė priklauso jaun___ virėjui.",
+      "answer_ending": "am",
+      "full_word": "jaunam",
+      "russian": "Кафе принадлежит молодому повару.",
+      "english": "The café belongs to a young cook.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Atidaviau knygą nauj___ kaimynui.",
+      "answer_ending": "am",
+      "full_word": "naujam",
+      "russian": "Я отдал книгу новому соседу.",
+      "english": "I gave the book to the new neighbour.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Pardavėja padėjo sen___ žmonėms.",
+      "answer_ending": "iems",
+      "full_word": "seniems",
+      "russian": "Продавщица помогла пожилым людям.",
+      "english": "The shop assistant helped the elderly people.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Šis parkas skirtas maž___ šunims.",
+      "answer_ending": "iems",
+      "full_word": "mažiems",
+      "russian": "Этот парк для маленьких собак.",
+      "english": "This park is for small dogs.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Šis žaidimas skirtas maž___ mergaitėms.",
+      "answer_ending": "oms",
+      "full_word": "mažoms",
+      "russian": "Эта игра для маленьких девочек.",
+      "english": "This game is for little girls.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Ši kelionė skirta jaun___ žmonėms.",
+      "answer_ending": "iems",
+      "full_word": "jauniems",
+      "russian": "Эта поездка для молодых людей.",
+      "english": "This trip is for young people.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Kalėdų Senelis neša dovanas ger___ vaikams.",
+      "answer_ending": "iems",
+      "full_word": "geriems",
+      "russian": "Дед Мороз несёт подарки хорошим детям.",
+      "english": "Santa brings presents to good children.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Ji dainuoja dainą maž___ broliui.",
+      "answer_ending": "am",
+      "full_word": "mažam",
+      "russian": "Она поёт песню маленькому брату.",
+      "english": "She is singing a song to her little brother.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Pasakiau ačiū ger___ gydytojui.",
+      "answer_ending": "am",
+      "full_word": "geram",
+      "russian": "Я сказал спасибо хорошему врачу.",
+      "english": "I said thank you to the good doctor.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Ta kepurė tinka šalt___ orui.",
+      "answer_ending": "am",
+      "full_word": "šaltam",
+      "russian": "Эта шапка подходит для холодной погоды.",
+      "english": "That hat is right for cold weather.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Ši suknelė tinka karšt___ vasarai.",
+      "answer_ending": "ai",
+      "full_word": "karštai",
+      "russian": "Это платье подходит для жаркого лета.",
+      "english": "This dress is good for a hot summer.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Šie drabužiai tinka šilt___ orui.",
+      "answer_ending": "am",
+      "full_word": "šiltam",
+      "russian": "Эта одежда подходит для тёплой погоды.",
+      "english": "These clothes are good for warm weather.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Mes linkime sėkmės nauj___ kolegei.",
+      "answer_ending": "ai",
+      "full_word": "naujai",
+      "russian": "Мы желаем удачи новой коллеге.",
+      "english": "We wish our new colleague good luck.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Padavėjas atnešė kavos graž___ merginoms.",
+      "answer_ending": "ioms",
+      "full_word": "gražioms",
+      "russian": "Официант принёс кофе красивым девушкам.",
+      "english": "The waiter brought coffee to the pretty girls.",
+      "source": "own"
+    },
+    {
+      "case_index": 23,
+      "display": "Duok vandens rud___ šuniui.",
+      "answer_ending": "am",
+      "full_word": "rudam",
+      "russian": "Дай воды коричневой собаке.",
+      "english": "Give the brown dog some water.",
+      "source": "own"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš turiu juod___ katę.",
+      "answer_ending": "ą",
+      "full_word": "juodą",
+      "russian": "У меня есть чёрная кошка.",
+      "english": "I have a black cat.",
+      "source": "tatoeba:8003905"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš turiu didel___ namą.",
+      "answer_ending": "į",
+      "full_word": "didelį",
+      "russian": "У меня большой дом.",
+      "english": "I have a big house.",
+      "source": "tatoeba:3254532"
+    },
+    {
+      "case_index": 24,
+      "display": "Jis turi didel___ šeimą.",
+      "answer_ending": "ę",
+      "full_word": "didelę",
+      "russian": "У него большая семья.",
+      "english": "He has a big family.",
+      "source": "tatoeba:1626561"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš turiu nauj___ knygą.",
+      "answer_ending": "ą",
+      "full_word": "naują",
+      "russian": "У меня есть новая книга.",
+      "english": "I have a new book.",
+      "source": "tatoeba:12901043"
+    },
+    {
+      "case_index": 24,
+      "display": "Apsiauk nauj___ batus.",
+      "answer_ending": "us",
+      "full_word": "naujus",
+      "russian": "Надень новые ботинки.",
+      "english": "Put on your new shoes.",
+      "source": "tatoeba:13723876"
+    },
+    {
+      "case_index": 24,
+      "display": "Mes žiūrėjome įdom___ filmą.",
+      "answer_ending": "ų",
+      "full_word": "įdomų",
+      "russian": "Мы смотрели интересный фильм.",
+      "english": "We watched an interesting film.",
+      "source": "tatoeba:7634742"
+    },
+    {
+      "case_index": 24,
+      "display": "Ji turi įdom___ knygą.",
+      "answer_ending": "ią",
+      "full_word": "įdomią",
+      "russian": "У неё есть интересная книга.",
+      "english": "She has an interesting book.",
+      "source": "tatoeba:3265606"
+    },
+    {
+      "case_index": 24,
+      "display": "Ji turi ilg___ plaukus.",
+      "answer_ending": "us",
+      "full_word": "ilgus",
+      "russian": "У неё длинные волосы.",
+      "english": "She has long hair.",
+      "source": "tatoeba:2016764"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš rašiau ilg___ laišką.",
+      "answer_ending": "ą",
+      "full_word": "ilgą",
+      "russian": "Я писал длинное письмо.",
+      "english": "I was writing a long letter.",
+      "source": "tatoeba:10745049"
+    },
+    {
+      "case_index": 24,
+      "display": "Ji turi graž___ akis.",
+      "answer_ending": "ias",
+      "full_word": "gražias",
+      "russian": "У неё красивые глаза.",
+      "english": "She has beautiful eyes.",
+      "source": "tatoeba:12173768"
+    },
+    {
+      "case_index": 24,
+      "display": "Jie turi graž___ sodą.",
+      "answer_ending": "ų",
+      "full_word": "gražų",
+      "russian": "У них красивый сад.",
+      "english": "They have a beautiful garden.",
+      "source": "tatoeba:10147615"
+    },
+    {
+      "case_index": 24,
+      "display": "Ji dainuoja graž___ dainą.",
+      "answer_ending": "ią",
+      "full_word": "gražią",
+      "russian": "Она поёт красивую песню.",
+      "english": "She is singing a beautiful song.",
+      "source": "tatoeba:10770199"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš mėgstu karšt___ kavą.",
+      "answer_ending": "ą",
+      "full_word": "karštą",
+      "russian": "Я люблю горячий кофе.",
+      "english": "I like hot coffee.",
+      "source": "tatoeba:8342645"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš geriu šalt___ vandenį.",
+      "answer_ending": "ą",
+      "full_word": "šaltą",
+      "russian": "Я пью холодную воду.",
+      "english": "I'm drinking cold water.",
+      "source": "tatoeba:9820325"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš apsivilksiu šilt___ paltą.",
+      "answer_ending": "ą",
+      "full_word": "šiltą",
+      "russian": "Я надену тёплое пальто.",
+      "english": "I'll put on a warm coat.",
+      "source": "tatoeba:12289299"
+    },
+    {
+      "case_index": 24,
+      "display": "Visi mėgsta šviež___ duoną.",
+      "answer_ending": "ią",
+      "full_word": "šviežią",
+      "russian": "Все любят свежий хлеб.",
+      "english": "Everyone likes fresh bread.",
+      "source": "tatoeba:12133559"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš valgau tiktai šviež___ daržoves.",
+      "answer_ending": "ias",
+      "full_word": "šviežias",
+      "russian": "Я ем только свежие овощи.",
+      "english": "I only eat fresh vegetables.",
+      "source": "tatoeba:11539207"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš visada valgau sveik___ maistą.",
+      "answer_ending": "ą",
+      "full_word": "sveiką",
+      "russian": "Я всегда ем здоровую еду.",
+      "english": "I always eat healthy food.",
+      "source": "tatoeba:12173377"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš kepu skan___ duoną.",
+      "answer_ending": "ią",
+      "full_word": "skanią",
+      "russian": "Я пеку вкусный хлеб.",
+      "english": "I bake tasty bread.",
+      "source": "tatoeba:8728422"
+    },
+    {
+      "case_index": 24,
+      "display": "Mama iškepė skan___ pyragą.",
+      "answer_ending": "ų",
+      "full_word": "skanų",
+      "russian": "Мама испекла вкусный пирог.",
+      "english": "Mum baked a tasty pie.",
+      "source": "own"
+    },
+    {
+      "case_index": 24,
+      "display": "Tu kepi skan___ tortus.",
+      "answer_ending": "ius",
+      "full_word": "skanius",
+      "russian": "Ты печёшь вкусные торты.",
+      "english": "You bake tasty cakes.",
+      "source": "tatoeba:9860757"
+    },
+    {
+      "case_index": 24,
+      "display": "Mokytojas man uždavė sunk___ klausimą.",
+      "answer_ending": "ų",
+      "full_word": "sunkų",
+      "russian": "Учитель задал мне трудный вопрос.",
+      "english": "The teacher asked me a difficult question.",
+      "source": "tatoeba:7002114"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš nešioju brang___ laikrodį.",
+      "answer_ending": "ų",
+      "full_word": "brangų",
+      "russian": "Я ношу дорогие часы.",
+      "english": "I wear an expensive watch.",
+      "source": "tatoeba:12105739"
+    },
+    {
+      "case_index": 24,
+      "display": "Ji nusipirko brang___ akinius.",
+      "answer_ending": "ius",
+      "full_word": "brangius",
+      "russian": "Она купила дорогие очки.",
+      "english": "She bought expensive glasses.",
+      "source": "tatoeba:13675047"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš turiu sen___ dviratį.",
+      "answer_ending": "ą",
+      "full_word": "seną",
+      "russian": "У меня старый велосипед.",
+      "english": "I have an old bike.",
+      "source": "tatoeba:1665827"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš mėgstu sen___ filmus.",
+      "answer_ending": "us",
+      "full_word": "senus",
+      "russian": "Я люблю старые фильмы.",
+      "english": "I like old films.",
+      "source": "tatoeba:6842559"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš turiu žal___ obuolį.",
+      "answer_ending": "ią",
+      "full_word": "žalią",
+      "russian": "У меня есть зелёное яблоко.",
+      "english": "I have a green apple.",
+      "source": "tatoeba:11990074"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš turiu žal___ marškinius.",
+      "answer_ending": "ius",
+      "full_word": "žalius",
+      "russian": "У меня есть зелёная рубашка.",
+      "english": "I have a green shirt.",
+      "source": "tatoeba:11525742"
+    },
+    {
+      "case_index": 24,
+      "display": "Ji apsivilko gelton___ suknelę.",
+      "answer_ending": "ą",
+      "full_word": "geltoną",
+      "russian": "Она надела жёлтое платье.",
+      "english": "She put on a yellow dress.",
+      "source": "tatoeba:14068171"
+    },
+    {
+      "case_index": 24,
+      "display": "Dėvėk mėlyn___ suknelę.",
+      "answer_ending": "ą",
+      "full_word": "mėlyną",
+      "russian": "Надень синее платье.",
+      "english": "Wear the blue dress.",
+      "source": "tatoeba:12885566"
+    },
+    {
+      "case_index": 24,
+      "display": "Aš turiu raudon___ dviratį.",
+      "answer_ending": "ą",
+      "full_word": "raudoną",
+      "russian": "У меня красный велосипед.",
+      "english": "I have a red bike.",
+      "source": "tatoeba:1619404"
+    },
+    {
+      "case_index": 24,
+      "display": "Mes nusipirkome penkis raudon___ obuolius.",
+      "answer_ending": "us",
+      "full_word": "raudonus",
+      "russian": "Мы купили пять красных яблок.",
+      "english": "We bought five red apples.",
+      "source": "tatoeba:10706282"
+    },
+    {
+      "case_index": 24,
+      "display": "Jis turi maž___ sūnų.",
+      "answer_ending": "ą",
+      "full_word": "mažą",
+      "russian": "У него маленький сын.",
+      "english": "He has a little son.",
+      "source": "tatoeba:3212006"
+    },
+    {
+      "case_index": 24,
+      "display": "Ji rašo trump___ apsakymus.",
+      "answer_ending": "us",
+      "full_word": "trumpus",
+      "russian": "Она пишет короткие рассказы.",
+      "english": "She writes short stories.",
+      "source": "tatoeba:8696966"
+    },
+    {
+      "case_index": 24,
+      "display": "Meška turi trump___ uodegą.",
+      "answer_ending": "ą",
+      "full_word": "trumpą",
+      "russian": "У медведя короткий хвост.",
+      "english": "A bear has a short tail.",
+      "source": "tatoeba:12883336"
+    },
+    {
+      "case_index": 24,
+      "display": "Paduok man švar___ lėkštę.",
+      "answer_ending": "ią",
+      "full_word": "švarią",
+      "russian": "Дай мне чистую тарелку.",
+      "english": "Pass me a clean plate.",
+      "source": "own"
+    },
+    {
+      "case_index": 24,
+      "display": "Jis įsimylėjo jaun___ moterį.",
+      "answer_ending": "ą",
+      "full_word": "jauną",
+      "russian": "Он влюбился в молодую женщину.",
+      "english": "He fell in love with a young woman.",
+      "source": "tatoeba:10867921"
+    },
+    {
+      "case_index": 24,
+      "display": "Mokytojas mums papasakojo linksm___ istoriją.",
+      "answer_ending": "ą",
+      "full_word": "linksmą",
+      "russian": "Учитель рассказал нам весёлую историю.",
+      "english": "The teacher told us a funny story.",
+      "source": "tatoeba:11661440"
+    },
+    {
+      "case_index": 25,
+      "display": "Prausiausi veidą šalt___ vandeniu.",
+      "answer_ending": "u",
+      "full_word": "šaltu",
+      "russian": "Я умывался холодной водой.",
+      "english": "I washed my face with cold water.",
+      "source": "tatoeba:3590208"
+    },
+    {
+      "case_index": 25,
+      "display": "Aš su nauj___ batais.",
+      "answer_ending": "ais",
+      "full_word": "naujais",
+      "russian": "Я в новых ботинках.",
+      "english": "I'm wearing new shoes.",
+      "source": "tatoeba:12792458"
+    },
+    {
+      "case_index": 25,
+      "display": "Aš patenkintas savo nauj___ darbu.",
+      "answer_ending": "u",
+      "full_word": "nauju",
+      "russian": "Я доволен своей новой работой.",
+      "english": "I'm happy with my new job.",
+      "source": "tatoeba:12327991"
+    },
+    {
+      "case_index": 25,
+      "display": "Traukinyje aš susidūriau su sen___ draugu.",
+      "answer_ending": "u",
+      "full_word": "senu",
+      "russian": "В поезде я встретил старого друга.",
+      "english": "I ran into an old friend on the train.",
+      "source": "tatoeba:13687563"
+    },
+    {
+      "case_index": 25,
+      "display": "Jis atėjo su sen___ batais.",
+      "answer_ending": "ais",
+      "full_word": "senais",
+      "russian": "Он пришёл в старых ботинках.",
+      "english": "He came in old shoes.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Tas vyras yra su ilg___ plaukais.",
+      "answer_ending": "ais",
+      "full_word": "ilgais",
+      "russian": "У того мужчины длинные волосы.",
+      "english": "That man has long hair.",
+      "source": "tatoeba:6900597"
+    },
+    {
+      "case_index": 25,
+      "display": "Aš būsiu su mėlyn___ marškiniais.",
+      "answer_ending": "ais",
+      "full_word": "mėlynais",
+      "russian": "Я буду в синей рубашке.",
+      "english": "I'll be wearing a blue shirt.",
+      "source": "tatoeba:10600459"
+    },
+    {
+      "case_index": 25,
+      "display": "Pažvelk į namą raudon___ stogu.",
+      "answer_ending": "u",
+      "full_word": "raudonu",
+      "russian": "Посмотри на дом с красной крышей.",
+      "english": "Look at the house with the red roof.",
+      "source": "tatoeba:12181693"
+    },
+    {
+      "case_index": 25,
+      "display": "Kas ta moteris rud___ paltu?",
+      "answer_ending": "u",
+      "full_word": "rudu",
+      "russian": "Кто та женщина в коричневом пальто?",
+      "english": "Who is that woman in the brown coat?",
+      "source": "tatoeba:9855656"
+    },
+    {
+      "case_index": 25,
+      "display": "Jie liko ger___ draugais.",
+      "answer_ending": "ais",
+      "full_word": "gerais",
+      "russian": "Они остались хорошими друзьями.",
+      "english": "They remained good friends.",
+      "source": "tatoeba:12545221"
+    },
+    {
+      "case_index": 25,
+      "display": "Aš jį laikau ger___ vairuotoju.",
+      "answer_ending": "u",
+      "full_word": "geru",
+      "russian": "Я считаю его хорошим водителем.",
+      "english": "I consider him a good driver.",
+      "source": "tatoeba:13858383"
+    },
+    {
+      "case_index": 25,
+      "display": "Valgyk tik švar___ rankomis.",
+      "answer_ending": "iomis",
+      "full_word": "švariomis",
+      "russian": "Ешь только чистыми руками.",
+      "english": "Eat only with clean hands.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Mergaitė žal___ akimis yra mano sesuo.",
+      "answer_ending": "iomis",
+      "full_word": "žaliomis",
+      "russian": "Девочка с зелёными глазами — моя сестра.",
+      "english": "The girl with green eyes is my sister.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Aš stengiuosi maitintis sveik___ maistu.",
+      "answer_ending": "u",
+      "full_word": "sveiku",
+      "russian": "Я стараюсь питаться здоровой едой.",
+      "english": "I try to eat healthy food.",
+      "source": "tatoeba:12792508"
+    },
+    {
+      "case_index": 25,
+      "display": "Man patinka kvėpuoti švar___ kalnų oru.",
+      "answer_ending": "iu",
+      "full_word": "švariu",
+      "russian": "Мне нравится дышать чистым горным воздухом.",
+      "english": "I like breathing clean mountain air.",
+      "source": "tatoeba:10456672"
+    },
+    {
+      "case_index": 25,
+      "display": "Aš norėjau šviež___ oru pakvėpuoti.",
+      "answer_ending": "iu",
+      "full_word": "šviežiu",
+      "russian": "Я хотел подышать свежим воздухом.",
+      "english": "I wanted to get some fresh air.",
+      "source": "tatoeba:10737612"
+    },
+    {
+      "case_index": 25,
+      "display": "Abi merginos apsirengusios balt___ drabužiais.",
+      "answer_ending": "ais",
+      "full_word": "baltais",
+      "russian": "Обе девушки одеты в белое.",
+      "english": "Both girls are dressed in white.",
+      "source": "tatoeba:6911825"
+    },
+    {
+      "case_index": 25,
+      "display": "Jis kalbėjo su didel___ pagarba.",
+      "answer_ending": "e",
+      "full_word": "didele",
+      "russian": "Он говорил с большим уважением.",
+      "english": "He spoke with great respect.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Parašykite savo vardą didel___ raidėmis.",
+      "answer_ending": "ėmis",
+      "full_word": "didelėmis",
+      "russian": "Напишите своё имя большими буквами.",
+      "english": "Write your name in capital letters.",
+      "source": "tatoeba:570091"
+    },
+    {
+      "case_index": 25,
+      "display": "Aš mėgstu rašyti juod___ rašalu.",
+      "answer_ending": "u",
+      "full_word": "juodu",
+      "russian": "Я люблю писать чёрными чернилами.",
+      "english": "I like writing in black ink.",
+      "source": "tatoeba:11989778"
+    },
+    {
+      "case_index": 25,
+      "display": "Mes sėdėjome po žal___ medžiu.",
+      "answer_ending": "iu",
+      "full_word": "žaliu",
+      "russian": "Мы сидели под зелёным деревом.",
+      "english": "We sat under a green tree.",
+      "source": "tatoeba:7884520"
+    },
+    {
+      "case_index": 25,
+      "display": "Čia aš susipažinau su labai įdom___ žmonėmis.",
+      "answer_ending": "iais",
+      "full_word": "įdomiais",
+      "russian": "Здесь я познакомился с очень интересными людьми.",
+      "english": "Here I met some very interesting people.",
+      "source": "tatoeba:13748531"
+    },
+    {
+      "case_index": 25,
+      "display": "Pavaišink svečius skan___ sausainiais!",
+      "answer_ending": "iais",
+      "full_word": "skaniais",
+      "russian": "Угости гостей вкусным печеньем!",
+      "english": "Treat the guests to some tasty biscuits!",
+      "source": "tatoeba:11572627"
+    },
+    {
+      "case_index": 25,
+      "display": "Ji papuošė stalą gelton___ gėlėmis.",
+      "answer_ending": "omis",
+      "full_word": "geltonomis",
+      "russian": "Она украсила стол жёлтыми цветами.",
+      "english": "She decorated the table with yellow flowers.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Į mišką mes einame siaur___ keliuku.",
+      "answer_ending": "u",
+      "full_word": "siauru",
+      "russian": "В лес мы идём по узкой тропинке.",
+      "english": "We walk to the forest along a narrow path.",
+      "source": "tatoeba:7871799"
+    },
+    {
+      "case_index": 25,
+      "display": "Jis važiuoja plač___ gatve.",
+      "answer_ending": "ia",
+      "full_word": "plačia",
+      "russian": "Он едет по широкой улице.",
+      "english": "He is driving along a wide street.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Važiuojame greit___ traukiniu.",
+      "answer_ending": "u",
+      "full_word": "greitu",
+      "russian": "Мы едем скорым поездом.",
+      "english": "We're going by fast train.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Geriu kavą su šilt___ pienu.",
+      "answer_ending": "u",
+      "full_word": "šiltu",
+      "russian": "Я пью кофе с тёплым молоком.",
+      "english": "I drink coffee with warm milk.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Ji eina su maž___ šuniu.",
+      "answer_ending": "u",
+      "full_word": "mažu",
+      "russian": "Она идёт с маленькой собакой.",
+      "english": "She is walking with a small dog.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Jis gyvena su jaun___ žmona.",
+      "answer_ending": "a",
+      "full_word": "jauna",
+      "russian": "Он живёт с молодой женой.",
+      "english": "He lives with his young wife.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Mergaitė su raudon___ suknele šoka.",
+      "answer_ending": "a",
+      "full_word": "raudona",
+      "russian": "Девочка в красном платье танцует.",
+      "english": "The girl in the red dress is dancing.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Vaikai žaidžia su maž___ katėmis.",
+      "answer_ending": "omis",
+      "full_word": "mažomis",
+      "russian": "Дети играют с маленькими кошками.",
+      "english": "The children are playing with the small cats.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Ji džiaugiasi graž___ dovana.",
+      "answer_ending": "ia",
+      "full_word": "gražia",
+      "russian": "Она радуется красивому подарку.",
+      "english": "She is pleased with the beautiful present.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Valgau sriubą su šviež___ daržovėmis.",
+      "answer_ending": "iomis",
+      "full_word": "šviežiomis",
+      "russian": "Я ем суп со свежими овощами.",
+      "english": "I'm eating soup with fresh vegetables.",
+      "source": "own"
+    },
+    {
+      "case_index": 25,
+      "display": "Jis atėjo su linksm___ žinia.",
+      "answer_ending": "a",
+      "full_word": "linksma",
+      "russian": "Он пришёл с радостной вестью.",
+      "english": "He came with happy news.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Aš gyvenu didel___ name.",
+      "answer_ending": "iame",
+      "full_word": "dideliame",
+      "russian": "Я живу в большом доме.",
+      "english": "I live in a big house.",
+      "source": "tatoeba:8843495"
+    },
+    {
+      "case_index": 26,
+      "display": "Aš gyvenu maž___ mieste.",
+      "answer_ending": "ame",
+      "full_word": "mažame",
+      "russian": "Я живу в маленьком городе.",
+      "english": "I live in a small town.",
+      "source": "tatoeba:1659952"
+    },
+    {
+      "case_index": 26,
+      "display": "Aš miegu didel___ lovoje.",
+      "answer_ending": "ėje",
+      "full_word": "didelėje",
+      "russian": "Я сплю на большой кровати.",
+      "english": "I sleep in a big bed.",
+      "source": "tatoeba:9855719"
+    },
+    {
+      "case_index": 26,
+      "display": "Mes pietavome maž___ kavinėje.",
+      "answer_ending": "oje",
+      "full_word": "mažoje",
+      "russian": "Мы обедали в маленьком кафе.",
+      "english": "We had lunch in a small café.",
+      "source": "tatoeba:7239434"
+    },
+    {
+      "case_index": 26,
+      "display": "Kaip jautiesi nauj___ mokykloje?",
+      "answer_ending": "oje",
+      "full_word": "naujoje",
+      "russian": "Как ты себя чувствуешь в новой школе?",
+      "english": "How do you feel at your new school?",
+      "source": "tatoeba:2164771"
+    },
+    {
+      "case_index": 26,
+      "display": "Mūsų nauj___ name yra liftas.",
+      "answer_ending": "ame",
+      "full_word": "naujame",
+      "russian": "В нашем новом доме есть лифт.",
+      "english": "Our new building has a lift.",
+      "source": "tatoeba:8574618"
+    },
+    {
+      "case_index": 26,
+      "display": "Cukrus tirpsta karšt___ kavoje.",
+      "answer_ending": "oje",
+      "full_word": "karštoje",
+      "russian": "Сахар тает в горячем кофе.",
+      "english": "Sugar dissolves in hot coffee.",
+      "source": "tatoeba:2164983"
+    },
+    {
+      "case_index": 26,
+      "display": "Cukrus tirpsta šilt___ vandenyje.",
+      "answer_ending": "ame",
+      "full_word": "šiltame",
+      "russian": "Сахар растворяется в тёплой воде.",
+      "english": "Sugar dissolves in warm water.",
+      "source": "tatoeba:10456822"
+    },
+    {
+      "case_index": 26,
+      "display": "Ryžiai auga šilt___ šalyse.",
+      "answer_ending": "ose",
+      "full_word": "šiltose",
+      "russian": "Рис растёт в тёплых странах.",
+      "english": "Rice grows in warm countries.",
+      "source": "tatoeba:474423"
+    },
+    {
+      "case_index": 26,
+      "display": "Šitos gėlės auga šilt___ kraštuose.",
+      "answer_ending": "uose",
+      "full_word": "šiltuose",
+      "russian": "Эти цветы растут в тёплых краях.",
+      "english": "These flowers grow in warm regions.",
+      "source": "tatoeba:8428293"
+    },
+    {
+      "case_index": 26,
+      "display": "Aš galiu plaukti šalt___ vandenyje.",
+      "answer_ending": "ame",
+      "full_word": "šaltame",
+      "russian": "Я могу плавать в холодной воде.",
+      "english": "I can swim in cold water.",
+      "source": "tatoeba:11350263"
+    },
+    {
+      "case_index": 26,
+      "display": "Aš nenoriu maudytis šalt___ upėje.",
+      "answer_ending": "oje",
+      "full_word": "šaltoje",
+      "russian": "Я не хочу купаться в холодной реке.",
+      "english": "I don't want to swim in the cold river.",
+      "source": "tatoeba:13491075"
+    },
+    {
+      "case_index": 26,
+      "display": "Jie gyvena labai graž___ name.",
+      "answer_ending": "iame",
+      "full_word": "gražiame",
+      "russian": "Они живут в очень красивом доме.",
+      "english": "They live in a very beautiful house.",
+      "source": "tatoeba:1570691"
+    },
+    {
+      "case_index": 26,
+      "display": "Pinigai yra rud___ piniginėje.",
+      "answer_ending": "oje",
+      "full_word": "rudoje",
+      "russian": "Деньги в коричневом кошельке.",
+      "english": "The money is in the brown wallet.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Jis gyvena tame žal___ name.",
+      "answer_ending": "iame",
+      "full_word": "žaliame",
+      "russian": "Он живёт в том зелёном доме.",
+      "english": "He lives in that green house.",
+      "source": "tatoeba:8843295"
+    },
+    {
+      "case_index": 26,
+      "display": "Naoko gyvena šitame balt___ name.",
+      "answer_ending": "ame",
+      "full_word": "baltame",
+      "russian": "Наоко живёт в этом белом доме.",
+      "english": "Naoko lives in this white house.",
+      "source": "tatoeba:10669463"
+    },
+    {
+      "case_index": 26,
+      "display": "Paukštis skrenda aukštai mėlyn___ danguje.",
+      "answer_ending": "ame",
+      "full_word": "mėlyname",
+      "russian": "Птица летит высоко в голубом небе.",
+      "english": "A bird is flying high in the blue sky.",
+      "source": "tatoeba:12848542"
+    },
+    {
+      "case_index": 26,
+      "display": "Šita žuvis gyvena švar___ vandenyje.",
+      "answer_ending": "iame",
+      "full_word": "švariame",
+      "russian": "Эта рыба живёт в чистой воде.",
+      "english": "This fish lives in clean water.",
+      "source": "tatoeba:12282308"
+    },
+    {
+      "case_index": 26,
+      "display": "Mano seneliai gyvena sen___ name.",
+      "answer_ending": "ame",
+      "full_word": "sename",
+      "russian": "Мои бабушка и дедушка живут в старом доме.",
+      "english": "My grandparents live in an old house.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Jie yra ger___ rankose.",
+      "answer_ending": "ose",
+      "full_word": "gerose",
+      "russian": "Они в хороших руках.",
+      "english": "They're in good hands.",
+      "source": "tatoeba:11319691"
+    },
+    {
+      "case_index": 26,
+      "display": "Tu esi ger___ vietoje.",
+      "answer_ending": "oje",
+      "full_word": "geroje",
+      "russian": "Ты в хорошем месте.",
+      "english": "You're in a good place.",
+      "source": "tatoeba:6807890"
+    },
+    {
+      "case_index": 26,
+      "display": "Aš esu sunk___ padėtyje.",
+      "answer_ending": "ioje",
+      "full_word": "sunkioje",
+      "russian": "Я в трудном положении.",
+      "english": "I'm in a difficult situation.",
+      "source": "tatoeba:13562409"
+    },
+    {
+      "case_index": 26,
+      "display": "Vaikai žaidžia maž___ kiemuose.",
+      "answer_ending": "uose",
+      "full_word": "mažuose",
+      "russian": "Дети играют в маленьких дворах.",
+      "english": "Children play in small yards.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Vaikai žaidžia žal___ pievoje.",
+      "answer_ending": "ioje",
+      "full_word": "žalioje",
+      "russian": "Дети играют на зелёном лугу.",
+      "english": "The children are playing in the green meadow.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Mes gyvename ram___ gatvėje.",
+      "answer_ending": "ioje",
+      "full_word": "ramioje",
+      "russian": "Мы живём на тихой улице.",
+      "english": "We live on a quiet street.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Jis dirba tyl___ kabinete.",
+      "answer_ending": "iame",
+      "full_word": "tyliame",
+      "russian": "Он работает в тихом кабинете.",
+      "english": "He works in a quiet office.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Knygos guli maž___ dėžėse.",
+      "answer_ending": "ose",
+      "full_word": "mažose",
+      "russian": "Книги лежат в маленьких коробках.",
+      "english": "The books are in small boxes.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Mes apsistojome patog___ viešbutyje.",
+      "answer_ending": "iame",
+      "full_word": "patogiame",
+      "russian": "Мы остановились в удобной гостинице.",
+      "english": "We stayed in a comfortable hotel.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Jie gyvena brang___ bute.",
+      "answer_ending": "iame",
+      "full_word": "brangiame",
+      "russian": "Они живут в дорогой квартире.",
+      "english": "They live in an expensive flat.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Aš pirkau batus brang___ parduotuvėje.",
+      "answer_ending": "ioje",
+      "full_word": "brangioje",
+      "russian": "Я купил ботинки в дорогом магазине.",
+      "english": "I bought shoes in an expensive shop.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Kava yra raudon___ puodelyje.",
+      "answer_ending": "ame",
+      "full_word": "raudoname",
+      "russian": "Кофе в красной чашке.",
+      "english": "The coffee is in the red cup.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Studentai gyvena nauj___ bendrabučiuose.",
+      "answer_ending": "uose",
+      "full_word": "naujuose",
+      "russian": "Студенты живут в новых общежитиях.",
+      "english": "The students live in new dormitories.",
+      "source": "own"
+    },
+    {
+      "case_index": 26,
+      "display": "Žmonės didel___ miestuose dažnai skuba.",
+      "answer_ending": "iuose",
+      "full_word": "dideliuose",
+      "russian": "Люди в больших городах часто спешат.",
+      "english": "People in big cities are often in a hurry.",
+      "source": "own"
+    }
+  ]
+}

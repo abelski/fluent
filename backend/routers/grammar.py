@@ -57,7 +57,7 @@ def _grammar_programs(session: Session) -> list[SimpleNamespace]:
                             difficulty=p.difficulty,
                             is_public=p.is_public, lesson_filter=p.lesson_filter,
                             program_type=p.program_type)
-            for p in session.exec(select(GrammarProgram)).all()
+            for p in session.exec(select(GrammarProgram).order_by(GrammarProgram.id)).all()
         ],
         tags={"grammar_program"},
     )
@@ -346,10 +346,11 @@ def list_grammar_programs(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return all public grammar programs with enrollment status for authenticated users."""
+    """Public grammar programs with enrollment status; admins also get hidden ones (#62f preview)."""
     _ensure_seed(session)
     user = _try_get_user(authorization, session)
-    programs = [p for p in _grammar_programs(session) if p.is_public]
+    is_admin = bool(user and user.is_admin)
+    programs = [p for p in _grammar_programs(session) if p.is_public or is_admin]
     enrolled_ids: set[int] = set()
     if user:
         enrolled_ids = cache.enrollment_ids(
@@ -366,6 +367,7 @@ def list_grammar_programs(
             "enrolled": p.id in enrolled_ids,
             "lesson_filter": p.lesson_filter,
             "program_type": p.program_type,
+            "is_public": p.is_public,
         }
         for p in programs
     ]
@@ -380,7 +382,7 @@ def enroll_grammar_program(
     """Enroll the authenticated user in a grammar program (idempotent)."""
     user = _require_user(authorization, session)
     program = session.get(GrammarProgram, program_id)
-    if not program or not program.is_public:
+    if not program or not (program.is_public or user.is_admin):  # admins preview hidden ones (#62f)
         raise HTTPException(status_code=404, detail="Program not found")
     existing = session.exec(
         select(UserGrammarProgram).where(

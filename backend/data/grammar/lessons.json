@@ -59,7 +59,25 @@
 
     [100, "basic",    [20], 24, "Dauginiai skaitvardžiai: amžius"],
     [101, "advanced", [20], 35, "Dauginiai skaitvardžiai: amžius"],
-    [102, "practice", [20], 20, "Dauginiai skaitvardžiai: amžius"]
+    [102, "practice", [20], 20, "Dauginiai skaitvardžiai: amžius"],
+    [106, "basic", [21], 24, "Būdvardžiai: Vardininkas"],
+    [107, "advanced", [21], 35, "Būdvardžiai: Vardininkas"],
+    [108, "practice", [21], 20, "Būdvardžiai: Vardininkas"],
+    [112, "basic", [22], 24, "Būdvardžiai: Kilmininkas"],
+    [113, "advanced", [22], 35, "Būdvardžiai: Kilmininkas"],
+    [114, "practice", [22], 20, "Būdvardžiai: Kilmininkas"],
+    [118, "basic", [23], 24, "Būdvardžiai: Naudininkas"],
+    [119, "advanced", [23], 35, "Būdvardžiai: Naudininkas"],
+    [120, "practice", [23], 20, "Būdvardžiai: Naudininkas"],
+    [124, "basic", [24], 24, "Būdvardžiai: Galininkas"],
+    [125, "advanced", [24], 35, "Būdvardžiai: Galininkas"],
+    [126, "practice", [24], 20, "Būdvardžiai: Galininkas"],
+    [130, "basic", [25], 24, "Būdvardžiai: Įnagininkas"],
+    [131, "advanced", [25], 35, "Būdvardžiai: Įnagininkas"],
+    [132, "practice", [25], 20, "Būdvardžiai: Įnagininkas"],
+    [136, "basic", [26], 24, "Būdvardžiai: Vietininkas"],
+    [137, "advanced", [26], 35, "Būdvardžiai: Vietininkas"],
+    [138, "practice", [26], 20, "Būdvardžiai: Vietininkas"]
   ],
   "cases": {
     "1":  ["Vardininkas",   "Vienaskaita"],
@@ -81,6 +99,12 @@
     "17": ["Kelintiniai: Įnagininkas", "Skaičiai"],
     "18": ["Kelintiniai: Vietininkas", "Skaičiai"],
     "19": ["Laikas: Galininkas",      "Skaičiai"],
-    "20": ["Dauginiai skaitvardžiai", "Skaičiai"]
+    "20": ["Dauginiai skaitvardžiai", "Skaičiai"],
+    "21": ["Būdvardžiai: Vardininkas", "Būdvardžiai"],
+    "22": ["Būdvardžiai: Kilmininkas", "Būdvardžiai"],
+    "23": ["Būdvardžiai: Naudininkas", "Būdvardžiai"],
+    "24": ["Būdvardžiai: Galininkas", "Būdvardžiai"],
+    "25": ["Būdvardžiai: Įnagininkas", "Būdvardžiai"],
+    "26": ["Būdvardžiai: Vietininkas", "Būdvardžiai"]
   }
 }

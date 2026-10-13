@@ -391,6 +391,13 @@ def llms_txt(session: Session = Depends(get_session)):
         f"- {c.name_en or c.name_ru} ({n} test{'' if n == 1 else 's'})"
         for c in practice_cats if (n := published_counts.get(c.id))
     ]
+    # #62f S4 — every public grammar program with its visible lesson count.
+    from routers.grammar import _grammar_programs, _program_lesson_ids
+    grammar_lines = [
+        f"- {g.title_en or g.title} ({len(_program_lesson_ids(g, session))} lessons)"
+        for g in _grammar_programs(session) if g.is_public
+    ]
+
     practice_section = (
         "\n\n## Exam-format practice\n"
         "Practice tests in the format of Lithuanian state exams: the A2 language exam and the Constitution exam.\n"
@@ -403,7 +410,7 @@ def llms_txt(session: Session = Depends(get_session)):
         f"grammar exercises, and real-world reading articles.\n\n"
         f"## What this app teaches\n"
         f"Lithuanian vocabulary and grammar for English and Russian speakers, "
-        f"organized by CEFR levels (A1–B2). Covers all major Lithuanian noun cases "
+        f"organized by CEFR levels (A1–B2). Covers Lithuanian noun cases, numerals and adjectives "
         f"with fill-in-the-gap exercises, plus a growing library of reading texts.\n\n"
         f"## Programs ({program_count} learning programs)\n"
         f"Curated vocabulary programs organized by topic and CEFR level. "
@@ -412,9 +419,8 @@ def llms_txt(session: Session = Depends(get_session)):
         f"## Vocabulary ({list_count} lists)\n"
         + "\n".join(vocab_lines)
         + f"\n\n## Grammar ({lesson_count} lessons)\n"
-        f"Interactive exercises covering Lithuanian noun cases: Galininkas, Kilmininkas, "
-        f"Naudininkas, Vardininkas, Įnagininkas, Vietininkas and more. "
-        f"Each lesson uses spaced repetition with fill-in-the-gap sentences.\n\n"
+        + "\n".join(grammar_lines)
+        + "\n\n"
         f"## Reading articles ({article_count} texts)\n"
         + "\n".join(article_lines)
         + practice_section

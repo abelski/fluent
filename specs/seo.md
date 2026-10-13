@@ -78,3 +78,12 @@ Scenario: llms.txt lists exam-format practice
   And when no category has a published test the whole section is omitted
   And /dashboard/practice/ itself stays noindex, disallowed in robots.txt and out of the sitemap
 ```
+
+```gherkin
+Scenario: llms.txt lists the public grammar programs (#62f)
+  When /llms.txt is requested
+  Then "## Grammar" lists every public grammar program as "- <title_en> (N lessons)", N being the
+    lessons a guest can see in it (a public program with 0 visible lessons is still listed)
+  And a hidden program is not listed
+  And the intro says it covers "Lithuanian noun cases, numerals and adjectives"
+```

@@ -136,7 +136,10 @@ Scenario: remind session has nothing eligible
 Scenario: public program list
   Given any caller, authenticated or not
   When GET /grammar-programs is called
-  Then only programs flagged is_public are returned
+  Then only programs flagged is_public are returned (admins also get hidden ones — see below)
+  And programs come in id order, so the hero's «Начать с падежей» (the first "cases" program)
+    keeps picking «Литовские падежи» when more "cases" programs exist
+  And each program includes is_public
   And each program includes "enrolled": true/false, which is always false for an
     unauthenticated caller
   And each program includes title_en and description_en alongside the Russian
@@ -157,7 +160,15 @@ Scenario: enrolling in a program
   Given an authenticated user and a program_id that exists and is public
   When POST /me/grammar-programs/{program_id} is called
   Then an enrollment is created if one does not already exist (idempotent)
-  And enrolling in a missing or non-public program returns 404
+  And enrolling in a missing or non-public program returns 404 (for non-admins)
+```
+
+```gherkin
+Scenario: admin previews a hidden grammar program (#62f)
+  Given a grammar program with is_public = false
+  When an admin lists grammar programs or enrolls in it
+  Then the admin sees it (with is_public = false) and can enroll; non-admins still get
+    neither (it is missing from their list and enrolling returns 404)
 ```
 
 ```gherkin
@@ -247,8 +258,9 @@ Scenario: basic-level tasks carry four same-paradigm options when four forms exi
     4 distinct full words, exactly one equal to "answer", in shuffled order
   And "distinct" ignores only case and tone marks, so "ranka" and "ranką" can both appear
   And the distractors come from the answer's own paradigm:
-    sentence tasks → other forms of the same noun (words.txt) or numeral/pronoun
-      (paradigms_extra.txt); a numeral prefix such as "dvidešimt" stays on every option,
+    sentence tasks → other forms of the same noun (words.txt), numeral/pronoun
+      (paradigms_extra.txt) or adjective (adjectives.txt, checked last, #62f); a numeral
+      prefix such as "dvidešimt" stays on every option,
     verb_conjugation tasks → other persons of the same verb and tense, then the same
       person in other tenses,
     verb_case tasks → other questions from a fixed list (ką? ko? kam? kuo? į ką? …),
@@ -414,4 +426,29 @@ Scenario: enroll or unenroll fails
   Then one line reading "Не получилось — попробуйте ещё раз." in the destructive
     colour appears under the program chips
   And it is cleared as soon as the user selects a chip or tries another enroll/unenroll action
+```
+
+```gherkin
+Scenario: new grammar programs use the existing lesson pipeline (#62f)
+  Given the "Прилагательные" program (lesson_filter ["Būdvardžiai"], case indices 21–26,
+    lessons 106–138) is public and its six case rules are published
+  Then its lessons appear at Basic / Advanced / Practice level like any noun lesson
+  And Basic tasks offer 4 forms of the same adjective (its adjectives.txt line)
+  And the instruction reads «Выбери/Впиши правильную форму прилагательного: <падеж>» /
+    "Pick/Type the right form of the adjective: <case>"
+  And while the program is hidden and its rules are `testing`, non-admins see none of its lessons
+```
+
+```gherkin
+Scenario: a sentence task's «от: …» hint (base_lt)
+  Given a sentence task with full word W and stem S
+  Then base_lt is W's noun nominative (words.txt) if unambiguous, else the dictionary form
+    (first column) of W's adjectives.txt line, else the noun nominative found by stem S
+```
+
+```gherkin
+Scenario: the sentence text is served as stored
+  Given a sentence row whose full word also appears after the blank
+    (e.g. «Tai ger___ knyga, o filmas gera.»)
+  Then display is served unchanged — the old duplicate-word cleanup that deleted it was removed (#62f)
 ```

@@ -146,6 +146,23 @@ for _line in _EXTRA_PARADIGMS_PATH.read_text(encoding="utf-8").splitlines():
         else:
             _EXTRA_FORM_TO_FORMS[_form] = _forms
 
+# Adjective paradigms (#62f): lowercase form → its whole line (column 1 = the
+# dictionary form, used for the «от: …» hint). Checked last in _paradigm_forms;
+# a form on two lines is ambiguous → None → typing. Built by
+# scripts/build_adjective_paradigms.py.
+_ADJECTIVES_PATH = Path(__file__).parent / "data/grammar/adjectives.txt"
+_ADJ_FORM_TO_FORMS: dict[str, list[str] | None] = {}
+for _line in _ADJECTIVES_PATH.read_text(encoding="utf-8").splitlines():
+    if not _line.strip() or _line.startswith("#"):
+        continue
+    _forms = [f.strip() for f in _line.split("\t") if f.strip()]
+    for _form in {f.lower() for f in _forms}:
+        if _form in _ADJ_FORM_TO_FORMS:
+            if _ADJ_FORM_TO_FORMS[_form] != _forms:
+                _ADJ_FORM_TO_FORMS[_form] = None
+        else:
+            _ADJ_FORM_TO_FORMS[_form] = _forms
+
 # Stems of place/location nouns — used to restrict Vietininkas (locative) basic
 # declension tasks so every prompt makes semantic sense as a location.
 _PLACE_STEMS: frozenset[str] = frozenset([
@@ -352,12 +369,22 @@ def _pick_options(answer: str, forms: list[str]) -> list[str] | None:
 
 
 def _paradigm_forms(word: str) -> list[str]:
-    """Every form of the lexeme `word` belongs to: WORDS first, then the numeral table."""
+    """Every form of the lexeme `word` belongs to: WORDS, the numeral table, then adjectives."""
     word = word.lower()
     row = _FORM_TO_ROW.get(word)
     if row:
         return [f for i in range(1, 15) if (f := _word_form(row, i))]
-    return list(_EXTRA_FORM_TO_FORMS.get(word) or [])
+    extra = _EXTRA_FORM_TO_FORMS.get(word)
+    if extra:
+        return list(extra)
+    return list(_ADJ_FORM_TO_FORMS.get(word) or [])
+
+
+def _sentence_base_lt(full_word: str, stem: str) -> str | None:
+    """The «от: …» hint: noun nominative, else the adjective's dictionary form, else by stem."""
+    adj = _ADJ_FORM_TO_FORMS.get((full_word or "").lower())
+    return (_FORM_TO_NOMINATIVE.get(full_word) or (adj[0] if adj else None)
+            or _STEM_TO_NOMINATIVE.get(stem))
 
 
 def _sentence_options(full: str) -> list[str] | None:
@@ -484,13 +511,8 @@ def _generate_sentence_tasks(cases: list[int], count: int, session: Session, lev
     for i in range(count):
         row = pool[i % len(pool)]
         stem = _extract_stem(row.display)
-        base_lt = _FORM_TO_NOMINATIVE.get(row.full_word) or _STEM_TO_NOMINATIVE.get(stem)
+        base_lt = _sentence_base_lt(row.full_word, stem)
         display = row.display
-        parts = display.split('___')
-        if len(parts) == 2 and row.full_word.lower() in parts[1].lower():
-            after = re.sub(re.escape(row.full_word), '', parts[1], count=1, flags=re.IGNORECASE)
-            after = re.sub(r'\s+', ' ', after).strip()
-            display = parts[0] + '___' + (' ' + after if after else '')
         full = stem + row.answer_ending
         # #60 — basic: pick the whole word from 4 paradigm forms, when 4 exist.
         options = _sentence_options(full) if level == "basic" else None
@@ -606,6 +628,8 @@ _CASE_EN = {
     "Galininkas": "accusative", "Įnagininkas": "instrumental", "Vietininkas": "locative",
     "Šauksmininkas": "vocative",
 }
+# Case groups whose lessons drill one part of speech (numerals, #62f adjectives).
+_GROUP_WORD = {"Skaičiai": ("числительного", "numeral"), "Būdvardžiai": ("прилагательного", "adjective")}
 _NUMBER_RU = {"Vienaskaita": "ед. ч.", "Daugiskaita": "мн. ч."}
 _NUMBER_EN = {"Vienaskaita": "singular", "Daugiskaita": "plural"}
 
@@ -625,12 +649,13 @@ def _instruction(kind: str, detail, has_options: bool) -> tuple[str, str] | None
         infos = [CASE_INFO[c] for c in detail if c in CASE_INFO]
         if not infos:
             return None
-        if all(num == "Skaičiai" for _, num in infos):
+        groups = {num for _, num in infos}
+        if len(groups) == 1 and (word := _GROUP_WORD.get(next(iter(groups)))):
             names = [name.split(": ")[-1] for name, _ in infos]
             ru_cases = " / ".join(dict.fromkeys(_CASE_RU[n] for n in names if n in _CASE_RU))
             en_cases = " / ".join(dict.fromkeys(_CASE_EN[n] for n in names if n in _CASE_EN))
-            ru = f"{verb_ru} правильную форму числительного"
-            en = f"{verb_en} the right form of the numeral"
+            ru = f"{verb_ru} правильную форму {word[0]}"
+            en = f"{verb_en} the right form of the {word[1]}"
             return (f"{ru}: {ru_cases}", f"{en}: {en_cases}") if ru_cases else (ru, en)
         pairs = [(n, num) for n, num in infos if n in _CASE_RU and num in _NUMBER_RU]
         if not pairs:

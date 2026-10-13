@@ -388,3 +388,17 @@ client actually made rather than returning a constant.
 navbar, the 1180px container, the segmented language pill, and the absence of decorative blur blobs.
 The container and blur-blob checks run across all 5 top-nav pages (`NAV_PAGES` in that spec) — add a
 new top-nav page's URL there when one is added, so the shell can't silently drift again.
+
+## Grammar data files and seeds
+
+| Thing | File |
+|---|---|
+| Noun-pipeline lessons + case index → [name, group] | `backend/data/grammar/lessons.json` (loaded by `data/grammar/lessons.py`) |
+| Noun declension table (options + «от:» hint) | `backend/data/grammar/words.txt` |
+| Numeral / pronoun paradigms (#60) | `backend/data/grammar/paradigms_extra.txt` |
+| Adjective paradigms (#62f) — generated, don't hand-edit | `backend/data/grammar/adjectives.txt` ← `backend/scripts/build_adjective_paradigms.py` |
+| Data-only grammar program content (rules, sentences, program) | `backend/data/grammar/programs/<name>.json` |
+| Generic re-runnable grammar seed + per-format validator | `backend/scripts/seed_grammar_program.py` |
+| Admin `lesson_filter` select (5 fixed options + one per newer config group) | `frontend/app/dashboard/admin/grammar/page.tsx` |
+
+Why the program is data-only and how to add the next one: `documentation/grammar-new-programs.md`.

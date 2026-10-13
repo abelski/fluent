@@ -602,3 +602,41 @@ def test_sign_gaps_block_keeps_image():
         cat_id = _add_signs(s)
         result = [{"topic": f"p:{cat_id}", "title_ru": "", "title_en": "", "correct": 0, "total": 2, "weak": True}]
         _check_sign_tasks([t for t in kc.gap_tasks(result, s) if t["type"] == "reading"])
+
+
+# ── #62f adjectives join the pool once published ─────────────────────────────
+
+def _real_grammar(monkeypatch):
+    import grammar_service as gs
+    monkeypatch.setattr(kc, "get_lessons", gs.get_lessons)
+    monkeypatch.setattr(grammar_router, "get_lessons", gs.get_lessons)
+    monkeypatch.setattr(kc, "get_lesson_tasks", gs.get_lesson_tasks)
+    monkeypatch.setattr(kc, "get_verb_lesson_tasks", lambda lid, s: [])
+
+
+def test_adjective_topics_join_when_published(monkeypatch):
+    from tests import test_grammar_adjectives as adj
+    _real_grammar(monkeypatch)
+    adj.wipe()
+    try:
+        with Session(_test_engine) as s:
+            adj.seed_mod.seed(s, adj.DATA)
+        adj_topics = {f"g:{i}" for i in range(106, 137, 6)}
+        for _ in range(5):  # rules `testing`: never picked
+            assert not {t["topic"] for t in _build()} & adj_topics
+        adj.set_released(True)
+        picked = set()
+        for _ in range(5):
+            picked |= {t["topic"] for t in _build() if t["topic"].startswith("g:")}
+        assert "g:106" in picked
+        result = [{"topic": "g:106", "title_ru": "Būdvardžiai: Vardininkas", "title_en": "Būdvardžiai: Vardininkas",
+                   "correct": 0, "total": 2, "weak": True}]
+        with Session(_test_engine) as s:
+            tasks = kc.gap_tasks(result, s)
+            assert tasks and all(t.get("options") for t in tasks)
+            user = s.get(User, _FREE)
+            recs = kc.recommendations(result, user, s)
+        # "KC cases" (no lesson_filter = every noun lesson) matches too; the point is the new program.
+        assert "Прилагательные" in [r["title_ru"] for r in recs if r["kind"] == "grammar"]
+    finally:
+        adj.wipe()
