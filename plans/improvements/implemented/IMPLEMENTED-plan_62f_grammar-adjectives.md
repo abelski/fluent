@@ -1,6 +1,6 @@
 ---
 kind: feature
-status: in_progress
+status: done
 iteration: 1
 max_iterations: 30
 suggested_model: opus
