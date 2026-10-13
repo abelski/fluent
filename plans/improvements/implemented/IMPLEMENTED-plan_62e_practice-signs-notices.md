@@ -119,7 +119,10 @@ EXIF, blur), credits and an article update; the code change is small.
    place must be inferred. (2) Otherwise a real-life task: when is it open/closed, how much, how far,
    what is forbidden, what to do. (3) A word from the sign may appear in the answer if the question
    still needs the text understood (e.g. which day, which time). (4) One clearly correct answer, no
-   arguable distractors; distractors from the same sign where possible. (5) Language only — no
+   arguable distractors; distractors from the same sign where possible. (4b, 2026-10-13 user review of live tests) **No match-the-word answers**: the answer must not
+   be findable by matching a word of the question to the sign (question «…iki Šilutės?» + sign «ŠILUTĖ 15»
+   is too obvious). Each question needs one step of understanding — direction words, a day from «I–V»,
+   an inference from a situation — and the photo must offer ≥ 2 candidate answers. (5) Language only — no
    arithmetic, geography or cultural-knowledge questions. Checked by Claude when drafting and by the
    user when reviewing `signs.json`.
 7. **Image rules** — Photos: `.webp` made with `cwebp -metadata none -resize 1200 0` (strips EXIF —

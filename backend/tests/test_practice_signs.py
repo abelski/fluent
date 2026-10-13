@@ -56,7 +56,7 @@ def seeded():
 def test_validator_accepts_data_file_and_images():
     seed_mod.validate(DATA)
     tests = DATA["tests"]
-    assert [len(t["questions"]) for t in tests] == [6, 6, 5, 6, 6]
+    assert [len(t["questions"]) for t in tests] == [6, 5, 5, 5, 5]
 
 
 def _bad(mutate, public_dir=None):
@@ -114,7 +114,7 @@ def test_validator_rejects_duplicate_image_url():
 def test_seed_stores_own_options_images_no_passage(client, seeded):
     with Session(_test_engine) as s:
         tests = s.exec(select(PracticeTest).where(PracticeTest.category_id == seeded).order_by(PracticeTest.sort_order)).all()
-        assert [t.question_count for t in tests] == [6, 6, 5, 6, 6]
+        assert [t.question_count for t in tests] == [6, 5, 5, 5, 5]
         assert all(t.lesson_text_lt is None and t.kind == "choice" and t.status == "testing" for t in tests)
         q = s.exec(select(PracticeQuestion).where(PracticeQuestion.test_id == tests[0].id).order_by(PracticeQuestion.sort_order)).first()
         src = DATA["tests"][0]["questions"][0]
@@ -135,11 +135,28 @@ def test_update_text_rewrites_in_place(seeded):
     src.update(question_lt="NAUJAS?", options=["x", "y", "z"], correct_option="b")
     with Session(_test_engine) as s:
         before = s.exec(select(PracticeQuestion).where(PracticeQuestion.image_url == src["image_url"])).one().id
-        assert seed_mod.update_text(s, data) == 29
+        assert seed_mod.update_text(s, data) == 26
     with Session(_test_engine) as s:
         q = s.exec(select(PracticeQuestion).where(PracticeQuestion.image_url == src["image_url"])).one()
         assert q.id == before
         assert (q.question_lt, q.question_ru, q.option_c, q.option_d, q.correct_option) == ("NAUJAS?", "NAUJAS?", "z", "", "b")
+
+
+def test_update_text_hides_dropped_and_syncs_count(seeded):
+    import copy
+    data = copy.deepcopy(DATA)
+    gone = data["tests"][0]["questions"].pop()
+    with Session(_test_engine) as s:
+        assert seed_mod.update_text(s, data) == 25
+    with Session(_test_engine) as s:
+        q = s.exec(select(PracticeQuestion).where(PracticeQuestion.image_url == gone["image_url"])).one()
+        assert q.is_active is False
+        t = s.get(PracticeTest, q.test_id)
+        assert t.question_count == len(data["tests"][0]["questions"])
+    with Session(_test_engine) as s:  # putting it back re-activates it
+        seed_mod.update_text(s, DATA)
+    with Session(_test_engine) as s:
+        assert s.exec(select(PracticeQuestion).where(PracticeQuestion.image_url == gone["image_url"])).one().is_active is True
 
 
 # ── Admin API ─────────────────────────────────────────────────────────────────

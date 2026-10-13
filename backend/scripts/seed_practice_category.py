@@ -9,7 +9,8 @@ No --reset on purpose: deleting tests fails on Postgres once a practice_exam_res
 references them (FK). Later fixes go through the admin editor.
 Tests land as `testing` (admins only) — publish them in the admin panel.
 --update-text (signs only, #62e): for an existing category, rewrite each question's text, options and
-correct answer in place, matched by image_url. Ids stay, so results referencing tests are safe.
+correct answer in place, matched by image_url; questions no longer in the file are deactivated and
+each test's question_count is synced. Ids stay, so results referencing tests are safe.
 """
 
 import json
@@ -274,8 +275,17 @@ def update_text(session, data: dict) -> int:
     missing = [q["image_url"] for q in wanted if q["image_url"] not in by_url]
     if missing:
         raise ValueError(f"no stored question for {missing}")
+    keep = {q["image_url"] for q in wanted}
+    for row in rows:  # questions dropped from the file are hidden, never deleted (results may reference tests)
+        if row.image_url not in keep and row.is_active:
+            row.is_active = False
+            session.add(row)
+    for test in session.exec(select(PracticeTest).where(PracticeTest.category_id == cat.id)).all():
+        test.question_count = sum(1 for r in rows if r.test_id == test.id and r.image_url in keep)
+        session.add(test)
     for q in wanted:
         row = by_url[q["image_url"]]
+        row.is_active = True
         opts = (list(q["options"]) + ["", "", ""])[:4]
         row.question_lt = row.question_ru = q["question_lt"]
         row.option_a, row.option_b, row.option_c, row.option_d = opts
