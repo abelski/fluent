@@ -355,7 +355,13 @@ export default function GrammarAdminPage() {
     );
   }
 
-  const groups = GROUP_ORDER.filter(g => groupCases[g]?.length);
+  // GROUP_ORDER first, then any newer config group (#62f Būdvardžiai) so its rules stay editable.
+  const groups = [...GROUP_ORDER, ...Object.keys(groupCases).filter(g => !GROUP_ORDER.includes(g))]
+    .filter(g => groupCases[g]?.length);
+  // Config groups the 5 fixed lesson_filter options don't cover get one option each (#62f).
+  const extraFilterGroups = Object.keys(groupCases).filter(
+    g => !['Vienaskaita', 'Daugiskaita', 'Skaičiai'].includes(g) && groupCases[g]?.length,
+  );
 
   return (
     <main className="bg-slate-50 text-gray-900 min-h-screen">
@@ -553,6 +559,9 @@ export default function GrammarAdminPage() {
                   <option value='["Vienaskaita"]'>{tr.adminGrammar.lessonFilterSingularOption}</option>
                   <option value='["Daugiskaita"]'>{tr.adminGrammar.lessonFilterPluralOption}</option>
                   <option value='["Skaičiai"]'>{tr.adminGrammar.lessonFilterNumbersOption}</option>
+                  {extraFilterGroups.map(g => (
+                    <option key={g} value={JSON.stringify([g])}>{g}</option>
+                  ))}
                 </select>
                 <p className="text-[10px] text-gray-400 mt-0.5">{tr.adminGrammar.lessonFilterHint}</p>
               </div>

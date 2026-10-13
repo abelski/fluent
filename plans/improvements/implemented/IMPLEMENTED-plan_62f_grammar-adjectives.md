@@ -1,12 +1,12 @@
 ---
 kind: feature
-status: draft
-iteration: 0
+status: done
+iteration: 1
 max_iterations: 30
 suggested_model: opus
 suggested_effort: high
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: opus
+confirmed_effort: high
 ---
 
 # #62f — Grammar: "Прилагательные" (adjectives in cases)
@@ -23,7 +23,7 @@ The A2 exam checks adjective–noun agreement ("Man reikia **šiltos** striukės
 cases and numerals, not adjectives.
 
 The **Numbers program is the precedent** — it was added as data, not code:
-- `backend/data/grammar/lessons.json`: `cases` (= `CASE_INFO`, index → `[name, group]`) and
+- `backend/data/grammar/lessons.json`: `cases` (= `CASE_INFO`, a dict with **string keys** `"0"`…`"20"` → `[name, group]`) and
   `lessons` (= `LESSON_CONFIG`, `[id, level, [case_index], task_count, title]`, a basic / advanced /
   practice triple per topic). Numbers = case indices 15–20, group `Skaičiai`, lessons 70–102.
 - `backend/scripts/seed_numbers_grammar.py` inserts `GrammarCaseRule` (the rule card, RU + EN) and
@@ -56,8 +56,8 @@ Constraints found (verified in code):
 - `_grammar_programs` has **no ORDER BY**, and the Grammar hero's «Начать с падежей» enrolls
   `programs.find(type==='cases')` (`grammar/page.tsx:234`) — with more `cases` programs the pick
   depends on table row order.
-- The admin grammar page hard-codes the `lesson_filter` `<select>` options
-  (`frontend/app/dashboard/admin/grammar/page.tsx:552-555`); `GROUP_ORDER` only matters for a program
+- The admin grammar page hard-codes the 5 `lesson_filter` `<select>` options — all, both,
+  singular, plural, numbers (`frontend/app/dashboard/admin/grammar/page.tsx:551-555`); `GROUP_ORDER` only matters for a program
   without `lesson_filter`.
 - A `-us` adjective with a t/d stem alternates (platus → plačios, saldus → saldžios).
 - Typed answers go through `normalizeLt`, which drops diacritics, so at Advanced/Practice «gera» and
@@ -94,7 +94,7 @@ adjective forms, plus the shared groundwork; the content is the main risk.
 
 ## Requirements
 
-1. **Case indices 21–26**, group `Būdvardžiai`, in `lessons.json` `cases`:
+1. **Case indices 21–26** (string keys `"21"`…`"26"` in the `cases` dict), group `Būdvardžiai`, in `lessons.json`:
    21 `Būdvardžiai: Vardininkas`, 22 `Būdvardžiai: Kilmininkas`, 23 `Būdvardžiai: Naudininkas`,
    24 `Būdvardžiai: Galininkas`, 25 `Būdvardžiai: Įnagininkas`, 26 `Būdvardžiai: Vietininkas`.
 2. **Lessons** in `lessons.json` `lessons`: basic ids 106, 112, 118, 124, 130, 136 (+1 advanced,
@@ -106,20 +106,21 @@ adjective forms, plus the shared groundwork; the content is the main risk.
    `backend/scripts/build_adjective_paradigms.py`, output committed; ~40 common A2 adjectives,
    regular ones only. `grammar_service.py` loads it into a separate `_ADJ_FORM_TO_FORMS` (form → the
    full line), checked **last** in `_paradigm_forms`; a form found on two lines → ambiguous → typing.
-4. **`base_lt`** for sentence tasks: `_FORM_TO_NOMINATIVE.get(full_word)`, else the first column of
+4. **`base_lt`** for sentence tasks (`grammar_service.py:487`): `_FORM_TO_NOMINATIVE.get(full_word)`, else the first column of
    the full word's `_ADJ_FORM_TO_FORMS` line, else `_STEM_TO_NOMINATIVE.get(stem)`. Noun rows are
    unchanged.
 5. **Remove the duplicate-word cleanup** in `_generate_sentence_tasks` (it changes no current row,
    breaks adjective rows, and would break #62g's prefix rows).
 6. **Generic grammar seed** — `backend/scripts/seed_grammar_program.py <data.json>`, data in
-   `backend/data/grammar/programs/adjectives.json` (`"format": "adjectives"`), validators in
-   `backend/scripts/grammar_validators.py` (`VALIDATORS = {"adjectives": validate_adjectives}`;
-   #62g/#62h add theirs). The JSON holds the case rules, the sentences and the program. Behaviour:
-   `--dry-run` validates without the DB and prints a sample of 10 sentences per case; the real run
-   inserts rules (`status` `testing`) and sentences only for case indices that have **none** yet
-   (re-runnable, never duplicates), and **upserts** the program by title (insert with `is_public`
-   false, or update in place — never delete; enrollments reference it); `--reset` deletes and
-   re-inserts the rules and sentences of the JSON's case indices only.
+   `backend/data/grammar/programs/adjectives.json` (`"format": "adjectives"`). Like the shipped
+   `seed_practice_category.py`, `validate_adjectives` lives **in the seed file**, picked by an
+   if/elif on `format` (#62g/#62h add a branch; pytest imports it from the script). The JSON holds
+   the case rules, the sentences and the program. Behaviour: `--dry-run` validates without the DB
+   and prints a sample of 10 sentences per case; the real run inserts rules (`status` `testing`) and
+   sentences only for case indices that have **none** yet (re-runnable, never duplicates), and
+   **upserts** the program by title (insert with `is_public` false, or update in place — never
+   delete; enrollments reference it). **No `--reset`** (same as the practice seed): later fixes go
+   through the admin editor.
 7. **Content** — 6 `GrammarCaseRule` rows (RU + EN `name`, `question`, `usage`, `endings_sg`,
    `endings_pl`, `transform`; `article_slug` `būdvardžiai-linksniavimas`, matching the article's
    declension types) and ~35 `GrammarSentence` rows per case (`use_in_basic/advanced/practice` true;
@@ -130,8 +131,7 @@ adjective forms, plus the shared groundwork; the content is the main risk.
    and Common Voice (CC0) — filter the per-language exports (kept in `temp_files/`, not in git) for
    sentences with the target forms — then adapt to A2 and fix the translations; write the rest. Every
    sentence carries `"source": "tatoeba:<id>" | "commonvoice" | "own"` in the JSON (the seed ignores
-   it; the validator requires it). If the `about-team` «Источники» credit (#62c Req 8) is not there
-   yet, this plan adds it (user step).
+   it; the validator requires it). The `about-team` «Источники» credit already exists (#62c).
 8. **`validate_adjectives`** (also used by pytest): every sentence passes `_sentence_invariant_holds`;
    for every sentence, `_paradigm_forms(full_word)` equals its `adjectives.txt` line (≥ 4 distinct
    forms) and `base_lt` equals that line's first column; no `adjectives.txt` form appears in
@@ -142,14 +142,18 @@ adjective forms, plus the shared groundwork; the content is the main risk.
    non-public program; non-admins are unchanged (404). Spec updated.
 10. **Stable program order** — `_grammar_programs` loads `.order_by(GrammarProgram.id)`, so the hero's
     «Начать с падежей» keeps picking «Литовские падежи».
-11. **Admin `lesson_filter` select** — keeps its 4 labelled options and adds one option per config
+11. **Admin `lesson_filter` select** — keeps its 5 options and adds one option per config
     group not already covered, labelled with the group name (`["Būdvardžiai"]` → «Būdvardžiai»).
-    #62g/#62h need no admin change.
+    #62g/#62h need no admin change. Its existing `gray-*` styling is left as is (admin page, out of scope).
 12. **Knowledge check** — no code change: once published, lessons 106…136 join the topic pool as
     `g:<basic id>`; Recommendations map them to this program via `_program_lesson_ids`.
 13. **Release order** (user step, `## Release`): after the deploy and the seed, make the program
     public and publish its six case rules **in the same pass** — rules published while the program is hidden would put
     the lessons into checks and the continue session with no program to recommend.
+
+14. **Instruction line** — `_instruction` in `grammar_service.py` gets a `Būdvardžiai` branch next to
+    the numerals one: «Выбери/Впиши правильную форму прилагательного: <падеж>» / "Pick/Type the
+    right form of the adjective: <case>". Tested in `test_grammar_adjectives.py`.
 
 ### SEO
 - **S1 — no indexed page changes.** `/dashboard/grammar/` keeps its title, description and canonical;
@@ -162,7 +166,10 @@ adjective forms, plus the shared groundwork; the content is the main risk.
   bodies (the meta description) stay byte-identical. **Timing gate:** not before the #48c RU-traffic
   check (~2026-10-24). The edit bumps `updated_at`, so IndexNow re-pushes it at the next deploy.
 - **S4 — llms.txt** "## Grammar" lists the public grammar programs from the DB (`title_en` + lesson
-  count) instead of the hard-coded noun-case sentence, so #62g/#62h appear automatically.
+  count) instead of the hard-coded noun-case sentence (`main.py:414-417`), so #62g/#62h appear
+  automatically. Every public program is listed, even one with 0 visible lessons (only possible
+  mid-release). The intro line «Covers all major Lithuanian noun cases» (`main.py:406`) becomes
+  «Covers Lithuanian noun cases, numerals and adjectives».
 
 ### Standing constraints
 - All validation must be server-side (never frontend-only).
@@ -193,26 +200,31 @@ docs, CHANGELOG.
 _Filled in at step 0 (date + what the user approved or changed). Until then the Requirements stand
 as written; anything the prototype changes is copied into the Requirements before step 1._
 
+- 2026-10-13 — user approved the prototype (https://claude.ai/artifact/ChSLiXj5jq9aCrhkZJ8iN4) with:
+  endings as one line (no `GrammarRuleCard` change), written so «-ios» never wraps at 375px; hint
+  only «от: šaltas» (no gender/number); rule `name` without a parenthetical («Прилагательные:
+  родительный падеж» / "Adjectives: genitive"); an instruction line for the group (Req 14).
+
 
 ## Implementation
 
-- [ ] 0. **Prototype** — build `temp_files/prototypes/plan_62f_grammar-adjectives.html` per `## Prototype`, screenshot
+- [x] 0. **Prototype** — build `temp_files/prototypes/plan_62f_grammar-adjectives.html` per `## Prototype`, screenshot
   every state (RU + EN, 1280 + 375) into `temp_files/screenshots/plan_62f_grammar-adjectives-prototype/`, publish it as a
   private artifact. **STOP — user step:** the user reviews; iterate until approved. Record the verdict
   under `### Approved decisions` and copy any change into the Requirements. **No product code before
   approval.**
-- [ ] 1. **SEO baseline** (before any code change, local backend on :8000 running):
+- [x] 1. **SEO baseline** (before any code change, local backend on :8000 running):
   `cd frontend && rm -rf .next/cache/fetch-cache && npm run build && node scripts/seo-snapshot.mjs --out ../temp_files/seo/plan_62f-baseline.json`.
-- [ ] 2. `backend/scripts/build_adjective_paradigms.py` → `backend/data/grammar/adjectives.txt` (Req 3).
-- [ ] 3. `backend/grammar_service.py` — load `adjectives.txt` (Req 3), `base_lt` lookup (Req 4),
-  remove the duplicate-word cleanup (Req 5).
-- [ ] 4. `backend/data/grammar/lessons.json` — Req 1, 2.
-- [ ] 5. `backend/scripts/seed_grammar_program.py` + `backend/scripts/grammar_validators.py` +
+- [x] 2. `backend/scripts/build_adjective_paradigms.py` → `backend/data/grammar/adjectives.txt` (Req 3).
+- [x] 3. `backend/grammar_service.py` — load `adjectives.txt` (Req 3), `base_lt` lookup (Req 4),
+  remove the duplicate-word cleanup (Req 5), instruction line (Req 14).
+- [x] 4. `backend/data/grammar/lessons.json` — Req 1, 2.
+- [x] 5. `backend/scripts/seed_grammar_program.py` (validator inside) +
   `backend/data/grammar/programs/adjectives.json` — Req 6, 7, 8.
-- [ ] 6. `backend/routers/grammar.py` — Req 9 (admin list + enroll), Req 10 (ORDER BY).
-- [ ] 7. `frontend/app/dashboard/admin/grammar/page.tsx` — Req 11.
-- [ ] 8. `backend/main.py` llms.txt — S4.
-- [ ] 9. Tests:
+- [x] 6. `backend/routers/grammar.py` — Req 9 (admin list + enroll), Req 10 (ORDER BY).
+- [x] 7. `frontend/app/dashboard/admin/grammar/page.tsx` — Req 11.
+- [x] 8. `backend/main.py` llms.txt — S4.
+- [x] 9. Tests:
   - `backend/tests/test_grammar_adjectives.py` — `validate_adjectives` passes on the seed data; every
     `adjectives.txt` line has a unique first column; an adjective Basic task has 4 options from its
     own line and `base_lt` = its dictionary form; a noun sentence's `base_lt` and options are
@@ -225,13 +237,15 @@ as written; anything the prototype changes is copied into the Requirements befor
   - `backend/tests/test_programs.py` (or a new file) — an admin lists and enrolls in a hidden
     program; a free user gets neither (404 on enroll); `GET /grammar-programs` order is by id.
   - `backend/tests/test_knowledge_check.py` — with only these topics published: `build_check` can
-    pick `g:106`, `gap_tasks` serves it with options, `recommendations` maps it to «Прилагательные».
+    pick `g:106`, `gap_tasks` serves it with options, `recommendations` maps it to «Прилагательные»;
+    with the rules `testing`, a free user's `build_check` never picks `g:106`…`g:136`.
   - `backend/tests/test_seo_files.py` — llms.txt lists the public grammar programs, not hidden ones.
   - `backend/tests/test_grammar_basic_options.py`, `test_grammar_practice_full_word.py` — still green.
   - `frontend/tests/grammar-adjectives.spec.ts` — Playwright, API mocked **incl.
     `/api/admin/grammar/config` with the new group**: the program card and its topic list on
     `/dashboard/grammar`; a Basic adjective task with 4 options and the «от: šiltas» hint; an
-    Advanced typed task; a Practice task; a wrong answer; the hero's «Начать с падежей» still targets
+    Advanced typed task; a Practice task; a wrong answer; the admin lesson-filter select has an
+    option with value `["Būdvardžiai"]` and its 5 old options unchanged; the hero's «Начать с падежей» still targets
     «Литовские падежи». Screenshots (Validation).
 - [ ] 10. **STOP — user step.** Ask the user to review `adjectives.txt` and the sentence sample from
   `cd backend && .venv/bin/python scripts/seed_grammar_program.py data/grammar/programs/adjectives.json --dry-run`,
@@ -239,7 +253,7 @@ as written; anything the prototype changes is copied into the Requirements befor
   (or wait 10 min) before the smoke. Users see nothing: the deployed code has no lessons for these case indices and the program is
   hidden. Until this plan is deployed, don't edit the new rules or sentences in the prod admin — the
   old code rejects case indices it doesn't know (admins only). Release: see `## Release`.
-- [ ] 11. Docs/specs: `specs/grammar.md` — the #62f part of the idea's new-programs scenario, the
+- [x] 11. Docs/specs: `specs/grammar.md` — the #62f part of the idea's new-programs scenario, the
   `base_lt` adjective fallback, the removed cleanup, admin preview of hidden programs, program order;
   `specs/knowledge-check.md` — new grammar lessons join the pool; `specs/seo.md` — llms.txt grammar
   list; new `documentation/grammar-new-programs.md` (#62g/#62h append): the data-only approach, ids
@@ -247,7 +261,7 @@ as written; anything the prototype changes is copied into the Requirements befor
   generic seed's idempotency and why the program is never deleted, the release order, why the cleanup
   was removed, the diacritics limit at the typing levels; `documentation/IMPLEMENTATION.md` — the
   grammar data files and seed. Close-out: add
-  `- <today> — release #62f: credit + program public + rules published once deployed (#62f)` to
+  `- <today> — release #62f: program public + rules published once deployed (#62f)` to
   `plans/reminders.md`.
 
 ## Validation
@@ -296,14 +310,12 @@ Merging ships the code; the program stays hidden and its case rules `testing` un
 steps. Every state in between is consistent for users.
 
 1. **Preconditions:** this plan is merged, pushed and live on Render; the seed has run.
-2. **Credit first:** if the `about-team` article has no «Источники» / "Sources" section yet, add it
-   (text in `documentation/content-sources.md`) — the sentences include Tatoeba-derived ones. Exempt
-   from the #48c timing gate (a licence attribution, not an SEO change).
+2. **Credit:** already live in `about-team` (#62c) — nothing to do.
 3. **One pass, never half:** make «Прилагательные» public **and** publish its 6 case rules in the
    admin grammar page. A public program with unpublished rules would show no lessons; published rules
    with a hidden program would put the lessons into checks and the continue session with no program
    to recommend.
-4. **Verify** as a free user: the program is listed; after enrolling, the first lesson is open and a
+4. **Verify** (the program list is cached up to 10 min — wait or expect a lag) as a free user: the program is listed; after enrolling, the first lesson is open and a
    Basic task has 4 options and the «от: …» hint; a new knowledge check can include one of its topics.
 5. **Article** (after the #48c timing gate, ~2026-10-24): append «Потренируйтесь в Fluent» / "Practise in Fluent" to `būdvardžiai-linksniavimas` (S3).
 6. **Record:** "released YYYY-MM-DD" on the #62f row in `documentation/CHANGELOG.md`, delete the
@@ -312,3 +324,9 @@ steps. Every state in between is consistent for users.
 **Rollback:** hide the program **and** set its rules back to `testing` (both, for the same reason as
 step 3); enrollments and results stay. **Abandon before release:** leave both hidden — users never
 see them.
+
+## Review
+
+- [x] Code review passed (round 1)
+- note: llms.txt calls `_program_lesson_ids` per public program (a few extra queries per request; fine unless uncached and slow).
+- note: admin enroll in a hidden program writes a real enrollment row (intended, Req 9).
