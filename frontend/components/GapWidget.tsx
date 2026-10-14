@@ -60,7 +60,7 @@ export default function GapWidget() {
       .filter((r) => r.weak)
       .sort((a, b) => a.correct / a.total - b.correct / b.total);
     const date = new Date(latest.created_at.endsWith('Z') ? latest.created_at : latest.created_at + 'Z')
-      .toLocaleDateString(lang === 'en' ? 'en-GB' : 'ru-RU', { day: 'numeric', month: 'long' });
+      .toLocaleDateString(tr.common.dateLocale, { day: 'numeric', month: 'long' });
     const meta = (
       <span className="text-xs text-muted" data-testid="gap-meta">
         {t.checked.replace('{date}', date).replace('{correct}', String(latest.correct)).replace('{total}', String(latest.total))}

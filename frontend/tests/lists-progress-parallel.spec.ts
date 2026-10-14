@@ -68,7 +68,8 @@ test('/api/me/lists-progress is not blocked behind /api/lists', async ({ page })
   expect(listsStart).toBeGreaterThanOrEqual(0);
 
   // The two requests start together. If lists-progress were still chained it
-  // would start only after LISTS_DELAY_MS.
-  expect(progressStart).toBeLessThan(LISTS_DELAY_MS / 2);
+  // would start only after LISTS_DELAY_MS. Compare the two starts, not each to t0:
+  // t0 is before page.goto, so it also counts page boot, which runs past
+  // LISTS_DELAY_MS / 2 on a loaded machine and made the test flaky.
   expect(Math.abs(progressStart - listsStart)).toBeLessThan(LISTS_DELAY_MS / 2);
 });
