@@ -64,7 +64,8 @@ test.describe('TAK mascot', () => {
     await page.goto('/dashboard/lists/_/study');
 
     // mood is forced to at least +1 on a passed screen, so the pose is one of the happy tier
-    const mascot = page.locator('[data-testid="tak-mascot"]');
+    // (skip the bare TAK inside MistakeButton, which can come first in the DOM)
+    const mascot = page.locator('[data-testid="tak-mascot"]:not([data-pose="bare"])');
     await expect(mascot.first()).toBeVisible({ timeout: 5000 });
     const pose = await mascot.first().getAttribute('data-pose');
     expect(['grin', 'galaxy', 'hype']).toContain(pose);
