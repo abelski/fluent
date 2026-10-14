@@ -32,7 +32,7 @@ buy Premium at the moment a user discovers they are weak somewhere.
 | Long text with gaps + word bank | **Practice — new category "Текст с пропусками"** | #62d | New test kind, needs #62c's `kind` column |
 | Photo of a real sign/post + question | **Practice — new category "Вывески и объявления"** | #62e | Needs an image on a question |
 | Adjectives in cases | **Grammar — new program "Прилагательные"** | #62f | |
-| Motion-verb prefixes (iš-, per-, nu-, par-…) | **Grammar — new program "Приставки движения"** | #62g | |
+| Motion-verb prefixes (iš-, per-, nu-, par-…) | **Parked** (2026-10-13) | ~~#62g~~ | Prototype review: the preposition echoes the prefix, so the task teaches nothing; plan in `plans/improvements/hold/` |
 | Telling time + quantity + Genitive | **Grammar — new program "Время и количество"** | #62h | Grouped: both are numbers + Genitive; "kelintą valandą?" stays in Numbers; time follows the `numbers-03-time` article (ordinal system, no be/po yet) |
 | Sentence builder (scrambled words) | **Already exists** — Phrases stage-1 word tiles | — | No work |
 | Describe a picture (writing) | **Parked** | — | No way to grade free text (no AI key in our subscription) |
@@ -175,14 +175,14 @@ Scenario: question with an image
 ```
 Shipped (2026-10-13), beyond the above: `image_url` limited to site paths `/img/…`; credit stored as "<author>, <licence>" with a localized «Фото:» / "Photo:" prefix; image `max-h-[320px]`, cropped not zoomable; questions A2–A2+ (Req 6a); `--update-text` seeder flag. See `specs/practice.md`.
 
-### specs/grammar.md (#62f / #62g / #62h — new programs)
+### specs/grammar.md (#62f / #62h — new programs; #62g parked)
 **New**
 ```gherkin
 Scenario: new grammar programs use the existing lesson pipeline
-  Given the "Прилагательные", "Приставки движения" or "Время и количество" program is public
+  Given the "Прилагательные" or "Время и количество" program is public
     and its case rules are published
   Then its lessons appear at Basic / Advanced / Practice level like any noun lesson
-  And Basic tasks offer 4 options from the same paradigm (4 forms of one adjective; 4 motion prefixes;
+  And Basic tasks offer 4 options from the same paradigm (4 forms of one adjective;
     4 forms of one numeral or noun)
 ```
 
@@ -282,6 +282,7 @@ Scenario: new content joins the knowledge check
 - **Long gap-fill** — new Practice category "Текст с пропусками" (not inside Articles).
 - **Describe a picture** — parked, no grading possible without AI.
 - **Grammar topics** — 3 new programs (Adjectives; Motion prefixes; Time & quantity); nasals parked.
+  Motion prefixes parked 2026-10-13 at the #62g prototype review (preposition gives the prefix away).
 - **Purpose of the check** — gap analysis with advice, not a score.
 - **Free vs Premium** — check is free (first run); "Work on mistakes" tabs and retakes are Premium;
   free users get an upsell after the check. Practice categories stay free; grammar keeps its rules.

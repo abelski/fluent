@@ -77,3 +77,17 @@ aktor	ius	iaus	iui	ių	iumi	iuje	iau	iai	ių	iams	ius	iais	iuose	iai	actor	ак�
 profesor	ius	iaus	iui	ių	iumi	iuje	iau	iai	ių	iams	ius	iais	iuose	iai	professor	профессор
 vand	uo	ens	eniui	enį	eniu	enyje	enie	enys	enų	enims	enis	enimis	enyse	enys	water	вода
 krepš	ys	io	iui	į	iu	yje	y	iai	ių	iams	ius	iais	iuose	iai	bag	сумка
+kav	a	os	ai	ą	a	oje	!a	!os	!ų	!oms	!as	!omis	!ose	!os	coffee	кофе
+pien	as	o	ui	ą	u	e	!e	!ai	!ų	!ams	!us	!ais	!uose	!ai	milk	молоко
+duon	a	os	ai	ą	a	oje	!a	!os	!ų	!oms	!as	!omis	!ose	!os	bread	хлеб
+sviest	as	o	ui	ą	u	e	!e	!ai	!ų	!ams	!us	!ais	!uose	!ai	butter	масло
+cukr	us	aus	ui	ų	umi	uje	!au	!ūs	!ų	!ums	!us	!umis	!uose	!ūs	sugar	сахар
+drusk	a	os	ai	ą	a	oje	!a	!os	!ų	!oms	!as	!omis	!ose	!os	salt	соль
+sūr	is	io	iui	į	iu	yje	!i	!iai	!ių	!iams	!ius	!iais	!iuose	!iai	cheese	сыр
+arbat	a	os	ai	ą	a	oje	!a	!os	!ų	!oms	!as	!omis	!ose	!os	tea	чай
+vyn	as	o	ui	ą	u	e	!e	!ai	!ų	!ams	!us	!ais	!uose	!ai	wine	вино
+mės	a	os	ai	ą	a	oje	!a	!os	!ų	!oms	!as	!omis	!ose	!os	meat	мясо
+saldain	is	io	iui	į	iu	yje	!i	iai	ių	iams	ius	iais	iuose	!iai	candy	конфета
+kiaušin	is	io	iui	į	iu	yje	!i	iai	ių	iams	ius	iais	iuose	!iai	egg	яйцо
+bulv	ė	ės	ei	ę	e	ėje	!e	ės	ių	ėms	es	ėmis	ėse	!ės	potato	картофель
+pomidor	as	o	ui	ą	u	e	!e	ai	ų	ams	us	ais	uose	!ai	tomato	помидор

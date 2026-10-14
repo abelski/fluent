@@ -11,4 +11,5 @@ Format: `- YYYY-MM-DD — what to do (#N)`. Delete a line when it's done.
 - 2026-10-20 — /seo: IndexNow effect — Yandex pages in search > 43, Bing impressions > 2/week, vs seo-log 2026-10-06 (#59a)
 - 2026-10-22 — compare basic-lesson first-attempt pass rate (>75%) 2 weeks before vs after #60 from GrammarLessonResult; date is a placeholder (today + 14d), move it to release date + 14d once #60 ships (#60)
 - 2026-10-24 — #62e: A2 article update, once #62b–#62e are all released (#62e)
-- 2026-10-13 — release #62f: program public + rules published once deployed (#62f)
+- 2026-10-24 — #62f: append «Потренируйтесь в Fluent» / "Practise in Fluent" to būdvardžiai-linksniavimas (keep first 160 chars), after the #48c check (#62f)
+- 2026-10-13 — release #62h: program public + rules published once deployed (#62h)

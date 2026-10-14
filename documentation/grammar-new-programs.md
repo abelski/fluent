@@ -12,6 +12,8 @@ The Numbers program was the precedent: a program is (1) case indices with a grou
 `filterLessonsForProgram`, `_program_lesson_ids`, the knowledge check) then does everything.
 
 #62f: case indices 21–26, group `Būdvardžiai`, lessons 106/112/118/124/130/136 (+1 advanced, +2 practice).
+#62h: case indices 31–34, group `Laikas ir kiekis`, lessons 166/172/178/184 (+1 advanced, +2 practice).
+(27–30 / 142–165 stay reserved for #62g, on hold.)
 
 ## Constraints
 
@@ -73,3 +75,25 @@ tested at Basic, where the 4 options are compared with diacritics kept.
 
 The rule card prints endings as one line (approved in the #62f prototype). The seed data uses the
 non-breaking hyphen U+2011 in `endings_*` so «‑ios» never wraps after its hyphen at 375px.
+
+## #62h «Время и количество»: why it follows `numbers-03-time`
+
+- **Ordinal clock only, no be/po.** The `numbers-03-time` article teaches whole hours («trečia
+  valanda», Vardininkas), «pusė» + ordinal Genitive of the *next* hour, and nuo/iki + ordinal
+  Genitive. The lessons teach exactly that, so article and lessons never disagree and no blank has two
+  valid answers (cardinal/ordinal mixes were ambiguous at Practice, where the stem is stripped).
+  be/po waits until the article covers it. Every time blank is an ordinal (1st–20th, 30th have
+  `paradigms_extra.txt` lines), so every Basic task has 4 options; 10–19 cardinals are never blanked.
+- **Case 19 («kelintą valandą?») stays in Numbers.** Moving it would change existing Numbers lessons
+  and users' progress; the new program only adds 31–34.
+- **New nouns in `words.txt`:** kava, pienas, duona, sviestas, cukrus, druska, sūris, arbata, vynas,
+  mėsa, saldainis, kiaušinis, bulvė, pomidoras — needed for Basic options and the «от: …» hint. Mass
+  nouns have `!` on every plural ending (and countable ones on unnatural forms), so they can join the
+  existing declension drills (`_generate_declension_tasks` samples all of `WORDS`) without
+  producing odd forms.
+- **No-collision rule:** a new row's forms join `_FORM_TO_ROW` / `_FORM_TO_NOMINATIVE`; a form shared
+  with another row would make an existing noun's form ambiguous and silently drop its options. A
+  deterministic test (`tests/test_grammar_time_quantity.py`) asserts no form or stem of the new rows
+  equals a form of any other `words.txt`, `paradigms_extra.txt` or `adjectives.txt` line.
+- **Instruction line:** group `Laikas ir kiekis` gets «Выбери/Впиши правильную форму: <падеж>» (ед./мн. ч.
+  for 33/34). A rule card row whose endings value is «—» is not rendered.

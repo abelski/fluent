@@ -18,7 +18,8 @@ Scenario: topics
     "v:<id>" for verb tenses 200/202/204/206/208/210, or "p:<category_id>" for a
     Practice category with at least one free published test, except Конституция (id 1)
   And new grammar lessons join the same way: e.g. #62f adjective topics g:106…g:136 are in the
-    pool once their case rules are published, and Recommendations map them to «Прилагательные»
+    pool once their case rules are published, and Recommendations map them to «Прилагательные»;
+    likewise #62h time/quantity topics g:166…g:184 map to «Время и количество»
   And a new category joins the pool as soon as it has a free published test, with no code change
     (e.g. "Верно / Неверно / Не сказано": out while its tests are `testing`, in once one is
     published, yielding 3-option `reading` tasks)

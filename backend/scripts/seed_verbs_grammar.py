@@ -2,7 +2,7 @@
 
 Creates two programs:
   - 'Спряжение глаголов'  (program_type='verbs',      difficulty=2)
-  - 'Управление глаголов' (program_type='verb_cases',  difficulty=2)
+  - 'Падежи глаголов' (program_type='verb_cases',  difficulty=2)
 
 Usage (from repo root):
     python backend/scripts/seed_verbs_grammar.py
@@ -35,8 +35,8 @@ PROGRAMS = [
         "program_type": "verbs",
     },
     {
-        "title": "Управление глаголов",
-        "title_en": "Verb Case Governance",
+        "title": "Падежи глаголов",
+        "title_en": "Cases after verbs",
         "description": (
             "Отработайте падежи, которыми управляют 365 литовских глаголов. "
             "Примеры из книги «365 глаголов литовского языка»."

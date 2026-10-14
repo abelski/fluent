@@ -640,3 +640,30 @@ def test_adjective_topics_join_when_published(monkeypatch):
         assert "Прилагательные" in [r["title_ru"] for r in recs if r["kind"] == "grammar"]
     finally:
         adj.wipe()
+
+
+# ── #62h time and quantity join the pool once published ──────────────────────
+
+def test_time_quantity_topics_join_when_published(monkeypatch):
+    from tests import test_grammar_time_quantity as tq
+    _real_grammar(monkeypatch)
+    tq.wipe()
+    try:
+        with Session(_test_engine) as s:
+            tq.seed_mod.seed(s, tq.DATA)
+        tq_topics = {f"g:{i}" for i in (166, 172, 178, 184)}
+        for _ in range(5):  # rules `testing`: never picked
+            assert not {t["topic"] for t in _build()} & tq_topics
+        tq.set_released(True)
+        picked = set()
+        for _ in range(30):
+            picked |= {t["topic"] for t in _build() if t["topic"].startswith("g:")}
+        assert "g:166" in picked
+        result = [{"topic": "g:166", "title_ru": "x", "title_en": "x", "correct": 0, "total": 2, "weak": True}]
+        with Session(_test_engine) as s:
+            tasks = kc.gap_tasks(result, s)
+            assert tasks and all(t.get("options") for t in tasks)
+            recs = kc.recommendations(result, s.get(User, _FREE), s)
+        assert "Время и количество" in [r["title_ru"] for r in recs if r["kind"] == "grammar"]
+    finally:
+        tq.wipe()

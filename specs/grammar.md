@@ -440,6 +440,20 @@ Scenario: new grammar programs use the existing lesson pipeline (#62f)
 ```
 
 ```gherkin
+Scenario: time and quantity lessons (#62h)
+  Given the "Время и количество" program (lesson_filter ["Laikas ir kiekis"], case indices 31–34,
+    lessons 166–186) is public and its four case rules are published
+  Then its lessons appear at Basic / Advanced / Practice level like any noun lesson
+  And time blanks (31–32) are always ordinals, so Basic offers 4 forms of the same ordinal
+  And quantity tasks (33–34) offer 4 forms of the same noun with «от: <nominative>»
+  And while the program is hidden and its rules are `testing`, non-admins see none of its lessons
+  Given a task from group "Laikas ir kiekis"
+  Then the instruction reads «Выбери/Впиши правильную форму: <падеж>[, ед./мн. ч.]» /
+    "Pick/Type the right form: <case>[, singular/plural]" — nominative for 31, genitive for 32–34
+  And a rule card whose singular or plural endings value is «—» omits that row
+```
+
+```gherkin
 Scenario: a sentence task's «от: …» hint (base_lt)
   Given a sentence task with full word W and stem S
   Then base_lt is W's noun nominative (words.txt) if unambiguous, else the dictionary form
