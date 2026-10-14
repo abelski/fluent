@@ -1,13 +1,19 @@
 ---
 kind: feature
-status: draft
-iteration: 0
+status: parked
+iteration: 1
 max_iterations: 30
 suggested_model: opus
 suggested_effort: medium
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: opus
+confirmed_effort: medium
 ---
+
+> **Parked 2026-10-13 (user, at the prototype review):** the preposition echoes the prefix
+> («Lina ___eina iš namų»), so the answer is given away and nothing is learned. Alternatives
+> offered — meaning from the translation (sentences with no echoing preposition) or blanking
+> prefix + preposition (needs a two-blank task) — were declined. Prototype:
+> `temp_files/prototypes/plan_62g_grammar-motion-prefixes.html`.
 
 # #62g — Grammar: "Приставки движения" (motion-verb prefixes)
 
@@ -15,7 +21,7 @@ confirmed_effort: null
 
 Idea: `plans/ideas/idea_62_exercise-formats-map-and-gap-check.md` (confirmed). **Part 7 of 8.**
 Branch `feat/62g-grammar-motion-prefixes`. **Depends on #62a and #62f being merged** — #62f brings
-the generic seed (`scripts/seed_grammar_program.py` + `scripts/grammar_validators.py`), admin preview
+the generic seed (`scripts/seed_grammar_program.py`, validators inside it, one per `"format"`), admin preview
 of hidden programs, the generated admin group options, the llms.txt grammar list, the removal of the
 duplicate-word cleanup, and `documentation/grammar-new-programs.md`.
 
@@ -33,12 +39,15 @@ Facts found in `backend/grammar_service.py` and the UI:
 2. **Basic options** come from `_paradigm_forms` — a prefix has no paradigm, so Basic would fall back
    to typing. `_sentence_options` needs a prefix branch.
 3. `SentenceBlank` (`GrammarTaskRunner.tsx`) renders `before` + blank + `after`, so «Lina [__]eina iš
-   namų.» displays correctly. But `GrammarRuleCard` (`GrammarTaskRunner.tsx:270-287`) always shows
-   an endings row; with both endings «—» (a prefix rule has none) it prints «Множественное число: —».
+   namų.» displays correctly. But `GrammarRuleCard` (`GrammarTaskRunner.tsx:296-313`) hides the two-row block when
+   `endings_sg` is «—» but then always prints the plural row; with both endings «—» (a prefix rule has none) it prints «Множественное число: —».
 4. Lithuanian: ap- becomes **api-** before b/p (apibėgti); pa- with motion verbs is mostly
    perfective (pabėgti iš namų), not directional; at- and nu- also fit į / iš / prie sentences
    (atėjo į kambarį, atbėgo iš mokyklos, atėjo prie namo) — so a random distractor can be a second
    correct answer.
+5. **Task instruction** — `_instruction("cases", …)` only knows the groups in `_GROUP_WORD`
+   (Skaičiai, Būdvardžiai); for `Priešdėliai` it returns None, so the task would show no
+   instruction line.
 
 **SEO**: `/dashboard/grammar/` metadata is unchanged (client-loaded programs). The article
 **`verb-governance`** («Управление глаголов и приставочные образования», RU + EN) already has a
@@ -66,11 +75,15 @@ Model/effort: opus/medium — two small, well-located code changes plus ~110 nat
 
 1. **`MOTION_PREFIXES`** in `grammar_service.py`: `("ap", "at", "iš", "nu", "par", "per", "pra",
    "pri", "su", "už", "į")`.
-2. **Basic options** — `_sentence_options(full)`: if `full.lower()` is in `MOTION_PREFIXES`, return
+2. **Basic options** — `_sentence_options(full)`, first thing, before the `rpartition`: if `full.lower()` is in `MOTION_PREFIXES`, return
    `_pick_options(full, <the other prefixes, shuffled>)`, where for an answer in {«į», «iš», «pri»}
    the candidates exclude «at» and «nu». Other answers unchanged.
-3. **Rule card** — `GrammarRuleCard` hides the endings rows when both `endings_sg` and `endings_pl`
-   are «—» or empty. Cards with one real endings row (Numbers) render as today.
+2a. **Instruction** — in `_instruction`, inside the existing `len(groups) == 1` check, when the
+   group is `Priešdėliai` return («Выбери приставку» / "Pick the prefix") or («Впиши приставку» / "Type the
+   prefix"), by `has_options`.
+3. **Rule card** — one-line change at `GrammarTaskRunner.tsx:308`: show the plural-only row only
+   when the picked `rule.endings_pl` (after the RU/EN `pick`) is non-empty and not «—». Numbers
+   cards (sg «—», real pl) render as today.
 4. **Case indices 27–30**, group `Priešdėliai`: 27 `Priešdėliai: iš-, į-`, 28 `Priešdėliai: nu-,
    pri-, at-`, 29 `Priešdėliai: per-, pra-`, 30 `Priešdėliai: ap-, su-, už-, par-`.
    **Lessons**: basic ids 142, 148, 154, 160 (+1 advanced, +2 practice), task counts 24 / 35 / 20.
@@ -90,8 +103,7 @@ Model/effort: opus/medium — two small, well-located code changes plus ~110 nat
    yet, this plan adds it (user step).
 6. **`validate_prefixes`**: exactly one `___`, preceded by a space and followed directly by a
    lowercase letter (the root); the blank is never sentence-initial; `answer_ending == full_word`, in
-   `MOTION_PREFIXES` and in the topic's own prefix set; «ap» never before a root starting with b or p;
-   the task built from each row keeps `display` unchanged and has 4 prefix options that obey Req 2;
+   `MOTION_PREFIXES` and in the topic's own prefix set; «ap» never before a root starting with b or p, «at» never before t or d (ati-);
    no duplicate `display`; ≥ 25 sentences per topic, every prefix of the topic used ≥ 4 times; every
    sentence has a `source`.
 7. **Knowledge check** — no code change (published lessons join the pool as `g:<basic id>`).
@@ -147,16 +159,18 @@ as written; anything the prototype changes is copied into the Requirements befor
   approval.**
 - [ ] 1. **SEO baseline** (before any code change, local backend on :8000 running):
   `cd frontend && rm -rf .next/cache/fetch-cache && npm run build && node scripts/seo-snapshot.mjs --out ../temp_files/seo/plan_62g-baseline.json`.
-- [ ] 2. `backend/grammar_service.py` — Req 1, 2.
+- [ ] 2. `backend/grammar_service.py` — Req 1, 2, 2a.
 - [ ] 3. `frontend/app/dashboard/components/GrammarTaskRunner.tsx` — Req 3.
 - [ ] 4. `backend/data/grammar/lessons.json` — Req 4.
 - [ ] 5. `backend/data/grammar/programs/prefixes.json` + `validate_prefixes` in
-  `backend/scripts/grammar_validators.py` — Req 5, 6.
+  `backend/scripts/seed_grammar_program.py` (new `"prefixes"` branch in `validate`) — Req 5, 6.
 - [ ] 6. Tests:
   - `backend/tests/test_grammar_prefixes.py` — `validate_prefixes` passes on the seed data and fails
     on a sentence-initial blank, a prefix outside the topic, a stem before the blank, «ap» before
     «bėga»; a prefix row's task keeps «Lina ___eina iš namų.» byte-for-byte at all three levels;
     Basic gives 4 distinct prefixes including the answer, and for «į»/«iš»/«pri» never «at» or «nu»;
+    the instruction reads «Выбери приставку» at Basic and «Впиши приставку» at Advanced (EN too);
+    «ap» before «bėga» or «at» before «tempia» fails; `_sentence_base_lt` returns None for a prefix row (no «от:» hint leaks the answer);
     lessons 142–162 are < 200, hidden from a free user while `testing`, and map to this program only.
   - `backend/tests/test_knowledge_check.py` — with only these topics published: `build_check` can
     pick `g:142`, `gap_tasks` serves it with prefix options, `recommendations` maps it to «Приставки
@@ -164,9 +178,9 @@ as written; anything the prototype changes is copied into the Requirements befor
   - `backend/tests/test_grammar_basic_options.py`, `test_grammar_practice_full_word.py` — still green.
   - `frontend/tests/grammar-prefixes.spec.ts` — Playwright, API mocked **incl.
     `/api/admin/grammar/config` with the new group**: the program card; a Basic prefix task renders
-    «Lina [blank]eina iš namų.» with 4 prefix buttons; picking one fills the blank before the root;
+    «Lina [blank]eina iš namų.» with 4 prefix buttons; picking one fills the blank before the root; an Advanced typed task; a Practice task; a wrong answer showing the correct prefix;
     the rule card shows no «—» endings row; a Numbers rule card still shows its endings. Screenshots
-    (Validation).
+    (Validation). Confirm the seed's shared rule check accepts «—» endings.
 - [ ] 7. **STOP — user step.** Ask the user to review the sentence sample from
   `cd backend && .venv/bin/python scripts/seed_grammar_program.py data/grammar/programs/prefixes.json --dry-run`,
   then run it without `--dry-run` (prod: rules `testing`, program hidden). Restart the local backend
@@ -183,7 +197,7 @@ as written; anything the prototype changes is copied into the Requirements befor
 
 ## Validation
 
-- [ ] Backend: `cd backend && .venv/bin/python -m pytest -q tests/test_grammar_prefixes.py tests/test_grammar_basic_options.py tests/test_grammar_practice_full_word.py tests/test_knowledge_check.py`
+- [ ] Backend: `cd backend && .venv/bin/python -m pytest -q tests/test_grammar_prefixes.py tests/test_grammar_basic_options.py tests/test_grammar_practice_full_word.py tests/test_grammar_adjectives.py tests/test_knowledge_check.py`
 - [ ] Full backend suite green: `cd backend && .venv/bin/python -m pytest -q`
 - [ ] Types: `cd frontend && npx tsc --noEmit`
 - [ ] Playwright: `cd frontend && npx playwright test tests/grammar-prefixes.spec.ts tests/grammar-adjectives.spec.ts tests/grammar-bento.spec.ts tests/design-system-parity.spec.ts --reporter=list`

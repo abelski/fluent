@@ -77,7 +77,19 @@
     [132, "practice", [25], 20, "Būdvardžiai: Įnagininkas"],
     [136, "basic", [26], 24, "Būdvardžiai: Vietininkas"],
     [137, "advanced", [26], 35, "Būdvardžiai: Vietininkas"],
-    [138, "practice", [26], 20, "Būdvardžiai: Vietininkas"]
+    [138, "practice", [26], 20, "Būdvardžiai: Vietininkas"],
+    [166, "basic",    [31], 24, "Laikas: Kelinta valanda? (Vardininkas)"],
+    [167, "advanced", [31], 35, "Laikas: Kelinta valanda? (Vardininkas)"],
+    [168, "practice", [31], 20, "Laikas: Kelinta valanda? (Vardininkas)"],
+    [172, "basic",    [32], 24, "Laikas: pusė, nuo … iki (Kilmininkas)"],
+    [173, "advanced", [32], 35, "Laikas: pusė, nuo … iki (Kilmininkas)"],
+    [174, "practice", [32], 20, "Laikas: pusė, nuo … iki (Kilmininkas)"],
+    [178, "basic",    [33], 24, "Kiekis: Kilmininkas Vns."],
+    [179, "advanced", [33], 35, "Kiekis: Kilmininkas Vns."],
+    [180, "practice", [33], 20, "Kiekis: Kilmininkas Vns."],
+    [184, "basic",    [34], 24, "Kiekis: Kilmininkas Dgs."],
+    [185, "advanced", [34], 35, "Kiekis: Kilmininkas Dgs."],
+    [186, "practice", [34], 20, "Kiekis: Kilmininkas Dgs."]
   ],
   "cases": {
     "1":  ["Vardininkas",   "Vienaskaita"],
@@ -105,6 +117,10 @@
     "23": ["Būdvardžiai: Naudininkas", "Būdvardžiai"],
     "24": ["Būdvardžiai: Galininkas", "Būdvardžiai"],
     "25": ["Būdvardžiai: Įnagininkas", "Būdvardžiai"],
-    "26": ["Būdvardžiai: Vietininkas", "Būdvardžiai"]
+    "26": ["Būdvardžiai: Vietininkas", "Būdvardžiai"],
+    "31": ["Laikas: Kelinta valanda? (Vardininkas)", "Laikas ir kiekis"],
+    "32": ["Laikas: pusė, nuo … iki (Kilmininkas)", "Laikas ir kiekis"],
+    "33": ["Kiekis: Kilmininkas Vns.", "Laikas ir kiekis"],
+    "34": ["Kiekis: Kilmininkas Dgs.", "Laikas ir kiekis"]
   }
 }

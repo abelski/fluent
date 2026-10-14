@@ -293,22 +293,20 @@ export function GrammarRuleCard({ rules, collapsible }: { rules: GrammarRule[]; 
               {rule.transform && (
                 <p className="text-gray-500 text-xs mb-3 leading-relaxed font-mono bg-white/60 rounded px-2 py-1">{rule.transform}</p>
               )}
-              {r.endings_sg !== '—' && (
+              {(r.endings_sg !== '—' || r.endings_pl !== '—') && (
                 <div className="flex flex-wrap gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-400">{tr.grammar.singular} </span>
-                    <span className="text-gray-500 font-mono">{rule.endings_sg}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">{tr.grammar.plural} </span>
-                    <span className="text-gray-500 font-mono">{rule.endings_pl}</span>
-                  </div>
-                </div>
-              )}
-              {r.endings_sg === '—' && (
-                <div className="text-xs">
-                  <span className="text-gray-400">{tr.grammar.plural} </span>
-                  <span className="text-gray-500 font-mono">{rule.endings_pl}</span>
+                  {r.endings_sg !== '—' && (
+                    <div>
+                      <span className="text-gray-400">{tr.grammar.singular} </span>
+                      <span className="text-gray-500 font-mono">{rule.endings_sg}</span>
+                    </div>
+                  )}
+                  {r.endings_pl !== '—' && (
+                    <div>
+                      <span className="text-gray-400">{tr.grammar.plural} </span>
+                      <span className="text-gray-500 font-mono">{rule.endings_pl}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

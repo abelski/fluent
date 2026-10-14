@@ -1,12 +1,12 @@
 ---
 kind: feature
-status: draft
-iteration: 0
+status: done
+iteration: 2
 max_iterations: 30
 suggested_model: opus
 suggested_effort: medium
-confirmed_model: null
-confirmed_effort: null
+confirmed_model: opus
+confirmed_effort: medium
 ---
 
 # #62h — Grammar: "Время и количество" (telling the time + quantity + Genitive)
@@ -16,8 +16,9 @@ confirmed_effort: null
 Idea: `plans/ideas/idea_62_exercise-formats-map-and-gap-check.md` (confirmed). **Part 8 of 8.**
 Branch `feat/62h-grammar-time-quantity`. **Depends on #62a and #62f being merged** (#62f: the
 generic seed + validators, admin preview of hidden programs, generated admin group options, the
-llms.txt grammar list, `documentation/grammar-new-programs.md`). #62g is not needed but merges first
-by order.
+llms.txt grammar list, `documentation/grammar-new-programs.md`) — both merged. #62g is **on hold**
+(`plans/improvements/hold/`) and not needed; its reserved case indices 27–30 and lesson ids 142–165
+stay free for it, so this plan keeps 31–34 / 166+.
 
 The exam asks "Kelinta valanda?" and quantity phrases with the Genitive («puodelis kavos»,
 «kilogramas obuolių»). The user grouped both into one program (idea: both are numbers + Genitive).
@@ -74,6 +75,10 @@ Model/effort: opus/medium — ~110 sentences and ~14 noun paradigms; no generato
 2. **Nouns** — add rows to `words.txt` for every noun a quantity sentence blanks that is not there yet
    (~14: kava, pienas, duona, sviestas, cukrus, druska, sūris, arbata, vynas, mėsa, saldainis,
    kiaušinis, bulvė, pomidoras), full 14-ending paradigm, `!` for forms that don't exist, EN + RU.
+   **Accepted side effect:** `_generate_declension_tasks` (`backend/grammar_service.py`) samples all of
+   `WORDS`, so these nouns also appear in existing noun-declension drills from the deploy on. That is
+   fine (they are ordinary nouns) as long as every unnatural form is `!` — mass nouns (kava, pienas,
+   cukrus, druska, sviestas, …) get `!` for every plural ending, and `!` forms are already skipped.
 3. **Content** — `backend/data/grammar/programs/time_quantity.json` (`"format": "time_quantity"`)
    through #62f's generic seed: 4 rule cards (`status` `testing`, RU + EN, wording consistent with
    `numbers-03-time`: ordinal feminine for hours, «pusė» + Gen of the *next* hour, nuo/iki + Gen,
@@ -90,12 +95,13 @@ Model/effort: opus/medium — ~110 sentences and ~14 noun paradigms; no generato
    yet, this plan adds it (user step).
 4. **`validate_time_quantity`**: every sentence passes the #156 invariant; **every** Basic task gets
    4 options from the answer's own lexeme (this also keeps blanks off the 10–19 / tens numerals, which
-   have no paradigm line); topics 31–32 blank only ordinals; topics 33–34 get a `base_lt`; no
+   have no paradigm line); topics 31–32 blank only ordinals (exactly one `___` per sentence — in
+   «nuo … iki» one ordinal is blanked, the other is written in full); topics 33–34 get a `base_lt`; no
    duplicate `display`; ≥ 25 sentences per topic; topic 32 uses each of pusė / nuo…iki ≥ 8 times;
    every sentence has a `source`.
 5. **No collision from new nouns** — a deterministic test: no form or stem of the new `words.txt` rows
    equals a form of any other `words.txt` row, any `paradigms_extra.txt` line or any `adjectives.txt`
-   line.
+   line; the adjectives dry-run (its clash check reads `words.txt`) still passes.
 6. **Knowledge check** — no code change (published lessons join the pool as `g:<basic id>`).
 7. **Release order** — as #62f Req 13 (program public + rules published in one pass, after the deploy
    and the seed; `## Release`).
@@ -115,90 +121,79 @@ Model/effort: opus/medium — ~110 sentences and ~14 noun paradigms; no generato
 - If this plan touches markup, styling, or a component: read `documentation/design system/Component Library (as-built).html` and `documentation/IMPLEMENTATION.md` first, use named design tokens (never a raw Tailwind step), and run `frontend/tests/design-system-parity.spec.ts` after any shared-shell/token change. (No UI change: the lesson UI and the admin select are reused.)
 - Add autotest coverage for the new feature and run the relevant suite(s) as part of Validation.
 
-## Prototype (phase 0 — visuals before implementation)
-
-The user reviews the look before any product code is written. A static mock,
-`temp_files/prototypes/plan_62h_grammar-time-quantity.html` (Tailwind from the CDN with Fluent's tokens copied from
-`frontend/tailwind.config.js`), with a **state switcher** and an **RU/EN toggle**. Surrounding UI is
-**copied from the real components, not sketched** (memory "prototype replicas copy real UI"); only the
-new part is invented.
-
-- **Copy from the code:** the same Grammar page and `GrammarTaskRunner.tsx` screens as #62f, `GrammarRuleCard`.
-- **New part:** time and quantity task content.
-- **States:** program card; a Basic time task (ordinal options); a Basic quantity task with «от: kava»; a Practice time task (stem stripped, digits in the translation); a wrong answer; a rule card.
-- **Content:** one real rule card per topic type (time, quantity) and 5 real draft sentences.
-- **Decide in the prototype:** how the time appears in the translation («3:30» vs words), wording of the time rule card.
-
-**Prototype DoD (reduced, precedent #53/#55/#56):** renders at 1280px and 375px in RU and EN;
-every state above screenshotted into `temp_files/screenshots/plan_62h_grammar-time-quantity-prototype/` and looked at; published as a
-private artifact (follow the artifact-design skill's page contract) and the link given to the user;
-the user's verdict recorded below with the date. Dropped for the prototype: backend, autotests,
-docs, CHANGELOG.
-
-### Approved decisions
-_Filled in at step 0 (date + what the user approved or changed). Until then the Requirements stand
-as written; anything the prototype changes is copied into the Requirements before step 1._
-
-
 ## Implementation
 
-- [ ] 0. **Prototype** — build `temp_files/prototypes/plan_62h_grammar-time-quantity.html` per `## Prototype`, screenshot
-  every state (RU + EN, 1280 + 375) into `temp_files/screenshots/plan_62h_grammar-time-quantity-prototype/`, publish it as a
-  private artifact. **STOP — user step:** the user reviews; iterate until approved. Record the verdict
-  under `### Approved decisions` and copy any change into the Requirements. **No product code before
-  approval.**
-- [ ] 1. **SEO baseline** (before any code change, local backend on :8000 running):
+- [x] 1. **SEO baseline** (before any code change, local backend on :8000 running):
   `cd frontend && rm -rf .next/cache/fetch-cache && npm run build && node scripts/seo-snapshot.mjs --out ../temp_files/seo/plan_62h-baseline.json`.
-- [ ] 2. `backend/data/grammar/words.txt` — Req 2.
-- [ ] 3. `backend/data/grammar/lessons.json` — Req 1.
-- [ ] 4. `backend/data/grammar/programs/time_quantity.json` + `validate_time_quantity` in
-  `backend/scripts/grammar_validators.py` — Req 3, 4.
-- [ ] 5. Tests:
-  - `backend/tests/test_grammar_time_quantity.py` — `validate_time_quantity` passes on the seed data
+- [x] 2. `backend/data/grammar/words.txt` — Req 2.
+- [x] 3. `backend/data/grammar/lessons.json` — Req 1: lessons under `lessons`, case entries 31–34
+  under `cases` (the validator reads them via CASE_INFO, as `validate_adjectives` does).
+- [x] 4. `backend/data/grammar/programs/time_quantity.json` + `validate_time_quantity` in
+  `backend/scripts/seed_grammar_program.py` (next to `validate_adjectives`; add the
+  `"time_quantity"` branch to `validate()`) — Req 3, 4.
+- [x] 5. Tests:
+  - `backend/tests/test_grammar_time_quantity.py` (mirror `backend/tests/test_grammar_adjectives.py`) — `validate_time_quantity` passes on the seed data
     and fails on a blank on «penkiolikos», a cardinal blank in topic 31, a sentence without options;
-    new noun rows have 14 endings + EN + RU; Req 5 no-collision check; lessons 166–186 are < 200,
+    new noun rows have 14 endings + EN + RU; Req 5 no-collision check; mass nouns have `!` on every
+    plural ending, and `_generate_declension_tasks` over the existing noun cases never returns a form
+    of a new noun that is `!` (Req 2 side effect); lessons 166–186 are < 200,
     hidden from a free user while `testing`, and map to this program only.
   - `backend/tests/test_knowledge_check.py` — with only these topics published: `build_check` can
     pick `g:166`, `gap_tasks` serves it with options, `recommendations` maps it to «Время и количество».
   - `backend/tests/test_grammar_basic_options.py`, `test_grammar_practice_full_word.py` — still green.
-  - `frontend/tests/grammar-time-quantity.spec.ts` — Playwright, API mocked **incl.
-    `/api/admin/grammar/config` with the new group**: the program card; a Basic time task («Dabar
-    pusė ketvirt[blank].» with 4 ordinal forms); a quantity task with the «от: kava» hint; a Practice
-    time task (stem stripped, translation visible); a wrong answer. Screenshots (Validation).
-- [ ] 6. **STOP — user step.** Ask the user to review the sentence sample from
+  - `frontend/tests/grammar-time-quantity.spec.ts` — screenshot driver only (the lesson UI is
+    unchanged and covered by the #62f spec); API mocked: a Basic time task («Dabar pusė
+    ketvirt[blank].» with 4 ordinal forms), a Basic quantity task with the «от: kava» hint, a Practice
+    time task (stem stripped, translation visible), an Advanced task with the rule card.
+- [x] 5a. **Instruction line** (user request 2026-10-13) — `backend/grammar_service.py` `_instruction`:
+  tasks of group `Laikas ir kiekis` get «Выбери/Впиши правильную форму: <падеж>» / "Pick/Type the right
+  form: <case>" (Именительный for 31, Родительный for 32–34; ед./мн. ч. for 33/34), like the other
+  groups. Test in `backend/tests/test_grammar_time_quantity.py`; existing instruction tests stay green.
+- [x] 5b. **Hide empty endings row** (user request 2026-10-13) — the grammar rule card component
+  (`GrammarRuleCard` in `GrammarTaskRunner.tsx`): don't render the Sg/Pl endings row whose value is
+  «—». Also give each topic its own rule card in the Playwright mock. Re-take the 16 screenshots and
+  look at them. Update the component library if it documents the rule card rows.
+- [x] 5c. **Lithuanian content review** (user request 2026-10-13) — an independent review of every
+  `"source": "own"` sentence and all RU/EN translations in `time_quantity.json` (grammar, naturalness,
+  A2 level, one valid answer per blank); replace or fix what it flags, as #62f did. Re-run the dry-run.
+- [x] 6. **STOP — user step.** (seeded 2026-10-13 at the user's request: 4 rules, 112 sentences, program id=6) Ask the user to review the sentence sample (incl. how the time reads in translations: «3:30»
+  vs words) from
   `cd backend && .venv/bin/python scripts/seed_grammar_program.py data/grammar/programs/time_quantity.json --dry-run`
   and the new noun rows, then run it without `--dry-run` (prod: rules `testing`, program hidden).
   Restart the local backend (or wait 10 min) before the smoke. Users see nothing: the deployed code has no lessons for these case indices and the program is
   hidden. Until this plan is deployed, don't edit the new rules or sentences in the prod admin — the
   old code rejects case indices it doesn't know (admins only). Release: see `## Release`.
   The new `words.txt` nouns go live with the deploy itself; the no-collision test (Req 5) is what
-  keeps every existing lesson unchanged at that moment.
-- [ ] 7. Docs/specs: `specs/grammar.md` — the #62h part of the new-programs scenario;
+  keeps existing forms unambiguous; the nouns do join existing declension drills (accepted, Req 2).
+- [x] 7. Docs/specs: `specs/grammar.md` — the #62h part of the new-programs scenario;
   `specs/knowledge-check.md` — mention the topics; `documentation/grammar-new-programs.md` — why the
   lessons follow `numbers-03-time` (ordinal only, no be/po yet), why case 19 stays in Numbers, the new
-  nouns and the no-collision rule. Close-out: add
+  nouns and the no-collision rule. Close-out: add the `#62h` row to
+  `documentation/CHANGELOG.md`, and
   `- <today> — release #62h: program public + rules published once deployed (#62h)` to
   `plans/reminders.md`.
 
+## Review
+
+- [x] Code review passed (round 2)
+- note: `_instruction` parses case display names for the case word and Vns./Dgs. — returns None safely if renamed.
+
 ## Validation
 
-- [ ] Backend: `cd backend && .venv/bin/python -m pytest -q tests/test_grammar_time_quantity.py tests/test_grammar_basic_options.py tests/test_grammar_practice_full_word.py tests/test_knowledge_check.py`
-- [ ] Full backend suite green: `cd backend && .venv/bin/python -m pytest -q`
-- [ ] Types: `cd frontend && npx tsc --noEmit`
-- [ ] Playwright: `cd frontend && npx playwright test tests/grammar-time-quantity.spec.ts tests/grammar-adjectives.spec.ts tests/grammar-bento.spec.ts tests/design-system-parity.spec.ts --reporter=list`
-- [ ] Seed dry-run passes: `cd backend && .venv/bin/python scripts/seed_grammar_program.py data/grammar/programs/time_quantity.json --dry-run`
+- [x] Backend: `cd backend && .venv/bin/python -m pytest -q tests/test_grammar_time_quantity.py tests/test_grammar_basic_options.py tests/test_grammar_practice_full_word.py tests/test_knowledge_check.py`
+- [x] Full backend suite green: `cd backend && .venv/bin/python -m pytest -q`
+- [x] Types: `cd frontend && npx tsc --noEmit`
+- [x] Playwright: `cd frontend && npx playwright test tests/grammar-time-quantity.spec.ts tests/grammar-adjectives.spec.ts tests/grammar-bento.spec.ts tests/design-system-parity.spec.ts --reporter=list`
+- [x] Seed dry-run passes: `cd backend && .venv/bin/python scripts/seed_grammar_program.py data/grammar/programs/time_quantity.json --dry-run`
 - [ ] Leak check right after the real seed: on fluent.lt in a private window and as a free test
   user (prod still runs the old code), the Grammar page shows nothing new — the new program and its lessons are invisible.
-- [ ] SEO diff clean (DoD command).
+- [x] SEO diff clean (DoD command).
 - [ ] Smoke (local, after the seed, as admin): enroll in the hidden «Время и количество», run one
   Basic and one Practice lesson; a Numbers lesson and a Kilmininkas lesson look exactly as before.
-- [ ] Screenshots in `temp_files/screenshots/plan_62h_grammar-time-quantity/`, looked at and
-  described: program card, topic list, a Basic time task, a Basic quantity task with the hint, an
-  Advanced task with the rule card, a Practice time task, a wrong answer — each in **RU and EN**, at
+- [x] Screenshots in `temp_files/screenshots/plan_62h_grammar-time-quantity/`, looked at and
+  described: a Basic time task, a Basic quantity task with the hint, an Advanced task with the rule
+  card, a Practice time task — each in **RU and EN**, at
   **1280px and 375px**.
-- [ ] The built UI matches the approved prototype: the same states side by side
-  (`temp_files/screenshots/plan_62h_grammar-time-quantity-prototype/` vs this plan's screenshots); differences only where
-  agreed in `### Approved decisions`.
 - [ ] Production comparison: Grammar page nav, header, footer intact.
 - [ ] News post written and published via /news-writer (user's call, after the Release steps).
 
@@ -207,10 +202,11 @@ as written; anything the prototype changes is copied into the Requirements befor
 ```bash
 cd backend && .venv/bin/python -m pytest -q
 cd backend && .venv/bin/python scripts/seed_grammar_program.py data/grammar/programs/time_quantity.json --dry-run
+cd backend && .venv/bin/python scripts/seed_grammar_program.py data/grammar/programs/adjectives.json --dry-run
 cd frontend && npx tsc --noEmit
 cd frontend && npx playwright test tests/grammar-time-quantity.spec.ts tests/grammar-adjectives.spec.ts tests/grammar-bento.spec.ts tests/design-system-parity.spec.ts --reporter=list
 cd frontend && rm -rf .next/cache/fetch-cache && npm run build && node scripts/seo-snapshot.mjs --diff ../temp_files/seo/plan_62h-baseline.json
-ls temp_files/screenshots/plan_62h_grammar-time-quantity/ | grep -c png   # expect >= 28 (7 states x RU/EN x 1280/375)
+ls temp_files/screenshots/plan_62h_grammar-time-quantity/ | grep -c png   # expect >= 16 (4 states x RU/EN x 1280/375)
 ```
 
 User-facing checks (must be evidenced by the screenshots above): **both languages RU + EN**,

@@ -18,8 +18,8 @@
     [210, "basic",    "imperative",               20, "Повелительное наклонение"],
     [211, "advanced", "imperative",               30, "Повелительное наклонение"],
     [225, "practice", "imperative",               20, "Повелительное наклонение"],
-    [300, "basic",    "case_governance",          20, "Управление глаголов"],
-    [301, "advanced", "case_governance",          15, "Управление глаголов"]
+    [300, "basic",    "case_governance",          20, "Падежи глаголов"],
+    [301, "advanced", "case_governance",          15, "Падежи глаголов"]
   ],
   "tense_hints": {
     "indicative_present": {

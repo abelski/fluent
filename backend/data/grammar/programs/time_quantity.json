@@ -1,0 +1,1090 @@
+{
+ "format": "time_quantity",
+ "program": {
+  "title": "Время и количество",
+  "title_en": "Time and quantity",
+  "description": "Который час по-литовски и сколько чего: trečia valanda, pusė ketvirtos, nuo devintos iki penktos, puodelis kavos, kilogramas obuolių.",
+  "description_en": "Telling the time and saying how much in Lithuanian: trečia valanda, pusė ketvirtos, nuo devintos iki penktos, puodelis kavos, kilogramas obuolių.",
+  "difficulty": 2,
+  "lesson_filter": [
+   "Laikas ir kiekis"
+  ],
+  "program_type": "cases"
+ },
+ "rules": [
+  {
+   "case_index": 31,
+   "name_ru": "Время: который час?",
+   "name_en": "Time: what time is it?",
+   "question": "Kelinta valanda? (Который час?)",
+   "question_en": "Kelinta valanda? (What time is it?)",
+   "usage": "Час называют порядковым числительным женского рода в именительном падеже — оно согласуется со словом valanda: Dabar trečia valanda (сейчас 3:00). Слово valanda можно опустить: Kelinta valanda? — Penkta.",
+   "usage_en": "The hour is an ordinal numeral, feminine nominative, agreeing with valanda: Dabar trečia valanda (it's 3:00). Valanda can be dropped: Kelinta valanda? — Penkta.",
+   "transform": "pirmas → pirma · antras → antra · trečias → trečia · ketvirtas → ketvirta · dvyliktas → dvylikta",
+   "transform_en": "pirmas → pirma · antras → antra · trečias → trečia · ketvirtas → ketvirta · dvyliktas → dvylikta",
+   "endings_sg": "ж.р.: ‑a, ‑ia (trečia)",
+   "endings_pl": "—",
+   "endings_sg_en": "f.: ‑a, ‑ia (trečia)",
+   "endings_pl_en": "—",
+   "article_slug": "numbers-03-time"
+  },
+  {
+   "case_index": 32,
+   "name_ru": "Время: pusė, nuo … iki",
+   "name_en": "Time: pusė, nuo … iki",
+   "question": "Kelintos? (Которого часа?)",
+   "question_en": "Kelintos? (Of which hour?)",
+   "usage": "Половина часа — pusė + родительный падеж следующего часа: pusė ketvirtos — 3:30 («половина четвёртого»). С … до … — nuo + родительный, iki + родительный: dirbu nuo devintos iki penktos (с 9 до 5).",
+   "usage_en": "Half past — pusė + the genitive of the next hour: pusė ketvirtos is 3:30 (\"half of the fourth\"). From … to … — nuo + genitive, iki + genitive: dirbu nuo devintos iki penktos (from 9 to 5).",
+   "transform": "trečia → trečios · ketvirta → ketvirtos · dvylikta → dvyliktos",
+   "transform_en": "trečia → trečios · ketvirta → ketvirtos · dvylikta → dvyliktos",
+   "endings_sg": "ж.р.: ‑os, ‑ios (trečios)",
+   "endings_pl": "—",
+   "endings_sg_en": "f.: ‑os, ‑ios (trečios)",
+   "endings_pl_en": "—",
+   "article_slug": "numbers-03-time"
+  },
+  {
+   "case_index": 33,
+   "name_ru": "Количество: родительный падеж ед. ч.",
+   "name_en": "Quantity: genitive singular",
+   "question": "Kiek ko? (Сколько чего?)",
+   "question_en": "Kiek ko? (How much of what?)",
+   "usage": "После слов меры и ёмкости (puodelis, stiklinė, butelis, kilogramas, litras, gabalas, kepalas) и после daug, mažai, truputį, šiek tiek, kiek вещественное существительное стоит в родительном падеже единственного числа: puodelis kavos, litras pieno, daug cukraus.",
+   "usage_en": "After measure and container words (puodelis, stiklinė, butelis, kilogramas, litras, gabalas, kepalas) and after daug, mažai, truputį, šiek tiek, kiek, a mass noun takes the genitive singular: puodelis kavos, litras pieno, daug cukraus.",
+   "transform": "kava → kavos · pienas → pieno · sūris → sūrio · cukrus → cukraus · vanduo → vandens",
+   "transform_en": "kava → kavos · pienas → pieno · sūris → sūrio · cukrus → cukraus · vanduo → vandens",
+   "endings_sg": "‑o, ‑io, ‑os, ‑ios, ‑ės, ‑aus, ‑ens",
+   "endings_pl": "—",
+   "endings_sg_en": "‑o, ‑io, ‑os, ‑ios, ‑ės, ‑aus, ‑ens",
+   "endings_pl_en": "—",
+   "article_slug": "daiktavardžiai-linksniavimas"
+  },
+  {
+   "case_index": 34,
+   "name_ru": "Количество: родительный падеж мн. ч.",
+   "name_en": "Quantity: genitive plural",
+   "question": "Kiek ko? (Сколько чего?)",
+   "question_en": "Kiek ko? (How many of what?)",
+   "usage": "Исчисляемые существительные после слов меры и ёмкости, после daug, mažai, kiek и после чисел 10–20 и круглых десятков (dešimt, penkiolika, dvidešimt, trisdešimt; у 21–29 и т. д. падеж определяет последняя цифра) стоят в родительном падеже множественного числа: kilogramas obuolių, dešimt kiaušinių.",
+   "usage_en": "Countable nouns after measure and container words, after daug, mažai, kiek and after 10–20 and round tens (dešimt, penkiolika, dvidešimt, trisdešimt; 21–29 etc. follow the last digit) take the genitive plural: kilogramas obuolių, dešimt kiaušinių.",
+   "transform": "pomidoras → pomidorų · obuolys → obuolių · bulvė → bulvių · morka → morkų",
+   "transform_en": "pomidoras → pomidorų · obuolys → obuolių · bulvė → bulvių · morka → morkų",
+   "endings_sg": "—",
+   "endings_pl": "‑ų, ‑ių",
+   "endings_sg_en": "—",
+   "endings_pl_en": "‑ų, ‑ių",
+   "article_slug": "daiktavardžiai-linksniavimas"
+  }
+ ],
+ "sentences": [
+  {
+   "case_index": 31,
+   "display": "Tuoj bus treči___ valanda.",
+   "answer_ending": "a",
+   "full_word": "trečia",
+   "russian": "Скоро будет 3:00.",
+   "english": "It will soon be 3:00.",
+   "source": "tatoeba:1605054"
+  },
+  {
+   "case_index": 31,
+   "display": "Ar tau tinka šešt___ valanda?",
+   "answer_ending": "a",
+   "full_word": "šešta",
+   "russian": "Тебе подходит 6:00?",
+   "english": "Does 6:00 suit you?",
+   "source": "tatoeba:7145575"
+  },
+  {
+   "case_index": 31,
+   "display": "Dabar penkt___ valanda vakaro.",
+   "answer_ending": "a",
+   "full_word": "penkta",
+   "russian": "Сейчас 5:00 вечера.",
+   "english": "It's 5:00 in the evening.",
+   "source": "tatoeba:7916906"
+  },
+  {
+   "case_index": 31,
+   "display": "Jau dešimt___ valanda.",
+   "answer_ending": "a",
+   "full_word": "dešimta",
+   "russian": "Уже 10:00.",
+   "english": "It's already 10:00.",
+   "source": "tatoeba:8086368"
+  },
+  {
+   "case_index": 31,
+   "display": "Jau vienuolikt___ valanda.",
+   "answer_ending": "a",
+   "full_word": "vienuolikta",
+   "russian": "Уже 11:00.",
+   "english": "It's already 11:00.",
+   "source": "tatoeba:8241667"
+  },
+  {
+   "case_index": 31,
+   "display": "Dabar treči___ valanda.",
+   "answer_ending": "a",
+   "full_word": "trečia",
+   "russian": "Сейчас 3:00.",
+   "english": "It's 3:00.",
+   "source": "tatoeba:9240468"
+  },
+  {
+   "case_index": 31,
+   "display": "Jau ketvirt___ valanda.",
+   "answer_ending": "a",
+   "full_word": "ketvirta",
+   "russian": "Уже 4:00.",
+   "english": "It's already 4:00.",
+   "source": "tatoeba:12116383"
+  },
+  {
+   "case_index": 31,
+   "display": "Dabar antr___ valanda nakties.",
+   "answer_ending": "a",
+   "full_word": "antra",
+   "russian": "Сейчас 2:00 ночи.",
+   "english": "It's 2:00 at night.",
+   "source": "tatoeba:12656547"
+  },
+  {
+   "case_index": 31,
+   "display": "Dabar pirm___ valanda.",
+   "answer_ending": "a",
+   "full_word": "pirma",
+   "russian": "Сейчас 1:00.",
+   "english": "It's 1:00.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Kelinta valanda? — Septint___.",
+   "answer_ending": "a",
+   "full_word": "septinta",
+   "russian": "Который час? — 7:00.",
+   "english": "What time is it? — 7:00.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Dabar aštunt___ valanda ryto.",
+   "answer_ending": "a",
+   "full_word": "aštunta",
+   "russian": "Сейчас 8:00 утра.",
+   "english": "It's 8:00 in the morning.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Jau devint___ valanda, laikas eiti į darbą.",
+   "answer_ending": "a",
+   "full_word": "devinta",
+   "russian": "Уже 9:00, пора идти на работу.",
+   "english": "It's already 9:00, time to go to work.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Dabar dvylikt___ valanda.",
+   "answer_ending": "a",
+   "full_word": "dvylikta",
+   "russian": "Сейчас 12:00.",
+   "english": "It's 12:00.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Kai buvo penkt___ valanda, mes grįžome namo.",
+   "answer_ending": "a",
+   "full_word": "penkta",
+   "russian": "Когда было 5:00, мы вернулись домой.",
+   "english": "When it was 5:00, we came back home.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Buvo jau vienuolikt___ valanda vakaro.",
+   "answer_ending": "a",
+   "full_word": "vienuolikta",
+   "russian": "Было уже 11:00 вечера.",
+   "english": "It was already 11:00 in the evening.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Mano laikrodis rodo, kad dabar šešt___ valanda.",
+   "answer_ending": "a",
+   "full_word": "šešta",
+   "russian": "Мои часы показывают, что сейчас 6:00.",
+   "english": "My watch says it's 6:00.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Gal jau septint___ valanda?",
+   "answer_ending": "a",
+   "full_word": "septinta",
+   "russian": "Может, уже 7:00?",
+   "english": "Maybe it's already 7:00?",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Dabar tik pirm___ valanda nakties.",
+   "answer_ending": "a",
+   "full_word": "pirma",
+   "russian": "Сейчас только 1:00 ночи.",
+   "english": "It's only 1:00 at night.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Jau antr___ valanda, o jo vis dar nėra.",
+   "answer_ending": "a",
+   "full_word": "antra",
+   "russian": "Уже 2:00, а его всё ещё нет.",
+   "english": "It's already 2:00 and he still isn't here.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Kelinta dabar valanda? Ketvirt___.",
+   "answer_ending": "a",
+   "full_word": "ketvirta",
+   "russian": "Который сейчас час? 4:00.",
+   "english": "What time is it now? 4:00.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Dabar devint___ valanda vakaro.",
+   "answer_ending": "a",
+   "full_word": "devinta",
+   "russian": "Сейчас 9:00 вечера.",
+   "english": "It's 9:00 in the evening.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Buvo aštunt___ valanda, kai jis atėjo.",
+   "answer_ending": "a",
+   "full_word": "aštunta",
+   "russian": "Было 8:00, когда он пришёл.",
+   "english": "It was 8:00 when he came.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Kai bus dešimt___ valanda, paskambink man.",
+   "answer_ending": "a",
+   "full_word": "dešimta",
+   "russian": "Когда будет 10:00, позвони мне.",
+   "english": "When it's 10:00, call me.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Jau dvylikt___ valanda, einam pietauti.",
+   "answer_ending": "a",
+   "full_word": "dvylikta",
+   "russian": "Уже 12:00, пойдём обедать.",
+   "english": "It's already 12:00, let's go to lunch.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Lauke tamsu, nors tik penkt___ valanda.",
+   "answer_ending": "a",
+   "full_word": "penkta",
+   "russian": "На улице темно, хотя только 5:00.",
+   "english": "It's dark outside, although it's only 5:00.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Mama sako, kad jau treči___ valanda.",
+   "answer_ending": "a",
+   "full_word": "trečia",
+   "russian": "Мама говорит, что уже 3:00.",
+   "english": "Mom says it's already 3:00.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Dabar lygiai šešt___ valanda.",
+   "answer_ending": "a",
+   "full_word": "šešta",
+   "russian": "Сейчас ровно 6:00.",
+   "english": "It's exactly 6:00.",
+   "source": "own"
+  },
+  {
+   "case_index": 31,
+   "display": "Jau vienuolikt___ valanda ryto.",
+   "answer_ending": "a",
+   "full_word": "vienuolikta",
+   "russian": "Уже 11:00 утра.",
+   "english": "It's already 11:00 in the morning.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Aš kasdien dirbu nuo devint___ iki penktos.",
+   "answer_ending": "os",
+   "full_word": "devintos",
+   "russian": "Я каждый день работаю с 9 до 5.",
+   "english": "I work from 9 to 5 every day.",
+   "source": "tatoeba:1634264"
+  },
+  {
+   "case_index": 32,
+   "display": "Mes dirbame nuo devintos iki penkt___.",
+   "answer_ending": "os",
+   "full_word": "penktos",
+   "russian": "Мы работаем с 9 до 5.",
+   "english": "We work from 9 to 5.",
+   "source": "tatoeba:7730616"
+  },
+  {
+   "case_index": 32,
+   "display": "Dabar pusė penkt___ ryto.",
+   "answer_ending": "os",
+   "full_word": "penktos",
+   "russian": "Сейчас 4:30 утра.",
+   "english": "It's 4:30 in the morning.",
+   "source": "tatoeba:12656573"
+  },
+  {
+   "case_index": 32,
+   "display": "Aš tavęs lauksiu iki šešt___ valandos.",
+   "answer_ending": "os",
+   "full_word": "šeštos",
+   "russian": "Я буду ждать тебя до 6:00.",
+   "english": "I'll wait for you until 6:00.",
+   "source": "tatoeba:6995954"
+  },
+  {
+   "case_index": 32,
+   "display": "Dirbsi iki dešimt___ valandos?",
+   "answer_ending": "os",
+   "full_word": "dešimtos",
+   "russian": "Будешь работать до 10:00?",
+   "english": "Will you work until 10:00?",
+   "source": "tatoeba:3323071"
+  },
+  {
+   "case_index": 32,
+   "display": "Būk namuose iki šešt___.",
+   "answer_ending": "os",
+   "full_word": "šeštos",
+   "russian": "Будь дома до 6.",
+   "english": "Be home by 6.",
+   "source": "tatoeba:8554815"
+  },
+  {
+   "case_index": 32,
+   "display": "Aš čia laukiu nuo treči___ valandos.",
+   "answer_ending": "os",
+   "full_word": "trečios",
+   "russian": "Я жду здесь с 3:00.",
+   "english": "I've been waiting here since 3:00.",
+   "source": "tatoeba:8863451"
+  },
+  {
+   "case_index": 32,
+   "display": "Palauk iki septint___ valandos.",
+   "answer_ending": "os",
+   "full_word": "septintos",
+   "russian": "Подожди до 7:00.",
+   "english": "Wait until 7:00.",
+   "source": "tatoeba:9474637"
+  },
+  {
+   "case_index": 32,
+   "display": "Aš čia esu nuo penkt___ valandos.",
+   "answer_ending": "os",
+   "full_word": "penktos",
+   "russian": "Я здесь с 5:00.",
+   "english": "I've been here since 5:00.",
+   "source": "tatoeba:12197468"
+  },
+  {
+   "case_index": 32,
+   "display": "Aš tavęs lauksiu iki aštunt___ valandos.",
+   "answer_ending": "os",
+   "full_word": "aštuntos",
+   "russian": "Я буду ждать тебя до 8:00.",
+   "english": "I'll wait for you until 8:00.",
+   "source": "tatoeba:12280672"
+  },
+  {
+   "case_index": 32,
+   "display": "Darbas turi būti baigtas iki dvylikt___ valandos.",
+   "answer_ending": "os",
+   "full_word": "dvyliktos",
+   "russian": "Работа должна быть закончена до 12:00.",
+   "english": "The work must be finished by 12:00.",
+   "source": "tatoeba:13312147"
+  },
+  {
+   "case_index": 32,
+   "display": "Nuo dešimt___ vakaro iki šeštos ryto reikia miegoti.",
+   "answer_ending": "os",
+   "full_word": "dešimtos",
+   "russian": "С 10 вечера до 6 утра нужно спать.",
+   "english": "From 10 p.m. to 6 a.m. you should sleep.",
+   "source": "tatoeba:12954522"
+  },
+  {
+   "case_index": 32,
+   "display": "Parduotuvė dirba nuo aštunt___ iki dešimtos.",
+   "answer_ending": "os",
+   "full_word": "aštuntos",
+   "russian": "Магазин работает с 8 до 10.",
+   "english": "The shop is open from 8 to 10.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Pamoka vyksta nuo pirm___ iki trečios.",
+   "answer_ending": "os",
+   "full_word": "pirmos",
+   "russian": "Урок идёт с 1 до 3.",
+   "english": "The class runs from 1 to 3.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Susitikimas bus nuo antros iki ketvirt___.",
+   "answer_ending": "os",
+   "full_word": "ketvirtos",
+   "russian": "Встреча будет с 2 до 4.",
+   "english": "The meeting will be from 2 to 4.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Kavinė dirba nuo septint___ ryto.",
+   "answer_ending": "os",
+   "full_word": "septintos",
+   "russian": "Кафе работает с 7 утра.",
+   "english": "The café is open from 7 in the morning.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Biblioteka dirba iki aštuntos, o muziejus iki šešt___.",
+   "answer_ending": "os",
+   "full_word": "šeštos",
+   "russian": "Библиотека работает до 8, а музей до 6.",
+   "english": "The library is open until 8 and the museum until 6.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Dabar pusė treči___.",
+   "answer_ending": "os",
+   "full_word": "trečios",
+   "russian": "Сейчас 2:30.",
+   "english": "It's 2:30.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Jau pusė dvylikt___.",
+   "answer_ending": "os",
+   "full_word": "dvyliktos",
+   "russian": "Уже 11:30.",
+   "english": "It's already 11:30.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Kelinta valanda? Pusė ketvirt___.",
+   "answer_ending": "os",
+   "full_word": "ketvirtos",
+   "russian": "Который час? 3:30.",
+   "english": "What time is it? 3:30.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Jau pusė pirm___, einam pietauti.",
+   "answer_ending": "os",
+   "full_word": "pirmos",
+   "russian": "Уже 12:30, пойдём обедать.",
+   "english": "It's already 12:30, let's go to lunch.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Dabar pusė aštunt___ ryto.",
+   "answer_ending": "os",
+   "full_word": "aštuntos",
+   "russian": "Сейчас 7:30 утра.",
+   "english": "It's 7:30 in the morning.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Buvo pusė dešimt___ vakaro.",
+   "answer_ending": "os",
+   "full_word": "dešimtos",
+   "russian": "Было 9:30 вечера.",
+   "english": "It was 9:30 in the evening.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Dabar tik pusė šešt___.",
+   "answer_ending": "os",
+   "full_word": "šeštos",
+   "russian": "Сейчас только 5:30.",
+   "english": "It's only 5:30.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Jau pusė vienuolikt___, laikas miegoti.",
+   "answer_ending": "os",
+   "full_word": "vienuoliktos",
+   "russian": "Уже 10:30, пора спать.",
+   "english": "It's already 10:30, time to sleep.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Dabar pusė antr___ nakties.",
+   "answer_ending": "os",
+   "full_word": "antros",
+   "russian": "Сейчас 1:30 ночи.",
+   "english": "It's 1:30 at night.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Jau pusė devint___, o autobuso vis dar nėra.",
+   "answer_ending": "os",
+   "full_word": "devintos",
+   "russian": "Уже 8:30, а автобуса всё ещё нет.",
+   "english": "It's already 8:30 and the bus still isn't here.",
+   "source": "own"
+  },
+  {
+   "case_index": 32,
+   "display": "Dabar pusė penkt___ po pietų.",
+   "answer_ending": "os",
+   "full_word": "penktos",
+   "russian": "Сейчас 4:30 дня.",
+   "english": "It's 4:30 in the afternoon.",
+   "source": "own"
+  },
+  {
+   "case_index": 33,
+   "display": "Prašyčiau stiklinės pien___.",
+   "answer_ending": "o",
+   "full_word": "pieno",
+   "russian": "Мне бы стакан молока.",
+   "english": "I'd like a glass of milk.",
+   "source": "tatoeba:627556"
+  },
+  {
+   "case_index": 33,
+   "display": "Atnešiu butelį vyn___.",
+   "answer_ending": "o",
+   "full_word": "vyno",
+   "russian": "Я принесу бутылку вина.",
+   "english": "I'll bring a bottle of wine.",
+   "source": "tatoeba:1219899"
+  },
+  {
+   "case_index": 33,
+   "display": "Ar norėtum puodelio kav___?",
+   "answer_ending": "os",
+   "full_word": "kavos",
+   "russian": "Хочешь чашку кофе?",
+   "english": "Would you like a cup of coffee?",
+   "source": "tatoeba:1602813"
+  },
+  {
+   "case_index": 33,
+   "display": "Paprašyčiau kepalo duon___.",
+   "answer_ending": "os",
+   "full_word": "duonos",
+   "russian": "Мне бы буханку хлеба.",
+   "english": "I'd like a loaf of bread.",
+   "source": "tatoeba:1605630"
+  },
+  {
+   "case_index": 33,
+   "display": "Jis metė šuniui gabalą mės___.",
+   "answer_ending": "os",
+   "full_word": "mėsos",
+   "russian": "Он бросил собаке кусок мяса.",
+   "english": "He threw the dog a piece of meat.",
+   "source": "tatoeba:1631837"
+  },
+  {
+   "case_index": 33,
+   "display": "Tu geri per daug kav___.",
+   "answer_ending": "os",
+   "full_word": "kavos",
+   "russian": "Ты пьёшь слишком много кофе.",
+   "english": "You drink too much coffee.",
+   "source": "tatoeba:2209255"
+  },
+  {
+   "case_index": 33,
+   "display": "Gal galėčiau gauti stiklinę arbat___?",
+   "answer_ending": "os",
+   "full_word": "arbatos",
+   "russian": "Можно мне стакан чая?",
+   "english": "Could I get a glass of tea?",
+   "source": "tatoeba:2668416"
+  },
+  {
+   "case_index": 33,
+   "display": "Ar gali man duoti puodelį arbat___?",
+   "answer_ending": "os",
+   "full_word": "arbatos",
+   "russian": "Можешь дать мне чашку чая?",
+   "english": "Can you give me a cup of tea?",
+   "source": "tatoeba:2744617"
+  },
+  {
+   "case_index": 33,
+   "display": "Tomas nevalgo daug mės___.",
+   "answer_ending": "os",
+   "full_word": "mėsos",
+   "russian": "Том не ест много мяса.",
+   "english": "Tom doesn't eat much meat.",
+   "source": "tatoeba:3452252"
+  },
+  {
+   "case_index": 33,
+   "display": "Gal galite paskolinti man truputį cukr___?",
+   "answer_ending": "aus",
+   "full_word": "cukraus",
+   "russian": "Не одолжите мне немного сахара?",
+   "english": "Could you lend me a little sugar?",
+   "source": "tatoeba:3206314"
+  },
+  {
+   "case_index": 33,
+   "display": "Man reikia šiek tiek pien___.",
+   "answer_ending": "o",
+   "full_word": "pieno",
+   "russian": "Мне нужно немного молока.",
+   "english": "I need a little milk.",
+   "source": "tatoeba:3949151"
+  },
+  {
+   "case_index": 33,
+   "display": "Kiek kainuoja litras pien___?",
+   "answer_ending": "o",
+   "full_word": "pieno",
+   "russian": "Сколько стоит литр молока?",
+   "english": "How much is a litre of milk?",
+   "source": "tatoeba:5989127"
+  },
+  {
+   "case_index": 33,
+   "display": "Duok man butelį vyn___.",
+   "answer_ending": "o",
+   "full_word": "vyno",
+   "russian": "Дай мне бутылку вина.",
+   "english": "Give me a bottle of wine.",
+   "source": "tatoeba:6997188"
+  },
+  {
+   "case_index": 33,
+   "display": "Gal įdėkime dar truputį drusk___?",
+   "answer_ending": "os",
+   "full_word": "druskos",
+   "russian": "Может, добавим ещё немного соли?",
+   "english": "Shall we add a little more salt?",
+   "source": "tatoeba:7779554"
+  },
+  {
+   "case_index": 33,
+   "display": "Pridėk truputį drusk___.",
+   "answer_ending": "os",
+   "full_word": "druskos",
+   "russian": "Добавь немного соли.",
+   "english": "Add a little salt.",
+   "source": "tatoeba:7963897"
+  },
+  {
+   "case_index": 33,
+   "display": "Įpilk truputį pien___.",
+   "answer_ending": "o",
+   "full_word": "pieno",
+   "russian": "Налей немного молока.",
+   "english": "Pour in a little milk.",
+   "source": "tatoeba:8070121"
+  },
+  {
+   "case_index": 33,
+   "display": "Kiek cukr___ tu nupirkai?",
+   "answer_ending": "aus",
+   "full_word": "cukraus",
+   "russian": "Сколько сахара ты купил?",
+   "english": "How much sugar did you buy?",
+   "source": "tatoeba:8773825"
+  },
+  {
+   "case_index": 33,
+   "display": "Prašau, paruošk man puodelį kav___.",
+   "answer_ending": "os",
+   "full_word": "kavos",
+   "russian": "Пожалуйста, сделай мне чашку кофе.",
+   "english": "Please make me a cup of coffee.",
+   "source": "tatoeba:9690613"
+  },
+  {
+   "case_index": 33,
+   "display": "Tomas į arbatą deda labai daug cukr___.",
+   "answer_ending": "aus",
+   "full_word": "cukraus",
+   "russian": "Том кладёт в чай очень много сахара.",
+   "english": "Tom puts a lot of sugar in his tea.",
+   "source": "tatoeba:9739957"
+  },
+  {
+   "case_index": 33,
+   "display": "Aš noriu stiklinės vand___.",
+   "answer_ending": "ens",
+   "full_word": "vandens",
+   "russian": "Я хочу стакан воды.",
+   "english": "I want a glass of water.",
+   "source": "tatoeba:9705124"
+  },
+  {
+   "case_index": 33,
+   "display": "Liko mažai vand___.",
+   "answer_ending": "ens",
+   "full_word": "vandens",
+   "russian": "Осталось мало воды.",
+   "english": "There's little water left.",
+   "source": "tatoeba:10719763"
+  },
+  {
+   "case_index": 33,
+   "display": "Nupirk kilogramą sūr___.",
+   "answer_ending": "io",
+   "full_word": "sūrio",
+   "russian": "Купи килограмм сыра.",
+   "english": "Buy a kilo of cheese.",
+   "source": "own"
+  },
+  {
+   "case_index": 33,
+   "display": "Ant stalo yra gabalas sūr___.",
+   "answer_ending": "io",
+   "full_word": "sūrio",
+   "russian": "На столе кусок сыра.",
+   "english": "There's a piece of cheese on the table.",
+   "source": "own"
+  },
+  {
+   "case_index": 33,
+   "display": "Man reikia pakelio sviest___.",
+   "answer_ending": "o",
+   "full_word": "sviesto",
+   "russian": "Мне нужна пачка масла.",
+   "english": "I need a pack of butter.",
+   "source": "own"
+  },
+  {
+   "case_index": 33,
+   "display": "Į košę įdėk šaukštą sviest___.",
+   "answer_ending": "o",
+   "full_word": "sviesto",
+   "russian": "Положи в кашу ложку масла.",
+   "english": "Put a spoonful of butter in the porridge.",
+   "source": "own"
+  },
+  {
+   "case_index": 33,
+   "display": "Nupirkau du kepalus duon___.",
+   "answer_ending": "os",
+   "full_word": "duonos",
+   "russian": "Я купил две буханки хлеба.",
+   "english": "I bought two loaves of bread.",
+   "source": "own"
+  },
+  {
+   "case_index": 33,
+   "display": "Išgėriau puodelį arbat___.",
+   "answer_ending": "os",
+   "full_word": "arbatos",
+   "russian": "Я выпил чашку чая.",
+   "english": "I drank a cup of tea.",
+   "source": "own"
+  },
+  {
+   "case_index": 33,
+   "display": "Duok man kilogramą mės___.",
+   "answer_ending": "os",
+   "full_word": "mėsos",
+   "russian": "Дай мне килограмм мяса.",
+   "english": "Give me a kilo of meat.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Mes suvalgėme labai daug obuol___.",
+   "answer_ending": "ių",
+   "full_word": "obuolių",
+   "russian": "Мы съели очень много яблок.",
+   "english": "We ate a lot of apples.",
+   "source": "tatoeba:1572463"
+  },
+  {
+   "case_index": 34,
+   "display": "Duok man pusę kilogramo pomidor___.",
+   "answer_ending": "ų",
+   "full_word": "pomidorų",
+   "russian": "Дай мне полкило помидоров.",
+   "english": "Give me half a kilo of tomatoes.",
+   "source": "tatoeba:1605559"
+  },
+  {
+   "case_index": 34,
+   "display": "Ji jam nupirko šiek tiek saldain___.",
+   "answer_ending": "ių",
+   "full_word": "saldainių",
+   "russian": "Она купила ему немного конфет.",
+   "english": "She bought him some sweets.",
+   "source": "tatoeba:2653833"
+  },
+  {
+   "case_index": 34,
+   "display": "Prašau man duoti kilogramą pomidor___.",
+   "answer_ending": "ų",
+   "full_word": "pomidorų",
+   "russian": "Дайте мне, пожалуйста, килограмм помидоров.",
+   "english": "Please give me a kilo of tomatoes.",
+   "source": "tatoeba:6725052"
+  },
+  {
+   "case_index": 34,
+   "display": "Mama pirko dėžutę pomidor___.",
+   "answer_ending": "ų",
+   "full_word": "pomidorų",
+   "russian": "Мама купила коробку помидоров.",
+   "english": "Mom bought a box of tomatoes.",
+   "source": "tatoeba:6742553"
+  },
+  {
+   "case_index": 34,
+   "display": "Kiek kainuoja kilogramas obuol___?",
+   "answer_ending": "ių",
+   "full_word": "obuolių",
+   "russian": "Сколько стоит килограмм яблок?",
+   "english": "How much is a kilo of apples?",
+   "source": "tatoeba:6827355"
+  },
+  {
+   "case_index": 34,
+   "display": "Mano mama išvirė dešimt kiaušin___.",
+   "answer_ending": "ių",
+   "full_word": "kiaušinių",
+   "russian": "Моя мама сварила десять яиц.",
+   "english": "My mom boiled ten eggs.",
+   "source": "tatoeba:6993255"
+  },
+  {
+   "case_index": 34,
+   "display": "Tomas pirko tris kilogramus obuol___.",
+   "answer_ending": "ių",
+   "full_word": "obuolių",
+   "russian": "Том купил три килограмма яблок.",
+   "english": "Tom bought three kilos of apples.",
+   "source": "tatoeba:7192681"
+  },
+  {
+   "case_index": 34,
+   "display": "Mes daug bulv___ valgome.",
+   "answer_ending": "ių",
+   "full_word": "bulvių",
+   "russian": "Мы едим много картошки.",
+   "english": "We eat a lot of potatoes.",
+   "source": "tatoeba:9312210"
+  },
+  {
+   "case_index": 34,
+   "display": "Aš pirkau tuziną kiaušin___.",
+   "answer_ending": "ių",
+   "full_word": "kiaušinių",
+   "russian": "Я купил дюжину яиц.",
+   "english": "I bought a dozen eggs.",
+   "source": "tatoeba:10137302"
+  },
+  {
+   "case_index": 34,
+   "display": "Aš nusipirkau dešimt kiaušin___.",
+   "answer_ending": "ių",
+   "full_word": "kiaušinių",
+   "russian": "Я купил десять яиц.",
+   "english": "I bought ten eggs.",
+   "source": "tatoeba:10147734"
+  },
+  {
+   "case_index": 34,
+   "display": "Nupirk kilogramą mork___.",
+   "answer_ending": "ų",
+   "full_word": "morkų",
+   "russian": "Купи килограмм моркови.",
+   "english": "Buy a kilo of carrots.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Turguje nupirkau dėžutę brašk___.",
+   "answer_ending": "ių",
+   "full_word": "braškių",
+   "russian": "На рынке я купил коробку клубники.",
+   "english": "I bought a box of strawberries at the market.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Nupirkau maišą bulv___.",
+   "answer_ending": "ių",
+   "full_word": "bulvių",
+   "russian": "Я купил мешок картошки.",
+   "english": "I bought a sack of potatoes.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Vaikai suvalgė daug saldain___.",
+   "answer_ending": "ių",
+   "full_word": "saldainių",
+   "russian": "Дети съели много конфет.",
+   "english": "The children ate a lot of sweets.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Šaldytuve liko mažai kiaušin___.",
+   "answer_ending": "ių",
+   "full_word": "kiaušinių",
+   "russian": "В холодильнике осталось мало яиц.",
+   "english": "There are few eggs left in the fridge.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Kiek agurk___ tau reikia?",
+   "answer_ending": "ų",
+   "full_word": "agurkų",
+   "russian": "Сколько огурцов тебе нужно?",
+   "english": "How many cucumbers do you need?",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Į salotas reikia kilogramo agurk___.",
+   "answer_ending": "ų",
+   "full_word": "agurkų",
+   "russian": "Для салата нужен килограмм огурцов.",
+   "english": "The salad needs a kilo of cucumbers.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Nupirkau maišelį kriauš___.",
+   "answer_ending": "ių",
+   "full_word": "kriaušių",
+   "russian": "Я купил пакет груш.",
+   "english": "I bought a bag of pears.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Ant stalo stovi dubenėlis vyšn___.",
+   "answer_ending": "ių",
+   "full_word": "vyšnių",
+   "russian": "На столе стоит миска вишни.",
+   "english": "There's a bowl of cherries on the table.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Duok man pusę kilogramo slyv___.",
+   "answer_ending": "ų",
+   "full_word": "slyvų",
+   "russian": "Дай мне полкило слив.",
+   "english": "Give me half a kilo of plums.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Kiek kainuoja kilogramas citrin___?",
+   "answer_ending": "ų",
+   "full_word": "citrinų",
+   "russian": "Сколько стоит килограмм лимонов?",
+   "english": "How much is a kilo of lemons?",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Kepykloje nupirkau dešimt bandel___.",
+   "answer_ending": "ių",
+   "full_word": "bandelių",
+   "russian": "В пекарне я купил десять булочек.",
+   "english": "I bought ten buns at the bakery.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Vakarienei išviriau penkiolika dešrel___.",
+   "answer_ending": "ių",
+   "full_word": "dešrelių",
+   "russian": "На ужин я сварил пятнадцать сосисок.",
+   "english": "I boiled fifteen sausages for dinner.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Sode užaugo daug kriauš___.",
+   "answer_ending": "ių",
+   "full_word": "kriaušių",
+   "russian": "В саду выросло много груш.",
+   "english": "A lot of pears grew in the garden.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Turguje daug pomidor___ ir agurkų.",
+   "answer_ending": "ų",
+   "full_word": "pomidorų",
+   "russian": "На рынке много помидоров и огурцов.",
+   "english": "There are lots of tomatoes and cucumbers at the market.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Rūsyje liko mažai bulv___.",
+   "answer_ending": "ių",
+   "full_word": "bulvių",
+   "russian": "В подвале осталось мало картошки.",
+   "english": "There are few potatoes left in the cellar.",
+   "source": "own"
+  },
+  {
+   "case_index": 34,
+   "display": "Pakelyje yra dvidešimt saldain___.",
+   "answer_ending": "ių",
+   "full_word": "saldainių",
+   "russian": "В пакетике двадцать конфет.",
+   "english": "There are twenty sweets in the bag.",
+   "source": "own"
+  }
+ ]
+}

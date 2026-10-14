@@ -657,6 +657,19 @@ def _instruction(kind: str, detail, has_options: bool) -> tuple[str, str] | None
             ru = f"{verb_ru} правильную форму {word[0]}"
             en = f"{verb_en} the right form of the {word[1]}"
             return (f"{ru}: {ru_cases}", f"{en}: {en_cases}") if ru_cases else (ru, en)
+        if groups == {"Laikas ir kiekis"}:  # #62h: case/number are inside the name
+            parts = []
+            for name, _ in infos:
+                case = next((c for c in _CASE_RU if c in name), None)
+                num = "Vienaskaita" if name.endswith("Vns.") else "Daugiskaita" if name.endswith("Dgs.") else None
+                if case:
+                    parts.append((_CASE_RU[case] + (f", {_NUMBER_RU[num]}" if num else ""),
+                                  _CASE_EN[case] + (f", {_NUMBER_EN[num]}" if num else "")))
+            if not parts:
+                return None
+            ru = " / ".join(dict.fromkeys(r for r, _ in parts))
+            en = " / ".join(dict.fromkeys(e for _, e in parts))
+            return f"{verb_ru} правильную форму: {ru}", f"{verb_en} the right form: {en}"
         pairs = [(n, num) for n, num in infos if n in _CASE_RU and num in _NUMBER_RU]
         if not pairs:
             return None
