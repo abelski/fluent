@@ -283,7 +283,7 @@ LESSONS = [
             ("Ingai patinka tvarkyti namus.", "b"),
             ("Namus Inga tvarko viena.", "b"),
             ("Ingos vyras plauna indus.", "a"),
-            ("Šiukšles išneša Ingos duktė.", "a"),
+            ("Šiukšles išneša Ingos duktė.", "b"),
         ],
     },
     {
