@@ -1,9 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { BACKEND_URL, getToken, getGrammarPrograms, enrollGrammarProgram, unenrollGrammarProgram, saveGrammarLessonResult, type GrammarProgramSummary } from '../../../lib/api';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  BACKEND_URL, getToken, getGrammarPrograms, getGrammarRemindTasks, enrollGrammarProgram, unenrollGrammarProgram,
+  saveGrammarLessonResult, type GrammarProgramSummary,
+} from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
@@ -12,14 +15,16 @@ import PageShell from '../components/PageShell';
 // The exercise screen itself lives in GrammarTaskRunner so the combined
 // continue-session can reuse it; this page keeps the lesson list and done screen.
 import GrammarTaskRunner, { type Task } from '../components/GrammarTaskRunner';
-// #53 — the lesson list's hero / chips / bento / topic cards.
+// #66 — the overview («В процессе» / «Завершённые» / «Другие программы») and the program
+// page (`?program=<id>`). See documentation/overview-pages.md.
 import {
-  GrammarHero, ProgramChips, FeaturedCard, ProgramStack, TopicsSection,
-  featuredFor, isPassed, programTitle, type Lesson, type LessonsByProgram,
+  GrammarOverviewBody, GrammarOverviewHero, GrammarProgramPage, buildGrammarModel, isPassed, programHref, programTitle,
+  type Lesson,
 } from '../components/GrammarOverview';
-import { BENTO_GRID, ConfirmDialog, ErrorLine } from '../components/BentoParts';
+import { ConfirmDialog } from '../components/BentoParts';
+import { OverviewNotice } from '../components/ProgramOverview';
 
-// «Напомни что я мог забыть» (#26) — a pseudo-lesson through the same startLesson
+// «Повторить пройденное» (#26, #66) — a pseudo-lesson through the same startLesson
 // flow. id=0 is the sentinel REMIND_LESSON_ID used server-side for the saved
 // result; it never matches a real lesson id, so it can't collide with `lessons`.
 const REMIND_LESSON: Lesson = {
@@ -68,17 +73,31 @@ function filterLessonsForProgram(
 }
 
 export default function GrammarPage() {
+  // useSearchParams needs a Suspense boundary under static export — same as inbox/page.tsx.
+  return (
+    <Suspense fallback={<PageShell>{null}</PageShell>}>
+      <GrammarPageInner />
+    </Suspense>
+  );
+}
+
+function GrammarPageInner() {
   const { tr, lang } = useT();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewId = Number(searchParams.get('program')) || null;
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [caseGroups, setCaseGroups] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [programs, setPrograms] = useState<GrammarProgramSummary[]>([]);
   const [programsLoading, setProgramsLoading] = useState(true);
-  const [selected, setSelected] = useState<number | 'all'>('all');
   const [confirmId, setConfirmId] = useState<number | null>(null);
-  // Enroll/unenroll failure line under the chips; cleared on the next action.
-  const [actionError, setActionError] = useState(false);
+  // The program just added from the catalogue — its page shows «✓ … · Отменить».
+  const [justAdded, setJustAdded] = useState<number | null>(null);
+  // Enroll/unenroll failure, or a review with nothing to draw from; cleared on the next action.
+  const [notice, setNotice] = useState<'action' | 'remind' | null>(null);
+  // The program a review run is scoped to (#66) — sent as `program_id` to remind.
+  const [remindProgram, setRemindProgram] = useState<number | null>(null);
 
   // Exercise state — the run itself lives in GrammarTaskRunner; the page only keeps
   // what its own done screen needs (final score and TAK's final mood).
@@ -126,30 +145,41 @@ export default function GrammarPage() {
       .finally(() => setProgramsLoading(false));
   }, []);
 
+  // «Добавить» enrolls and opens the program page with «✓ … теперь в твоих программах».
   async function handleEnroll(programId: number) {
     // Guests go to sign in; OAuth always lands on /dashboard (no return here).
     if (!getToken()) { router.push('/login'); return; }
-    setActionError(false);
+    setNotice(null);
     try {
       await enrollGrammarProgram(programId);
       setPrograms((prev) => prev.map((p) => p.id === programId ? { ...p, enrolled: true } : p));
-      setSelected(programId);
+      setJustAdded(programId);
+      router.push(programHref(programId));
       fetchLessons(); // locks change on enroll
     } catch (e) {
       console.error(e);
-      setActionError(true);
+      setNotice('action');
     }
   }
 
+  // Undo / «Убрать программу»: unenroll and go back to the overview.
   async function handleUnenroll(programId: number) {
-    setActionError(false);
+    setNotice(null);
     try {
       await unenrollGrammarProgram(programId);
       setPrograms((prev) => prev.map((p) => p.id === programId ? { ...p, enrolled: false } : p));
+      setJustAdded(null);
+      router.push('/dashboard/grammar');
+      fetchLessons();
     } catch (e) {
       console.error(e);
-      setActionError(true);
+      setNotice('action');
     }
+  }
+
+  function startReview(programId: number) {
+    setRemindProgram(programId);
+    startLesson(REMIND_LESSON, programId);
   }
 
   function isVerbLesson(lessonId: number) { return lessonId >= 200; }
@@ -160,22 +190,37 @@ export default function GrammarPage() {
       .catch((err) => console.error('API error:', err));
   }
 
-  function startLesson(lesson: Lesson) {
+  function startLesson(lesson: Lesson, reviewProgramId: number | null = remindProgram) {
     setExerciseLoading(true);
     setActiveLesson(lesson);
     setCorrect(0);
     setMood(MOOD_NEUTRAL);
     setDone(false);
     setBlocked(null);
+    setNotice(null);
+
+    // The remind pseudo-lesson (id 0, #26) has its own endpoint — it isn't a real
+    // LESSON_CONFIG entry, so /grammar/lessons/0/tasks would just 404. #66 scopes it to
+    // the program the review button belongs to.
+    if (lesson.id === REMIND_LESSON.id) {
+      getGrammarRemindTasks(reviewProgramId ?? undefined)
+        .then(({ status, tasks: data }) => {
+          if (status === 429) { setTasks([]); setBlocked('quota'); return; }
+          if (status !== 200 || data.length === 0) {
+            // 404 no_passed_practice (or 403): nothing to draw from — say so on the list.
+            setTasks([]); setActiveLesson(null); setNotice('remind'); return;
+          }
+          setTasks(data);
+        })
+        .catch(() => { setTasks([]); setActiveLesson(null); })
+        .finally(() => setExerciseLoading(false));
+      return;
+    }
 
     const base = isVerbLesson(lesson.id) ? 'verb-lessons' : 'lessons';
     const token = getToken();
     const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-    // The remind pseudo-lesson (id 0, #26) has its own endpoint — it isn't a real
-    // LESSON_CONFIG entry, so /grammar/lessons/0/tasks would just 404.
-    const url = lesson.id === REMIND_LESSON.id
-      ? `${BACKEND_URL}/api/grammar/remind/tasks`
-      : `${BACKEND_URL}/api/grammar/${base}/${lesson.id}/tasks`;
+    const url = `${BACKEND_URL}/api/grammar/${base}/${lesson.id}/tasks`;
     // Without this header the request was anonymous, so the server-side lock/quota
     // checks below (403/429) never actually fired — see documentation/grammar-lesson-lock-and-premium.md.
     fetch(url, { headers })
@@ -218,80 +263,52 @@ export default function GrammarPage() {
       );
     }
 
-    const byProgram: LessonsByProgram = {};
-    for (const p of programs) {
-      byProgram[p.id] = filterLessonsForProgram(lessons, p.lesson_filter ?? null, caseGroups, p.program_type ?? 'cases');
-    }
-    const uniqueLessons = (ps: GrammarProgramSummary[]) =>
-      Array.from(new Map(ps.flatMap((p) => byProgram[p.id]).map((l) => [l.id, l])).values());
-    const enrolledPrograms = programs.filter((p) => p.enrolled);
-    const none = enrolledPrograms.length === 0;
-    const enrolledLessons = uniqueLessons(enrolledPrograms);
-    // Remind is only offered once at least one «Повторение» lesson has been passed
-    // in a program the user is actually enrolled in — same eligibility rule the
-    // server enforces at GET /grammar/remind/tasks (404 otherwise).
-    const canRemind = enrolledLessons.some((l) => l.level === 'practice' && isPassed(l));
+    const models = programs.map((p) =>
+      buildGrammarModel(p, filterLessonsForProgram(lessons, p.lesson_filter ?? null, caseGroups, p.program_type ?? 'cases')));
+    const mine = models.filter((m) => m.program.enrolled);
+    const others = models.filter((m) => !m.program.enrolled);
+    const none = mine.length === 0;
+    const enrolledLessons = Array.from(new Map(mine.flatMap((m) => m.lessons).map((l) => [l.id, l])).values());
     const casesProgram = programs.find((p) => (p.program_type ?? 'cases') === 'cases') ?? programs[0];
-    const heroNext = featuredFor('all', programs, byProgram);
-    const featured = featuredFor(selected, programs, byProgram);
-    const counts: Record<number, number> = {};
-    for (const p of programs) counts[p.id] = byProgram[p.id].length;
+    const viewing = mine.find((m) => m.program.id === viewId) ?? null;
     const confirmProgram = programs.find((p) => p.id === confirmId);
+    const noticeLine = notice && (
+      <OverviewNotice testId={notice === 'remind' ? 'grammar-remind-none' : 'grammar-action-error'}>
+        {notice === 'remind' ? tr.overview.remindNone : tr.grammar.actionFailed}
+      </OverviewNotice>
+    );
 
     return (
       <PageShell className="pb-20 flex flex-col gap-5">
-        <GrammarHero
-          passed={enrolledLessons.filter(isPassed).length}
-          total={enrolledLessons.length}
-          none={none}
-          onContinue={heroNext?.kind === 'next' ? () => startLesson(heroNext.lesson) : null}
-          onStartCases={none && casesProgram ? () => handleEnroll(casesProgram.id) : null}
-          remind={none ? null : {
-            onClick: () => startLesson(REMIND_LESSON),
-            disabled: !canRemind,
-            hint: canRemind ? undefined : tr.grammar.remindHint,
-          }}
-        />
-
-        <div>
-          <ProgramChips
-            programs={programs}
-            counts={counts}
-            allCount={(none ? uniqueLessons(programs) : enrolledLessons).length}
-            selected={selected}
-            onSelect={(id) => { setActionError(false); setSelected(id); }}
+        {viewing ? (
+          <GrammarProgramPage
+            model={viewing}
+            mine={mine}
+            justAdded={justAdded === viewing.program.id}
+            onUndo={() => handleUnenroll(viewing.program.id)}
+            onRemove={() => setConfirmId(viewing.program.id)}
+            onStart={(l) => startLesson(l, null)}
+            onReview={() => startReview(viewing.program.id)}
+            notice={noticeLine}
           />
-          {actionError && (
-            <ErrorLine testId="grammar-action-error">{tr.grammar.actionFailed}</ErrorLine>
-          )}
-        </div>
-
-        {featured ? (
-          <>
-            <section className={BENTO_GRID}>
-              <FeaturedCard
-                featured={featured}
-                lessons={byProgram[featured.program.id]}
-                hideAddFor={none && casesProgram ? casesProgram.id : null}
-                onStart={startLesson}
-                onAdd={handleEnroll}
-              />
-              <ProgramStack
-                programs={programs.filter((p) => p.id !== featured.program.id)}
-                byProgram={byProgram}
-                onOpen={(id) => { setActionError(false); setSelected(id); }}
-                onAdd={handleEnroll}
-              />
-            </section>
-            <TopicsSection
-              program={featured.program}
-              lessons={byProgram[featured.program.id]}
-              onStart={startLesson}
-              onUnenroll={() => setConfirmId(featured.program.id)}
-            />
-          </>
         ) : (
-          <p className="text-faint text-sm py-8 text-center">{tr.grammar.programsEmpty}</p>
+          <>
+            <GrammarOverviewHero
+              mine={mine}
+              passed={enrolledLessons.filter(isPassed).length}
+              total={enrolledLessons.length}
+              none={none}
+              onStart={(l) => startLesson(l, null)}
+              onReview={startReview}
+              onStartCases={none && casesProgram ? () => handleEnroll(casesProgram.id) : null}
+            />
+            {noticeLine}
+            {models.length === 0 ? (
+              <p className="text-faint text-sm py-8 text-center">{tr.grammar.programsEmpty}</p>
+            ) : (
+              <GrammarOverviewBody mine={mine} others={others} none={none} onAdd={handleEnroll} onReview={startReview} />
+            )}
+          </>
         )}
 
         {confirmProgram && (

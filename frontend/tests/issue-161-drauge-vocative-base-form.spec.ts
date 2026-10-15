@@ -159,7 +159,7 @@ test.describe('Issue #161 — masculine "drauge" task does not render the "от:
   });
 
   async function openLesson(page: import('@playwright/test').Page) {
-    await page.goto('/dashboard/grammar');
+    await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
     await page.getByTestId('level-button').first().click();
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
   }

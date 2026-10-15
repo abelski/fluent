@@ -8,12 +8,14 @@ lessons in sequence, and their pass/fail history unlocks the next lesson. It is 
 Next.js dashboard grammar pages over the REST API; the same endpoints also serve the admin's
 read-only view into draft/testing content (there is no separate admin content-editing router in
 scope here — admin-only behavior below is limited to what `routers/grammar.py` itself branches on).
-The `/dashboard/grammar` lesson-list screen itself doubles as onboarding: hero card, program
-chips, a featured card + stacked program cards ("bento"), and per-topic cards, letting a visitor
-with no enrolled program preview and enroll without leaving the page.
+The `/dashboard/grammar` screen (#66) is an overview — hero, «В процессе», «Завершённые»,
+«Другие программы» — and, on `?program=<id>`, a program page listing what is left; with no
+enrolled program the overview is the catalogue, so a visitor can preview and enroll without
+leaving the page.
 Backed by: `backend/routers/grammar.py`, `backend/grammar_service.py`,
 `frontend/app/dashboard/grammar/page.tsx`,
 `frontend/app/dashboard/components/GrammarOverview.tsx`,
+`frontend/app/dashboard/components/ProgramOverview.tsx`,
 `frontend/app/dashboard/components/GrammarTaskRunner.tsx`.
 
 ## Scenarios
@@ -116,11 +118,22 @@ Scenario: progress summary excludes the remind sentinel
 Scenario: remind session builds from passed practice lessons
   Given an authenticated student enrolled in one or more programs
   And the student has passed (>75%) at least one lesson whose level is "practice"
-    within a program they are enrolled in
-  When GET /grammar/remind/tasks is called
-  Then up to 10 tasks are sampled from those eligible passed practice lessons
+    («Смешанный» / "Mixed") within a program they are enrolled in
+  When GET /grammar/remind/tasks is called without program_id
+  Then up to 10 tasks are sampled from those eligible passed practice lessons, in random order
     (both noun and verb/verb-case lessons are eligible)
   And a daily session quota unit is consumed for the request
+```
+
+```gherkin
+Scenario: remind session scoped to one program (#66)
+  Given GET /grammar/remind/tasks?program_id=<id>
+  Then up to 10 tasks are sampled only from that program's passed "practice"-level lessons
+  And the weakest lessons (lowest best score) are drawn first, ties in random order
+  And without program_id behaviour is unchanged
+  And an unknown or hidden program is 404, a program the student is not enrolled in is
+    403 {"code": "not_enrolled"} — both before any quota is charged
+  And 404 "no_passed_practice" is returned before any quota is charged when nothing is eligible
 ```
 
 ```gherkin
@@ -145,6 +158,18 @@ Scenario: public program list
   And each program includes title_en and description_en alongside the Russian
     title/description; the frontend shows the English field only when the UI
     language is English and that field is non-null, otherwise it shows Russian
+```
+
+```gherkin
+Scenario: programs report their latest result date (#66)
+  When GET /grammar-programs is read by a signed-in student
+  Then each enrolled program carries "last_result_at": the ISO 8601 UTC time of the student's
+    latest lesson result in that program (one grouped query, mapped through the program's lessons)
+  And it is null for programs with no result, for programs the student is not enrolled in,
+    and for anonymous callers
+  And results saved against the remind sentinel (lesson 0) never count — a review run
+    can't be attributed to one program
+  And «Пора повторить» and the hero's choice of program use it
 ```
 
 ```gherkin
@@ -320,26 +345,26 @@ Scenario: recurring characters have names that can't be read as pronouns
 ```
 
 ```gherkin
-Scenario: grammar page with no enrolled program doubles as onboarding
+Scenario: grammar page with no enrolled program doubles as onboarding (#66)
   Given a user (logged in or anonymous) enrolled in no grammar program
   When they open /dashboard/grammar
   Then the hero shows "0" with no "N из M" badge and an empty progress bar
-  And the hero's primary button reads «Начать с падежей» and calls enroll for the
-    cases program directly (no separate onboarding screen or page navigation)
-  And «Напомни, что я мог забыть» is not shown
-  And the featured card previews the first public program (title, description,
-    lesson and topic counts) with no enroll button of its own
-  And the other public programs are stacked beside it, each with a description and «Добавить»
-  And the topic cards below show that program's topics with level chips but no
-    scores, and all level buttons disabled (no «Убрать» either)
+  And the hero's only button reads «Начать с падежей»
+  And below the hero there is only the catalogue «Программы»: one card per public program
+    (difficulty kicker, title, lesson and topic counts, description, «Что внутри ▾» with the
+    format line and the topics in the UI language, «Добавить ›»), the first marked
+    «С неё проще всего начать»
 ```
 
 ```gherkin
-Scenario: enrolling from the grammar page
+Scenario: enrolling from the grammar page (#66)
   Given a logged-in user on /dashboard/grammar
-  When they press «Начать с падежей» or a program's «Добавить» (hero, featured card, or stack)
+  When they press «Начать с падежей» or a catalogue card's «Добавить»
   Then POST /me/grammar-programs/{id} is called for that program
-  And the page marks it enrolled and re-selects it as the active chip, without navigating away
+  And the program page /dashboard/grammar?program=<id> opens with
+    «✓ «X» — теперь в твоих программах · Отменить»
+  When they press «Отменить»
+  Then DELETE /me/grammar-programs/{id} is called and the overview opens again
 ```
 
 ```gherkin
@@ -352,87 +377,122 @@ Scenario: anonymous visitor tries to enroll
 ```
 
 ```gherkin
-Scenario: program chips filter the page
-  Given the grammar page is loaded
-  Then there is one chip per public program with its lesson count, plus «Все»
-  And a chip for a program the user is enrolled in carries a dot marker
-  And «Все» counts the union of enrolled programs' lessons (or of every program's
-    lessons when none is enrolled)
-  When a program chip is selected
-  Then the featured card and the topic cards below switch to that program
+Scenario: overview splits programs by state (#66)
+  Given a student enrolled in programs A (in progress), B (fully passed) and not enrolled in C
+  When /dashboard/grammar opens
+  Then «В процессе» holds a card for A with «d/n уроков», a bar and
+    «Дальше — <topic> · <level> — <state>»; the whole card opens A's program page
+  And «Завершённые» holds a row for B with ✓, N/N, «последний раз N дней назад ·
+    слабее всего: <topic · level> — ✓ 78%» and «Повторить · ~10 заданий»
+    («Короткая сессия из пройденного, сначала слабое»); the row opens B's program page
+  And «Другие программы» holds a catalogue card for C with «Что внутри» and «Добавить»
+  And the hero holds the page's only «Продолжить ›» with one line naming what it opens and the
+    pass mark: «Дальше — <program>: <topic> · <level> — <state>»
+  And that is the next lesson (first unlocked, not passed, in program order — Premium included)
+    of the in-progress program practised last (latest last_result_at; never-practised ones last)
+  And the button reads «Начать» instead when nothing in that program was ever tried
 ```
 
 ```gherkin
-Scenario: featured card shows the next lesson
-  Given the user is enrolled in at least one program and chip «Все» is selected
-  Then the featured card shows the first enrolled program (in program list order) that
-    has a lesson which is neither locked nor passed, and the first such lesson in it
-  And for a noun-case lesson (id < 200) the heading is the lesson's own title, which is
-    already Lithuanian (e.g. «Kilmininkas Vns.»); the sub-heading below it is the case's
-    RU/EN name (rules[0].name_ru or name_en), with a trailing "(<the same LT title>)"
-    stripped off (e.g. «Родительный (Kilmininkas)» renders as just «Родительный»),
-    while an unrelated trailing parenthetical such as «(kiek? yra)» is kept
-  And a verb lesson (id >= 200) has no sub-heading and uses its own title (title_en in
-    EN mode, falling back to the Russian title)
-  And the topic's level chips (display only, showing lock state and ✓/score%), the
-    lesson's position within its topic ("урок 2 из 3") and a single «Начать урок ›»
-    button are shown — the level buttons that actually start lessons live on the topic
-    cards below, not on the featured card
-  And the hero's «Продолжить ›» button starts that same lesson
-  And when chip «Все» is selected, the topic cards below show that same program
+Scenario: one status wording (#66)
+  Then a lesson never tried reads «нужно больше 75%»
+  And a lesson tried below the pass mark reads amber «лучший 45%» · «нужно больше 75%»
+  And a passed lesson reads green «✓ 90%» — green means passed only
+  And level 3 is called «Смешанный» / "Mixed" in the lesson list, the exercise screens and the hero
 ```
 
 ```gherkin
-Scenario: nothing left to continue
-  Given every unlocked lesson in the user's enrolled programs is passed
-  When the grammar page loads
-  Then the featured card previews the first public program the user is not enrolled
-    in yet, with a «Добавить» button
-  And if the user is enrolled in every public program, the featured card shows a
-    completion message instead, with a /pricing link only if any remaining lesson is
-    still locked (premium-only)
-  And the hero's «Продолжить ›» button is not shown
+Scenario: a finished program says it is time to review (#66)
+  Given a fully passed program whose last_result_at is 7 or more days ago
+  Then its «Завершённые» row and its program header show «Пора повторить»
+  And due rows are listed first
 ```
 
 ```gherkin
-Scenario: topic card levels start lessons directly
-  Given the topic cards of the currently selected program (grouped by consecutive
-    lessons sharing the same title)
-  Then each topic card shows its title (Lithuanian for noun-case topics), the case
-    name as a sub-heading, a linked source article when one exists, passed/total, and
-    one button per level (Базовый / Продвинутый / Повторение)
-  And a level button shows ✓ once its best score exceeds 75%, or the best score
-    percentage if attempted but not yet passed, or nothing if never attempted
-  When an unlocked level button is pressed
-  Then that lesson starts immediately (no intermediate confirmation)
-  And a locked level button is disabled and shows a lock icon, with an existing
-    «Открыть Premium» upsell link shown once per card, outside the disabled buttons
-  And every level button is at least 44px tall on a 375px viewport
+Scenario: every program complete (#66)
+  Given every program the student enrolled in is fully passed
+  Then the hero says «✓ Все уроки пройдены» and its button «Повторить пройденное» starts a review
+    of the most overdue program (oldest last_result_at) that has a passed «Смешанный» lesson
 ```
 
 ```gherkin
-Scenario: removing a program from the grammar page
-  Given the user has selected a program they are enrolled in
-  Then a «Убрать» link appears next to the topics heading (hidden for a preview/not-enrolled program)
-  When they press it, a confirmation dialog appears naming the program and no request is sent yet
+Scenario: program page lists what is left (#66)
+  Given a student opens /dashboard/grammar?program=<id> for a program they are enrolled in
+  Then a back link «Грамматика» and «Перейти:» chips for their other programs are shown
+    (a sideways-scrolling row at 375px)
+  And the header shows the title with a ⋯ menu («Убрать программу»), «N из M уроков пройдено»,
+    «d из t тем», a bar, the theory link once when every topic shares one article,
+    «Дальше — <topic> · <level> — <state>» and the page's one button «Продолжить ›» / «Начать ›»
+  And «Осталось N тем» shows a legend, the next topic first (tinted, kicker «Дальше»;
+    «Начни здесь» on an untouched program), then started topics (tag «Начато»), then two more,
+    the rest folded under «Ещё N тем» (open by default from 860px)
+  And each topic's levels are one strip of tappable cells: level name + «✓ 90% ›» /
+    «60% ›» / «не начат ›»; a locked level shows a lock
+  And pressing an unlocked cell starts that lesson immediately
+  And passed topics are folded under «Пройдено N тем · слабее всего: X ✓ 78%» with
+    «Показать ▾» — collapsed in progress (starting with «Повторить · ~10 заданий» when a
+    «Смешанный» lesson is passed), open when the program is complete; rows weakest first
+  And a ?program= id the student is not enrolled in shows the overview instead
+```
+
+```gherkin
+Scenario: locked topics state their reason (#66)
+  Given a free student with locked lessons in the program
+  Then a partly locked topic says «Продвинутый откроется после «<topic · level>» — нужно больше 75%»
+  And the first fully locked topic says «Откроется после «<topic · level>» — нужно больше 75%»,
+    the second is shown without a reason, the rest fold into «Ещё N тем — откроются по порядку»
+  And tapping a locked row or cell shows its reason
+  And the card ends with «Открыть всё сразу — с Premium ›» linking to /pricing
+  And a Premium student (no locks) sees no locked tail and no Premium link
+```
+
+```gherkin
+Scenario: finished program page (#66)
+  Given the student opens the page of a fully passed program
+  Then the header shows «✓ Все уроки пройдены», «Пора повторить» when due, «последний раз …»,
+    «Слабее всего: <topic · level> — ✓ 78%» and «Повторить · ~10 заданий»
+  And the button calls GET /grammar/remind/tasks?program_id=<id>
+  And when nothing is eligible (404) a line «Пока нечего повторять…» is shown instead of a run
+```
+
+```gherkin
+Scenario: removing a program from the grammar page (#66)
+  Given the student is on an enrolled program's page
+  When they open the ⋯ menu and press «Убрать программу», a confirmation dialog names the
+    program and no request is sent yet
   When they confirm
-  Then DELETE /me/grammar-programs/{id} is called and the program is marked not enrolled
+  Then DELETE /me/grammar-programs/{id} is called and the overview opens
 ```
 
 ```gherkin
 Scenario: enroll or unenroll fails
   Given a logged-in user on /dashboard/grammar
   When an enroll or unenroll request returns a non-2xx response
-  Then one line reading "Не получилось — попробуйте ещё раз." in the destructive
-    colour appears under the program chips
-  And it is cleared as soon as the user selects a chip or tries another enroll/unenroll action
+  Then one line reading "Не получилось — попробуйте ещё раз." in the destructive colour appears
+    under the hero (overview) or above the program header
+  And it is cleared on the next enroll/unenroll or lesson start
+```
+
+```gherkin
+Scenario: compact hero on phones (#66)
+  Given a viewport of 375 px
+  Then the hero title is full width, TAK sits beside the numbers, the button is full width
+  And «Продолжить» ends within the first phone screen (about 500px down)
+  And desktop is unchanged
+```
+
+```gherkin
+Scenario: the /dashboard/grammar/programs page is gone (#66)
+  Then the catalogue lives in «Другие программы» on the overview
+  And no page links to /dashboard/grammar/programs (the combined session's enrol link opens
+    /dashboard/grammar)
 ```
 
 ```gherkin
 Scenario: new grammar programs use the existing lesson pipeline (#62f)
   Given the "Прилагательные" program (lesson_filter ["Būdvardžiai"], case indices 21–26,
     lessons 106–138) is public and its six case rules are published
-  Then its lessons appear at Basic / Advanced / Practice level like any noun lesson
+  Then its lessons appear at Basic / Advanced / Mixed («Смешанный») level like any noun lesson
   And Basic tasks offer 4 forms of the same adjective (its adjectives.txt line)
   And the instruction reads «Выбери/Впиши правильную форму прилагательного: <падеж>» /
     "Pick/Type the right form of the adjective: <case>"
@@ -443,7 +503,7 @@ Scenario: new grammar programs use the existing lesson pipeline (#62f)
 Scenario: time and quantity lessons (#62h)
   Given the "Время и количество" program (lesson_filter ["Laikas ir kiekis"], case indices 31–34,
     lessons 166–186) is public and its four case rules are published
-  Then its lessons appear at Basic / Advanced / Practice level like any noun lesson
+  Then its lessons appear at Basic / Advanced / Mixed («Смешанный») level like any noun lesson
   And time blanks (31–32) are always ordinals, so Basic offers 4 forms of the same ordinal
   And quantity tasks (33–34) offer 4 forms of the same noun with «от: <nominative>»
   And while the program is hidden and its rules are `testing`, non-admins see none of its lessons

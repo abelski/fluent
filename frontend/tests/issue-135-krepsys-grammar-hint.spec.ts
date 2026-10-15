@@ -59,7 +59,7 @@ test.describe('Issue #135 — krepšys base-word hint shown for accusative sente
   });
 
   test('accusative sentence shows krepšys as base form', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
+    await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
     await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });

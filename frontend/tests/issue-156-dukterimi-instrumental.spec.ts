@@ -119,7 +119,7 @@ test.describe('Issue #156 — dukterimi is the correct instrumental (not dukteri
   });
 
   test('answer "erimi" for Mama eina su dukt___ is accepted as correct', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
+    await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
     await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
@@ -131,7 +131,7 @@ test.describe('Issue #156 — dukterimi is the correct instrumental (not dukteri
   });
 
   test('wrong answer "eria" shows dukterimi as correct (not dukteri/dukteria)', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
+    await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
     await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });

@@ -100,7 +100,8 @@
       <li><b>Breakpoints:</b> not Tailwind defaults — 3→2 columns at 1200px, →1 column at 860px (see
         "Deliberate deviations" for why 1200px, not the originally planned 1000px).</li>
       <li><b>Readability outranks fidelity.</b> If a documented value is genuinely hard to read, darken it and
-        record it as a deliberate deviation. Small-caps secondary labels use <code>#5b6067</code>.</li>
+        record it as a deliberate deviation. Small-caps secondary labels and small info text use <code>#5b6067</code>
+        — the <code>ink-soft</code> token since #66.</li>
       <li><b>TAK is the only mascot, and replaces decorative emoji</b> plus decorative navigational arrows —
         never small functional glyphs (dropdown/accordion carets, the ⭐ difficulty rating). See Emoji policy.</li>
       <li><b>One mascot per screen, at 128px, via <code>PageMascot</code>.</b> Every page outside
@@ -168,7 +169,7 @@
       <div class="swatch-block"><div class="swatch" style="background:#8a8f98"></div><div class="swatch-label"><b>muted</b> #8a8f98<br>secondary text</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#9a9fa6"></div><div class="swatch-label"><b>muted-nav</b> #9a9fa6<br>inactive nav / footer text</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#b0b4ba"></div><div class="swatch-label"><b>faint</b> #b0b4ba<br>captions, counts</div></div>
-      <div class="swatch-block"><div class="swatch" style="background:#5b6067"></div><div class="swatch-label"><b>#5b6067</b><br>readable secondary — small caps labels (a11y, see Principles)</div></div>
+      <div class="swatch-block"><div class="swatch" style="background:#5b6067"></div><div class="swatch-label"><b>ink-soft</b> #5b6067<br>readable secondary — small caps labels, info lines, lock reasons (a11y, see Principles; token since #66)</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#d9d9d9"></div><div class="swatch-label"><b>line</b> #d9d9d9<br>card borders, header rule</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#f1f1f1"></div><div class="swatch-label"><b>line-strong</b> #f1f1f1<br>panel header separator</div></div>
       <div class="swatch-block"><div class="swatch" style="background:#f4f4f4"></div><div class="swatch-label"><b>line-soft</b> #f4f4f4<br>table row separator</div></div>
@@ -513,6 +514,9 @@
       practice, grammar exercise, done screens) where it is the primary content rather than a side accent.
       Bubble tail offset and head overlap are computed from <code>size</code>, so the bubble keeps pointing at TAK's
       head if a call site ever scales him.
+      The bubble text carries <code>overflow-wrap: anywhere</code> (#66): in the compact phone hero TAK sits in a
+      200px column beside the numbers, and a long greeting word (Слова shows a random word) must wrap inside the
+      bubble rather than run past the card.
     </p>
   </div>
 
@@ -540,13 +544,15 @@
       (button + hint) is hidden, not just disabled.
     </p>
     <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
-      <b>Stacks below <code>sm</code>.</b> The demo below shows the desktop row layout (mascot beside the stats,
-      <code>nextMilestone</code> pinned right) — below <code>sm</code> it switches to <code>flex-col</code> (mascot
-      above the stats block) instead, because at 375px the 128px mascot left only ~180px for the count/badge/button
-      row, wrapping button labels mid-word (confirmed on Фразы: "Повторить" / "фразы" split across two lines).
-      <code>nextMilestone</code> becomes an <code>absolute top-4 right-4</code> corner label on mobile (same idiom
-      as the "Done" badges on list/chapter cards) instead of squeezing into the row, reverting to its normal inline
-      position at <code>sm</code> and up.
+      <b>Compact below <code>sm</code> (#66).</b> The demo below shows the desktop row layout (mascot beside the
+      stats, <code>nextMilestone</code> pinned right), unchanged. Below <code>sm</code> the card is a 2-column grid
+      (<code>grid-cols-[minmax(0,1fr)_auto]</code>): count + badge + label, the bar and an inline «Далее A2» line
+      on the left, TAK beside them on the right, and the buttons <b>full width</b> underneath (stacked,
+      text centred). The wrappers are <code>display: contents</code> on phones and the original flex row from
+      <code>sm</code>, so desktop markup is unchanged. This replaced the earlier phone layout (TAK stacked above
+      everything, <code>nextMilestone</code> as an absolute corner label) — that pushed the buttons below the first
+      phone screen; the old reason for stacking (buttons squeezed beside a 128px TAK) is gone because the buttons no
+      longer share the row with TAK. Same layout as the compact <code>BentoHero</code> below.
     </p>
     <div class="hero-demo">
       <svg class="tak-svg" width="70" height="84" viewBox="0 0 200 240" style="flex-shrink:0;"><g class="float">
@@ -592,16 +598,24 @@
     </p>
     <table>
       <tr><th>Piece</th><th>Spec</th></tr>
-      <tr><td><code>GrammarHero</code></td><td>Flat card (<code>border-line</code>, 14px, no shadow),
+      <tr><td><code>GrammarHero</code> (<code>BentoHero</code>)</td><td>Flat card (<code>border-line</code>, 14px, no shadow),
         <code>data-testid="stats-card-grammar"</code>. Carries the page <code>h1</code> (32px/700/&minus;0.02em;
-        28px below 420px), subtitle, <code>charactersNote</code>, stat row identical to <code>ProgressStatCard</code>
+        28px below 420px), subtitle, <code>charactersNote</code> (desktop only since #66), stat row identical to <code>ProgressStatCard</code>
         (30px count, <code>bg-emerald-50 text-emerald-600</code> &laquo;из M&raquo; badge, 13px muted label), 6px
-        bar (<code>bg-gray-100</code> track, <code>bg-emerald-600</code> fill, max 440px). Buttons: ink
-        <code>bg-ink text-white rounded-[10px]</code> &laquo;Продолжить ›&raquo; (or &laquo;Начать с падежей&raquo; with no
-        programs, same slot) + soft <code>bg-emerald-50 text-emerald-600</code> remind. Right side: static
-        declension sample (namas/namo/namui/namą, endings <code>text-emerald-600</code>, hidden below 860px) and
-        <code>PageMascot phrase="Mokomės!"</code> at 128px &mdash; above the text on mobile, like
-        <code>ProgressStatCard</code>'s stacked layout.</td></tr>
+        bar (<code>bg-gray-100</code> track, <code>bg-emerald-600</code> fill, max 440px). <b>#66:</b> one 13px
+        <code>ink-soft</code> line names what the button opens and the pass mark («Дальше — Литовские падежи:
+        Vardininkas Dgs. · Смешанный — лучший 60% · нужно больше 75%»), then the page's <b>only</b> ink
+        &laquo;Продолжить ›&raquo; (the program practised last, by <code>last_result_at</code>), or &laquo;Начать с падежей&raquo; with no
+        programs, or — every program complete — «✓ Все уроки пройдены» + &laquo;Повторить пройденное&raquo;. The remind button
+        moved to the program page. Right side: static declension sample (hidden below 860px) and
+        <code>PageMascot phrase="Mokomės!"</code> at 128px. <b>Compact below 860px (#66):</b> 2-column grid &mdash;
+        title full width, TAK beside the numbers (not above the title), buttons full width; the left column wrapper
+        is <code>display: contents</code> there and a block from 860px, where the card is the unchanged flex row.
+        At 375px «Продолжить» ends near 500px instead of ~615px. Guarded by <code>design-system-parity.spec.ts</code>.</td></tr>
+      <tr><td colspan="2"><b>Retired in #66 for Грамматика and Практика:</b> program chips, featured card, program
+        stack, topic cards and section cards below were replaced by the overview / program page in
+        &laquo;Overview pages (#66)&raquo;. <code>BentoChips</code> and the featured shell stay for Статьи. The rows are kept
+        as the record of what #53/#55 shipped.</td></tr>
       <tr><td><code>ProgramChips</code></td><td>Pill chips <code>rounded-full border border-line bg-white px-3.5 py-2
         text-sm font-semibold</code>, count in 12px <code>text-muted</code>; active <code>bg-ink border-ink
         text-white</code>. A 6px <code>bg-emerald-600</code> dot marks enrolled programs. Wrap on mobile, 44px tall
@@ -786,6 +800,68 @@
       <tr><td>Size</td><td><code>min-w-11 min-h-11 flex items-center justify-center</code> (44&times;44, per Principles) with
         <code>-my-3.5 -mr-3</code> so the 16px-tall title row does not grow and the glyph lines up with the card's padding edge.</td></tr>
       <tr><td>Colour</td><td><code>text-muted</code> &rarr; <code>hover:text-emerald-700</code> (hover goes darker). No background, no border.</td></tr>
+    </table>
+  </div>
+
+  <h2>Overview pages — Грамматика &amp; Практика (#66)</h2>
+  <div class="card" style="margin-bottom:20px;">
+    <p style="font-size:13.5px;line-height:1.8;margin:0 0 16px;">
+      Shared pieces: <code>frontend/app/dashboard/components/ProgramOverview.tsx</code>. Page-specific rows and
+      models: <code>GrammarOverview.tsx</code> (topics + level strips) and <code>PracticeOverview.tsx</code> (test rows,
+      blocks). Two views on the same route: the <b>overview</b> and the <b>program page</b> on
+      <code>?program=&lt;id&gt;</code> (static export &mdash; no new route; see <code>documentation/overview-pages.md</code>).
+      Info text is <code>ink-soft</code>, never <code>muted</code> at 12&ndash;13px.
+    </p>
+    <table>
+      <tr><th>Piece</th><th>Spec</th></tr>
+      <tr><td>Overview order</td><td>Hero (the page's only «Продолжить») → «В процессе» → «Завершённые» → «Другие программы».
+        A new user sees the hero («Начать с падежей» / «Начать с Конституции» + outline «Начать с чтения (A2)») and the catalogue only.</td></tr>
+      <tr><td><code>InProgressCard</code></td><td>Whole card is a link to the program page. <code>px-[22px] py-5</code>, 17px/700 title,
+        <code>d/n уроков</code> 13px muted, 6px bar, «Дальше — &lt;item&gt; — &lt;state&gt;» 13px <code>ink-soft</code>, emerald «Открыть программу ›».
+        No buttons. Grid 1 → 2 (860px) → 3 (1200px, only when it divides evenly), <code>items-stretch</code>.</td></tr>
+      <tr><td><code>CompletedBlock</code></td><td>One card, rows divided by <code>line-soft</code>. Row = link (stretched
+        <code>after:absolute</code>): ✓ + 15px/700 title + <code>N/N</code> + amber «Пора повторить» tag
+        (<code>bg-[#fdf6e3] text-[#8a6d1d]</code>, ≥ 7 days since <code>last_result_at</code>), 12.5px <code>ink-soft</code>
+        «последний раз N дней назад · слабее всего: X — ✓ 78%», one outline button (<code>OUTLINE_BTN</code>: white,
+        <code>border-line</code>, 13px/600, 44px tall below 860px) «Повторить · ~10 заданий» (grammar: remind scoped to the
+        program) / «Повторить · 6 вопросов» (practice: reopens the weakest passed test) + 12.5px muted hint. Due rows first.</td></tr>
+      <tr><td><code>CatalogCard</code></td><td>Kicker (grammar difficulty, 11px <code>ink-soft</code>), 17px/700 title + count,
+        13px muted description, optional «С неё проще всего начать» pill (<code>bg-[#f2f3f3] text-ink-soft</code>),
+        «Что внутри ▾» (<code>&lt;details&gt;</code>: format line + contents list), soft «Добавить ›». «Добавить» opens the
+        program with an emerald-50 «✓ X — теперь в твоих программах · Отменить» banner. Практика groups the catalogue by
+        exam (kicker «Тест по Конституции — гражданство и ПМЖ» / «Языковой экзамен A2»); a group with more than one
+        category offers «Добавить все части (N)».</td></tr>
+      <tr><td><code>ProgramSwitcher</code></td><td>«‹ Грамматика» back link + «Перейти:» chips for my other programs
+        (rounded-full, <code>border-line</code>, ✓ for complete, <code>d/n</code> otherwise); one sideways-scrolling row on a phone.</td></tr>
+      <tr><td><code>ProgramHeader</code></td><td>Same grid idea as the compact hero: 24px (28px from 860px) title full width with
+        a ⋯ menu (44×44, «Убрать программу» in <code>text-destructive</code>) in the corner; stats (22px count + «из M» badge +
+        label, grammar adds «N из M тем»), bar; TAK 128px beside the stats; then the «Дальше» line and the page's one
+        ink button, full width on phones. Complete: «✓ Все уроки пройдены» + «Пора повторить» + «последний раз…»,
+        «Слабее всего: X — ✓ 78%», the review button + hint.</td></tr>
+      <tr><td><code>RemainingCard</code> «Осталось N»</td><td>Header 15px/700 + count; grammar adds a 12.5px <code>ink-soft</code>
+        legend. The next item first, tinted <code>bg-[#f7faf8]</code> with an 11px kicker «Дальше» («Начни здесь» on an untouched
+        program); started topics tagged «Начато» (<code>bg-[#f2f3f3] text-ink-soft</code>). Locked tail: two rows, the
+        first states its reason (lock + 13px <code>#3a3d42</code>), the rest folded «Ещё N тем — откроются по порядку».
+        Tapping any locked row or cell reveals its reason. Free grammar users get an amber «Открыть всё сразу — с Premium ›»
+        foot. Premium: next + started + two more, the rest folded (open by default from 860px).</td></tr>
+      <tr><td>Level strip (grammar)</td><td>A topic's levels as one bordered strip (<code>divide-x divide-line</code>, 10px radius,
+        full width on phones, 390px from 860px): each cell is a button — level name + «✓ 90% ›» (emerald) / «60% ›»
+        (<code>amber-700</code>) / «не начат ›» (<code>ink-soft</code>); locked = <code>bg-[#fafbfa]</code>, faint, lock.
+        The level tints of the old topic cards are gone: green means passed only.</td></tr>
+      <tr><td>Test row (practice)</td><td>The whole row is a link with a trailing <code>TakChevron</code>: 14.5px/600 title in the
+        UI language, the Lithuanian original (<code>title_lt</code>, <code>lang="lt"</code>) as a 12.5px muted second line,
+        meta «10 вопросов · &lt;state&gt;» in <code>ink-soft</code>, «Экзамен» pill on the final exam, outlined amber
+        «Premium» for a free user. Constitution: the sample test first («Начни здесь», «без проходного балла»), blocks as
+        <code>&lt;details&gt;</code> (current one open; others one line with <code>passed/total</code>, a segmented strip and
+        «Откроется после «Блок 1…»»), the final exam pinned last under a <code>line-strong</code> rule.</td></tr>
+      <tr><td><code>PassedCard</code> «Пройдено N»</td><td><code>&lt;details&gt;</code> card: «Пройдено N тем · слабее всего: X ✓ 78%»
+        + emerald «Показать ▾ / Скрыть». Collapsed while in progress (then it starts with the review row), open when the
+        program is complete. Rows weakest first (the sample test last).</td></tr>
+      <tr><td>Status wording</td><td>One wording on both pages (<code>StatusLabel</code>): new → «нужно больше 75%» / «нужно 60%»;
+        tried below the pass mark → <code>amber-700</code> «лучший 45%» · need; passed → <code>emerald-600</code> «✓ 90%»;
+        the sample test → «без проходного балла» (never «нужно 0%»); locked → lock + «Откроется после X». Verbs:
+        «Продолжить» (once per page), «Повторить · …» (review), «Добавить» (catalogue), «Начать с …» (new-user hero).
+        Grammar level 3 is «Смешанный» / "Mixed" everywhere.</td></tr>
     </table>
   </div>
 
@@ -1388,6 +1464,18 @@
         «Начать с Конституции») and Статьи (hero without a bar &mdash; reading is not tracked), sharing
         <code>BentoParts.tsx</code> so the three pages cannot drift; Слова and Фразы keep <code>ProgressStatCard</code> and
         their order.</td></tr>
+      <tr><td>Phone hero is a 2-column grid, not the stacked column (#66) &mdash; <code>BentoHero</code> (Грамматика, Практика,
+        Статьи) and <code>ProgressStatCard</code> (Слова, Фразы)</td><td>The stacked phone layout put TAK above the title, so
+        the main button landed below the first phone screen (~615px down on Грамматика). Now the title is full width, TAK
+        sits beside the numbers and the buttons are full width underneath; the hero note and the hero art stay
+        desktop-only. Desktop is unchanged (wrappers are <code>display: contents</code> on phones only). On
+        <code>ProgressStatCard</code> the «Далее A2» corner label became an inline line under the bar on phones, since TAK
+        now occupies that corner.</td></tr>
+      <tr><td>Грамматика / Практика dropped chips + featured card + stack + topic cards for overview sections and a program
+        page on <code>?program=</code> (#66)</td><td>The same program showed 2&ndash;4 times, passed and unpassed items shared one
+        grid, locks had no reason and practice tests were bare numbers. Five rounds of cold usability reviews converged on
+        «В процессе» / «Завершённые» / «Другие программы» + a program page listing only what is left. Статьи keeps the bento
+        layout: it is a library to browse, not a path. The <code>/programs</code> catalogue pages were deleted.</td></tr>
       <tr><td>Grammar Basic options carry raw stock steps (<code>border-gray-900</code>, <code>bg-emerald-100</code>,
         <code>bg-red-100</code>, <code>text-red-600</code>) (#60)</td><td>They are copied verbatim from the
         <code>QuizSession</code> stage-2 option list so a choice looks the same on Слова and Грамматика; switching only

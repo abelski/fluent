@@ -93,16 +93,16 @@ async function mock(page: Page, o: { lang: 'ru' | 'en'; width: number; enrolled:
   return calls;
 }
 
+// #66 — the program page (`?program=`) holds the topics («Осталось»).
 async function openProgram(page: Page) {
-  await page.goto('/dashboard/grammar');
-  await page.getByTestId('category-program-9').click();
-  await expect(page.getByTestId('topics-section')).toBeVisible();
+  await page.goto('/dashboard/grammar?program=9');
+  await expect(page.getByTestId('remaining-card')).toBeVisible();
 }
 
 // Kilmininkas = 2nd topic → its basic/advanced/practice level buttons are 3, 4, 5.
 async function startLevel(page: Page, n: number) {
   await openProgram(page);
-  await page.getByTestId('topics-section').getByTestId('level-button').nth(n).click();
+  await page.getByTestId('remaining-card').getByTestId('level-button').nth(n).click();
   await expect(page.getByTestId('task-counter')).toBeVisible();
 }
 
@@ -113,12 +113,13 @@ for (const lang of ['ru', 'en'] as const) {
       test('program card and topic list', async ({ page }) => {
         await mock(page, { lang, width, enrolled: [9] });
         await openProgram(page);
-        const featured = page.getByTestId('featured-card');
-        await expect(featured).toContainText(lang === 'ru' ? 'Прилагательные' : 'Adjectives');
-        await featured.screenshot({ path: `${SHOTS}/1-program-card-${tag}.png` });
-        const topics = page.getByTestId('topics-section');
+        const header = page.getByTestId('program-header');
+        await expect(header).toContainText(lang === 'ru' ? 'Прилагательные' : 'Adjectives');
+        // Every topic shares one article, so it is linked once, in the header (#66).
+        await expect(header).toContainText(lang === 'ru' ? 'Прилагательные: склонение' : 'Adjectives: declension');
+        await header.screenshot({ path: `${SHOTS}/1-program-card-${tag}.png` });
+        const topics = page.getByTestId('remaining-card');
         await expect(topics.getByTestId('level-button')).toHaveCount(18);
-        await expect(topics).toContainText(lang === 'ru' ? 'Прилагательные: склонение' : 'Adjectives: declension');
         await topics.screenshot({ path: `${SHOTS}/2-topic-list-${tag}.png` });
       });
 

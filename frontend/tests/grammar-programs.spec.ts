@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+// Grammar programs: enrol / open / remove. Since #66 the catalogue lives on the overview
+// («Программы» / «Другие программы») and each program has its page on `?program=<id>`;
+// the separate /dashboard/grammar/programs page is gone. Fully mocked.
+
 function makeFakeJwt(name: string): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const payload = btoa(JSON.stringify({ email: 'test@test.com', name, exp: 9999999999 }));
@@ -24,6 +28,8 @@ const MOCK_PROGRAM = {
   description: 'Все грамматические падежи литовского языка.',
   difficulty: 1,
   lesson_filter: '["Vienaskaita","Daugiskaita"]',
+  program_type: 'cases',
+  last_result_at: null,
 };
 
 const MOCK_LESSON = {
@@ -38,94 +44,53 @@ const MOCK_LESSON = {
 };
 
 test.describe('Grammar programs', () => {
-  function setupCommonMocks(page: import('@playwright/test').Page) {
-    page.route('**/api/admin/grammar/config', route => route.fulfill({ json: MOCK_CONFIG }));
+  async function setupCommonMocks(page: import('@playwright/test').Page, enrolled: boolean) {
+    await page.route('**/api/**', (route) => route.fulfill({ json: [] })); // fallback: never the real backend
+    await page.route('**/api/admin/grammar/config', (route) => route.fulfill({ json: MOCK_CONFIG }));
+    await page.route('**/api/grammar-programs', (route) => route.fulfill({ json: [{ ...MOCK_PROGRAM, enrolled }] }));
+    await page.route('**/api/grammar/lessons', (route) => route.fulfill({ json: [MOCK_LESSON] }));
   }
 
-  test('not enrolled: no-programs hero plus Смотреть все программы link', async ({ page }) => {
+  test('not enrolled: no-programs hero plus the catalogue; no /programs link any more', async ({ page }) => {
     await setFakeToken(page);
-    setupCommonMocks(page);
-
-    await page.route('**/api/grammar-programs', (route) =>
-      route.fulfill({ json: [{ ...MOCK_PROGRAM, enrolled: false }] })
-    );
-    await page.route('**/api/grammar/lessons', (route) =>
-      route.fulfill({ json: [] })
-    );
-
+    await setupCommonMocks(page, false);
     await page.goto('/dashboard/grammar');
-    await expect(page.getByTestId('browse-programs-link')).toBeVisible();
     await expect(page.getByTestId('hero-start-cases')).toBeVisible();
+    await expect(page.getByTestId('catalog-card-1')).toContainText('Литовские падежи');
+    await expect(page.getByTestId('catalog-card-1-add')).toHaveText('Добавить');
+    await expect(page.locator('a[href*="/grammar/programs"]')).toHaveCount(0);
   });
 
-  test('shows lesson tree when enrolled', async ({ page }) => {
+  test('enrolled: the in-progress card opens the program page with its topics', async ({ page }) => {
     await setFakeToken(page);
-    setupCommonMocks(page);
-
-    await page.route('**/api/grammar-programs', (route) =>
-      route.fulfill({ json: [{ ...MOCK_PROGRAM, enrolled: true }] })
-    );
-    await page.route('**/api/grammar/lessons', (route) =>
-      route.fulfill({ json: [MOCK_LESSON] })
-    );
-
+    await setupCommonMocks(page, true);
     await page.goto('/dashboard/grammar');
-    await expect(page.getByTestId('unenroll-button')).toBeVisible();
-    await expect(page.getByTestId('category-program-1')).toBeVisible();
+    await page.getByTestId('program-card-1').click();
+    await expect(page).toHaveURL(/\/dashboard\/grammar\/?\?program=1$/);
+    await expect(page.getByTestId('program-header')).toContainText('Литовские падежи');
+    await expect(page.getByTestId('topic-row')).toContainText('Galininkas');
+    // Nothing attempted yet: «Начать», not «Продолжить».
+    await expect(page.getByTestId('program-continue')).toHaveText('Начать');
+    await page.getByTestId('program-back').click();
+    await expect(page).toHaveURL(/\/dashboard\/grammar\/?$/);
   });
 
   test('unenroll (after confirm) shows the no-programs hero', async ({ page }) => {
     await setFakeToken(page);
-    setupCommonMocks(page);
+    await setupCommonMocks(page, true);
+    let deleted = false;
+    await page.route('**/api/me/grammar-programs/1', (route) => {
+      deleted = route.request().method() === 'DELETE';
+      return route.fulfill({ json: { ok: true } });
+    });
 
-    const programs = [{ ...MOCK_PROGRAM, enrolled: true }];
-
-    await page.route('**/api/grammar-programs', (route) =>
-      route.fulfill({ json: programs })
-    );
-    await page.route('**/api/grammar/lessons', (route) =>
-      route.fulfill({ json: [MOCK_LESSON] })
-    );
-    await page.route('**/api/me/grammar-programs/1', (route) =>
-      route.fulfill({ json: { ok: true } })
-    );
-
-    await page.goto('/dashboard/grammar');
-    await expect(page.getByTestId('unenroll-button')).toBeVisible();
-
+    await page.goto('/dashboard/grammar?program=1');
+    await page.getByTestId('program-menu').click();
     await page.getByTestId('unenroll-button').click();
     await page.getByTestId('unenroll-confirm-button').click();
     await expect(page.getByTestId('hero-start-cases')).toHaveText('Начать с падежей');
     await expect(page.getByTestId('grammar-hero-count')).toHaveText('0');
     await expect(page.getByTestId('unenroll-button')).toHaveCount(0);
-  });
-
-  test('catalog page shows program card with Добавить button', async ({ page }) => {
-    await setFakeToken(page);
-    setupCommonMocks(page);
-
-    await page.route('**/api/grammar-programs', (route) =>
-      route.fulfill({ json: [{ ...MOCK_PROGRAM, enrolled: false }] })
-    );
-
-    await page.goto('/dashboard/grammar/programs');
-    await expect(page.getByTestId('grammar-program-card')).toBeVisible();
-    await expect(page.getByTestId('enroll-button')).toBeVisible();
-  });
-
-  test('catalog page shows enrolled badge after enrolling', async ({ page }) => {
-    await setFakeToken(page);
-    setupCommonMocks(page);
-
-    await page.route('**/api/grammar-programs', (route) =>
-      route.fulfill({ json: [{ ...MOCK_PROGRAM, enrolled: false }] })
-    );
-    await page.route('**/api/me/grammar-programs/1', (route) =>
-      route.fulfill({ json: { ok: true } })
-    );
-
-    await page.goto('/dashboard/grammar/programs');
-    await page.getByTestId('enroll-button').click();
-    await expect(page.getByTestId('enrolled-badge')).toBeVisible();
+    expect(deleted).toBe(true);
   });
 });

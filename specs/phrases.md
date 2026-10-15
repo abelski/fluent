@@ -161,6 +161,15 @@ Scenario: The phrases page shows a random public-program phrase in the mascot's 
     shown instead
 ```
 
+```gherkin
+Scenario: compact stat card on phones (#66)
+  Given a viewport of 375 px
+  Then the stat card is a 2-column grid: the count, badge, label, progress bar and an inline
+    «Далее <level>» line on the left, TAK beside them on the right
+  And the buttons are full width underneath, so they sit on the first phone screen
+  And desktop (from 640px) is unchanged: TAK left, stats in the middle, «Далее» pinned right
+```
+
 ### Personal phrase lists
 
 ```gherkin

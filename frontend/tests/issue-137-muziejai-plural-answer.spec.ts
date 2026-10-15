@@ -59,7 +59,7 @@ test.describe('Issue #137 — muziejai is the correct nominative plural (not muz
   });
 
   test('answer "ai" for Čia yra muziej___ is accepted as correct', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
+    await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
     await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });
@@ -71,7 +71,7 @@ test.describe('Issue #137 — muziejai is the correct nominative plural (not muz
   });
 
   test('wrong answer shows muziejai as correct (not muziejūs)', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
+    await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
     await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });

@@ -97,6 +97,7 @@ test.describe('Issue #181 — Rūta character name (not ambiguous "Ona")', () =>
       }
 
       await page.setViewportSize({ width: 1280, height: 720 });
+      await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
       await page.getByTestId('level-button').first().click();
       await page.waitForSelector('input[type="text"]', { timeout: 5000 });
       await expect(page.locator(`text=${hint}`)).toBeVisible({ timeout: 3000 });

@@ -27,6 +27,7 @@ library). In code they are Tailwind theme colors:
 | `#8a8f98` | `muted` | secondary text |
 | `#9a9fa6` | `muted-nav` | inactive nav/footer text |
 | `#b0b4ba` | `faint` | captions, counts |
+| `#5b6067` | `ink-soft` | readable secondary/info text — small-caps labels, «Дальше» lines, legends, lock reasons (#66; `muted` at 12–13px fails AA) |
 | `#d9d9d9` | `line` | card borders, header rule |
 | `#f1f1f1` | `line-strong` | panel header separator |
 | `#f4f4f4` | `line-soft` | table row separator |
@@ -87,10 +88,11 @@ library's "Deliberate deviations" table.
 | Envelope + unread badge + dropdown preview (#23) | `frontend/components/InboxMenu.tsx` |
 | Inbox message list + message view (#23) | `frontend/app/dashboard/inbox/page.tsx`, `MessageView.tsx` |
 | Inbox API client + date formatting + `fluent:inbox-changed` (#23) | `frontend/lib/inbox.ts` |
-| Hero stat card | `frontend/app/dashboard/components/ProgressStatCard.tsx` |
+| Hero stat card (compact 2-column phone layout since #66) | `frontend/app/dashboard/components/ProgressStatCard.tsx` |
 | Shared bento pieces (#53 → extracted in #55): hero shell, chips, featured shell/heading classes, stack cards, section heading, confirm dialog, error line | `frontend/app/dashboard/components/BentoParts.tsx` (`BentoHero`, `BentoChips`, `StackProgressCard`, `StackAddCard`, `SectionHeading`, `ConfirmDialog`, `ErrorLine`, `FEATURED_SHELL`, `BENTO_GRID`, `CARD_GRID`, …) |
-| Grammar hero / program chips / featured card / program stack / topic cards (#53) | `frontend/app/dashboard/components/GrammarOverview.tsx` (`GrammarHero`, `ProgramChips`, `FeaturedCard`, `ProgramStack`, `TopicsSection`/`TopicCard`) — built on `BentoParts` |
-| Practice hero / featured test / category stack + final-exam card / section cards (#55) | `frontend/app/dashboard/components/PracticeOverview.tsx` (`PracticeHero`, `PracticeFeaturedCard`, `PracticeStack`, `PracticeSections`); data + state in `app/dashboard/practice/page.tsx` |
+| Overview / program-page pieces shared by Грамматика and Практика (#66): in-progress card, completed rows, catalogue card, switcher, program header, «Осталось» / «Пройдено» cards, fold, status wording, «Пора повторить» (7 days) | `frontend/app/dashboard/components/ProgramOverview.tsx` (`InProgressCard`, `CompletedBlock`, `CatalogCard`, `ProgramSwitcher`, `AddedBanner`, `ProgramHeader`, `RemainingCard`, `PassedCard`, `Fold`, `StatusLabel`, `DUE_AFTER_DAYS`) |
+| Grammar overview + program page (#66; replaced the #53 chips/featured/stack/topic cards) | `frontend/app/dashboard/components/GrammarOverview.tsx` (`buildGrammarModel`, `GrammarOverviewHero`, `GrammarOverviewBody`, `GrammarProgramPage`, level strip); data + state + `?program=` in `app/dashboard/grammar/page.tsx` |
+| Practice overview + program page (#66; replaced the #55 featured/stack/section cards) | `frontend/app/dashboard/components/PracticeOverview.tsx` (`buildPracticeModel`, `PracticeOverviewHero`, `PracticeOverviewBody`, `PracticeProgramPage`, test rows, blocks); data + state + `?program=` in `app/dashboard/practice/page.tsx` |
 | Articles hero / category chips / newest + stack / theme cards (#55) | `frontend/app/dashboard/articles/ArticlesList.tsx` (`ArticlesBento`); theme keys `ARTICLE_THEMES` in `articles/types.ts` |
 | Effort radar card on the signed-in home (#56) | `frontend/components/EffortRadar.tsx` |
 | Card info button — "i" link in a card's title row (#57, first use: effort radar → balance article) | `frontend/components/EffortRadar.tsx` |
@@ -171,12 +173,18 @@ named "page content is constrained to the 1180px container" and "decorative blur
 Фразы/Практика/Статьи were on an older 896px/blur/shadow shell and have been migrated onto
 `PageShell`; that older shell is retired, don't reintroduce it.
 
+**Compact phone hero (#66).** Both hero components switch to a 2-column grid below their
+breakpoint (`BentoHero` 860px, `ProgressStatCard` `sm`): title full width, TAK beside the numbers,
+buttons full width. The left-column wrappers are `display: contents` on phones and normal blocks
+above, so the desktop flex row is untouched. `design-system-parity.spec.ts` guards it on all 5 pages.
+
 Two orderings, not one: Слова/Фразы/Практика put the hero `ProgressStatCard` *above* the title
 (card → banner → title+subtitle → content) — guarded by `tests/stats-card-alignment.spec.ts`
 ("stats card is rendered above the page title"). Грамматика (#53), Практика and Статьи (#55) use the
 bento ordering instead: title inside the page's own hero (`BentoHero` from `BentoParts.tsx`) → chips
-(with the "browse all" link, practice/grammar) → bento → section/topic/theme cards — see the deviation
-below. Only Слова/Фразы keep the `ProgressStatCard` ordering. Don't introduce another ordering. The other
+→ bento → theme cards (Статьи) — see the deviation below. Since #66 Грамматика and Практика go hero →
+«В процессе» → «Завершённые» → «Другие программы», with the program page on `?program=<id>`
+(`documentation/overview-pages.md`). Only Слова/Фразы keep the `ProgressStatCard` ordering. Don't introduce another ordering. The other
 pages end the same way: main content → the "browse all" link (`text-emerald-600 hover:text-emerald-700`). The mascot renders inside the hero's
 `icon` prop; on
 pages where the hero can be absent in a common state (Практика with no enrolled
@@ -233,7 +241,7 @@ least one enrollment in *each* of `UserProgram` (words), `UserGrammarProgram` (g
 enrollment in any one of them returns `needs_enrollment: [...]` with everything else empty and no
 quota charge; the frontend renders a dedicated blocking screen (`needsEnrollment` state in
 `continue/page.tsx`, `data-testid="continue-needs-enrollment"`) that links out to each missing
-category's existing enroll page (`/dashboard/lists`, `/dashboard/grammar/programs`,
+category's existing enroll page (`/dashboard/lists`, `/dashboard/grammar` — #66: the catalogue is on the overview,
 `/dashboard/phrases`) rather than building a picker inline. This is a **hard gate** — no
 skip-and-continue option — and it is distinct from a category that's enrolled but simply has
 nothing due yet, which still silently omits that phase as before. Note `backend/onboarding.py`'s

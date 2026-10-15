@@ -88,3 +88,14 @@ a real lesson, with two branches keyed on `id === 0`: fetch
 hide the pass/fail banner on the done screen (its copy is about unlocking the
 *next* lesson, which doesn't exist for a remind run — `nextLesson` is already
 `null` there since `id: 0` never matches a real lesson in the list).
+
+## #66 — scoped to one program, weakest first
+
+The button moved from the Грамматика hero onto the program page («Пройдено» / a finished
+program's header) and the «Завершённые» rows, labelled «Повторить · ~10 заданий». It calls
+`GET /grammar/remind/tasks?program_id=<id>`: only that program's passed «Смешанный» lessons,
+ordered by best score ascending so the weakest are drawn first (the cut to 10 tasks keeps them).
+Unknown program → 404, not enrolled → 403 `not_enrolled`, nothing eligible → 404
+`no_passed_practice` — all before the quota charge. Without `program_id` nothing changed (the
+hero's «Повторить пройденное», shown once every program is complete, passes the most overdue
+program). Level 3 is now called «Смешанный» / "Mixed". See `documentation/overview-pages.md`.

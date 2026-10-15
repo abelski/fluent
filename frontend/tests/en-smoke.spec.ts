@@ -120,7 +120,7 @@ test.describe('EN render smoke — grammar sentence runner', () => {
   });
 
   test('the rule card and base-word hint carry no Cyrillic', async ({ page }) => {
-    await page.goto('/dashboard/grammar');
+    await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
     await page.getByTestId('level-button').first().click();
 
     await page.waitForSelector('input[type="text"]', { timeout: 5000 });

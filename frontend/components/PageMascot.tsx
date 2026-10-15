@@ -44,7 +44,9 @@ export default function PageMascot({
 
   return (
     <div className={className} data-testid="page-mascot" data-mood={mood}>
-      <div className="relative bg-white border border-gray-100 rounded-xl px-4 py-2 font-bold text-sm w-fit">
+      {/* overflow-wrap: a long greeting word (#66 compact hero puts TAK in a 200px column on
+          phones) wraps inside the bubble instead of running past the card. */}
+      <div className="relative bg-white border border-gray-100 rounded-xl px-4 py-2 font-bold text-sm w-fit [overflow-wrap:anywhere]">
         <span data-testid={phraseTestId}>{forcePhrase ? phrase : moodPhrase(mood, phrase)}</span>
         {translation && (
           <span data-testid="mascot-translation" className="block mt-0.5 font-normal text-ink/70">{translation}</span>

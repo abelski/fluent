@@ -1059,7 +1059,7 @@ export default function QuizSession({
             <TakChevron direction="left" size={10} className="inline-block align-[-1px] mr-1" />{tr.study.backToLists}
           </Link>
           <div className="flex items-center gap-3 min-w-0 ml-3">
-            <span className="text-[#5b6067] text-xs uppercase tracking-wider text-right">
+            <span className="text-ink-soft text-xs uppercase tracking-wider text-right">
               {headerLabel ? `${headerLabel} · ${stageLabel}` : stageLabel}
             </span>
             <span className="shrink-0 whitespace-nowrap text-gray-400 text-sm">{wordsDone} / {totalWords}</span>
@@ -1132,7 +1132,7 @@ export default function QuizSession({
                 {audioState === 'locked' && <LockedSpeakButton newTab />}
               </div>
               {digit && <p className="text-5xl sm:text-7xl font-bold text-emerald-600 mb-4" data-testid="number-digit">{digit}</p>}
-              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mb-4">{translateHint(word.hint, lang)}</p>}
+              {word.hint && !digit && <p className="text-ink-soft text-xs uppercase tracking-wider mb-4">{translateHint(word.hint, lang)}</p>}
               <div className="h-px bg-gray-100 mb-4" />
               <p className="text-xl text-gray-500">{trans(word, lang)}</p>
             </div>
@@ -1158,7 +1158,7 @@ export default function QuizSession({
                 {audioState === 'locked' && <LockedSpeakButton newTab />}
               </div>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
-              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{translateHint(word.hint, lang)}</p>}
+              {word.hint && !digit && <p className="text-ink-soft text-xs uppercase tracking-wider mt-2">{translateHint(word.hint, lang)}</p>}
             </div>
             <div className="w-full grid grid-cols-1 gap-3">
               {options.map((opt, i) => {
@@ -1201,7 +1201,7 @@ export default function QuizSession({
               <p className="text-gray-400 text-sm mb-3 uppercase tracking-wider">{tr.study.selectLithuanian}</p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
-              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{translateHint(word.hint, lang)}</p>}
+              {word.hint && !digit && <p className="text-ink-soft text-xs uppercase tracking-wider mt-2">{translateHint(word.hint, lang)}</p>}
             </div>
             <div className="w-full grid grid-cols-1 gap-3">
               {options.map((opt, i) => {
@@ -1248,7 +1248,7 @@ export default function QuizSession({
               </p>
               <p className="text-2xl sm:text-4xl font-bold tracking-tight">{trans(word, lang)}</p>
               {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
-              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{translateHint(word.hint, lang)}</p>}
+              {word.hint && !digit && <p className="text-ink-soft text-xs uppercase tracking-wider mt-2">{translateHint(word.hint, lang)}</p>}
             </div>
 
             <div className="w-full min-h-[3.5rem] border-b border-gray-200 pb-3 flex flex-wrap gap-2 justify-center" data-testid="assembled-row">
@@ -1285,7 +1285,7 @@ export default function QuizSession({
                     disabled={used || answerState !== 'unanswered'}
                     className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${
                       used
-                        ? 'bg-gray-50 border-gray-100 text-[#5b6067]'
+                        ? 'bg-gray-50 border-gray-100 text-ink-soft'
                         : 'bg-white border-gray-900 text-gray-900 hover:bg-gray-100'
                     }`}
                   >
@@ -1339,7 +1339,7 @@ export default function QuizSession({
                   {digit && <p className="text-4xl sm:text-6xl font-bold text-emerald-600 mt-2" data-testid="number-digit">{digit}</p>}
                 </>
               )}
-              {word.hint && !digit && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-2">{translateHint(word.hint, lang)}</p>}
+              {word.hint && !digit && <p className="text-ink-soft text-xs uppercase tracking-wider mt-2">{translateHint(word.hint, lang)}</p>}
               {cloveIsCloze && <p className="text-gray-400 text-sm mt-3">{trans(word, lang)}</p>}
             </div>
             <div className="w-full flex flex-col gap-3">
@@ -1448,7 +1448,7 @@ export default function QuizSession({
                   )}
                   {after}
                 </p>
-                {word.hint && <p className="text-[#5b6067] text-xs uppercase tracking-wider mt-3">{translateHint(word.hint, lang)}</p>}
+                {word.hint && <p className="text-ink-soft text-xs uppercase tracking-wider mt-3">{translateHint(word.hint, lang)}</p>}
                 <p className="text-gray-400 text-sm mt-3">{trans(word, lang)}</p>
               </div>
               <div className="w-full flex flex-col gap-3">

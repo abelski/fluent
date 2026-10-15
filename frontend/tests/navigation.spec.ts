@@ -60,36 +60,33 @@ test.describe('Navigation', () => {
 });
 
 
-test.describe('Grammar page — categories', () => {
-  test('enrolled program has a chip with the enrolled dot; «Все» is selected by default', async ({ page }) => {
+// #66 — the chips/topic grid gave way to «В процессе» cards and a program page on ?program=.
+test.describe('Grammar page — programs', () => {
+  test('an enrolled program shows as an «В процессе» card that opens its page', async ({ page }) => {
     await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.goto('/dashboard/grammar');
-    // Program chip uses program id: program id=1 → data-testid="category-program-1"
-    const chip = page.locator('[data-testid="category-program-1"]');
-    await expect(chip).toBeVisible({ timeout: 5000 });
-    await expect(chip.getByTestId('enrolled-dot')).toBeVisible();
-    await expect(page.getByTestId('category-all')).toHaveAttribute('aria-pressed', 'true');
+    const card = page.getByTestId('program-card-1');
+    await expect(card).toBeVisible({ timeout: 5000 });
+    await expect(card).toContainText('Литовские падежи');
+    await card.click();
+    await expect(page).toHaveURL(/\?program=1$/);
+    await expect(page.getByTestId('program-header')).toContainText('Литовские падежи');
   });
 
-  test('Падежи chip can be selected and deselected via «Все»', async ({ page }) => {
+  test('the program page links back to the overview', async ({ page }) => {
     await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
-    await page.goto('/dashboard/grammar');
-    const chip = page.locator('[data-testid="category-program-1"]');
-    await expect(chip).toBeVisible({ timeout: 5000 });
-    await chip.click();
-    await expect(chip).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('topics-section')).toContainText('Литовские падежи');
-    await page.getByTestId('category-all').click();
-    await expect(chip).toHaveAttribute('aria-pressed', 'false');
+    await page.goto('/dashboard/grammar?program=1');
+    await page.getByTestId('program-back').click();
+    await expect(page).toHaveURL(/\/dashboard\/grammar\/?$/);
+    await expect(page.getByTestId('program-card-1')).toBeVisible();
   });
-
 });
 
 test.describe('Grammar page — lesson levels', () => {
-  // Helper: click the first lesson card of the given level label.
-  // Lessons are level buttons on the topic cards.
+  // Helper: click the first open lesson of the given level label.
+  // Lessons are the level cells on the program page (#66).
   async function startFirstLessonOfLevel(page: import('@playwright/test').Page, levelLabel: string) {
     await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
@@ -97,9 +94,9 @@ test.describe('Grammar page — lesson levels', () => {
     await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
       await route.fulfill({ json: [] });
     });
-    await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
-    const card = page.locator('[data-testid="topic-card"] button').filter({ hasText: levelLabel }).first();
+    await page.goto('/dashboard/grammar?program=1');
+    await page.waitForSelector('[data-testid="level-button"]', { timeout: 5000 });
+    const card = page.getByTestId('level-button').filter({ hasText: levelLabel }).first();
     await card.click();
     // Wait for exercise screen: "К урокам" back button is unique to exercise view
     await expect(page.getByText('К урокам')).toBeVisible({ timeout: 8000 });
@@ -116,7 +113,7 @@ test.describe('Grammar page — lesson levels', () => {
   });
 
   test('practice lesson shows no grammar hint', async ({ page }) => {
-    await startFirstLessonOfLevel(page, 'Повторение');
+    await startFirstLessonOfLevel(page, 'Смешанный'); // #66 rename of «Повторение»
     // No hint button at all
     await expect(page.getByText('Грамматическая подсказка')).not.toBeVisible();
     await expect(page.getByText('Грамматическое правило')).not.toBeVisible();
@@ -137,7 +134,7 @@ test.describe('Grammar progression — locking', () => {
     },
   ];
 
-  test('locked lesson shows lock icon and cannot be clicked', async ({ page }) => {
+  test('locked lesson shows lock icon and its reason; tapping it starts nothing', async ({ page }) => {
     await setFakeToken(page);
     await mockGrammarProgramsEnrolled(page);
     await page.route('**/api/grammar/lessons', async (route) => {
@@ -146,13 +143,18 @@ test.describe('Grammar progression — locking', () => {
     await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
       await route.fulfill({ json: [] });
     });
-    await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
+    let started = false;
+    await page.route('**/api/grammar/lessons/*/tasks', (route) => { started = true; return route.fulfill({ json: [] }); });
+    await page.goto('/dashboard/grammar?program=1');
+    await page.waitForSelector('[data-testid="level-strip"] button', { timeout: 5000 });
 
-    // Second lesson should have data-testid="lesson-locked" and be disabled
+    // Second lesson is the locked cell; #66: it says why instead of being a dead button.
     const lockedCard = page.locator('[data-testid="lesson-locked"]').first();
     await expect(lockedCard).toBeVisible();
-    await expect(lockedCard).toBeDisabled();
+    await expect(page.getByTestId('lock-reason')).toHaveText('Продвинутый откроется после «Падежи · Базовый» — нужно больше 75%');
+    await lockedCard.click();
+    await expect(page.getByTestId('program-header')).toBeVisible();
+    expect(started).toBe(false);
   });
 
   test('unlocked lesson is clickable', async ({ page }) => {
@@ -164,11 +166,11 @@ test.describe('Grammar progression — locking', () => {
     await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
       await route.fulfill({ json: [] });
     });
-    await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
+    await page.goto('/dashboard/grammar?program=1');
+    await page.waitForSelector('[data-testid="level-strip"] button', { timeout: 5000 });
 
     // First lesson is unlocked — should NOT have lesson-locked testid
-    const cards = page.locator('[data-testid="topic-card"] button');
+    const cards = page.locator('[data-testid="level-strip"] button');
     await expect(cards.first()).not.toBeDisabled();
     await expect(cards.first()).not.toHaveAttribute('data-testid', 'lesson-locked');
   });
@@ -201,11 +203,11 @@ test.describe('Grammar progression — locking', () => {
       await route.fulfill({ json: { ok: true, passed: true } });
     });
 
-    await page.goto('/dashboard/grammar');
-    await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
+    await page.goto('/dashboard/grammar?program=1');
+    await page.waitForSelector('[data-testid="level-strip"] button', { timeout: 5000 });
 
     // Start lesson 1
-    await page.locator('[data-testid="topic-card"] button').first().click();
+    await page.locator('[data-testid="level-strip"] button').first().click();
     await expect(page.getByText('К урокам')).toBeVisible({ timeout: 5000 });
 
     // Answer both tasks correctly
@@ -242,7 +244,7 @@ test.describe('Grammar progression — locking', () => {
       await route.fulfill({ json: { ok: true, passed: false } });
     });
 
-    await page.goto('/dashboard/grammar');
+    await page.goto('/dashboard/grammar?program=1');
     await page.getByTestId('level-button').first().click();
     await expect(page.getByText('К урокам')).toBeVisible({ timeout: 5000 });
 
@@ -266,8 +268,9 @@ test.describe('Practice page', () => {
     await setFakeToken(page);
     await page.goto('/dashboard/practice');
     await expect(page.getByRole('heading', { name: 'Практика', exact: true })).toBeVisible();
-    // #55: the category prompt became the hero subtitle (no categories mocked → onboarding copy).
-    await expect(page.getByTestId('stats-card-practice')).toContainText('Добавь программу');
+    // #55: the category prompt became the hero subtitle (no categories mocked → onboarding copy);
+    // #66 reworded it to «Выбери, к чему готовишься…».
+    await expect(page.getByTestId('stats-card-practice')).toContainText('Выбери, к чему готовишься');
   });
 });
 

@@ -6,7 +6,8 @@ import type { Page } from '@playwright/test';
 // The rule itself is server-side: `is_locked` on the lesson list plus a 403 from the
 // tasks endpoint for a free user who asks for a locked lesson by id. These tests cover
 // the UI contract on top of that:
-//   • free user  → lock icon + a "Открыть с Premium" hint linking to /pricing
+//   • free user  → lock icon, the lock's reason, and «Открыть всё сразу — с Premium» → /pricing
+//                  (#66: one Premium link under «Осталось» replaced the per-lesson hint)
 //   • premium    → no lock, no hint, an out-of-order lesson starts normally
 //   • 403 / 429  → a real blocked screen instead of the endless spinner the page used
 //                  to show whenever the tasks fetch returned anything but 200.
@@ -56,25 +57,26 @@ async function openLessonCards(page: Page, lessons: unknown[]) {
   await page.route(/\/api\/grammar\/verb-lessons/, async (route) => {
     await route.fulfill({ json: [] });
   });
-  await page.goto('/dashboard/grammar');
-  await page.waitForSelector('[data-testid="topic-card"] button', { timeout: 5000 });
+  await page.goto('/dashboard/grammar?program=1'); // #66 — the lessons live on the program page
+  await page.waitForSelector('[data-testid="level-strip"] button', { timeout: 5000 });
 }
 
 test.describe('Grammar lesson order — free user', () => {
-  test('locked lesson shows the lock icon and a /pricing upsell hint', async ({ page }) => {
+  test('locked lesson shows the lock icon, its reason and the /pricing link', async ({ page }) => {
     await openLessonCards(page, FREE_LESSONS);
 
     await expect(page.locator('[data-testid="lesson-locked"]')).toBeVisible();
+    await expect(page.getByTestId('lock-reason')).toHaveText('Продвинутый откроется после «Падежи · Базовый» — нужно больше 75%');
 
-    const upsell = page.locator('[data-testid="lesson-locked-upsell"]');
+    const upsell = page.getByTestId('premium-link');
     await expect(upsell).toBeVisible();
     await expect(upsell).toHaveAttribute('href', /\/pricing\/?$/);
-    await expect(upsell).toHaveText('Открыть с Premium');
+    await expect(upsell).toHaveText('Открыть всё сразу — с Premium');
   });
 
   test('unlocked lesson has no upsell hint', async ({ page }) => {
     await openLessonCards(page, [lesson(1, 'basic', false)]);
-    await expect(page.locator('[data-testid="lesson-locked-upsell"]')).toHaveCount(0);
+    await expect(page.getByTestId('premium-link')).toHaveCount(0);
   });
 });
 
@@ -82,7 +84,7 @@ test.describe('Grammar lesson order — premium user', () => {
   test('no lock icon and no upsell hint anywhere', async ({ page }) => {
     await openLessonCards(page, PREMIUM_LESSONS);
     await expect(page.locator('[data-testid="lesson-locked"]')).toHaveCount(0);
-    await expect(page.locator('[data-testid="lesson-locked-upsell"]')).toHaveCount(0);
+    await expect(page.getByTestId('premium-link')).toHaveCount(0);
   });
 
   test('out-of-order lesson starts normally', async ({ page }) => {
@@ -92,7 +94,7 @@ test.describe('Grammar lesson order — premium user', () => {
     await openLessonCards(page, PREMIUM_LESSONS);
 
     // Second lesson — the one a free user would still have locked.
-    await page.locator('[data-testid="topic-card"] button').nth(1).click();
+    await page.locator('[data-testid="level-strip"] button').nth(1).click();
     await expect(page.getByText('К урокам')).toBeVisible({ timeout: 8000 });
   });
 });
@@ -136,6 +138,6 @@ test.describe('Grammar lesson order — blocked responses', () => {
     await expect(page.locator('[data-testid="grammar-blocked-locked"]')).toBeVisible({ timeout: 8000 });
 
     await page.getByRole('button', { name: /К урокам/ }).click();
-    await expect(page.locator('[data-testid="category-program-1"]')).toBeVisible();
+    await expect(page.getByTestId('program-header')).toBeVisible(); // back on the program page
   });
 });

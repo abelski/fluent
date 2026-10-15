@@ -31,7 +31,7 @@ for (const [state, { mock, act }] of Object.entries(STATES)) {
       test(`${state} ${lang} ${width}`, async ({ page }) => {
         await mockGrammar(page, { ...mock, lang, width });
         await page.goto('/dashboard/grammar');
-        await expect(page.getByTestId('featured-card')).toBeVisible();
+        await expect(page.getByTestId('stats-card-grammar')).toBeVisible(); // #66 — the featured card is gone
         if (act) await act(page);
         await page.waitForTimeout(300);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

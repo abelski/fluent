@@ -1,4 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { mockGrammar } from './helpers/grammarBento';
+import { mockPractice } from './helpers/practiceBento';
+import { mockArticles } from './helpers/articlesBento';
+import { mockShellPages } from './helpers/shellPages';
 
 /**
  * Guards the visual contract taken from `documentation/design system/prototypes/*.html`.
@@ -161,6 +165,63 @@ test.describe('Design-system parity', () => {
     // The dropdown adds a second copy of the five nav links.
     await expect(page.locator('header a[href^="/dashboard"]')).toHaveCount(10);
   });
+
+  // #66 — compact hero on phones, same on all five top-nav pages: the title spans the card,
+  // TAK sits beside the numbers (not above the title), the main button spans the card under
+  // them. From 860px (BentoHero) / `sm` (ProgressStatCard) the desktop layout is unchanged.
+  const HEROES: { url: string; card: string; button: string; kind: 'bento' | 'stat'; mock: (p: Page, width: number) => Promise<unknown> }[] = [
+    { url: '/dashboard/lists', card: 'stats-card-words', button: '', kind: 'stat', mock: (p, width) => mockShellPages(p, { width }) },
+    { url: '/dashboard/phrases', card: 'stats-card-phrases', button: '', kind: 'stat', mock: (p, width) => mockShellPages(p, { width }) },
+    { url: '/dashboard/grammar', card: 'stats-card-grammar', button: 'hero-start-cases', kind: 'bento', mock: (p, width) => mockGrammar(p, { enrolled: [], width }) },
+    { url: '/dashboard/practice', card: 'stats-card-practice', button: 'hero-start-practice', kind: 'bento', mock: (p, width) => mockPractice(p, { enrolled: [], width }) },
+    { url: '/dashboard/articles', card: 'articles-hero', button: 'articles-read-newest', kind: 'bento', mock: (p, width) => mockArticles(p, { width }) },
+  ];
+  const box = async (l: import('@playwright/test').Locator) => (await l.boundingBox())!;
+  const overlapY = (a: { y: number; height: number }, b: { y: number; height: number }) => a.y < b.y + b.height && b.y < a.y + a.height;
+
+  for (const h of HEROES) {
+    for (const width of [375, 1280]) {
+      test(`hero layout at ${width}px: ${h.url}`, async ({ page }) => {
+        await h.mock(page, width);
+        await page.goto(h.url);
+        const card = page.getByTestId(h.card);
+        await expect(card).toBeVisible();
+        const c = await box(card);
+        const phone = width < 640;
+        if (h.kind === 'bento') {
+          const title = await box(card.getByTestId('hero-title-block'));
+          const stats = await box(card.getByTestId('hero-stats'));
+          const tak = await box(card.getByTestId('hero-mascot'));
+          const btn = await box(page.getByTestId(h.button));
+          if (phone) {
+            expect(title.width, 'title spans the card').toBeGreaterThan(c.width * 0.85);
+            expect(tak.y, 'TAK below the title').toBeGreaterThanOrEqual(title.y + title.height - 1);
+            expect(tak.x, 'TAK right of the numbers').toBeGreaterThanOrEqual(stats.x + stats.width - 1);
+            expect(overlapY(tak, stats), 'TAK beside the numbers').toBe(true);
+            expect(btn.width, 'button spans the card').toBeGreaterThan(c.width * 0.85);
+            expect(btn.y, 'button under the numbers').toBeGreaterThanOrEqual(stats.y + stats.height - 1);
+          } else {
+            expect(tak.x, 'TAK right of the text column').toBeGreaterThanOrEqual(title.x + title.width - 1);
+            expect(btn.width, 'desktop button is not full width').toBeLessThan(c.width / 2);
+          }
+        } else {
+          const tak = await box(card.getByTestId('page-mascot'));
+          const count = await box(card.locator('p').first());
+          const btn = await box(card.locator('a').first());
+          if (phone) {
+            expect(tak.x, 'TAK right of the count').toBeGreaterThanOrEqual(count.x + count.width - 1);
+            expect(tak.y, 'TAK above the buttons').toBeLessThan(btn.y);
+            expect(btn.width, 'button spans the card').toBeGreaterThan(c.width * 0.85);
+          } else {
+            expect(tak.x + tak.width, 'desktop TAK left of the count').toBeLessThanOrEqual(count.x + 1);
+            expect(btn.width, 'desktop button is not full width').toBeLessThan(c.width / 2);
+          }
+        }
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        expect(overflow, 'horizontal overflow').toBeLessThanOrEqual(0);
+      });
+    }
+  }
 
   test('study-card secondary labels are readable, not near-white', async ({ page }) => {
     await page.goto('/dashboard/grammar');

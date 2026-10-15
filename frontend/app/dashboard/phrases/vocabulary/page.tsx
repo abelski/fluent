@@ -158,7 +158,7 @@ export default function PhrasesVocabularyPage() {
                       // The "needs review" chip stays red-tinted even when
                       // unselected, as in the prototype.
                       : key === 'due'    ? 'bg-[#fdeceb] text-[#c2504a]'
-                      : 'bg-[#f2f3f3] text-[#5b6067]'
+                      : 'bg-[#f2f3f3] text-ink-soft'
                   }`}
                 >
                   {label}{count > 0 && <span className="ml-1 opacity-70">({count})</span>}

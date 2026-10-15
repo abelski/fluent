@@ -47,9 +47,10 @@ test.describe('Verb grammar programs', () => {
       await route.fulfill({ json: {} });
     });
 
-    await page.goto('/dashboard/grammar/programs');
-    await expect(page.getByText('Спряжение глаголов')).toBeVisible();
-    await expect(page.getByText('Управление глаголов')).toBeVisible();
+    await page.goto('/dashboard/grammar'); // #66 — the /programs page is gone; programs show on the overview
+    // Enrolled → «В процессе» cards (the hero also names the one to continue).
+    await expect(page.getByTestId('program-card-3')).toContainText('Спряжение глаголов');
+    await expect(page.getByTestId('program-card-4')).toContainText('Управление глаголов');
   });
 
   test('backend GET /grammar/verb-lessons/200/tasks returns verb_conjugation tasks', async ({ request }) => {

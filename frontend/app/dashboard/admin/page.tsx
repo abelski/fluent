@@ -119,6 +119,7 @@ interface PracticeTestRow {
   category_id: number | null;
   title_ru: string;
   title_en: string | null;
+  title_lt: string | null; // #66 — Lithuanian original, shown as a sub-line
   description_ru: string | null;
   description_en: string | null;
   lesson_text_lt: string | null;
@@ -170,6 +171,7 @@ const BLANK_TEST: Omit<PracticeTestRow, 'id' | 'total_questions' | 'active_quest
   category_id: null,
   title_ru: '',
   title_en: '',
+  title_lt: '',
   description_ru: '',
   description_en: '',
   lesson_text_lt: null,
@@ -1417,6 +1419,7 @@ const [practiceQPage, setPracticeQPage] = useState(1);
       body: JSON.stringify({
         title_ru: editingTest.title_ru,
         title_en: editingTest.title_en || null,
+        title_lt: editingTest.title_lt ?? '', // "" clears; the server strips + validates (≤200)
         description_ru: editingTest.description_ru || null,
         description_en: editingTest.description_en || null,
         lesson_text_lt: editingTest.lesson_text_lt || null,
@@ -3410,6 +3413,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                           <input value={newTest.title_en ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, title_en: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                         </div>
                         <div className="flex flex-col gap-1">
+                          <label className="text-xs text-gray-400">{tr.adminPractice.fieldTitleLt}</label>
+                          <input lang="lt" maxLength={200} value={newTest.title_lt ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, title_lt: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                        </div>
+                        <div className="flex flex-col gap-1">
                           <label className="text-xs text-gray-400">{tr.adminPractice.fieldDescRu}</label>
                           <input value={newTest.description_ru ?? ''} onChange={(e) => setNewTest((p) => ({ ...p, description_ru: e.target.value }))} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                         </div>
@@ -3468,6 +3475,10 @@ const [practiceQPage, setPracticeQPage] = useState(1);
                                 <div className="flex flex-col gap-1">
                                   <label className="text-xs text-gray-400">{tr.adminPractice.fieldTitleEn}</label>
                                   <input value={editingTest.title_en ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, title_en: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-gray-400">{tr.adminPractice.fieldTitleLt}</label>
+                                  <input data-testid="admin-test-title-lt" lang="lt" maxLength={200} value={editingTest.title_lt ?? ''} onChange={(e) => setEditingTest((p) => p ? { ...p, title_lt: e.target.value } : p)} className="bg-white border border-gray-900 rounded-lg px-2 py-1 text-sm outline-none" />
                                 </div>
                                 <div className="flex flex-col gap-1">
                                   <label className="text-xs text-gray-400">{tr.adminPractice.fieldDescRu}</label>

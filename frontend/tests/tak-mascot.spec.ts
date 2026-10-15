@@ -150,8 +150,6 @@ test.describe('TAK mascot', () => {
     const routes = [
       '/dashboard/vocabulary',
       '/dashboard/practice',
-      '/dashboard/practice/programs',
-      '/dashboard/grammar/programs',
       '/dashboard/settings',
       '/dashboard/articles',
     ];

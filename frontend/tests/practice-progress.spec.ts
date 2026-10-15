@@ -56,7 +56,9 @@ const MOCK_TEST_LOCKED = {
 test.describe('Practice progress', () => {
   test('shows per-category progress bar and count on the list page', async ({ page }) => {
     await setFakeToken(page);
-    // #55: the bento page reads /practice/categories + /tests and derives progress itself.
+    // #55/#66: the overview reads /practice/categories + /tests (+ /me/practice-categories for
+    // the last result) and derives progress itself.
+    await page.route('**/api/**', (route) => route.fulfill({ json: [] })); // fallback: never the real backend
     await page.route('**/api/practice/categories', (route) =>
       route.fulfill({ json: [{ ...MOCK_CATEGORY, source_url: null, enrolled: true }] })
     );
@@ -71,6 +73,8 @@ test.describe('Practice progress', () => {
     await expect(page.getByTestId('stats-card-practice')).toContainText('из 2');
     const bar = page.getByTestId('stats-card-practice').locator('.bg-emerald-600').first();
     await expect(bar).toBeVisible();
+    // #66 — the in-progress card carries the same count.
+    await expect(page.getByTestId('program-card-2')).toContainText('1/2');
   });
 
   test('first test is enabled, second test is locked with lock icon', async ({ page }) => {

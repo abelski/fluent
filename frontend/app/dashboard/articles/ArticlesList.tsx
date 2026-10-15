@@ -184,7 +184,7 @@ function ArticlesBento({
               <h2 className={FEATURED_HEADING} data-testid="featured-heading">{title(featured)}</h2>
               <div className="text-sm text-muted">{date(featured)}</div>
               <div>
-                <span className="inline-flex text-xs px-2.5 py-0.5 rounded-full bg-[#f2f3f3] text-[#5b6067]">
+                <span className="inline-flex text-xs px-2.5 py-0.5 rounded-full bg-[#f2f3f3] text-ink-soft">
                   {t.themes[themeOf(featured)]}
                 </span>
               </div>

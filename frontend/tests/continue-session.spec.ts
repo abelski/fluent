@@ -350,7 +350,7 @@ test.describe('Combined continue session', () => {
 
     const gate = page.getByTestId('continue-needs-enrollment');
     await expect(gate).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('continue-enroll-grammar')).toHaveAttribute('href', /^\/dashboard\/grammar\/programs\/?$/);
+    await expect(page.getByTestId('continue-enroll-grammar')).toHaveAttribute('href', /^\/dashboard\/grammar\/?$/); // #66 — the catalogue is on the overview
     // Only the missing category gets a link — words/phrases are already enrolled.
     await expect(page.getByTestId('continue-enroll-words')).toHaveCount(0);
     await expect(page.getByTestId('continue-enroll-phrases')).toHaveCount(0);
@@ -368,7 +368,7 @@ test.describe('Combined continue session', () => {
 
     await expect(page.getByTestId('continue-needs-enrollment')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('continue-enroll-words')).toHaveAttribute('href', /^\/dashboard\/lists\/?$/);
-    await expect(page.getByTestId('continue-enroll-grammar')).toHaveAttribute('href', /^\/dashboard\/grammar\/programs\/?$/);
+    await expect(page.getByTestId('continue-enroll-grammar')).toHaveAttribute('href', /^\/dashboard\/grammar\/?$/); // #66 — the catalogue is on the overview
     await expect(page.getByTestId('continue-enroll-phrases')).toHaveAttribute('href', /^\/dashboard\/phrases\/?$/);
   });
 

@@ -37,7 +37,7 @@ const TASK = {
 };
 
 async function openLesson(page: import('@playwright/test').Page) {
-  await page.goto('/dashboard/grammar');
+  await page.goto('/dashboard/grammar?program=2'); // #66 — levels live on the program page
 
   await page.getByTestId('level-button').first().click();
 
@@ -53,7 +53,7 @@ test.describe('Issue #151 — bū́ti comma alternates are accepted', () => {
     await page.route('**/api/grammar/lessons', (r) => r.fulfill({ json: [] }));
     await page.route('**/api/grammar/progress', (r) => r.fulfill({ json: {} }));
     await page.route('**/api/grammar-programs', (r) =>
-      r.fulfill({ json: [{ program_type: 'verbs', key: 'verbs', enrolled: true }] }));
+      r.fulfill({ json: [{ id: 2, title: 'Глаголы', program_type: 'verbs', key: 'verbs', enrolled: true }] }));
     await page.route('**/api/grammar/verb-lessons?program_type=verbs', (r) =>
       r.fulfill({ json: [LESSON] }));
     await page.route('**/api/grammar/verb-lessons?program_type=verb_cases', (r) =>

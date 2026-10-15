@@ -1,44 +1,62 @@
 'use client';
 
-// #55 — Практика in the #53 bento layout. Guests see the same page as "no programs"
-// (categories + tests are readable without a token); enrolling sends them to /login.
-// Presentational pieces: components/PracticeOverview.tsx + components/BentoParts.tsx.
+// #66 — Практика: overview («В процессе» / «Завершённые» / «Другие программы») and the program
+// page on `?program=<id>` (the static export needs no new route). Guests see the same page as
+// "no programs" (categories + tests are readable without a token); enrolling sends them to
+// /login. Presentational pieces: components/PracticeOverview.tsx + ProgramOverview.tsx.
+// See documentation/overview-pages.md.
 
-import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  BACKEND_URL, getToken, getPracticeCategories, getPracticeCategoryTests,
+  BACKEND_URL, getToken, getMyPracticeCategories, getPracticeCategories, getPracticeCategoryTests,
   enrollPracticeCategory, unenrollPracticeCategory, type PracticeCategorySummary,
 } from '../../../lib/api';
 import { useT } from '../../../lib/useT';
 import PageMascot from '../../../components/PageMascot';
 import PageShell from '../components/PageShell';
-import { BENTO_GRID, BentoChips, ConfirmDialog, ErrorLine } from '../components/BentoParts';
+import { ConfirmDialog } from '../components/BentoParts';
+import { OverviewNotice } from '../components/ProgramOverview';
 import {
-  PracticeFeaturedCard, PracticeHero, PracticeSections, PracticeStack, categoryName, isTestPassed,
-  practiceFeaturedFor, testHref, type TestsByCategory,
+  PracticeOverviewBody, PracticeOverviewHero, PracticeProgramPage, buildPracticeModel, categoryName, isTestPassed,
+  programHref, type TestsByCategory,
 } from '../components/PracticeOverview';
 
 export default function PracticePage() {
+  // useSearchParams needs a Suspense boundary under static export — same as inbox/page.tsx.
+  return (
+    <Suspense fallback={<PageShell>{null}</PageShell>}>
+      <PracticePageInner />
+    </Suspense>
+  );
+}
+
+function PracticePageInner() {
   const { tr, lang } = useT();
   const t = tr.practice;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewId = Number(searchParams.get('program')) || null;
 
   const [categories, setCategories] = useState<PracticeCategorySummary[]>([]);
   const [byCat, setByCat] = useState<TestsByCategory>({});
+  const [lastResult, setLastResult] = useState<Record<number, string | null>>({});
   const [premiumUser, setPremiumUser] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<number | 'all'>('all');
   const [confirmId, setConfirmId] = useState<number | null>(null);
-  // Enroll/unenroll failure line under the chips; cleared on the next action.
+  // The category just added from the catalogue — its page shows «✓ … · Отменить».
+  const [justAdded, setJustAdded] = useState<number | null>(null);
+  // Enroll/unenroll failure; cleared on the next action.
   const [actionError, setActionError] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const cats = await getPracticeCategories();
+      const [cats, mine] = await Promise.all([getPracticeCategories(), getMyPracticeCategories()]);
       const lists = await Promise.all(cats.map((c) => getPracticeCategoryTests(c.id).catch(() => [])));
       setCategories(cats);
       setByCat(Object.fromEntries(cats.map((c, i) => [c.id, lists[i]])));
+      // #66 — the latest result per category drives «Пора повторить» and the hero's program.
+      setLastResult(Object.fromEntries(mine.map((m) => [m.id, m.last_result_at])));
     } catch (e) {
       console.error(e);
     } finally {
@@ -50,32 +68,45 @@ export default function PracticePage() {
     load();
     const token = getToken();
     if (!token) return;
-    // Only labels the «Premium» test buttons; the exam endpoint enforces Premium itself.
+    // Only labels the «Premium» test rows; the exam endpoint enforces Premium itself.
     fetch(`${BACKEND_URL}/api/me/quota`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : null))
       .then((q) => setPremiumUser(!!q?.premium_active))
       .catch(() => {});
   }, [load]);
 
-  async function handleEnroll(categoryId: number) {
+  async function enroll(ids: number[]): Promise<boolean> {
     // Guests go to sign in; OAuth always lands on /dashboard (no return here).
-    if (!getToken()) { router.push('/login'); return; }
+    if (!getToken()) { router.push('/login'); return false; }
     setActionError(false);
     try {
-      await enrollPracticeCategory(categoryId);
-      setCategories((prev) => prev.map((c) => c.id === categoryId ? { ...c, enrolled: true } : c));
-      setSelected(categoryId);
+      for (const id of ids) await enrollPracticeCategory(id);
+      setCategories((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, enrolled: true } : c));
+      load(); // locks and scores come with the enrolled view
+      return true;
     } catch (e) {
       console.error(e);
       setActionError(true);
+      return false;
     }
   }
 
+  // «Добавить» enrolls and opens the program page with «✓ … теперь в твоих программах».
+  async function handleEnroll(categoryId: number) {
+    if (await enroll([categoryId])) {
+      setJustAdded(categoryId);
+      router.push(programHref(categoryId));
+    }
+  }
+
+  // Undo / «Убрать программу»: unenroll and go back to the overview.
   async function handleUnenroll(categoryId: number) {
     setActionError(false);
     try {
       await unenrollPracticeCategory(categoryId); // 404 (not enrolled) counts as done
       setCategories((prev) => prev.map((c) => c.id === categoryId ? { ...c, enrolled: false } : c));
+      setJustAdded(null);
+      router.push('/dashboard/practice');
     } catch (e) {
       console.error(e);
       setActionError(true);
@@ -99,80 +130,55 @@ export default function PracticePage() {
     );
   }
 
-  const enrolled = categories.filter((c) => c.enrolled);
-  const none = enrolled.length === 0;
-  const enrolledTests = enrolled.flatMap((c) => byCat[c.id] ?? []);
-  const allTests = categories.flatMap((c) => byCat[c.id] ?? []);
-  const startCategory = categories[0] ?? null;
-  const heroNext = practiceFeaturedFor('all', categories, byCat);
-  const featured = practiceFeaturedFor(selected, categories, byCat);
-  const finals = enrolled.flatMap((c) =>
-    (byCat[c.id] ?? []).filter((x) => x.is_final).map((test) => ({ category: c, test })));
+  const models = categories.map((c) => buildPracticeModel(c, byCat[c.id] ?? [], lastResult[c.id] ?? null));
+  const mine = models.filter((m) => m.category.enrolled);
+  const others = models.filter((m) => !m.category.enrolled);
+  const none = mine.length === 0;
+  const enrolledTests = mine.flatMap((m) => m.tests);
+  const cit = models.find((m) => m.exam === 'cit') ?? null;
+  const a2 = models.find((m) => m.exam === 'a2') ?? null; // Reading — first A2 category by sort order
+  const viewing = mine.find((m) => m.category.id === viewId) ?? null;
   const confirmCategory = categories.find((c) => c.id === confirmId);
+  const notice = actionError && <OverviewNotice testId="practice-action-error">{t.actionFailed}</OverviewNotice>;
 
   return (
     <PageShell className="pb-20 flex flex-col gap-5">
-      <PracticeHero
-        passed={enrolledTests.filter(isTestPassed).length}
-        total={enrolledTests.length}
-        none={none}
-        continueHref={heroNext?.kind === 'next' ? testHref(heroNext.category.id, heroNext.test.id) : null}
-        onStart={none && startCategory ? () => handleEnroll(startCategory.id) : null}
-        onNavigate={navigate}
-      />
-
-      <div>
-        <BentoChips
-          items={[
-            {
-              key: 'all', label: t.allChip, count: (none ? allTests : enrolledTests).length,
-              active: selected === 'all', testId: 'category-all',
-              onClick: () => { setActionError(false); setSelected('all'); },
-            },
-            ...categories.map((c) => ({
-              key: c.id,
-              label: categoryName(c, lang),
-              count: (byCat[c.id] ?? []).length,
-              active: selected === c.id,
-              dot: c.enrolled,
-              testId: `category-practice-${c.id}`,
-              onClick: () => { setActionError(false); setSelected(c.id); },
-            })),
-          ]}
-          more={{ href: '/dashboard/practice/programs', label: t.browseProgramsLink, testId: 'browse-programs-link' }}
+      {viewing ? (
+        <PracticeProgramPage
+          model={viewing}
+          mine={mine}
+          justAdded={justAdded === viewing.category.id}
+          premiumUser={premiumUser}
+          onUndo={() => handleUnenroll(viewing.category.id)}
+          onRemove={() => setConfirmId(viewing.category.id)}
+          onNavigate={navigate}
+          notice={notice}
         />
-        {actionError && <ErrorLine testId="practice-action-error">{t.actionFailed}</ErrorLine>}
-      </div>
-
-      {featured ? (
-        <>
-          <section className={BENTO_GRID}>
-            <PracticeFeaturedCard
-              featured={featured}
-              tests={byCat[featured.category.id] ?? []}
-              hideAddFor={none && startCategory ? startCategory.id : null}
-              onNavigate={navigate}
-              onAdd={handleEnroll}
-            />
-            <PracticeStack
-              categories={categories.filter((c) => c.id !== featured.category.id)}
-              finals={finals}
-              byCat={byCat}
-              onOpen={(id) => { setActionError(false); setSelected(id); }}
-              onAdd={handleEnroll}
-              onNavigate={navigate}
-            />
-          </section>
-          <PracticeSections
-            category={featured.category}
-            tests={byCat[featured.category.id] ?? []}
-            premiumUser={premiumUser}
-            onStart={(test) => navigate(testHref(featured.category.id, test.id))}
-            onUnenroll={() => setConfirmId(featured.category.id)}
-          />
-        </>
       ) : (
-        <p className="text-faint text-sm py-8 text-center">{t.noTests}</p>
+        <>
+          <PracticeOverviewHero
+            mine={mine}
+            passed={enrolledTests.filter(isTestPassed).length}
+            total={enrolledTests.length}
+            none={none}
+            onNavigate={navigate}
+            onStartCit={none && cit ? () => handleEnroll(cit.category.id) : null}
+            onStartA2={none && a2 ? () => handleEnroll(a2.category.id) : null}
+          />
+          {notice}
+          {models.length === 0 ? (
+            <p className="text-faint text-sm py-8 text-center">{t.noTests}</p>
+          ) : (
+            <PracticeOverviewBody
+              mine={mine}
+              others={others}
+              none={none}
+              onAdd={handleEnroll}
+              onAddAll={(ids) => { enroll(ids); }}
+              onNavigate={navigate}
+            />
+          )}
+        </>
       )}
 
       {confirmCategory && (

@@ -152,7 +152,12 @@ def list_enrolled_categories(
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """Return practice categories the user has enrolled in, with per-category progress."""
+    """Return practice categories the user has enrolled in, with per-category progress.
+
+    `last_result_at` (#66): the user's latest result in any of the category's visible
+    tests (ISO 8601 UTC), null if none — drives «Пора повторить» and which program the
+    overview hero continues. Same single results query as the best scores; never cached.
+    """
     user = _require_user(authorization, session)
     is_admin = user.is_admin
 
@@ -181,6 +186,7 @@ def list_enrolled_categories(
     # Best score per test for this user (only for tests in enrolled categories)
     all_test_ids = [t.id for tests in tests_by_category.values() for t in tests]
     best_scores: dict[int, float] = {}
+    last_at: dict[int, object] = {}
     if all_test_ids:
         results = session.exec(
             select(PracticeExamResult)
@@ -190,6 +196,8 @@ def list_enrolled_categories(
             pct = r.score / r.total if r.total > 0 else 0.0
             if r.test_id not in best_scores or pct > best_scores[r.test_id]:
                 best_scores[r.test_id] = pct
+            if r.test_id not in last_at or r.created_at > last_at[r.test_id]:
+                last_at[r.test_id] = r.created_at
 
     output = []
     for c in categories:
@@ -201,6 +209,7 @@ def list_enrolled_categories(
             1 for t in cat_tests
             if best_scores.get(t.id, 0.0) >= t.pass_threshold
         )
+        cat_dates = [last_at[t.id] for t in cat_tests if t.id in last_at]
         output.append({
             "id": c.id,
             "name_ru": c.name_ru,
@@ -211,6 +220,8 @@ def list_enrolled_categories(
             "test_count": tests_total,
             "tests_passed": tests_passed,
             "tests_total": tests_total,
+            # stored as naive UTC (models._utcnow)
+            "last_result_at": max(cat_dates).isoformat() + "Z" if cat_dates else None,
         })
     return output
 
@@ -311,6 +322,7 @@ def list_category_tests(
             "id": t.id,
             "title_ru": t.title_ru,
             "title_en": t.title_en,
+            "title_lt": t.title_lt,
             "description_ru": t.description_ru,
             "description_en": t.description_en,
             "lesson_text_lt": t.lesson_text_lt,
@@ -654,6 +666,7 @@ def admin_list_category_tests(
             "category_id": t.category_id,
             "title_ru": t.title_ru,
             "title_en": t.title_en,
+            "title_lt": t.title_lt,
             "description_ru": t.description_ru,
             "description_en": t.description_en,
             "question_count": t.question_count,
@@ -698,6 +711,7 @@ def admin_list_tests(
             "category_id": t.category_id,
             "title_ru": t.title_ru,
             "title_en": t.title_en,
+            "title_lt": t.title_lt,
             "description_ru": t.description_ru,
             "description_en": t.description_en,
             "question_count": t.question_count,
@@ -728,9 +742,21 @@ def _clean_section(v: Optional[str]) -> Optional[str]:
     return v or None
 
 
+_TITLE_LT_MAX = 200
+
+
+def _clean_title_lt(v: Optional[str]) -> Optional[str]:
+    """Lithuanian original title (#66): strip, empty → None, over 200 chars → 422."""
+    v = v.strip() if v else None
+    if v and len(v) > _TITLE_LT_MAX:
+        raise ValueError(f"title_lt must be at most {_TITLE_LT_MAX} characters")
+    return v or None
+
+
 class TestIn(BaseModel):
     title_ru: str
     title_en: Optional[str] = None
+    title_lt: Optional[str] = None
     description_ru: Optional[str] = None
     description_en: Optional[str] = None
     lesson_text_lt: Optional[str] = None
@@ -746,6 +772,7 @@ class TestIn(BaseModel):
     kind: str = "choice"
 
     _sections = field_validator("section_ru", "section_en")(_clean_section)
+    _title_lt = field_validator("title_lt")(_clean_title_lt)
 
 
 @router.post("/admin/practice/tests")
@@ -763,6 +790,7 @@ def admin_create_test(
     t = PracticeTest(
         title_ru=body.title_ru.strip(),
         title_en=body.title_en,
+        title_lt=body.title_lt,
         description_ru=body.description_ru,
         description_en=body.description_en,
         lesson_text_lt=body.lesson_text_lt,
@@ -787,6 +815,7 @@ def admin_create_test(
 class TestUpdate(BaseModel):
     title_ru: Optional[str] = None
     title_en: Optional[str] = None
+    title_lt: Optional[str] = None
     description_ru: Optional[str] = None
     description_en: Optional[str] = None
     lesson_text_lt: Optional[str] = None
@@ -802,6 +831,7 @@ class TestUpdate(BaseModel):
     kind: Optional[str] = None
 
     _sections = field_validator("section_ru", "section_en")(_clean_section)
+    _title_lt = field_validator("title_lt")(_clean_title_lt)
 
 
 @router.patch("/admin/practice/tests/{test_id}")
@@ -839,8 +869,8 @@ def admin_update_test(
         t.is_premium = body.is_premium
     if body.category_id is not None:
         t.category_id = body.category_id
-    # #55 — only fields actually sent (the #48b rule); "" / null clears a section.
-    for field in ("section_ru", "section_en"):
+    # #55 — only fields actually sent (the #48b rule); "" / null clears a section (and title_lt, #66).
+    for field in ("section_ru", "section_en", "title_lt"):
         if field in body.model_fields_set:
             setattr(t, field, getattr(body, field))
     if "is_final" in body.model_fields_set and body.is_final is not None:
@@ -1037,6 +1067,7 @@ def admin_export_test(
     payload = {
         "title_ru": t.title_ru,
         "title_en": t.title_en,
+        "title_lt": t.title_lt,
         "description_ru": t.description_ru,
         "description_en": t.description_en,
         "question_count": t.question_count,
@@ -1087,6 +1118,10 @@ async def admin_import_test(
         raise HTTPException(status_code=400, detail="title_ru is required in JSON")
     kind = data.get("kind") or "choice"
     _check_kind(kind)
+    try:
+        title_lt = _clean_title_lt(str(data["title_lt"]) if data.get("title_lt") else None)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     # #62e — reject bad image fields before anything is written
     images = [_clean_image(item.get("image_url"), item.get("image_credit"))
               for item in data.get("questions", [])]
@@ -1094,6 +1129,7 @@ async def admin_import_test(
     t = PracticeTest(
         title_ru=title_ru,
         title_en=data.get("title_en"),
+        title_lt=title_lt,
         description_ru=data.get("description_ru"),
         description_en=data.get("description_en"),
         lesson_text_lt=data.get("lesson_text_lt"),

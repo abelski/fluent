@@ -10,7 +10,7 @@ import Link from 'next/link';
 import PageMascot from '../../../components/PageMascot';
 import TakChevron from '../../../components/TakChevron';
 
-export const INK_BTN = 'inline-flex items-center gap-1.5 bg-ink hover:bg-black text-white text-sm font-semibold rounded-[10px] px-[18px] py-[11px] transition-colors';
+export const INK_BTN = 'inline-flex items-center justify-center gap-1.5 bg-ink hover:bg-black text-white text-sm font-semibold rounded-[10px] px-[18px] py-[11px] transition-colors';
 export const SOFT_BTN = 'inline-flex items-center bg-emerald-50 text-emerald-600 hover:bg-emerald-100 font-semibold rounded-[10px] transition-colors';
 export const CARD = 'bg-white border border-line rounded-[14px]';
 export const KICKER = 'text-xs font-semibold tracking-[0.06em] uppercase text-muted';
@@ -50,6 +50,7 @@ export function BentoHero({
   badge,
   label,
   pct,
+  next,
   actions,
   hint,
   art,
@@ -64,37 +65,53 @@ export function BentoHero({
   badge: string | null; // «из M» pill; null hides it
   label: string;
   pct: number | null; // null = no progress bar (articles)
+  next?: ReactNode; // #66 — one line naming what the button opens, above the buttons
   actions: ReactNode | null; // the button row; null hides the row
   hint?: string;
   art: ReactNode; // right-side sample (use HERO_ART), next to the mascot
   mascotPhrase: string;
 }) {
+  // #66 compact phone hero: below 860px the card is a 2-column grid — title full width,
+  // TAK beside the numbers, buttons full width — so the main button sits on the first phone
+  // screen. The left column wrapper is `display: contents` there and a normal block from
+  // 860px, where the card is the unchanged flex row (text left, art + TAK right).
   return (
     <section
       data-testid={testId}
-      className={`${CARD} px-5 py-[22px] min-[860px]:px-9 min-[860px]:py-8 flex flex-col min-[860px]:flex-row min-[860px]:items-center gap-5 min-[860px]:gap-8`}
+      className={`${CARD} px-5 py-[22px] min-[860px]:px-9 min-[860px]:py-8 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 min-[860px]:flex min-[860px]:flex-row min-[860px]:items-center min-[860px]:gap-8`}
     >
-      <div className="flex-1 min-w-0">
-        <h1 className="text-[28px] min-[420px]:text-[32px] font-bold tracking-[-0.02em] text-ink mb-1.5">{title}</h1>
-        <p className="text-[15px] text-muted max-w-[52ch]">{subtitle}</p>
-        {note && <p className="text-[13px] text-muted mt-1">{note}</p>}
-
-        <div className="mt-5 flex items-baseline flex-wrap gap-2.5">
-          <p className="text-[30px] font-bold text-ink leading-none tabular-nums" data-testid={countTestId}>{count}</p>
-          {badge && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 whitespace-nowrap">
-              {badge}
-            </span>
-          )}
-          <p className="text-[13px] text-muted">{label}</p>
+      <div className="contents min-[860px]:block min-[860px]:flex-1 min-[860px]:min-w-0">
+        <div className="col-span-2 min-w-0" data-testid="hero-title-block">
+          <h1 className="text-[28px] min-[420px]:text-[32px] font-bold tracking-[-0.02em] text-ink mb-1.5">{title}</h1>
+          <p className="text-[15px] text-muted max-w-[52ch]">{subtitle}</p>
+          {note && <p className="hidden min-[860px]:block text-[13px] text-muted mt-1">{note}</p>}
         </div>
-        {pct !== null && <ProgressBar pct={pct} className="mt-3 max-w-[440px]" />}
 
-        {actions && <div className="mt-5 flex flex-wrap gap-2.5">{actions}</div>}
-        {hint && <p className="text-xs text-faint mt-1.5">{hint}</p>}
+        <div className="col-start-1 row-start-2 self-center min-w-0 min-[860px]:mt-5" data-testid="hero-stats">
+          <div className="flex items-baseline flex-wrap gap-x-2.5 gap-y-1">
+            <p className="text-[30px] font-bold text-ink leading-none tabular-nums" data-testid={countTestId}>{count}</p>
+            {badge && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 whitespace-nowrap">
+                {badge}
+              </span>
+            )}
+            <p className="text-[13px] text-muted">{label}</p>
+          </div>
+          {pct !== null && <ProgressBar pct={pct} className="mt-3 max-w-[440px]" />}
+        </div>
+
+        {(next || actions || hint) && (
+          <div className="col-span-2 min-w-0 min-[860px]:mt-5">
+            {next && <p className="text-[13px] text-ink-soft max-w-[62ch] [overflow-wrap:anywhere]" data-testid="hero-next">{next}</p>}
+            {actions && (
+              <div className={`${next ? 'mt-2.5' : ''} flex flex-col min-[860px]:flex-row min-[860px]:flex-wrap gap-2.5`}>{actions}</div>
+            )}
+            {hint && <p className="text-xs text-faint mt-1.5">{hint}</p>}
+          </div>
+        )}
       </div>
 
-      <div className="order-first min-[860px]:order-none flex items-end gap-5 shrink-0">
+      <div className="col-start-2 row-start-2 self-start min-[860px]:self-auto flex items-end gap-5 shrink-0" data-testid="hero-mascot">
         {art}
         <PageMascot phrase={mascotPhrase} className="shrink-0" />
       </div>
