@@ -147,6 +147,14 @@ Scenario: dashboard articles layout
 ```
 
 ```gherkin
+Scenario: compact hero on phones (#66)
+  Given a viewport of 375 px
+  Then the hero title is full width, TAK sits beside the numbers, the «Читать новую ›» button
+    is full width, and the hero note and the «Популярные темы» panel stay desktop-only
+  And desktop is unchanged
+```
+
+```gherkin
 Scenario: admin sets an article theme
   Given an authenticated admin editing an article in the admin editor
   When they pick one of verbs/numbers/cases/words/life/start from the theme dropdown,

@@ -38,8 +38,8 @@ test.describe('Grammar program titles i18n (issue #104)', () => {
 
     await page.goto('/dashboard/grammar');
 
-    // The title now appears in several places (chip, featured card, topics heading).
-    await expect(page.getByTestId('category-program-1').getByText('Lithuanian Cases')).toBeVisible({ timeout: 5000 });
+    // #66 — the enrolled program shows as an «In progress» card.
+    await expect(page.getByTestId('program-card-1').getByText('Lithuanian Cases')).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Литовские падежи')).toHaveCount(0);
   });
 
@@ -53,6 +53,6 @@ test.describe('Grammar program titles i18n (issue #104)', () => {
 
     await page.goto('/dashboard/grammar');
 
-    await expect(page.getByTestId('category-program-1').getByText('Литовские падежи')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('program-card-1').getByText('Литовские падежи')).toBeVisible({ timeout: 5000 });
   });
 });

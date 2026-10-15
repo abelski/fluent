@@ -55,7 +55,7 @@ for (const [state, { mock, url, act }] of Object.entries(PRACTICE)) {
         await mockPractice(page, { ...mock, lang, width });
         await page.goto(url ?? '/dashboard/practice');
         if (act) await act(page);
-        else await expect(page.getByTestId('featured-card')).toBeVisible();
+        else await expect(page.getByTestId('stats-card-practice')).toBeVisible(); // #66 — the featured card is gone
         await shot(page, state, lang, width);
       });
     }

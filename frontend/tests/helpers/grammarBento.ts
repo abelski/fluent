@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
-// Shared mocked API for the #53 grammar lesson list (grammar-bento.spec.ts and
-// plan53-screenshots.spec.ts). Everything is mocked: the local backend shares the
+// Shared mocked API for the Грамматика page (#53, overview since #66): grammar-bento,
+// overview-pages and the screenshot specs. Everything is mocked: the local backend shares the
 // production DB, so these tests must never enroll/unenroll for real.
 
 export function makeFakeJwt(): string {
@@ -14,7 +14,10 @@ export function makeFakeJwt(): string {
 // Rule names mirror the real API shape: «Родительный (Kilmininkas)» repeats the LT title.
 const CONFIG = {
   lessons: [],
-  cases: { '1': ['Vardininkas', 'Vienaskaita'], '2': ['Kilmininkas', 'Vienaskaita'], '3': ['Naudininkas', 'Vienaskaita'], '8': ['Vardininkas', 'Daugiskaita'] },
+  cases: {
+    '1': ['Vardininkas', 'Vienaskaita'], '2': ['Kilmininkas', 'Vienaskaita'], '3': ['Naudininkas', 'Vienaskaita'],
+    '4': ['Galininkas', 'Vienaskaita'], '5': ['Įnagininkas', 'Vienaskaita'], '8': ['Vardininkas', 'Daugiskaita'],
+  },
 };
 
 export const PROGRAMS = [
@@ -55,6 +58,13 @@ const NOUNS = [
   noun(6, 'Kilmininkas Vns.', 'practice', [2], rule('Родительный (Kilmininkas)', 'Genitive (Kilmininkas)')),
   noun(7, 'Skaičiai: Vardininkas (kiek yra?)', 'basic', [1], rule('Числительные: Именительный (kiek? yra)', 'Numbers: Nominative (kiek? yra)')),
   noun(8, 'Skaičiai: Vardininkas (kiek yra?)', 'advanced', [1], rule('Числительные: Именительный (kiek? yra)', 'Numbers: Nominative (kiek? yra)')),
+  // #66 — three more singular topics, so program 1 has enough topics to fold (6 topics, 17 lessons).
+  ...(['basic', 'advanced', 'practice'] as const).map((lv, i) =>
+    noun(9 + i, 'Naudininkas Vns.', lv, [3], rule('Дательный (Naudininkas)', 'Dative (Naudininkas)'))),
+  ...(['basic', 'advanced', 'practice'] as const).map((lv, i) =>
+    noun(12 + i, 'Galininkas Vns.', lv, [4], rule('Винительный (Galininkas)', 'Accusative (Galininkas)'))),
+  ...(['basic', 'advanced', 'practice'] as const).map((lv, i) =>
+    noun(15 + i, 'Įnagininkas Vns.', lv, [5], rule('Творительный (Įnagininkas)', 'Instrumental (Įnagininkas)'))),
   noun(20, 'Vardininkas Dgs.', 'basic', [8], rule('Именительный мн.ч. (Vardininkas Dgs.)', 'Nominative plural (Vardininkas Dgs.)')),
   noun(21, 'Vardininkas Dgs.', 'practice', [8], rule('Именительный мн.ч. (Vardininkas Dgs.)', 'Nominative plural (Vardininkas Dgs.)')),
 ];
@@ -83,10 +93,17 @@ export interface GrammarMock {
   lang?: 'ru' | 'en';
   width?: number;
   enrollStatus?: number; // status for POST/DELETE /me/grammar-programs/*
+  lastResult?: Record<number, string | null>; // #66 — program id → last_result_at
+  premium?: boolean; // /me/quota premium_active
+  remindStatus?: number; // status for GET /grammar/remind/tasks
 }
 
+/** ISO date `days` days ago — for `last_result_at`. */
+export const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+
 /** Mocks every endpoint the grammar page touches. Returns the list of mutation calls
- * ("POST /api/me/grammar-programs/1") and started-lesson task requests ("lessons/4"). */
+ * ("POST /api/me/grammar-programs/1") and started-lesson task requests ("lessons/4",
+ * "remind?program_id=1"). */
 export async function mockGrammar(page: Page, m: GrammarMock) {
   const calls: string[] = [];
   const tasks: string[] = [];
@@ -102,22 +119,34 @@ export async function mockGrammar(page: Page, m: GrammarMock) {
   await page.route('**/api/**', (r) => r.fulfill({ json: [] }));
   await page.route('**/api/billing/config', (r) => r.fulfill({ json: { enabled: true } }));
   await page.route('**/api/me/quota', (r) => r.fulfill({ json: {
-    is_premium: false, premium_active: false, premium_until: null, sessions_today: 0,
-    daily_limit: 10, is_admin: false, is_superadmin: false } }));
+    is_premium: !!m.premium, premium_active: !!m.premium, premium_until: null, sessions_today: 0,
+    daily_limit: m.premium ? null : 10, is_admin: false, is_superadmin: false } }));
   await page.route('**/api/admin/grammar/config', (r) => r.fulfill({ json: CONFIG }));
   await page.route('**/api/grammar-programs', (r) =>
-    r.fulfill({ json: PROGRAMS.map((p) => ({ ...p, enrolled: enrolled.has(p.id) })) }));
+    r.fulfill({ json: PROGRAMS.map((p) => ({
+      ...p, enrolled: enrolled.has(p.id), last_result_at: m.guest ? null : m.lastResult?.[p.id] ?? null })) }));
   await page.route('**/api/grammar/lessons', (r) => r.fulfill({ json: withScores(NOUNS, m.scores ?? {}) }));
   await page.route('**/api/grammar/verb-lessons?program_type=verbs', (r) =>
     r.fulfill({ json: withScores(VERBS, m.scores ?? {}) }));
   await page.route('**/api/grammar/verb-lessons?program_type=verb_cases', (r) => r.fulfill({ json: [] }));
   await page.route(/\/api\/grammar\/(lessons|verb-lessons|remind)\/?(\d+)?\/?tasks/, (r) => {
-    tasks.push(new URL(r.request().url()).pathname.replace('/api/grammar/', '').replace('/tasks', ''));
+    const url = new URL(r.request().url());
+    tasks.push(url.pathname.replace('/api/grammar/', '').replace('/tasks', '') + url.search);
+    if (url.pathname.includes('/remind/') && m.remindStatus && m.remindStatus !== 200) {
+      return r.fulfill({ status: m.remindStatus, json: { detail: 'no_passed_practice' } });
+    }
     return r.fulfill({ json: TASKS });
   });
   await page.route('**/api/me/grammar-programs/*', (r) => {
     const url = new URL(r.request().url());
-    calls.push(`${r.request().method()} ${url.pathname}`);
+    const method = r.request().method();
+    calls.push(`${method} ${url.pathname}`);
+    // Stateful like the server, so a reload after enrolling sees it.
+    if (!m.enrollStatus) {
+      const id = Number(url.pathname.split('/').pop());
+      if (method === 'POST') enrolled.add(id);
+      if (method === 'DELETE') enrolled.delete(id);
+    }
     return r.fulfill({ status: m.enrollStatus ?? 200, json: m.enrollStatus ? { detail: 'boom' } : { ok: true } });
   });
   return { calls, tasks };

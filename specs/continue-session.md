@@ -23,7 +23,7 @@ Scenario: Student has never enrolled in one of the three categories
     missing category, all phase content empty, and phases: []
   And no daily-quota unit is charged
   And the page shows an enrollment-gate screen with a link per missing
-    category (to /dashboard/lists, /dashboard/grammar/programs, or
+    category (to /dashboard/lists, /dashboard/grammar, or
     /dashboard/phrases) plus a retry button
 
 Scenario: Student is enrolled everywhere but nothing is due or new

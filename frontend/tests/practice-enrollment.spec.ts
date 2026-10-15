@@ -58,9 +58,10 @@ const MOCK_TESTS = [
   },
 ];
 
-// #55: /dashboard/practice is the bento page (full coverage in practice-bento.spec.ts); it
-// reads GET /practice/categories (+ per-category /tests), no longer /me/practice-categories.
+// #66: /dashboard/practice is the overview (full coverage in practice-bento.spec.ts); it reads
+// GET /practice/categories (+ per-category /tests) and /me/practice-categories (last result).
 async function mockPracticePage(page: import('@playwright/test').Page, enrolled: boolean) {
+  await page.route('**/api/**', (route) => route.fulfill({ json: [] })); // fallback: never the real backend
   await page.route('**/api/practice/categories', (route) =>
     route.fulfill({ json: MOCK_CATEGORIES.map((c) => ({ ...c, enrolled: enrolled && c.id === 1 })) })
   );
@@ -71,127 +72,50 @@ async function mockPracticePage(page: import('@playwright/test').Page, enrolled:
   await page.route('**/api/me/quota', (route) => route.fulfill({ json: { premium_active: false } }));
 }
 
-test.describe('/dashboard/practice — enrolled-only view', () => {
-  test('no enrolled categories: onboarding hero instead of an empty state', async ({ page }) => {
+test.describe('/dashboard/practice — overview', () => {
+  test('no enrolled categories: onboarding hero and the catalogue instead of an empty state', async ({ page }) => {
     await setFakeToken(page);
     await mockPracticePage(page, false);
     await page.goto('/dashboard/practice');
-    await expect(page.getByTestId('hero-start-practice')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByTestId('featured-card')).toHaveAttribute('data-kind', 'preview');
+    await expect(page.getByTestId('stats-card-practice')).toContainText('Выбери, к чему готовишься', { timeout: 5000 });
+    // No category here has a final exam, so the hero offers the A2 start only.
+    await expect(page.getByTestId('hero-start-a2')).toBeVisible();
+    await expect(page.getByTestId('hero-start-practice')).toHaveCount(0);
+    await expect(page.getByTestId('catalog-card-1')).toContainText('Конституция Литвы');
+    await expect(page.getByTestId('catalog-card-2')).toContainText('История Литвы');
+    await expect(page.getByTestId('in-progress-section')).toHaveCount(0);
   });
 
-  test('programs browse link is in the chips row', async ({ page }) => {
-    await setFakeToken(page);
-    await mockPracticePage(page, false);
-    await page.goto('/dashboard/practice');
-    await expect(page.getByRole('link', { name: /Смотреть все программы/ })).toHaveAttribute('href', /\/dashboard\/practice\/programs/);
-  });
-
-  test('shows the enrolled category', async ({ page }) => {
+  test('#66: no link to the removed /dashboard/practice/programs page', async ({ page }) => {
     await setFakeToken(page);
     await mockPracticePage(page, true);
     await page.goto('/dashboard/practice');
-    await expect(page.getByTestId('category-practice-1')).toContainText('Конституция Литвы', { timeout: 5000 });
-    await expect(page.getByTestId('category-practice-1').getByTestId('enrolled-dot')).toBeVisible();
+    await expect(page.getByTestId('program-card-1')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('a[href*="/practice/programs"]')).toHaveCount(0);
   });
 
-  test('"Смотреть все программы" link is visible', async ({ page }) => {
+  test('shows the enrolled category as an in-progress card; the rest stays in the catalogue', async ({ page }) => {
     await setFakeToken(page);
     await mockPracticePage(page, true);
     await page.goto('/dashboard/practice');
-    await expect(page.getByRole('link', { name: /Смотреть все программы/ })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('program-card-1')).toContainText('Конституция Литвы', { timeout: 5000 });
+    await expect(page.getByTestId('program-card-1')).toContainText('0/1');
+    await expect(page.getByTestId('catalog-card-2')).toBeVisible();
+    await expect(page.getByTestId('catalog-card-1')).toHaveCount(0);
   });
 
-  test('a test button navigates to the category detail page', async ({ page }) => {
+  test('card → program page → a test row navigates to the category detail page', async ({ page }) => {
     await setFakeToken(page);
     await mockPracticePage(page, true);
     await page.goto('/dashboard/practice');
-    await page.getByTestId('practice-test-button').first().click();
+    await page.getByTestId('program-card-1').click();
+    await expect(page).toHaveURL(/\/dashboard\/practice\/?\?program=1$/);
+    await page.getByTestId('test-row').first().click();
     await expect(page).toHaveURL(/\/dashboard\/practice\/1\/?\?test=10/);
   });
 });
 
-test.describe('/dashboard/practice/programs — browse all categories', () => {
-  test('shows all categories heading', async ({ page }) => {
-    await setFakeToken(page);
-    await page.route('**/api/practice/categories', (route) =>
-      route.fulfill({ json: MOCK_CATEGORIES })
-    );
-
-    await page.goto('/dashboard/practice/programs');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Все программы', { timeout: 5000 });
-  });
-
-  test('shows category names', async ({ page }) => {
-    await setFakeToken(page);
-    await page.route('**/api/practice/categories', (route) =>
-      route.fulfill({ json: MOCK_CATEGORIES })
-    );
-
-    await page.goto('/dashboard/practice/programs');
-    await expect(page.getByText('Конституция Литвы')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('История Литвы')).toBeVisible();
-  });
-
-  test('shows enroll button for unenrolled category', async ({ page }) => {
-    await setFakeToken(page);
-    await page.route('**/api/practice/categories', (route) =>
-      route.fulfill({ json: MOCK_CATEGORIES })
-    );
-
-    await page.goto('/dashboard/practice/programs');
-    const enrollBtns = page.getByRole('button', { name: 'Записаться' });
-    await expect(enrollBtns.first()).toBeVisible({ timeout: 5000 });
-  });
-
-  test('shows enrolled badge for enrolled category', async ({ page }) => {
-    await setFakeToken(page);
-    const categoriesWithEnrolled = [
-      { ...MOCK_CATEGORIES[0], enrolled: true },
-      { ...MOCK_CATEGORIES[1], enrolled: false },
-    ];
-    await page.route('**/api/practice/categories', (route) =>
-      route.fulfill({ json: categoriesWithEnrolled })
-    );
-
-    await page.goto('/dashboard/practice/programs');
-    await expect(page.getByText('Записан')).toBeVisible({ timeout: 5000 });
-  });
-
-  test('enrolling calls POST and shows enrolled badge', async ({ page }) => {
-    await setFakeToken(page);
-    await page.route('**/api/practice/categories', (route) =>
-      route.fulfill({ json: MOCK_CATEGORIES })
-    );
-
-    let postCalled = false;
-    await page.route('**/api/me/practice-categories/**', async (route) => {
-      if (route.request().method() === 'POST') {
-        postCalled = true;
-        await route.fulfill({ json: { ok: true } });
-      } else {
-        await route.fulfill({ json: { ok: true } });
-      }
-    });
-
-    await page.goto('/dashboard/practice/programs');
-    await expect(page.getByRole('button', { name: 'Записаться' }).first()).toBeVisible({ timeout: 5000 });
-    await page.getByRole('button', { name: 'Записаться' }).first().click();
-    await expect(page.getByText('Записан')).toBeVisible({ timeout: 3000 });
-    expect(postCalled).toBe(true);
-  });
-
-  test('back link navigates to /dashboard/practice/', async ({ page }) => {
-    await setFakeToken(page);
-    await page.route('**/api/practice/categories', (route) =>
-      route.fulfill({ json: MOCK_CATEGORIES })
-    );
-
-    await page.goto('/dashboard/practice/programs');
-    await page.getByRole('link', { name: /К категориям/ }).click();
-    await expect(page).toHaveURL(/\/dashboard\/practice\//);
-  });
-});
+// #66 — the /dashboard/practice/programs page is gone; the catalogue lives on the overview.
 
 test.describe('/dashboard/practice/[id] — category detail page', () => {
   test('shows tests list', async ({ page }) => {

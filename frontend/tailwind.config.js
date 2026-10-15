@@ -21,6 +21,9 @@ module.exports = {
         muted: '#8a8f98',
         'muted-nav': '#9a9fa6',
         faint: '#b0b4ba',
+        // #66 — readable secondary/info text (small-caps labels, lock reasons, "next" lines).
+        // `muted` at 12–13px is 3.2:1 on white and fails AA; this clears it.
+        'ink-soft': '#5b6067',
         destructive: '#c2504a',
         // #56 effort radar "all time" layer; "this week" uses emerald-700. The pair was checked
         // with the dataviz palette validator on a white surface — contrast WARN on this lighter

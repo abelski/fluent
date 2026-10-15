@@ -6,15 +6,16 @@ category might bundle several tests on one topic, optionally with a linked sourc
 optional short reading passage shown before a test). Anyone, including a signed-out visitor, can
 browse categories and their tests; only signed-in users can enroll, track progress, and sit an
 exam. Once enrolled, a student works through a category's tests in order; a test unlocks once the
-previous test in the category is passed at its own pass threshold. `/dashboard/practice` presents
-this as a hero (overall progress) → category chips → a bento pair (a featured "next test" or
-category-preview card plus a stack of other categories and any final-exam card) → section cards
-grouping that category's tests for direct start. Admins author categories, tests and questions,
+previous test in the category is passed at its own pass threshold. `/dashboard/practice` (#66)
+presents this as an overview — hero (overall progress, the page's one «Продолжить») → «В процессе»
+→ «Завершённые» → «Другие программы» (the catalogue, grouped by exam) — and, on `?program=<id>`,
+a program page listing the tests that are left as whole-row links. Admins author categories, tests and questions,
 group tests into named sections, flag one test per category as the final exam, and can export or
 import a test (with all its questions) as JSON. It is called by the Next.js dashboard practice
 pages over the REST API, plus the admin panel's practice-content editor.
 Backed by: `backend/routers/practice.py`, `frontend/app/dashboard/practice/`,
-`frontend/app/dashboard/components/PracticeOverview.tsx`.
+`frontend/app/dashboard/components/PracticeOverview.tsx`,
+`frontend/app/dashboard/components/ProgramOverview.tsx`.
 
 ## Scenarios
 
@@ -47,6 +48,9 @@ Scenario: student's enrolled-categories view
     test's own pass_threshold
   And a user with no enrollments gets an empty list without querying tests at all
   And for a non-admin an enrolled category with no visible test is omitted (#62a)
+  And each category carries "last_result_at" (#66): the ISO 8601 UTC time of the user's latest
+    result in any of its visible tests, or null — computed from the same single results query,
+    never cached
 ```
 
 ```gherkin
@@ -65,6 +69,8 @@ Scenario: listing tests within a category with sequential lock
   Given any caller viewing a category's test list
   When GET /practice/categories/{category_id}/tests is called
   Then each test carries its section_ru, section_en and is_final alongside the fields below
+  And each test carries title_lt (#66): the Lithuanian original of the title, or null —
+    title_ru / title_en hold the UI-language titles
   And for an authenticated user the first test in sort order is always unlocked, each later
     test is locked until the student's best score on the immediately preceding test meets or
     exceeds that preceding test's own pass_threshold (thresholds can differ per test, unlike
@@ -111,67 +117,94 @@ Scenario: premium gating on a test is enforced by the server
 ```
 
 ```gherkin
-Scenario: practice page doubles as onboarding for a user in no category
+Scenario: practice page doubles as onboarding for a user in no category (#66)
   Given a signed-in user enrolled in zero categories, or a signed-out visitor
   When they open /dashboard/practice
   Then they are not redirected to /login
-  And the hero shows 0 passed with an empty progress bar and a "start with the first
-    category" action instead of "continue"
-  And the featured card previews the first category (name, description, test count) with
-    an "add" button
-  And the other categories are stacked as add-cards
-  And the section cards under the featured category show its tests as preview buttons,
-    disabled, with no lock/score state
-  When an anonymous visitor presses the featured "add" button or a stack "add" button
+  And the hero shows 0 passed with an empty progress bar and two buttons: «Начать с Конституции»
+    and an outline «Начать с чтения (A2)»
+  And below it there is only the catalogue «Программы», grouped by exam: «Тест по Конституции —
+    гражданство и ПМЖ» (the category with a final exam) and «Языковой экзамен A2» (the rest),
+    with «Можно готовиться к обоим экзаменам.»
+  And each catalogue card shows the name, test count, description, «Что внутри ▾» (a format line
+    «Тесты по 10 вопросов, проходной балл 60–75%. Открываются по порядку.» and the contents:
+    the sample test, the blocks with their test counts and the exam for the Constitution;
+    the test titles otherwise) and «Добавить»
+  And the A2 group offers «Добавить все части (N)» when it holds more than one category
+  When an anonymous visitor presses any start or «Добавить» button
   Then they are sent to /login (no enrollment call is made without a token)
 ```
 
 ```gherkin
-Scenario: practice featured card shows the next test to continue
-  Given the user is enrolled in at least one category
-  Then when the "Все" chip is selected, the featured card shows the first not-yet-passed,
-    unlocked test (in sort order) of the first enrolled category that has one
-  And its heading is that test's title in the current UI language (falling back to the
-    other language's title per the usual *_en ?? *_ru rule — not always the Lithuanian
-    title), with the title in the *other* language shown as a sub-heading when it differs,
-    the question count, the pass mark, the best score badge if attempted, and a "start
-    test" button
-  And the hero's "continue" action opens the same test
-  And when a selected category has nothing left to continue, its featured card instead
-    shows a category preview (if not yet enrolled) or a "all done" summary (if enrolled and
-    every test passed)
+Scenario: enrolling from the practice page (#66)
+  Given a logged-in user
+  When they press a hero start button or a catalogue «Добавить»
+  Then POST /me/practice-categories/{id} is called and the program page
+    /dashboard/practice?program=<id> opens with «✓ «X» — теперь в твоих программах · Отменить»
+  When they press «Добавить все части (N)»
+  Then every category of that group is enrolled and the overview stays open
 ```
 
 ```gherkin
-Scenario: practice tests grouped into section cards
-  Given a category's visible tests
-  Then tests sharing the same section_ru are grouped into one card, in test sort order,
-    titled with the section label (section_en when the UI is English and set, else
-    section_ru), and cards are ordered by the position of their last test in the list
-  And a test with no section_ru gets its own single-test card, titled with that test's own
-    title (and sub-heading), instead of a section label
-  And within a card, each test renders as a button: numbered when the card groups several
-    tests, otherwise a single "start" label; it shows a checkmark when passed, the best
-    percentage when attempted but not passed, a lock icon and disabled state when locked,
-    and a "Premium" tag when the test is premium and the viewer has no active premium
-  And for an unenrolled category (preview) every button is disabled regardless of lock state
-  When an unlocked, non-preview test button is pressed
+Scenario: practice overview mirrors grammar (#66)
+  Given the user is enrolled in at least one category
+  Then «В процессе» holds a card per category with tests left: «d/n тестов», a bar,
+    «Дальше — <test> — <state>»; the whole card opens its program page
+  And «Завершённые» holds a row per fully passed category: ✓, N/N, «Пора повторить» when its
+    last_result_at is 7+ days old, «последний раз N дней назад · слабее всего: <test> — ✓ 78%»
+  And «Другие программы» is the catalogue of categories not enrolled yet
+  And the hero holds the page's only «Продолжить ›» with «Дальше — <category>: <test> — <state>»,
+    opening the next test (first unlocked, not passed, in sort order) of the in-progress
+    category practised last
+  And states read: new «нужно 60%», tried below the pass mark amber «лучший 45%» · «нужно 60%»,
+    passed green «✓ 90%», the sample test (pass mark 0) «без проходного балла» — never «нужно 0%»
+  And test titles are in the UI language (title_en ?? title_ru), with title_lt as a second line
+```
+
+```gherkin
+Scenario: finished category review button reopens the weakest test (#66)
+  Given every test in a practice category is passed
+  Then «Повторить · <N вопросов>» (hint «Пройти заново тест, где результат слабее всего») opens
+    the lowest-scoring passed test (the sample test excluded) as a normal retake
+  And no new backend endpoint and no daily session is involved
+  And with every enrolled category complete, the hero says «✓ Все тесты пройдены» and offers the
+    same retake for the most overdue category
+```
+
+```gherkin
+Scenario: practice program page (#66)
+  Given the user opens /dashboard/practice?program=<id> for an enrolled category
+  Then a back link «Практика» and «Перейти:» chips for their other categories are shown
+  And the header shows the name with a ⋯ menu («Убрать программу»), «N из M тестов пройдено»,
+    a bar, «Дальше — <test> — <state>» and the page's one button «Продолжить ›» / «Начать ›»
+  And «Осталось N тестов» rows open their test (the whole row, ›), each showing the title,
+    title_lt, «10 вопросов · <state>», an «Экзамен» pill on the final exam and a «Premium» tag
+    for a premium test when the viewer has no active premium
+  And the sample test (pass mark 0, locks nothing) comes first as «Начни здесь»,
+    «Формат как на настоящем экзамене»
+  And a category with sections keeps its blocks: the current block open with every test it
+    has left, the others one line each with passed/total, a segmented strip and
+    «Откроется после «Блок 1…»» (naming the block before, never a test inside itself)
+  And a category without sections lists open tests, then two locked ones, the rest folded
+    under «Ещё N тестов — откроются по порядку»
+  And the first locked row says «Откроется после «<previous test>» — нужно 60%»; tapping any
+    locked row shows its reason
+  And the final exam is pinned last, its lock saying «Откроется, когда пройдены все блоки и
+    итоговые тесты»
+  And passed tests sit under «Пройдено N тестов · слабее всего: X ✓ 78%» (collapsed in
+    progress, starting with the retake button; open when complete), weakest first, the
+    sample test last, each with its block name
+  When an unlocked row is pressed
   Then the app navigates to /dashboard/practice/{category_id}?test={test_id}, which starts
     that test immediately once the category's test list has loaded (reading screen first if
     the test has lesson_text_lt), skipping the intermediate test-list screen
   And from that test's reading/question/result screens, "back" returns to
-    /dashboard/practice instead of the category's test list, because it was opened via
-    ?test=
+    /dashboard/practice instead of the category's test list, because it was opened via ?test=
 ```
 
 ```gherkin
-Scenario: final exam card
-  Given an enrolled category has a test flagged is_final
-  Then the stack includes a dedicated final-exam card for it, showing a fixed title, the
-    test's own title, its question count and pass mark, and a lock icon plus disabled state
-    when that test is still locked
-  When it is pressed while unlocked
-  Then it opens and starts that test the same way a section-card button does
+Scenario: the /dashboard/practice/programs page is gone (#66)
+  Then the catalogue lives in «Другие программы» on the overview and nothing links to it
 ```
 
 ```gherkin
@@ -187,12 +220,28 @@ Scenario: admin sets a practice test's section and final flag
 ```
 
 ```gherkin
-Scenario: removing a practice category from the practice page
-  Given the user has an enrolled category open (its featured or stacked card selected)
-  Then an "unenroll" control appears next to the section-cards heading for that category
-  When it is pressed and the confirmation dialog is accepted
-  Then DELETE /me/practice-categories/{id} is called and that category's cards switch to
-    the not-enrolled (preview/add) state without a full page reload
+Scenario: admin sets a practice test's Lithuanian original title (#66)
+  Given an authenticated admin creating, updating or importing a practice test
+  Then they can set title_lt (optional; the admin form field «Оригинал на литовском (LT)»)
+  And the value is trimmed, an empty value is stored as NULL, and a value over 200 characters
+    is rejected (422 on create/update, 400 on import)
+  And on update title_lt is only touched when the request sends it ("" clears it)
+  And export includes title_lt and import reads it back
+```
+
+```gherkin
+Scenario: removing a practice category from the practice page (#66)
+  Given the user is on an enrolled category's program page
+  When they open the ⋯ menu, press «Убрать программу» and accept the confirmation dialog
+  Then DELETE /me/practice-categories/{id} is called and the overview opens, the category
+    back in the catalogue
+```
+
+```gherkin
+Scenario: compact hero on phones (#66)
+  Given a viewport of 375 px
+  Then the hero title is full width, TAK sits beside the numbers, the buttons are full width
+  And desktop is unchanged
 ```
 
 ```gherkin
@@ -356,7 +405,7 @@ Scenario: admin manages questions
 Scenario: admin exports and imports a test
   Given an authenticated admin
   When GET /admin/practice/tests/{test_id}/export is called
-  Then the test (including kind and lesson_text_lt) and all its questions are returned as a
+  Then the test (including kind, lesson_text_lt and title_lt) and all its questions are returned as a
     downloadable JSON file
   When POST /admin/practice/tests/import is called with a JSON file
   Then a brand-new test is always created (status "draft"), never merged into an

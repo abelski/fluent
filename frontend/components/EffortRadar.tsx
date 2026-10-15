@@ -133,7 +133,7 @@ export default function EffortRadar() {
             const [x, y] = point(i, 100);
             return (
               <a key={`l${i}`} href={a.href} data-testid={`effort-axis-${a.key}`}>
-                <text x={x + offsets[i][0]} y={y + offsets[i][1]} textAnchor={anchors[i]} fontSize={12.5} fontWeight={600} className="fill-[#5b6067] hover:fill-emerald-700">
+                <text x={x + offsets[i][0]} y={y + offsets[i][1]} textAnchor={anchors[i]} fontSize={12.5} fontWeight={600} className="fill-ink-soft hover:fill-emerald-700">
                   {name(i)}
                 </text>
               </a>
@@ -154,7 +154,7 @@ export default function EffortRadar() {
         )}
       </div>
 
-      <div className="flex gap-[18px] justify-center flex-wrap text-[12.5px] text-[#5b6067]" data-testid="effort-legend">
+      <div className="flex gap-[18px] justify-center flex-wrap text-[12.5px] text-ink-soft" data-testid="effort-legend">
         {!noWeek && <span className="inline-flex items-center gap-1.5" data-testid="effort-legend-item"><i className={`w-3 h-3 rounded-[3px] ${WEEK.bg}`} />{t.effortWeek}</span>}
         <span className="inline-flex items-center gap-1.5" data-testid="effort-legend-item"><i className={`w-3 h-3 rounded-[3px] ${ALL.bg}`} />{t.effortAll}</span>
       </div>
@@ -172,7 +172,7 @@ export default function EffortRadar() {
             <tr key={a.key} className="border-b border-line-soft">
               <td className="text-left py-1.5"><a href={a.href} className="text-ink hover:text-emerald-700">{name(i)}</a></td>
               {!noWeek && <td className={`text-right py-1.5 font-semibold ${WEEK.text}`}>{cell(W[i], weekPts[i])}</td>}
-              <td className="text-right py-1.5 text-[#5b6067]">{cell(A[i], allPts[i])}</td>
+              <td className="text-right py-1.5 text-ink-soft">{cell(A[i], allPts[i])}</td>
             </tr>
           ))}
         </tbody>

@@ -282,6 +282,7 @@ class PracticeTest(SQLModel, table=True):
     category_id: Optional[int] = Field(default=None, foreign_key="practice_category.id", index=True)
     title_ru: str
     title_en: Optional[str] = None
+    title_lt: Optional[str] = Field(default=None, max_length=200)  # Lithuanian original, shown as a sub-line (#66)
     description_ru: Optional[str] = None
     description_en: Optional[str] = None
     question_count: int = Field(default=20)       # questions shown per exam session

@@ -1175,6 +1175,7 @@ export interface PracticeTestSummary {
   id: number;
   title_ru: string;
   title_en: string | null;
+  title_lt?: string | null;     // #66 — Lithuanian original, shown as a sub-line
   description_ru: string | null;
   description_en: string | null;
   lesson_text_lt: string | null;
@@ -1202,6 +1203,21 @@ export async function getPracticeCategories(): Promise<PracticeCategorySummary[]
   return r.json();
 }
 
+/** Enrolled categories with progress (#55) and the latest result date (#66). Signed-in only. */
+export interface MyPracticeCategory {
+  id: number;
+  tests_passed: number;
+  tests_total: number;
+  last_result_at: string | null; // ISO 8601 UTC; null = no result yet
+}
+
+export async function getMyPracticeCategories(): Promise<MyPracticeCategory[]> {
+  if (!getToken()) return [];
+  const r = await fetch(`${BACKEND_URL}/api/me/practice-categories`, { headers: authHeaders() });
+  if (!r.ok) return [];
+  return r.json();
+}
+
 /** Optional auth: guests get published tests, unlocked, without scores. */
 export async function getPracticeCategoryTests(categoryId: number): Promise<PracticeTestSummary[]> {
   const r = await fetch(`${BACKEND_URL}/api/practice/categories/${categoryId}/tests`, { headers: authHeaders() });
@@ -1221,6 +1237,7 @@ export interface GrammarProgramSummary {
   enrolled: boolean;
   lesson_filter: string | null; // JSON array of CASE_INFO group names, e.g. '["Vienaskaita","Daugiskaita"]'
   program_type: string;         // "cases" | "verbs" | "verb_cases"
+  last_result_at?: string | null; // #66 — latest result in this program, ISO 8601 UTC; null for guests / none
 }
 
 export async function getGrammarPrograms(): Promise<GrammarProgramSummary[]> {
@@ -1230,6 +1247,19 @@ export async function getGrammarPrograms(): Promise<GrammarProgramSummary[]> {
   });
   if (!r.ok) return [];
   return r.json();
+}
+
+/**
+ * «Повторить · ~10 заданий» (#26, #66): a mixed run from passed «Смешанный» lessons. With
+ * `programId` it draws only from that program, weakest first. `status` lets the caller tell
+ * 404 (nothing eligible) / 403 / 429 (daily limit) apart from success.
+ */
+export async function getGrammarRemindTasks(programId?: number): Promise<{ status: number; tasks: GrammarTask[] }> {
+  const q = programId !== undefined ? `?program_id=${programId}` : '';
+  const r = await fetch(`${BACKEND_URL}/api/grammar/remind/tasks${q}`, { headers: authHeaders() });
+  if (!r.ok) return { status: r.status, tasks: [] };
+  const data = await r.json();
+  return { status: r.status, tasks: Array.isArray(data) ? data : [] };
 }
 
 export async function enrollGrammarProgram(programId: number): Promise<void> {

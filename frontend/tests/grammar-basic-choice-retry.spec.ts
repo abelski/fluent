@@ -59,7 +59,7 @@ async function setup(page: Page, opts: { level?: string; tasks?: unknown[]; lang
     calls.results.push(r.request().postDataJSON());
     return r.fulfill({ json: { ok: true, passed: false } });
   });
-  await page.goto('/dashboard/grammar');
+  await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
   await page.getByTestId('level-button').first().click();
   return calls;
 }

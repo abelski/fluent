@@ -125,7 +125,7 @@ export default function ContinueSessionPage() {
   if (needsEnrollment.length > 0) {
     const categoryHref: Record<ContinuePhase, string> = {
       words: '/dashboard/lists',
-      grammar: '/dashboard/grammar/programs',
+      grammar: '/dashboard/grammar',
       phrases: '/dashboard/phrases',
     };
     const categoryLabel: Record<ContinuePhase, string> = {

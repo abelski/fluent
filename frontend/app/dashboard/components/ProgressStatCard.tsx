@@ -66,15 +66,19 @@ export default function ProgressStatCard({
   const { tr } = useT();
   const c = THEME[theme];
 
+  // #66 compact phone layout: below `sm` the card is a 2-column grid — the numbers, bar and
+  // "Next" label on the left with TAK beside them, the buttons full width underneath — instead
+  // of TAK stacked above everything. The wrappers are `display: contents` there and the
+  // original flex row from `sm` up, so desktop is unchanged.
   return (
     <div
-      className="relative rounded-[14px] bg-white border border-line px-4 py-5 sm:px-[26px] sm:py-[22px] flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"
+      className="relative rounded-[14px] bg-white border border-line px-4 py-5 sm:px-[26px] sm:py-[22px] grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-3 sm:flex sm:flex-row sm:items-center sm:gap-6"
       data-testid={testId}
     >
-      {icon}
+      <div className="col-start-2 row-start-1 row-span-3 self-start sm:contents" data-testid="stat-card-icon">{icon}</div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline flex-wrap gap-2 sm:gap-2.5">
+      <div className="contents sm:block sm:flex-1 sm:min-w-0">
+        <div className="col-start-1 row-start-1 self-end flex items-baseline flex-wrap gap-2 sm:gap-2.5">
           <p className="text-[30px] font-bold text-gray-900 leading-none">{count}</p>
           {countBadge && (
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${c.badge} whitespace-nowrap`}>
@@ -85,7 +89,7 @@ export default function ProgressStatCard({
         </div>
 
         {milestone && (
-          <div className="mt-3">
+          <div className="col-start-1 row-start-2 sm:mt-3">
             <div className={`h-1.5 ${TRACK} rounded-full overflow-hidden`}>
               <div
                 className={`h-full ${c.bar} rounded-full transition-all duration-700`}
@@ -99,13 +103,13 @@ export default function ProgressStatCard({
         )}
 
         {count > 0 && (
-          <div className="mt-3.5">
-            <div className="flex flex-wrap gap-2.5">
+          <div className="col-span-2 row-start-4 sm:mt-3.5">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2.5">
               {primaryAction && (
                 primaryAction.href ? (
                   <Link
                     href={primaryAction.href}
-                    className={`inline-block text-xs ${c.primaryBtn} font-semibold px-3.5 py-2 rounded-lg transition-colors`}
+                    className={`inline-block text-center text-xs ${c.primaryBtn} font-semibold px-3.5 py-2 rounded-lg transition-colors`}
                   >
                     {primaryAction.label}
                   </Link>
@@ -114,7 +118,7 @@ export default function ProgressStatCard({
                     type="button"
                     onClick={primaryAction.onClick}
                     disabled={primaryAction.disabled}
-                    className={`inline-block text-xs ${c.primaryBtn} font-semibold px-3.5 py-2 rounded-lg transition-colors ${
+                    className={`inline-block text-center text-xs ${c.primaryBtn} font-semibold px-3.5 py-2 rounded-lg transition-colors ${
                       primaryAction.disabled ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
@@ -125,7 +129,7 @@ export default function ProgressStatCard({
               {secondaryAction && (
                 <Link
                   href={secondaryAction.href}
-                  className={`inline-block text-xs border ${SECONDARY_BTN} font-semibold px-3.5 py-2 rounded-lg transition-colors`}
+                  className={`inline-block text-center text-xs border ${SECONDARY_BTN} font-semibold px-3.5 py-2 rounded-lg transition-colors`}
                 >
                   {secondaryAction.label} <TakChevron size={10} className="inline-block align-[-1px]" />
                 </Link>
@@ -150,7 +154,7 @@ export default function ProgressStatCard({
       </div>
 
       {nextMilestone && (
-        <div className="absolute top-4 right-4 text-right sm:static sm:shrink-0">
+        <div className="col-start-1 row-start-3 flex items-baseline gap-1.5 sm:block sm:text-right sm:shrink-0" data-testid="stat-card-next">
           <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide">{tr.stats.nextLabel}</p>
           <p className="text-sm font-semibold text-ink">{nextMilestone}</p>
         </div>

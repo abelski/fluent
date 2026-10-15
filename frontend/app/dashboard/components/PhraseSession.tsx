@@ -1000,7 +1000,7 @@ export default function PhraseSession({
                     disabled={used || !!assembleResult}
                     className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors ${
                       used
-                        ? 'bg-gray-50 border-gray-100 text-[#5b6067]'
+                        ? 'bg-gray-50 border-gray-100 text-ink-soft'
                         : 'bg-white border-gray-200 text-gray-700 hover:border-purple-400 hover:text-purple-700 cursor-pointer'
                     }`}
                   >

@@ -232,7 +232,8 @@ export interface Translations {
     lockedUpsell: string; // small hint on a locked lesson card, links to /pricing
     lockedTitle: string; // blocked state after a 403 from the tasks endpoint
     lockedBody: string;
-    remindHint: string; // shown under the disabled remind button when no practice lesson is passed yet
+    remindHint: string;
+    reviewPassed: string; // #66 — hero button once every program is complete // shown under the disabled remind button when no practice lesson is passed yet
     // #53 — hero / chips / bento layout of the lesson list
     emptySubtitle: string; // hero subtitle when no program is enrolled
     continue: string; // hero «Продолжить» — starts the featured next lesson
@@ -252,6 +253,69 @@ export interface Translations {
     programDone: string; // featured completion card
     declHouse: string; // translation of «namas» in the hero declension sample
     actionFailed: string; // enroll/unenroll request failed
+  };
+  /** #66 — shared wording of the Грамматика / Практика overview and program pages. */
+  overview: {
+    next: string;
+    startHereKicker: string;
+    remaining: string;
+    passed: string;
+    inProgress: string;
+    completed: string;
+    completedHint: string;
+    due: string;
+    more: string;
+    programs: string;
+    add: string;
+    inside: string;
+    startHere: string;
+    remove: string;
+    moreActions: string;
+    theory: string;
+    started: string;
+    added: string; // {x}
+    noPass: string;
+    trialSub: string;
+    show: string;
+    hide: string;
+    undo: string;
+    openProgram: string;
+    switchTo: string;
+    addAll: string; // {n}
+    best: string; // {s}
+    needPct: string; // {n}
+    needOver: string;
+    continue: string;
+    start: string;
+    reviewHint: string;
+    lockLevel: string; // {lv} {x}
+    opensAfter: string; // {x}
+    moreLocked: string; // {k}
+    moreOpen: string; // {k}
+    examOpens: string;
+    premiumLink: string;
+    weakest: string;
+    lastTime: string; // {d} {u}
+    lastToday: string;
+    days: PluralForms;
+    exam: string;
+    notStarted: string;
+    lockedHint: string;
+    legend: string;
+    legendNew: string;
+    formatG: string;
+    formatP: string; // {q} {pass}
+    examCit: string;
+    examA2: string;
+    bothHint: string;
+    doneG: string;
+    doneP: string;
+    reviewTasks: string;
+    reviewTest: string; // {q}
+    reviewTestHint: string;
+    topicsPassed: string; // {d} {t} {u}
+    remindNone: string;
+    startA2: string;
   };
   practice: {
     title: string;
@@ -369,6 +433,7 @@ export interface Translations {
     exportTest: string;
     fieldTitleRu: string;
     fieldTitleEn: string;
+    fieldTitleLt: string;
     fieldDescRu: string;
     fieldQuestionCount: string;
     fieldPassThreshold: string;

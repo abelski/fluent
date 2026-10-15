@@ -13,3 +13,4 @@ Format: `- YYYY-MM-DD — what to do (#N)`. Delete a line when it's done.
 - 2026-10-24 — #62e: A2 article update, once #62b–#62e are all released (#62e)
 - 2026-10-24 — #62f: append «Потренируйтесь в Fluent» / "Practise in Fluent" to būdvardžiai-linksniavimas (keep first 160 chars), after the #48c check (#62f)
 - 2026-10-24 — #62h: append «Потренируйтесь в Fluent» / "Practise in Fluent" to numbers-03-time (keep first 160 chars); ask the user about «dvylikos» → «dvyliktos» in the hours table, after the #48c check (#62h)
+- 2026-10-17 — #66 release: on prod apply migration a9b0c1d2e3f4 (practice_test.title_lt) BEFORE deploying the code, then `backend/scripts/fix_practice_titles_66.py --dry-run`, review (check the restored Lithuanian reading titles), then `--apply`; date is a placeholder — move it to the release day (#66)

@@ -9,6 +9,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlmodel import Session, select
 
 import cache
@@ -280,13 +281,28 @@ def _program_lesson_ids(program: SimpleNamespace, session: Session) -> list[int]
     ]
 
 
+def _remind_lesson_order(eligible: list[int], best: dict[int, float], weakest_first: bool) -> list[int]:
+    """Order remind candidates (#66): weakest best score first when scoped to one
+    program, otherwise shuffled (the #26 behaviour). Ties stay in random order."""
+    order = list(eligible)
+    random.shuffle(order)
+    if weakest_first:
+        order.sort(key=lambda lid: best.get(lid, 0.0))  # stable: shuffled ties stay shuffled
+    return order
+
+
 @router.get("/grammar/remind/tasks")
 def remind_tasks(
+    program_id: Optional[int] = None,
     authorization: Optional[str] = Header(None),
     session: Session = Depends(get_session),
 ):
-    """«Напомни что я мог забыть» (#26) — a mixed run built from every «Повторение»
-    (practice) lesson the user has already passed, in programs they're enrolled in.
+    """«Повторить пройденное» (#26, #66) — a mixed run built from every «Смешанный»
+    (practice-level) lesson the user has already passed, in programs they're enrolled in.
+
+    `program_id` (#66) scopes the run to one enrolled program (404 unknown, 403 not
+    enrolled) and draws the weakest lessons (lowest best score) first; without it the
+    behaviour is unchanged.
 
     404 (no session charged) when nothing is eligible; otherwise a daily session is
     spent like any other lesson. The result is saved by the caller against the
@@ -298,15 +314,26 @@ def remind_tasks(
         session, UserGrammarProgram, UserGrammarProgram.program_id, user.id
     )
     programs = [p for p in _grammar_programs(session) if p.id in enrolled_ids]
+    if program_id is not None:
+        if not any(p.id == program_id and (p.is_public or user.is_admin) for p in _grammar_programs(session)):
+            raise HTTPException(status_code=404, detail="Program not found")
+        programs = [p for p in programs if p.id == program_id]
+        if not programs:
+            raise HTTPException(status_code=403, detail={"code": "not_enrolled"})
 
-    passed_ids: set[int] = set(session.exec(
-        select(GrammarLessonResult.lesson_id)
+    # One query: every passed attempt, so both eligibility and the best score per
+    # lesson (a passed lesson's best attempt is always a passed one) come from it.
+    best: dict[int, float] = {}
+    for lid, score, total in session.exec(
+        select(GrammarLessonResult.lesson_id, GrammarLessonResult.score, GrammarLessonResult.total)
         .where(
             GrammarLessonResult.user_id == user.id,
             GrammarLessonResult.passed == True,  # noqa: E712
         )
-        .distinct()
-    ).all())
+    ).all():
+        pct = score / total if total > 0 else 0.0
+        if pct > best.get(lid, -1.0):
+            best[lid] = pct
 
     all_lessons = (
         get_lessons(session, is_admin=False)
@@ -318,7 +345,7 @@ def remind_tasks(
     eligible_ids: set[int] = set()
     for program in programs:
         for lid in _program_lesson_ids(program, session):
-            if lid in passed_ids and lesson_level.get(lid) == "practice":
+            if lid in best and lesson_level.get(lid) == "practice":
                 eligible_ids.add(lid)
 
     if not eligible_ids:
@@ -327,18 +354,41 @@ def remind_tasks(
 
     _quota_check_and_increment(user, session)
 
-    eligible = list(eligible_ids)
-    random.shuffle(eligible)
-    chosen = eligible[:REMIND_TASK_COUNT]
+    chosen = _remind_lesson_order(list(eligible_ids), best, program_id is not None)[:REMIND_TASK_COUNT]
     per_lesson = math.ceil(REMIND_TASK_COUNT / len(chosen))
 
     pool: list[dict] = []
-    for lid in chosen:
+    for lid in chosen:  # weakest first in program mode, so the cut below keeps them
         tasks = (get_verb_lesson_tasks(lid, session) if lid >= 200 else get_lesson_tasks(lid, session)) or []
         if tasks:
             pool.extend(random.sample(tasks, min(per_lesson, len(tasks))))
+    # Pre-cut shuffle is unscoped only (#26: cut a random subset). Scoped, the pool is
+    # weakest-first, so the cut keeps the weakest lessons' tasks; the final shuffle
+    # then mixes the order the user sees in both modes.
+    if program_id is None:
+        random.shuffle(pool)
+    pool = pool[:REMIND_TASK_COUNT]
     random.shuffle(pool)
-    return pool[:REMIND_TASK_COUNT]
+    return pool
+
+
+def _last_result_by_program(user: User, programs: list[SimpleNamespace], session: Session) -> dict[int, str]:
+    """Latest result date per program (#66), ISO 8601 UTC, from one grouped query over the
+    user's own results. The remind sentinel (lesson 0) can't be attributed to a
+    program, so it never counts. Progress — never cached."""
+    last_by_lesson = dict(session.exec(
+        select(GrammarLessonResult.lesson_id, func.max(GrammarLessonResult.created_at))
+        .where(GrammarLessonResult.user_id == user.id, GrammarLessonResult.lesson_id != REMIND_LESSON_ID)
+        .group_by(GrammarLessonResult.lesson_id)
+    ).all())
+    out: dict[int, str] = {}
+    if not last_by_lesson:
+        return out
+    for p in programs:
+        dates = [last_by_lesson[lid] for lid in _program_lesson_ids(p, session) if lid in last_by_lesson]
+        if dates:
+            out[p.id] = max(dates).isoformat() + "Z"  # stored as naive UTC (models._utcnow)
+    return out
 
 
 @router.get("/grammar-programs")
@@ -352,10 +402,12 @@ def list_grammar_programs(
     is_admin = bool(user and user.is_admin)
     programs = [p for p in _grammar_programs(session) if p.is_public or is_admin]
     enrolled_ids: set[int] = set()
+    last_result: dict[int, str] = {}
     if user:
         enrolled_ids = cache.enrollment_ids(
             session, UserGrammarProgram, UserGrammarProgram.program_id, user.id
         )
+        last_result = _last_result_by_program(user, [p for p in programs if p.id in enrolled_ids], session)
     return [
         {
             "id": p.id,
@@ -368,6 +420,7 @@ def list_grammar_programs(
             "lesson_filter": p.lesson_filter,
             "program_type": p.program_type,
             "is_public": p.is_public,
+            "last_result_at": last_result.get(p.id),  # #66 — null for guests / not enrolled / no results
         }
         for p in programs
     ]

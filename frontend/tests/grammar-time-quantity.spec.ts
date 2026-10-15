@@ -72,9 +72,8 @@ async function mock(page: Page, lang: 'ru' | 'en', width: number) {
 
 // Level buttons: topic i → basic/advanced/practice = 3i, 3i+1, 3i+2.
 async function startLevel(page: Page, n: number) {
-  await page.goto('/dashboard/grammar');
-  await page.getByTestId('category-program-12').click();
-  await page.getByTestId('topics-section').getByTestId('level-button').nth(n).click();
+  await page.goto('/dashboard/grammar?program=12'); // #66 — the program page holds the topics
+  await page.getByTestId('remaining-card').getByTestId('level-button').nth(n).click();
   await expect(page.getByTestId('task-counter')).toBeVisible();
 }
 

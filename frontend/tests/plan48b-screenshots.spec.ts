@@ -72,7 +72,7 @@ async function openGrammarLesson(page: Page, task: object) {
   await page.route('**/api/grammar/lessons/2/tasks', (r) => r.fulfill({ json: [task] }));
   await page.route('**/api/grammar/lessons/2/results', (r) => r.fulfill({ json: { ok: true, passed: true } }));
   await page.route('**/api/admin/grammar/config', (r) => r.fulfill({ json: { lessons: [], cases: {} } }));
-  await page.goto('/dashboard/grammar');
+  await page.goto('/dashboard/grammar?program=1'); // #66 — levels live on the program page
   await page.getByTestId('level-button').first().click();
   await page.waitForSelector('input[type="text"]', { timeout: 5000 });
 }
@@ -144,7 +144,7 @@ for (const lang of LANGS) {
     test(`grammar programs — ${lang} ${wname}`, async ({ page }) => {
       await setup(page, lang, width, makeFakeJwt('grammar-programs@test.com'));
       await page.route('**/api/grammar-programs', (r) => r.fulfill({ json: [{ ...ADMIN_PROGRAM, enrolled: false, program_type: 'cases' }] }));
-      await page.goto('/dashboard/grammar/programs');
+      await page.goto('/dashboard/grammar'); // #66 — the catalogue moved onto the overview
       await expect(page.getByText(pick(lang, ADMIN_PROGRAM.description, ADMIN_PROGRAM.description_en))).toBeVisible();
       await shot(page, 'grammar-programs', lang, width);
     });
